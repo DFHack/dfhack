@@ -24,7 +24,6 @@ public:
      * Returns true on success, otherwise false on failure.
      */
     bool init();
-    void reset();
     /*
      * Commands the console to shutdown. Safe to call from any thread.
      */
@@ -60,7 +59,11 @@ public:
     /*
      * Sets the prompt text.
      */
-    SDLConsole& set_prompt(std::string string);
+    SDLConsole& set_prompt(std::string text);
+
+    void set_prompt_input(std::string text);
+    void restore_prompt();
+    void interrupt_prompt();
 
     /*
      * Configures the dimensions for the console window.
@@ -155,7 +158,7 @@ protected:
 
 private:
     void write_line_(std::string& line, std::optional<SDL_Color> color);
-    void push_props_needs_update();
+    void reset();
     template<typename F>
     void push_api_task(F&& func);
     std::shared_ptr<SDLConsole_impl> impl;

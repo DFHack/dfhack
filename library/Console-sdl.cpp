@@ -54,7 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <VTableInterpose.h>
 
 #include "Console.h"
-#include "SDL_console.h"
+#include "SDLConsole.h"
 
 using namespace DFHack;
 
@@ -280,7 +280,7 @@ bool Console::shutdown(void)
 {
     if (!inited.load()) return true;
     d->con.shutdown();
-    inited = false;
+    inited.store(false);
     return true;
 }
 
@@ -390,8 +390,7 @@ bool Console::sdl_event_hook(SDL_Event &e)
  */
 void Console::cleanup()
 {
-    if (!inited.load()) return;
-    INTERPOSE_HOOK(con_render_hook,render).apply(0);
+    INTERPOSE_HOOK(con_render_hook,render).apply(false);
     // destroy() will change console's state to inactive
     d->con.destroy();
     inited.store(false);

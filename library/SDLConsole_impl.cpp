@@ -22,12 +22,14 @@
 #include <condition_variable>
 #include <cmath>
 #include <cwctype>
-#include <set>
+#include <numeric>
 //#include <cuchar>
 
 #include "SDL_pixels.h"
+#include "Core.h"
 #include "modules/DFSDL.h"
-#include "SDL_console.h"
+#include "SDLConsole.h"
+#include "SDLConsole_impl.h"
 
 using namespace DFHack;
 
@@ -57,6 +59,7 @@ CONSOLE_DECLARE_SYMBOL(SDL_GetModState);
 CONSOLE_DECLARE_SYMBOL(SDL_GetRendererOutputSize);
 CONSOLE_DECLARE_SYMBOL(SDL_GetWindowFlags);
 CONSOLE_DECLARE_SYMBOL(SDL_GetWindowID);
+CONSOLE_DECLARE_SYMBOL(SDL_GetTicks64);
 CONSOLE_DECLARE_SYMBOL(SDL_HideWindow);
 CONSOLE_DECLARE_SYMBOL(SDL_iconv_string);
 CONSOLE_DECLARE_SYMBOL(SDL_InitSubSystem);
@@ -126,6 +129,7 @@ void bind_sdl_symbols()
         CONSOLE_ADD_SYMBOL(SDL_GetRendererOutputSize),
         CONSOLE_ADD_SYMBOL(SDL_GetWindowFlags),
         CONSOLE_ADD_SYMBOL(SDL_GetWindowID),
+        CONSOLE_ADD_SYMBOL(SDL_GetTicks64),
         CONSOLE_ADD_SYMBOL(SDL_HideWindow),
         CONSOLE_ADD_SYMBOL(SDL_iconv_string),
         CONSOLE_ADD_SYMBOL(SDL_InitSubSystem),
@@ -258,6 +262,33 @@ namespace text {
         return count;
     }
 
+    void erase_surrogate_pairs(std::u16string& text) {
+        constexpr char16_t replacement = u'?';
+
+        for (auto it = text.begin(); it != text.end(); ) {
+            char16_t current = *it;
+
+            if (current >= 0xD800 && current <= 0xDBFF) { // High surrogate
+                auto next = std::next(it);
+                if (next != text.end() && *next >= 0xDC00 && *next <= 0xDFFF) {
+                    *it = replacement;
+                    // Erase pair
+                    it = text.erase(it, std::next(it));
+                } else {
+                    *it = replacement;
+                    // Invalid high
+                    it = text.erase(it);
+                }
+            } else if (current >= 0xDC00 && current <= 0xDFFF) {
+                *it = replacement;
+                // Invalid low
+                it = text.erase(it);
+            } else {
+                ++it;
+            }
+        }
+    }
+
     bool is_newline(char32_t ch) {
         return ch == U'\n' || ch == U'\r';
     }
@@ -266,54 +297,93 @@ namespace text {
         return ch == U' ' || ch == U'\t';
     }
 
-    std::pair<size_t, size_t> get_range(const std::u32string& text, size_t pos, std::function<bool(char32_t)> predicate) {
-        auto it_start = text.begin() + pos;
-        auto it_end = it_start;
+    std::pair<size_t, size_t> find_range_with_pred(const std::u32string& text, size_t pos, std::function<bool(char32_t)> predicate) {
+        if (text.empty()) return { 0, 0 };
+        else if (pos >= text.size()) return { text.size()-1, text.size()-1 };
 
-        while (it_start != text.begin() && predicate(*(it_start - 1))) {
-            --it_start;
-        }
+        auto left = text.begin() + pos;
+        auto right = left;
 
-        while (it_end != text.end() && predicate(*it_end)) {
-            ++it_end;
-        }
-        if (it_end == text.end())
-            --it_end;
+        while (left != text.begin() && predicate(*(left - 1)))
+            --left;
+
+        auto t = right;
+        while (right != text.end() && predicate(*right))
+            ++right;
+
+        if (t != right)
+            --right;
 
         return {
-            (size_t)(std::distance(text.begin(), it_start)),
-            (size_t)(std::distance(text.begin(), it_end))
+            std::distance(text.begin(), left),
+            std::distance(text.begin(), right)
         };
     }
 
+#if 0
     size_t skip_wspace(const std::u32string& text, size_t pos) {
+        if (text.empty()) return 0;
+        else if (pos >= text.size()) return text.size() - 1;
+
         auto it = text.begin() + pos;
         while (it != text.end() && is_wspace(*it)) {
-            it = std::next(it);
+            ++it;
         }
+
+        if (it == text.end()) --it;
         return std::distance(text.begin(), it);
+    }
+#endif
+
+    size_t skip_wspace(const std::u32string& text, size_t pos) {
+        if (text.empty()) return 0;
+        else if (pos >= text.size()) return text.size() - 1;
+
+        return std::distance(text.begin(),
+                             std::ranges::find_if_not(std::ranges::subrange(text.begin() + pos, text.end() - 1),
+                                                      is_wspace));
     }
 
     size_t skip_wspace_reverse(const std::u32string& text, size_t pos) {
+        if (text.empty()) return 0;
+        else if (pos >= text.size()) pos = text.size() - 1;
+
         auto it = text.begin() + pos;
-        while (it != text.begin() && is_wspace(*std::prev(it))) {
-            it = std::prev(it);
+        while (it != text.begin() && is_wspace(*it)) {
+            --it;
         }
         return std::distance(text.begin(), it);
     }
 
+    /*
     size_t skip_graph(const std::u32string& text, size_t pos) {
+        if (text.empty()) return 0;
+        else if (pos >= text.size()) return text.size() - 1;
+
         auto it = text.begin() + pos;
         while (it != text.end() && !is_wspace(*it)) {
-            it = std::next(it);
+            ++it;
         }
+        if (it == text.end()) --it;
         return std::distance(text.begin(), it);
+    }*/
+
+    size_t skip_graph(const std::u32string& text, size_t pos) {
+        if (text.empty()) return 0;
+        if (pos >= text.size()) return text.size() - 1;
+
+        return std::distance(text.begin(),
+                             std::ranges::find_if(std::ranges::subrange(text.begin() + pos, text.end() - 1),
+                                                  is_wspace));
     }
 
     size_t skip_graph_reverse(const std::u32string& text, size_t pos) {
+        if (text.empty()) return 0;
+        else if (pos >= text.size()) pos = text.size() - 1;
+
         auto it = text.begin() + pos;
-        while (it != text.begin() && !is_wspace(*std::prev(it))) {
-            it = std::prev(it);
+        while (it != text.begin() && !is_wspace(*it)) {
+            --it;
         }
         return std::distance(text.begin(), it);
     }
@@ -325,12 +395,9 @@ namespace text {
      * the current word and trailing spaces to find the next one. Returns the
      * position of the end of the previous word or non-space character.
      */
-    size_t prev_word_pos(const std::u32string& text, size_t pos) {
-        if (text.empty()) {
-            return 0;
-        } else if (pos >= text.size()) {
-            pos = text.size() - 1;
-        }
+    size_t find_prev_word(const std::u32string& text, size_t pos) {
+        //if (text.empty()) return 0;
+        //else if (pos >= text.size()) pos = text.size() - 1;
 
         size_t start = pos;
         start = skip_wspace_reverse(text, start);
@@ -350,13 +417,7 @@ namespace text {
      * the current word and trailing spaces to find the next one. Returns the
      * position of the start of the next word or non-space character.
      */
-    size_t next_word_pos(const std::u32string& text, size_t pos) {
-        if (text.empty()) {
-            return 0;
-        } else if (pos >= text.size()) {
-            pos = text.size() - 1;
-        }
-
+    size_t find_next_word(const std::u32string& text, size_t pos) {
         size_t start = pos;
         start = skip_wspace(text, start);
         if (start == pos) {
@@ -368,20 +429,20 @@ namespace text {
         return pos;
     }
 
-    std::pair<size_t, size_t> get_wspace_range(const std::u32string& text, size_t pos) {
-        return get_range(text, pos, [](char32_t ch) { return is_wspace(ch); });
+    std::pair<size_t, size_t> find_wspace_range(const std::u32string& text, size_t pos) {
+        return find_range_with_pred(text, pos, [](char32_t ch) { return is_wspace(ch); });
     }
 
-    std::pair<size_t, size_t> get_word_range(const std::u32string& text, size_t pos) {
+    std::pair<size_t, size_t> find_text_range(const std::u32string& text, size_t pos) {
         // Bounds check here since .at() is used below
         if (text.empty() || pos >= text.size()) {
             return { std::u32string::npos, std::u32string::npos };
         }
 
         if (is_wspace(text.at(pos))) {
-            return get_wspace_range(text, pos);
+            return find_wspace_range(text, pos);
         }
-        return get_range(text, pos, [](char32_t ch) { return !is_wspace(ch); });
+        return find_range_with_pred(text, pos, [](char32_t ch) { return !is_wspace(ch); });
     }
 }
 
@@ -427,65 +488,66 @@ int ceil_boundary(int position, int cell_size)
 
 // Should probably be kept for effecient mapping --
 // although char16_t should probably be used instead of char32_t.
-static const std::unordered_map<char32_t, uint8_t> unicode_to_cp437 = {
+static const std::unordered_map<uint16_t, uint8_t> unicode_to_cp437 = {
     // Control characters and symbols
-    /* NULL           */ { U'\u263A', 0x01 }, { U'\u263B', 0x02 }, { U'\u2665', 0x03 },
-    { U'\u2666', 0x04 }, { U'\u2663', 0x05 }, { U'\u2660', 0x06 }, { U'\u2022', 0x07 },
-    { U'\u25D8', 0x08 }, { U'\u25CB', 0x09 }, { U'\u25D9', 0x0A }, { U'\u2642', 0x0B },
-    { U'\u2640', 0x0C }, { U'\u266A', 0x0D }, { U'\u266B', 0x0E }, { U'\u263C', 0x0F },
+    /* NULL        */ { 0x263A, 0x01 }, { 0x263B, 0x02 }, { 0x2665, 0x03 },
+    { 0x2666, 0x04 }, { 0x2663, 0x05 }, { 0x2660, 0x06 }, { 0x2022, 0x07 },
+    { 0x25D8, 0x08 }, { 0x25CB, 0x09 }, { 0x25D9, 0x0A }, { 0x2642, 0x0B },
+    { 0x2640, 0x0C }, { 0x266A, 0x0D }, { 0x266B, 0x0E }, { 0x263C, 0x0F },
 
-    { U'\u25BA', 0x10 }, { U'\u25C4', 0x11 }, { U'\u2195', 0x12 }, { U'\u203C', 0x13 },
-    { U'\u00B6', 0x14 }, { U'\u00A7', 0x15 }, { U'\u25AC', 0x16 }, { U'\u21A8', 0x17 },
-    { U'\u2191', 0x18 }, { U'\u2193', 0x19 }, { U'\u2192', 0x1A }, { U'\u2190', 0x1B },
-    { U'\u221F', 0x1C }, { U'\u2194', 0x1D }, { U'\u25B2', 0x1E }, { U'\u25BC', 0x1F },
+    { 0x25BA, 0x10 }, { 0x25C4, 0x11 }, { 0x2195, 0x12 }, { 0x203C, 0x13 },
+    { 0x00B6, 0x14 }, { 0x00A7, 0x15 }, { 0x25AC, 0x16 }, { 0x21A8, 0x17 },
+    { 0x2191, 0x18 }, { 0x2193, 0x19 }, { 0x2192, 0x1A }, { 0x2190, 0x1B },
+    { 0x221F, 0x1C }, { 0x2194, 0x1D }, { 0x25B2, 0x1E }, { 0x25BC, 0x1F },
 
     // ASCII, no mapping needed
 
     // Extended Latin characters and others
-    { U'\u2302', 0x7F },
+    { 0x2302, 0x7F },
 
-    { U'\u00C7', 0x80 }, { U'\u00FC', 0x81 }, { U'\u00E9', 0x82 }, { U'\u00E2', 0x83 },
-    { U'\u00E4', 0x84 }, { U'\u00E0', 0x85 }, { U'\u00E5', 0x86 }, { U'\u00E7', 0x87 },
-    { U'\u00EA', 0x88 }, { U'\u00EB', 0x89 }, { U'\u00E8', 0x8A }, { U'\u00EF', 0x8B },
-    { U'\u00EE', 0x8C }, { U'\u00EC', 0x8D }, { U'\u00C4', 0x8E }, { U'\u00C5', 0x8F },
+    { 0x00C7, 0x80 }, { 0x00FC, 0x81 }, { 0x00E9, 0x82 }, { 0x00E2, 0x83 },
+    { 0x00E4, 0x84 }, { 0x00E0, 0x85 }, { 0x00E5, 0x86 }, { 0x00E7, 0x87 },
+    { 0x00EA, 0x88 }, { 0x00EB, 0x89 }, { 0x00E8, 0x8A }, { 0x00EF, 0x8B },
+    { 0x00EE, 0x8C }, { 0x00EC, 0x8D }, { 0x00C4, 0x8E }, { 0x00C5, 0x8F },
 
-    { U'\u00C9', 0x90 }, { U'\u00E6', 0x91 }, { U'\u00C6', 0x92 }, { U'\u00F4', 0x93 },
-    { U'\u00F6', 0x94 }, { U'\u00F2', 0x95 }, { U'\u00FB', 0x96 }, { U'\u00F9', 0x97 },
-    { U'\u00FF', 0x98 }, { U'\u00D6', 0x99 }, { U'\u00DC', 0x9A }, { U'\u00A2', 0x9B },
-    { U'\u00A3', 0x9C }, { U'\u00A5', 0x9D }, { U'\u20A7', 0x9E }, { U'\u0192', 0x9F },
+    { 0x00C9, 0x90 }, { 0x00E6, 0x91 }, { 0x00C6, 0x92 }, { 0x00F4, 0x93 },
+    { 0x00F6, 0x94 }, { 0x00F2, 0x95 }, { 0x00FB, 0x96 }, { 0x00F9, 0x97 },
+    { 0x00FF, 0x98 }, { 0x00D6, 0x99 }, { 0x00DC, 0x9A }, { 0x00A2, 0x9B },
+    { 0x00A3, 0x9C }, { 0x00A5, 0x9D }, { 0x20A7, 0x9E }, { 0x0192, 0x9F },
 
-    { U'\u00E1', 0xA0 }, { U'\u00ED', 0xA1 }, { U'\u00F3', 0xA2 }, { U'\u00FA', 0xA3 },
-    { U'\u00F1', 0xA4 }, { U'\u00D1', 0xA5 }, { U'\u00AA', 0xA6 }, { U'\u00BA', 0xA7 },
-    { U'\u00BF', 0xA8 }, { U'\u2310', 0xA9 }, { U'\u00AC', 0xAA }, { U'\u00BD', 0xAB },
-    { U'\u00BC', 0xAC }, { U'\u00A1', 0xAD }, { U'\u00AB', 0xAE }, { U'\u00BB', 0xAF },
+    { 0x00E1, 0xA0 }, { 0x00ED, 0xA1 }, { 0x00F3, 0xA2 }, { 0x00FA, 0xA3 },
+    { 0x00F1, 0xA4 }, { 0x00D1, 0xA5 }, { 0x00AA, 0xA6 }, { 0x00BA, 0xA7 },
+    { 0x00BF, 0xA8 }, { 0x2310, 0xA9 }, { 0x00AC, 0xAA }, { 0x00BD, 0xAB },
+    { 0x00BC, 0xAC }, { 0x00A1, 0xAD }, { 0x00AB, 0xAE }, { 0x00BB, 0xAF },
 
     // Box drawing characters
-    { U'\u2591', 0xB0 }, { U'\u2592', 0xB1 }, { U'\u2593', 0xB2 }, { U'\u2502', 0xB3 },
-    { U'\u2524', 0xB4 }, { U'\u2561', 0xB5 }, { U'\u2562', 0xB6 }, { U'\u2556', 0xB7 },
-    { U'\u2555', 0xB8 }, { U'\u2563', 0xB9 }, { U'\u2551', 0xBA }, { U'\u2557', 0xBB },
-    { U'\u255D', 0xBC }, { U'\u255C', 0xBD }, { U'\u255B', 0xBE }, { U'\u2510', 0xBF },
+    { 0x2591, 0xB0 }, { 0x2592, 0xB1 }, { 0x2593, 0xB2 }, { 0x2502, 0xB3 },
+    { 0x2524, 0xB4 }, { 0x2561, 0xB5 }, { 0x2562, 0xB6 }, { 0x2556, 0xB7 },
+    { 0x2555, 0xB8 }, { 0x2563, 0xB9 }, { 0x2551, 0xBA }, { 0x2557, 0xBB },
+    { 0x255D, 0xBC }, { 0x255C, 0xBD }, { 0x255B, 0xBE }, { 0x2510, 0xBF },
 
-    { U'\u2514', 0xC0 }, { U'\u2534', 0xC1 }, { U'\u252C', 0xC2 }, { U'\u251C', 0xC3 },
-    { U'\u2500', 0xC4 }, { U'\u253C', 0xC5 }, { U'\u255E', 0xC6 }, { U'\u255F', 0xC7 },
-    { U'\u255A', 0xC8 }, { U'\u2554', 0xC9 }, { U'\u2569', 0xCA }, { U'\u2566', 0xCB },
-    { U'\u2560', 0xCC }, { U'\u2550', 0xCD }, { U'\u256C', 0xCE }, { U'\u2567', 0xCF },
+    { 0x2514, 0xC0 }, { 0x2534, 0xC1 }, { 0x252C, 0xC2 }, { 0x251C, 0xC3 },
+    { 0x2500, 0xC4 }, { 0x253C, 0xC5 }, { 0x255E, 0xC6 }, { 0x255F, 0xC7 },
+    { 0x255A, 0xC8 }, { 0x2554, 0xC9 }, { 0x2569, 0xCA }, { 0x2566, 0xCB },
+    { 0x2560, 0xCC }, { 0x2550, 0xCD }, { 0x256C, 0xCE }, { 0x2567, 0xCF },
 
-    { U'\u2568', 0xD0 }, { U'\u2564', 0xD1 }, { U'\u2565', 0xD2 }, { U'\u2559', 0xD3 },
-    { U'\u2558', 0xD4 }, { U'\u2552', 0xD5 }, { U'\u2553', 0xD6 }, { U'\u256B', 0xD7 },
-    { U'\u256A', 0xD8 }, { U'\u2518', 0xD9 }, { U'\u250C', 0xDA }, { U'\u2588', 0xDB },
-    { U'\u2584', 0xDC }, { U'\u258C', 0xDD }, { U'\u2590', 0xDE }, { U'\u2580', 0xDF },
+    { 0x2568, 0xD0 }, { 0x2564, 0xD1 }, { 0x2565, 0xD2 }, { 0x2559, 0xD3 },
+    { 0x2558, 0xD4 }, { 0x2552, 0xD5 }, { 0x2553, 0xD6 }, { 0x256B, 0xD7 },
+    { 0x256A, 0xD8 }, { 0x2518, 0xD9 }, { 0x250C, 0xDA }, { 0x2588, 0xDB },
+    { 0x2584, 0xDC }, { 0x258C, 0xDD }, { 0x2590, 0xDE }, { 0x2580, 0xDF },
 
     // Mathematical symbols and others
-    { U'\u03B1', 0xE0 }, { U'\u00DF', 0xE1 }, { U'\u0393', 0xE2 }, { U'\u03C0', 0xE3 },
-    { U'\u03A3', 0xE4 }, { U'\u03C3', 0xE5 }, { U'\u00B5', 0xE6 }, { U'\u03C4', 0xE7 },
-    { U'\u03A6', 0xE8 }, { U'\u0398', 0xE9 }, { U'\u03A9', 0xEA }, { U'\u03B4', 0xEB },
-    { U'\u221E', 0xEC }, { U'\u03C6', 0xED }, { U'\u03B5', 0xEE }, { U'\u2229', 0xEF },
+    { 0x03B1, 0xE0 }, { 0x00DF, 0xE1 }, { 0x0393, 0xE2 }, { 0x03C0, 0xE3 },
+    { 0x03A3, 0xE4 }, { 0x03C3, 0xE5 }, { 0x00B5, 0xE6 }, { 0x03C4, 0xE7 },
+    { 0x03A6, 0xE8 }, { 0x0398, 0xE9 }, { 0x03A9, 0xEA }, { 0x03B4, 0xEB },
+    { 0x221E, 0xEC }, { 0x03C6, 0xED }, { 0x03B5, 0xEE }, { 0x2229, 0xEF },
 
-    { U'\u2261', 0xF0 }, { U'\u00B1', 0xF1 }, { U'\u2265', 0xF2 }, { U'\u2264', 0xF3 },
-    { U'\u2320', 0xF4 }, { U'\u2321', 0xF5 }, { U'\u00F7', 0xF6 }, { U'\u2248', 0xF7 },
-    { U'\u00B0', 0xF8 }, { U'\u2219', 0xF9 }, { U'\u00B7', 0xFA }, { U'\u221A', 0xFB },
-    { U'\u207F', 0xFC }, { U'\u00B2', 0xFD }, { U'\u25A0', 0xFE }, { U'\u00A0', 0xFF }
+    { 0x2261, 0xF0 }, { 0x00B1, 0xF1 }, { 0x2265, 0xF2 }, { 0x2264, 0xF3 },
+    { 0x2320, 0xF4 }, { 0x2321, 0xF5 }, { 0x00F7, 0xF6 }, { 0x2248, 0xF7 },
+    { 0x00B0, 0xF8 }, { 0x2219, 0xF9 }, { 0x00B7, 0xFA }, { 0x221A, 0xFB },
+    { 0x207F, 0xFC }, { 0x00B2, 0xFD }, { 0x25A0, 0xFE }, { 0x00A0, 0xFF },
 };
+
 
 #if 0
 class Logger {
@@ -885,8 +947,7 @@ private:
 };
 
 /*
- * Stores configuration for component consumption.
- * TODO: rethink how this stuff is done.
+ * Stores configuration for components.
  */
 class Property {
     using Value = std::variant<std::string, std::u32string, int64_t, int, SDL_Rect>;
@@ -895,11 +956,6 @@ public:
     void set(const std::string& key, const T& value) {
         std::scoped_lock l(m_);
         props_[key] = value;
-        // For the render thread when updating changes eligible properties
-        // after init() is called. needs_update_ doesn't need
-        // to be set here. Instead it is set via push_api_task() when
-        // an eligible property is changed after init().
-        dirty_props_.insert(key);
     }
 
     template <typename T>
@@ -916,66 +972,8 @@ public:
         return std::get<T>(it->second);
     }
 
-    template <typename T>
-    void on_change(const std::string& key, T default_value, std::function<void(T)> fn) {
-        std::scoped_lock l(m_);
-        funcs_[key] = Func{
-            [fn, default_value](const Value& new_value) {
-                if (std::holds_alternative<T>(new_value)) {
-                    fn(std::get<T>(new_value));
-                } else {
-                    fn(default_value);
-                }
-            },
-            default_value
-        };
-        // Invoke the on_change callback immediately set the value
-        // stored value for this property, or if exists, set to default.
-        Value value = props_.contains(key) ? props_[key] : Value{default_value};
-        if (std::holds_alternative<T>(value)) {
-            fn(std::get<T>(value));
-        }
-    }
-
-    // For the render thread to update changes to properties.
-    // after init() is called.
-    void update_if_needed() {
-        if (!needs_update_) return;
-        std::scoped_lock l(m_);
-        for (const auto& key : dirty_props_) {
-            auto it = funcs_.find(key);
-            if (it != funcs_.end()) {
-                const Value& value = (props_.contains(key) ? props_[key] : it->second.default_value);
-                it->second.func(value);
-            }
-        }
-        dirty_props_.clear();
-        needs_update_ = false;
-    }
-
-    void set_needs_update()
-    {
-        needs_update_ = true;
-    }
-
-    // Just clear the function objects and dirty prop list
-    // as they may have been invalidated.
-    void reset()
-    {
-        funcs_.clear();
-        dirty_props_.clear();
-        needs_update_ = false;
-    }
-
 private:
-    struct Func {
-        std::function<void(const Value&)> func;
-        Value default_value;
-    };
-    std::unordered_map<std::string, Func> funcs_;
     std::unordered_map<std::string, Value> props_;
-    std::unordered_set<std::string> dirty_props_;
-    bool needs_update_{false};
     std::recursive_mutex m_;
 };
 
@@ -1694,6 +1692,7 @@ public:
     std::u32string prompt_text;
     // The input portion of the prompt.
     std::u32string* input;
+    std::u32string interrupted_input;
     size_t cursor { 0 }; // position of cursor within an entry
     // 1x1 texture stretched to font's single character dimensions
     SDL_Texture* cursor_texture;
@@ -1709,9 +1708,7 @@ public:
     {
         input = &history.emplace_back(U"");
 
-        props().on_change<std::u32string>(property::PROMPT_TEXT, U"> ", [this](const std::u32string& value) {
-            set_prompt_text(value);
-        });
+        set_prompt_text(props().get<std::u32string>(property::PROMPT_TEXT, U"> "));
 
         create_cursor_texture();
 
@@ -1797,13 +1794,13 @@ public:
 
         case SDLK_b:
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
-                cursor = text::prev_word_pos(*input, cursor);
+                cursor = text::find_prev_word(*input, cursor);
             }
             break;
 
         case SDLK_f:
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
-                cursor = text::next_word_pos(*input, cursor);
+                cursor = text::find_next_word(*input, cursor);
             }
             break;
         case SDLK_c:
@@ -1811,7 +1808,7 @@ public:
             // TODO: Add state for when selecting text
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
                 *input += U"^C";
-                new_interrupted_command();
+                interrupt();
             }
             break;
         }
@@ -1838,11 +1835,19 @@ public:
         wrap_text();
     }
 
-    void new_interrupted_command()
+    void interrupt()
     {
+        interrupted_input = *input;
         emit(InternalEventType::new_input, input);
         input->clear();
         reset_cursor();
+        wrap_text();
+    }
+
+    void restore_from_interrupt()
+    {
+        *input = interrupted_input;
+        cursor = input->length();
         wrap_text();
     }
 
@@ -1890,6 +1895,13 @@ public:
             input->insert(cursor, str);
         }
         cursor += str.length();
+        wrap_text();
+    }
+
+    void set_input(const std::u32string& str)
+    {
+        *input = str;
+        cursor = str.length();
         wrap_text();
     }
 
@@ -2335,7 +2347,7 @@ public:
     // Scrollbar could be made optional.
     int scroll_offset { 0 };
     SDL_Rect frame;
-    int scrollback;
+    int scrollback_;
     int num_rows { 0 };
     bool depressed { false };
     TextSelection text_selection;
@@ -2348,9 +2360,7 @@ public:
     {
         resize(viewport);
 
-        props().on_change<int>(property::OUTPUT_SCROLLBACK, 1000, [this](int v) {
-            scrollback = v;
-        });
+        set_scrollback(props().get<int>(property::OUTPUT_SCROLLBACK, 1000));
 
         scrollbar.set_page_size(rows());
         scrollbar.set_content_size(1); // account for prompt
@@ -2417,12 +2427,39 @@ public:
         });
     }
 
+    void set_scrollback(size_t scrollback)
+    {
+        scrollback_ = scrollback;
+    }
+
     int on_SDL_KEYDOWN(const SDL_KeyboardEvent& e)
     {
         auto sym = e.keysym.sym;
         switch (sym) {
         case SDLK_TAB:
-          //  new_input_line(text::from_utf8("(tab)"));
+        {
+            std::thread cmdhelper([input = text::to_utf8(*prompt.input)]() {
+                auto& core = DFHack::Core::getInstance();
+                auto& con = SDLConsole::get_console();
+                std::vector<std::string> possibles;
+
+                core.getAutoCompletePossibles(input, possibles);
+                if (possibles.empty()) return;
+                else if (possibles.size() == 1)
+                    SDLConsole::get_console().set_prompt_input(possibles[0]);
+                else {
+                    std::string result = std::accumulate(
+                        std::next(possibles.begin()), possibles.end(), possibles[0],
+                            [](const std::string& a, const std::string& b) {
+                            return a + " " + b;
+                        });
+                    con.interrupt_prompt();
+                    con.write_line(result);
+                    con.restore_prompt();
+                }
+            });
+            cmdhelper.detach();
+        }
             break;
         /* copy */
         case SDLK_c:
@@ -2475,14 +2512,15 @@ public:
             auto frag = find_fragment_at_y(vp.y);
             if (frag.has_value()) {
                 const std::u32string& text = frag.value().get().text.data();
-                auto wordpos = text::get_word_range(text, (size_t)get_column(vp.x));
+                auto wordpos = text::find_text_range(text, (size_t)get_column(vp.x));
 
                 auto get_x = [this](std::u32string::size_type pos, int fallback) -> int {
                     return (pos != std::u32string::npos) ? pos * font->char_width : fallback;
                 };
 
                 begin_text_selection({get_x(wordpos.first, viewport.x), vp.y}, false);
-                end_text_selection({get_x(wordpos.second, viewport.w), vp.y}, false);
+                // wordpos is 0-based
+                end_text_selection({get_x(wordpos.second+1, viewport.w), vp.y}, false);
             }
         } else if (e.clicks == 3) {
             // NOTE: using 0 for x doesn't work.
@@ -2653,7 +2691,7 @@ public:
         TextEntry& entry = entries.emplace_front(entry_type, text, color);
 
         /* When the list is too long, start chopping */
-        if (num_rows > scrollback) {
+        if (num_rows > scrollback_) {
             num_rows -= entries.back().size;
             entries.pop_back();
         }
@@ -2697,8 +2735,8 @@ public:
                 if (!clipboard_text.empty())
                     clipboard_text += sep;
                 auto extent = column_extent(rect.w) + col;
-                auto end_idx = std::min(extent, frag.text.size());
-                clipboard_text += frag.text.substr(col, end_idx - col);
+                auto end_idx = std::min(extent, frag.text.size() - 1);
+                clipboard_text += frag.text.substr(col, (end_idx - col) + 1);
             }
         }
         sdl_console::SDL_SetClipboardText(text::to_utf8(clipboard_text).c_str());
@@ -2706,23 +2744,44 @@ public:
 
     size_t get_column(int x)
     {
-        return x / font->char_width;
+        size_t column = x / font->char_width;
+        return std::clamp(column, size_t(0), columns());
     }
 
     size_t column_extent(int width)
     {
-        return width / font->char_width;
+        size_t extent = width / font->char_width;
+        return std::clamp(extent, size_t(0), columns());
     }
 
-    int columns()
+    size_t columns()
     {
         return (float)viewport.w / font->char_width;
     }
 
-    int rows()
+    size_t rows()
     {
         return (float)viewport.h / font->line_height_with_spacing();
     }
+
+#if 0
+    void do_cmd_completion()
+    {
+        assert(cmd_completion_future);
+        if (cmd_completion_future->valid()
+                && cmd_completion_future->wait_for(std::chrono::milliseconds(0)) // 0 for don't block
+                        == std::future_status::ready) {
+            try {
+                std::string result = cmd_completion_future->get();
+                if (!result.empty())
+                    prompt.set_input(text::from_utf8(result));
+            } catch (const std::exception &e) {
+                std::cerr << "SDLConsole: cmd_completion_future exception: " << e.what() << std::endl;
+            }
+            cmd_completion_future.reset();
+        }
+    }
+#endif
 
     void render() override
     {
@@ -2733,6 +2792,7 @@ public:
         if (!text_selection.rects.empty())
             render_highlight_selected_text();
         // SDL_SetTextureColorMod(font->texture, 0, 128, 0);
+
         render_prompt_and_output();
         // SDL_SetTextureColorMod(font->texture, 255, 255, 255);
         prompt.render_cursor(scroll_offset);
@@ -2854,19 +2914,36 @@ public:
     std::unique_ptr<Toolbar> toolbar; // optional toolbar. XXX: implementation requires it
     std::unique_ptr<OutputPane> outpane;
     bool has_focus{false};
+    bool is_shown{true};
+    bool is_minimized{false};
 
     MainWindow(WidgetContext& wctx)
         : Widget(wctx)
     {
         connect_global<SDL_WindowEvent>(SDL_WINDOWEVENT, [this](SDL_WindowEvent& e) {
-            if (e.event == SDL_WINDOWEVENT_RESIZED) {
+            switch(e.event) {
+            case SDL_WINDOWEVENT_RESIZED:
                 resize({});
-            } else if (e.event == SDL_WINDOWEVENT_FOCUS_LOST) {
+                break;
+            case SDL_WINDOWEVENT_FOCUS_LOST:
                 has_focus = false;
-            } else if (e.event == SDL_WINDOWEVENT_FOCUS_GAINED) {
+                break;
+            case SDL_WINDOWEVENT_FOCUS_GAINED:
                 // TODO: Check if cursor is disabled first.
                 SDL_ShowCursor(SDL_ENABLE);
                 has_focus = true;
+                break;
+            case SDL_WINDOWEVENT_MINIMIZED:
+                is_minimized = true;
+            case SDL_WINDOWEVENT_HIDDEN:
+                is_shown = false;
+                break;
+            case SDL_WINDOWEVENT_SHOWN:
+            case SDL_WINDOWEVENT_EXPOSED:
+            case SDL_WINDOWEVENT_MAXIMIZED:
+                is_shown = true;
+                is_minimized = false;
+                break;
             }
         });
 
@@ -3159,14 +3236,26 @@ public:
     void update()
     {
         handle_tasks();
-        pshare.props.update_if_needed();
-        render_frame();
+
+        static auto last_tick = SDL_GetTicks64();
+        constexpr Uint32 shown_min_frame_time = 1000 / 20; // 20 fps;
+        constexpr Uint32 minimized_min_frame_time = 1000;
+
+        auto current_tick = SDL_GetTicks64();
+        if (main_window.is_shown)
+        {
+            auto min_frame_time = main_window.is_minimized ? minimized_min_frame_time : shown_min_frame_time;
+
+            if (current_tick - last_tick >= min_frame_time) {
+                render_frame();
+                last_tick = current_tick;
+            }
+        }
     }
 
     void shutdown()
     {
         state.set_state(SDLConsole::State::shutdown);
-        pshare.props.reset();
         command_pipe.shutdown();
     }
 
@@ -3277,21 +3366,40 @@ SDLConsole& SDLConsole::set_mainwindow_create_rect(int w, int h, int x, int y)
 
 SDLConsole& SDLConsole::set_scrollback(int scrollback) {
     pshare->props.set<int>(property::OUTPUT_SCROLLBACK, scrollback);
-    push_props_needs_update();
+    push_api_task([this, scrollback] {
+        impl->outpane().set_scrollback(scrollback);
+    });
     return *this;
 }
 
-SDLConsole& SDLConsole::set_prompt(std::string text) {
-    auto t = text::from_utf8(text);
-    pshare->props.set<std::u32string>(property::PROMPT_TEXT, t);
-    push_props_needs_update();
+SDLConsole& SDLConsole::set_prompt(std::string text)
+{
+    auto my_text = text::from_utf8(text);
+    pshare->props.set<std::u32string>(property::PROMPT_TEXT, my_text);
+    push_api_task([this, my_text = my_text] {
+        impl->outpane().prompt.set_prompt_text(my_text);
+    });
     return *this;
 }
 
-void SDLConsole::push_props_needs_update()
+void SDLConsole::set_prompt_input(std::string text)
+{
+    push_api_task([this, text = text::from_utf8(text)] {
+        impl->outpane().prompt.set_input(text);
+    });
+}
+
+void SDLConsole::interrupt_prompt()
 {
     push_api_task([this] {
-        impl->pshare.props.set_needs_update();
+        impl->outpane().prompt.interrupt();
+    });
+}
+
+void SDLConsole::restore_prompt()
+{
+    push_api_task([this] {
+        impl->outpane().prompt.restore_from_interrupt();
     });
 }
 

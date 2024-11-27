@@ -119,6 +119,7 @@ set(MAIN_SOURCES
 file(GLOB_RECURSE TEST_SOURCES
     LIST_DIRECTORIES false
     *test.cpp)
+list(APPEND TEST_SOURCES SDLConsole_impl.cpp)
 dfhack_test(dfhack-test "${TEST_SOURCES}")
 
 if (NOT DFHACK_SDL_CONSOLE)
@@ -134,7 +135,7 @@ else()
     else()
         set(DFCLIENT_CONSOLE_SOURCES Console-posix.cpp)
     endif()
-    set(CONSOLE_SOURCES Console-sdl.cpp Console-sdl-impl.cpp)
+    set(CONSOLE_SOURCES Console-sdl.cpp SDLConsole_impl.cpp)
 endif()
 
 set(MAIN_SOURCES_WINDOWS

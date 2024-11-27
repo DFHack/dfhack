@@ -484,6 +484,19 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     return false;
 }
 
+void Core::getAutoCompletePossibles(const std::string &first, std::vector<std::string> &possibles)
+{
+    std::vector<std::string> commands;
+
+    get_commands(con, commands);
+    for (auto &command : commands) {
+        if (command.substr(0, first.size()) == first)
+            possibles.push_back(command);
+    }
+    if (commands.size() == possibles.size())
+        possibles.clear();
+}
+
 bool Core::addScriptPath(std::string path, bool search_before)
 {
     std::lock_guard<std::mutex> lock(script_path_mutex);

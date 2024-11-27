@@ -195,6 +195,7 @@ namespace DFHack
 
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters);
         command_result runCommand(color_ostream &out, const std::string &command);
+        void getAutoCompletePossibles(const std::string &command, std::vector<std::string> &possibles);
         bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
 
         bool addScriptPath(std::string path, bool search_before = false);

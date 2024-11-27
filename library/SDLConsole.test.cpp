@@ -133,41 +133,68 @@ TEST(SDLConsole, find_next_word) {
 TEST(SDLConsole, find_wspace_range) {
     std::u32string tstr;
     std::pair<size_t, size_t> ret;
+    std::pair<size_t, size_t> exp;
 
     tstr = U"   ";
     ret = text::find_wspace_range(tstr, 1);
-    ASSERT_EQ(ret, std::make_pair(0, 2));
+    exp.first = 0;
+    exp.second = 2;
+    ASSERT_EQ(ret.first, exp.first);
+    ASSERT_EQ(ret.second, exp.second);
 
-    tstr = U"foo   bar"; 
+    tstr = U"foo   bar";
     ret = text::find_wspace_range(tstr, 3);
-    ASSERT_EQ(ret, std::make_pair(3, 5));
+    exp.first = 3;
+    exp.second = 5;
+    ASSERT_EQ(ret.first, exp.first);
+    ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foobar  ";
     ret = text::find_wspace_range(tstr, 6);
-    ASSERT_EQ(ret, std::make_pair(6, 7));
+    exp.first = 6;
+    exp.second = 7;
+    ASSERT_EQ(ret.first, exp.first);
+    ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foobar ";
     ret = text::find_wspace_range(tstr, 6);
-    ASSERT_EQ(ret, std::make_pair(6, 6));
-    
+    exp.first = 6;
+    exp.second = 6;
+    ASSERT_EQ(ret.first, exp.first);
+    ASSERT_EQ(ret.second, exp.second);
+
     tstr = U"";
     ret = text::find_wspace_range(tstr, 0);
-    ASSERT_EQ(ret, std::make_pair(0, 0));
+    exp.first = 0;
+    exp.second = 0;
+    ASSERT_EQ(ret.first, exp.first);
+    ASSERT_EQ(ret.second, exp.second);
+
 }
 
 TEST(SDLConsole, find_text_range) {
     std::u32string tstr;
     std::pair<size_t, size_t> ret;
+    std::pair<size_t, size_t> exp;
     
-    tstr = U"foo"; 
+    tstr = U"foo";
     ret = text::find_text_range(tstr, 0);
-    ASSERT_EQ(ret, std::make_pair(0, 2));  
+    exp.first = 0;
+    exp.second = 2;
+    ASSERT_EQ(ret.first, exp.first);
+    ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foo bar";
     ret = text::find_text_range(tstr, 5);
-    ASSERT_EQ(ret, std::make_pair(4, 6));
+    exp.first = 4;
+    exp.second = 6;
+    ASSERT_EQ(ret.first, exp.first);
+    ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foo bar ";
     ret = text::find_text_range(tstr, 5);
-    ASSERT_EQ(ret, std::make_pair(4, 6));
+    exp.first = 4;
+    exp.second = 6;
+    ASSERT_EQ(ret.first, exp.first);
+    ASSERT_EQ(ret.second, exp.second);
 }

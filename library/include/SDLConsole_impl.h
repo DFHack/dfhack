@@ -5,7 +5,7 @@
 #include <functional>
 
 namespace sdl_console {
-namespace text { 
+namespace text {
 size_t skip_wspace(const std::u32string& text, size_t pos);
 
 size_t skip_wspace_reverse(const std::u32string& text, size_t pos);

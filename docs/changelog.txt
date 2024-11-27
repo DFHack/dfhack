@@ -64,6 +64,7 @@ Template for new versions:
 - `logistics`: don't ignore rotten items when applying stockpile logistics operations (e.g. autodump, autoclaim, etc.)
 
 ## Misc Improvements
+- DFHack startup now verifies that its idea of the size of certain DF global objects are the same as what DF says they are, and refuses to start if there is a mismatch
 - DFHack text edit fields now delete the character at the cursor when you hit the Delete key
 - DFHack text edit fields now move the cursor by one word left or right with Ctrl-Left and Ctrl-Right
 - DFHack text edit fields now move the cursor to the beginning or end of the line with Home and End

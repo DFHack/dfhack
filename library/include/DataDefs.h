@@ -34,11 +34,6 @@ distribution.
 
 #include "BitArray.h"
 
-// Stop some MS stupidity
-#ifdef interface
-    #undef interface
-#endif
-
 typedef struct lua_State lua_State;
 
 /*

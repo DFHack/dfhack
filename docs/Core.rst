@@ -339,7 +339,7 @@ used regardless of whether you run Dwarf Fortress from its own app or DFHack's.
   DF's global "cheat sheet", and shuts down if a discrepancy is detected.
   This is intended to reduce the risk of misalignments in these structures leading
   to crashes or other misbehavior. This option bypasses this check.
-  This option should normally only be used to faciliate DFHack development.
+  This option should normally only be used to facilitate DFHack development.
   This option will **not** enable DFHack to be used usefully with a version of DF
   to which DFHack has not been aligned. Without properly aligned structures,
   DFHack is mostly useless and most operations will either fail

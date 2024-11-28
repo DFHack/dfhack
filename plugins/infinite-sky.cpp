@@ -1,13 +1,12 @@
 
 #include "Core.h"
-#include "DataDefs.h"
 #include "Debug.h"
-#include "Export.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 
-#include "modules/World.h"
 #include "modules/EventManager.h"
+#include "modules/Maps.h"
+#include "modules/World.h"
 
 #include "df/construction.h"
 #include "df/map_block.h"
@@ -19,7 +18,8 @@
 #include <string>
 #include <vector>
 
-using namespace std;
+using std::string;
+using std::vector;
 
 using namespace DFHack;
 using namespace df::enums;
@@ -45,7 +45,7 @@ enum ConfigValues {
 command_result infiniteSky (color_ostream &out, std::vector <std::string> & parameters);
 
 static void constructionEventHandler(color_ostream& out, void* ptr);
-EventManager::EventHandler handler(plugin_self, constructionEventHandler,0);
+EventManager::EventHandler handler(plugin_self, constructionEventHandler,11);
 
 DFhackCExport command_result plugin_init(color_ostream &out,
                                          std::vector<PluginCommand> &commands) {
@@ -87,11 +87,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown(color_ostream &out) {
-    cleanup();
-    return CR_OK;
-}
-
 DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     config = World::GetPersistentSiteData(CONFIG_KEY);
 
@@ -101,7 +96,6 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
         config = World::AddPersistentSiteData(CONFIG_KEY);
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     }
-
 
     // Call plugin_enable to set value to ensure the event handler is properly registered
     plugin_enable(out, config.get_bool(CONFIG_IS_ENABLED));
@@ -118,6 +112,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out,
             DEBUG(control, out)
                 .print("world unloaded; disabling %s\n", plugin_name);
             is_enabled = false;
+            cleanup();
         }
     }
     return CR_OK;
@@ -134,86 +129,84 @@ static void constructionEventHandler(color_ostream &out, void *ptr) {
 
 void doInfiniteSky(color_ostream& out, int32_t howMany) {
     CoreSuspender suspend;
-    int32_t x_count_block = world->map.x_count_block;
-    int32_t y_count_block = world->map.y_count_block;
     int32_t z_count_block = world->map.z_count_block;
     df::map_block ****block_index = world->map.block_index;
 
-    for (int32_t a = 0; a < x_count_block; a++) {
-        for (int32_t b = 0; b < y_count_block; b++) {
-            // Allocate a new block column and copy over data from the old
-            df::map_block **blockColumn =
-                new df::map_block *[z_count_block + howMany];
-            memcpy(blockColumn, block_index[a][b],
-                   z_count_block * sizeof(df::map_block *));
-            delete[] block_index[a][b];
-            block_index[a][b] = blockColumn;
+    cuboid last_air_layer(
+        0, 0, world->map.z_count_block - 1,
+        world->map.x_count_block - 1, world->map.y_count_block - 1, world->map.z_count_block - 1);
 
-            df::map_block *last_air_block = blockColumn[z_count_block - 1];
-            for (int32_t count = 0; count < howMany; count++) {
-                df::map_block *air_block = new df::map_block();
-                std::fill(&air_block->tiletype[0][0],
-                          &air_block->tiletype[0][0] + (16 * 16),
-                          df::tiletype::OpenSpace);
+    last_air_layer.forCoord([&](df::coord bpos) {
+        // Allocate a new block column and copy over data from the old
+        df::map_block **blockColumn =
+            new df::map_block *[z_count_block + howMany];
+        memcpy(blockColumn, block_index[bpos.x][bpos.y],
+               z_count_block * sizeof(df::map_block *));
+        delete[] block_index[bpos.x][bpos.y];
+        block_index[bpos.x][bpos.y] = blockColumn;
 
-                // Set block positions properly (based on prior air layer)
-                air_block->map_pos = last_air_block->map_pos;
-                air_block->map_pos.z += count + 1;
-                air_block->region_pos = last_air_block->region_pos;
+        df::map_block *last_air_block = blockColumn[bpos.z];
+        for (int32_t count = 0; count < howMany; count++) {
+            df::map_block *air_block = new df::map_block();
+            std::fill(&air_block->tiletype[0][0],
+                      &air_block->tiletype[0][0] + (16 * 16),
+                      df::tiletype::OpenSpace);
 
-                // Copy other potentially important metadata from prior air
-                // layer
-                std::memcpy(air_block->lighting, last_air_block->lighting,
-                            sizeof(air_block->lighting));
-                std::memcpy(air_block->temperature_1,
-                            last_air_block->temperature_1,
-                            sizeof(air_block->temperature_1));
-                std::memcpy(air_block->temperature_2,
-                            last_air_block->temperature_2,
-                            sizeof(air_block->temperature_2));
-                std::memcpy(air_block->region_offset,
-                            last_air_block->region_offset,
-                            sizeof(air_block->region_offset));
+            // Set block positions properly (based on prior air layer)
+            air_block->map_pos = last_air_block->map_pos;
+            air_block->map_pos.z += count + 1;
+            air_block->region_pos = last_air_block->region_pos;
 
-                // Create tile designations to inform lighting and
-                // outside markers
-                df::tile_designation designation{};
-                designation.bits.light = true;
-                designation.bits.outside = true;
-                std::fill(&air_block->designation[0][0],
-                          &air_block->designation[0][0] + (16 * 16),
-                          designation);
+            // Copy other potentially important metadata from prior air
+            // layer
+            std::memcpy(air_block->lighting, last_air_block->lighting,
+                        sizeof(air_block->lighting));
+            std::memcpy(air_block->temperature_1, last_air_block->temperature_1,
+                        sizeof(air_block->temperature_1));
+            std::memcpy(air_block->temperature_2, last_air_block->temperature_2,
+                        sizeof(air_block->temperature_2));
+            std::memcpy(air_block->region_offset, last_air_block->region_offset,
+                        sizeof(air_block->region_offset));
 
-                blockColumn[z_count_block + count] = air_block;
-                world->map.map_blocks.push_back(air_block);
+            // Create tile designations to inform lighting and
+            // outside markers
+            df::tile_designation designation{};
+            designation.bits.light = true;
+            designation.bits.outside = true;
+            std::fill(&air_block->designation[0][0],
+                      &air_block->designation[0][0] + (16 * 16), designation);
 
-                // deal with map_block_column stuff even though it'd probably be
-                // fine
-                df::map_block_column *column = world->map.column_index[a][b];
-                if (!column) {
-                    DEBUG(cycle, out)
-                        .print("%s, line %d: column is null (%d, %d).\n",
-                               __FILE__, __LINE__, a, b);
-                    continue;
-                }
-                df::map_block_column::T_unmined_glyphs *glyphs =
-                    new df::map_block_column::T_unmined_glyphs;
-                glyphs->x[0] = 0;
-                glyphs->x[1] = 1;
-                glyphs->x[2] = 2;
-                glyphs->x[3] = 3;
-                glyphs->y[0] = 0;
-                glyphs->y[1] = 0;
-                glyphs->y[2] = 0;
-                glyphs->y[3] = 0;
-                glyphs->tile[0] = 'e';
-                glyphs->tile[1] = 'x';
-                glyphs->tile[2] = 'p';
-                glyphs->tile[3] = '^';
-                column->unmined_glyphs.push_back(glyphs);
+            blockColumn[z_count_block + count] = air_block;
+            world->map.map_blocks.push_back(air_block);
+
+            // deal with map_block_column stuff even though it'd probably be
+            // fine
+            df::map_block_column *column =
+                world->map.column_index[bpos.x][bpos.y];
+            if (!column) {
+                DEBUG(cycle, out)
+                    .print("%s, line %d: column is null (%d, %d).\n", __FILE__,
+                           __LINE__, bpos.x, bpos.y);
+                continue;
             }
+            df::map_block_column::T_unmined_glyphs *glyphs =
+                new df::map_block_column::T_unmined_glyphs;
+            glyphs->x[0] = 0;
+            glyphs->x[1] = 1;
+            glyphs->x[2] = 2;
+            glyphs->x[3] = 3;
+            glyphs->y[0] = 0;
+            glyphs->y[1] = 0;
+            glyphs->y[2] = 0;
+            glyphs->y[3] = 0;
+            glyphs->tile[0] = 'e';
+            glyphs->tile[1] = 'x';
+            glyphs->tile[2] = 'p';
+            glyphs->tile[3] = '^';
+            column->unmined_glyphs.push_back(glyphs);
         }
-    }
+        return true;
+    });
 
     // Update global z level flags
     df::z_level_flags *flags = new df::z_level_flags[z_count_block + howMany];
@@ -258,7 +251,7 @@ command_result infiniteSky(color_ostream &out,
         opts.help)
         return CR_WRONG_USAGE;
 
-    if (opts.n != 0) {
+    if (opts.n > 0) {
         out.print("Infinite-sky: creating %d new z-level%s of sky.\n", opts.n,
                   opts.n == 1 ? "" : "s");
         doInfiniteSky(out, opts.n);

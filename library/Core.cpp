@@ -1663,6 +1663,9 @@ bool Core::InitMainThread() {
 
         for (auto& gte : *df::global::global_table)
         {
+            // this will exit the loop when the terminator is hit, in the event the global table size in structures is incorrect
+            if (gte.address == nullptr || gte.name == nullptr)
+                break;
             std::string name{ gte.name };
             if (sizechecks.contains(name) && gte.size != sizechecks.at(name))
             {

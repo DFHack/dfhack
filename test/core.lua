@@ -42,19 +42,11 @@ end
 -- validates that the size in df.globals.xml is correct
 function test.global_table_size()
     local elem_size = df.global_table_entry:sizeof()
+    local actual_arr_size = 0
+    while df._displace(df.global.global_table[0], actual_arr_size, elem_size).address do
+        actual_arr_size = actual_arr_size + 1
+    end
     local declared_arr_size = df.global.global_table:sizeof() // elem_size
-    for i=0,declared_arr_size-1 do
-        expect.true_(df._displace(df.global.global_table[0], i, elem_size).address,
-            'nil address found in middle of global_table at idx ' .. i)
-    end
-    if df._displace(df.global.global_table[0], declared_arr_size, elem_size).address then
-        local idx_of_nil
-        for i=declared_arr_size+1,declared_arr_size*2 do
-            if not df._displace(df.global.global_table[0], i, elem_size).address then
-                idx_of_nil = i
-                break
-            end
-        end
-        expect.fail('nil *not* found at end of declared global-table (idx ' .. declared_arr_size .. '); table size should be: ' .. idx_of_nil)
-    end
+    expect.eq(declared_arr_size, actual_arr_size,
+        ('global_table size mismatch: expected: %d, actual: %d'):format(declared_arr_size, actual_arr_size))
 end

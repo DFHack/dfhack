@@ -1680,7 +1680,6 @@ bool Core::InitMainThread() {
         }
     }
 
-
     perf_counters.reset();
 
     return true;

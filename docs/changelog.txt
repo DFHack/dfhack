@@ -52,6 +52,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `infinite-sky`: (reinstated, renamed from ``infiniteSky``) tool for automatically creating new z-levels of sky to build in
 - `forceequip`: (reinstated) Forcibly move items into a unit's inventory
 
 ## New Features

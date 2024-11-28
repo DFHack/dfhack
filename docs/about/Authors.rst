@@ -147,6 +147,7 @@ Myk Taylor              myk002
 Najeeb Al-Shabibi       master-spike
 napagokc                napagokc
 Neil Little             nmlittle
+Nicholas McDaniel       NicksWorld
 Nick Rart               nickrart                comestible
 Nicolas Ayala           nicolasayala
 Nik Nyby                nikolas

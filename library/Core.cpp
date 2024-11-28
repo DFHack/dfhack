@@ -1645,6 +1645,41 @@ bool Core::InitMainThread() {
     // Init global object pointers
     df::global::InitGlobals();
 
+    // check key game structure sizes against the global table
+    // this check is (silently) skipped if either `game` or `global_table` is not defined
+    // to faciliate the linux symbol discovery process (which runs without any symbols)
+    // or if --skip-size-check is discovered on the command line
+
+    if (df::global::global_table && df::global::game &&
+        df::global::game->command_line.original.find("--skip-size-check") == std::string::npos)
+    {
+        std::stringstream msg;
+        bool gt_error = false;
+        static const std::map<const std::string, const size_t> sizechecks{
+            { "world", sizeof(df::world) },
+            { "game", sizeof(df::gamest) },
+            { "plotinfo", sizeof(df::plotinfost) },
+        };
+
+        for (auto& gte : *df::global::global_table)
+        {
+            std::string name{ gte.name };
+            if (sizechecks.contains(name) && gte.size != sizechecks.at(name))
+            {
+                msg << "Global '" << name << "' size mismatch: is " << gte.size << ", expected " << sizechecks.at(name) << "\n";
+                gt_error = true;
+            }
+        }
+
+        if (gt_error)
+        {
+            msg << "DFHack cannot safely run under these conditions.\n";
+            fatal(msg.str(), "DFHack fatal error");
+            errorstate = true;
+            return false;
+        }
+    }
+
     perf_counters.reset();
 
     return true;

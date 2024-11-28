@@ -53,7 +53,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "df/renderer_2d.h"
 #include <VTableInterpose.h>
 
-#include "Console.h"
+#include "SDLConsoleDriver.h"
 #include "SDLConsole.h"
 
 using namespace DFHack;
@@ -232,14 +232,14 @@ namespace DFHack
     };
 }
 
-Console::Console()
+SDLConsoleDriver::SDLConsoleDriver()
 {
     d = new Private();
     inited.store(false);
     // we can't create the mutex at this time. the SDL functions aren't hooked yet.
     wlock = new std::recursive_mutex();
 }
-Console::~Console()
+SDLConsoleDriver::~SDLConsoleDriver()
 {
     assert(!inited);
     if(wlock)
@@ -252,7 +252,7 @@ Console::~Console()
  * FIXME: Two-stage init because we need to initialize on
  * the main thread, but interpose isn't available until later.
  */
-bool Console::init(bool dont_redirect)
+bool SDLConsoleDriver::init(bool dont_redirect)
 {
     static int init_stage = 0;
 
@@ -276,7 +276,7 @@ bool Console::init(bool dont_redirect)
     return inited.load();
 }
 
-bool Console::shutdown(void)
+bool SDLConsoleDriver::shutdown(void)
 {
     if (!inited.load()) return true;
     d->con.shutdown();
@@ -288,22 +288,22 @@ bool Console::shutdown(void)
  * This should be for guarding against interleaving prints to the console.
  * The begin_batch() and end_batch() pair does the job on its own.
  */
-void Console::begin_batch()
+void SDLConsoleDriver::begin_batch()
 {
     wlock->lock();
 }
 
-void Console::end_batch()
+void SDLConsoleDriver::end_batch()
 {
     wlock->unlock();
 }
 
 /* Don't think we need this? */
-void Console::flush_proxy()
+void SDLConsoleDriver::flush_proxy()
 {
 }
 
-void Console::add_text(color_value color, const std::string &text)
+void SDLConsoleDriver::add_text(color_value color, const std::string &text)
 {
     // I don't think this lock is needed, unless to prevent
     // interleaving prints. But we have batch for that?
@@ -314,33 +314,33 @@ void Console::add_text(color_value color, const std::string &text)
         fwrite(text.data(), 1, text.size(), stderr);
 }
 
-int Console::get_columns(void)
+int SDLConsoleDriver::get_columns(void)
 {
     // returns Console::FAILURE if inactive
     return d->con.get_columns();
 }
 
-int Console::get_rows(void)
+int SDLConsoleDriver::get_rows(void)
 {
     // returns Console::FAILURE if inactive
     return d->con.get_rows();
 }
 
-void Console::clear()
+void SDLConsoleDriver::clear()
 {
     d->con.clear();
 }
 /* XXX: Not implemented */
-void Console::gotoxy(int x, int y)
+void SDLConsoleDriver::gotoxy(int x, int y)
 {
 }
 /* XXX: Not implemented */
-void Console::cursor(bool enable)
+void SDLConsoleDriver::cursor(bool enable)
 {
     d->cursor(enable);
 }
 
-int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
+int SDLConsoleDriver::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
     // Tell fiothread we are done.
     if(!inited.load())
@@ -349,18 +349,18 @@ int Console::lineedit(const std::string & prompt, std::string & output, CommandH
     return d->lineedit(prompt,output,ch);
 }
 
-void Console::msleep (unsigned int msec)
+void SDLConsoleDriver::msleep (unsigned int msec)
 {
     std::this_thread::sleep_for(std::chrono::milliseconds(msec));
 }
 
-bool Console::hide()
+bool SDLConsoleDriver::hide()
 {
     d->con.hide_window();
     return true;
 }
 
-bool Console::show()
+bool SDLConsoleDriver::show()
 {
     d->con.show_window();
     return true;
@@ -373,7 +373,7 @@ bool Console::show()
  * NOTE: We do not absolutely have to clean up here. It can be done at exit.
  * This is for the ability to shutdown and restart the console at run time.
  */
-bool Console::sdl_event_hook(SDL_Event &e)
+bool SDLConsoleDriver::sdl_event_hook(SDL_Event &e)
 {
     auto& con = d->con;
     if (con.state.is_active()) {
@@ -388,7 +388,7 @@ bool Console::sdl_event_hook(SDL_Event &e)
  * Cleanup must be done from the main thread.
  * NOTE: may be able to do this in the destructor instead.
  */
-void Console::cleanup()
+void SDLConsoleDriver::cleanup()
 {
     INTERPOSE_HOOK(con_render_hook,render).apply(false);
     // destroy() will change console's state to inactive

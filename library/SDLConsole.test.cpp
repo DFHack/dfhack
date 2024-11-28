@@ -22,7 +22,7 @@ TEST(SDLConsole, skip_wspace) {
 
     tstr = U"";
     ret = text::skip_wspace(tstr, 1);
-    ASSERT_EQ(ret, 0); 
+    ASSERT_EQ(ret, 0);
 
     tstr = U"foo";
     ret = text::skip_wspace(tstr, -1);
@@ -120,7 +120,7 @@ TEST(SDLConsole, find_prev_word) {
 TEST(SDLConsole, find_next_word) {
     std::u32string tstr;
     size_t ret;
-    
+
     tstr = U"foo bar baz";
     ret = text::find_next_word(tstr, 7);
     ASSERT_EQ(ret, 8);
@@ -176,7 +176,7 @@ TEST(SDLConsole, find_text_range) {
     std::u32string tstr;
     std::pair<size_t, size_t> ret;
     std::pair<size_t, size_t> exp;
-    
+
     tstr = U"foo";
     ret = text::find_text_range(tstr, 0);
     exp.first = 0;

@@ -119,7 +119,7 @@ set(MAIN_SOURCES
 file(GLOB_RECURSE TEST_SOURCES
     LIST_DIRECTORIES false
     *test.cpp)
-list(APPEND TEST_SOURCES SDLConsole_impl.cpp)
+list(APPEND TEST_SOURCES Console-posix.cpp SDLConsole_impl.cpp)
 dfhack_test(dfhack-test "${TEST_SOURCES}")
 
 if (NOT DFHACK_SDL_CONSOLE)
@@ -135,7 +135,8 @@ else()
     else()
         set(DFCLIENT_CONSOLE_SOURCES Console-posix.cpp)
     endif()
-    set(CONSOLE_SOURCES Console-sdl.cpp SDLConsole_impl.cpp)
+    set(CONSOLE_SOURCES ${DFCLIENT_CONSOLE_SOURCES})
+    list(APPEND CONSOLE_SOURCES Console-sdl.cpp SDLConsole_impl.cpp)
 endif()
 
 set(MAIN_SOURCES_WINDOWS
@@ -386,6 +387,8 @@ add_dependencies(dfhack generate_proto_core)
 add_dependencies(dfhack generate_headers)
 
 add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS} ${DFCLIENT_CONSOLE_SOURCES})
+# SDLConsole requires to be run with df
+target_compile_definitions(dfhack-client PUBLIC DISABLE_SDL_CONSOLE)
 add_dependencies(dfhack-client dfhack)
 
 add_executable(dfhack-run dfhack-run.cpp)
@@ -432,10 +435,6 @@ set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static)
 target_link_libraries(dfhack-run dfhack-client)
-
-# FIXME: to remove
-#target_link_libraries(dfhack SDL2_image)
-#target_link_libraries(dfhack-client SDL2_image)
 
 if(APPLE)
     add_custom_command(TARGET dfhack-run COMMAND ${dfhack_SOURCE_DIR}/package/darwin/fix-libs.sh WORKING_DIRECTORY ../ COMMENT "Fixing library dependencies...")

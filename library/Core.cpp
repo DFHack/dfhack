@@ -1477,6 +1477,7 @@ Core::~Core()
 }
 
 Core::Core() :
+    con(getConsole()),
     d(std::make_unique<Private>()),
     script_path_mutex{},
     HotkeyMutex{},
@@ -1514,6 +1515,7 @@ void Core::fatal (std::string output, const char * title)
     if (output[output.size() - 1] != '\n')
         out << '\n';
     out << "DFHack will now deactivate.\n";
+
     if(con.isInited())
     {
         con.printerr("%s", out.str().c_str());

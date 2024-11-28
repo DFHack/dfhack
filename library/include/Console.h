@@ -25,14 +25,16 @@ distribution.
 #pragma once
 #include "Export.h"
 #include "ColorText.h"
-#include <atomic>
 #include <deque>
 #include <fstream>
 #include <assert.h>
 #include <iostream>
-#include <mutex>
 #include <string>
 #include <vector>
+#include <algorithm>
+#include <functional>
+#include <map>
+#include <memory>
 
 union SDL_Event;
 
@@ -122,38 +124,67 @@ namespace  DFHack
         std::deque <std::string> history;
     };
 
-    class Private;
     class DFHACK_EXPORT Console : public color_ostream
     {
     protected:
-        virtual void begin_batch();
-        virtual void add_text(color_value color, const std::string &text);
-        virtual void end_batch();
+        using FactoryFunc = std::function<std::unique_ptr<Console>()>;
+        struct RegistryEntry {
+            FactoryFunc func;
+            int priority;
+        };
 
-        virtual void flush_proxy();
+        static void registerConsole(const std::string &name, FactoryFunc func, int priority) {
+            getRegistry().emplace(name, RegistryEntry{func, priority});
+        }
+    private:
+        static std::map<std::string, RegistryEntry> &getRegistry() {
+            static std::map<std::string, RegistryEntry> registry;
+            return registry;
+        }
+
+        static auto getAvailableConsoles() {
+            std::vector<std::pair<std::string, RegistryEntry>> result;
+            auto& registry = getRegistry();
+
+            for (const auto &entry : registry) {
+                result.emplace_back(entry.first, entry.second);
+            }
+
+            std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) {
+                return a.second.priority > b.second.priority;
+            });
+
+            return result;
+        }
+
+    protected:
+        virtual void begin_batch() {};
+        virtual void add_text(color_value color, const std::string &text) {};
+        virtual void end_batch() {};
+        virtual void flush_proxy() {};
 
     public:
         ///ctor, NOT thread-safe
-        Console();
+        Console() = default;
         ///dtor, NOT thread-safe
-        ~Console();
+        virtual ~Console() = default;
         /// initialize the console. NOT thread-safe
-        bool init( bool dont_redirect );
+        virtual bool init( bool dont_redirect ) { return false; };
         /// shutdown the console. NOT thread-safe
-        bool shutdown( void );
+        virtual bool shutdown( void ) { return true; };
 
         /// Clear the console, along with its scrollback
-        void clear();
+        virtual void clear() {};
         /// Position cursor at x,y. 1,1 = top left corner
-        void gotoxy(int x, int y);
+        virtual void gotoxy(int x, int y) {};
         /// Enable or disable the caret/cursor
-        void cursor(bool enable = true);
+        virtual void cursor(bool enable = true) {};
         /// Waits given number of milliseconds before continuing.
-        void msleep(unsigned int msec);
+        virtual void msleep(unsigned int msec) {};
         /// get the current number of columns
-        int  get_columns(void);
+        virtual int  get_columns(void) { return FAILURE; };
         /// get the current number of rows
-        int  get_rows(void);
+        virtual int  get_rows(void) { return FAILURE; };
         /// beep. maybe?
         //void beep (void);
         //! \defgroup lineedit_return_values Possible errors from lineedit
@@ -163,19 +194,23 @@ namespace  DFHack
         static constexpr int RETRY = -3;
         //! \}
         /// A simple line edit (raw mode)
-        int lineedit(const std::string& prompt, std::string& output, CommandHistory & history );
-        bool isInited (void) { return inited; };
+        virtual int lineedit(const std::string& prompt, std::string& output, CommandHistory & history ) { return SHUTDOWN; };
+        virtual bool isInited (void) { return false; };
 
         bool is_console() { return true; }
 
-        bool hide();
-        bool show();
+        virtual bool hide() { return false; };
+        virtual bool show() { return false; };
 
-        bool sdl_event_hook(SDL_Event& event);
-        void cleanup();
-    private:
-        Private * d;
-        std::recursive_mutex * wlock;
-        std::atomic<bool> inited;
+        virtual bool sdl_event_hook(SDL_Event& event) { return false; };
+        virtual void cleanup() {};
+
+        static std::unique_ptr<Console> makeConsole() {
+            auto availableConsoles = getAvailableConsoles();
+            if (!availableConsoles.empty()) {
+                return availableConsoles[0].second.func();
+            }
+            return std::make_unique<Console>();
+        }
     };
 }

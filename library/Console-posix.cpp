@@ -75,7 +75,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         _res; })
 #endif
 
-#include "Console.h"
+#include "PosixConsole.h"
 #include "Hooks.h"
 using namespace DFHack;
 
@@ -833,14 +833,14 @@ namespace DFHack
     };
 }
 
-Console::Console()
+PosixConsole::PosixConsole()
 {
-    d = 0;
+    d = nullptr;
     inited = false;
     // we can't create the mutex at this time. the SDL functions aren't hooked yet.
     wlock = new std::recursive_mutex();
 }
-Console::~Console()
+PosixConsole::~PosixConsole()
 {
     assert(!inited);
     if(wlock)
@@ -849,7 +849,7 @@ Console::~Console()
         delete d;
 }
 
-bool Console::init(bool dont_redirect)
+bool PosixConsole::init(bool dont_redirect)
 {
     d = new Private();
     // make our own weird streams so our IO isn't redirected
@@ -882,7 +882,12 @@ bool Console::init(bool dont_redirect)
     return true;
 }
 
-bool Console::shutdown(void)
+bool PosixConsole::is_supported()
+{
+    return !isUnsupportedTerm() && isatty(STDIN_FILENO);
+}
+
+bool PosixConsole::shutdown(void)
 {
     if(!d)
         return true;
@@ -894,7 +899,7 @@ bool Console::shutdown(void)
     return true;
 }
 
-void Console::begin_batch()
+void PosixConsole::begin_batch()
 {
     //color_ostream::begin_batch();
 
@@ -904,7 +909,7 @@ void Console::begin_batch()
         d->begin_batch();
 }
 
-void Console::end_batch()
+void PosixConsole::end_batch()
 {
     if (inited)
         d->end_batch();
@@ -912,14 +917,14 @@ void Console::end_batch()
     wlock->unlock();
 }
 
-void Console::flush_proxy()
+void PosixConsole::flush_proxy()
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
         d->flush();
 }
 
-void Console::add_text(color_value color, const std::string &text)
+void PosixConsole::add_text(color_value color, const std::string &text)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
@@ -928,7 +933,7 @@ void Console::add_text(color_value color, const std::string &text)
         fwrite(text.data(), 1, text.size(), stderr);
 }
 
-int Console::get_columns(void)
+int PosixConsole::get_columns(void)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = Console::FAILURE;
@@ -937,7 +942,7 @@ int Console::get_columns(void)
     return ret;
 }
 
-int Console::get_rows(void)
+int PosixConsole::get_rows(void)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = Console::FAILURE;
@@ -946,28 +951,28 @@ int Console::get_rows(void)
     return ret;
 }
 
-void Console::clear()
+void PosixConsole::clear()
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->clear();
 }
 
-void Console::gotoxy(int x, int y)
+void PosixConsole::gotoxy(int x, int y)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->gotoxy(x,y);
 }
 
-void Console::cursor(bool enable)
+void PosixConsole::cursor(bool enable)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->cursor(enable);
 }
 
-int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
+int PosixConsole::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = Console::SHUTDOWN;
@@ -984,19 +989,19 @@ int Console::lineedit(const std::string & prompt, std::string & output, CommandH
     return ret;
 }
 
-void Console::msleep (unsigned int msec)
+void PosixConsole::msleep (unsigned int msec)
 {
     if (msec > 1000) sleep(msec/1000000);
     usleep((msec % 1000000) * 1000);
 }
 
-bool Console::hide()
+bool PosixConsole::hide()
 {
     //Warmist: don't know if it's possible...
     return false;
 }
 
-bool Console::show()
+bool PosixConsole::show()
 {
     //Warmist: don't know if it's possible...
     return false;

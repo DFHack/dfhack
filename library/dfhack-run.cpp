@@ -59,7 +59,8 @@ using namespace dfproto;
 
 int main (int argc, char *argv[])
 {
-    Console out;
+    auto conPtr = Console::makeConsole();
+    Console& out = *conPtr;
 
     if (argc <= 1)
     {

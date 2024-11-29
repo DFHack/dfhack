@@ -52,8 +52,8 @@ Template for new versions:
 # Future
 
 ## New Tools
-- `infinite-sky`: (reinstated, renamed from ``infiniteSky``) tool for automatically creating new z-levels of sky to build in
-- `forceequip`: (reinstated) Forcibly move items into a unit's inventory
+- `infinite-sky`: (reinstated, renamed from ``infiniteSky``) automatically create new z-levels of sky to build in
+- `forceequip`: (reinstated) forcibly move items into a unit's inventory
 
 ## New Features
 - `tweak`: ``realistic-melting``: change melting return for inorganic armor parts, shields, weapons, trap components and tools to stop smelters from creating metal, bring melt return for adamantine in line with other metals to ~95% of forging cost. wear reduces melt return by 10% per level
@@ -63,11 +63,10 @@ Template for new versions:
 - `autobutcher`: don't run a scanning and marking cycle on the first tick of a fortress to allow for all custom configuration to be set first
 - `nestboxes`: don't consider eggs to be infertile just because the mother has left the nest; eggs can still hatch in this situation
 - `timestream`: adjust the incubation counter on fertile eggs so they hatch at the expected time
-- `timestream`: fix potential crash in birthday tracking
 - `logistics`: don't ignore rotten items when applying stockpile logistics operations (e.g. autodump, autoclaim, etc.)
 
 ## Misc Improvements
-- DFHack startup now verifies that its idea of the size of certain DF global objects are the same as what DF says they are, and refuses to start if there is a mismatch
+- DFHack now verifies that critical DF data structures have known sizes and refuses to start if there is a mismatch
 - DFHack text edit fields now delete the character at the cursor when you hit the Delete key
 - DFHack text edit fields now move the cursor by one word left or right with Ctrl-Left and Ctrl-Right
 - DFHack text edit fields now move the cursor to the beginning or end of the line with Home and End
@@ -82,12 +81,10 @@ Template for new versions:
 - The error message that comes up if there is a version mismatch between DF and the installed DFHack now informs you which DF versions are supported by the installed version of DFHack
 
 ## API
-
 - ``DFHack::Units``: new function ``setPathGoal``
 - ``Units::setAutomaticProfessions``: bay12-provided entry point to assign labors based on work details
 
 ## Lua
-
 - ``dfhack.units``: new function ``setPathGoal``
 - ``widgets.TabBar``: updated to allow for horizontal scrolling of tabs when there are too many to fit in the available space
 

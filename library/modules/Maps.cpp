@@ -63,6 +63,8 @@ distribution.
 #include "df/world_underground_region.h"
 #include "df/z_level_flags.h"
 
+#include <array>
+#include <utility>
 #include <string>
 #include <vector>
 #include <map>

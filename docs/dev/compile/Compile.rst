@@ -303,7 +303,7 @@ Step 1: prepare a build container
 On your Linux host, install and run the docker daemon and then run these commands::
 
     xhost +local:root
-    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --user buildmaster --name dfhack-win ghcr.io/dfhack/build-env:msvc
+    docker run -it --env="DISPLAY" --env="QT_X11_NO_MITSHM=1" --volume=/tmp/.X11-unix:/tmp/.X11-unix --user buildmaster --name dfhack-win ghcr.io/dfhack/build-env:master
 
 The ``xhost`` command and ``--env`` parameters are there so you can eventually
 run Dwarf Fortress from the container and have it display on your host.

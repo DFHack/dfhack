@@ -214,6 +214,7 @@ static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df
         return false;
 
     auto shape = tileShape(*tt);
+
     if (shape == df::tiletype_shape::STAIR_UP || shape == df::tiletype_shape::STAIR_UPDOWN)
         return false;
 
@@ -272,7 +273,7 @@ static void check_wagon_tile(FloodCtx & ctx, const df::coord & pos) {
     ctx.seen.emplace(pos);
 
     if (ctx.entry_tiles.contains(pos)) {
-        ctx.wagon_path.emplace(pos);
+        ctx.wagon_path.emplace(pos); // Is this needed?
         ctx.search_edge.emplace(pos);
         return;
     }
@@ -323,7 +324,8 @@ static bool wagon_flood(color_ostream &out, unordered_set<df::coord> * wagon_pat
         TRACE(log,out).print("checking tile: (%d, %d, %d); pathability group: %d\n", pos.x, pos.y, pos.z,
             Maps::getWalkableGroup(pos));
 
-        if (entry_tiles.contains(pos)) {
+        // Ensure our wagon flood end points lands on an edge tile.
+        if ((pos.x == 0 || pos.y == 0) && entry_tiles.contains(pos)) {
             found = true;
             if (!wagon_path)
                 break;

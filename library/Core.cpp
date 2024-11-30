@@ -453,13 +453,13 @@ void get_commands(color_ostream &con, std::vector<std::string> &commands) {
         con.printerr("Failed Lua call to helpdb.get_commands.\n");
     }
 
-    Lua::GetVector(L, commands);
+    Lua::GetVector(L, commands, top + 1);
 }
 
 static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
 {
     std::vector<std::string> commands, possible;
-
+    get_commands(con, commands);
     for (auto &command : commands)
         if (command.substr(0, first.size()) == first)
             possible.push_back(command);

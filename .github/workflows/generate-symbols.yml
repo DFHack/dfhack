@@ -316,6 +316,10 @@ jobs:
         ref: ${{ inputs.structures_ref }}
         token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
         path: xml
+    - name: Download DFHack
+      uses: actions/download-artifact@v4
+      with:
+        name: dfhack-symbols-windows64-build
     - name: Setup steamcmd
       id: steamcmd
       uses: CyberAndrii/setup-steamcmd@v1
@@ -346,9 +350,10 @@ jobs:
           +login $STEAM_USERNAME \
           "+app_update 975370 $BETA_PARAMS validate" \
           +quit
+        tar xjf ../dfhack-symbols-windows64-build.tar.bz2 -C DF_steam
         cp xml/symbols.xml DF_steam/hack
         cd DF_steam
-        ./Dwarf Fortress.exe &
+        "Dwarf Fortress.exe" &
         while ! dfhack-run.exe lua 'print(scr)' | fgrep 'viewscreen_titlest' 2>/dev/null; do
           echo "waiting for DF to start"
           sleep 0.5

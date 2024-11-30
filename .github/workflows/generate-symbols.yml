@@ -145,7 +145,7 @@ jobs:
             echo "waiting for DF to start"
             sleep 0.5
           done
-          df_ver=`./dfhack-run lua 'print(dfhack.gui.getDFViewscreen(true).str_version)'`
+          df_ver=`./dfhack-run lua 'print(dfhack.gui.getDFViewscreen(true).str_version)' | ansifilter`
           echo "Found version string: '$df_ver'"
           sed -i "s/v0.50.0 linux64 STEAM/v0.$df_ver linux64 STEAM/" ../xml/symbols.xml
         fi
@@ -349,11 +349,11 @@ jobs:
         cp xml/symbols.xml DF_steam/hack
         cd DF_steam
         ./Dwarf Fortress.exe &
-        while ! ./dfhack-run.exe lua 'print(scr)' | fgrep 'viewscreen_titlest' 2>/dev/null; do
+        while ! dfhack-run.exe lua 'print(scr)' | fgrep 'viewscreen_titlest' 2>/dev/null; do
           echo "waiting for DF to start"
           sleep 0.5
         done
-        df_ver=`./dfhack-run.exe lua 'print(dfhack.gui.getDFViewscreen(true).str_version)'`
+        df_ver=`dfhack-run.exe lua 'print(dfhack.gui.getDFViewscreen(true).str_version)'`
         echo "Found version string: '$df_ver'"
         sed -i "s/v0.50.0 win64 STEAM/v0.$df_ver win64 STEAM/" ../xml/symbols.xml
     - name: Merge updates

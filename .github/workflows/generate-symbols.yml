@@ -146,7 +146,8 @@ jobs:
             sleep 0.5
           done
           df_ver=`./dfhack-run lua 'print(dfhack.gui.getDFViewscreen(true).str_version)'`
-          sed -i "s/v0.50.0 linux64 STEAM/v0.${df_ver} linux64 STEAM/" ../xml/symbols.xml
+          echo "Found version string: '$df_ver'"
+          sed -i "s/v0.50.0 linux64 STEAM/v0.$df_ver linux64 STEAM/" ../xml/symbols.xml
         fi
 
     # Itch
@@ -354,7 +355,8 @@ jobs:
           sleep 0.5
         done
         df_ver=`./dfhack-run.exe lua 'print(dfhack.gui.getDFViewscreen(true).str_version)'`
-        sed -i "s/v0.50.0 win64 STEAM/v0.${df_ver} win64 STEAM/" ../xml/symbols.xml
+        echo "Found version string: '$df_ver'"
+        sed -i "s/v0.50.0 win64 STEAM/v0.$df_ver win64 STEAM/" ../xml/symbols.xml
     - name: Merge updates
       shell: bash
       run: |

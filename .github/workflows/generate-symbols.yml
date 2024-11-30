@@ -398,4 +398,4 @@ jobs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: gh workflow run steam-deploy.yml -R DFHack/dfhack -r ${{ github.ref }} -f version=${{ env.DETECTED_DF_VER }} -f steam_branch=${{ inputs.steam_branch }}
+      run: echo gh workflow run steam-deploy.yml -R DFHack/dfhack -r ${{ github.ref }} -f version=${{ env.DETECTED_DF_VER }} -f steam_branch=${{ inputs.steam_branch }}

@@ -83,12 +83,18 @@ std::shared_ptr<const VersionInfo> VersionInfoFactory::getVersionInfoByPETimesta
 
 std::vector<std::shared_ptr<const VersionInfo>> VersionInfoFactory::getVersionInfosForCurOs() const {
     static const OSType expected = VersionInfo::getCurOS();
+    static const string zeroMd5 = "00000000000000000000000000000000";
 
     std::vector<std::shared_ptr<const VersionInfo>> ret;
 
     for (const auto& version : versions) {
-        if (version->getOS() == expected && version->getVersion().find("LOCAL") == std::string::npos)
+        if (version->getOS() == expected
+            && version->getVersion().find("LOCAL") == string::npos
+            && !version->hasPE(0)
+            && !version->hasMD5(zeroMd5))
+        {
             ret.emplace_back(version);
+        }
     }
 
     return ret;

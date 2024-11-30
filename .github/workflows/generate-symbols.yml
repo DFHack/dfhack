@@ -399,8 +399,9 @@ jobs:
         cd library/xml
         git checkout ${{ inputs.structures_ref }}
         git pull
-        echo DETECTED_DF_VER=`git diff symbols.xml | grep -E "^[+][^']+'v0[.]" | head -n1 | sed -r "s/.*name='v0.([^ ]+) .*/\1/"` >>$GITHUB_ENV
-
+        df_ver=`grep -E 'symbol-table.*STEAM' symbols.xml | head -n1 | sed -r "s/.*name='v0.([^ ]+) .*/\1/"`
+        echo "using DF version: $df_ver"
+        echo "DETECTED_DF_VER=$df_ver" >>$GITHUB_ENV
     - name: Commit ref update
       uses: stefanzweifel/git-auto-commit-action@v5
       with:

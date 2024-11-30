@@ -6,6 +6,7 @@
 #include <xlsxio_read.h>
 
 #include "DataFuncs.h"
+#include "Error.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 #include "PluginStatics.h"

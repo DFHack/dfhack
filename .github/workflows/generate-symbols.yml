@@ -148,6 +148,7 @@ jobs:
           df_ver=`./dfhack-run lua 'print(dfhack.gui.getDFViewscreen(true).str_version)' | ansifilter`
           echo "Found version string: '$df_ver'"
           sed -i "s/v0.50.0 linux64 STEAM/v0.$df_ver linux64 STEAM/" ../xml/symbols.xml
+          ./dfhack-run die
         fi
 
     # Itch
@@ -350,7 +351,11 @@ jobs:
           +login $STEAM_USERNAME \
           "+app_update 975370 $BETA_PARAMS validate" \
           +quit
+<<<<<<< HEAD
         tar xjf ../dfhack-symbols-windows64-build.tar.bz2 -C DF_steam
+=======
+        tar xjf dfhack-symbols-windows64-build.tar.bz2 -C DF_steam
+>>>>>>> develop
         cp xml/symbols.xml DF_steam/hack
         cd DF_steam
         "Dwarf Fortress.exe" &
@@ -361,6 +366,7 @@ jobs:
         df_ver=`dfhack-run.exe lua 'print(dfhack.gui.getDFViewscreen(true).str_version)'`
         echo "Found version string: '$df_ver'"
         sed -i "s/v0.50.0 win64 STEAM/v0.$df_ver win64 STEAM/" ../xml/symbols.xml
+        dfhack-run.exe die
     - name: Merge updates
       shell: bash
       run: |

@@ -82,4 +82,4 @@ jobs:
       if: env.TIMESTAMP
       with:
         path: state
-        key: watchstate-${{ matrix.version }}-${{ env.TIMESTAMP }}
+        key: watchstate-${{ matrix.df_steam_branch }}-${{ env.TIMESTAMP }}

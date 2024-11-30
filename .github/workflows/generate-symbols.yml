@@ -351,11 +351,7 @@ jobs:
           +login $STEAM_USERNAME \
           "+app_update 975370 $BETA_PARAMS validate" \
           +quit
-<<<<<<< HEAD
-        tar xjf ../dfhack-symbols-windows64-build.tar.bz2 -C DF_steam
-=======
         tar xjf dfhack-symbols-windows64-build.tar.bz2 -C DF_steam
->>>>>>> develop
         cp xml/symbols.xml DF_steam/hack
         cd DF_steam
         "Dwarf Fortress.exe" &

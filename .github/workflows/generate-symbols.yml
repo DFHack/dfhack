@@ -134,6 +134,11 @@ jobs:
         tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_steam
         xml/symbols_gen_linux.sh ${{ inputs.version == 'auto' && '50.0' || inputs.version }} STEAM DF_steam
         if [ "${{ inputs.version }}" = "auto" ]; then
+          while pgrep dwarfort; do
+            echo "waiting for DF to exit"
+            sleep 0.5
+          done
+          cp xml/symbols.xml DF_steam/hack
           cd DF_steam
           DFHACK_DISABLE_CONSOLE=1 ./dfhack &
           while ! ./dfhack-run lua 'print(scr)' | fgrep 'viewscreen_titlest' 2>/dev/null; do
@@ -341,6 +346,7 @@ jobs:
           +login $STEAM_USERNAME \
           "+app_update 975370 $BETA_PARAMS validate" \
           +quit
+        cp xml/symbols.xml DF_steam/hack
         cd DF_steam
         ./Dwarf Fortress.exe &
         while ! ./dfhack-run.exe lua 'print(scr)' | fgrep 'viewscreen_titlest' 2>/dev/null; do
@@ -398,4 +404,4 @@ jobs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: echo gh workflow run steam-deploy.yml -R DFHack/dfhack -r ${{ github.ref }} -f version=${{ env.DETECTED_DF_VER }} -f steam_branch=${{ inputs.steam_branch }}
+      run: gh workflow run steam-deploy.yml -R DFHack/dfhack -r ${{ github.ref }} -f version=${{ env.DETECTED_DF_VER }} -f steam_branch=${{ inputs.steam_branch }}

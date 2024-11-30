@@ -328,7 +328,6 @@ jobs:
       shell: bash
       run: |
         mkdir DF_steam
-        mkdir ${{ steps.steamcmd.outputs.directory }}/config
         echo "$STEAM_CONFIG_VDF" | base64 -d >${{ steps.steamcmd.outputs.directory }}/config/config.vdf
         echo "DF steam branch: ${{ inputs.df_steam_branch }}"
         if [ "${{ inputs.df_steam_branch }}" = "default" ]; then

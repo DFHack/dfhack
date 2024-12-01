@@ -235,6 +235,15 @@ static bool is_wagon_dynamic_traversible(df::tiletype_shape shape, const df::coo
     return false;
 }
 
+static bool is_wagon_tile_traversible(df::tiletype_shape shape) {
+    // TODO: smoothed boulders are traversible
+    if (shape == df::tiletype_shape::STAIR_UP || shape == df::tiletype_shape::STAIR_DOWN ||
+            shape == df::tiletype_shape::STAIR_UPDOWN || shape == df::tiletype_shape::BOULDER ||
+            shape == df::tiletype_shape::EMPTY || shape == df::tiletype_shape::NONE)
+        return false;
+    return true;
+}
+
 static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df::coord & prev_pos) {
     auto tt = Maps::getTileType(pos);
     if (!tt)
@@ -245,29 +254,34 @@ static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df
     auto& occ = *Maps::getTileOccupancy(pos);
     switch (occ.bits.building) {
         case tile_building_occ::Obstacle: // Statue
-            //fallthrough
+            //FALLTHROUGH
         case tile_building_occ::Well:
-            //fallthrough
-        case tile_building_occ::Impassable:
+            //FALLTHROUGH
+        case tile_building_occ::Impassable: // Raised bridge
             return false;
 
-        case tile_building_occ::Dynamic: // doors(block), levers (block), traps (block), hatches (OK, but block on down ramp), closed floor grates (OK), closed floor bars (OK)
+        case tile_building_occ::Dynamic:
+            // doors(block), levers (block), traps (block), hatches (OK, but block on down ramp)
+            // closed floor grates (OK), closed floor bars (OK)
             if (is_wagon_dynamic_traversible(shape, pos) == false)
                 return false;
             break;
+
         case tile_building_occ::None: // Not occupied by a building
-            // TODO smoothed boulders are traversable
-            if (shape == df::tiletype_shape::STAIR_UP || shape == df::tiletype_shape::STAIR_DOWN ||
-                    shape == df::tiletype_shape::STAIR_UPDOWN || shape == df::tiletype_shape::BOULDER ||
-                    shape == df::tiletype_shape::EMPTY || shape == df::tiletype_shape::NONE)
+            //FALLTHROUGH
+        case tile_building_occ::Planned:
+            //FALLTHROUGH
+        case tile_building_occ::Passable:
+            // bed, support, rollers, armor/weapon stand, cage (not trap)
+            // open wall grate/vertical bars, retracted bridge, open floodgate
+            if (is_wagon_tile_traversible(shape) == false)
                 return false;
             break;
-        case tile_building_occ::Planned:
-            //fallthrough
-        case tile_building_occ::Passable: // bed, support, rollers, armor/weapon stand, bed, cage, open wall grate/vertical bars
-            //fallthrough
-        case tile_building_occ::Floored:  // depot, lowered bridge, forbidden hatch
+        case tile_building_occ::Floored:
+            // depot, lowered bridge, retracable bridge, forbidden hatch
+            break;
         default:
+            //NOTREACHED
             break;
     }
 

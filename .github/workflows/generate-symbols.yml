@@ -147,6 +147,7 @@ jobs:
           done
           df_ver=`./dfhack-run lua 'print(dfhack.gui.getDFViewscreen(true).str_version)' | ansifilter`
           echo "Found version string: '$df_ver'"
+          echo "DETECTED_DF_VER=$df_ver" >>$GITHUB_ENV
           sed -i "s/v0.50.0 linux64 STEAM/v0.$df_ver linux64 STEAM/" ../xml/symbols.xml
           ./dfhack-run die || true
         fi
@@ -194,7 +195,7 @@ jobs:
     - name: Commit symbol updates
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: Auto-update symbols for Linux DF version ${{ inputs.version }}
+        commit_message: Auto-update symbols for Linux DF version ${{ env.DETECTED_DF_VER || inputs.version }}
         repository: xml
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
@@ -376,7 +377,7 @@ jobs:
     - name: Commit symbol updates
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: Auto-update Windows DF version ${{ env.DETECTED_DF_VER }} in symbols
+        commit_message: Auto-update Windows DF version to ${{ env.DETECTED_DF_VER }} in symbols
         repository: xml
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com

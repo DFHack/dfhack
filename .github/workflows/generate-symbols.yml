@@ -194,7 +194,7 @@ jobs:
     - name: Commit symbol updates
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: Auto-update symbols
+        commit_message: Auto-update symbols for Linux DF version ${{ inputs.version }}
         repository: xml
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
@@ -297,7 +297,7 @@ jobs:
     - name: Commit symbol updates
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: Auto-update symbols
+        commit_message: Auto-update symbols for Windows DF version ${{ inputs.version }}
         repository: xml
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
@@ -361,6 +361,7 @@ jobs:
         done
         df_ver=`./dfhack-run.exe lua 'print(dfhack.gui.getDFViewscreen(true).str_version)'`
         echo "Found version string: '$df_ver'"
+        echo "DETECTED_DF_VER=$df_ver" >>$GITHUB_ENV
         sed -i "s/v0.50.0 win64 STEAM/v0.$df_ver win64 STEAM/" ../xml/symbols.xml
         ./dfhack-run.exe die || true
     - name: Merge updates
@@ -375,7 +376,7 @@ jobs:
     - name: Commit symbol updates
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: Auto-update Windows DF version in symbols
+        commit_message: Auto-update Windows DF version ${{ env.DETECTED_DF_VER }} in symbols
         repository: xml
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
@@ -405,7 +406,7 @@ jobs:
     - name: Commit ref update
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: Auto-update structures ref
+        commit_message: Auto-update structures ref for ${{ env.DETECTED_DF_VER }}
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
     - name: Launch steam-deploy

@@ -233,12 +233,14 @@ struct infinitesky_options {
 };
 static const struct_field_info infinitesky_options_fields[] = {
     {struct_field_info::PRIMITIVE, "help", offsetof(infinitesky_options, help), &df::identity_traits<bool>::identity, 0, 0},
-    {struct_field_info::PRIMITIVE, "n", offsetof(infinitesky_options, n), &df::identity_traits<int32_t>::identity, 0, 0}
+    {struct_field_info::PRIMITIVE, "n", offsetof(infinitesky_options, n), &df::identity_traits<int32_t>::identity, 0, 0},
+    {struct_field_info::END}
 };
 struct_identity infinitesky_options::_identity{sizeof(infinitesky_options), &df::allocator_fn<infinitesky_options>, NULL, "infinitesky_options", NULL, infinitesky_options_fields};
 
 command_result infiniteSky(color_ostream &out,
                            std::vector<std::string> &parameters) {
+    CoreSuspender suspend;
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

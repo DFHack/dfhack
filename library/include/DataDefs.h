@@ -33,6 +33,7 @@ distribution.
 #include <vector>
 
 #include "BitArray.h"
+#include "Export.h"
 
 typedef struct lua_State lua_State;
 

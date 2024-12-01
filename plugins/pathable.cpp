@@ -1,4 +1,5 @@
 #include "Debug.h"
+#include "Error.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
 

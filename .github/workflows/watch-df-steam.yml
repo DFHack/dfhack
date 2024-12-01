@@ -14,32 +14,27 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # dfhack_ref: leave blank if no structures update is desired
-        # structures_ref: leave blank to default to master
-        # steam_branch: leave blank if no steam push is desired
+        # df_steam_branch: which DF Steam branch to watch
         # platform: leave blank to default to all
-        # channel: leave blank to default to all; should usually be steam
+        # structures_ref: leave blank to default to master
+        # dfhack_ref: leave blank if no structures update is desired
+        # steam_branch: leave blank if no DFHack steam push is desired
         include:
           - df_steam_branch: public
-            version: public
           - df_steam_branch: beta
-            version: 51.01-beta
-            channel: steam
-            dfhack_ref: adv-beta
             structures_ref: adv-beta
+            dfhack_ref: adv-beta
             steam_branch: adventure-beta
           - df_steam_branch: testing
-            version: testing
-            channel: steam
-            dfhack_ref: testing
             structures_ref: testing
+            dfhack_ref: testing
     steps:
     - name: Fetch state
       uses: actions/cache/restore@v4
       with:
         path: state
-        key: watchstate-${{ matrix.version }}
-        restore-keys: watchstate-${{ matrix.version }}
+        key: watchstate-${{ matrix.df_steam_branch }}
+        restore-keys: watchstate-${{ matrix.df_steam_branch }}
     - name: Compare branch metadata
       uses: nick-fields/retry@v3
       with:
@@ -77,9 +72,9 @@ jobs:
           -R DFHack/dfhack \
           -r ${{ matrix.dfhack_ref }} \
           -f structures_ref=${{ matrix.structures_ref }} \
-          -f version=${{ matrix.version }} \
+          -f version=auto \
           -f platform=${{ matrix.platform }} \
-          -f channel=${{ matrix.channel }} \
+          -f channel=steam \
           -f df_steam_branch=${{ matrix.df_steam_branch }} \
           -f steam_branch=${{ matrix.steam_branch }}
     - name: Save state
@@ -87,4 +82,4 @@ jobs:
       if: env.TIMESTAMP
       with:
         path: state
-        key: watchstate-${{ matrix.version }}-${{ env.TIMESTAMP }}
+        key: watchstate-${{ matrix.df_steam_branch }}-${{ env.TIMESTAMP }}

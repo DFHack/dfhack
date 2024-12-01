@@ -152,6 +152,10 @@ static void reset_ephemeral_state() {
     season_tick_throttled = false;
 }
 
+static void do_disable() {
+    EventManager::unregisterAll(plugin_self);
+}
+
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
@@ -170,7 +174,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             EventManager::registerListener(EventManager::EventType::UNIT_NEW_ACTIVE, new_unit_handler);
             do_cycle(out);
         } else {
-            EventManager::unregisterAll(plugin_self);
+            do_disable();
         }
     } else {
         DEBUG(control,out).print("%s from the API, but already %s; no action\n",
@@ -222,7 +226,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         if (is_enabled) {
             DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
-            plugin_enable(out, false);
+            do_disable();
         }
     }
     return CR_OK;

@@ -235,12 +235,28 @@ static bool is_wagon_dynamic_traversible(df::tiletype_shape shape, const df::coo
     return false;
 }
 
-static bool is_wagon_tile_traversible(df::tiletype_shape shape) {
-    // TODO: smoothed boulders are traversible
-    if (shape == df::tiletype_shape::STAIR_UP || shape == df::tiletype_shape::STAIR_DOWN ||
+// NOTE: When i.e. tracks, stairs have a bridge over them, the tile will have
+// an occupancy of floored.
+static bool is_wagon_tile_traversible(df::tiletype& tt) {
+    auto shape = tileShape(tt);
+    auto special = tileSpecial(tt);
+    auto material = tileMaterial(tt);
+
+    // Allow murky pool ramps
+    if (shape == df::tiletype_shape::RAMP_TOP)
+        return true;
+    // NOTE: smoothing a boulder turns it into a smoothed floor
+    else if (shape == df::tiletype_shape::STAIR_UP || shape == df::tiletype_shape::STAIR_DOWN ||
             shape == df::tiletype_shape::STAIR_UPDOWN || shape == df::tiletype_shape::BOULDER ||
             shape == df::tiletype_shape::EMPTY || shape == df::tiletype_shape::NONE)
         return false;
+    else if (special == df::tiletype_special::TRACK)
+        return false;
+    // Fires seem to have their own path group, and group for lava is 0
+    // According to wiki, the wagon won't path thru pool and river tiles, but ramps are ok
+    else if (material == df::tiletype_material::POOL || material == df::tiletype_material::RIVER)
+        return false;
+
     return true;
 }
 
@@ -250,14 +266,13 @@ static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df
         return false;
 
     auto shape = tileShape(*tt);
-
     auto& occ = *Maps::getTileOccupancy(pos);
     switch (occ.bits.building) {
-        case tile_building_occ::Obstacle: // Statue
+        case tile_building_occ::Obstacle: // Statues, windmills (middle tile)
             //FALLTHROUGH
         case tile_building_occ::Well:
             //FALLTHROUGH
-        case tile_building_occ::Impassable: // Raised bridge
+        case tile_building_occ::Impassable: // Raised bridges
             return false;
 
         case tile_building_occ::Dynamic:
@@ -272,13 +287,15 @@ static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df
         case tile_building_occ::Planned:
             //FALLTHROUGH
         case tile_building_occ::Passable:
-            // bed, support, rollers, armor/weapon stand, cage (not trap)
-            // open wall grate/vertical bars, retracted bridge, open floodgate
-            if (is_wagon_tile_traversible(shape) == false)
+            // Any tile with no building or a passable building including
+            // beds, supports, rollers, armor/weapon stands, cages (not traps),
+            // open wall grate/vertical bars, retracted bridges, open floodgates,
+            // workshops (tiles with open space are handled by the tile check)
+            if (is_wagon_tile_traversible(*tt) == false)
                 return false;
             break;
         case tile_building_occ::Floored:
-            // depot, lowered bridge, retracable bridge, forbidden hatch
+            // depot, lowered bridges or retractable bridges, forbidden hatches
             break;
         default:
             //NOTREACHED

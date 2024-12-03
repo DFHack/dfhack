@@ -439,10 +439,9 @@ bool is_builtin(color_ostream &con, const std::string &command) {
 }
 
 void get_commands(color_ostream &con, std::vector<std::string> &commands) {
-    // FIXME: this should be a conditional lock but that functionality doesn't work yet
-    CoreSuspender suspend{};
+    CoreSuspender suspend{std::defer_lock};
 
-    if (!suspend.owns_lock()) {
+    if (!suspend.try_lock()) {
         con.printerr("Cannot acquire core lock in helpdb.get_commands\n");
         commands.clear();
         return;
@@ -649,10 +648,9 @@ static std::string sc_event_name (state_change_event id) {
 }
 
 void help_helper(color_ostream &con, const std::string &entry_name) {
-    // FIXME: this should be a conditional lock but that functionality doesn't work yet
-    CoreSuspender suspend{ };
+    CoreSuspender suspend{ std::defer_lock };
 
-    if (!suspend.owns_lock()) {
+    if (!suspend.try_lock()) {
         con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
         return;
     }

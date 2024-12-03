@@ -340,7 +340,7 @@ namespace DFHack
          * \sa DFHack::CoreSuspender
          * \{
          */
-        std::recursive_mutex CoreSuspendMutex;
+        std::recursive_timed_mutex CoreSuspendMutex;
         std::condition_variable_any CoreWakeup;
         std::atomic<std::thread::id> ownerThread;
         std::atomic<size_t> toolCount;
@@ -372,23 +372,14 @@ namespace DFHack
     public:
         void lock()
         {
-            auto& core = Core::getInstance();
             parent_t::lock();
-            tid = core.ownerThread.exchange(std::this_thread::get_id(),
-                    std::memory_order_acquire);
-            lock_count++;
+            complete_lock();
         }
 
         bool try_lock()
         {
-            auto& core = Core::getInstance();
-            bool locked = parent_t::try_lock();
-            if (locked)
-            {
-                tid = core.ownerThread.exchange(std::this_thread::get_id(),
-                    std::memory_order_acquire);
-                lock_count++;
-            }
+            bool locked = parent_t::try_lock_for(std::chrono::milliseconds(100));
+            if (locked) complete_lock();
             return locked;
         }
 
@@ -413,6 +404,16 @@ namespace DFHack
             while (lock_count > 0)
                 unlock();
         }
+
+    private:
+        void complete_lock()
+        {
+            auto& core = Core::getInstance();
+            tid = core.ownerThread.exchange(std::this_thread::get_id(),
+                std::memory_order_acquire);
+            lock_count++;
+        }
+
         friend class MainThread;
     };
 
@@ -457,36 +458,47 @@ namespace DFHack
 
         void lock()
         {
-            auto& core = Core::getInstance();
-            core.toolCount.fetch_add(1, std::memory_order_relaxed);
+            inc_tool_count();
             parent_t::lock();
         }
 
         bool try_lock()
         {
-            auto& core = Core::getInstance();
-            bool locked = parent_t::try_lock();
-            if (locked)
-                core.toolCount.fetch_add(1, std::memory_order_relaxed);
-            return locked;
+            inc_tool_count();
+            if (parent_t::try_lock())
+                return true;
+            dec_tool_count();
+            return false;
         }
 
         void unlock()
         {
-            auto& core = Core::getInstance();
             parent_t::unlock();
-            /* Notify core to continue when all queued tools have completed
-             * 0 = None wants to own the core
-             * 1+ = There are tools waiting core access
-             * fetch_add returns old value before subtraction
-             */
-            if (core.toolCount.fetch_add(-1, std::memory_order_relaxed) == 1)
-                core.CoreWakeup.notify_one();
+            dec_tool_count();
         }
 
         ~CoreSuspender() {
             while (lock_count > 0)
                 unlock();
+        }
+
+    protected:
+        void inc_tool_count()
+        {
+            auto& core = Core::getInstance();
+            core.toolCount.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        void dec_tool_count()
+        {
+            /* Notify core to continue when all queued tools have completed
+             * 0 = None wants to own the core
+             * 1+ = There are tools waiting core access
+             * fetch_add returns old value before subtraction
+             */
+            auto& core = Core::getInstance();
+            if (core.toolCount.fetch_add(-1, std::memory_order_relaxed) == 1)
+                core.CoreWakeup.notify_one();
         }
     };
 

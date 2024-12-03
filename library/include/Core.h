@@ -31,6 +31,7 @@ distribution.
 #include "modules/Graphic.h"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <map>
 #include <memory>
@@ -353,15 +354,17 @@ namespace DFHack
         friend struct CoreSuspendReleaseMain;
     };
 
-    class CoreSuspenderBase  : protected std::unique_lock<std::recursive_mutex> {
+    class CoreSuspenderBase : protected std::unique_lock< decltype(Core::CoreSuspendMutex) > {
     protected:
-        using parent_t = std::unique_lock<std::recursive_mutex>;
+        size_t lock_count = 0;
+        using mutex_type = decltype(Core::CoreSuspendMutex);
+        using parent_t = std::unique_lock< mutex_type >;
         std::thread::id tid;
 
         CoreSuspenderBase(std::defer_lock_t d) : CoreSuspenderBase{&Core::getInstance(), d} {}
 
         CoreSuspenderBase(Core* core, std::defer_lock_t) :
-            /* Lock the core */
+            /* Lock the core (jk not really) */
             parent_t{core->CoreSuspendMutex,std::defer_lock},
             /* Mark this thread to be the core owner */
             tid{}
@@ -373,6 +376,20 @@ namespace DFHack
             parent_t::lock();
             tid = core.ownerThread.exchange(std::this_thread::get_id(),
                     std::memory_order_acquire);
+            lock_count++;
+        }
+
+        bool try_lock()
+        {
+            auto& core = Core::getInstance();
+            bool locked = parent_t::try_lock();
+            if (locked)
+            {
+                tid = core.ownerThread.exchange(std::this_thread::get_id(),
+                    std::memory_order_acquire);
+                lock_count++;
+            }
+            return locked;
         }
 
         void unlock()
@@ -383,15 +400,17 @@ namespace DFHack
             if (tid == std::thread::id{})
                 Lua::Core::Reset(core.getConsole(), "suspend");
             parent_t::unlock();
+            lock_count--;
         }
 
         bool owns_lock() const noexcept
         {
-            return parent_t::owns_lock();
+            return lock_count > 0;
+//            return parent_t::owns_lock();
         }
 
         ~CoreSuspenderBase() {
-            if (owns_lock())
+            while (lock_count > 0)
                 unlock();
         }
         friend class MainThread;
@@ -443,6 +462,15 @@ namespace DFHack
             parent_t::lock();
         }
 
+        bool try_lock()
+        {
+            auto& core = Core::getInstance();
+            bool locked = parent_t::try_lock();
+            if (locked)
+                core.toolCount.fetch_add(1, std::memory_order_relaxed);
+            return locked;
+        }
+
         void unlock()
         {
             auto& core = Core::getInstance();
@@ -457,7 +485,7 @@ namespace DFHack
         }
 
         ~CoreSuspender() {
-            if (owns_lock())
+            while (lock_count > 0)
                 unlock();
         }
     };
@@ -483,4 +511,5 @@ namespace DFHack
     };
 
     using CoreSuspendClaimer = CoreSuspender;
+
 }

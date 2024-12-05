@@ -30,6 +30,7 @@ distribution.
 #include "DataDefs.h"
 #include "Debug.h"
 #include "Console.h"
+#include "SDLConsoleDriver.h"
 #include "MiscUtils.h"
 #include "Module.h"
 #include "VersionInfoFactory.h"
@@ -1700,9 +1701,9 @@ bool Core::InitMainThread() {
 
     perf_counters.reset();
 
-    // SDL_CONSOLE FIXME
-    if(con.init(false))
-        std::cerr << "Console init(first).\n";
+    if (con.get_type() == Console::Type::SDL
+            && !con.as<SDLConsoleDriver>().init_sdl())
+        std::cerr << "SDLConsole: failed to initialize.\n";
 
     return true;
 }
@@ -2518,7 +2519,9 @@ void Core::setArmokTools(const std::vector<std::string> &tool_names) {
 // returns true if the event is handled
 bool Core::DFH_SDL_Event(SDL_Event* ev) {
     uint32_t start_ms = p->getTickCount();
-    if (getConsole().sdl_event_hook(*ev)) return true;
+    if (con.get_type() == Console::Type::SDL
+            && con.as<SDLConsoleDriver>().sdl_event_hook(*ev))
+        return true;
     bool ret = doSdlInputEvent(ev);
     perf_counters.incCounter(perf_counters.total_keybinding_ms, start_ms);
     return ret;

@@ -23,6 +23,7 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "ColorText.h"
 #include <deque>
@@ -31,12 +32,7 @@ distribution.
 #include <iostream>
 #include <string>
 #include <vector>
-#include <algorithm>
-#include <functional>
-#include <map>
 #include <memory>
-
-union SDL_Event;
 
 namespace  DFHack
 {
@@ -126,38 +122,17 @@ namespace  DFHack
 
     class DFHACK_EXPORT Console : public color_ostream
     {
-    protected:
-        using FactoryFunc = std::function<std::unique_ptr<Console>()>;
-        struct RegistryEntry {
-            FactoryFunc func;
-            int priority;
+    public:
+        enum class Type {
+            Posix,
+            SDL,
+            Windows,
+            DUMMY
         };
 
-        static void registerConsole(const std::string &name, FactoryFunc func, int priority) {
-            getRegistry().emplace(name, RegistryEntry{func, priority});
-        }
-    private:
-        static std::map<std::string, RegistryEntry> &getRegistry() {
-            static std::map<std::string, RegistryEntry> registry;
-            return registry;
-        }
-
-        static auto getAvailableConsoles() {
-            std::vector<std::pair<std::string, RegistryEntry>> result;
-            auto& registry = getRegistry();
-
-            for (const auto &entry : registry) {
-                result.emplace_back(entry.first, entry.second);
-            }
-
-            std::sort(result.begin(), result.end(), [](const auto& a, const auto& b) {
-                return a.second.priority > b.second.priority;
-            });
-
-            return result;
-        }
-
     protected:
+        Type con_type{Type::DUMMY};
+
         virtual void begin_batch() {};
         virtual void add_text(color_value color, const std::string &text) {};
         virtual void end_batch() {};
@@ -166,6 +141,7 @@ namespace  DFHack
     public:
         ///ctor, NOT thread-safe
         Console() = default;
+        Console(Type type) : con_type(type) {}
         ///dtor, NOT thread-safe
         virtual ~Console() = default;
         /// initialize the console. NOT thread-safe
@@ -202,15 +178,14 @@ namespace  DFHack
         virtual bool hide() { return false; };
         virtual bool show() { return false; };
 
-        virtual bool sdl_event_hook(SDL_Event& event) { return false; };
         virtual void cleanup() {};
+        Type get_type() const { return con_type; }
 
-        static std::unique_ptr<Console> makeConsole() {
-            auto availableConsoles = getAvailableConsoles();
-            if (!availableConsoles.empty()) {
-                return availableConsoles[0].second.func();
-            }
-            return std::make_unique<Console>();
+        template <typename T>
+        T& as() {
+            return static_cast<T&>(*this);
         }
+
+        static std::unique_ptr<Console> makeConsole();
     };
 }

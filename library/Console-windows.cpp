@@ -409,7 +409,7 @@ namespace DFHack
 }
 
 
-WindowsConsole::WindowsConsole()
+WindowsConsole::WindowsConsole() : Console(Console::Type::Windows)
 {
     d = 0;
     wlock = 0;

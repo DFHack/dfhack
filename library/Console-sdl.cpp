@@ -232,7 +232,7 @@ namespace DFHack
     };
 }
 
-SDLConsoleDriver::SDLConsoleDriver()
+SDLConsoleDriver::SDLConsoleDriver() : Console(Console::Type::SDL)
 {
     d = new Private();
     inited.store(false);
@@ -254,18 +254,8 @@ SDLConsoleDriver::~SDLConsoleDriver()
  */
 bool SDLConsoleDriver::init(bool dont_redirect)
 {
-    static int init_stage = 0;
-
-    if (init_stage == -1)
-        return false;
-
-    if (init_stage == 1) {
+    if (inited)
         INTERPOSE_HOOK(con_render_hook,render).apply(true);
-        return true;
-    }
-
-    inited.store(d->con.init());
-    init_stage = inited.load() ? 1 : -1;
 
     if (!dont_redirect)
     {
@@ -273,6 +263,12 @@ bool SDLConsoleDriver::init(bool dont_redirect)
             fputs("Failed to redirect stdout to file\n", stderr);
         }
     }
+    return inited.load();
+}
+
+bool SDLConsoleDriver::init_sdl()
+{
+    inited.store(d->con.init());
     return inited.load();
 }
 
@@ -376,7 +372,7 @@ bool SDLConsoleDriver::show()
 bool SDLConsoleDriver::sdl_event_hook(SDL_Event &e)
 {
     auto& con = d->con;
-    if (con.state.is_active()) {
+    if (con.state.is_active()) [[likely]] {
         return con.sdl_event_hook(e);
     } else if (con.state.is_shutdown()) {
         cleanup();

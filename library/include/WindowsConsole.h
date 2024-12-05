@@ -31,8 +31,6 @@ distribution.
 #include <string>
 #include <memory>
 
-union SDL_Event;
-
 namespace  DFHack
 {
     class Private;
@@ -73,13 +71,5 @@ namespace  DFHack
         Private * d;
         std::recursive_mutex * wlock;
         std::atomic<bool> inited;
-
-        static const inline bool registered = [] {
-            if (is_supported()) {
-                registerConsole("WindowsConsole", [] { return std::make_unique<WindowsConsole>(); }, 100);
-                return true;
-            }
-            return false;
-        }();
     };
 }

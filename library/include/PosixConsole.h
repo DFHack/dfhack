@@ -30,8 +30,6 @@ distribution.
 #include <mutex>
 #include <string>
 
-union SDL_Event;
-
 namespace  DFHack
 {
     class Private;
@@ -43,8 +41,6 @@ namespace  DFHack
         void end_batch() override;
         void flush_proxy() override;
     public:
-        static bool is_supported();
-
         PosixConsole();
         ~PosixConsole();
 
@@ -68,17 +64,12 @@ namespace  DFHack
         bool hide() override;
         bool show() override;
 
+        static bool is_supported();
+
     private:
         Private * d;
         std::recursive_mutex * wlock;
         std::atomic<bool> inited;
-
-        static const inline bool registered = [] {
-            if (is_supported()) {
-                registerConsole("PosixConsole", [] { return std::make_unique<PosixConsole>(); }, 100);
-                return true;
-            }
-            return false;
-        }();
     };
+
 }

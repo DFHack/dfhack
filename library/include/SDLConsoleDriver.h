@@ -77,19 +77,12 @@ namespace  DFHack
         bool hide() override;
         bool show() override;
 
-        bool sdl_event_hook(SDL_Event& event) override;
+        bool sdl_event_hook(SDL_Event& event);
+        bool init_sdl();
         void cleanup() override;
     private:
         Private * d;
         std::recursive_mutex * wlock;
         std::atomic<bool> inited;
-
-        static const inline bool registered = [] {
-            if (is_supported()) {
-                registerConsole("SDLConsole", [] { return std::make_unique<SDLConsoleDriver>(); }, 0);
-                return true;
-            }
-            return false;
-        }();
     };
 }

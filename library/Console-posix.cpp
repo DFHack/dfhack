@@ -76,6 +76,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #endif
 
 #include "PosixConsole.h"
+
 #include "Hooks.h"
 using namespace DFHack;
 
@@ -833,7 +834,7 @@ namespace DFHack
     };
 }
 
-PosixConsole::PosixConsole()
+PosixConsole::PosixConsole() : Console(Console::Type::Posix)
 {
     d = nullptr;
     inited = false;

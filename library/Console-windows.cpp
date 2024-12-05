@@ -509,7 +509,7 @@ bool WindowsConsole::init(bool)
     return true;
 }
 // FIXME: looks awfully empty, doesn't it?
-bool Console::shutdown(void)
+bool WindowsConsole::shutdown(void)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     FreeConsole();

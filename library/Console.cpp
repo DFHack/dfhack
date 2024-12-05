@@ -9,7 +9,7 @@ std::unique_ptr<Console> Console::makeConsole() {
 
 // Return the Windows console
 #if defined(_WIN32) || defined(_WIN64)
-    return std::make_unique<WindowsConsole>(); 
+    return std::make_unique<WindowsConsole>();
 
 // Return Posix console if launched from a supported terminal
 #elif defined(__linux__) || defined(__unix__) || defined(__APPLE__)

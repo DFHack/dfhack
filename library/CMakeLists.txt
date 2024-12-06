@@ -119,25 +119,23 @@ set(MAIN_SOURCES
 file(GLOB_RECURSE TEST_SOURCES
     LIST_DIRECTORIES false
     *test.cpp)
-list(APPEND TEST_SOURCES SDLConsole_impl.cpp)
+
+if (DFHACK_SDL_CONSOLE)
+    list(APPEND TEST_SOURCES SDLConsole_impl.cpp)
+endif()
 dfhack_test(dfhack-test "${TEST_SOURCES}")
 
-if (NOT DFHACK_SDL_CONSOLE)
-    if(WIN32)
-        set(CONSOLE_SOURCES Console-windows.cpp Console.cpp)
-    else()
-        set(CONSOLE_SOURCES Console-posix.cpp Console.cpp)
-    endif()
-    set(DFCLIENT_CONSOLE_SOURCES ${CONSOLE_SOURCES})
+if(WIN32)
+        set(CONSOLE_SOURCES Console-windows.cpp)
 else()
-    if(WIN32)
-        set(DFCLIENT_CONSOLE_SOURCES Console-windows.cpp Console.cpp)
-    else()
-        set(DFCLIENT_CONSOLE_SOURCES Console-posix.cpp Console.cpp)
-    endif()
-    set(CONSOLE_SOURCES ${DFCLIENT_CONSOLE_SOURCES})
+        set(CONSOLE_SOURCES Console-posix.cpp)
+endif()
+list(APPEND CONSOLE_SOURCES Console.cpp)
+if (DFHACK_SDL_CONSOLE)
     list(APPEND CONSOLE_SOURCES Console-sdl.cpp SDLConsole_impl.cpp)
 endif()
+
+set(DFCLIENT_CONSOLE_SOURCES Console.cpp)
 
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
@@ -387,8 +385,7 @@ add_dependencies(dfhack generate_proto_core)
 add_dependencies(dfhack generate_headers)
 
 add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS} ${DFCLIENT_CONSOLE_SOURCES})
-# SDLConsole requires to be run with df
-target_compile_definitions(dfhack-client PUBLIC DISABLE_SDL_CONSOLE)
+target_compile_definitions(dfhack-client PUBLIC BUILD_DFHACK_CLIENT)
 add_dependencies(dfhack-client dfhack)
 
 add_executable(dfhack-run dfhack-run.cpp)

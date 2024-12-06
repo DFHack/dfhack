@@ -123,6 +123,26 @@ namespace  DFHack
     class DFHACK_EXPORT Console : public color_ostream
     {
     public:
+        const char * ANSI_CLS = "\033[2J";
+        const char * ANSI_BLACK = "\033[22;30m";
+        const char * ANSI_RED = "\033[22;31m";
+        const char * ANSI_GREEN = "\033[22;32m";
+        const char * ANSI_BROWN = "\033[22;33m";
+        const char * ANSI_BLUE = "\033[22;34m";
+        const char * ANSI_MAGENTA = "\033[22;35m";
+        const char * ANSI_CYAN = "\033[22;36m";
+        const char * ANSI_GREY = "\033[22;37m";
+        const char * ANSI_DARKGREY = "\033[01;30m";
+        const char * ANSI_LIGHTRED = "\033[01;31m";
+        const char * ANSI_LIGHTGREEN = "\033[01;32m";
+        const char * ANSI_YELLOW = "\033[01;33m";
+        const char * ANSI_LIGHTBLUE = "\033[01;34m";
+        const char * ANSI_LIGHTMAGENTA = "\033[01;35m";
+        const char * ANSI_LIGHTCYAN = "\033[01;36m";
+        const char * ANSI_WHITE = "\033[01;37m";
+        const char * RESETCOLOR = "\033[0m";
+
+
         enum class Type {
             Posix,
             SDL,
@@ -130,11 +150,40 @@ namespace  DFHack
             DUMMY
         };
 
+        const char * getANSIColor(const int c)
+        {
+            switch (c)
+            {
+                case -1: return RESETCOLOR; // HACK! :P
+                case 0 : return ANSI_BLACK;
+                case 1 : return ANSI_BLUE; // non-ANSI
+                case 2 : return ANSI_GREEN;
+                case 3 : return ANSI_CYAN; // non-ANSI
+                case 4 : return ANSI_RED; // non-ANSI
+                case 5 : return ANSI_MAGENTA;
+                case 6 : return ANSI_BROWN;
+                case 7 : return ANSI_GREY;
+                case 8 : return ANSI_DARKGREY;
+                case 9 : return ANSI_LIGHTBLUE; // non-ANSI
+                case 10: return ANSI_LIGHTGREEN;
+                case 11: return ANSI_LIGHTCYAN; // non-ANSI;
+                case 12: return ANSI_LIGHTRED; // non-ANSI;
+                case 13: return ANSI_LIGHTMAGENTA;
+                case 14: return ANSI_YELLOW; // non-ANSI
+                case 15: return ANSI_WHITE;
+                default: return "";
+            }
+        }
+
     protected:
         Type con_type{Type::DUMMY};
 
         virtual void begin_batch() {};
-        virtual void add_text(color_value color, const std::string &text) {};
+        virtual void add_text(color_value color, const std::string &text) {
+            std::cout << getANSIColor(color);
+            std::cout << text;
+            std::cout << RESETCOLOR;
+        };
         virtual void end_batch() {};
         virtual void flush_proxy() {};
 

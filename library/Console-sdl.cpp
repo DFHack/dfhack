@@ -372,6 +372,7 @@ bool SDLConsoleDriver::show()
 bool SDLConsoleDriver::sdl_event_hook(SDL_Event &e)
 {
     auto& con = d->con;
+    //auto& con = SDLConsole::get_console();
     if (con.state.is_active()) [[likely]] {
         return con.sdl_event_hook(e);
     } else if (con.state.is_shutdown()) {

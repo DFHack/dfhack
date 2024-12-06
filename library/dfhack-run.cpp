@@ -54,6 +54,30 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
+#if defined(_WIN32) || defined(_WIN64)
+#include <windows.h>
+
+void enablevt100() {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE || hOut == NULL) {
+        return;
+    }
+    DWORD dwMode = 0;
+    if (GetConsoleMode(hOut, &dwMode)) {
+        if (!(dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)) {
+            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            SetConsoleMode(hOut, dwMode);
+        }
+    }
+}
+
+const char* exeName = "Dwarf Fortress.exe";
+#else
+    // Assume Posix
+    void enablevt100() { return; }
+    const char* exeName = "./dfhack";
+#endif
+
 using namespace DFHack;
 using namespace dfproto;
 
@@ -67,19 +91,17 @@ int main (int argc, char *argv[])
         fprintf(stderr, "Usage: dfhack-run <command> [args...]\n\n");
         fprintf(stderr, "Note: this command does not start DFHack; it is intended to connect\n"
                         "to a running DFHack instance. If you were trying to start DFHack, run\n"
-#ifdef _WIN32
-                        "   Dwarf Fortress.exe\n"
-#else
-                        "   ./dfhack\n"
-#endif
+                        "   %s\n"
                         "or see the documentation in hack/docs/index.html for more help.\n"
-        );
+        , exeName);
 #ifdef _WIN32
         fprintf(stderr, "\nPress Enter to quit.\n");
         fgetc(stdin);
 #endif
         return 2;
     }
+
+    enablevt100();
 
     // Connect to DFHack
     RemoteClient client(&out);

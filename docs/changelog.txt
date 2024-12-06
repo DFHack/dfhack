@@ -63,6 +63,7 @@ Template for new versions:
 - `autobutcher`: don't run a scanning and marking cycle on the first tick of a fortress to allow for all custom configuration to be set first
 - `nestboxes`: don't consider eggs to be infertile just because the mother has left the nest; eggs can still hatch in this situation
 - `timestream`: adjust the incubation counter on fertile eggs so they hatch at the expected time
+- `timestream`: adjust the timeout on traps so they can be re-triggered at normal rates
 - `logistics`: don't ignore rotten items when applying stockpile logistics operations (e.g. autodump, autoclaim, etc.)
 
 ## Misc Improvements

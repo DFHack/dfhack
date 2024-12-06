@@ -459,7 +459,10 @@ void get_commands(color_ostream &con, std::vector<std::string> &commands) {
 static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
 {
     std::vector<std::string> commands, possible;
-    get_commands(con, commands);
+
+    // restore call to get_commands once we have updated the core lock to a deferred lock
+    // so calling Lua from the console thread won't deadlock if Lua is currently busy
+    //get_commands(con, commands);
     for (auto &command : commands)
         if (command.substr(0, first.size()) == first)
             possible.push_back(command);

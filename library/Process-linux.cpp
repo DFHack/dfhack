@@ -24,6 +24,7 @@ distribution.
 
 #include <cstdio>
 #include <cstring>
+#include <cxxabi.h>
 #include <dirent.h>
 #include <errno.h>
 #include <map>
@@ -113,13 +114,18 @@ Process::~Process()
 
 string Process::doReadClassName (void * vptr)
 {
-    //FIXME: BAD!!!!!
-    char * typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
-    char * typestring = Process::readPtr(typeinfo + sizeof(void*));
-    string raw = readCString(typestring);
-    size_t start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
-    size_t end = raw.length();
-    return raw.substr(start,end-start);
+    char* typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
+    char* typestring = Process::readPtr(typeinfo + sizeof(void*));
+
+    int status = -1;
+    char* demangledRaw = abi::__cxa_demangle(typestring, nullptr, nullptr, &status);
+    if (status != 0)
+        return "dummy"; // Failed to demangle, return dummy name
+
+    string demangled(demangledRaw);
+    free(demangledRaw);
+
+    return demangled;
 }
 
 //FIXME: cross-reference with ELF segment entries?

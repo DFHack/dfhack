@@ -642,7 +642,8 @@ bool Units::isDanger(df::unit *unit) {
     if (isTame(unit) || isOwnGroup(unit))
         return false;
 
-    return isCrazed(unit)
+    return unit->flags2.bits.visitor_uninvited
+        || isCrazed(unit)
         || isInvader(unit)
         || isAgitated(unit)
         || isSemiMegabeast(unit)

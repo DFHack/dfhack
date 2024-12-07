@@ -305,8 +305,6 @@ static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df
     if (ctx.wgroup == Maps::getWalkableGroup(pos))
         return true;
 
-    // RAMP_TOP is assigned a walkability group if that commit is accepted
-    // so this test, I think, would be useless.
     if (shape == df::tiletype_shape::RAMP_TOP ) {
         df::coord pos_below = pos + df::coord(0, 0, -1);
         if (Maps::getWalkableGroup(pos_below)) {
@@ -351,22 +349,6 @@ static void check_wagon_tile(FloodCtx & ctx, const df::coord & pos) {
         ctx.wagon_path.emplace(pos);
         ctx.search_edge.emplace(pos);
     }
-
-#if 0
-    // Use this if we don't mind red Xs on down ramps
-    if ((is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 0, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord(-1,  0, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1,  0, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord(-1,  1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 0,  1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1,  1, 0), pos))) {
-        ctx.wagon_path.emplace(pos);
-        ctx.search_edge.emplace(pos);
-    }
-#endif
-
 }
 
 // returns true if a continuous 3-wide path can be found to an entry tile

@@ -76,7 +76,8 @@ Template for new versions:
 - `preserve-rooms`: automatically release room reservations for captured squad members. we were kidding ourselves with our optimistic kept reservations. they're unlikely to come back : ((
 - `buildingplan`: add value info to item selection dialog (effectively ungrouping items with different values) and add sorting by value
 - `timestream`: reduce CPU utilization
-- `fix/occupancy`: additionally handle the case where tile occupancy doesn't reflect the actual existence of a building
+- `fix/occupancy`: additionally handle the case where tile building occupancy needs to be set instead of cleared
+- `orders`: make ``orders sort`` sort orders that are tied to a specific workshop first
 
 ## Documentation
 - Dreamfort: add link to Dreamfort tutorial youtube series: https://www.youtube.com/playlist?list=PLzXx9JcB9oXxmrtkO1y8ZXzBCFEZrKxve

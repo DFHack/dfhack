@@ -327,31 +327,6 @@ static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df
     return false;
 }
 
-static bool is_wagon_traversible_by_ramp(FloodCtx & ctx, const df::coord & pos) {
-    if ((is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 0, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1, -1, 0), pos)) || // Top
-
-            (is_wagon_traversible(ctx, pos+df::coord(-1,  0, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 0,  0, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1,  0, 0), pos)) || // Middle
-
-            (is_wagon_traversible(ctx, pos+df::coord(-1,  1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 0,  1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1,  1, 0), pos)) || // Bottom
-
-            (is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord(-1,  0, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord(-1,  1, 0), pos)) || // Left
-
-            (is_wagon_traversible(ctx, pos+df::coord( 1, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1,  0, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1,  1, 0), pos))) { // Right
-        return true;
-    }
-    return false;
-}
-
 static void check_wagon_tile(FloodCtx & ctx, const df::coord & pos) {
     if (ctx.seen.contains(pos))
         return;
@@ -364,53 +339,15 @@ static void check_wagon_tile(FloodCtx & ctx, const df::coord & pos) {
         return;
     }
 
-    auto tt = Maps::getTileType(pos);
-    if (!tt)
-        return;
-
-    auto shape = tileShape(*tt);
-
-#if 0
-    if (shape == df::tiletype_shape::RAMP_TOP) {
-        std::cerr << "check_wagon_tile start" << std::endl;
-        bool r = is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos);
-        std::cerr << r << ", " + coord_to_str(pos+df::coord(-1, -1, 0)) + ", pos=" + coord_to_str(pos) << std::endl;
-
-	r = is_wagon_traversible(ctx, pos+df::coord( 0, -1, 0), pos);
-        std::cerr << r << ", " + coord_to_str(pos+df::coord(0, -1, 0)) + ", pos=" + coord_to_str(pos) << std::endl;
-
-	r = is_wagon_traversible(ctx, pos+df::coord( 1, -1, 0), pos);
-        std::cerr << r << ", " + coord_to_str(pos+df::coord(1, -1, 0)) + ", pos=" + coord_to_str(pos) << std::endl;
-
-	r = is_wagon_traversible(ctx, pos+df::coord(-1,  0, 0), pos);
-        std::cerr << r << ", " + coord_to_str(pos+df::coord(-1, 0, 0)) + ", pos=" + coord_to_str(pos) << std::endl;
-
-	r = is_wagon_traversible(ctx, pos+df::coord( 1,  0, 0), pos);
-	std::cerr << r << ", " + coord_to_str(pos+df::coord(1, 0, 0)) + ", pos=" + coord_to_str(pos) << std::endl;
-
-	r = is_wagon_traversible(ctx, pos+df::coord( -1,  1, 0), pos);
-        std::cerr << r << ", " + coord_to_str(pos+df::coord(-1, 1, 0)) + ", pos=" + coord_to_str(pos) << std::endl;
-
-	r = is_wagon_traversible(ctx, pos+df::coord( 0,  1, 0), pos);
-        std::cerr << r << ", " + coord_to_str(pos+df::coord(0, 1, 0)) + ", pos=" + coord_to_str(pos) << std::endl;
-
-	r = is_wagon_traversible(ctx, pos+df::coord( 1,  1, 0), pos);
-        std::cerr << r << ", " + coord_to_str(pos+df::coord(1, 1, 0)) + ", pos=" + coord_to_str(pos) << std::endl;
-        std::cerr << "check_wagon_tile end" << std::endl;
-    }
-#endif
-
-
-    if ((shape != df::tiletype_shape::RAMP_TOP &&
-            (is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 0, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1, -1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord(-1,  0, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1,  0, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord(-1,  1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 0,  1, 0), pos) &&
-            is_wagon_traversible(ctx, pos+df::coord( 1,  1, 0), pos))) ||
-            (shape == df::tiletype_shape::RAMP_TOP && is_wagon_traversible_by_ramp(ctx, pos))) {
+    if (is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos) &&
+        is_wagon_traversible(ctx, pos+df::coord( 0, -1, 0), pos) &&
+        is_wagon_traversible(ctx, pos+df::coord( 1, -1, 0), pos) &&
+        is_wagon_traversible(ctx, pos+df::coord(-1,  0, 0), pos) &&
+        is_wagon_traversible(ctx, pos+df::coord( 1,  0, 0), pos) &&
+        is_wagon_traversible(ctx, pos+df::coord(-1,  1, 0), pos) &&
+        is_wagon_traversible(ctx, pos+df::coord( 0,  1, 0), pos) &&
+        is_wagon_traversible(ctx, pos+df::coord( 1,  1, 0), pos))
+    {
         ctx.wagon_path.emplace(pos);
         ctx.search_edge.emplace(pos);
     }

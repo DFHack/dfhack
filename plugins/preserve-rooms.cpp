@@ -507,6 +507,8 @@ static void process_rooms(color_ostream &out,
     auto it = last_known.begin();
     auto it_end = last_known.end();
     for (auto zone : vec) {
+        if (!zone)
+            continue; // there have been reports from players of NULL zones in the vector : (
         if (!zone->assigned_unit) {
             handle_missing_assignments(out, active_unit_ids, &it, it_end, share_with_spouse, zone->id);
             continue;

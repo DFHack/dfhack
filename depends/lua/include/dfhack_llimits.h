@@ -60,6 +60,7 @@ struct lua_extra_state {
       pthread_mutexattr_init(&attr); \
       pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); \
       pthread_mutex_init(luai_mutex(L), &attr); \
+      pthread_mutexattr_destroy(&attr); \
    } while (0)
 #define luai_userstateclose(L) do { \
       lua_unlock(L); \

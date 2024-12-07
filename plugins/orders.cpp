@@ -1011,8 +1011,12 @@ static command_result orders_clear_command(color_ostream & out)
     return CR_OK;
 }
 
-static bool compare_freq(df::manager_order *a, df::manager_order *b)
+static bool orders_compare(df::manager_order *a, df::manager_order *b)
 {
+    if (a->workshop_id != b->workshop_id) {
+        return a->workshop_id >= 0;
+    }
+
     if (a->frequency == df::manager_order::T_frequency::OneTime
             || b->frequency == df::manager_order::T_frequency::OneTime)
         return a->frequency < b->frequency;
@@ -1025,11 +1029,11 @@ static command_result orders_sort_command(color_ostream & out)
 
     if (!std::is_sorted(world->manager_orders.all.begin(),
                         world->manager_orders.all.end(),
-                        compare_freq))
+                        orders_compare))
     {
         std::stable_sort(world->manager_orders.all.begin(),
                          world->manager_orders.all.end(),
-                         compare_freq);
+                         orders_compare);
         out << "Fixed priority of manager orders." << std::endl;
     }
 

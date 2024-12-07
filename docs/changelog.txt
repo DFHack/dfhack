@@ -59,7 +59,7 @@ Template for new versions:
 - `tweak`: ``realistic-melting``: change melting return for inorganic armor parts, shields, weapons, trap components and tools to stop smelters from creating metal, bring melt return for adamantine in line with other metals to ~95% of forging cost. wear reduces melt return by 10% per level
 
 ## Fixes
-- Fix mouse clicks bleeding through DFHack windows when clicking in the space between the frame and the window content in resizable windows
+- Fix mouse clicks bleeding through resizable DFHack windows when clicking in the space between the frame and the window content
 - `autobutcher`: don't run a scanning and marking cycle on the first tick of a fortress to allow for all custom configuration to be set first
 - `nestboxes`: don't consider eggs to be infertile just because the mother has left the nest; eggs can still hatch in this situation
 - `timestream`: adjust the incubation counter on fertile eggs so they hatch at the expected time
@@ -75,13 +75,13 @@ Template for new versions:
 - Quickfort blueprint library: ``aquifer_tap`` blueprint now designated at priority 3 and marks the stairway tile below the tap in "blueprint" mode to prevent drips while the drainage pipe is being prepared
 - `preserve-rooms`: automatically release room reservations for captured squad members. we were kidding ourselves with our optimistic kept reservations. they're unlikely to come back : ((
 - `buildingplan`: add value info to item selection dialog (effectively ungrouping items with different values) and add sorting by value
-- `timestream`: reduce CPU utilization
+- `timestream`: improve FPS by a further 10%
 - `fix/occupancy`: additionally handle the case where tile building occupancy needs to be set instead of cleared
-- `orders`: make ``orders sort`` sort orders that are tied to a specific workshop first
+- `orders`: ``orders sort`` now moves orders that are tied to a specific workshop to the top of the list in the overall manager orders screen
 
 ## Documentation
 - Dreamfort: add link to Dreamfort tutorial youtube series: https://www.youtube.com/playlist?list=PLzXx9JcB9oXxmrtkO1y8ZXzBCFEZrKxve
-- The error message that comes up if there is a version mismatch between DF and the installed DFHack now informs you which DF versions are supported by the installed version of DFHack
+- The error message that comes up if there is a version mismatch between DF and DFHack now informs you which DF versions are supported by the installed version of DFHack
 
 ## API
 - ``DFHack::Units``: new function ``setPathGoal``

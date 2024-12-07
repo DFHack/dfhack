@@ -642,13 +642,14 @@ bool Units::isDanger(df::unit *unit) {
     if (isTame(unit) || isOwnGroup(unit))
         return false;
 
-    return unit->flags2.bits.visitor_uninvited
-        || isCrazed(unit)
+    // NOTE: demons from hell have visitor/visitor_unvited set to false
+    // other demons may visit as a diplomat
+    return isCrazed(unit)
         || isInvader(unit)
+        || isOpposedToLife(unit)
         || isAgitated(unit)
-        || isSemiMegabeast(unit)
-        || ((isOpposedToLife(unit) || isNightCreature(unit)) && !unit->flags2.bits.visitor)
-        || isGreatDanger(unit);
+        || unit->flags2.bits.visitor_uninvited;
+        || ((isGreatDanger(unit) || isNightCreature()) && !unit->flags2.bits.visitor)
 }
 
 bool Units::isGreatDanger(df::unit *unit) {

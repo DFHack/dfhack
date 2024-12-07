@@ -29,6 +29,7 @@ distribution.
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <DbgHelp.h>
 #include <psapi.h>
 
 #include <cstring>
@@ -343,21 +344,32 @@ int Process::adjustOffset(int offset, bool to_file)
 
 string Process::doReadClassName (void * vptr)
 {
-    char * rtti = readPtr((char *)vptr - sizeof(void*));
+    char* rtti = readPtr((char *)vptr - sizeof(void*));
 #ifdef DFHACK64
-    void *base;
+    void* base;
     if (!RtlPcToFileHeader(rtti, &base))
         return "dummy";
-    char * typeinfo = (char *)base + readDWord(rtti + 0xC);
-    string raw = readCString(typeinfo + 0x10+4); // skips the .?AV
+    char* typeinfo = (char *)base + readDWord(rtti + 0xC);
+    char* raw = (char*)typeinfo + 0x10;
 #else
-    char * typeinfo = readPtr(rtti + 0xC);
-    string raw = readCString(typeinfo + 0xC); // skips the .?AV
+    char* typeinfo = readPtr(rtti + 0xC);
+    char* raw = (char*)typeinfo + 0x8
 #endif
-    if (!raw.length())
+    if (*raw == 0)
         return "dummy";
-    raw.resize(raw.length() - 2);// trim @@ from end
-    return raw;
+
+    char demangledBuf[MAX_SYM_NAME];
+    // UNDNAME_NO_ARGUMENTS is essentially "UNDNAME_TYPE_ONLY", why Microsoft?
+    DWORD flags = UNDNAME_NAME_ONLY | UNDNAME_NO_ARGUMENTS | UNDNAME_32_BIT_DECODE;
+
+    // The first character ('.') is skipped as it simply denotes a class or struct
+    DWORD res = UnDecorateSymbolName(raw + 1, (char*)&demangledBuf, MAX_SYM_NAME, flags);
+    if (res == 0) {
+        return "dummy";
+    }
+    std::string demangled((char*)&demangledBuf);
+
+    return demangled;
 }
 
 uint32_t Process::getTickCount()

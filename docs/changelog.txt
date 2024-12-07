@@ -78,6 +78,7 @@ Template for new versions:
 - `timestream`: improve FPS by a further 10%
 - `fix/occupancy`: additionally handle the case where tile building occupancy needs to be set instead of cleared
 - `orders`: ``orders sort`` now moves orders that are tied to a specific workshop to the top of the list in the overall manager orders screen
+- `gui/pathable`: make wagon path to depot representation more robust
 
 ## Documentation
 - Dreamfort: add link to Dreamfort tutorial youtube series: https://www.youtube.com/playlist?list=PLzXx9JcB9oXxmrtkO1y8ZXzBCFEZrKxve

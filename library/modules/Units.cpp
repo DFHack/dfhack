@@ -649,7 +649,7 @@ bool Units::isDanger(df::unit *unit) {
         || isOpposedToLife(unit)
         || isAgitated(unit)
         || unit->flags2.bits.visitor_uninvited
-        || ((isGreatDanger(unit) || isNightCreature()) && !unit->flags2.bits.visitor);
+        || ((isGreatDanger(unit) || isNightCreature(unit)) && !unit->flags2.bits.visitor);
 }
 
 bool Units::isGreatDanger(df::unit *unit) {

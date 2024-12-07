@@ -757,45 +757,9 @@ bool Maps::ReadGeology(vector<vector<int16_t> > *layer_mats, vector<df::coord2d>
     return true;
 }
 
-uint16_t getNeighborWalkableGroup(df::map_block * block, df::coord pos) {
-    auto neighborGroup = [block, pos](int dx, int dy) {
-        return index_tile(block->walkable, pos + df::coord(dx, dy, 0));
-    };
-
-    constexpr std::array<std::pair<int, int>, 8> directions = {{
-        {-1, -1}, {0, -1}, {1, -1},
-        {-1,  0},           {1,  0},
-        {-1,  1}, {0,  1}, {1,  1}
-    }};
-
-    for (const auto& [dx, dy] : directions) {
-        uint16_t g = neighborGroup(dx, dy);
-        if (g) return g;
-    }
-    return 0;
-}
-
-uint16_t Maps::getWalkableGroup(df::coord pos)
-{
+uint16_t Maps::getWalkableGroup(df::coord pos) {
     auto block = getTileBlock(pos);
-    if (!block) return 0;
-
-    /*
-     * RAMP_TOP tiles do not have a walkability group assigned to them directly.
-     * To determine walkability, we assign the group of an adjacent tile,
-     * with the constraint that the assigned group matches the walkability group
-     * of the same tile one z-level below.
-     */
-    auto tt = getTileType(pos);
-    if (tt && tileShape(*tt) == df::tiletype_shape::RAMP_TOP) {
-        auto below_group = getWalkableGroup(pos + df::coord(0, 0, -1));
-        if (below_group != 0) {
-            auto neigh_group = getNeighborWalkableGroup(block, pos);
-            return below_group == neigh_group ? neigh_group : 0;
-        }
-    }
-
-    return index_tile(block->walkable, pos);
+    return block ? index_tile(block->walkable, pos) : 0;
 }
 
 bool Maps::canWalkBetween(df::coord pos1, df::coord pos2)

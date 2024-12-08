@@ -93,6 +93,7 @@ Template for new versions:
 
 ## Removed
 - UI focus strings for squad panel flows combined into a single tree: ``dwarfmode/SquadEquipment`` -> ``dwarfmode/Squads/Equipment``, ``dwarfmode/SquadSchedule`` -> ``dwarfmode/Squads/Schedule``
+- `faststart`: removed since the vanilla startup sequence is now sufficiently fast
 
 # 50.14-r1
 

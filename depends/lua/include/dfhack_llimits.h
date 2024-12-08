@@ -54,8 +54,19 @@ struct lua_extra_state {
 #define lua_lock(L) EnterCriticalSection(luai_mutex(L))
 #define lua_unlock(L) LeaveCriticalSection(luai_mutex(L))
 #else
-#define luai_userstateopen(L) luai_mutex(L) = (mutex_t*)malloc(sizeof(mutex_t)); *luai_mutex(L) = PTHREAD_MUTEX_INITIALIZER
-#define luai_userstateclose(L) lua_unlock(L); pthread_mutex_destroy(luai_mutex(L)); free(luai_mutex(L))
+#define luai_userstateopen(L) do { \
+      luai_mutex(L) = (mutex_t*)malloc(sizeof(mutex_t)); \
+      pthread_mutexattr_t attr; \
+      pthread_mutexattr_init(&attr); \
+      pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); \
+      pthread_mutex_init(luai_mutex(L), &attr); \
+      pthread_mutexattr_destroy(&attr); \
+   } while (0)
+#define luai_userstateclose(L) do { \
+      lua_unlock(L); \
+      pthread_mutex_destroy(luai_mutex(L)); \
+      free(luai_mutex(L)); \
+   } while (0)
 #define lua_lock(L) pthread_mutex_lock(luai_mutex(L))
 #define lua_unlock(L) pthread_mutex_unlock(luai_mutex(L))
 #endif

@@ -7,7 +7,6 @@
 # Enable system services
 enable buildingplan
 enable burrow
-enable faststart
 enable logistics
 enable overlay
 enable preserve-rooms

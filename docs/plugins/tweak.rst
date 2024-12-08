@@ -53,6 +53,19 @@ Commands
     Names filled waterskins, flasks, and vials according to their contents,
     the same way other containers such as barrels, bins, and cages are named.
     (:bug:`4914`)
+``realistic-melting``
+    Makes amortized metal bar returns for melting uniform across all item types.
+    Affects weapons, shields, armor parts, tools, and trap components. The target
+    amount of metal produced by melting is 95% of the metal used for production
+    of the item. Each level of wear decreases melt return by a further 10%. The game
+    has a fixed granularity of 0.3 for metal bar returns, so individual items will
+    randomly return an amount that may be above or below the target. For example
+    a metal cap with item size 1 will produce 0.9 of a bar with a 16.6% chance of
+    producing an additional 0.3 of a bar. Over time, the average return for melting
+    these types of caps will be ~0.95 of a bar. Calculations for melting return are
+    done for items with base game production cost. Melting return might not be
+    calculated correctly for modded items or items created in custom reactions
+    that don't respect vanilla production costs. (:bug:`6027`)
 ``named-codices``
     Displays titles for books instead of the default material description.
 ``partial-items``

@@ -69,20 +69,20 @@ Here are some package install commands for various distributions:
 
 * On Arch Linux::
 
-    pacman -Sy gcc cmake ccmake ninja git dwarffortress zlib perl-xml-libxml perl-xml-libxslt
+    pacman -Sy gcc cmake ccache ninja git dwarffortress zlib perl-xml-libxml perl-xml-libxslt
 
   * The ``dwarffortress`` package provides the necessary SDL packages.
   * For the required Perl modules: ``perl-xml-libxml`` and ``perl-xml-libxslt`` (or through ``cpan``)
 
 * On Ubuntu::
 
-    apt-get install gcc cmake ninja-build git zlib1g-dev libsdl2-dev libxml-libxml-perl libxml-libxslt-perl
+    apt-get install gcc cmake ccache ninja-build git zlib1g-dev libsdl2-dev libxml-libxml-perl libxml-libxslt-perl
 
   * Other Debian-based distributions should have similar requirements.
 
 * On Fedora::
 
-    yum install gcc-c++ cmake ninja-build git zlib-devel SDL2-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
+    yum install gcc-c++ cmake ccache ninja-build git zlib-devel SDL2-devel perl-core perl-XML-LibXML perl-XML-LibXSLT ruby
 
 To build DFHack, you need GCC 10 or newer. Note that extremely new GCC versions
 may not have been used to build DFHack yet, so if you run into issues with

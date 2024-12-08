@@ -315,6 +315,10 @@ All types and the global object have the following features:
 
 All compound types (structs, classes, unions, and the global object) support:
 
+* ``type._union``
+
+  ``true`` if the type represents a union, otherwise ``nil``.
+
 * ``type._fields``
 
   Contains a table mapping field names to descriptions of the type's fields,
@@ -947,7 +951,7 @@ can be omitted.
 
 * ``dfhack.TranslateName(name[,in_english[,only_last_name]])``
 
-  Convert a language_name or only the last name part to string.
+  Convert a ``df.language_name`` (or only the last name part) to string.
 
 * ``dfhack.df2utf(string)``
 
@@ -1702,6 +1706,11 @@ Units module
   so it may be prudent to check if the operation has succeeded by using
   ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit
   in question.
+
+* ``dfhack.units.setPathGoal(unit, pos, goal)``
+
+  Set target coordinates and goal (of type ``df.unit_path_goal``) for the given
+  unit. In case of a change, also clears the unit's current path.
 
 * ``dfhack.units.create(race, caste)``
 
@@ -5348,11 +5357,9 @@ If the panel has already been maximized in this fashion, then it will jump to
 its minimum size. Both jumps respect the resizable edges defined by the
 ``resize_anchors`` attribute.
 
-The time duration that a double click can span is defined by the global variable
-``DOUBLE_CLICK_MS``. The default value is ``500`` and can be changed by the end
-user with a command like::
-
-  :lua require('gui.widgets').DOUBLE_CLICK_MS=1000
+The time duration that a double click can span can be controlled via the
+`control-panel` or `gui/control-panel` interfaces (``Mouse double click speed``
+option). It defaults to 500 ms.
 
 Window class
 ------------
@@ -5511,6 +5518,155 @@ The ``EditField`` class also provides the following functions:
 
   Inserts the given text at the current cursor position.
 
+TextArea class
+--------------
+
+Subclass of Panel; implements a multi-line text field with features such as
+text wrapping, mouse control, text selection, clipboard support, history,
+and typical text editor shortcuts.
+
+Cursor Behavior
+~~~~~~~~~~~~~~~
+
+The cursor in the ``TextArea`` class is index-based, starting from 1,
+consistent with Lua's text indexing conventions.
+
+Each character, including newlines (``string.char(10)``),
+occupies a single index in the text content.
+
+Cursor movement and position are fully aware of line breaks,
+meaning they count as one unit in the offset.
+
+The cursor always points to the position between characters,
+with 1 being the position before the first character and
+``#text + 1`` representing the position after the last character.
+
+Cursor positions are preserved during text operations like insertion,
+deletion, or replacement. If changes affect the cursor's position,
+it will be adjusted to the nearest valid index.
+
+TextArea Attributes:
+
+* ``init_text``: The initial text content for the text area.
+
+* ``init_cursor``: The initial cursor position within the text content.
+  If not specified, defaults to end of the text (length of ``init_text`` + 1).
+
+* ``text_pen``: Optional pen used to draw the text. Default is ``COLOR_LIGHTCYAN``.
+
+* ``select_pen``: Optional pen used for text selection. Default is ``COLOR_CYAN``.
+
+* ``ignore_keys``: List of input keys to ignore.
+  Functions similarly to the ``ignore_keys`` attribute in the ``EditField`` class.
+
+* ``on_text_change``: Callback function called whenever the text changes.
+  The function signature should be ``on_text_change(new_text, old_text)``.
+
+* ``on_cursor_change``: Callback function called whenever the cursor position changes.
+  Expected function signature is ``on_cursor_change(new_cursor, old_cursor)``.
+
+* ``one_line_mode``: If set to ``true``, disables multi-line text features.
+  In this mode the :kbd:`Enter` key is not handled by the widget
+  as if it were included in ``ignore_keys``.
+  If multiline text (including ``\n`` chars) is pasted into the widget, newlines are removed.
+
+TextArea Functions:
+
+* ``textarea:getText()``
+
+    Returns the current text content of the ``TextArea`` widget as a string.
+    "\n" characters (``string.char(10)``) should be interpreted as new lines
+
+* ``textarea:setText(text)``
+
+    Sets the content of the ``TextArea`` to the specified string ``text``.
+    The cursor position will not be adjusted, so should be set separately.
+
+* ``textarea:getCursor()``
+
+    Returns the current cursor position within the text content.
+    The position is represented as a single integer, starting from 1.
+
+* ``textarea:setCursor(cursor)``
+
+    Sets the cursor position within the text content.
+
+* ``textarea:scrollToCursor()``
+
+    Scrolls the text area view to ensure that the current cursor position is visible.
+    This happens automatically when the user interactively moves the cursor or
+    pastes text into the widget, but may need to be called when ``setCursor`` is
+    called programmatically.
+
+* ``textarea:clearHistory()``
+
+    Clears undo/redo history of the widget.
+
+Functionality
+~~~~~~~~~~~~~
+
+The TextArea widget provides a familiar and intuitive text editing experience with baseline features such as:
+
+- Text Wrapping: Automatically fits text within the display area.
+- Mouse and Keyboard Support: Standard keys like :kbd:`Home`, :kbd:`End`, :kbd:`Backspace`, and :kbd:`Delete` are supported,
+  along with gestures like double-click to select a word or triple-click to select a line.
+- Clipboard Operations: copy, cut, and paste,
+  with intuitive defaults when no text is selected.
+- Undo/Redo: :kbd:`Ctrl` + :kbd:`Z` and :kbd:`Ctrl` + :kbd:`Y` for quick changes.
+- Additional features include advanced navigation, line management,
+  and smooth scrolling for handling long text efficiently.
+
+Detailed list:
+
+- Cursor Control: Navigate through text using arrow keys (Left, Right, Up,
+  and Down) for precise cursor placement.
+- Mouse Control: Use the mouse to position the cursor within the text,
+  providing an alternative to keyboard navigation.
+- Text Selection: Select text with the mouse, with support for replacing or
+  removing selected text.
+- Select Word/Line: Use double click to select current word, or triple click to
+  select current line.
+- Move By Word: Use :kbd:`Ctrl` + :kbd:`Left` and :kbd:`Ctrl` + :kbd:`Right` to
+  move the cursor one word back or forward.
+- Line Navigation: :kbd:`Home` moves the cursor to the beginning of the current
+  line, and :kbd:`End` moves it to the end.
+- Jump to Beginning/End: Quickly move the cursor to the beginning or end of the
+  text using :kbd:`Ctrl` + :kbd:`Home` and :kbd:`Ctrl` + :kbd:`End`.
+- Longest X Position Memory: The cursor remembers the longest x position when
+  moving up or down, making vertical navigation more intuitive.
+- New Lines: Easily insert new lines using the :kbd:`Enter` key, supporting
+  multiline text input.
+- Text Wrapping: Text automatically wraps within the editor, ensuring lines fit
+  within the display without manual adjustments.
+- Scrolling for long text entries.
+- Backspace Support: Use the backspace key to delete characters to the left of
+  the cursor.
+- Delete Character: :kbd:`Delete` deletes the character under the cursor.
+- Delete Current Line: :kbd:`Ctrl` + :kbd:`U` deletes the entire current line
+  where the cursor is located.
+- Delete Rest of Line: :kbd:`Ctrl` + :kbd:`K` deletes text from the cursor to
+  the end of the line.
+- Delete Last Word: :kbd:`Ctrl` + :kbd:`W` removes the word immediately before
+  the cursor.
+- Select All: Select entire text by :kbd:`Ctrl` + :kbd:`A`.
+- Undo/Redo: Undo/Redo changes by :kbd:`Ctrl` + :kbd:`Z` / :kbd:`Ctrl` +
+  :kbd:`Y`.
+- Clipboard Operations: Perform OS clipboard cut, copy, and paste operations on
+  selected text, allowing you to paste the copied content into other
+  applications.
+- Copy Text: Use :kbd:`Ctrl` + :kbd:`C` to copy selected text.
+  - copy selected text, if available
+  - if no text is selected it copy the entire current line, including the
+  terminating newline if present
+- Cut Text: Use :kbd:`Ctrl` + :kbd:`X` to cut selected text.
+  - cut selected text, if available
+  - if no text is selected it will cut the entire current line, including the
+  terminating newline if present
+- Paste Text: Use :kbd:`Ctrl` + :kbd:`V` to paste text from the clipboard into
+  the editor.
+  - replace selected text, if available
+  - If no text is selected, paste text in the cursor position
+
 Scrollbar class
 ---------------
 
@@ -5554,16 +5710,14 @@ while scrolling will result in faster movement.
 You can click and drag the scrollbar to scroll to a specific spot, or you can
 click and hold on the end arrows or in the unfilled portion of the scrollbar to
 scroll multiple times, just like in a normal browser scrollbar. The speed of
-scroll events when the mouse button is held down is controlled by two global
-variables:
+scroll events when the mouse button is held down can be controlled
+via the `control-panel` or `gui/control-panel` interfaces:
 
-:``SCROLL_INITIAL_DELAY_MS``: The delay before the second scroll event.
-:``SCROLL_DELAY_MS``: The delay between further scroll events.
+1. The delay before the second scroll event is the ``Mouse initial scroll repeat
+   delay`` setting (default is 300 ms)
 
-The defaults are 300 and 20, respectively, but they can be overridden by the
-user in their :file:`dfhack-config/init/dfhack.init` file, for example::
-
-  :lua require('gui.widgets').SCROLL_DELAY_MS = 100
+2. The delay between further scroll events is the ``Mouse scroll repeat delay`` option
+   (default is 20 ms)
 
 Label class
 -----------
@@ -6194,9 +6348,16 @@ TabBar class
 ------------
 
 This widget implements a set of one or more tabs to allow navigation between groups
-of content. Tabs automatically wrap on the width of the window and will continue
-rendering on the next line(s) if all tabs cannot fit on a single line.
+of content.
 
+:wrap: If true, tabs automatically wrap on the width of the window and will
+       continue rendering on the next line(s) if all tabs cannot fit on a single line.
+       If false, tabs will be truncated and can be scrolled using ``scroll_key``
+       and ``scroll_key_back``, mouse wheel or by clicking on the scroll labels
+       that will automatically appear on the left and right sides of the tab bar
+       as needed. When clicking on a tab or using ``key`` or ``key_back`` to switch tabs,
+       the selected tab will be scrolled into view if it is not already visible.
+       Defaults to true.
 :key: Specifies a keybinding that can be used to switch to the next tab.
       Defaults to ``CUSTOM_CTRL_T``.
 :key_back: Specifies a keybinding that can be used to switch to the previous
@@ -6222,6 +6383,28 @@ rendering on the next line(s) if all tabs cannot fit on a single line.
            itself as the second. The default implementation, which will handle most
            situations, returns ``self.active_tab_pens``, if ``self.get_cur_page() == idx``,
            otherwise returns ``self.inactive_tab_pens``.
+:scroll_key: Specifies a keybinding that can be used to scroll the tabs to the right.
+             Defaults to ``CUSTOM_ALT_T``.
+:scroll_key_back: Specifies a keybinding that can be used to scroll the tabs to the left.
+                  Defaults to ``CUSTOM_ALT_Y``.
+:scroll_left_text: The text to display on the left scroll label.
+                   Defaults to "<<<".
+:scroll_right_text: The text to display on the right scroll label.
+                    Defaults to ">>>".
+:scroll_label_text_pen: The pen to use for the scroll label text.
+                        Defaults to ``Label`` default.
+:scroll_label_text_hpen: The pen to use for the scroll label text when hovered.
+                         Defaults to ``scroll_label_text_pen`` with the background
+                         and foreground colors swapped.
+:scroll_step: The number of units to scroll tabs by.
+              Defaults to 10.
+:fast_scroll_multiplier: The multiplier for fast scrolling (holding shift).
+                         Defaults to 3.
+:scroll_into_view_offset: After a selected tab is scrolled into view, this offset
+                          is added to the scroll position to ensure the tab is
+                          not flush against the edge of the tab bar, allowing
+                          some space for the user to see the next tab.
+                          Defaults to 5.
 
 Tab class
 ---------

@@ -93,6 +93,7 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::init;
 using df::global::world;
+using std::string;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
@@ -452,13 +453,16 @@ void get_commands(color_ostream &con, std::vector<std::string> &commands) {
         con.printerr("Failed Lua call to helpdb.get_commands.\n");
     }
 
-    Lua::GetVector(L, commands);
+    Lua::GetVector(L, commands, top + 1);
 }
 
 static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
 {
     std::vector<std::string> commands, possible;
 
+    // restore call to get_commands once we have updated the core lock to a deferred lock
+    // so calling Lua from the console thread won't deadlock if Lua is currently busy
+    //get_commands(con, commands);
     for (auto &command : commands)
         if (command.substr(0, first.size()) == first)
             possible.push_back(command);
@@ -1492,7 +1496,7 @@ Core::Core() :
     color_ostream::log_errors_to_stderr = true;
 };
 
-void Core::fatal (std::string output)
+void Core::fatal (std::string output, const char * title)
 {
     errorstate = true;
     std::stringstream out;
@@ -1509,7 +1513,9 @@ void Core::fatal (std::string output)
     fprintf(stderr, "%s\n", out.str().c_str());
     out << "Check file stderr.log for details.\n";
     std::cout << "DFHack fatal error: " << out.str() << std::endl;
-    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, "DFHack error!", out.str().c_str(), NULL);
+    if (!title)
+        title = "DFHack error!";
+    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, title, out.str().c_str(), NULL);
 
     bool is_headless = bool(getenv("DFHACK_HEADLESS"));
     if (is_headless)
@@ -1611,7 +1617,27 @@ bool Core::InitMainThread() {
         }
         else
         {
-            fatal("Not a known DF version.\n");
+            std::stringstream msg;
+            msg << "Not a supported DF version.\n"
+                   "\n"
+                   "Please make sure that you have a version of DFHack installed that\n"
+                   "matches the version of Dwarf Fortress.\n"
+                   "\n"
+                   "DFHack version: " << Version::dfhack_version() << "\n"
+                   "\n";
+            auto supported_versions = vif->getVersionInfosForCurOs();
+            if (supported_versions.size()) {
+                msg << "Dwarf Fortress releases supported by this version of DFHack:\n\n";
+                for (auto & sv : supported_versions) {
+                    string ver = sv->getVersion();
+                    if (ver.starts_with("v0.")) {  // translate "v0.50" to the standard format: "v50"
+                        ver = "v" + ver.substr(3);
+                    }
+                    msg << "    " << ver << "\n";
+                }
+                msg << "\n";
+            }
+            fatal(msg.str(), "DFHack version mismatch");
         }
         errorstate = true;
         return false;
@@ -1621,6 +1647,44 @@ bool Core::InitMainThread() {
 
     // Init global object pointers
     df::global::InitGlobals();
+
+    // check key game structure sizes against the global table
+    // this check is (silently) skipped if either `game` or `global_table` is not defined
+    // to faciliate the linux symbol discovery process (which runs without any symbols)
+    // or if --skip-size-check is discovered on the command line
+
+    if (df::global::global_table && df::global::game &&
+        df::global::game->command_line.original.find("--skip-size-check") == std::string::npos)
+    {
+        std::stringstream msg;
+        bool gt_error = false;
+        static const std::map<const std::string, const size_t> sizechecks{
+            { "world", sizeof(df::world) },
+            { "game", sizeof(df::gamest) },
+            { "plotinfo", sizeof(df::plotinfost) },
+        };
+
+        for (auto& gte : *df::global::global_table)
+        {
+            // this will exit the loop when the terminator is hit, in the event the global table size in structures is incorrect
+            if (gte.address == nullptr || gte.name == nullptr)
+                break;
+            std::string name{ gte.name };
+            if (sizechecks.contains(name) && gte.size != sizechecks.at(name))
+            {
+                msg << "Global '" << name << "' size mismatch: is " << gte.size << ", expected " << sizechecks.at(name) << "\n";
+                gt_error = true;
+            }
+        }
+
+        if (gt_error)
+        {
+            msg << "DFHack cannot safely run under these conditions.\n";
+            fatal(msg.str(), "DFHack fatal error");
+            errorstate = true;
+            return false;
+        }
+    }
 
     perf_counters.reset();
 

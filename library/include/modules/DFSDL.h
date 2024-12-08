@@ -1,5 +1,6 @@
 #pragma once
 
+#include "Error.h"
 #include "Export.h"
 #include "ColorText.h"
 

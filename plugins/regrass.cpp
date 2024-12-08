@@ -2,6 +2,7 @@
 
 #include "DataDefs.h"
 #include "Debug.h"
+#include "Error.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 #include "TileTypes.h"

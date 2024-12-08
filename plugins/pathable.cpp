@@ -337,7 +337,8 @@ static void check_wagon_tile(FloodCtx & ctx, const df::coord & pos) {
         return;
     }
 
-    if (is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos) &&
+    if (is_wagon_traversible(ctx, pos, pos) &&
+        is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos) &&
         is_wagon_traversible(ctx, pos+df::coord( 0, -1, 0), pos) &&
         is_wagon_traversible(ctx, pos+df::coord( 1, -1, 0), pos) &&
         is_wagon_traversible(ctx, pos+df::coord(-1,  0, 0), pos) &&

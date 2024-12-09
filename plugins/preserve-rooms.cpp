@@ -507,6 +507,11 @@ static void process_rooms(color_ostream &out,
     auto it = last_known.begin();
     auto it_end = last_known.end();
     for (auto zone : vec) {
+        auto idx = linear_index(df::global::world->buildings.all, (df::building*)(zone));
+        if (idx == -1) {
+            WARN(cycle, out).print("invalid building pointer %p in building vector\n", zone);
+            continue;
+        }
         if (!zone->assigned_unit) {
             handle_missing_assignments(out, active_unit_ids, &it, it_end, share_with_spouse, zone->id);
             continue;

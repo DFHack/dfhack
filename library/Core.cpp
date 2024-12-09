@@ -1669,9 +1669,11 @@ bool Core::InitMainThread() {
     // to faciliate the linux symbol discovery process (which runs without any symbols)
     // or if --skip-size-check is discovered on the command line
 
-    if (df::global::global_table && df::global::game &&
-        df::global::game->command_line.original.find("--skip-size-check") == std::string::npos)
+    if (!df::global::global_table || !df::global::game ||
+        df::global::game->command_line.original.find("--skip-size-check") != std::string::npos)
     {
+        std::cerr << "Skipping structure size verification check." << std::endl;
+    } else {
         std::stringstream msg;
         bool gt_error = false;
         static const std::map<const std::string, const size_t> sizechecks{
@@ -1700,6 +1702,8 @@ bool Core::InitMainThread() {
             errorstate = true;
             return false;
         }
+
+        std::cerr << "Structure size verification check passed." << std::endl;
     }
 
     perf_counters.reset();

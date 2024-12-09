@@ -237,7 +237,7 @@ static bool is_wagon_dynamic_traversible(df::tiletype_shape shape, const df::coo
 
 // NOTE: When i.e. tracks, stairs have a bridge over them, the tile will have
 // an occupancy of floored.
-static bool is_wagon_tile_traversible(df::tiletype& tt) {
+static bool is_wagon_tile_traversible(df::tiletype tt) {
     auto shape = tileShape(tt);
     auto special = tileSpecial(tt);
     auto material = tileMaterial(tt);
@@ -266,7 +266,10 @@ static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df
         return false;
 
     auto shape = tileShape(*tt);
-    auto& occ = *Maps::getTileOccupancy(pos);
+    auto occp = Maps::getTileOccupancy(pos);
+    if (!occp)
+        return false;
+    auto & occ = *occp;
     switch (occ.bits.building) {
         case tile_building_occ::Obstacle: // Statues, windmills (middle tile)
             //FALLTHROUGH
@@ -371,6 +374,12 @@ static bool wagon_flood(color_ostream &out, unordered_set<df::coord> * wagon_pat
     ctx.wagon_path.emplace(depot_pos);
     ctx.seen.emplace(depot_pos);
     ctx.search_edge.emplace(depot_pos);
+
+    auto & edge = plotinfo->map_edge;
+    size_t num_edge_tiles = edge.surface_x.size();
+    int max_edge_x = edge.surface_x[num_edge_tiles - 1];
+    int max_edge_y = edge.surface_y[num_edge_tiles - 1];
+
     while (!ctx.search_edge.empty()) {
         df::coord pos = ctx.search_edge.top();
         ctx.search_edge.pop();
@@ -379,9 +388,9 @@ static bool wagon_flood(color_ostream &out, unordered_set<df::coord> * wagon_pat
             Maps::getWalkableGroup(pos));
 
         // Ensure our wagon flood end points lands on an edge tile.
-        // When there is no path to the depot entry_tiles will not
+        // When there is no path to the depot search_edge will not
         // contain any edge tiles.
-        if ((pos.x == 0 || pos.y == 0) && entry_tiles.contains(pos)) {
+        if ((pos.x == 0 || pos.y == 0 || pos.x == max_edge_x || pos.y == max_edge_y) && entry_tiles.contains(pos)) {
             found = true;
             if (!wagon_path)
                 break;

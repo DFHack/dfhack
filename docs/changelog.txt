@@ -52,6 +52,24 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.14-r2
+
+## New Tools
 - `infinite-sky`: (reinstated, renamed from ``infiniteSky``) automatically create new z-levels of sky to build in
 - `forceequip`: (reinstated) forcibly move items into a unit's inventory
 

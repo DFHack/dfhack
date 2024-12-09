@@ -30,6 +30,7 @@
 #include "df/activity_event_writest.h"
 #include "df/activity_event_worshipst.h"
 #include "df/building_nest_boxst.h"
+#include "df/building_trapst.h"
 #include "df/init.h"
 #include "df/item_eggst.h"
 #include "df/unit.h"
@@ -579,6 +580,21 @@ static void adjust_activities(color_ostream &out, int32_t timeskip) {
     }
 }
 
+static void adjust_buildings(color_ostream &out, int32_t timeskip) {
+    // decrement trap timers
+    for (df::building_trapst *tr : world->buildings.other.TRAP) {
+        decrement_counter(tr, &df::building_trapst::ready_timeout, timeskip);
+        // used by pressure plates to delay until the plate is triggerable again
+        // other trap types never set this to a value higher than 1 so it is safe to decrement here
+        decrement_counter(tr, &df::building_trapst::state, timeskip);
+    }
+
+    for (df::building *bld : world->buildings.all) {
+        // assumes age > 0, but that will become true very quickly for all new buildings
+        increment_counter(bld, &df::building::age, timeskip);
+    }
+}
+
 static void adjust_items(color_ostream &out, int32_t timeskip) {
     // increment incubation counters for fertile eggs in non-forbidden nestboxes
     for (df::building_nest_boxst *nb : world->buildings.other.NEST_BOX) {
@@ -636,6 +652,7 @@ static void do_cycle(color_ostream &out) {
 
     adjust_units(out, timeskip);
     adjust_activities(out, timeskip);
+    adjust_buildings(out, timeskip);
     adjust_items(out, timeskip);
 }
 

@@ -57,6 +57,7 @@ struct lua_extra_state {
 #define luai_userstateopen(L) do { \
       luai_mutex(L) = (mutex_t*)malloc(sizeof(mutex_t)); \
       pthread_mutexattr_t attr; \
+      pthread_mutexattr_init(&attr); \
       pthread_mutexattr_settype(&attr, PTHREAD_MUTEX_RECURSIVE); \
       pthread_mutex_init(luai_mutex(L), &attr); \
    } while (0)

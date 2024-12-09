@@ -173,14 +173,18 @@ static bool get_pathability_groups(color_ostream &out, unordered_set<uint16_t> *
 static bool get_entry_tiles(unordered_set<df::coord> * entry_tiles, const unordered_set<uint16_t> & depot_pathability_groups) {
     auto & edge = plotinfo->map_edge;
     size_t num_edge_tiles = edge.surface_x.size();
-    uint32_t max_x, max_y, max_z;
-    Maps::getTileSize(max_x, max_y, max_z);
+    uint32_t count_x, count_y, count_z;
+    Maps::getTileSize(count_x, count_y, count_z);
+    if (!count_x || !count_y)
+        return false;
+    uint16_t max_x = count_x - 1;
+    uint16_t max_y = count_y - 1;
     bool found = false;
     for (size_t idx = 0; idx < num_edge_tiles; ++idx) {
         df::coord pos(edge.surface_x[idx], edge.surface_y[idx], edge.surface_z[idx]);
         auto wgroup = Maps::getWalkableGroup(pos);
         if (depot_pathability_groups.contains(wgroup) &&
-                (pos.x == 0 || pos.y == 0 || pos.x == (int16_t)max_x || pos.y == (int16_t)max_y)) {
+                (pos.x == 0 || pos.y == 0 || pos.x == max_x || pos.y == max_y)) {
             found = true;
             if (!entry_tiles)
                 break;

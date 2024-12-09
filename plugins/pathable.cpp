@@ -242,7 +242,7 @@ static bool is_wagon_tile_traversible(df::tiletype tt) {
     auto special = tileSpecial(tt);
     auto material = tileMaterial(tt);
 
-    // Allow murky pool ramps
+    // Allow ramps (murky pool and river tiles are blocked except for ramps)
     if (shape == df::tiletype_shape::RAMP_TOP)
         return true;
     // NOTE: smoothing a boulder turns it into a smoothed floor
@@ -299,9 +299,6 @@ static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df
             break;
         case tile_building_occ::Floored:
             // depot, lowered bridges or retractable bridges, forbidden hatches
-            break;
-        default:
-            //NOTREACHED
             break;
     }
 

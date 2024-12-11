@@ -126,6 +126,7 @@ Matthew Cline
 Matthew Lindner         mlindner
 Matthew Taylor          ymber                   yutna
 Max                     maxthyme                Max^TM
+Maxim Verkhov           nibirubingus
 McArcady                McArcady
 melkor217               melkor217
 Meneth32

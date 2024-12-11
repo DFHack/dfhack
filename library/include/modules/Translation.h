@@ -56,7 +56,7 @@ DFHACK_EXPORT void setNickname(df::language_name *name, std::string nick);
 DFHACK_EXPORT std::string capitalize(const std::string &str, bool all_words = false);
 
 // translate a name using the loaded dictionaries
-DFHACK_EXPORT std::string TranslateName (const df::language_name * name, bool inEnglish = true,
+DFHACK_EXPORT std::string TranslateName (const df::language_name * name, bool inEnglish = false,
                                          bool onlyLastPart = false);
 }
 }

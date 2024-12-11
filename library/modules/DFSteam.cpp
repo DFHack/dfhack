@@ -19,9 +19,13 @@ static const int DFHACK_STEAM_APPID = 2346660;
 static bool g_steam_initialized = false;
 static DFLibrary* g_steam_handle = nullptr;
 static const std::vector<std::string> STEAM_LIBS {
-    "steam_api64.dll",
-    "libsteam_api.so",
+#ifdef WIN32
+    "steam_api64.dll"
+#elif defined(_DARWIN)
     "steam_api"  // TODO: validate this on OSX
+#else
+    "libsteam_api.so"
+#endif
 };
 
 bool (*g_SteamAPI_Init)() = nullptr;

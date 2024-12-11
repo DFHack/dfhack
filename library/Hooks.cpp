@@ -11,19 +11,25 @@ DFhackCExport const int32_t dfhooks_priority = 100;
 // and the main event loop is initiated
 DFhackCExport void dfhooks_init() {
     if (getenv("DFHACK_DISABLE")) {
-        fprintf(stdout, "dfhack: DFHACK_DISABLE detected in environment; disabling\n");
+        fprintf(stderr, "dfhack: DFHACK_DISABLE detected in environment; disabling\n");
         disabled = true;
         return;
     }
 
     // we need to init DF globals before we can check the commandline
-    if (!DFHack::Core::getInstance().InitMainThread() || !df::global::game)
+    if (!DFHack::Core::getInstance().InitMainThread() || !df::global::game) {
+        disabled = true;
         return;
+    }
+
     const std::string & cmdline = df::global::game->command_line.original;
     if (cmdline.find("--disable-dfhack") != std::string::npos) {
-        fprintf(stdout, "dfhack: --disable-dfhack specified on commandline; disabling\n");
+        fprintf(stderr, "dfhack: --disable-dfhack specified on commandline; disabling\n");
         disabled = true;
+        return;
     }
+
+    fprintf(stderr, "DFHack pre-init successful.\n");
 }
 
 // called from the main thread after the main event loops exits

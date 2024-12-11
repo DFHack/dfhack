@@ -57,7 +57,7 @@ David Timm              dtimm
 Dean Golden             LightHardt
 Deon
 dhthwy                  dhthwy
-dikbut                  Tjudge1
+dikbutdagrate           Tjudge1
 Dmitrii Kurkin          Kurkin
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
@@ -147,6 +147,7 @@ Myk Taylor              myk002
 Najeeb Al-Shabibi       master-spike
 napagokc                napagokc
 Neil Little             nmlittle
+Nicholas McDaniel       NicksWorld
 Nick Rart               nickrart                comestible
 Nicolas Ayala           nicolasayala
 Nik Nyby                nikolas
@@ -172,6 +173,7 @@ PopnROFL                PopnROFL
 potato
 ppaawwll                ppaawwll                🐇🐇🐇🐇
 Priit Laes              plaes
+Przemysław Skrobot      frogi16
 psychowico              wiktor-obrebski
 Putnam                  Putnam3145
 quarque2                quarque2

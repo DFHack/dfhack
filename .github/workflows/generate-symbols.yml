@@ -8,7 +8,7 @@ on:
         required: true
         default: master
       version:
-        description: DF version
+        description: DF version (can be "auto" if channel is steam)
         required: true
       platform:
         description: Target OS platform
@@ -44,7 +44,7 @@ on:
         type: string
 
 jobs:
-  package:
+  package-linux:
     uses: ./.github/workflows/build-linux.yml
     if: inputs.platform == 'all' || inputs.platform == 'linux'
     with:
@@ -57,12 +57,25 @@ jobs:
       plugins: false
     secrets: inherit
 
+  package-win64:
+    uses: ./.github/workflows/build-windows.yml
+    if: (inputs.platform == 'all' || inputs.platform == 'windows') && inputs.version == 'auto'
+    with:
+      dfhack_ref: ${{ github.ref }}
+      structures_ref: ${{ inputs.structures_ref }}
+      artifact-name: dfhack-symbols-windows64-build
+      append-date-and-hash: false
+      cache-id: release
+      cache-readonly: true
+      plugins: false
+    secrets: inherit
+
   generate-linux:
     name: Generate linux64 symbols
     runs-on: ubuntu-latest
     if: inputs.platform == 'all' || inputs.platform == 'linux'
     needs:
-    - package
+    - package-linux
     steps:
     - name: Install dependencies
       run: |
@@ -119,11 +132,29 @@ jobs:
           "+app_update 975370 $BETA_PARAMS validate" \
           +quit
         tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_steam
-        xml/symbols_gen_linux.sh ${{ inputs.version }} STEAM DF_steam
+        xml/symbols_gen_linux.sh ${{ inputs.version == 'auto' && '50.0' || inputs.version }} STEAM DF_steam
+        if [ "${{ inputs.version }}" = "auto" ]; then
+          while pgrep dwarfort; do
+            echo "waiting for DF to exit"
+            sleep 0.5
+          done
+          cp xml/symbols.xml DF_steam/hack
+          cd DF_steam
+          DFHACK_DISABLE_CONSOLE=1 ./dfhack &
+          while ! ./dfhack-run lua 'print(scr)' | fgrep 'viewscreen_titlest' 2>/dev/null; do
+            echo "waiting for DF to start"
+            sleep 0.5
+          done
+          df_ver=`./dfhack-run lua 'print(dfhack.gui.getDFViewscreen(true).str_version)' | ansifilter`
+          echo "Found version string: '$df_ver'"
+          echo "DETECTED_DF_VER=$df_ver" >>$GITHUB_ENV
+          sed -i "s/v0.50.0 linux64 STEAM/v0.$df_ver linux64 STEAM/" ../xml/symbols.xml
+          ./dfhack-run die || true
+        fi
 
     # Itch
     - name: Generate Itch symbols
-      if: inputs.channel == 'all' || inputs.channel == 'itch'
+      if: (inputs.channel == 'all' || inputs.channel == 'itch') && inputs.version != 'auto'
       env:
         DISPLAY: :0
         ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
@@ -139,7 +170,7 @@ jobs:
 
     # Classic
     - name: Generate Classic symbols
-      if: inputs.channel == 'all' || inputs.channel == 'classic'
+      if: (inputs.channel == 'all' || inputs.channel == 'classic') && inputs.version != 'auto'
       env:
         DISPLAY: :0
       run: |
@@ -164,7 +195,7 @@ jobs:
     - name: Commit symbol updates
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: Auto-update symbols
+        commit_message: Auto-update symbols for Linux DF version ${{ env.DETECTED_DF_VER || inputs.version }}
         repository: xml
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
@@ -227,11 +258,11 @@ jobs:
           +login $STEAM_USERNAME \
           "+app_update 975370 $BETA_PARAMS validate" \
           +quit
-        xml/symbols_gen_windows.sh ${{ inputs.version }} STEAM DF_steam
+        xml/symbols_gen_windows.sh ${{ inputs.version == 'auto' && '50.0' || inputs.version }} STEAM DF_steam
 
     # Itch
     - name: Generate Itch symbols
-      if: inputs.channel == 'all' || inputs.channel == 'itch'
+      if: (inputs.channel == 'all' || inputs.channel == 'itch') && inputs.version != 'auto'
       env:
         ITCH_API_KEY: ${{ secrets.ITCH_API_KEY }}
       run: |
@@ -245,7 +276,7 @@ jobs:
 
     # Classic
     - name: Generate Classic symbols
-      if: inputs.channel == 'all' || inputs.channel == 'classic'
+      if: (inputs.channel == 'all' || inputs.channel == 'classic') && inputs.version != 'auto'
       run: |
         mkdir DF_classic
         minor=$(echo "${{ inputs.version }}" | cut -d. -f1)
@@ -267,7 +298,86 @@ jobs:
     - name: Commit symbol updates
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: Auto-update symbols
+        commit_message: Auto-update symbols for Windows DF version ${{ inputs.version }}
+        repository: xml
+        commit_user_name: DFHack-Urist via GitHub Actions
+        commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
+
+  auto-ver-windows:
+    name: Autodetect DF version string (Windows)
+    if: (inputs.platform == 'all' || inputs.platform == 'windows') && (inputs.channel == 'all' || inputs.channel == 'steam') && inputs.version == 'auto'
+    needs:
+      - package-win64
+      - generate-windows
+    runs-on: windows-latest
+    steps:
+    - name: Clone structures
+      uses: actions/checkout@v4
+      with:
+        repository: DFHack/df-structures
+        ref: ${{ inputs.structures_ref }}
+        token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
+        path: xml
+    - name: Download DFHack
+      uses: actions/download-artifact@v4
+      with:
+        name: dfhack-symbols-windows64-build
+    - name: Setup steamcmd
+      id: steamcmd
+      uses: CyberAndrii/setup-steamcmd@v1
+    - name: Update DF version string
+      env:
+        STEAM_USERNAME: ${{ secrets.STEAM_USERNAME }}
+        STEAM_CONFIG_VDF: ${{ secrets.STEAM_CONFIG_VDF }}
+        STEAM_DF_TESTING: ${{ secrets.STEAM_DF_TESTING }}
+        STEAM_DF_ADVENTURE_TEST: ${{ secrets.STEAM_DF_ADVENTURE_TEST }}
+      shell: bash
+      run: |
+        mkdir DF_steam
+        echo "$STEAM_CONFIG_VDF" | base64 -d >${{ steps.steamcmd.outputs.directory }}/config/config.vdf
+        echo "DF steam branch: ${{ inputs.df_steam_branch }}"
+        if [ "${{ inputs.df_steam_branch }}" = "default" ]; then
+          BETA_PARAMS=""
+        elif [ "${{ inputs.df_steam_branch }}" = "testing" ]; then
+          BETA_PARAMS="-beta testing -betapassword $STEAM_DF_TESTING"
+        elif [ "${{ inputs.df_steam_branch }}" = "adventure_test" ]; then
+          BETA_PARAMS="-beta adventure_test -betapassword $STEAM_DF_ADVENTURE_TEST"
+        else
+          BETA_PARAMS="-beta ${{ inputs.df_steam_branch }}"
+        fi
+        ${{ steps.steamcmd.outputs.executable }} \
+          +@ShutdownOnFailedCommand 1 \
+          +@sSteamCmdForcePlatformType windows \
+          +force_install_dir $PWD/DF_steam \
+          +login $STEAM_USERNAME \
+          "+app_update 975370 $BETA_PARAMS validate" \
+          +quit
+        tar xjf dfhack-symbols-windows64-build.tar.bz2 -C DF_steam
+        cp xml/symbols.xml DF_steam/hack
+        cd DF_steam
+        "./Dwarf Fortress.exe" &
+        while ! ./dfhack-run.exe lua 'print(scr)' | fgrep 'viewscreen_titlest' 2>/dev/null; do
+          echo "waiting for DF to start"
+          sleep 0.5
+        done
+        df_ver=`./dfhack-run.exe lua 'print(dfhack.gui.getDFViewscreen(true).str_version)'`
+        echo "Found version string: '$df_ver'"
+        echo "DETECTED_DF_VER=$df_ver" >>$GITHUB_ENV
+        sed -i "s/v0.50.0 win64 STEAM/v0.$df_ver win64 STEAM/" ../xml/symbols.xml
+        ./dfhack-run.exe die || true
+    - name: Merge updates
+      shell: bash
+      run: |
+        cd xml
+        if ! git diff --exit-code; then
+          git stash
+          git pull
+          git stash pop
+        fi
+    - name: Commit symbol updates
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        commit_message: Auto-update Windows DF version to ${{ env.DETECTED_DF_VER }} in symbols
         repository: xml
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
@@ -277,7 +387,7 @@ jobs:
     runs-on: ubuntu-latest
     needs:
     - generate-linux
-    - generate-windows
+    - auto-ver-windows
     if: ${{ ! failure() }}
     steps:
     - name: Clone DFHack
@@ -285,15 +395,19 @@ jobs:
       with:
         token: ${{ secrets.DFHACK_GITHUB_TOKEN }}
     - name: Update ref
+      shell: bash
       run: |
         git submodule update --init --no-single-branch library/xml
         cd library/xml
         git checkout ${{ inputs.structures_ref }}
         git pull
+        df_ver=`grep -E 'symbol-table.*STEAM' symbols.xml | head -n1 | sed -r "s/.*name='v0.([^ ]+) .*/\1/"`
+        echo "using DF version: $df_ver"
+        echo "DETECTED_DF_VER=$df_ver" >>$GITHUB_ENV
     - name: Commit ref update
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        commit_message: Auto-update structures ref
+        commit_message: Auto-update structures ref for ${{ env.DETECTED_DF_VER }}
         commit_user_name: DFHack-Urist via GitHub Actions
         commit_user_email: 63161697+DFHack-Urist@users.noreply.github.com
     - name: Launch steam-deploy
@@ -301,4 +415,4 @@ jobs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      run: gh workflow run steam-deploy.yml -R DFHack/dfhack -r ${{ github.ref }} -f version=${{ inputs.version }} -f steam_branch=${{ inputs.steam_branch }}
+      run: gh workflow run steam-deploy.yml -R DFHack/dfhack -r ${{ github.ref }} -f version=${{ env.DETECTED_DF_VER }} -f steam_branch=${{ inputs.steam_branch }}

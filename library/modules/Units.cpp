@@ -73,6 +73,7 @@ distribution.
 #include "df/unit_action_type_group.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
+#include "df/unit_path_goal.h"
 #include "df/unit_relationship_type.h"
 #include "df/unit_skill.h"
 #include "df/unit_soul.h"
@@ -645,13 +646,14 @@ bool Units::isDanger(df::unit *unit) {
     if (isTame(unit) || isOwnGroup(unit))
         return false;
 
+    // NOTE: demons from hell have visitor/visitor_unvited set to false
+    // other demons may visit as a diplomat
     return isCrazed(unit)
         || isInvader(unit)
         || isOpposedToLife(unit)
         || isAgitated(unit)
-        || isSemiMegabeast(unit)
-        || isNightCreature(unit)
-        || isGreatDanger(unit);
+        || unit->flags2.bits.visitor_uninvited
+        || ((isGreatDanger(unit) || isNightCreature(unit)) && !unit->flags2.bits.visitor);
 }
 
 bool Units::isGreatDanger(df::unit *unit) {
@@ -939,6 +941,38 @@ void Units::makeown(df::unit *unit) {
     (*f)(unit);
 }
 
+void Units::setAutomaticProfessions(df::unit* unit) {
+    CHECK_NULL_POINTER(unit);
+    auto fp = df::global::unitst_set_automatic_professions;
+    CHECK_NULL_POINTER(fp);
+
+    using FT = std::function<void(df::unit*)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(unit);
+}
+
+
+// functionality reverse-engineered from DF's unitst::set_goal
+void Units::setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
+{
+    if (unit->path.dest != pos || unit->path.goal != goal)
+    {
+        unit->path.dest = pos;
+        unit->path.goal = goal;
+        unit->path.path.clear();
+    }
+
+    if (unit->flags1.bits.rider && unit->mount_type == df::rider_positions_type::STANDARD)
+    {
+        if (auto mount = df::unit::find(unit->relationship_ids[df::unit_relationship_type::RiderMount]))
+        {
+            mount->path.dest = pos;
+            mount->path.goal = goal;
+            mount->path.path.clear();
+        }
+    }
+}
+
 df::unit *Units::create(int16_t race, int16_t caste) {
     auto fp = df::global::unitst_more_convenient_create;
     CHECK_NULL_POINTER(fp);
@@ -1115,7 +1149,7 @@ string Units::getReadableName(df::historical_figure *hf) {
             prof_name = "Ghostly " + prof_name;
     }
 
-    string name = Translation::TranslateName(getVisibleName(hf), false);
+    string name = Translation::TranslateName(getVisibleName(hf));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1138,7 +1172,7 @@ string Units::getReadableName(df::unit *unit) {
     if (isTame(unit))
         prof_name += " (" + getTameTag(unit) + ")";
 
-    string name = Translation::TranslateName(getVisibleName(unit), false);
+    string name = Translation::TranslateName(getVisibleName(unit));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1660,7 +1694,7 @@ static string get_land_title(Units::NoblePosition *np)
         if (site_link->flags.bits.land_for_holding && site_link->position_profile_id == np->assignment->id)
         {
             auto site = df::world_site::find(site_link->target);
-            return site ? " of " + Translation::TranslateName(&site->name) : "";
+            return site ? " of " + Translation::TranslateName(&site->name, true) : "";
         }
     return "";
 }

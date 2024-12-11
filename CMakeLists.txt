@@ -8,7 +8,7 @@ project(dfhack)
 
 # set up versioning.
 set(DF_VERSION "50.14")
-set(DFHACK_RELEASE "r1.1")
+set(DFHACK_RELEASE "r2.1")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -56,7 +56,7 @@ endif()
 
 if(WIN32)
     set(MSVC_MIN_VER 1930)
-    set(MSVC_MAX_VER 1941)
+    set(MSVC_MAX_VER 1942)
     if(NOT MSVC)
         message(SEND_ERROR "No MSVC found! MSVC 2022 version ${MSVC_MIN_VER} to ${MSVC_MAX_VER} is required.")
     elseif((MSVC_VERSION LESS MSVC_MIN_VER) OR (MSVC_VERSION GREATER MSVC_MAX_VER))

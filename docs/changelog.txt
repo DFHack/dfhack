@@ -67,6 +67,12 @@ Template for new versions:
 
 ## Removed
 
+# 50.15-r1.1
+
+## Misc Improvements
+
+- Updated support for Classic (Itch not available for analysis yet)
+
 # 50.15-r1
 
 # Fixes

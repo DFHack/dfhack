@@ -17,6 +17,7 @@ using namespace DFHack;
 #include "tweaks/eggs-fertile.h"
 #include "tweaks/fast-heat.h"
 #include "tweaks/flask-contents.h"
+#include "tweaks/material-size-for-melting.h"
 #include "tweaks/named-codices.h"
 #include "tweaks/partial-items.h"
 #include "tweaks/reaction-gloves.h"
@@ -73,6 +74,15 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     TWEAK_HOOK("partial-items", partial_items_hook_thread, getItemDescription);
 
     TWEAK_HOOK("reaction-gloves", reaction_gloves_hook, produce);
+
+    TWEAK_HOOK("realistic-melting", material_size_for_melting_armor_hook, getMaterialSizeForMelting);
+    TWEAK_HOOK("realistic-melting", material_size_for_melting_gloves_hook, getMaterialSizeForMelting);
+    TWEAK_HOOK("realistic-melting", material_size_for_melting_shoes_hook, getMaterialSizeForMelting);
+    TWEAK_HOOK("realistic-melting", material_size_for_melting_helm_hook, getMaterialSizeForMelting);
+    TWEAK_HOOK("realistic-melting", material_size_for_melting_pants_hook, getMaterialSizeForMelting);
+    TWEAK_HOOK("realistic-melting", material_size_for_melting_weapon_hook, getMaterialSizeForMelting);
+    TWEAK_HOOK("realistic-melting", material_size_for_melting_trapcomp_hook, getMaterialSizeForMelting);
+    TWEAK_HOOK("realistic-melting", material_size_for_melting_tool_hook, getMaterialSizeForMelting);
 
     return CR_OK;
 }

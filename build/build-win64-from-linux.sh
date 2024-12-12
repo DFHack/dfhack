@@ -32,9 +32,7 @@ if [[ $(id -u) -eq 0 ]]; then
     chown -R $builder_uid win64-cross
 fi
 
-# Assumes you built a container image called dfhack-build-msvc from
-# https://github.com/BenLubar/build-env/tree/master/msvc, see
-# docs/dev/compile/Compile.rst.
+# Pulls the MSVC build env container from the GitHub registry
 #
 # NOTE: win64-cross is mounted in /src/build due to the hardcoded `cmake ..` in
 # the Dockerfile
@@ -44,7 +42,7 @@ if ! docker run --rm -i -v "$srcdir":/src -v "$srcdir/build/win64-cross/":/src/b
     -e steam_username \
     -e steam_password \
     --name dfhack-win \
-    ghcr.io/dfhack/build-env:msvc \
+    ghcr.io/dfhack/build-env:master \
     bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output -DBUILD_DOCS=1 $CMAKE_EXTRA_ARGS && dfhack-make -j$jobs install" \
     ; then
     echo

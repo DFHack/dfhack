@@ -1,6 +1,7 @@
 #include "itemfilter.h"
 
 #include "Debug.h"
+#include "MiscUtils.h"
 
 #include "df/item.h"
 

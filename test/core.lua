@@ -38,3 +38,15 @@ function test.getHackPath_chdir()
         expect.eq(clean_path(dfhack.getHackPath()), clean_path(fs.getcwd()))
     end)
 end
+
+-- validates that the size in df.globals.xml is correct
+function test.global_table_size()
+    local elem_size = df.global_table_entry:sizeof()
+    local actual_arr_size = 0
+    while df._displace(df.global.global_table[0], actual_arr_size, elem_size).address do
+        actual_arr_size = actual_arr_size + 1
+    end
+    local declared_arr_size = df.global.global_table:sizeof() // elem_size
+    expect.eq(declared_arr_size, actual_arr_size,
+        ('global_table size mismatch: expected: %d, actual: %d'):format(declared_arr_size, actual_arr_size))
+end

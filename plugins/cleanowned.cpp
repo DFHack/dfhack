@@ -168,7 +168,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             df::unit *owner = Items::getOwner(item);
 
             if (owner)
-                out.print(", owner %s", DF2CONSOLE(Translation::TranslateName(&owner->name,false)).c_str());
+                out.print(", owner %s", DF2CONSOLE(Translation::TranslateName(&owner->name)).c_str());
 
             if (!dry_run)
             {

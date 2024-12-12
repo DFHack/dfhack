@@ -33,6 +33,7 @@ using namespace std;
 
 #include "Core.h"
 #include "MemAccess.h"
+#include "MiscUtils.h"
 #include "TileTypes.h"
 #include "Types.h"
 #include "VersionInfo.h"

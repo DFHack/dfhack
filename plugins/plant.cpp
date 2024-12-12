@@ -1,6 +1,7 @@
 // Grow and remove shrubs or trees.
 
 #include "Debug.h"
+#include "Error.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 #include "TileTypes.h"

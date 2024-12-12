@@ -105,7 +105,7 @@ function BurrowDesignationOverlay:onInput(keys)
                 self.last_click_ms = now_ms
                 self.saved_pos = pos
             elseif fill ~= 'off' then
-                if now_ms - self.last_click_ms <= widgets.DOUBLE_CLICK_MS then
+                if now_ms - self.last_click_ms <= widgets.getDoubleClickMs() then
                     self.last_click_ms = 0
                     local do_3d = fill == '3d'
                     self.pending_fn = curry(flood_fill, pos, if_burrow.erasing, do_3d)

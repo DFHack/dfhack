@@ -1,7 +1,13 @@
 #include "Debug.h"
+#include "Error.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
 
+#include "df/building_type.h"
+#include "df/building_hatchst.h"
+#include "df/building_bars_floorst.h"
+#include "df/building_grate_floorst.h"
+#include "df/tile_building_occ.h"
 #include "modules/Buildings.h"
 #include "modules/Gui.h"
 #include "modules/Maps.h"
@@ -167,11 +173,18 @@ static bool get_pathability_groups(color_ostream &out, unordered_set<uint16_t> *
 static bool get_entry_tiles(unordered_set<df::coord> * entry_tiles, const unordered_set<uint16_t> & depot_pathability_groups) {
     auto & edge = plotinfo->map_edge;
     size_t num_edge_tiles = edge.surface_x.size();
+    uint32_t count_x, count_y, count_z;
+    Maps::getTileSize(count_x, count_y, count_z);
+    if (!count_x || !count_y)
+        return false;
+    uint16_t max_x = count_x - 1;
+    uint16_t max_y = count_y - 1;
     bool found = false;
     for (size_t idx = 0; idx < num_edge_tiles; ++idx) {
         df::coord pos(edge.surface_x[idx], edge.surface_y[idx], edge.surface_z[idx]);
         auto wgroup = Maps::getWalkableGroup(pos);
-        if (depot_pathability_groups.contains(wgroup)) {
+        if (depot_pathability_groups.contains(wgroup) &&
+                (pos.x == 0 || pos.y == 0 || pos.x == max_x || pos.y == max_y)) {
             found = true;
             if (!entry_tiles)
                 break;
@@ -202,20 +215,99 @@ struct FloodCtx {
         : wgroup(wgroup), wagon_path(wagon_path), entry_tiles(entry_tiles) {}
 };
 
-static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df::coord & prev_pos) {
-    if (auto bld = Buildings::findAtTile(pos)) {
-        auto btype = bld->getType();
-        if (btype == df::building_type::Trap || btype == df::building_type::Door)
-            return false;
-    }
+static bool is_wagon_dynamic_traversible(df::tiletype_shape shape, const df::coord & pos) {
+    auto bld = Buildings::findAtTile(pos);
+    if (!bld) return false;
 
+    auto btype = bld->getType();
+    // open hatch should be inaccessible regardless of the tile it sits on
+    if (btype == df::building_type::Hatch) {
+        if (shape == df::tiletype_shape::RAMP_TOP)
+            return false;
+
+        auto& hatch = *static_cast<df::building_hatchst*>(bld);
+        if (hatch.door_flags.bits.closed)
+            return true;
+    // open floor grate/bar should be inaccessible regardless of the tile it sits on
+    } else if (btype == df::building_type::GrateFloor) {
+        auto& b = *static_cast<df::building_grate_floorst*>(bld);
+        if (b.gate_flags.bits.closed)
+            return true;
+    } else if (btype == df::building_type::BarsFloor) {
+        auto& b = *static_cast<df::building_bars_floorst*>(bld);
+        if (b.gate_flags.bits.closed)
+            return true;
+    }
+    // Doors, traps..etc
+    return false;
+}
+
+// NOTE: When i.e. tracks, stairs have a bridge over them, the tile will have
+// an occupancy of floored.
+static bool is_wagon_tile_traversible(df::tiletype tt) {
+    auto shape = tileShape(tt);
+    auto special = tileSpecial(tt);
+    auto material = tileMaterial(tt);
+
+    // Allow ramps (murky pool and river tiles are blocked except for ramps)
+    if (shape == df::tiletype_shape::RAMP_TOP)
+        return true;
+    // NOTE: smoothing a boulder turns it into a smoothed floor
+    else if (shape == df::tiletype_shape::STAIR_UP || shape == df::tiletype_shape::STAIR_DOWN ||
+            shape == df::tiletype_shape::STAIR_UPDOWN || shape == df::tiletype_shape::BOULDER ||
+            shape == df::tiletype_shape::EMPTY || shape == df::tiletype_shape::NONE)
+        return false;
+    else if (special == df::tiletype_special::TRACK)
+        return false;
+    // Fires seem to have their own path group, and group for lava is 0
+    // According to wiki, the wagon won't path thru pool and river tiles, but ramps are ok
+    else if (material == df::tiletype_material::POOL || material == df::tiletype_material::RIVER)
+        return false;
+
+    return true;
+}
+
+static bool is_wagon_traversible(FloodCtx & ctx, const df::coord & pos, const df::coord & prev_pos) {
     auto tt = Maps::getTileType(pos);
     if (!tt)
         return false;
 
     auto shape = tileShape(*tt);
-    if (shape == df::tiletype_shape::STAIR_UP || shape == df::tiletype_shape::STAIR_UPDOWN)
+    auto occp = Maps::getTileOccupancy(pos);
+    if (!occp)
         return false;
+    auto & occ = *occp;
+    switch (occ.bits.building) {
+        case tile_building_occ::Obstacle: // Statues, windmills (middle tile)
+            //FALLTHROUGH
+        case tile_building_occ::Well:
+            //FALLTHROUGH
+        case tile_building_occ::Impassable: // Raised bridges
+            return false;
+
+        case tile_building_occ::Dynamic:
+            // doors(block), levers (block), traps (block), hatches (OK, but block on down ramp)
+            // closed floor grates (OK), closed floor bars (OK)
+            if (is_wagon_dynamic_traversible(shape, pos) == false)
+                return false;
+            break;
+
+        case tile_building_occ::None: // Not occupied by a building
+            //FALLTHROUGH
+        case tile_building_occ::Planned:
+            //FALLTHROUGH
+        case tile_building_occ::Passable:
+            // Any tile with no building or a passable building including
+            // beds, supports, rollers, armor/weapon stands, cages (not traps),
+            // open wall grate/vertical bars, retracted bridges, open floodgates,
+            // workshops (tiles with open space are handled by the tile check)
+            if (is_wagon_tile_traversible(*tt) == false)
+                return false;
+            break;
+        case tile_building_occ::Floored:
+            // depot, lowered bridges or retractable bridges, forbidden hatches
+            break;
+    }
 
     if (ctx.wgroup == Maps::getWalkableGroup(pos))
         return true;
@@ -247,12 +339,13 @@ static void check_wagon_tile(FloodCtx & ctx, const df::coord & pos) {
     ctx.seen.emplace(pos);
 
     if (ctx.entry_tiles.contains(pos)) {
-        ctx.wagon_path.emplace(pos);
+        ctx.wagon_path.emplace(pos); // Is this needed?
         ctx.search_edge.emplace(pos);
         return;
     }
 
-    if (is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos) &&
+    if (is_wagon_traversible(ctx, pos, pos) &&
+        is_wagon_traversible(ctx, pos+df::coord(-1, -1, 0), pos) &&
         is_wagon_traversible(ctx, pos+df::coord( 0, -1, 0), pos) &&
         is_wagon_traversible(ctx, pos+df::coord( 1, -1, 0), pos) &&
         is_wagon_traversible(ctx, pos+df::coord(-1,  0, 0), pos) &&
@@ -285,6 +378,7 @@ static bool wagon_flood(color_ostream &out, unordered_set<df::coord> * wagon_pat
     ctx.wagon_path.emplace(depot_pos);
     ctx.seen.emplace(depot_pos);
     ctx.search_edge.emplace(depot_pos);
+
     while (!ctx.search_edge.empty()) {
         df::coord pos = ctx.search_edge.top();
         ctx.search_edge.pop();

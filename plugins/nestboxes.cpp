@@ -118,15 +118,13 @@ static void do_cycle(color_ostream &out) {
     cycle_timestamp = world->frame_counter;
 
     for (df::building_nest_boxst *nb : world->buildings.other.NEST_BOX) {
-        bool fertile = false;
-        if (nb->claimed_by != -1) {
-            df::unit *u = df::unit::find(nb->claimed_by);
-            if (u && u->pregnancy_timer > 0)
-                fertile = true;
-        }
         for (auto &contained_item : nb->contained_items) {
-            auto *item = virtual_cast<df::item_eggst>(contained_item->item);
-            if (item && item->flags.bits.forbid != fertile) {
+            if (contained_item->use_mode == df::building_item_role_type::PERM)
+                continue;
+            if (auto *item = virtual_cast<df::item_eggst>(contained_item->item)) {
+                bool fertile = item->egg_flags.bits.fertile;
+                if (item->flags.bits.forbid == fertile)
+                    continue;
                 item->flags.bits.forbid = fertile;
                 if (fertile && item->flags.bits.in_job) {
                     // cancel any job involving the egg
@@ -135,7 +133,7 @@ static void do_cycle(color_ostream &out) {
                     if (sref && sref->data.job)
                         Job::removeJob(sref->data.job);
                 }
-                out.print("%d eggs %s.\n", item->getStackSize(), fertile ? "forbidden" : "unforbidden");
+                out.print("nestboxes: %d eggs %s\n", item->getStackSize(), fertile ? "forbidden" : "unforbidden");
             }
         }
     }

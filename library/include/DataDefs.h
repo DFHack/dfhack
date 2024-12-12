@@ -33,11 +33,7 @@ distribution.
 #include <vector>
 
 #include "BitArray.h"
-
-// Stop some MS stupidity
-#ifdef interface
-    #undef interface
-#endif
+#include "Export.h"
 
 typedef struct lua_State lua_State;
 

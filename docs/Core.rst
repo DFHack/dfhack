@@ -334,6 +334,14 @@ used regardless of whether you run Dwarf Fortress from its own app or DFHack's.
   counted towards your hours, see the DFHack stub launcher ``--nowait`` option
   below.
 
+- ``--skip-size-check``: DFHack normally verifies the sizes of important game
+  on startup and shuts down if a discrepancy is detected. This is intended to
+  reduce the risk of misalignments in these structures leading to crashes or
+  other misbehavior. This option bypasses the check. This option should
+  normally only be used to facilitate DFHack development. This option will
+  **not** enable DFHack to be used usefully with a version of DF with which
+  DFHack has not been aligned.
+
 Options passed to the DFHack Steam stub launcher
 ------------------------------------------------
 

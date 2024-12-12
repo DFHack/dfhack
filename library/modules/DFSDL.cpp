@@ -22,16 +22,24 @@ using std::vector;
 static DFLibrary *g_sdl_handle = nullptr;
 static DFLibrary *g_sdl_image_handle = nullptr;
 static const vector<string> SDL_LIBS {
-    "SDL2.dll",
+#ifdef WIN32
+    "SDL2.dll"
+#elif defined(_DARWIN)
     "SDL.framework/Versions/A/SDL",
-    "SDL.framework/SDL",
+    "SDL.framework/SDL"
+#else
     "libSDL2-2.0.so.0"
+#endif
 };
 static const vector<string> SDL_IMAGE_LIBS {
-    "SDL2_image.dll",
+#ifdef WIN32
+    "SDL2_image.dll"
+#elif defined(_DARWIN)
     "SDL_image.framework/Versions/A/SDL_image",
-    "SDL_image.framework/SDL_image",
+    "SDL_image.framework/SDL_image"
+#else
     "libSDL2_image-2.0.so.0"
+#endif
 };
 
 SDL_Surface * (*g_IMG_Load)(const char *) = nullptr;

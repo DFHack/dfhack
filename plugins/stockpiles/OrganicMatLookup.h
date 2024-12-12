@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ColorText.h"
+
 #include "modules/Materials.h"
 
 #include "df/organic_mat_category.h"

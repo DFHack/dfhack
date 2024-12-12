@@ -114,10 +114,10 @@ ReservedWidget.ATTRS{
 new_world_loaded = true
 
 local CONFLICTING_TOOLTIPS = utils.invert{
-    df.main_hover_instruction.ZoneRepaint,
-    df.main_hover_instruction.ZoneSuspend,
-    df.main_hover_instruction.ZoneRemove,
-    df.main_hover_instruction.ZoneAssignLocation,
+    df.main_hover_instruction.ZONE_REPAINT,
+    df.main_hover_instruction.ZONE_SUSPEND,
+    df.main_hover_instruction.ZONE_REMOVE_EXISTING,
+    df.main_hover_instruction.ZONE_ASSIGN_LOCATION,
 }
 
 function ReservedWidget:init()

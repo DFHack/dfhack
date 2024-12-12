@@ -174,7 +174,7 @@ static void checkslabs(color_ostream &out)
             )
         {
             createSlabJob(ghost);
-            auto fullName = Translation::TranslateName(&ghost->name, false);
+            auto fullName = Translation::TranslateName(&ghost->name);
             out.print("Added slab order for ghost %s\n", fullName.c_str());
         }
     }

@@ -43,6 +43,7 @@ distribution.
 #include "modules/Burrows.h"
 #include "modules/Constructions.h"
 #include "modules/Designations.h"
+#include "modules/DFSDL.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
@@ -2065,6 +2066,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getIdentity),
     WRAPM(Units, getNemesis),
     WRAPM(Units, makeown),
+    WRAPM(Units, setPathGoal),
     WRAPM(Units, create),
     WRAPM(Units, getPhysicalAttrValue),
     WRAPM(Units, getMentalAttrValue),

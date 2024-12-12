@@ -33,11 +33,13 @@ distribution.
 #include <stdint.h>
 #include "Export.h"
 #include "Module.h"
-#include "DFSDL.h"
 #include <vector>
 
 namespace DFHack
 {
+    // forward declaration used here instead of including DFSDL.h to reduce inclusion loading
+    struct DFTileSurface;
+
     class DFHACK_EXPORT Graphic : public Module
     {
         public:

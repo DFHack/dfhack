@@ -1,5 +1,7 @@
 #pragma once
 
+#include "ColorText.h"
+
 #include "modules/Materials.h"
 
 #include "df/dfhack_material_category.h"

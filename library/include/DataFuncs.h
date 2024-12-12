@@ -30,6 +30,7 @@ distribution.
 #include <map>
 #include <type_traits>
 
+#include "ColorText.h"
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
 

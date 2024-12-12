@@ -548,7 +548,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     if (unit->job.current_job)
     {
         // TODO: cancel job
-        out.printerr("Chosen unit '%s' has active job, cannot start mood!\n", Translation::TranslateName(&unit->name, false).c_str());
+        out.printerr("Chosen unit '%s' has active job, cannot start mood!\n", Translation::TranslateName(&unit->name).c_str());
         return CR_FAILURE;
     }
 

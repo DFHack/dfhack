@@ -59,8 +59,8 @@ local function get_new_patients(cur_patients)
     local new_patients = {}
     for _,unit in ipairs(df.global.world.units.active) do
         if unit.job.current_job then goto continue end
-        if cur_patients[unit.id] or not is_valid_animal(unit) then goto continue end
         if not unit.health or not unit.health.flags.needs_healthcare then goto continue end
+        if cur_patients[unit.id] or not is_valid_animal(unit) then goto continue end
         new_patients[unit.id] = unit
         ::continue::
     end

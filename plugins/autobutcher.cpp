@@ -17,6 +17,7 @@
 #include "df/building_civzonest.h"
 #include "df/creature_raw.h"
 #include "df/general_ref.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/world.h"
 
@@ -31,6 +32,7 @@ using namespace DFHack;
 DFHACK_PLUGIN("autobutcher");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 // logging levels can be dynamically controlled with the `debugfilter` command.
@@ -89,7 +91,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
-        if (enable)
+        // don't autorun cycle on first frame of fortress so we don't mark animals for butchering before
+        // all initial configuration has been applied
+        if (enable && plotinfo->fortress_age > 0)
             autobutcher_cycle(out);
     } else {
         DEBUG(control,out).print("%s from the API, but already %s; no action\n",

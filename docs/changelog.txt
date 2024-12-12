@@ -67,6 +67,12 @@ Template for new versions:
 
 ## Removed
 
+# 50.15-r1
+
+# Fixes
+
+- `gui/prerelease-warning`: don't pop up during worldgen, only after a fort has been loaded
+
 # 50.14-r2
 
 ## New Tools

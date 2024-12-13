@@ -18,7 +18,7 @@ DFhackCExport void dfhooks_init() {
 
     // we need to init DF globals before we can check the commandline
     if (!DFHack::Core::getInstance().InitMainThread() || !df::global::game) {
-        disabled = true;
+        // we don't set disabled to true here so symbol generation can work
         return;
     }
 

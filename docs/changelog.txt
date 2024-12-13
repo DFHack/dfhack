@@ -67,6 +67,12 @@ Template for new versions:
 
 ## Removed
 
+# 50.15-r1.2
+
+## Misc Improvements
+
+- Updated support for Itch
+
 # 50.15-r1.1
 
 ## Misc Improvements

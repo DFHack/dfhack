@@ -488,7 +488,7 @@ command_result Plugin::invoke(color_ostream &out, const std::string & command, s
                     // expect their guard conditions to be matched,
                     // so as to avoid duplicating checks.
                     // This means suspending the core beforehand.
-                    CoreSuspender suspend(&c);
+                    CoreSuspender suspend(c);
                     df::viewscreen *top = c.getTopViewscreen();
 
                     if (!cmd.guard(top))

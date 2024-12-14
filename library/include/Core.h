@@ -356,20 +356,20 @@ namespace DFHack
 
     class CoreSuspenderBase : protected std::unique_lock< decltype(Core::CoreSuspendMutex) > {
     protected:
-        Core& core;
         bool isLocked = false;
         using mutex_type = decltype(Core::CoreSuspendMutex);
         using parent_t = std::unique_lock< mutex_type >;
         std::thread::id tid;
+        Core& core;
 
         CoreSuspenderBase() : CoreSuspenderBase{ Core::getInstance() } {}
 
         CoreSuspenderBase(Core& core) :
-            core{ core },
             /* Lock the core (jk not really) */
             parent_t{core.CoreSuspendMutex,std::defer_lock},
             /* Mark this thread to be the core owner */
-            tid{}
+            tid{},
+            core{ core }
         {}
 
     public:

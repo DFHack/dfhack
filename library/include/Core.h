@@ -356,7 +356,6 @@ namespace DFHack
 
     class CoreSuspenderBase : protected std::unique_lock< decltype(Core::CoreSuspendMutex) > {
     protected:
-        bool isLocked = false;
         using mutex_type = decltype(Core::CoreSuspendMutex);
         using parent_t = std::unique_lock< mutex_type >;
         std::thread::id tid;
@@ -388,23 +387,17 @@ namespace DFHack
 
         void unlock()
         {
-            if (!isLocked)
+            if (!owns_lock())
                 return;
             /* Restore core owner to previous value */
             core.ownerThread.store(tid, std::memory_order_release);
             if (tid == std::thread::id{})
                 Lua::Core::Reset(core.getConsole(), "suspend");
             parent_t::unlock();
-            isLocked = false;
-        }
-
-        bool owns_lock() const noexcept
-        {
-            return isLocked;
         }
 
         ~CoreSuspenderBase() {
-            if (isLocked) unlock();
+            if (owns_lock()) unlock();
         }
 
     protected:
@@ -413,7 +406,6 @@ namespace DFHack
             auto& core = Core::getInstance();
             tid = core.ownerThread.exchange(std::this_thread::get_id(),
                 std::memory_order_acquire);
-            isLocked = true;
         }
 
         friend class MainThread;

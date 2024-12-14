@@ -2406,8 +2406,7 @@ int Core::Shutdown ( void )
     errorstate = 1;
 
     // Make sure we release main thread if this is called from main thread
-    if (MainThread::suspend().owns_lock())
-        MainThread::suspend().unlock();
+    MainThread::suspend().unlock();
 
     // Make sure the console thread shutdowns before clean up to avoid any
     // unlikely data races.

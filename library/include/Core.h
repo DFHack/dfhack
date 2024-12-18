@@ -397,7 +397,7 @@ namespace DFHack
         }
 
         ~CoreSuspenderBase() {
-            if (owns_lock()) unlock();
+            unlock();
         }
 
     protected:
@@ -448,13 +448,14 @@ namespace DFHack
             lock();
         }
 
+        // note that this is needed so the destructor will call CoreSuspender::unlock instead of CoreSuspenderBase::unlock
         ~CoreSuspender() {
-            if (owns_lock()) unlock();
+            unlock();
         }
 
     protected:
         // deferred locking is not part of CoreSuspender's public API
-        // these constructors are onmly for use in derived classes,
+        // these constructors are only for use in derived classes,
         // specifically ConditionalCoreSuspender
         CoreSuspender(std::defer_lock_t d) : CoreSuspender{ Core::getInstance(),d } {}
         CoreSuspender(Core& core, std::defer_lock_t d) : CoreSuspenderBase{ core } {}

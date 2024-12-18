@@ -1,3 +1,5 @@
+// Quickly adjust burrow tiles and units.
+
 #include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
@@ -18,8 +20,8 @@
 #include "df/unit.h"
 #include "df/world.h"
 
-using std::vector;
 using std::string;
+using std::vector;
 using namespace DFHack;
 
 DFHACK_PLUGIN("burrow");
@@ -44,7 +46,7 @@ static void init_diggers(color_ostream& out);
 static void jobStartedHandler(color_ostream& out, void* ptr);
 static void jobCompletedHandler(color_ostream& out, void* ptr);
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
+DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
     DEBUG(status, out).print("initializing %s\n", plugin_name);
     commands.push_back(
         PluginCommand("burrow",
@@ -117,7 +119,7 @@ static void init_diggers(color_ostream& out) {
         return;
     }
 
-    std::vector<df::job*> pvec;
+    vector<df::job*> pvec;
     int start_id = 0;
     if (Job::listNewlyCreated(&pvec, &start_id)) {
         for (auto job : pvec) {
@@ -146,16 +148,12 @@ static void jobStartedHandler(color_ostream& out, void* ptr) {
 static void add_walls_to_burrow(color_ostream &out, df::burrow* b,
     const df::coord & pos1, const df::coord & pos2)
 {
-    for (int z = pos1.z; z <= pos2.z; z++) {
-        for (int y = pos1.y; y <= pos2.y; y++) {
-            for (int x = pos1.x; x <= pos2.x; x++) {
-                df::coord pos(x,y,z);
-                df::tiletype *tt = Maps::getTileType(pos);
-                if (tt && isWallTerrain(*tt))
-                    Burrows::setAssignedTile(b, pos, true);
-            }
-        }
-    }
+    Maps::forCoord([&b](df::coord pos) {
+        auto tt = Maps::getTileType(pos);
+        if (tt && isWallTerrain(*tt))
+            Burrows::setAssignedTile(b, pos, true);
+        return true; // next pos
+    }, pos1, pos2);
 }
 
 static void expand_burrows(color_ostream &out, const df::coord & pos, df::tiletype prev_tt, df::tiletype tt) {
@@ -327,7 +325,7 @@ static void setTilesByDesignation(df::burrow *target, df::tile_designation d_mas
     }
 }
 
-static bool setTilesByKeyword(df::burrow *target, std::string name, bool enable) {
+static bool setTilesByKeyword(df::burrow *target, string name, bool enable) {
     CHECK_NULL_POINTER(target);
 
     df::tile_designation mask;

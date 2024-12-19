@@ -444,26 +444,14 @@ static void handle_missing_assignments(color_ostream &out,
         int32_t hfid = it->second.first;
         int32_t spouse_hfid = it->second.second;
         auto hf = df::historical_figure::find(hfid);
-        if (!hf) {
-            // if the historical figure was culled, bail
+        // if the historical figure was culled, is dead, or was expelled, don't keep a reservation
+        if (!hf || hf->died_year > -1 || was_expelled(hf))
             continue;
-        }
-        auto unit = df::unit::find(hf->unit_id);
-        if (!unit) {
-            // if unit data is completely gone, then they're not likely to come back
-            continue;
-        }
-        if (Units::isActive(unit) && !Units::isDead(unit) && active_unit_ids.contains(unit->id)) {
-            // unit is still alive on the map; assume the unassigment was intentional/expected
-            continue;
-        }
-        if (!Units::isCitizen(unit, true) && !Units::isResident(unit, true)) {
-            // ignore units that are not members of the fort
-            continue;
-        }
-        if (was_expelled(hf)) {
-            // ignore expelled units
-            continue;
+        if (auto unit = df::unit::find(hf->unit_id)) {
+            if (Units::isActive(unit) && !Units::isDead(unit) && active_unit_ids.contains(unit->id)) {
+                // unit is still alive on the map; assume the unassigment was intentional/expected
+                continue;
+            }
         }
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
         if (!zone)
@@ -481,12 +469,12 @@ static void handle_missing_assignments(color_ostream &out,
                 continue;
             }
         }
-        if (Units::isDead(unit))
+        if (hf->died_year > -1)
             continue;
         // register the hf ids for reassignment and reserve the room
         DEBUG(cycle,out).print("registering primary unit for reassignment to zone %d (%s): %d %s\n",
-            zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), unit->id,
-            DF2CONSOLE(Units::getReadableName(unit)).c_str());
+            zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), hf->unit_id,
+            DF2CONSOLE(Units::getReadableName(hf)).c_str());
         pending_reassignment[hfid].push_back(zone_id);
         reserved_zones[zone_id].push_back(hfid);
         if (share_with_spouse && spouse) {
@@ -497,7 +485,7 @@ static void handle_missing_assignments(color_ostream &out,
         }
         INFO(cycle,out).print("preserve-rooms: reserving %s for the return of %s%s%s\n",
                     toLower_cp437(ENUM_KEY_STR(civzone_type, zone->type)).c_str(),
-                    DF2CONSOLE(Units::getReadableName(unit)).c_str(),
+                    DF2CONSOLE(Units::getReadableName(hf)).c_str(),
                     spouse_hf ? " or their spouse, " : "",
                     spouse_hf ? DF2CONSOLE(Units::getReadableName(spouse_hf)).c_str() : "");
 

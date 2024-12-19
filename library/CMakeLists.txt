@@ -9,6 +9,8 @@ if(UNIX)
     option(CONSOLE_NO_CATCH "Make the console not catch 'CTRL+C' events for easier debugging." OFF)
 endif()
 
+option(DFHACK_SDL_CONSOLE "Use experimental SDL console" ON)
+
 # Generation
 set(CODEGEN_OUT ${dfapi_SOURCE_DIR}/include/df/codegen.out.xml)
 
@@ -117,13 +119,23 @@ set(MAIN_SOURCES
 file(GLOB_RECURSE TEST_SOURCES
     LIST_DIRECTORIES false
     *test.cpp)
+
+if (DFHACK_SDL_CONSOLE)
+    list(APPEND TEST_SOURCES SDLConsole_impl.cpp)
+endif()
 dfhack_test(dfhack-test "${TEST_SOURCES}")
 
 if(WIN32)
-    set(CONSOLE_SOURCES Console-windows.cpp)
+        set(CONSOLE_SOURCES Console-windows.cpp)
 else()
-    set(CONSOLE_SOURCES Console-posix.cpp)
+        set(CONSOLE_SOURCES Console-posix.cpp)
 endif()
+list(APPEND CONSOLE_SOURCES Console.cpp)
+if (DFHACK_SDL_CONSOLE)
+    list(APPEND CONSOLE_SOURCES Console-sdl.cpp SDLConsole_impl.cpp)
+endif()
+
+set(DFCLIENT_CONSOLE_SOURCES Console.cpp)
 
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
@@ -372,7 +384,8 @@ add_library(dfhack SHARED ${PROJECT_SOURCES})
 add_dependencies(dfhack generate_proto_core)
 add_dependencies(dfhack generate_headers)
 
-add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS} ${CONSOLE_SOURCES})
+add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS} ${DFCLIENT_CONSOLE_SOURCES})
+target_compile_definitions(dfhack-client PUBLIC BUILD_DFHACK_CLIENT)
 add_dependencies(dfhack-client dfhack)
 
 add_executable(dfhack-run dfhack-run.cpp)

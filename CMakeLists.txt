@@ -32,6 +32,7 @@ endif(CMAKE_CONFIGURATION_TYPES)
 option(BUILD_DOCS "Choose whether to build the documentation (requires python and Sphinx)." OFF)
 option(BUILD_DOCS_NO_HTML "Don't build the HTML docs, only the in-game docs." OFF)
 option(REMOVE_SYMBOLS_FROM_DF_STUBS "Remove debug symbols from DF stubs. (Reduces libdfhack size to about half but removes a few useful symbols)" ON)
+option(DFHACK_SDL_CONSOLE "Use experimental SDL console" ON)
 
 macro(CHECK_GCC compiler_path)
     execute_process(COMMAND ${compiler_path} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)

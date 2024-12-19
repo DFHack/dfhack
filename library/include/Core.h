@@ -195,6 +195,7 @@ namespace DFHack
 
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters);
         command_result runCommand(color_ostream &out, const std::string &command);
+        void getAutoCompletePossibles(const std::string &command, std::vector<std::string> &possibles);
         bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
 
         bool addScriptPath(std::string path, bool search_before = false);
@@ -228,7 +229,10 @@ namespace DFHack
 
         static df::viewscreen *getTopViewscreen();
 
-        DFHack::Console &getConsole() { return con; }
+        DFHack::Console &getConsole() {
+            static std::unique_ptr<Console> con = Console::makeConsole();
+            return *con;
+        }
 
         std::unique_ptr<DFHack::Process> p;
         std::shared_ptr<DFHack::VersionInfo> vinfo;
@@ -243,7 +247,7 @@ namespace DFHack
         PerfCounters perf_counters;
 
     private:
-        DFHack::Console con;
+        DFHack::Console& con;
 
         Core();
         ~Core();

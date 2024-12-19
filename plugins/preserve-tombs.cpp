@@ -39,7 +39,7 @@ namespace DFHack {
     DBG_DECLARE(preservetombs, event, DebugCategory::LINFO);
 }
 
-static bool assign_to_tomb(int32_t unit_id, int32_t building_id);
+static bool assign_to_tomb(df::unit * unit, int32_t building_id);
 static void update_tomb_assignments(color_ostream& out);
 void onUnitDeath(color_ostream& out, void* ptr);
 static command_result do_command(color_ostream& out, std::vector<std::string>& params);
@@ -64,7 +64,7 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
             std::for_each(tomb_assignments.begin(), tomb_assignments.end(), [&out](const auto& p){
                 auto& [unit_id, building_id] = p;
                 auto* unit = df::unit::find(unit_id);
-                std::string name = unit ? Translation::TranslateName(&unit->name) : "UNKNOWN UNIT" ;
+                std::string name = unit ? DF2CONSOLE(Units::getReadableName(unit)) : "UNKNOWN UNIT" ;
                 out.print("%s (id %d) -> building %d\n", name.c_str(), unit_id, building_id);
             });
         }
@@ -86,6 +86,16 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
 // event listener
 EventManager::EventHandler assign_tomb_handler(plugin_self, onUnitDeath, 0);
 
+static void do_enable(color_ostream &out) {
+    EventManager::registerListener(EventManager::EventType::UNIT_DEATH, assign_tomb_handler);
+    update_tomb_assignments(out);
+}
+
+static void do_disable() {
+    tomb_assignments.clear();
+    EventManager::unregisterAll(plugin_self);
+}
+
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
@@ -97,14 +107,10 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
-        if (enable) {
-            EventManager::registerListener(EventManager::EventType::UNIT_DEATH, assign_tomb_handler);
-            update_tomb_assignments(out);
-        }
-        else {
-            tomb_assignments.clear();
-            EventManager::unregisterAll(plugin_self);
-        }
+        if (enable)
+            do_enable(out);
+        else
+            do_disable();
     } else {
         DEBUG(control,out).print("%s from the API, but already %s; no action\n",
                                 is_enabled ? "enabled" : "disabled",
@@ -116,8 +122,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     DEBUG(control,out).print("shutting down %s\n", plugin_name);
 
-// PluginManager handles unregistering our handler from EventManager,
-// so we don't have to do that here
+    // PluginManager handles unregistering our handler from EventManager,
+    // so we don't have to do that here
     return CR_OK;
 }
 
@@ -134,19 +140,18 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
     DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
+    if (is_enabled)
+        do_enable(out);
 
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (event == DFHack::SC_WORLD_UNLOADED) {
-        tomb_assignments.clear();
-        if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
-                                    plugin_name);
-            is_enabled = false;
-        }
-        EventManager::unregisterAll(plugin_self);
+    if (event == DFHack::SC_WORLD_UNLOADED && is_enabled) {
+        DEBUG(control,out).print("world unloaded; disabling %s\n",
+                                plugin_name);
+        is_enabled = false;
+        do_disable();
     }
     return CR_OK;
 }
@@ -169,15 +174,22 @@ void onUnitDeath(color_ostream& out, void* ptr) {
     if (it == tomb_assignments.end()) return;
 
     // assign that unit to their previously assigned tomb in life
+    auto unit = df::unit::find(unit_id);
     int32_t building_id = it->second;
-    if (!assign_to_tomb(unit_id, building_id)) {
-        WARN(event, out).print("Unit %d died - but failed to assign them back to their tomb %d\n", unit_id, building_id);
+    if (!assign_to_tomb(unit, building_id)) {
+        if (unit) {
+            WARN(event, out).print("%s died - but failed to assign them back to their tomb %d\n",
+                DF2CONSOLE(Units::getReadableName(unit)).c_str(), building_id);
+        } else {
+            WARN(event, out).print("Unit %d died - but failed to assign them back to their tomb %d\n", unit_id, building_id);
+        }
         return;
     }
-    // success, print status update and remove assignment from our memo-list
-    INFO(event, out).print("Unit %d died - assigning them back to their tomb\n", unit_id);
-    tomb_assignments.erase(it);
 
+    // success, print status update and remove assignment from our memo-list
+    INFO(event, out).print("%s died - assigning them back to their tomb\n",
+        DF2CONSOLE(Units::getReadableName(unit)).c_str());
+    tomb_assignments.erase(it);
 }
 
 // Update tomb assignments
@@ -231,9 +243,7 @@ static void update_tomb_assignments(color_ostream &out) {
 // ASSIGN UNIT TO TOMB
 //
 //
-static bool assign_to_tomb(int32_t unit_id, int32_t building_id) {
-    df::unit* unit = df::unit::find(unit_id);
-
+static bool assign_to_tomb(df::unit * unit, int32_t building_id) {
     if (!unit || !Units::isDead(unit)) return false;
 
     auto bld = df::building::find(building_id);

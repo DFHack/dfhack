@@ -56,6 +56,8 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `preserve-rooms`: don't erroneously release reservations for units that have returned from their missions but have not yet entered the fort map
+- `preserve-rooms`: handle case where unit records are culled by DF immediately after a unit leaves the map
 
 ## Misc Improvements
 

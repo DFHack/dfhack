@@ -109,6 +109,9 @@ if(MSVC)
     # this is equivalent to gcc -Wno_conversions which is the default as gcc -Wall doesn't enable -Wconversions
     add_compile_options("/wd4244")
 
+    # Enable C5038 - This is equivalent to gcc's -Werror=reorder, which is enabled by default by gcc -Wall
+    add_compile_options("/w15038")
+
     # MSVC panics if an object file contains more than 65,279 sections. this
     # happens quite frequently with code that uses templates, such as vectors.
     add_compile_options("/bigobj")

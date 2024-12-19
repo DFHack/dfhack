@@ -394,8 +394,16 @@ static void scrub_reservations(color_ostream &out) {
     vector<int32_t> hfids_to_scrub;
     for (auto &[hfid, zone_ids] : pending_reassignment) {
         auto hf = df::historical_figure::find(hfid);
-        if (hf && hf->died_year == -1 && hf->info && hf->info->whereabouts && hf->info->whereabouts->army_id > -1)
-            continue;
+        if (hf) {
+            // don't scrub alive units that are still in traveling armies
+            if (hf->died_year == -1 && hf->info && hf->info->whereabouts && hf->info->whereabouts->army_id > -1)
+                continue;
+            // don't scrub units that have returned but are not yet active
+            if (auto unit = df::unit::find(hf->unit_id)) {
+                if (unit->flags1.bits.incoming)
+                    continue;
+            }
+        }
         DEBUG(cycle,out).print("removed reservation for dead, culled, or non-army hfid %d: %s\n", hfid,
             hf ? DF2CONSOLE(Units::getReadableName(hf)).c_str() : "culled");
         hfids_to_scrub.push_back(hfid);

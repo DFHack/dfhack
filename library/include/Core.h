@@ -481,6 +481,4 @@ namespace DFHack
         CoreSuspendClaimMain();
         ~CoreSuspendClaimMain();
     };
-
-    using CoreSuspendClaimer = CoreSuspender;
 }

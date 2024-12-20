@@ -469,35 +469,32 @@ bool Plugin::reload(color_ostream &out)
 
 command_result Plugin::invoke(color_ostream &out, const std::string & command, std::vector <std::string> & parameters)
 {
-    Core & c = Core::getInstance();
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
     if (state == PS_LOADED) {
-        for (auto & cmd : commands) {
-            if (cmd.name != command)
-                continue;
-
+        if (auto cmdIt = std::ranges::find_if(commands, [&](const PluginCommand &cmd) { return cmd.name == command; });
+            commands.end() != cmdIt)
+        {
             // running interactive things from some other source than the console would break it
-            if (!out.is_console() && cmd.interactive)
+            if (!out.is_console() && cmdIt->interactive)
                 cr = CR_NEEDS_CONSOLE;
-            else if (cmd.guard) {
-                CoreSuspender suspend(&c);
-                if (!cmd.guard(c.getTopViewscreen())) {
+            else if (cmdIt->guard) {
+                CoreSuspender suspend;
+                if (!cmdIt->guard(Core::getInstance().getTopViewscreen())) {
                     out.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
                     cr = CR_WRONG_USAGE;
                 }
                 else {
-                    cr = cmd.function(out, parameters);
+                    cr = cmdIt->function(out, parameters);
                 }
             }
-            else if (cmd.unlocked) {
-                cr = cmd.function(out, parameters);
+            else if (cmdIt->unlocked) {
+                cr = cmdIt->function(out, parameters);
             }
             else {
-                CoreSuspender suspend(&c);
-                cr = cmd.function(out, parameters);
+                CoreSuspender suspend;
+                cr = cmdIt->function(out, parameters);
             }
-            break;
         }
     }
     access->lock_sub();

@@ -102,9 +102,9 @@ namespace DFHack
                       bool unlocked_ = false,
                       const char * usage_ = ""
                      )
-            : name(_name), description(_description), function(function_),
-              interactive(interactive_), unlocked(unlocked_), guard(NULL),
-              usage(usage_)
+            : name{_name}, description{_description}, function{function_},
+              interactive{interactive_}, unlocked{unlocked_}, guard{NULL},
+              usage{usage_}
         {
             fix_usage();
         }
@@ -114,9 +114,9 @@ namespace DFHack
                       command_function function_,
                       command_hotkey_guard guard_,
                       const char * usage_ = "")
-            : name(_name), description(_description), function(function_),
-              interactive(false), unlocked(false), guard(guard_),
-              usage(usage_)
+            : name{_name}, description{_description}, function{function_},
+              interactive{false}, unlocked{false}, guard{guard_},
+              usage{usage_}
         {
             fix_usage();
         }

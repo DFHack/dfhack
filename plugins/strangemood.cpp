@@ -344,6 +344,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 skill = job_skill::ENGRAVE_STONE;
             else if (parameters[i] == "mason")
                 skill = job_skill::MASONRY;
+            else if (parameters[i] == "stonecutter")
+                skill = job_skill::CUT_STONE;
+            else if (parameters[i] == "stonecarver")
+                skill = job_skill::CARVE_STONE;
             else if (parameters[i] == "tanner")
                 skill = job_skill::TANNER;
             else if (parameters[i] == "weaver")

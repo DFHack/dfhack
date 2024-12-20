@@ -61,6 +61,7 @@ Template for new versions:
 - `preserve-tombs`: properly re-enable after loading a game that had the tool enabled
 
 ## Misc Improvements
+- `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
 
 ## Documentation
 

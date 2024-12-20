@@ -322,6 +322,7 @@ struct tracking_stage_new_region : df::viewscreen_new_regionst {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_raw_load_stage != this->raw_load_stage) {
+            CoreSuspender guard;
             TRACE(textures).print("raw_load_stage %d -> %d\n", this->m_raw_load_stage,
                                   this->raw_load_stage);
             bool tmp_state = loading_state;
@@ -346,6 +347,7 @@ struct tracking_stage_adopt_region : df::viewscreen_adopt_regionst {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
+            CoreSuspender guard;
             TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
             bool tmp_state = loading_state;
             loading_state = this->cur_step >= 0 && this->cur_step < 3 ? true : false;
@@ -369,6 +371,7 @@ struct tracking_stage_load_region : df::viewscreen_loadgamest {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
+            CoreSuspender guard;
             TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
             bool tmp_state = loading_state;
             loading_state = this->cur_step >= 0 && this->cur_step < 3 ? true : false;
@@ -392,6 +395,7 @@ struct tracking_stage_new_arena : df::viewscreen_new_arenast {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
+            CoreSuspender guard;
             TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
             bool tmp_state = loading_state;
             loading_state = this->cur_step >= 0 && this->cur_step < 3 ? true : false;

@@ -128,7 +128,6 @@ static void constructionEventHandler(color_ostream &out, void *ptr) {
 }
 
 void doInfiniteSky(color_ostream& out, int32_t howMany) {
-    CoreSuspender suspend;
     int32_t z_count_block = world->map.z_count_block;
     df::map_block ****block_index = world->map.block_index;
 
@@ -240,7 +239,6 @@ struct_identity infinitesky_options::_identity{sizeof(infinitesky_options), &df:
 
 command_result infiniteSky(color_ostream &out,
                            std::vector<std::string> &parameters) {
-    CoreSuspender suspend;
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

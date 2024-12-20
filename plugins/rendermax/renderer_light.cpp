@@ -1176,7 +1176,6 @@ void lightingEngineViewscreen::loadSettings()
     }
     const std::string settingsfile=rawFolder+"rendermax.lua";
 
-    CoreSuspender lock;
     color_ostream_proxy out(Core::getInstance().getConsole());
 
     lua_State* s=DFHack::Lua::Core::State;

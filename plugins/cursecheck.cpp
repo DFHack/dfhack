@@ -128,7 +128,6 @@ curses determineCurse(df::unit * unit)
 
 command_result cursecheck (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
     df::unit* selected_unit = Gui::getSelectedUnit(out, true);
 
     bool giveDetails = false;

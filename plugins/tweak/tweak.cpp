@@ -154,8 +154,6 @@ static std::map<string, bool> get_status() {
 }
 
 static command_result tweak(color_ostream &out, vector <string> &parameters) {
-    CoreSuspender suspend;
-
     if (parameters.empty() || parameters[0] == "list") {
         out.print("tweaks:\n");
         for (auto & entry : get_status())

@@ -389,8 +389,6 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         }
     }
 
-    CoreSuspender suspend;
-
     // First, check if moods are enabled at all
     if (!d_init->feature.flags.is_set(d_init_flags4::ARTIFACTS))
     {

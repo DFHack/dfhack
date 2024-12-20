@@ -58,7 +58,6 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 }
 
 void onDig(color_ostream& out, void* ptr) {
-    CoreSuspender bob;
     df::job* job = (df::job*)ptr;
     if ( job->completion_timer > 0 )
         return;

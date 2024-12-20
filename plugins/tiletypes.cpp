@@ -1131,8 +1131,6 @@ command_result executePaintJob(color_ostream &out,
         return CR_OK;
     }
 
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -1353,8 +1351,6 @@ command_result df_tiletypes_command (color_ostream &out, vector <string> & param
 
 command_result df_tiletypes_here (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     tiletypes_options opts;
     if (!Lua::CallLuaModuleFunction(out, "plugins.tiletypes", "parse_commandline", std::make_tuple(&opts, parameters))
             || opts.help)
@@ -1375,8 +1371,6 @@ command_result df_tiletypes_here (color_ostream &out, vector <string> & paramete
 
 command_result df_tiletypes_here_point (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     tiletypes_options opts;
     if (!Lua::CallLuaModuleFunction(out, "plugins.tiletypes", "parse_commandline", std::make_tuple(&opts, parameters))
             || opts.help)

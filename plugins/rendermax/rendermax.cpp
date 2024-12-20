@@ -83,7 +83,6 @@ IMPLEMENT_VMETHOD_INTERPOSE(dungeon_render_hook, render);
 
 void removeOld()
 {
-    CoreSuspender lock;
     if(engine)
     {
         INTERPOSE_HOOK(dwarmode_render_hook,render).apply(false);
@@ -441,7 +440,6 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
             out.print("%s\n","Not installed, doing nothing.");
         else
             removeOld();
-        CoreSuspender guard;
         gps->force_full_display_count++;
         return CR_OK;
     }

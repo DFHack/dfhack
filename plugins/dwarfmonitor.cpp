@@ -1774,12 +1774,10 @@ static command_result dwarfmonitor_cmd(color_ostream &, vector <string> & parame
 
     auto cmd = parameters[0][0];
     if (cmd == 's' || cmd == 'S') {
-        CoreSuspender guard;
         if(Maps::IsValid())
             Screen::show(std::make_unique<ViewscreenFortStats>(), plugin_self);
     }
     else if (cmd == 'p' || cmd == 'P') {
-        CoreSuspender guard;
         if(Maps::IsValid())
             Screen::show(std::make_unique<ViewscreenPreferences>(), plugin_self);
     }

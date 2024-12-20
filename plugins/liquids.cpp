@@ -395,8 +395,6 @@ command_result df_liquids_here (color_ostream &out, vector <string> & parameters
 
 command_result df_liquids_execute(color_ostream &out)
 {
-    CoreSuspender suspend;
-
     auto cursor = Gui::getCursorPos();
     if (!cursor.isValid())
     {

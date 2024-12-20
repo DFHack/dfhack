@@ -1037,8 +1037,6 @@ static struct zone_param_filters_init { zone_param_filters_init() {
 }} zone_param_filters_init_;
 
 static command_result df_zone(color_ostream &out, vector <string> & parameters) {
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

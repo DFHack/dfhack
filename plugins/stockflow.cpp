@@ -94,10 +94,6 @@ public:
     bool command_method(const char *method, color_ostream &out) {
         // Calls a lua function with no parameters.
 
-        // Suspension is required for "stockflow enable" from the command line,
-        // but may be overkill for other situations.
-        CoreSuspender suspend;
-
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
 

@@ -1,11 +1,11 @@
 // This template is appropriate for plugins that simply provide one or more
 // commands, but don't need to be "enabled" to function.
 
-#include <string>
-#include <vector>
-
 #include "Debug.h"
 #include "PluginManager.h"
+
+#include <string>
+#include <vector>
 
 using std::string;
 using std::vector;
@@ -32,9 +32,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    // be sure to suspend the core if any DF state is read or modified
-    CoreSuspender suspend;
-
     // TODO: command logic
 
     return CR_OK;

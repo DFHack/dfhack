@@ -103,7 +103,7 @@ namespace DFHack
                      )
             : name(_name), description(_description),
               function(function_), interactive(interactive_),
-              guard(NULL), usage(usage_)
+              guard(NULL), usage(usage_), unlocked(false)
         {
             fix_usage();
         }
@@ -115,7 +115,7 @@ namespace DFHack
                       const char * usage_ = "")
             : name(_name), description(_description),
               function(function_), interactive(false),
-              guard(guard_), usage(usage_)
+              guard(guard_), usage(usage_), unlocked(false)
         {
             fix_usage();
         }
@@ -128,12 +128,15 @@ namespace DFHack
 
         bool isHotkeyCommand() const { return guard != NULL; }
 
+        void setRunWithCoreUnlocked(bool unlocked_) { unlocked = unlocked_; }
+
         std::string name;
         std::string description;
         command_function function;
         bool interactive;
         command_hotkey_guard guard;
         std::string usage;
+        bool unlocked;
     };
     class Plugin
     {

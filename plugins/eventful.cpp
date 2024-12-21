@@ -305,7 +305,7 @@ struct workshop_hook : df::building_workshopst{
     typedef df::building_workshopst interpose_base;
     DEFINE_VMETHOD_INTERPOSE(void,fillSidebarMenu,())
     {
-        CoreSuspendClaimer suspend;
+        CoreSuspender suspend;
         color_ostream_proxy out(Core::getInstance().getConsole());
         bool call_native=true;
         onWorkshopFillSidebarMenu(out,this,&call_native);
@@ -320,7 +320,7 @@ struct furnace_hook : df::building_furnacest{
     typedef df::building_furnacest interpose_base;
     DEFINE_VMETHOD_INTERPOSE(void,fillSidebarMenu,())
     {
-        CoreSuspendClaimer suspend;
+        CoreSuspender suspend;
         color_ostream_proxy out(Core::getInstance().getConsole());
         bool call_native=true;
         onWorkshopFillSidebarMenu(out,this,&call_native);
@@ -351,7 +351,7 @@ struct product_hook : item_product {
             return;
         }
         df::reaction* this_reaction=product->react;
-        CoreSuspendClaimer suspend;
+        CoreSuspender suspend;
         bool call_native=true;
         onReactionCompleting(out,this_reaction,(df::reaction_product_itemst*)this,unit,in_items,in_reag,out_items,&call_native);
         if(!call_native)
@@ -375,7 +375,7 @@ struct item_hooks :df::item_actual {
 
         DEFINE_VMETHOD_INTERPOSE(void, contaminateWound,(df::unit* unit, df::unit_wound* wound, int32_t a1, int16_t a2))
         {
-            CoreSuspendClaimer suspend;
+            CoreSuspender suspend;
             color_ostream_proxy out(Core::getInstance().getConsole());
             onItemContaminateWound(out,this,unit,wound,a1,a2);
             INTERPOSE_NEXT(contaminateWound)(unit,wound,a1,a2);
@@ -388,14 +388,14 @@ struct proj_item_hook: df::proj_itemst{
     typedef df::proj_itemst interpose_base;
     DEFINE_VMETHOD_INTERPOSE(bool,checkImpact,(bool mode))
     {
-        CoreSuspendClaimer suspend;
+        CoreSuspender suspend;
         color_ostream_proxy out(Core::getInstance().getConsole());
         onProjItemCheckImpact(out,this,mode);
         return INTERPOSE_NEXT(checkImpact)(mode); //returns destroy item or not?
     }
     DEFINE_VMETHOD_INTERPOSE(bool,checkMovement,())
     {
-        CoreSuspendClaimer suspend;
+        CoreSuspender suspend;
         color_ostream_proxy out(Core::getInstance().getConsole());
         onProjItemCheckMovement(out,this);
         return INTERPOSE_NEXT(checkMovement)();
@@ -408,14 +408,14 @@ struct proj_unit_hook: df::proj_unitst{
     typedef df::proj_unitst interpose_base;
     DEFINE_VMETHOD_INTERPOSE(bool,checkImpact,(bool mode))
     {
-        CoreSuspendClaimer suspend;
+        CoreSuspender suspend;
         color_ostream_proxy out(Core::getInstance().getConsole());
         onProjUnitCheckImpact(out,this,mode);
         return INTERPOSE_NEXT(checkImpact)(mode); //returns destroy item or not?
     }
     DEFINE_VMETHOD_INTERPOSE(bool,checkMovement,())
     {
-        CoreSuspendClaimer suspend;
+        CoreSuspender suspend;
         color_ostream_proxy out(Core::getInstance().getConsole());
         onProjUnitCheckMovement(out,this);
         return INTERPOSE_NEXT(checkMovement)();

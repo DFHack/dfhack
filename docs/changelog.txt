@@ -71,6 +71,9 @@ Template for new versions:
 
 ## Removed
 
+## Internals
+- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access
+
 # 50.15-r1.2
 
 ## Misc Improvements

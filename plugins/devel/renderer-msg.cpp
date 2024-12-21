@@ -62,7 +62,6 @@ DFhackCExport command_result plugin_enable (color_ostream &out, bool enable)
 {
     if (is_enabled == enable)
         return CR_OK;
-    CoreSuspender s;
     is_enabled = enable;
     if (enable)
         w = Renderer::AddRenderer(new renderer_msg, true);

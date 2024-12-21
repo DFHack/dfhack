@@ -137,8 +137,6 @@ static const struct_field_info autonestbox_options_fields[] = {
 struct_identity autonestbox_options::_identity(sizeof(autonestbox_options), &df::allocator_fn<autonestbox_options>, NULL, "autonestbox_options", NULL, autonestbox_options_fields);
 
 static command_result df_autonestbox(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

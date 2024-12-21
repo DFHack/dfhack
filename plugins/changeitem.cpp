@@ -84,8 +84,6 @@ command_result changeitem_execute(
 
 command_result df_changeitem(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     bool here = false;
     bool info = false;
     bool force = false;

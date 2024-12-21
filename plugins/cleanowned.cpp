@@ -72,8 +72,6 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             return CR_WRONG_USAGE;
     }
 
-    CoreSuspender suspend;
-
     if (!Translation::IsValid())
     {
         out.printerr("Translation data unavailable!\n");

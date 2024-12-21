@@ -55,8 +55,6 @@ static bool warned = false;
 
 command_result changelayer (color_ostream &out, std::vector <std::string> & parameters)
 {
-    CoreSuspender suspend;
-
     string material;
     bool force = false;
     bool all_biomes = false;

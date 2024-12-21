@@ -39,8 +39,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     bool show_help = false;
     if (!Lua::CallLuaModuleFunction(out, "plugins.stockpiles", "parse_commandline", std::make_tuple(parameters),
             1, [&](lua_State *L) {

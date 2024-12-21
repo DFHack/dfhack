@@ -21,8 +21,6 @@ REQUIRE_GLOBAL(world);
 
 command_result df_cleanconst(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

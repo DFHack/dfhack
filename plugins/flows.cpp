@@ -20,8 +20,6 @@ REQUIRE_GLOBAL(world);
 
 command_result df_flows (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     int flow1 = 0, flow2 = 0, flowboth = 0, water = 0, magma = 0;
     out.print("Counting flows and liquids ...\n");
 

@@ -45,8 +45,6 @@ command_result df_fixveins (color_ostream &out, vector <string> & parameters)
     if (parameters.size())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

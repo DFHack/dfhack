@@ -179,7 +179,6 @@ command_result trackstate ( color_ostream& out, vector< string >& parameters )
 
 command_result colormods (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
     auto & vec = world->raws.creatures.alphabetic;
     for(df::creature_raw* rawlion : vec)
     {
@@ -202,7 +201,6 @@ command_result ktimer (color_ostream &out, vector <string> & parameters)
     }
     uint64_t timestart = GetTimeMs64();
     {
-        CoreSuspender suspend;
         uint64_t timeend = GetTimeMs64();
         timeLast = timeend;
         timering = true;

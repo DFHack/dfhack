@@ -8,11 +8,6 @@
 // configured for specific use cases (but don't come with as many comments as
 // this one does).
 
-#include <string>
-#include <vector>
-
-#include "df/world.h"
-
 #include "Core.h"
 #include "Debug.h"
 #include "MemAccess.h"
@@ -22,6 +17,11 @@
 #include "modules/Persistence.h"
 #include "modules/Screen.h"
 #include "modules/World.h"
+
+#include "df/world.h"
+
+#include <string>
+#include <vector>
 
 using std::string;
 using std::vector;
@@ -38,7 +38,8 @@ DFHACK_PLUGIN("skeleton");
 // The identifier declared with this macro (i.e. is_enabled) is used to track
 // whether the plugin is in an "enabled" state. If you don't need enablement
 // for your plugin, you don't need this line. This variable will also be read
-// by the `plug` builtin command; when true the plugin will be shown as enabled.
+// by the `plug` builtin command; when it is true, the plugin will be shown as
+// enabled.
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
 // Any globals a plugin requires (e.g. world) should be listed here.
@@ -80,7 +81,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     DEBUG(status,out).print("shutting down %s\n", plugin_name);
 
     // You *MUST* kill all threads you created before this returns.
-    // If everything fails, just return CR_FAILURE. Your plugin will be
+    // If anything fails, just return CR_FAILURE. Your plugin will be
     // in a zombie state, but things won't crash.
     return CR_OK;
 
@@ -150,7 +151,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     return CR_OK;
 }
 
-// Whatever you put here will be done in each game frame refresh. Don't abuse it.
+// Whatever you put here will be done in each game tick/frame. Don't abuse it.
 // Note that if the plugin implements the enabled API, this function is only called
 // if the plugin is enabled.
 DFhackCExport command_result plugin_onupdate (color_ostream &out) {
@@ -203,24 +204,21 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     return CR_OK;
 }
 
-// This is the callback we registered in plugin_init. Note that while plugin
-// callbacks are called with the core suspended, command callbacks are called
-// from a different thread and need to explicity suspend the core if they
-// interact with Lua or DF game state (most commands do at least one of these).
+// This is the callback we registered in plugin_init. It will be called with the
+// core suspended, just like all the other callbacks. If this function does not
+// interact with Lua or DF game state (most commands do at least one of these),
+// you can call setRunWithCoreUnlocked(true) on the corresponding PluginCommand
+// that is registered in plugin_init.
 static command_result command_callback1(color_ostream &out, vector<string> &parameters) {
     DEBUG(command,out).print("%s command called with %zu parameters\n",
         plugin_name, parameters.size());
-
-    // I'll say it again: always suspend the core in command callbacks unless
-    // all your data is local.
-    CoreSuspender suspend;
 
     // Return CR_WRONG_USAGE to print out your help text. The help text is
     // sourced from the associated rst file in docs/plugins/. The same help will
     // also be returned by 'help your-command'.
 
     // simple commandline parsing can be done in C++, but there are lua libraries
-    // that can easily handle more complex commandlines. see the blueprint plugin
+    // that can easily handle more complex commandlines. see the dwarfvet plugin
     // for an example.
 
     // TODO: do something according to the flags set in the options struct

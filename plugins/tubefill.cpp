@@ -65,8 +65,6 @@ command_result tubefill(color_ostream &out, std::vector<std::string> & params)
             hollow = true;
     }
 
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

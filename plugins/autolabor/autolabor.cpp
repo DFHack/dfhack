@@ -1094,8 +1094,6 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
 
 command_result autolabor (color_ostream &out, std::vector <std::string> & parameters)
 {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

@@ -403,7 +403,6 @@ namespace DFHack
     protected:
         void complete_lock()
         {
-            auto& core = Core::getInstance();
             tid = core.ownerThread.exchange(std::this_thread::get_id(),
                 std::memory_order_acquire);
         }

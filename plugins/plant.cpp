@@ -528,8 +528,6 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
     df::coord pos_1, pos_2;
     vector<int32_t> filter; // Unsorted
 
-    CoreSuspender suspend;
-
     if (!Lua::CallLuaModuleFunction(out, "plugins.plant", "parse_commandline",
         std::make_tuple(&options, &pos_1, &pos_2, &filter, parameters)))
     {

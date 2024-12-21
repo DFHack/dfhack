@@ -900,8 +900,6 @@ static command_result map_prospector(color_ostream &con,
 
 command_result prospector(color_ostream &con, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     prospect_options options;
     if (!Lua::CallLuaModuleFunction(con, "plugins.prospector", "parse_commandline", std::make_tuple(&options, parameters))
             || options.help)

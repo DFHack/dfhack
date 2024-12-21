@@ -79,7 +79,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 command_result df_stripcaged(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
     bool keeparmor = true;
 
     if (parameters.size() == 1 && parameters[0] == "dumparmor")

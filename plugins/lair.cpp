@@ -26,7 +26,6 @@ command_result lair(color_ostream &out, vector<string> & params) {
             do_what = LAIR_RESET;
     }
 
-    CoreSuspender lock;
     if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
         return CR_FAILURE;

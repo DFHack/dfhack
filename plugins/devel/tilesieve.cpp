@@ -51,8 +51,6 @@ struct xyz
 
 command_result tilesieve(color_ostream &out, std::vector<std::string> & params)
 {
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

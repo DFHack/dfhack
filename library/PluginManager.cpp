@@ -469,43 +469,31 @@ bool Plugin::reload(color_ostream &out)
 
 command_result Plugin::invoke(color_ostream &out, const std::string & command, std::vector <std::string> & parameters)
 {
-    Core & c = Core::getInstance();
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
-    if(state == PS_LOADED)
-    {
-        for (size_t i = 0; i < commands.size();i++)
+    if (state == PS_LOADED) {
+        if (auto cmdIt = std::ranges::find_if(commands, [&](const PluginCommand &cmd) { return cmd.name == command; });
+            commands.end() != cmdIt)
         {
-            PluginCommand &cmd = commands[i];
-            if(cmd.name == command)
-            {
-                // running interactive things from some other source than the console would break it
-                if(!out.is_console() && cmd.interactive)
-                    cr = CR_NEEDS_CONSOLE;
-                else if (cmd.guard)
-                {
-                    // Execute hotkey commands in a way where they can
-                    // expect their guard conditions to be matched,
-                    // so as to avoid duplicating checks.
-                    // This means suspending the core beforehand.
-                    CoreSuspender suspend(c);
-                    df::viewscreen *top = c.getTopViewscreen();
-
-                    if (!cmd.guard(top))
-                    {
-                        out.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
-                        cr = CR_WRONG_USAGE;
-                    }
-                    else
-                    {
-                        cr = cmd.function(out, parameters);
-                    }
+            // running interactive things from some other source than the console would break it
+            if (!out.is_console() && cmdIt->interactive)
+                cr = CR_NEEDS_CONSOLE;
+            else if (cmdIt->guard) {
+                CoreSuspender suspend;
+                if (!cmdIt->guard(Core::getInstance().getTopViewscreen())) {
+                    out.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
+                    cr = CR_WRONG_USAGE;
                 }
-                else
-                {
-                    cr = cmd.function(out, parameters);
+                else {
+                    cr = cmdIt->function(out, parameters);
                 }
-                break;
+            }
+            else if (cmdIt->unlocked) {
+                cr = cmdIt->function(out, parameters);
+            }
+            else {
+                CoreSuspender suspend;
+                cr = cmdIt->function(out, parameters);
             }
         }
     }

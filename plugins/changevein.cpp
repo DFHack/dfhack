@@ -208,8 +208,6 @@ command_result df_changevein (color_ostream &out, vector <string> & parameters)
     if (parameters.size() != 1)
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

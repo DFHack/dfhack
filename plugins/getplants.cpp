@@ -389,8 +389,6 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
         return CR_WRONG_USAGE;
     }
 
-    CoreSuspender suspend;
-
     for (size_t i = 0; i < world->raws.plants.all.size(); i++) {
         df::plant_raw* plant = world->raws.plants.all[i];
         if (all) {

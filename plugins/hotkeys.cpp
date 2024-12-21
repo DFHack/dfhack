@@ -201,8 +201,6 @@ static command_result hotkeys_cmd(color_ostream &out, vector <string> & paramete
         return Core::getInstance().runCommand(out, cmd);
     }
 
-    CoreSuspender guard;
-
     if (parameters[0] == "list") {
         list(out);
         return CR_OK;

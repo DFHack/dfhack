@@ -860,7 +860,7 @@ df::viewscreen *dfhack_lua_viewscreen::get_pointer(lua_State *L, int idx, bool m
 
 bool dfhack_lua_viewscreen::safe_call_lua(int (*pf)(lua_State *), int args, int rvs)
 {
-    CoreSuspendClaimer suspend;
+    CoreSuspender suspend;
     color_ostream_proxy out(Core::getInstance().getConsole());
 
     auto L = Lua::Core::State;

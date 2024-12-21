@@ -47,8 +47,6 @@ REQUIRE_GLOBAL(map_renderer)
 #endif
 static int render_map_rect(lua_State* L)
 {
-    CoreSuspender suspender;
-
     int x = luaL_checkint(L, 1);
     int y = luaL_checkint(L, 2);
     int z = luaL_checkint(L, 3);

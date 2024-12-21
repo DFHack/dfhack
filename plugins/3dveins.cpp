@@ -1627,8 +1627,6 @@ command_result cmd_3dveins(color_ostream &con, std::vector<std::string> & parame
             return CR_WRONG_USAGE;
     }
 
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         con.printerr("Map is not available!\n");

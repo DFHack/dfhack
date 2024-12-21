@@ -261,8 +261,6 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
         return CR_WRONG_USAGE;
     }
 
-    CoreSuspender suspend;
-
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     if (!screen) {
         out.printerr("This plugin works only in the embark site selection phase.\n");

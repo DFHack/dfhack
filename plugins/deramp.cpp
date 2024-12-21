@@ -45,8 +45,6 @@ command_result df_deramp (color_ostream &out, vector <string> & parameters)
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

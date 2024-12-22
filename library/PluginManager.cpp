@@ -413,12 +413,17 @@ bool Plugin::unload(color_ostream &con)
         {
             // enter suspend
             access->unlock();
-            CoreSuspender suspend;
+            {
+                CoreSuspender suspend;
+                access->lock();
+                if (Core::getInstance().isMapLoaded() && plugin_save_site_data && World::IsSiteLoaded() && plugin_save_site_data(con) != CR_OK)
+                    con.printerr("Plugin %s has failed to save site data.\n", name.c_str());
+                if (Core::getInstance().isWorldLoaded() && plugin_save_world_data && plugin_save_world_data(con) != CR_OK)
+                    con.printerr("Plugin %s has failed to save world data.\n", name.c_str());
+                // holding the access lock while releasing the CoreSuspender creates a deadlock risk
+                access->unlock();
+            }
             access->lock();
-            if (Core::getInstance().isMapLoaded() && plugin_save_site_data && World::IsSiteLoaded() && plugin_save_site_data(con) != CR_OK)
-                con.printerr("Plugin %s has failed to save site data.\n", name.c_str());
-            if (Core::getInstance().isWorldLoaded() && plugin_save_world_data && plugin_save_world_data(con) != CR_OK)
-                con.printerr("Plugin %s has failed to save world data.\n", name.c_str());
         }
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;

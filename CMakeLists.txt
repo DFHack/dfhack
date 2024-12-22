@@ -15,6 +15,14 @@ set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 set(DFHACK_ABI_VERSION 2)
 set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
 
+# set up ccache
+find_program(CCACHE_EXECUTABLE "ccache" HINTS /usr/local/bin /opt/local/bin)
+if(CCACHE_EXECUTABLE)
+    message(STATUS "using ccache")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+endif()
+
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
     set(CMAKE_CONFIGURATION_TYPES "Release;RelWithDebInfo" CACHE STRING "List of supported configuration types" FORCE)

@@ -1,5 +1,4 @@
 #include "Console.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"

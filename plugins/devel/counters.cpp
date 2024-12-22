@@ -1,6 +1,5 @@
 // Show creature counter values
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"

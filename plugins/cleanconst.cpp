@@ -1,7 +1,6 @@
 // Destroys items being used as part of constructions
 // and flags the constructions to recreate their components upon disassembly
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"

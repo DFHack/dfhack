@@ -1,6 +1,5 @@
 // De-ramp.  All ramps marked for removal are replaced with given tile (presently, normal floor).
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"

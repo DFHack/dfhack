@@ -1,7 +1,6 @@
 //Quick building occupancy flag test.
 //Individual bits had no apparent meaning. Assume it's an enum, set by number.
 
-#include "Core.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>

@@ -33,7 +33,6 @@ using std::endl;
 using std::set;
 
 #include "Console.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "Export.h"

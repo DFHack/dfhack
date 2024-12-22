@@ -1,8 +1,6 @@
-#include "Core.h"
 #include "Console.h"
 #include "DataDefs.h"
 #include "Debug.h"
-#include "Export.h"
 #include "MiscUtils.h"
 #include "PluginManager.h"
 
@@ -25,11 +23,8 @@
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/plant.h"
 
-#include <iostream>
-#include <iomanip>
 #include <map>
 #include <algorithm>
-#include <vector>
 #include <math.h>
 
 #ifdef LINUX_BUILD

@@ -4,7 +4,6 @@
 #include <vector>
 
 #include "Console.h"
-#include "Core.h"
 #include "Export.h"
 #include "LuaTools.h"
 #include "PluginManager.h"

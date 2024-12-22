@@ -1,4 +1,3 @@
-#include "Core.h"
 #include "Error.h"
 #include "Console.h"
 #include "Export.h"

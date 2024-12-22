@@ -1,6 +1,5 @@
 // Allow changing the material of a mineral inclusion
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"

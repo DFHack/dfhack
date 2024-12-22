@@ -1,6 +1,5 @@
 // This tool counts static tiles and active flows of water and magma.
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"

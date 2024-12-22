@@ -1,6 +1,5 @@
 // Triggers a strange mood using (mostly) the same logic used in-game
 
-#include "Core.h"
 #include "Console.h"
 #include "DataDefs.h"
 #include "Export.h"

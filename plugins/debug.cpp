@@ -21,7 +21,6 @@ redistribute it freely, subject to the following restrictions:
    distribution.
  */
 
-#include "Core.h"
 #include "PluginManager.h"
 #include "DebugManager.h"
 #include "Debug.h"

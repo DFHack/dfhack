@@ -1,5 +1,4 @@
 #include "item_reader.h"
-#include "Core.h"
 #include "VersionInfo.h"
 #include "ItemdefInstrument.pb.h"
 

@@ -2,7 +2,6 @@
  * Tailor plugin. Automatically manages keeping your dorfs clothed.
  */
 
-#include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"

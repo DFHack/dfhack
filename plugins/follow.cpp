@@ -1,7 +1,6 @@
 // Make the camera follow the selected unit
 
 #include "Console.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "DFHack.h"
 #include "Export.h"

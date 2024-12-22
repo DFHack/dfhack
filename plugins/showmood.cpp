@@ -1,6 +1,5 @@
 // Show details of currently active strange mood, if any
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"

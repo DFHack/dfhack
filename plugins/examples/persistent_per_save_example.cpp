@@ -5,7 +5,6 @@
 // should persist its state in the savegame and auto-re-enable itself when a
 // savegame that had this plugin enabled is loaded.
 
-#include "Core.h"
 #include "Debug.h"
 #include "PluginManager.h"
 

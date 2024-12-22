@@ -120,10 +120,10 @@ jobs:
         uses: actions/cache/restore@v4
         with:
           path: ~/.cache/ccache
-          key: linux-gcc-v2-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}-${{ github.sha }}
+          key: linux-gcc-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}-${{ github.sha }}
           restore-keys: |
-            linux-gcc-v2-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}
-            linux-gcc-v2-${{ inputs.gcc-ver }}
+            linux-gcc-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}
+            linux-gcc-${{ inputs.gcc-ver }}
       - name: Configure DFHack
         env:
           CC: gcc-${{ inputs.gcc-ver }}
@@ -169,7 +169,7 @@ jobs:
         uses: actions/cache/save@v4
         with:
           path: ~/.cache/ccache
-          key: linux-gcc-v2-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}-${{ github.sha }}
+          key: linux-gcc-${{ inputs.gcc-ver }}-${{ inputs.cache-id }}-${{ github.sha }}
       - name: Format artifact name
         if: inputs.artifact-name
         id: artifactname

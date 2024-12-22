@@ -34,6 +34,7 @@ build/data
 build/docs
 build/lua
 build/bin
+build/lib
 build/depends
 build/library
 build/package

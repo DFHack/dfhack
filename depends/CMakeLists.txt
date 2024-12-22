@@ -71,6 +71,8 @@ set(LIBZIP_DO_INSTALL OFF CACHE BOOL "")
 add_subdirectory(libzip)
 if(MSVC)
     target_compile_options(zip PRIVATE /wd4244)
+elseif(UNIX)
+    set_target_properties(zip PROPERTIES COMPILE_FLAGS "-Wno-stringop-truncation")
 endif()
 
 set(XLSXIO_USE_DFHACK_LIBS ON CACHE BOOL "")

@@ -23,16 +23,16 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "ColorText.h"
-#include <atomic>
 #include <deque>
 #include <fstream>
 #include <assert.h>
 #include <iostream>
-#include <mutex>
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace  DFHack
 {
@@ -120,38 +120,96 @@ namespace  DFHack
         std::deque <std::string> history;
     };
 
-    class Private;
     class DFHACK_EXPORT Console : public color_ostream
     {
-    protected:
-        virtual void begin_batch();
-        virtual void add_text(color_value color, const std::string &text);
-        virtual void end_batch();
+    public:
+        const char * ANSI_CLS = "\033[2J";
+        const char * ANSI_BLACK = "\033[22;30m";
+        const char * ANSI_RED = "\033[22;31m";
+        const char * ANSI_GREEN = "\033[22;32m";
+        const char * ANSI_BROWN = "\033[22;33m";
+        const char * ANSI_BLUE = "\033[22;34m";
+        const char * ANSI_MAGENTA = "\033[22;35m";
+        const char * ANSI_CYAN = "\033[22;36m";
+        const char * ANSI_GREY = "\033[22;37m";
+        const char * ANSI_DARKGREY = "\033[01;30m";
+        const char * ANSI_LIGHTRED = "\033[01;31m";
+        const char * ANSI_LIGHTGREEN = "\033[01;32m";
+        const char * ANSI_YELLOW = "\033[01;33m";
+        const char * ANSI_LIGHTBLUE = "\033[01;34m";
+        const char * ANSI_LIGHTMAGENTA = "\033[01;35m";
+        const char * ANSI_LIGHTCYAN = "\033[01;36m";
+        const char * ANSI_WHITE = "\033[01;37m";
+        const char * RESETCOLOR = "\033[0m";
 
-        virtual void flush_proxy();
+
+        enum class Type {
+            Posix,
+            SDL,
+            Windows,
+            DUMMY
+        };
+
+        const char * getANSIColor(const int c)
+        {
+            switch (c)
+            {
+                case -1: return RESETCOLOR; // HACK! :P
+                case 0 : return ANSI_BLACK;
+                case 1 : return ANSI_BLUE; // non-ANSI
+                case 2 : return ANSI_GREEN;
+                case 3 : return ANSI_CYAN; // non-ANSI
+                case 4 : return ANSI_RED; // non-ANSI
+                case 5 : return ANSI_MAGENTA;
+                case 6 : return ANSI_BROWN;
+                case 7 : return ANSI_GREY;
+                case 8 : return ANSI_DARKGREY;
+                case 9 : return ANSI_LIGHTBLUE; // non-ANSI
+                case 10: return ANSI_LIGHTGREEN;
+                case 11: return ANSI_LIGHTCYAN; // non-ANSI;
+                case 12: return ANSI_LIGHTRED; // non-ANSI;
+                case 13: return ANSI_LIGHTMAGENTA;
+                case 14: return ANSI_YELLOW; // non-ANSI
+                case 15: return ANSI_WHITE;
+                default: return "";
+            }
+        }
+
+    protected:
+        Type con_type{Type::DUMMY};
+
+        virtual void begin_batch() {};
+        virtual void add_text(color_value color, const std::string &text) {
+            std::cout << getANSIColor(color);
+            std::cout << text;
+            std::cout << RESETCOLOR;
+        };
+        virtual void end_batch() {};
+        virtual void flush_proxy() {};
 
     public:
         ///ctor, NOT thread-safe
-        Console();
+        Console() = default;
+        Console(Type type) : con_type(type) {}
         ///dtor, NOT thread-safe
-        ~Console();
+        virtual ~Console() = default;
         /// initialize the console. NOT thread-safe
-        bool init( bool dont_redirect );
+        virtual bool init( bool dont_redirect ) { return false; };
         /// shutdown the console. NOT thread-safe
-        bool shutdown( void );
+        virtual bool shutdown( void ) { return true; };
 
         /// Clear the console, along with its scrollback
-        void clear();
+        virtual void clear() {};
         /// Position cursor at x,y. 1,1 = top left corner
-        void gotoxy(int x, int y);
+        virtual void gotoxy(int x, int y) {};
         /// Enable or disable the caret/cursor
-        void cursor(bool enable = true);
+        virtual void cursor(bool enable = true) {};
         /// Waits given number of milliseconds before continuing.
-        void msleep(unsigned int msec);
+        virtual void msleep(unsigned int msec) {};
         /// get the current number of columns
-        int  get_columns(void);
+        virtual int  get_columns(void) { return FAILURE; };
         /// get the current number of rows
-        int  get_rows(void);
+        virtual int  get_rows(void) { return FAILURE; };
         /// beep. maybe?
         //void beep (void);
         //! \defgroup lineedit_return_values Possible errors from lineedit
@@ -161,16 +219,22 @@ namespace  DFHack
         static constexpr int RETRY = -3;
         //! \}
         /// A simple line edit (raw mode)
-        int lineedit(const std::string& prompt, std::string& output, CommandHistory & history );
-        bool isInited (void) { return inited; };
+        virtual int lineedit(const std::string& prompt, std::string& output, CommandHistory & history ) { return SHUTDOWN; };
+        virtual bool isInited (void) { return false; };
 
         bool is_console() { return true; }
 
-        bool hide();
-        bool show();
-    private:
-        Private * d;
-        std::recursive_mutex * wlock;
-        std::atomic<bool> inited;
+        virtual bool hide() { return false; };
+        virtual bool show() { return false; };
+
+        virtual void cleanup() {};
+        Type get_type() const { return con_type; }
+
+        template <typename T>
+        T& as() {
+            return static_cast<T&>(*this);
+        }
+
+        static std::unique_ptr<Console> makeConsole();
     };
 }

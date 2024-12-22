@@ -21,7 +21,6 @@
 // - maybe store the last parameters in a file to make them persistent after dfhack is closed?
 
 #include "Console.h"
-#include "Core.h"
 #include "Export.h"
 #include "LuaTools.h"
 #include "PluginManager.h"

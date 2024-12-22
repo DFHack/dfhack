@@ -17,7 +17,6 @@
 
 
 #include "Console.h"
-#include "Core.h"
 #include "MiscUtils.h"
 #include "PluginManager.h"
 

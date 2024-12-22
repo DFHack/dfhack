@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <set>
 
-#include "Core.h"
 #include "Debug.h"
 #include "Console.h"
 #include "Export.h"

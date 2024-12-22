@@ -1,5 +1,4 @@
 
-#include "Core.h"
 #include "Console.h"
 #include "DataDefs.h"
 #include "Export.h"

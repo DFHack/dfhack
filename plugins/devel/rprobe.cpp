@@ -13,7 +13,6 @@
 #include <vector>
 
 using namespace std;
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"

@@ -4,7 +4,6 @@
 // config for autobutcher (state and sleep setting) is saved the first time autobutcher is started
 // config for watchlist entries is saved when they are created or modified
 
-#include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"

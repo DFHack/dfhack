@@ -8,7 +8,6 @@
 // configured for specific use cases (but don't come with as many comments as
 // this one does).
 
-#include "Core.h"
 #include "Debug.h"
 #include "MemAccess.h"
 #include "PluginManager.h"

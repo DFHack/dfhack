@@ -5,7 +5,6 @@
 #include <map>
 #include <cinttypes>
 #include <vector>
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"

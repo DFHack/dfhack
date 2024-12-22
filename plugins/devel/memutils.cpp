@@ -1,6 +1,5 @@
 #include <string>
 
-#include "Core.h"
 #include "LuaTools.h"
 #include "LuaWrapper.h"
 

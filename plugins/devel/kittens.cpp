@@ -6,7 +6,6 @@
 #include <thread>
 
 #include "Console.h"
-#include "Core.h"
 #include "Debug.h"
 #include "Export.h"
 #include "MiscUtils.h"

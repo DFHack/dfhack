@@ -1,7 +1,6 @@
 #include "assignJob.h"
 #include "edgeCost.h"
 
-#include "Core.h"
 #include "Console.h"
 #include "DataDefs.h"
 #include "Export.h"

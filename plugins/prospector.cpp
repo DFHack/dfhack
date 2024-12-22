@@ -1,6 +1,5 @@
 // Produces a list of materials available on the map.
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "LuaTools.h"

@@ -1,5 +1,4 @@
 
-#include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"

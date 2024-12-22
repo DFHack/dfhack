@@ -1,5 +1,4 @@
 //most of the code is shamelessly stolen from steam-engine.cpp
-#include "Core.h"
 #include "Error.h"
 #include <Console.h>
 #include <Export.h>

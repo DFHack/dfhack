@@ -4,7 +4,6 @@
 #include "defaultitemfilters.h"
 #include "itemfilter.h"
 
-#include "Core.h"
 
 #include "modules/Persistence.h"
 

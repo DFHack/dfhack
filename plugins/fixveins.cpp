@@ -5,7 +5,6 @@
 // It also fixes tiles marked as "mineral inclusion" where no inclusion is present,
 // which generally happen as a result of improper use of the tiletypes plugin
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"

@@ -71,7 +71,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "liquids",
         "Place magma, water or obsidian.",
         df_liquids,
-        true)); // interactive, needs console for prompt
+        true, true)); // interactive, needs console for prompt
     commands.push_back(PluginCommand(
         "liquids-here",
         "Use settings from liquids at cursor position.",
@@ -368,6 +368,7 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
             cur_mode.amount = 7;
         else if(command.empty())
         {
+            CoreSuspender suspend;
             df_liquids_execute(out);
         }
         else

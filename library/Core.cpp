@@ -2416,7 +2416,6 @@ int Core::Shutdown ( void )
     d->hotkeythread.join();
     d->iothread.join();
 
-    CoreSuspendClaimer suspend;
     if(plug_mgr)
     {
         delete plug_mgr;

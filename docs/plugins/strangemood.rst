@@ -36,9 +36,10 @@ Options
 ``--skill <skill>``
     Force the mood to use a specific skill instead of choosing the highest
     moodable skill. Valid values are "miner", "carpenter", "engraver", "mason",
-    "tanner", "weaver", "clothier", "weaponsmith",  "armorsmith", "metalsmith",
-    "gemcutter", "gemsetter", "woodcrafter", "stonecrafter", "metalcrafter",
-    "glassmaker", "leatherworker", "bonecarver", "bowyer", and "mechanic".
+    "stonecutter", "stonecarver", "tanner", "weaver", "clothier",
+    "weaponsmith",  "armorsmith", "metalsmith", "gemcutter", "gemsetter",
+    "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker",
+    "leatherworker", "bonecarver", "bowyer", and "mechanic".
 
 Known limitations: if the selected unit is currently performing a job, the mood
 will not be triggered.

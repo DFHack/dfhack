@@ -61,6 +61,7 @@ Template for new versions:
 - `preserve-tombs`: properly re-enable after loading a game that had the tool enabled
 
 ## Misc Improvements
+- `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
 
 ## Documentation
 
@@ -69,6 +70,9 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+## Internals
+- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access
 
 # 50.15-r1.2
 

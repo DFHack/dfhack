@@ -110,10 +110,7 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
             return CR_WRONG_USAGE;
     }
 
-    {
-        CoreSuspender suspend;
-        World::ReadGameMode(gm);
-    }
+    World::ReadGameMode(gm);
 
     printCurrentModes(gm, out);
 
@@ -192,10 +189,7 @@ command_result mode (color_ostream &out_, vector <string> & parameters)
             gm.g_type = (GameType) strtol(start, 0, 10);
         }
 
-        {
-            CoreSuspender suspend;
-            World::WriteGameMode(gm);
-        }
+        World::WriteGameMode(gm);
 
         out << endl;
     }

@@ -395,8 +395,6 @@ static void autobutcher_target(color_ostream &out, const autobutcher_options &op
 static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_options &opts);
 
 static command_result df_autobutcher(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

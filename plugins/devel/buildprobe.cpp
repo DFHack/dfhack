@@ -37,8 +37,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 command_result readFlag (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     // init the map
     if(!Maps::IsValid())
     {
@@ -97,8 +95,6 @@ command_result writeFlag (color_ostream &out, vector <string> & parameters)
             return CR_FAILURE;
             break; //Redundant.
     }
-
-    CoreSuspender suspend;
 
     // init the map
     if(!Maps::IsValid())

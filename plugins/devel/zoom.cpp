@@ -72,7 +72,6 @@ command_result df_gzoom (color_ostream &out, std::vector<std::string> & paramete
     int y = atoi( parameters[1].c_str());
     int z = atoi( parameters[2].c_str());
     int xi, yi, zi;
-    CoreSuspender cs;
     if(Gui::getCursorCoords(xi, yi, zi))
     {
         Gui::setCursorCoords(x,y,z);

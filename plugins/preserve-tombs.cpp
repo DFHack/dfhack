@@ -75,7 +75,6 @@ static command_result do_command(color_ostream& out, std::vector<std::string>& p
             out.printerr("Cannot update %s when not enabled", plugin_name);
             return CR_FAILURE;
         }
-        CoreSuspender suspend;
         update_tomb_assignments(out);
         out.print("Updated tomb assignments\n");
         return CR_OK;

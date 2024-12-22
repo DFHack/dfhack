@@ -395,9 +395,7 @@ static bool validateMaterialCategory(ClothingRequirement *requirement) {
 
 // A command! It sits around and looks pretty. And it's nice and friendly.
 command_result autoclothing(color_ostream &out, vector<string> &parameters)
-{   // Be sure to suspend the core if any DF state is read or modified
-    CoreSuspender suspend;
-
+{
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

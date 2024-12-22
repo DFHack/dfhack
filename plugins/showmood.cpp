@@ -40,8 +40,6 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    CoreSuspender suspend;
-
     bool found = false;
     for (df::job_list_link *cur = world->jobs.list.next; cur != NULL; cur = cur->next)
     {

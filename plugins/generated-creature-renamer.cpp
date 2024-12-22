@@ -99,8 +99,6 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     if (event != DFHack::SC_WORLD_LOADED)
         return CR_OK;
 
-    CoreSuspender suspend;
-
     std::vector<int> descriptorCount = std::vector<int>(descriptors.size());
 
     auto version = World::GetPersistentData("AlreadyRenamedCreatures");
@@ -189,7 +187,6 @@ command_result list_creatures(color_ostream &out, std::vector <std::string> & pa
         detailed = true;
     }
 
-    CoreSuspender suspend;
     for (size_t i = 0; i < world->raws.creatures.all.size(); i++)
     {
         auto creatureRaw = world->raws.creatures.all[i];

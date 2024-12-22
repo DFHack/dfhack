@@ -16,8 +16,6 @@ using namespace df::enums;
 
 command_result df_counters (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     df::unit *unit = Gui::getSelectedUnit(out);
     if (!unit)
         return CR_WRONG_USAGE;

@@ -190,7 +190,6 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
 }
 
 command_result df_autodump(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
     return autodump_main(out, parameters);
 }
 
@@ -201,7 +200,6 @@ command_result df_autodump_destroy_here(color_ostream &out, vector<string> &para
     vector<string> args;
     args.push_back("destroy-here");
 
-    CoreSuspender suspend;
     return autodump_main(out, args);
 }
 
@@ -212,8 +210,6 @@ command_result df_autodump_destroy_item(color_ostream &out, vector<string> &para
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
-
-    CoreSuspender suspend;
 
     df::item *item = Gui::getSelectedItem(out);
     if (!item)

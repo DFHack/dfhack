@@ -169,7 +169,6 @@ command_result cleanplants (color_ostream &out)
 
 command_result spotclean (color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     if (cursor->x < 0)
     {
         out.printerr("The cursor is not active.\n");
@@ -235,8 +234,6 @@ command_result clean (color_ostream &out, vector <string> & parameters)
     }
     if(!map && !units && !items && !plants)
         return CR_WRONG_USAGE;
-
-    CoreSuspender suspend;
 
     if(map)
         cleanmap(out,snow,mud,item_spatter);

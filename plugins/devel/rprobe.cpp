@@ -57,11 +57,8 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-
 command_result rprobe (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     bool set = false;
     int to_set = -1, set_field = -1, set_val = -1;
 

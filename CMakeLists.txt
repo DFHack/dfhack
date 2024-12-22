@@ -4,7 +4,6 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0074 NEW)
-project(dfhack)
 
 # set up versioning.
 set(DF_VERSION "51.01")
@@ -14,6 +13,17 @@ set(DFHACK_PRERELEASE TRUE)
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 set(DFHACK_ABI_VERSION 2)
 set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
+
+# set up ccache
+find_program(CCACHE_EXECUTABLE "ccache" HINTS /usr/local/bin /opt/local/bin)
+if(CCACHE_EXECUTABLE)
+    message(STATUS "using ccache")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+endif()
+
+# project must be declared *after* ccache setup
+project(dfhack)
 
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)

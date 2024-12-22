@@ -119,26 +119,6 @@ public:
 };
 }
 
-CoreSuspendReleaseMain::CoreSuspendReleaseMain()
-{
-    MainThread::suspend().unlock();
-}
-
-CoreSuspendReleaseMain::~CoreSuspendReleaseMain()
-{
-    MainThread::suspend().lock();
-}
-
-CoreSuspendClaimMain::CoreSuspendClaimMain()
-{
-    MainThread::suspend().lock();
-}
-
-CoreSuspendClaimMain::~CoreSuspendClaimMain()
-{
-    MainThread::suspend().unlock();
-}
-
 struct Core::Private
 {
     std::thread iothread;
@@ -1548,6 +1528,8 @@ df::viewscreen * Core::getTopViewscreen() {
 }
 
 bool Core::InitMainThread() {
+    df_render_thread = std::this_thread::get_id();
+
     Filesystem::init();
 
     // Re-route stdout and stderr again - DF seems to set up stdout and
@@ -1707,6 +1689,7 @@ bool Core::InitMainThread() {
 
 bool Core::InitSimulationThread()
 {
+    df_simulation_thread = std::this_thread::get_id();
     if(started)
         return true;
     if(errorstate)
@@ -2108,6 +2091,13 @@ void Core::doUpdate(color_ostream &out)
 // should always be from simulation thread!
 int Core::Update()
 {
+    if (shutdown)
+    {
+        // release the suspender
+        MainThread::suspend().unlock();
+        return -1;
+    }
+
     if(errorstate)
         return -1;
 
@@ -2405,8 +2395,7 @@ int Core::Shutdown ( void )
         return true;
     errorstate = 1;
 
-    // Make sure we release main thread if this is called from main thread
-    MainThread::suspend().unlock();
+    shutdown = true;
 
     // Make sure the console thread shutdowns before clean up to avoid any
     // unlikely data races.
@@ -2519,6 +2508,13 @@ bool Core::DFH_SDL_Event(SDL_Event* ev) {
 
 bool Core::doSdlInputEvent(SDL_Event* ev)
 {
+    // DF only calls the sdl input event hook from the render thread
+    // we use this to identify the render thread
+    //
+    // first time this is called, set df_render_thread to calling thread
+    // afterwards, assert that it's never changed
+    assert(std::this_thread::get_id() == df_render_thread);
+
     static std::map<int, bool> hotkey_states;
 
     // do NOT process events before we are ready.

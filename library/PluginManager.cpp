@@ -388,7 +388,7 @@ bool Plugin::unload(color_ostream &con)
     // get the mutex
     access->lock();
     // if we are actually loaded
-    if(state == PS_LOADED)
+    if (state == PS_LOADED)
     {
         if (Screen::hasActiveScreens(this))
         {
@@ -408,14 +408,18 @@ bool Plugin::unload(color_ostream &con)
         // wait for all calls to finish
         access->wait();
         state = PS_UNLOADING;
-        access->unlock();
-        // enter suspend
-        CoreSuspender suspend;
-        access->lock();
-        if (Core::getInstance().isMapLoaded() && plugin_save_site_data && World::IsSiteLoaded() && plugin_save_site_data(con) != CR_OK)
-            con.printerr("Plugin %s has failed to save site data.\n", name.c_str());
-        if (Core::getInstance().isWorldLoaded() && plugin_save_world_data && plugin_save_world_data(con) != CR_OK)
-            con.printerr("Plugin %s has failed to save world data.\n", name.c_str());
+        // only attempt to unload site or world data if the core is in a valid state
+        if (Core::getInstance().isValid())
+        {
+            // enter suspend
+            access->unlock();
+            CoreSuspender suspend;
+            access->lock();
+            if (Core::getInstance().isMapLoaded() && plugin_save_site_data && World::IsSiteLoaded() && plugin_save_site_data(con) != CR_OK)
+                con.printerr("Plugin %s has failed to save site data.\n", name.c_str());
+            if (Core::getInstance().isWorldLoaded() && plugin_save_world_data && plugin_save_world_data(con) != CR_OK)
+                con.printerr("Plugin %s has failed to save world data.\n", name.c_str());
+        }
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;
         if(plugin_shutdown)

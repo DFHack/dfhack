@@ -344,7 +344,11 @@ namespace DFHack
         std::condition_variable_any CoreWakeup;
         std::atomic<std::thread::id> ownerThread;
         std::atomic<size_t> toolCount;
+        std::atomic<bool> shutdown;
         //! \}
+
+        std::thread::id df_render_thread;
+        std::thread::id df_simulation_thread;
 
         friend class CoreService;
         friend class ServerConnection;
@@ -369,8 +373,9 @@ namespace DFHack
             /* Mark this thread to be the core owner */
             tid{},
             core{ core }
-        {}
-
+        {
+            assert(core.df_render_thread != std::thread::id{} && core.df_render_thread != std::this_thread::get_id());
+        }
     public:
         void lock()
         {
@@ -440,7 +445,7 @@ namespace DFHack
     class CoreSuspender : protected CoreSuspenderBase {
         using parent_t = CoreSuspenderBase;
     public:
-        CoreSuspender() : CoreSuspender{Core::getInstance()} { }
+        CoreSuspender() : CoreSuspender{Core::getInstance()} {}
 
         CoreSuspender(Core& core) : CoreSuspenderBase{core}
         {
@@ -515,23 +520,4 @@ namespace DFHack
         operator bool() const { return owns_lock(); }
     };
 
-    /*!
-     * Temporary release main thread ownership to allow alternative thread
-     * implement DF logic thread loop
-     */
-    struct DFHACK_EXPORT CoreSuspendReleaseMain {
-        CoreSuspendReleaseMain();
-        ~CoreSuspendReleaseMain();
-    };
-
-    /*!
-     * Temporary claim main thread ownership. This allows caller to call
-     * Core::Update from a different thread than original DF logic thread if
-     * logic thread has released main thread ownership with
-     * CoreSuspendReleaseMain
-     */
-    struct DFHACK_EXPORT CoreSuspendClaimMain {
-        CoreSuspendClaimMain();
-        ~CoreSuspendClaimMain();
-    };
 }

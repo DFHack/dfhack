@@ -15,13 +15,8 @@ if(UNIX)
     set_target_properties(protobuf PROPERTIES COMPILE_FLAGS "-Wno-deprecated-declarations -Wno-restrict")
 endif()
 
-if(UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
 option(INSTALL_GTEST "Enable installation of googletest. (Projects embedding googletest may want to turn this OFF.)" OFF)
 add_subdirectory(googletest)
-if(UNIX)
-    set_target_properties(gtest PROPERTIES COMPILE_FLAGS "-Wno-maybe-uninitialized -Wno-sign-compare -Wno-restrict")
-endif()
-endif()
 
 # Don't build tinyxml if it's being externally linked against.
 if(NOT TinyXML_FOUND)

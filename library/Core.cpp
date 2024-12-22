@@ -113,7 +113,7 @@ public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
     //! thread exit.
     static CoreSuspenderBase& suspend() {
-        static thread_local CoreSuspenderBase lock(std::defer_lock);
+        static thread_local CoreSuspenderBase lock{};
         return lock;
     }
 };
@@ -439,7 +439,14 @@ bool is_builtin(color_ostream &con, const std::string &command) {
 }
 
 void get_commands(color_ostream &con, std::vector<std::string> &commands) {
-    CoreSuspender suspend;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Cannot acquire core lock in helpdb.get_commands\n");
+        commands.clear();
+        return;
+    }
+
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
 
@@ -460,9 +467,7 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
 {
     std::vector<std::string> commands, possible;
 
-    // restore call to get_commands once we have updated the core lock to a deferred lock
-    // so calling Lua from the console thread won't deadlock if Lua is currently busy
-    //get_commands(con, commands);
+    get_commands(con, commands);
     for (auto &command : commands)
         if (command.substr(0, first.size()) == first)
             possible.push_back(command);
@@ -641,7 +646,12 @@ static std::string sc_event_name (state_change_event id) {
 }
 
 void help_helper(color_ostream &con, const std::string &entry_name) {
-    CoreSuspender suspend;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
 
@@ -2396,8 +2406,7 @@ int Core::Shutdown ( void )
     errorstate = 1;
 
     // Make sure we release main thread if this is called from main thread
-    if (MainThread::suspend().owns_lock())
-        MainThread::suspend().unlock();
+    MainThread::suspend().unlock();
 
     // Make sure the console thread shutdowns before clean up to avoid any
     // unlikely data races.

@@ -31,6 +31,7 @@ distribution.
 #include "modules/Graphic.h"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <map>
 #include <memory>
@@ -339,7 +340,7 @@ namespace DFHack
          * \sa DFHack::CoreSuspender
          * \{
          */
-        std::recursive_mutex CoreSuspendMutex;
+        std::recursive_timed_mutex CoreSuspendMutex;
         std::condition_variable_any CoreWakeup;
         std::atomic<std::thread::id> ownerThread;
         std::atomic<size_t> toolCount;
@@ -353,31 +354,41 @@ namespace DFHack
         friend struct CoreSuspendReleaseMain;
     };
 
-    class CoreSuspenderBase  : protected std::unique_lock<std::recursive_mutex> {
+    class CoreSuspenderBase : protected std::unique_lock< decltype(Core::CoreSuspendMutex) > {
     protected:
-        using parent_t = std::unique_lock<std::recursive_mutex>;
+        using mutex_type = decltype(Core::CoreSuspendMutex);
+        using parent_t = std::unique_lock< mutex_type >;
         std::thread::id tid;
+        Core& core;
 
-        CoreSuspenderBase(std::defer_lock_t d) : CoreSuspenderBase{&Core::getInstance(), d} {}
+        CoreSuspenderBase() : CoreSuspenderBase{ Core::getInstance() } {}
 
-        CoreSuspenderBase(Core* core, std::defer_lock_t) :
-            /* Lock the core */
-            parent_t{core->CoreSuspendMutex,std::defer_lock},
+        CoreSuspenderBase(Core& core) :
+            /* Lock the core (jk not really) */
+            parent_t{core.CoreSuspendMutex,std::defer_lock},
             /* Mark this thread to be the core owner */
-            tid{}
+            tid{},
+            core{ core }
         {}
+
     public:
         void lock()
         {
-            auto& core = Core::getInstance();
             parent_t::lock();
-            tid = core.ownerThread.exchange(std::this_thread::get_id(),
-                    std::memory_order_acquire);
+            complete_lock();
+        }
+
+        bool try_lock()
+        {
+            bool locked = parent_t::try_lock_for(std::chrono::milliseconds(100));
+            if (locked) complete_lock();
+            return locked;
         }
 
         void unlock()
         {
-            auto& core = Core::getInstance();
+            if (!owns_lock())
+                return;
             /* Restore core owner to previous value */
             core.ownerThread.store(tid, std::memory_order_release);
             if (tid == std::thread::id{})
@@ -385,15 +396,17 @@ namespace DFHack
             parent_t::unlock();
         }
 
-        bool owns_lock() const noexcept
-        {
-            return parent_t::owns_lock();
+        ~CoreSuspenderBase() {
+            unlock();
         }
 
-        ~CoreSuspenderBase() {
-            if (owns_lock())
-                unlock();
+    protected:
+        void complete_lock()
+        {
+            tid = core.ownerThread.exchange(std::this_thread::get_id(),
+                std::memory_order_acquire);
         }
+
         friend class MainThread;
     };
 
@@ -419,34 +432,61 @@ namespace DFHack
      *   The last step is to decrement Core::toolCount and wakeup main thread if
      *   no more tools are queued trying to acquire the
      *   Core::CoreSuspenderMutex.
+     *
+     * The public API for CoreSuspender only supports construction and destruction;
+     * all other locking operations are reserved
      */
-    class CoreSuspender : public CoreSuspenderBase {
+
+    class CoreSuspender : protected CoreSuspenderBase {
         using parent_t = CoreSuspenderBase;
     public:
-        CoreSuspender() : CoreSuspender{&Core::getInstance()} { }
-        CoreSuspender(std::defer_lock_t d) : CoreSuspender{&Core::getInstance(),d} { }
-        CoreSuspender(bool) : CoreSuspender{&Core::getInstance()} { }
-        CoreSuspender(Core* core, bool) : CoreSuspender{core} { }
-        CoreSuspender(Core* core) :
-            CoreSuspenderBase{core, std::defer_lock}
+        CoreSuspender() : CoreSuspender{Core::getInstance()} { }
+
+        CoreSuspender(Core& core) : CoreSuspenderBase{core}
         {
             lock();
         }
-        CoreSuspender(Core* core, std::defer_lock_t) :
-            CoreSuspenderBase{core, std::defer_lock}
-        {}
+
+        // note that this is needed so the destructor will call CoreSuspender::unlock instead of CoreSuspenderBase::unlock
+        ~CoreSuspender() {
+            unlock();
+        }
+
+    protected:
+        // deferred locking is not part of CoreSuspender's public API
+        // these constructors are only for use in derived classes,
+        // specifically ConditionalCoreSuspender
+        CoreSuspender(std::defer_lock_t d) : CoreSuspender{ Core::getInstance(),d } {}
+        CoreSuspender(Core& core, std::defer_lock_t d) : CoreSuspenderBase{ core } {}
 
         void lock()
         {
-            auto& core = Core::getInstance();
-            core.toolCount.fetch_add(1, std::memory_order_relaxed);
+            inc_tool_count();
             parent_t::lock();
+        }
+
+        bool try_lock()
+        {
+            inc_tool_count();
+            if (parent_t::try_lock())
+                return true;
+            dec_tool_count();
+            return false;
         }
 
         void unlock()
         {
-            auto& core = Core::getInstance();
             parent_t::unlock();
+            dec_tool_count();
+        }
+
+        void inc_tool_count()
+        {
+            core.toolCount.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        void dec_tool_count()
+        {
             /* Notify core to continue when all queued tools have completed
              * 0 = None wants to own the core
              * 1+ = There are tools waiting core access
@@ -455,11 +495,24 @@ namespace DFHack
             if (core.toolCount.fetch_add(-1, std::memory_order_relaxed) == 1)
                 core.CoreWakeup.notify_one();
         }
+    };
 
-        ~CoreSuspender() {
-            if (owns_lock())
-                unlock();
-        }
+    /*!
+     * ConditionalCoreSuspender attempts to acquire a CoreSuspender, but will fail if doing so
+     * would cause a thread wait. The caller can determine if the suspender was acquired by casting
+     * the created object to bool:
+     *     ConditionalCoreSuspender suspend;
+     *     if (suspend) {
+     *         ...
+     *     }
+     */
+
+    class ConditionalCoreSuspender : protected CoreSuspender {
+    public:
+        ConditionalCoreSuspender() : ConditionalCoreSuspender{ Core::getInstance() } { }
+        ConditionalCoreSuspender(Core& core) : CoreSuspender{ core, std::defer_lock } { try_lock(); }
+
+        operator bool() const { return owns_lock(); }
     };
 
     /*!

@@ -44,7 +44,7 @@ if ! docker run --rm -i -v "$srcdir":/src -v "$srcdir/build/win64-cross/":/src/b
     -e steam_password \
     --name dfhack-win \
     ghcr.io/dfhack/build-env:master \
-    bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output -DBUILD_DOCS=1 $CMAKE_EXTRA_ARGS && dfhack-make -j$jobs install && find . -iname '*.pdb' -exec cp --parents '{}' pdb/ \;" \
+    bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output -DBUILD_DOCS=1 $CMAKE_EXTRA_ARGS && dfhack-make -j$jobs install && find depends library plugins -iname '*.pdb' -exec cp --parents '{}' pdb/ \;" \
     ; then
     echo
     echo "Build failed"

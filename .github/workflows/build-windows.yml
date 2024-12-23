@@ -118,9 +118,9 @@ jobs:
         run: |
           cd build
           ccache -d win64-cross/ccache --show-stats --verbose
-          ccache -d win64-cross/ccache --max-size 150M
-          ccache -d win64-cross/ccache --cleanup
           ccache -d win64-cross/ccache --max-size 500M
+          ccache -d win64-cross/ccache --cleanup
+          ccache -d win64-cross/ccache --max-size 2G
           ccache -d win64-cross/ccache --zero-stats
       - name: Save ccache
         if: inputs.platform-files && !inputs.cache-readonly

@@ -1528,6 +1528,7 @@ df::viewscreen * Core::getTopViewscreen() {
 }
 
 bool Core::InitMainThread() {
+    // this hook is always called from DF's main (render) thread, so capture this thread id
     df_render_thread = std::this_thread::get_id();
 
     Filesystem::init();
@@ -1689,6 +1690,7 @@ bool Core::InitMainThread() {
 
 bool Core::InitSimulationThread()
 {
+    // the update hook is only called from the simulation thread, so capture this thread id
     df_simulation_thread = std::this_thread::get_id();
     if(started)
         return true;
@@ -2508,11 +2510,7 @@ bool Core::DFH_SDL_Event(SDL_Event* ev) {
 
 bool Core::doSdlInputEvent(SDL_Event* ev)
 {
-    // DF only calls the sdl input event hook from the render thread
-    // we use this to identify the render thread
-    //
-    // first time this is called, set df_render_thread to calling thread
-    // afterwards, assert that it's never changed
+    // this should only ever be called from the render thread
     assert(std::this_thread::get_id() == df_render_thread);
 
     static std::map<int, bool> hotkey_states;

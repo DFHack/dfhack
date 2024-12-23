@@ -56,6 +56,9 @@ on:
       launchdf:
         type: boolean
         default: false
+      save-pdb:
+        type: boolean
+        default: false
 
 
 jobs:
@@ -145,3 +148,9 @@ jobs:
         with:
           name: ${{ steps.artifactname.outputs.name }}
           path: ${{ steps.artifactname.outputs.name }}.tar.bz2
+      - name: Upload PDBs
+        if: inputs.artifact-name && inputs.save-pdb
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifactname.outputs.name }}_pdb
+          path: build/win64-cross/pdb

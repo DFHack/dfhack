@@ -52,6 +52,7 @@ jobs:
       docs: true
       html: false
       launchdf: ${{ inputs.launchdf }}
+      save-pdb: true
     secrets: inherit
 
   package-linux:

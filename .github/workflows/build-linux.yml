@@ -135,6 +135,7 @@ jobs:
             -G Ninja \
             -DCMAKE_INSTALL_PREFIX=build/image \
             -DCMAKE_BUILD_TYPE=Release \
+            -DDFHACK_RUN_URL='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' \
             ${{ inputs.platform-files && '-DCMAKE_C_COMPILER_LAUNCHER=ccache' || '' }} \
             ${{ inputs.platform-files && '-DCMAKE_CXX_COMPILER_LAUNCHER=ccache' || '' }} \
             -DBUILD_LIBRARY:BOOL=${{ inputs.platform-files }} \

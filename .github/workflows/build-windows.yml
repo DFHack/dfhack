@@ -110,7 +110,7 @@ jobs:
             win-msvc
       - name: Cross-compile
         env:
-          CMAKE_EXTRA_ARGS: -DBUILD_LIBRARY=${{ inputs.platform-files }} -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files && inputs.plugins }} -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} -DBUILD_DOCS:BOOL=${{ inputs.docs }} -DBUILD_DOCS_NO_HTML:BOOL=${{ !inputs.html }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} -DBUILD_TESTS:BOOL=${{ inputs.tests }} -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} ${{ inputs.xml-dump-type-sizes && '-DINSTALL_XMLDUMP:BOOL=1' || '' }}
+          CMAKE_EXTRA_ARGS: -DDFHACK_RUN_URL='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' -DBUILD_LIBRARY=${{ inputs.platform-files }} -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files && inputs.plugins }} -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} -DBUILD_DOCS:BOOL=${{ inputs.docs }} -DBUILD_DOCS_NO_HTML:BOOL=${{ !inputs.html }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} -DBUILD_TESTS:BOOL=${{ inputs.tests }} -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} ${{ inputs.xml-dump-type-sizes && '-DINSTALL_XMLDUMP:BOOL=1' || '' }}
         run: |
           cd build
           bash -x build-win64-from-linux.sh

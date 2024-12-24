@@ -1547,8 +1547,11 @@ bool Core::InitMainThread() {
     if (!freopen("stderr.log", "w", stderr))
         std::cerr << "Could not redirect stderr to stderr.log" << std::endl;
 
-    std::cerr << "DFHack build: " << Version::git_description() << "\n"
-         << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
+    std::cerr << "DFHack build: " << Version::git_description() << std::endl;
+    if (strlen(Version::dfhack_run_url())) {
+        std::cerr << "Build url: " << Version::dfhack_run_url() << std::endl;
+    }
+    std::cerr << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
 
     std::cerr << "Binding to SDL.\n";
     if (!DFSDL::init(con)) {

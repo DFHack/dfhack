@@ -76,10 +76,10 @@ jobs:
         done
     - name: Get short SHA of commit
       run: echo "SHORT_SHA=`echo ${{ github.sha }} | cut -c1-8`" >>$GITHUB_ENV
-    - name: Restore steamcmd cache
-      uses: actions/cache@v2
+    - name: steamcmd cache
+      uses: actions/cache@v4
       with:
-        path: /home/runner/work/_temp/_github_home/Steam
+        path: /home/runner/work/_temp/_github_home
         key: steamcmd-${{ github.sha }}
         restore-keys: steamcmd
     - name: Steam deploy

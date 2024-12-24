@@ -40,7 +40,6 @@ jobs:
       common-files: false
       stonesense: true
       launchdf: true
-      save-pdb: true
     secrets: inherit
 
   depot-linux64:

@@ -79,7 +79,7 @@ jobs:
     - name: steamcmd cache
       uses: actions/cache@v2
       with:
-        path: /home/runner/work/_temp/_github_home/Steam
+        path: /home/runner/work/_temp/_github_home
         key: steamcmd-${{ github.sha }}
         restore-keys: steamcmd
     - name: Steam deploy
@@ -94,15 +94,3 @@ jobs:
         depot2Path: win64-depot
         depot3Path: linux64-depot
         releaseBranch: ${{ github.event.inputs && github.event.inputs.steam_branch || 'staging' }}
-    - name: Debugging
-      run: |
-        echo "  *******  cwd: `pwd`"
-        find . -type f
-        echo "  *******  cache: /github/home"
-        find /home/runner/work/_temp/_github_home -type f
-        echo "  *******  cache: /github/workflow"
-        find /home/runner/work/_temp/_github_workflow -type f
-        echo "  *******  cache: /github/file_commands"
-        find /home/runner/work/_temp/_runner_file_commands -type f
-        echo "  *******  cache: /github/workspace"
-        find /home/runner/work/dfhack/dfhack -type f

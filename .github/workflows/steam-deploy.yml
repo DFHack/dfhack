@@ -77,7 +77,7 @@ jobs:
     - name: Get short SHA of commit
       run: echo "SHORT_SHA=`echo ${{ github.sha }} | cut -c1-8`" >>$GITHUB_ENV
     - name: steamcmd cache
-      uses: actions/cache@v2
+      uses: actions/cache@v4
       with:
         path: /home/runner/work/_temp/_github_home
         key: steamcmd-${{ github.sha }}

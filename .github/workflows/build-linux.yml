@@ -18,6 +18,11 @@ on:
         default: DFHack/df-structures
       structures_ref:
         type: string
+      stonesense_repo:
+        type: string
+        default: DFHack/stonesense
+      stonesense_ref:
+        type: string
       artifact-name:
         type: string
       append-date-and-hash:
@@ -107,6 +112,13 @@ jobs:
           repository: ${{ inputs.structures_repo }}
           ref: ${{ inputs.structures_ref }}
           path: library/xml
+      - name: Clone stonesense
+        if: inputs.stonesense_ref
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.stonesense_repo }}
+          ref: ${{ inputs.stonesense_ref }}
+          path: plugins/stonesense
       - name: Get 3rd party SDKs
         if: inputs.launchdf
         uses: actions/checkout@v4

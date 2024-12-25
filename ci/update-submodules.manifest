@@ -8,3 +8,4 @@ depends/libexpat dfhack
 depends/xlsxio dfhack
 depends/luacov dfhack
 depends/jsoncpp-sub dfhack
+depends/dfhooks main

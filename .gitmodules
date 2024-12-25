@@ -1,9 +1,6 @@
 [submodule "plugins/stonesense"]
 	path = plugins/stonesense
 	url = ../../DFHack/stonesense.git
-[submodule "plugins/isoworld"]
-	path = plugins/isoworld
-	url = ../../DFHack/isoworld.git
 [submodule "library/xml"]
 	path = library/xml
 	url = ../../DFHack/df-structures.git

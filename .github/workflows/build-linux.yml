@@ -169,7 +169,7 @@ jobs:
       - name: Run cpp tests
         if: inputs.platform-files
         run: ninja -C build test
-      - name: Finalize cache
+      - name: Finalize ccache
         if: inputs.platform-files
         run: |
           ccache --show-stats --verbose

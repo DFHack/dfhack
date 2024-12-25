@@ -34,7 +34,6 @@ jobs:
       with:
         path: state
         key: watchstate-${{ matrix.df_steam_branch }}
-        restore-keys: watchstate-${{ matrix.df_steam_branch }}
     - name: Compare branch metadata
       uses: nick-fields/retry@v3
       with:

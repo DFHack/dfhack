@@ -1,10 +1,10 @@
 library/xml master
 scripts master
 plugins/stonesense master
-plugins/isoworld dfhack
 depends/clsocket master
 depends/libzip dfhack
 depends/libexpat dfhack
 depends/xlsxio dfhack
 depends/luacov dfhack
 depends/jsoncpp-sub dfhack
+depends/dfhooks main

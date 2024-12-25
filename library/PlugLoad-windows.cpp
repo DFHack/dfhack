@@ -30,6 +30,7 @@ distribution.
 #include <vector>
 #include <string>
 #include "Core.h"
+#include "Debug.h"
 #include "PluginManager.h"
 #include "Hooks.h"
 #include <stdio.h>
@@ -39,6 +40,8 @@ distribution.
  */
 namespace DFHack
 {
+    DBG_DECLARE(core, plugins, DebugCategory::LINFO);
+
     DFLibrary* GLOBAL_NAMES = (DFLibrary*)GetModuleHandle(nullptr);
     DFLibrary * OpenPlugin (const char * filename)
     {
@@ -63,8 +66,16 @@ namespace DFHack
     {
         return (void *) GetProcAddress((HMODULE)plugin, function);
     }
-    void ClosePlugin (DFLibrary * plugin)
+    bool ClosePlugin (DFLibrary * plugin)
     {
-        FreeLibrary((HMODULE) plugin);
+        // FreeLibrary returns nonzero on success, zero on failure
+        int res = FreeLibrary((HMODULE)plugin);
+        if (res == 0)
+        {
+            DWORD err = GetLastError();
+            WARN(plugins).print("FreeLibrary failed with error code %x\n", err);
+        }
+        return (res != 0);
+
     }
 }

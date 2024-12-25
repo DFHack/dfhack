@@ -38,8 +38,12 @@ namespace DFHack
     {
         return (void *) dlsym((void *)plugin, function);
     }
-    void ClosePlugin (DFLibrary * plugin)
+    bool ClosePlugin (DFLibrary * plugin)
     {
-        dlclose((void *) plugin);
+        // dlclose returns 0 on success, nonzero on failure
+        int res = dlclose((void *) plugin);
+        if (res != 0)
+            WARN(plugins).print("dlclose failed with error code %x\n", res);
+        return res == 0;
     }
 }

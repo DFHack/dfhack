@@ -74,6 +74,7 @@ Template for new versions:
 
 ## Internals
 - Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access
+- Errors when unloading a plugin's DLL are now checked and reported
 
 # 50.15-r1.2
 

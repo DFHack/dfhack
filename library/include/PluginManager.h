@@ -68,8 +68,8 @@ namespace DFHack
     DFHACK_EXPORT DFLibrary * OpenPlugin (const char * filename);
     // find a symbol inside plugin
     DFHACK_EXPORT void * LookupPlugin (DFLibrary * plugin ,const char * function);
-    // Close a plugin library
-    DFHACK_EXPORT void ClosePlugin (DFLibrary * plugin);
+    // Close a plugin library. returns true on success, false on failure
+    DFHACK_EXPORT bool ClosePlugin (DFLibrary * plugin);
 
     struct DFHACK_EXPORT CommandReg {
         const char *name;

@@ -439,20 +439,19 @@ bool Plugin::unload(color_ostream &con)
         reset_lua();
         parent->unregisterCommands(this);
         commands.clear();
-        if(cr == CR_OK)
-        {
-            ClosePlugin(plugin_lib);
+
+        bool closed_safely = (cr == CR_OK) && ClosePlugin(plugin_lib);
+
+        if (closed_safely) {
             state = PS_UNLOADED;
-            access->unlock();
-            return true;
         }
         else
         {
             con.printerr("Plugin %s has failed to shutdown!\n",name.c_str());
             state = PS_BROKEN;
-            access->unlock();
-            return false;
         }
+        access->unlock();
+        return closed_safely;
     }
     else if(state == PS_UNLOADED || state == PS_DELETED)
     {

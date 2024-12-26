@@ -2,7 +2,6 @@
  * Confiscates and dumps garbage owned by dwarfs.
  */
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -71,8 +70,6 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
         else
             return CR_WRONG_USAGE;
     }
-
-    CoreSuspender suspend;
 
     if (!Translation::IsValid())
     {

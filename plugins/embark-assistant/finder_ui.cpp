@@ -1,5 +1,4 @@
 #include <stdio.h>
-#include "Core.h"
 #include <Console.h>
 
 #include <modules/Gui.h>

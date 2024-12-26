@@ -107,6 +107,7 @@ set(MAIN_SOURCES
     Types.cpp
     PluginManager.cpp
     PluginStatics.cpp
+    PlugLoad.cpp
     TileTypes.cpp
     VersionInfoFactory.cpp
     RemoteClient.cpp
@@ -128,7 +129,6 @@ endif()
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
     Hooks.cpp
-    PlugLoad-windows.cpp
     Process-windows.cpp
 )
 
@@ -139,7 +139,6 @@ endif()
 
 set(MAIN_SOURCES_LINUX
     ${CONSOLE_SOURCES}
-    PlugLoad-posix.cpp
     Process-linux.cpp
 )
 
@@ -346,6 +345,7 @@ set_property(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
     DF_VERSION="${DF_VERSION}"
     DFHACK_RELEASE="${DFHACK_RELEASE}"
     DFHACK_ABI_VERSION=${DFHACK_ABI_VERSION}
+    DFHACK_RUN_URL="${DFHACK_RUN_URL}"
 )
 if(DFHACK_PRERELEASE)
     set_property(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS

@@ -1,5 +1,4 @@
 //most of the code is shamelessly stolen from steam-engine.cpp
-#include "Core.h"
 #include "Error.h"
 #include <Console.h>
 #include <Export.h>
@@ -252,7 +251,7 @@ struct work_hook : df::building_workshopst{
             {
                 if(world->frame_counter % def->skip_updates == 0)
                 {
-                    CoreSuspendClaimer suspend;
+                    CoreSuspender suspend;
                     color_ostream_proxy out(Core::getInstance().getConsole());
                     onUpdateAction(out,this);
                 }

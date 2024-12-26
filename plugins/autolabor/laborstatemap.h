@@ -1,6 +1,5 @@
 #pragma once
 
-#include <Core.h>
 
 #include "df/job.h"
 #include "df/job_type.h"

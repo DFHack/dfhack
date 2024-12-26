@@ -1,7 +1,6 @@
 #include "assignJob.h"
 #include "edgeCost.h"
 
-#include "Core.h"
 #include "Console.h"
 #include "DataDefs.h"
 #include "Export.h"
@@ -345,7 +344,6 @@ void clearDijkstra() {
 /////////////////////////////////////////////////////////////////////////////////////////
 
 void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
-    CoreSuspender suspend;
     //returns the worker id of the job created //used to
     //out.print("%s, %d: %d\n", __FILE__, __LINE__, (int32_t)tickTime);
 

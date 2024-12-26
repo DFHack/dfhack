@@ -1,4 +1,3 @@
-#include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
@@ -857,9 +856,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    // be sure to suspend the core if any DF state is read or modified
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
@@ -906,7 +902,6 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 }
 
 static command_result do_unsuspend_command(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
     auto ok = Lua::CallLuaModuleFunction(out, "plugins.suspendmanager", "unsuspend_command", parameters);
     return ok ? CR_OK : CR_FAILURE;
 }

@@ -33,7 +33,6 @@ using std::endl;
 using std::set;
 
 #include "Console.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "DataIdentity.h"
 #include "Export.h"
@@ -93,7 +92,7 @@ command_result df_tiletypes_here_point (color_ostream &out, vector <string> & pa
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
     tiletypes_hist.load(HISTORY_FILE);
-    commands.push_back(PluginCommand("tiletypes", "Paints tiles of specified types onto the map.", df_tiletypes, true));
+    commands.push_back(PluginCommand("tiletypes", "Paints tiles of specified types onto the map.", df_tiletypes, true, true));
     commands.push_back(PluginCommand("tiletypes-command", "Run tiletypes commands (seperated by ' ; ')", df_tiletypes_command));
     commands.push_back(PluginCommand("tiletypes-here", "Repeat tiletypes command at cursor (with brush)", df_tiletypes_here));
     commands.push_back(PluginCommand("tiletypes-here-point", "Repeat tiletypes command at cursor (with single tile brush)", df_tiletypes_here_point));
@@ -1131,8 +1130,6 @@ command_result executePaintJob(color_ostream &out,
         return CR_OK;
     }
 
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -1318,11 +1315,12 @@ command_result df_tiletypes (color_ostream &out_, vector <string> & parameters)
         commands.clear();
         Core::cheap_tokenise(input, commands);
 
-        command_result ret = processCommand(out, commands, 0, commands.size(), end, true);
-
-        if (ret != CR_OK)
         {
-            return ret;
+            CoreSuspender suspend;
+            command_result ret = processCommand(out, commands, 0, commands.size(), end, true);
+
+            if (ret != CR_OK)
+                return ret;
         }
     }
     return CR_OK;
@@ -1353,8 +1351,6 @@ command_result df_tiletypes_command (color_ostream &out, vector <string> & param
 
 command_result df_tiletypes_here (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     tiletypes_options opts;
     if (!Lua::CallLuaModuleFunction(out, "plugins.tiletypes", "parse_commandline", std::make_tuple(&opts, parameters))
             || opts.help)
@@ -1375,8 +1371,6 @@ command_result df_tiletypes_here (color_ostream &out, vector <string> & paramete
 
 command_result df_tiletypes_here_point (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     tiletypes_options opts;
     if (!Lua::CallLuaModuleFunction(out, "plugins.tiletypes", "parse_commandline", std::make_tuple(&opts, parameters))
             || opts.help)

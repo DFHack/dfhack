@@ -8,7 +8,6 @@
 #include <string>
 #include <set>
 
-#include "Core.h"
 #include "MiscUtils.h"
 #include <Console.h>
 #include <Export.h>

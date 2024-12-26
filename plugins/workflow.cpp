@@ -1,4 +1,3 @@
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -1667,8 +1666,6 @@ static void print_job(color_ostream &out, ProtectedJob *pj)
 
 static command_result workflow_cmd(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isWorldLoaded()) {
         out.printerr("World is not loaded: please load a game first.\n");
         return CR_FAILURE;

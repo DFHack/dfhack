@@ -9,7 +9,6 @@
  *                   whose remains are unreachable.
  */
 
-#include "Core.h"
 #include "Debug.h"
 #include "PluginManager.h"
 

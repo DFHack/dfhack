@@ -1,4 +1,3 @@
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -116,8 +115,6 @@ public:
 
 static command_result stockcheck(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     std::vector<StockpileInfo*> stockpiles;
 
     for (df::building *build : world->buildings.all)

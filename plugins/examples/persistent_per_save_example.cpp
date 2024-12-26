@@ -5,7 +5,6 @@
 // should persist its state in the savegame and auto-re-enable itself when a
 // savegame that had this plugin enabled is loaded.
 
-#include "Core.h"
 #include "Debug.h"
 #include "PluginManager.h"
 
@@ -170,9 +169,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    // be sure to suspend the core if any DF state is read or modified
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

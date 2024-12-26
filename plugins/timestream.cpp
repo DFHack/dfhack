@@ -30,6 +30,7 @@
 #include "df/activity_event_writest.h"
 #include "df/activity_event_worshipst.h"
 #include "df/building_nest_boxst.h"
+#include "df/building_trapst.h"
 #include "df/init.h"
 #include "df/item_eggst.h"
 #include "df/unit.h"
@@ -121,13 +122,15 @@ static std::array<bool, NUM_COVERAGE_TICKS> tick_coverage;
 // only throttle due to tick_coverage at most once per season tick to avoid clustering
 static bool season_tick_throttled = false;
 
+static const int32_t TICKS_PER_YEAR = 403200;
+
 static void register_birthday(df::unit * unit) {
-    auto & btick = unit->birth_time;
-    if (btick < 0)
+    int32_t btick = unit->birth_time;
+    if (btick < 0 || btick > TICKS_PER_YEAR)
         return;
-    for (size_t tick=btick; tick >= 0; --tick) {
-        if (birthday_triggers.size() <= tick)
-            birthday_triggers.resize(btick-1, INT32_MAX);
+    if (birthday_triggers.size() <= (size_t)btick)
+        birthday_triggers.resize(btick+1, INT32_MAX);
+    for (int32_t tick=btick; tick >= 0; --tick) {
         if (birthday_triggers[tick] > btick)
             birthday_triggers[tick] = btick;
         else
@@ -150,6 +153,10 @@ static void reset_ephemeral_state() {
     season_tick_throttled = false;
 }
 
+static void do_disable() {
+    EventManager::unregisterAll(plugin_self);
+}
+
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
@@ -168,7 +175,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             EventManager::registerListener(EventManager::EventType::UNIT_NEW_ACTIVE, new_unit_handler);
             do_cycle(out);
         } else {
-            EventManager::unregisterAll(plugin_self);
+            do_disable();
         }
     } else {
         DEBUG(control,out).print("%s from the API, but already %s; no action\n",
@@ -220,7 +227,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         if (is_enabled) {
             DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
-            plugin_enable(out, false);
+            do_disable();
         }
     }
     return CR_OK;
@@ -233,8 +240,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
@@ -286,7 +291,7 @@ static int32_t get_next_trigger_year_tick(int32_t next_tick) {
 }
 
 static int32_t get_next_birthday(int32_t next_tick) {
-    if (next_tick >= (int32_t)birthday_triggers.size())
+    if (next_tick < 0 || next_tick >= (int32_t)birthday_triggers.size())
         return INT32_MAX;
     return birthday_triggers[next_tick];
 }
@@ -573,6 +578,21 @@ static void adjust_activities(color_ostream &out, int32_t timeskip) {
     }
 }
 
+static void adjust_buildings(color_ostream &out, int32_t timeskip) {
+    // decrement trap timers
+    for (df::building_trapst *tr : world->buildings.other.TRAP) {
+        decrement_counter(tr, &df::building_trapst::ready_timeout, timeskip);
+        // used by pressure plates to delay until the plate is triggerable again
+        // other trap types never set this to a value higher than 1 so it is safe to decrement here
+        decrement_counter(tr, &df::building_trapst::state, timeskip);
+    }
+
+    for (df::building *bld : world->buildings.all) {
+        // assumes age > 0, but that will become true very quickly for all new buildings
+        increment_counter(bld, &df::building::age, timeskip);
+    }
+}
+
 static void adjust_items(color_ostream &out, int32_t timeskip) {
     // increment incubation counters for fertile eggs in non-forbidden nestboxes
     for (df::building_nest_boxst *nb : world->buildings.other.NEST_BOX) {
@@ -630,6 +650,7 @@ static void do_cycle(color_ostream &out) {
 
     adjust_units(out, timeskip);
     adjust_activities(out, timeskip);
+    adjust_buildings(out, timeskip);
     adjust_items(out, timeskip);
 }
 

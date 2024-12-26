@@ -6,7 +6,6 @@
 #include <string.h>
 
 #include "Console.h"
-#include "Core.h"
 #include "Export.h"
 #include "MiscUtils.h"
 #include "PluginManager.h"

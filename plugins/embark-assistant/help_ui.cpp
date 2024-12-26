@@ -1,4 +1,3 @@
-#include "Core.h"
 #include <Console.h>
 
 #include <string>

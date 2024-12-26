@@ -1,4 +1,3 @@
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -103,7 +102,7 @@ static int lua_server_accept(int id,bool fail_on_timeout)
     CActiveSocket* sock=cur_server.socket->Accept();
     if(!sock)
     {
-        handle_error(sock->GetSocketError(),!fail_on_timeout);
+        handle_error(cur_server.socket->GetSocketError(),!fail_on_timeout);
         return 0;
     }
     else

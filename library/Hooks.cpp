@@ -11,19 +11,25 @@ DFhackCExport const int32_t dfhooks_priority = 100;
 // and the main event loop is initiated
 DFhackCExport void dfhooks_init() {
     if (getenv("DFHACK_DISABLE")) {
-        fprintf(stdout, "dfhack: DFHACK_DISABLE detected in environment; disabling\n");
+        fprintf(stderr, "dfhack: DFHACK_DISABLE detected in environment; disabling\n");
         disabled = true;
         return;
     }
 
     // we need to init DF globals before we can check the commandline
-    if (!DFHack::Core::getInstance().InitMainThread() || !df::global::game)
+    if (!DFHack::Core::getInstance().InitMainThread() || !df::global::game) {
+        // we don't set disabled to true here so symbol generation can work
         return;
+    }
+
     const std::string & cmdline = df::global::game->command_line.original;
     if (cmdline.find("--disable-dfhack") != std::string::npos) {
-        fprintf(stdout, "dfhack: --disable-dfhack specified on commandline; disabling\n");
+        fprintf(stderr, "dfhack: --disable-dfhack specified on commandline; disabling\n");
         disabled = true;
+        return;
     }
+
+    fprintf(stderr, "DFHack pre-init successful.\n");
 }
 
 // called from the main thread after the main event loops exits
@@ -45,7 +51,7 @@ DFhackCExport void dfhooks_update() {
 DFhackCExport void dfhooks_prerender() {
     if (disabled)
         return;
-    // TODO: render overlay widgets that are not attached to a viewscreen
+    // TODO: potentially render overlay elements that are not attached to a viewscreen
 }
 
 // called from the main thread for each SDL event. if true is returned, then
@@ -54,6 +60,14 @@ DFhackCExport bool dfhooks_sdl_event(SDL_Event* event) {
     if (disabled)
         return false;
     return DFHack::Core::getInstance().DFH_SDL_Event(event);
+}
+
+// called from the main thread just after setting mouse state in gps and just
+// before rendering the screen buffer to the screen.
+DFhackCExport void dfhooks_sdl_loop() {
+    if (disabled)
+        return;
+    // TODO: wire this up to the new SDL-based console once it is merged
 }
 
 // called from the main thread for each utf-8 char read from the ncurses input

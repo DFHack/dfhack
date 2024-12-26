@@ -113,30 +113,10 @@ public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
     //! thread exit.
     static CoreSuspenderBase& suspend() {
-        static thread_local CoreSuspenderBase lock(std::defer_lock);
+        static thread_local CoreSuspenderBase lock{};
         return lock;
     }
 };
-}
-
-CoreSuspendReleaseMain::CoreSuspendReleaseMain()
-{
-    MainThread::suspend().unlock();
-}
-
-CoreSuspendReleaseMain::~CoreSuspendReleaseMain()
-{
-    MainThread::suspend().lock();
-}
-
-CoreSuspendClaimMain::CoreSuspendClaimMain()
-{
-    MainThread::suspend().lock();
-}
-
-CoreSuspendClaimMain::~CoreSuspendClaimMain()
-{
-    MainThread::suspend().unlock();
 }
 
 struct Core::Private
@@ -439,7 +419,14 @@ bool is_builtin(color_ostream &con, const std::string &command) {
 }
 
 void get_commands(color_ostream &con, std::vector<std::string> &commands) {
-    CoreSuspender suspend;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Cannot acquire core lock in helpdb.get_commands\n");
+        commands.clear();
+        return;
+    }
+
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
 
@@ -453,13 +440,14 @@ void get_commands(color_ostream &con, std::vector<std::string> &commands) {
         con.printerr("Failed Lua call to helpdb.get_commands.\n");
     }
 
-    Lua::GetVector(L, commands);
+    Lua::GetVector(L, commands, top + 1);
 }
 
 static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
 {
     std::vector<std::string> commands, possible;
 
+    get_commands(con, commands);
     for (auto &command : commands)
         if (command.substr(0, first.size()) == first)
             possible.push_back(command);
@@ -638,7 +626,12 @@ static std::string sc_event_name (state_change_event id) {
 }
 
 void help_helper(color_ostream &con, const std::string &entry_name) {
-    CoreSuspender suspend;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
     auto L = Lua::Core::State;
     Lua::StackUnwinder top(L);
 
@@ -1535,6 +1528,9 @@ df::viewscreen * Core::getTopViewscreen() {
 }
 
 bool Core::InitMainThread() {
+    // this hook is always called from DF's main (render) thread, so capture this thread id
+    df_render_thread = std::this_thread::get_id();
+
     Filesystem::init();
 
     // Re-route stdout and stderr again - DF seems to set up stdout and
@@ -1551,8 +1547,11 @@ bool Core::InitMainThread() {
     if (!freopen("stderr.log", "w", stderr))
         std::cerr << "Could not redirect stderr to stderr.log" << std::endl;
 
-    std::cerr << "DFHack build: " << Version::git_description() << "\n"
-         << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
+    std::cerr << "DFHack build: " << Version::git_description() << std::endl;
+    if (strlen(Version::dfhack_run_url())) {
+        std::cerr << "Build url: " << Version::dfhack_run_url() << std::endl;
+    }
+    std::cerr << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
 
     std::cerr << "Binding to SDL.\n";
     if (!DFSDL::init(con)) {
@@ -1645,6 +1644,48 @@ bool Core::InitMainThread() {
     // Init global object pointers
     df::global::InitGlobals();
 
+    // check key game structure sizes against the global table
+    // this check is (silently) skipped if either `game` or `global_table` is not defined
+    // to faciliate the linux symbol discovery process (which runs without any symbols)
+    // or if --skip-size-check is discovered on the command line
+
+    if (!df::global::global_table || !df::global::game ||
+        df::global::game->command_line.original.find("--skip-size-check") != std::string::npos)
+    {
+        std::cerr << "Skipping structure size verification check." << std::endl;
+    } else {
+        std::stringstream msg;
+        bool gt_error = false;
+        static const std::map<const std::string, const size_t> sizechecks{
+            { "world", sizeof(df::world) },
+            { "game", sizeof(df::gamest) },
+            { "plotinfo", sizeof(df::plotinfost) },
+        };
+
+        for (auto& gte : *df::global::global_table)
+        {
+            // this will exit the loop when the terminator is hit, in the event the global table size in structures is incorrect
+            if (gte.address == nullptr || gte.name == nullptr)
+                break;
+            std::string name{ gte.name };
+            if (sizechecks.contains(name) && gte.size != sizechecks.at(name))
+            {
+                msg << "Global '" << name << "' size mismatch: is " << gte.size << ", expected " << sizechecks.at(name) << "\n";
+                gt_error = true;
+            }
+        }
+
+        if (gt_error)
+        {
+            msg << "DFHack cannot safely run under these conditions.\n";
+            fatal(msg.str(), "DFHack fatal error");
+            errorstate = true;
+            return false;
+        }
+
+        std::cerr << "Structure size verification check passed." << std::endl;
+    }
+
     perf_counters.reset();
 
     return true;
@@ -1652,6 +1693,8 @@ bool Core::InitMainThread() {
 
 bool Core::InitSimulationThread()
 {
+    // the update hook is only called from the simulation thread, so capture this thread id
+    df_simulation_thread = std::this_thread::get_id();
     if(started)
         return true;
     if(errorstate)
@@ -2053,6 +2096,13 @@ void Core::doUpdate(color_ostream &out)
 // should always be from simulation thread!
 int Core::Update()
 {
+    if (shutdown)
+    {
+        // release the suspender
+        MainThread::suspend().unlock();
+        return -1;
+    }
+
     if(errorstate)
         return -1;
 
@@ -2350,9 +2400,7 @@ int Core::Shutdown ( void )
         return true;
     errorstate = 1;
 
-    // Make sure we release main thread if this is called from main thread
-    if (MainThread::suspend().owns_lock())
-        MainThread::suspend().unlock();
+    shutdown = true;
 
     // Make sure the console thread shutdowns before clean up to avoid any
     // unlikely data races.
@@ -2371,7 +2419,6 @@ int Core::Shutdown ( void )
     d->hotkeythread.join();
     d->iothread.join();
 
-    CoreSuspendClaimer suspend;
     if(plug_mgr)
     {
         delete plug_mgr;
@@ -2466,6 +2513,9 @@ bool Core::DFH_SDL_Event(SDL_Event* ev) {
 
 bool Core::doSdlInputEvent(SDL_Event* ev)
 {
+    // this should only ever be called from the render thread
+    assert(std::this_thread::get_id() == df_render_thread);
+
     static std::map<int, bool> hotkey_states;
 
     // do NOT process events before we are ready.

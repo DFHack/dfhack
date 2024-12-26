@@ -3,7 +3,6 @@
 .git/*
 
 # Old files exempt from checks for now
-plugins/isoworld/*.txt
 plugins/raw/*.txt
 plugins/stonesense/*.txt
 
@@ -22,6 +21,4 @@ library/include/df/*
 
 # Dependencies that we don't control
 depends/*
-plugins/isoworld/agui/*
-plugins/isoworld/allegro/*
 plugins/stonesense/allegro/*

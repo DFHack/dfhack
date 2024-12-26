@@ -1,7 +1,6 @@
 // Destroys items being used as part of constructions
 // and flags the constructions to recreate their components upon disassembly
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -21,8 +20,6 @@ REQUIRE_GLOBAL(world);
 
 command_result df_cleanconst(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

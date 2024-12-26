@@ -259,6 +259,7 @@ function InputBox:init(info)
     self:addviews{
         widgets.EditField{
             view_id = 'edit',
+            label_text = info.label_text,
             text = info.input,
             text_pen = info.input_pen,
             frame = { l = 0, r = 0, h = 1 },

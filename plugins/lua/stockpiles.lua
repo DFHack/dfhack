@@ -1,6 +1,7 @@
 local _ENV = mkmodule('plugins.stockpiles')
 
 local argparse = require('argparse')
+local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local logistics = require('plugins.logistics')
 local overlay = require('plugins.overlay')
@@ -34,7 +35,7 @@ local function print_status()
     end
 end
 
-local function list_dir(path, prefix, filters)
+local function list_dir(path, prefix, filters, cb)
     local paths = dfhack.filesystem.listdir_recursive(path, 0, false)
     if not paths then
         dfhack.printerr(('Cannot find stockpile settings directory: "%s"'):format(path))
@@ -56,14 +57,15 @@ local function list_dir(path, prefix, filters)
             end
             if not matched then goto continue end
         end
-        print(('%s%s'):format(prefix, v.path:sub(1, -9)))
+        cb(('%s%s'):format(prefix, v.path:sub(1, -9)))
         ::continue::
     end
 end
 
-local function list_settings_files(filters)
-    list_dir(STOCKPILES_DIR, '', filters)
-    list_dir(STOCKPILES_LIBRARY_DIR, 'library/', filters)
+local function list_settings_files(filters, cb)
+    cb = cb or print
+    list_dir(STOCKPILES_DIR, '', filters, cb)
+    list_dir(STOCKPILES_LIBRARY_DIR, 'library/', filters, cb)
 end
 
 local function assert_safe_name(name)
@@ -240,59 +242,52 @@ function parse_commandline(args)
     return true
 end
 
---------------------
--- dialogs
---------------------
+-------------------------
+-- import/export dialogs
+-------------------------
 
-StockpilesExport = defclass(StockpilesExport, widgets.Window)
-StockpilesExport.ATTRS{frame_title='Export stockpile settings', frame={w=33, h=15}, resizable=true}
-
-function StockpilesExport:init()
-    self:addviews{
-        widgets.EditField{
-            view_id='edit',
-            frame={t=0, l=0, r=0},
-            label_text='name: ',
-            on_char=function(ch)
-                return not ch:match(BAD_FILENAME_REGEX)
-            end,
-        }, widgets.Label{frame={t=2, l=0}, text='Include which elements?'},
-        widgets.ToggleHotkeyLabel{frame={t=4, l=0}, label='General settings', initial_option=false},
-        widgets.ToggleHotkeyLabel{
-            frame={t=5, l=0},
-            label='Container settings',
-            initial_option=false,
-        }, widgets.ToggleHotkeyLabel{frame={t=6, l=0}, label='Categories', initial_option=true},
-        widgets.ToggleHotkeyLabel{frame={t=7, l=0}, label='Subtypes', initial_option=true},
-        widgets.HotkeyLabel{
-            frame={t=10, l=0},
-            label='export',
-            key='SELECT',
-            enabled=function()
-                return #self.subviews.edit.text > 0
-            end,
-            on_activate=self:callback('on_submit'),
-        },
-    }
+local function get_import_choices()
+    local filenames = {}
+    list_settings_files({}, function(fname) table.insert(filenames, fname) end)
+    return filenames
 end
 
-function StockpilesExport:on_submit(text)
-    self:dismiss()
-end
-
-StockpilesExportScreen = defclass(StockpilesExportScreen, gui.ZScreenModal)
-StockpilesExportScreen.ATTRS{focus_path='stockpiles/export'}
-
-function StockpilesExportScreen:init()
-    self:addviews{StockpilesExport{}}
-end
-
-function StockpilesExportScreen:onDismiss()
-    export_view = nil
+local function do_import()
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    local dlg
+    local function get_dlg() return dlg end
+    dlg = dialogs.ListBox{
+        frame_title='Import/Delete Stockpile Settings',
+        with_filter=true,
+        choices=get_import_choices(),
+        on_select=function(_, choice) import_settings(choice.text, {id=sp and sp.id}) end,
+        dismiss_on_select2=false,
+        on_select2=function(_, choice)
+            if choice.text:startswith('library/') then return end
+            local fname = ('%s/%s.dfstock'):format(STOCKPILES_DIR, choice.text)
+            if not dfhack.filesystem.isfile(fname) then return end
+            dialogs.showYesNoPrompt('Delete saved stockpile settings file?',
+                'Are you sure you want to delete "' .. fname .. '"?', nil,
+                function()
+                    print('deleting ' .. fname)
+                    os.remove(fname)
+                    local list = get_dlg().subviews.list
+                    local filter = list:getFilter()
+                    list:setChoices(get_import_choices(), list:getSelected())
+                    list:setFilter(filter)
+                end)
+        end,
+        select2_hint='Delete file',
+    }:show()
 end
 
 local function do_export()
-    export_view = export_view and export_view:raise() or StockpilesExportScreen{}:show()
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    dialogs.InputBox{
+        frame_title='Export Stockpile Settings',
+        text='Please enter a filename',
+        on_input=function(text) export_settings(text, {id=sp and sp.id}) end,
+    }:show()
 end
 
 --------------------
@@ -428,10 +423,11 @@ end
 StockpilesOverlay = defclass(StockpilesOverlay, overlay.OverlayWidget)
 StockpilesOverlay.ATTRS{
     desc='Shows a panel when a stockpile is selected for stockpile automation.',
-    default_pos={x=5, y=44},
+    default_pos={x=5, y=43},
     default_enabled=true,
+    version=2,
     viewscreens='dwarfmode/Stockpile/Some/Default',
-    frame={w=49, h=5},
+    frame={w=49, h=6},
 }
 
 function StockpilesOverlay:init()
@@ -447,21 +443,21 @@ function StockpilesOverlay:init()
         frame_background=gui.CLEAR_PEN,
         visible=is_expanded,
         subviews={
-            -- widgets.HotkeyLabel{
-            --     frame={t=0, l=0},
-            --     label='import settings',
-            --     auto_width=true,
-            --     key='CUSTOM_CTRL_I',
-            --     on_activate=do_import,
-            -- }, widgets.HotkeyLabel{
-            --     frame={t=1, l=0},
-            --     label='export settings',
-            --     auto_width=true,
-            --     key='CUSTOM_CTRL_E',
-            --     on_activate=do_export,
-            -- },
-            widgets.Panel{
+            widgets.HotkeyLabel{
                 frame={t=0, l=0},
+                label='import',
+                auto_width=true,
+                key='CUSTOM_CTRL_I',
+                on_activate=do_import,
+            }, widgets.HotkeyLabel{
+                frame={t=0, l=16},
+                label='export',
+                auto_width=true,
+                key='CUSTOM_CTRL_E',
+                on_activate=do_export,
+            },
+            widgets.Panel{
+                frame={t=1, l=0},
                 subviews={
                     widgets.Label{
                         frame={t=0, l=0, h=1},

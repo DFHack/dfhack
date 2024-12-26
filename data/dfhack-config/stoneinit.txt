@@ -1,0 +1,190 @@
+Please note, these keywords are case sensitive for now.
+
+--Interface--
+
+Sets the width and height of the application in pixels.
+[WIDTH:800]
+[HEIGHT:600]
+
+To launch the application in windowed mode, set this to YES.
+Setting it to NO makes the program attempt to launch fullscreen mode,
+using WIDTH and HEIGHT for resolution. Try and use resolutions compatible
+with your drivers, or the program will still load in window mode.
+[WINDOWED:YES]
+
+These two options set how large the cube loaded from Dwarf Fortress is.
+Each entry expects the number of tiles to load.
+[SEGMENTSIZE_XY:70]
+[SEGMENTSIZE_Z:4]
+
+Change this to off to skip the intro.
+[INTRO:OFF]
+
+Changes the interface font size.
+[FONTSIZE:10]
+
+Changes the fontfile to use.
+[FONT:DejaVuSans.ttf]
+
+Offsets the display by the given number of pixels.  Use to adjust display formatting.
+[LIFTSEGMENT:0]
+
+What to follow in the DF window.  Options are CENTER FOCUS or NONE.  Use (default) key 'f' to cycle.
+[TRACK_MODE:FOCUS]
+
+Invert the mouse wheel z-level axis movement. Use if you invert the z-axis mouse wheel in DF.
+[INVERT_MOUSE_Z:NO]
+
+Sets an initial x/y/z offset for follow mode
+[FOLLOW_OFFSET_X:0]
+[FOLLOW_OFFSET_Y:0]
+[FOLLOW_OFFSET_Z:0]
+
+Shows building graphics for zones. (Toggle with 'i')
+[SHOW_ZONES:YES]
+
+Shows building graphics for stockpiles. (Toggle with 'u')
+[SHOW_STOCKPILES:YES]
+
+Sets whether screenshots should have transparent backgrounds
+[TRANSPARENT_SCREENSHOTS:NO]
+
+Fog color, and alpha at the bottom z-level.
+Setting the alpha to 0, or SHOW_FOG to NO disables fog, for a slight performance increase.
+Color and alpha ranges are 0 (min) to 255 (max)
+[SHOW_FOG:YES]
+[FOG_RED:128]
+[FOG_GREEN:158]
+[FOG_BLUE:177]
+[FOG_ALPHA:30]
+
+Background color. setting this the same as the fog color produces a nice effect.
+[BACK_RED:128]
+[BACK_GREEN:158]
+[BACK_BLUE:177]
+
+This value, in milliseconds, is how long Stonesense waits between
+reloading the map. If zero, the autoreload will be disabled until
+set with Numpad+. Note that this will only work if a DF map is
+ready when Stonesense loads.
+[AUTO_RELOAD_TIME:50]
+
+Amount to change the auto reload time with each press of Numpad+/-
+[AUTO_RELOAD_STEP:50]
+
+Amount of time, in milliseconds, before the animation swaps to the next frame.
+Now independent of map refresh.
+[ANIMATION_RATE:196]
+
+--Adventure Mode Settings--
+
+Sets whether Stonesense should use a day/night effect.
+[NIGHT:NO]
+
+Sets weather Stonesense should shade in the fog-of-war partially hidden tiles.
+[FOG_OF_WAR:YES]
+
+--Debug Mode--
+
+Sets Stonesense in debug mode. Adds additional information to displays.
+[DEBUGMODE:NO]
+
+Sets the debug cursor to follow the cursor from DF when it is there.
+[FOLLOW_DF_CURSOR:YES]
+
+Shows creatures names floating above their sprites. (Toggle with 'n')
+[SHOW_CREATURE_NAMES:YES]
+
+Options to control how names are displayed (if SHOW_CREATURE_NAMES is set)
+[NAMES_USE_NICKNAME:YES]
+[NAMES_USE_SPECIES:YES]
+
+Enables or disables the entire on-screen-display overlay (Toggle with F2)
+[SHOW_OSD:YES]
+
+Shows all creatures, for debugging. Living, dead, kidnapped, caged, EVERY single one.
+[ALLCREATURES:NO]
+
+Adds more logging information to what is written to stonesense.log. May be useful
+if trying having issues with sprite configuration tweaking.
+[VERBOSE_LOGGING:NO]
+
+--Troubleshooting--
+
+This is the number of draw operations that will be held at a time.  Holding draw operations allows
+for those draws to be carried out efficiently if they have the same source.  May be tweaked for
+performance gains.
+[BITMAP_HOLDS:4096]
+
+Stonesense will try to merge all loaded sprites into a single texture, for performance reasons.
+if your videocard has low memory, you may want to disable this.
+[CACHE_IMAGES:NO]
+
+This sets the preferred size of the internal image cache. If your videocard does not support it,
+a smaller size is used.
+[IMAGE_CACHE_SIZE:4096]
+
+If this is set to YES, Stonesense will save a copy of the image cache each time something is added to it.
+Dot NOT turn this on unless something is going very wonky. this will slow loading times considerably,
+and possibly quickly fill up yout hard-drive.
+[LOG_IMAGECACHE:NO]
+
+Set the preferred renderer. Valid values are SOFTWARE, OPENGL, DIRECTX, and ANY. SOFTWARE has the highest
+compatibility, but is very slow.
+[RENDERER:ANY]
+
+--Colors--
+
+Stonesense can use the colors from DF for various purposes.
+[USE_DF_COLORS:NO]
+
+If USE_DF_COLORS is NO, the colors below are used instead.
+
+[BLACK_R:0]
+[BLACK_G:0]
+[BLACK_B:0]
+[BLUE_R:13]
+[BLUE_G:103]
+[BLUE_B:196]
+[GREEN_R:68]
+[GREEN_G:158]
+[GREEN_B:53]
+[CYAN_R:86]
+[CYAN_G:163]
+[CYAN_B:205]
+[RED_R:151]
+[RED_G:26]
+[RED_B:26]
+[MAGENTA_R:255]
+[MAGENTA_G:110]
+[MAGENTA_B:187]
+[BROWN_R:120]
+[BROWN_G:94]
+[BROWN_B:47]
+[LGRAY_R:185]
+[LGRAY_G:192]
+[LGRAY_B:162]
+[DGRAY_R:88]
+[DGRAY_G:83]
+[DGRAY_B:86]
+[LBLUE_R:145]
+[LBLUE_G:202]
+[LBLUE_B:255]
+[LGREEN_R:131]
+[LGREEN_G:212]
+[LGREEN_B:82]
+[LCYAN_R:176]
+[LCYAN_G:223]
+[LCYAN_B:215]
+[LRED_R:255]
+[LRED_G:34]
+[LRED_B:34]
+[LMAGENTA_R:255]
+[LMAGENTA_G:167]
+[LMAGENTA_B:246]
+[YELLOW_R:255]
+[YELLOW_G:218]
+[YELLOW_B:90]
+[WHITE_R:255]
+[WHITE_G:255]
+[WHITE_B:255]

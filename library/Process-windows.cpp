@@ -22,29 +22,34 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "Internal.h"
+#include <cstring>
+#include <cstdio>
+#include <cstdlib>
+#include <map>
+#include <set>
+#include <string>
+#include <vector>
 
-#define _WIN32_WINNT 0x0501
-#define WINVER 0x0501
+#include "Error.h"
+#include "Internal.h"
+#include "MemAccess.h"
+#include "Memory.h"
+#include "VersionInfo.h"
+#include "VersionInfoFactory.h"
+
+#define _WIN32_WINNT 0x0600
+#define WINVER 0x0600
 
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
 
-#include <cstring>
-#include <cstdio>
-#include <cstdlib>
-#include <vector>
-#include <string>
-#include <map>
-using namespace std;
-
-#include "VersionInfo.h"
-#include "VersionInfoFactory.h"
-#include "Error.h"
-#include "MemAccess.h"
-#include "Memory.h"
 using namespace DFHack;
+
+using std::string;
+using std::map;
+using std::vector;
+
 namespace DFHack
 {
     class PlatformSpecific
@@ -62,6 +67,7 @@ namespace DFHack
         char * base;
     };
 }
+
 Process::Process(const VersionInfoFactory& factory) : identified(false)
 {
     HMODULE hmod = NULL;
@@ -90,7 +96,7 @@ Process::Process(const VersionInfoFactory& factory) : identified(false)
         d->sections = (IMAGE_SECTION_HEADER *) malloc(sectionsSize);
         read(d->base + pe_offset + sizeof(d->pe_header), sectionsSize, (uint8_t *)(d->sections));
     }
-    catch (exception &)
+    catch (std::exception &)
     {
         return;
     }
@@ -115,6 +121,25 @@ Process::~Process()
     // destroy our rebased copy of the memory descriptor
     if(d->sections != NULL)
         free(d->sections);
+}
+
+string Process::doReadClassName (void * vptr)
+{
+    char * rtti = readPtr((char *)vptr - sizeof(void*));
+#ifdef DFHACK64
+    void *base;
+    if (!RtlPcToFileHeader(rtti, &base))
+        return "dummy";
+    char * typeinfo = (char *)base + readDWord(rtti + 0xC);
+    string raw = readCString(typeinfo + 0x10+4); // skips the .?AV
+#else
+    char * typeinfo = readPtr(rtti + 0xC);
+    string raw = readCString(typeinfo + 0xC); // skips the .?AV
+#endif
+    if (!raw.length())
+        return "dummy";
+    raw.resize(raw.length() - 2);// trim @@ from end
+    return raw;
 }
 
 /*
@@ -341,25 +366,6 @@ int Process::adjustOffset(int offset, bool to_file)
     return -1;
 }
 
-string Process::doReadClassName (void * vptr)
-{
-    char * rtti = readPtr((char *)vptr - sizeof(void*));
-#ifdef DFHACK64
-    void *base;
-    if (!RtlPcToFileHeader(rtti, &base))
-        return "dummy";
-    char * typeinfo = (char *)base + readDWord(rtti + 0xC);
-    string raw = readCString(typeinfo + 0x10+4); // skips the .?AV
-#else
-    char * typeinfo = readPtr(rtti + 0xC);
-    string raw = readCString(typeinfo + 0xC); // skips the .?AV
-#endif
-    if (!raw.length())
-        return "dummy";
-    raw.resize(raw.length() - 2);// trim @@ from end
-    return raw;
-}
-
 uint32_t Process::getTickCount()
 {
     return GetTickCount();
@@ -375,6 +381,12 @@ string Process::getPath()
     string out(String);
     return(out.substr(0,out.find_last_of("\\")));
 }
+
+int Process::getPID()
+{
+    return (int) GetCurrentProcessId();
+}
+
 
 bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
 {

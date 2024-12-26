@@ -55,6 +55,9 @@ using namespace DFHack;
 using std::string;
 using std::map;
 using std::vector;
+using std::endl;
+using std::cerr;
+
 
 Process::Process(const VersionInfoFactory& known_versions) : identified(false), my_pe(0)
 {

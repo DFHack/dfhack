@@ -49,6 +49,9 @@ using namespace DFHack;
 using std::string;
 using std::map;
 using std::vector;
+using std::endl;
+using std::cerr;
+
 
 namespace DFHack
 {

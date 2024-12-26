@@ -63,6 +63,8 @@ Template for new versions:
 
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
+- `stonesense`: changed announcements to be right-aligned and limited it to only show the most recent 10 announcements.
+- `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Documentation
 
@@ -74,6 +76,7 @@ Template for new versions:
 
 ## Internals
 - Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access
+- Errors when unloading a plugin's DLL are now checked and reported
 
 # 50.15-r1.2
 

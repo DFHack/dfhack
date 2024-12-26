@@ -107,6 +107,7 @@ set(MAIN_SOURCES
     Types.cpp
     PluginManager.cpp
     PluginStatics.cpp
+    PlugLoad.cpp
     TileTypes.cpp
     VersionInfoFactory.cpp
     RemoteClient.cpp
@@ -128,7 +129,6 @@ endif()
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
     Hooks.cpp
-    PlugLoad-windows.cpp
     Process-windows.cpp
 )
 
@@ -139,7 +139,6 @@ endif()
 
 set(MAIN_SOURCES_LINUX
     ${CONSOLE_SOURCES}
-    PlugLoad-posix.cpp
     Process-linux.cpp
 )
 

@@ -58,6 +58,7 @@ end
 local function do_export()
     dialogs.InputBox{
         frame_title='Export Manager Orders',
+        text='Please enter a filename',
         on_input=function(text)
             dfhack.run_command('orders', 'export', text)
         end

@@ -1,4 +1,4 @@
-// Provides commands for cleaning spatter (and grass) from the map.
+// Cleans spatter and/or grass from map tiles.
 
 #include "Debug.h"
 #include "LuaTools.h"

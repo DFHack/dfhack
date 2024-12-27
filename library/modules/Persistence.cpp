@@ -34,6 +34,8 @@ distribution.
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
+#include "df/world.h"
+
 #include <json/json.h>
 
 #include <unordered_map>
@@ -205,6 +207,13 @@ void Persistence::Internal::save(color_ostream& out) {
         if (strlen(Version::dfhack_run_url())) {
             file << "Build url:  " << Version::dfhack_run_url() << std::endl;
         }
+        if (df::global::world and df::global::version) {
+            file << std::endl;
+            file << "World name: " << World::getWorldName() << " (" << World::getWorldName(true) << ")" << std::endl;
+            file << "World generated in version:  " << df::global::world->original_save_version << std::endl;
+            file << "World last saved in version: " << df::global::world->save_version << std::endl;
+            file << "World loaded in version:     " << *df::global::version << std::endl;
+        }
     }
 
     // write entity data
@@ -304,7 +313,6 @@ void Persistence::Internal::load(color_ostream& out) {
     const std::string legacy_fname = getSaveFilePath(world_name, "legacy-data");
     if (Filesystem::exists(legacy_fname)) {
         int synthesized_entity_id = Persistence::WORLD_ENTITY_ID;
-        using df::global::world;
         if (World::IsSiteLoaded())
             synthesized_entity_id = World::GetCurrentSiteId();
         load_file(legacy_fname, synthesized_entity_id);

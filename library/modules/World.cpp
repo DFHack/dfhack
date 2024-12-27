@@ -166,6 +166,13 @@ string World::ReadWorldFolder()
     return world->cur_savegame.save_dir;
 }
 
+string World::getWorldName(bool in_english)
+{
+    if (!world || !world->world_data)
+        return "";
+    return Translation::TranslateName(&world->world_data->name, in_english);
+}
+
 bool World::isFortressMode(df::game_type t)
 {
     if (t == -1 && df::global::gametype)

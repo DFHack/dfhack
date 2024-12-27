@@ -5,7 +5,7 @@ cleaners
 ========
 
 .. dfhack-tool::
-    :summary: Provides commands for cleaning spatter (and grass) from the map.
+    :summary: Cleans spatter and/or grass from map tiles.
     :tags: adventure fort armok fps items map plants units
     :no-command:
 

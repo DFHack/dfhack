@@ -2307,10 +2307,12 @@ Maps module
 
   Returns the plant struct that owns the tile at the specified position.
 
+* ``dfhack.maps.isPlantInBox(plant, pos1, pos2)``
 * ``dfhack.maps.isPlantInBox(plant,x1,y1,z1,x2,y2,z2)``
 
   Returns true if the plant is within a box defined by the specified
-  coordinates, accounting for trees.
+  coordinates. For trees, returns true if any part of the tree is within
+  the box.
 
 * ``dfhack.maps.getWalkableGroup(pos)``
 

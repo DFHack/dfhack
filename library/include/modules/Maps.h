@@ -386,6 +386,7 @@ inline df::plant *getPlantAtTile(df::coord pos) { return getPlantAtTile(pos.x, p
 DFHACK_EXPORT bool isPlantInBox(df::plant *plant, const cuboid &bounds);
 inline bool isPlantInBox(df::plant *plant, int16_t x1, int16_t y1, int16_t z1,
     int16_t x2, int16_t y2, int16_t z2) { return isPlantInBox(plant, cuboid(x1, y1, z1, x2, y2, z2)); }
+inline bool isPlantInBox(df::plant *plant, df::coord pos1, df::coord pos2) { return isPlantInBox(plant, cuboid(pos1, pos2)); }
 
 // Get the biome type at the given region coordinates.
 DFHACK_EXPORT df::enums::biome_type::biome_type getBiomeTypeWithRef(int16_t region_x, int16_t region_y, int16_t region_ref_y);

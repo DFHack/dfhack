@@ -2533,17 +2533,26 @@ static int maps_getPlantAtTile(lua_State *L)
     return 1;
 }
 
-static int maps_isPlantInBox(lua_State *state)
+static int maps_isPlantInBox(lua_State *L)
 {
-    auto plant = Lua::CheckDFObject<df::plant>(state, 1);
-    int x1 = luaL_checkint(state, 2);
-    int y1 = luaL_checkint(state, 3);
-    int z1 = luaL_checkint(state, 4);
-    int x2 = luaL_checkint(state, 5);
-    int y2 = luaL_checkint(state, 6);
-    int z2 = luaL_checkint(state, 7);
-
-    lua_pushboolean(state, Maps::isPlantInBox(plant, x1, y1, z1, x2, y2, z2));
+    auto plant = Lua::CheckDFObject<df::plant>(L, 1);
+    if (lua_gettop(L) > 3)
+    {
+        int x1 = luaL_checkint(L, 2);
+        int y1 = luaL_checkint(L, 3);
+        int z1 = luaL_checkint(L, 4);
+        int x2 = luaL_checkint(L, 5);
+        int y2 = luaL_checkint(L, 6);
+        int z2 = luaL_checkint(L, 7);
+        lua_pushboolean(L, Maps::isPlantInBox(plant, x1, y1, z1, x2, y2, z2));
+    }
+    else
+    {
+        df::coord pos1, pos2;
+        Lua::CheckDFAssign(L, &pos1, 2);
+        Lua::CheckDFAssign(L, &pos2, 3);
+        lua_pushboolean(L, Maps::isPlantInBox(plant, pos1, pos2));
+    }
     return 1;
 }
 

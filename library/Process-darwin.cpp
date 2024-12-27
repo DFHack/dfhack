@@ -21,32 +21,43 @@ must not be misrepresented as being the original software.
 3. This notice may not be removed or altered from any source
 distribution.
 */
-
-#include "Internal.h"
-#include <dirent.h>
-#include <errno.h>
-#include <unistd.h>
-#include <sys/mman.h>
-#include <sys/time.h>
-
-#include <mach-o/dyld.h>
-
-#include <string>
-#include <vector>
+#include <cstring>
+#include <cstdio>
 #include <map>
 #include <set>
-#include <cstdio>
-#include <cstring>
-using namespace std;
+#include <string>
+#include <vector>
 
-#include <md5wrapper.h>
+#include <dirent.h>
+#include <errno.h>
+#include <sys/mman.h>
+#include <sys/time.h>
+#include <unistd.h>
+#include <string.h>
+
+#include <mach-o/dyld.h>
+#include <mach/mach.h>
+#include <mach/mach_vm.h>
+#include <mach/vm_region.h>
+#include <mach/vm_statistics.h>
+#include <dlfcn.h>
+
+
+#include "Error.h"
+#include "Internal.h"
 #include "MemAccess.h"
 #include "Memory.h"
-#include "VersionInfoFactory.h"
 #include "VersionInfo.h"
-#include "Error.h"
-#include <string.h>
+#include "VersionInfoFactory.h"
+#include "md5wrapper.h"
 using namespace DFHack;
+
+using std::string;
+using std::map;
+using std::vector;
+using std::endl;
+using std::cerr;
+
 
 Process::Process(const VersionInfoFactory& known_versions) : identified(false), my_pe(0)
 {
@@ -67,8 +78,8 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false), 
     auto vinfo = known_versions.getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
-        my_descriptor = std::make_shared<VersionInfo>(*vinfo);
         identified = true;
+        my_descriptor = std::make_shared<VersionInfo>(*vinfo);
     }
     else
     {
@@ -115,16 +126,10 @@ string Process::doReadClassName (void * vptr)
     char * typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
     char * typestring = Process::readPtr(typeinfo + sizeof(void*));
     string raw = readCString(typestring);
-    size_t  start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
+    size_t start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
     size_t end = raw.length();
     return raw.substr(start,end-start);
 }
-
-#include <mach/mach.h>
-#include <mach/mach_vm.h>
-#include <mach/vm_region.h>
-#include <mach/vm_statistics.h>
-#include <dlfcn.h>
 
 const char *
 inheritance_strings[] = {

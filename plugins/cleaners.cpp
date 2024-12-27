@@ -457,11 +457,11 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 {
     commands.push_back(PluginCommand(
         "clean",
-        "Remove contaminants from tiles, items, and creatures.",
+        "Removes contaminants.",
         clean));
     commands.push_back(PluginCommand(
         "spotclean",
-        "Clean the map tile under the cursor.",
+        "Remove contaminants from the tile under the cursor.",
         spotclean, Gui::cursor_hotkey));
     return CR_OK;
 }

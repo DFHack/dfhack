@@ -516,8 +516,6 @@ static command_result autofarm(color_ostream& out, std::vector<std::string>& par
         return CR_FAILURE;
     }
 
-    CoreSuspender suspend;
-
     if (parameters.size() == 1 && parameters[0] == "runonce")
     {
         if (autofarmInstance) autofarmInstance->process(out);

@@ -1043,8 +1043,6 @@ bool dig_now_impl(color_ostream &out, const dig_now_options &options) {
 }
 
 command_result dig_now(color_ostream &out, std::vector<std::string> &params) {
-    CoreSuspender suspend;
-
     dig_now_options options;
     if (!get_options(out, options, params) || options.help)
         return CR_WRONG_USAGE;

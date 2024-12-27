@@ -337,7 +337,7 @@ command_result cleanunits(color_ostream &out, const cuboid &bounds)
 }
 
 command_result spotclean(color_ostream &out, vector<string> &parameters)
-{   // Hotkey command, already suspended
+{
     DEBUG(log, out).print("Doing spotclean.\n");
     if (!Maps::IsValid())
     {
@@ -369,8 +369,6 @@ command_result clean(color_ostream &out, vector<string> &parameters)
     clean_options options;
     df::coord pos_1, pos_2;
     cuboid bounds;
-
-    CoreSuspender suspend;
 
     if (!Lua::CallLuaModuleFunction(out, "plugins.cleaners", "parse_commandline",
         std::make_tuple(&options, &pos_1, &pos_2, parameters)))

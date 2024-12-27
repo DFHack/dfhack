@@ -1,7 +1,4 @@
--- lua/plugins/repeatUtil.lua
--- author expwnent
 -- tools for registering callbacks periodically
--- vaguely based on a script by Putnam
 
 local _ENV = mkmodule("repeat-util")
 
@@ -11,6 +8,18 @@ dfhack.onStateChange.repeatUtilStateChange = function(code)
     if code == SC_WORLD_UNLOADED then
         repeating = {}
     end
+end
+
+function isScheduled(name)
+    return repeating[name] ~= nil
+end
+
+function listScheduled()
+    local result = {}
+    for name, _ in pairs(repeating) do
+        table.insert(result, name)
+    end
+    return result
 end
 
 function cancel(name)

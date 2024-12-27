@@ -1,7 +1,6 @@
 //Quick building occupancy flag test.
 //Individual bits had no apparent meaning. Assume it's an enum, set by number.
 
-#include "Core.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
@@ -37,8 +36,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 command_result readFlag (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     // init the map
     if(!Maps::IsValid())
     {
@@ -97,8 +94,6 @@ command_result writeFlag (color_ostream &out, vector <string> & parameters)
             return CR_FAILURE;
             break; //Redundant.
     }
-
-    CoreSuspender suspend;
 
     // init the map
     if(!Maps::IsValid())

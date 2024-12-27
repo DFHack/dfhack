@@ -2,7 +2,6 @@
 
 #include <map>
 
-#include <Core.h>
 
 using namespace DFHack;
 using namespace df::enums;

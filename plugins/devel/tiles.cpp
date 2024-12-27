@@ -8,7 +8,6 @@ using std::vector;
 using std::string;
 using std::endl;
 
-#include "Core.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>

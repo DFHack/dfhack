@@ -26,7 +26,6 @@ Updated: Dec. 21 2017
 #include <stdlib.h>
 
 #include "Error.h"
-#include "Core.h"
 #include "DataFuncs.h"
 #include <Console.h>
 #include <Export.h>

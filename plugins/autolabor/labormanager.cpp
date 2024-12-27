@@ -4,7 +4,6 @@
 * */
 
 
-#include "Core.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
@@ -1977,8 +1976,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable)
 
 command_result labormanager(color_ostream &out, std::vector <std::string> & parameters)
 {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isWorldLoaded()) {
         out.printerr("World is not loaded: please load a game first.\n");
         return CR_FAILURE;

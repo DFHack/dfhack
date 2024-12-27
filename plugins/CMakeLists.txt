@@ -5,20 +5,6 @@ if(BUILD_STONESENSE)
     add_subdirectory(stonesense)
 endif()
 
-option(BUILD_ISOWORLD "Build isoworld (needs a checkout first)." OFF)
-if(BUILD_ISOWORLD)
-    #add_subdirectory(isoworld)
-    if(UNIX)
-        if(APPLE)
-            # TODO: add an OSX runner script
-        else()
-        # On linux, copy our version of the df launch script which sets LD_PRELOAD
-        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/runisoworld
-            DESTINATION .)
-        endif()
-    endif()
-endif()
-
 option(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
 if(BUILD_DEV_PLUGINS)
     add_subdirectory(devel)
@@ -125,7 +111,6 @@ if(BUILD_SUPPORTED)
     dfhack_plugin(getplants getplants.cpp)
     dfhack_plugin(hotkeys hotkeys.cpp LINK_LIBRARIES lua)
     dfhack_plugin(infinite-sky infinite-sky.cpp LINK_LIBRARIES lua)
-    #dfhack_plugin(isoworldremote isoworldremote.cpp PROTOBUFS isoworldremote)
     #dfhack_plugin(jobutils jobutils.cpp)
     dfhack_plugin(lair lair.cpp)
     dfhack_plugin(liquids liquids.cpp Brushes.h LINK_LIBRARIES lua)

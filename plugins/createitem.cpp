@@ -1,7 +1,6 @@
 // Create arbitrary items
 
 #include "Console.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "Export.h"
 #include "MiscUtils.h"
@@ -219,7 +218,6 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
 
     if (parameters.size() == 1) {
         if (parameters[0] == "inspect") {
-            CoreSuspender suspend;
             auto item = Gui::getSelectedItem(out);
             if (!item)
                 return CR_FAILURE;
@@ -394,7 +392,6 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
         out.printerr("Map is not available.\n");
         return CR_FAILURE;
     }
-    CoreSuspender suspend;
 
     auto unit = Gui::getSelectedUnit(out, true);
     if (!unit) {

@@ -1,5 +1,4 @@
 #include "Console.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -314,199 +313,195 @@ static command_result orders_export_command(color_ostream & out, const std::stri
 
     Json::Value orders(Json::arrayValue);
 
+    for (auto it : world->manager_orders.all)
     {
-        CoreSuspender suspend;
+        Json::Value order(Json::objectValue);
 
-        for (auto it : world->manager_orders.all)
+        order["id"] = it->id;
+        order["job"] = enum_item_key(it->job_type);
+        if (!it->reaction_name.empty())
         {
-            Json::Value order(Json::objectValue);
-
-            order["id"] = it->id;
-            order["job"] = enum_item_key(it->job_type);
-            if (!it->reaction_name.empty())
-            {
-                order["reaction"] = it->reaction_name;
-            }
-
-            if (it->item_type != item_type::NONE)
-            {
-                order["item_type"] = enum_item_key(it->item_type);
-            }
-            if (it->item_subtype != -1)
-            {
-                df::itemdef *def = get_itemdef(out, it->item_type == item_type::NONE ? ENUM_ATTR(job_type, item, it->job_type) : it->item_type, it->item_subtype);
-
-                if (def)
-                {
-                    order["item_subtype"] = def->id;
-                }
-            }
-
-            if (it->job_type == job_type::PrepareMeal)
-            {
-                order["meal_ingredients"] = it->mat_type;
-            }
-            else if (it->mat_type != -1 || it->mat_index != -1)
-            {
-                order["material"] = MaterialInfo(it).getToken();
-            }
-
-            if (it->specflag.encrust_flags.whole != 0)
-            {
-                bitfield_to_json_array(order["item_category"], it->specflag.encrust_flags);
-            }
-
-            if (it->specdata.hist_figure_id != -1)
-            {
-                order["hist_figure"] = it->specdata.hist_figure_id;
-            }
-
-            if (it->material_category.whole != 0)
-            {
-                bitfield_to_json_array(order["material_category"], it->material_category);
-            }
-
-            if (it->art_spec.type != df::job_art_specifier_type::None)
-            {
-                Json::Value art(Json::objectValue);
-
-                art["type"] = enum_item_key(it->art_spec.type);
-                art["id"] = it->art_spec.id;
-                if (it->art_spec.subid != -1)
-                {
-                    art["subid"] = it->art_spec.subid;
-                }
-
-                order["art"] = art;
-            }
-
-            order["amount_left"] = it->amount_left;
-            order["amount_total"] = it->amount_total;
-            order["is_validated"] = bool(it->status.bits.validated);
-            order["is_active"] = bool(it->status.bits.active);
-
-            order["frequency"] = enum_item_key(it->frequency);
-
-            // TODO: finished_year, finished_year_tick
-
-            if (it->workshop_id != -1)
-            {
-                order["workshop_id"] = it->workshop_id;
-            }
-
-            if (it->max_workshops != 0)
-            {
-                order["max_workshops"] = it->max_workshops;
-            }
-
-            if (!it->item_conditions.empty())
-            {
-                Json::Value conditions(Json::arrayValue);
-
-                for (auto it2 : it->item_conditions)
-                {
-                    Json::Value condition(Json::objectValue);
-
-                    condition["condition"] = enum_item_key(it2->compare_type);
-                    condition["value"] = it2->compare_val;
-
-                    if (it2->flags1.whole != 0 || it2->flags2.whole != 0 || it2->flags3.whole != 0)
-                    {
-                        bitfield_to_json_array(condition["flags"], it2->flags1);
-                        bitfield_to_json_array(condition["flags"], it2->flags2);
-                        bitfield_to_json_array(condition["flags"], it2->flags3);
-                        // TODO: flags4, flags5
-                    }
-
-                    if (it2->item_type != item_type::NONE)
-                    {
-                        condition["item_type"] = enum_item_key(it2->item_type);
-                    }
-                    if (it2->item_subtype != -1)
-                    {
-                        df::itemdef *def = get_itemdef(out, it2->item_type, it2->item_subtype);
-
-                        if (def)
-                        {
-                            condition["item_subtype"] = def->id;
-                        }
-                    }
-
-                    if (it2->mat_type != -1 || it2->mat_index != -1)
-                    {
-                        condition["material"] = MaterialInfo(it2).getToken();
-                    }
-
-                    if (it2->metal_ore != -1)
-                    {
-                        condition["bearing"] = df::inorganic_raw::find(it2->metal_ore)->id;
-                    }
-
-                    if (!it2->reaction_class.empty())
-                    {
-                        condition["reaction_class"] = it2->reaction_class;
-                    }
-
-                    if (!it2->has_material_reaction_product.empty())
-                    {
-                        condition["reaction_product"] = it2->has_material_reaction_product;
-                    }
-
-                    if (it2->has_tool_use != tool_uses::NONE)
-                    {
-                        condition["tool"] = enum_item_key(it2->has_tool_use);
-                    }
-
-                    if (it2->min_dimension != -1)
-                    {
-                        condition["min_dimension"] = it2->min_dimension;
-                    }
-
-                    if (it2->reaction_id != -1)
-                    {
-                        df::reaction *reaction = world->raws.reactions.reactions[it2->reaction_id];
-                        condition["reaction_id"] = reaction->code;
-
-                        if (!it2->contains.empty())
-                        {
-                            Json::Value contains(Json::arrayValue);
-                            for (int32_t contains_val : it2->contains)
-                            {
-                                contains.append(reaction->reagents[contains_val]->code);
-                            }
-                            condition["contains"] = contains;
-                        }
-                    }
-
-                    conditions.append(condition);
-                }
-
-                order["item_conditions"] = conditions;
-            }
-
-            if (!it->order_conditions.empty())
-            {
-                Json::Value conditions(Json::arrayValue);
-
-                for (auto it2 : it->order_conditions)
-                {
-                    Json::Value condition(Json::objectValue);
-
-                    condition["order"] = it2->order_id;
-                    condition["condition"] = enum_item_key(it2->condition);
-
-                    // TODO: unk_1
-
-                    conditions.append(condition);
-                }
-
-                order["order_conditions"] = conditions;
-            }
-
-            // TODO: items
-
-            orders.append(order);
+            order["reaction"] = it->reaction_name;
         }
+
+        if (it->item_type != item_type::NONE)
+        {
+            order["item_type"] = enum_item_key(it->item_type);
+        }
+        if (it->item_subtype != -1)
+        {
+            df::itemdef *def = get_itemdef(out, it->item_type == item_type::NONE ? ENUM_ATTR(job_type, item, it->job_type) : it->item_type, it->item_subtype);
+
+            if (def)
+            {
+                order["item_subtype"] = def->id;
+            }
+        }
+
+        if (it->job_type == job_type::PrepareMeal)
+        {
+            order["meal_ingredients"] = it->mat_type;
+        }
+        else if (it->mat_type != -1 || it->mat_index != -1)
+        {
+            order["material"] = MaterialInfo(it).getToken();
+        }
+
+        if (it->specflag.encrust_flags.whole != 0)
+        {
+            bitfield_to_json_array(order["item_category"], it->specflag.encrust_flags);
+        }
+
+        if (it->specdata.hist_figure_id != -1)
+        {
+            order["hist_figure"] = it->specdata.hist_figure_id;
+        }
+
+        if (it->material_category.whole != 0)
+        {
+            bitfield_to_json_array(order["material_category"], it->material_category);
+        }
+
+        if (it->art_spec.type != df::job_art_specifier_type::None)
+        {
+            Json::Value art(Json::objectValue);
+
+            art["type"] = enum_item_key(it->art_spec.type);
+            art["id"] = it->art_spec.id;
+            if (it->art_spec.subid != -1)
+            {
+                art["subid"] = it->art_spec.subid;
+            }
+
+            order["art"] = art;
+        }
+
+        order["amount_left"] = it->amount_left;
+        order["amount_total"] = it->amount_total;
+        order["is_validated"] = bool(it->status.bits.validated);
+        order["is_active"] = bool(it->status.bits.active);
+
+        order["frequency"] = enum_item_key(it->frequency);
+
+        // TODO: finished_year, finished_year_tick
+
+        if (it->workshop_id != -1)
+        {
+            order["workshop_id"] = it->workshop_id;
+        }
+
+        if (it->max_workshops != 0)
+        {
+            order["max_workshops"] = it->max_workshops;
+        }
+
+        if (!it->item_conditions.empty())
+        {
+            Json::Value conditions(Json::arrayValue);
+
+            for (auto it2 : it->item_conditions)
+            {
+                Json::Value condition(Json::objectValue);
+
+                condition["condition"] = enum_item_key(it2->compare_type);
+                condition["value"] = it2->compare_val;
+
+                if (it2->flags1.whole != 0 || it2->flags2.whole != 0 || it2->flags3.whole != 0)
+                {
+                    bitfield_to_json_array(condition["flags"], it2->flags1);
+                    bitfield_to_json_array(condition["flags"], it2->flags2);
+                    bitfield_to_json_array(condition["flags"], it2->flags3);
+                    // TODO: flags4, flags5
+                }
+
+                if (it2->item_type != item_type::NONE)
+                {
+                    condition["item_type"] = enum_item_key(it2->item_type);
+                }
+                if (it2->item_subtype != -1)
+                {
+                    df::itemdef *def = get_itemdef(out, it2->item_type, it2->item_subtype);
+
+                    if (def)
+                    {
+                        condition["item_subtype"] = def->id;
+                    }
+                }
+
+                if (it2->mat_type != -1 || it2->mat_index != -1)
+                {
+                    condition["material"] = MaterialInfo(it2).getToken();
+                }
+
+                if (it2->metal_ore != -1)
+                {
+                    condition["bearing"] = df::inorganic_raw::find(it2->metal_ore)->id;
+                }
+
+                if (!it2->reaction_class.empty())
+                {
+                    condition["reaction_class"] = it2->reaction_class;
+                }
+
+                if (!it2->has_material_reaction_product.empty())
+                {
+                    condition["reaction_product"] = it2->has_material_reaction_product;
+                }
+
+                if (it2->has_tool_use != tool_uses::NONE)
+                {
+                    condition["tool"] = enum_item_key(it2->has_tool_use);
+                }
+
+                if (it2->min_dimension != -1)
+                {
+                    condition["min_dimension"] = it2->min_dimension;
+                }
+
+                if (it2->reaction_id != -1)
+                {
+                    df::reaction *reaction = world->raws.reactions.reactions[it2->reaction_id];
+                    condition["reaction_id"] = reaction->code;
+
+                    if (!it2->contains.empty())
+                    {
+                        Json::Value contains(Json::arrayValue);
+                        for (int32_t contains_val : it2->contains)
+                        {
+                            contains.append(reaction->reagents[contains_val]->code);
+                        }
+                        condition["contains"] = contains;
+                    }
+                }
+
+                conditions.append(condition);
+            }
+
+            order["item_conditions"] = conditions;
+        }
+
+        if (!it->order_conditions.empty())
+        {
+            Json::Value conditions(Json::arrayValue);
+
+            for (auto it2 : it->order_conditions)
+            {
+                Json::Value condition(Json::objectValue);
+
+                condition["order"] = it2->order_id;
+                condition["condition"] = enum_item_key(it2->condition);
+
+                // TODO: unk_1
+
+                conditions.append(condition);
+            }
+
+            order["order_conditions"] = conditions;
+        }
+
+        // TODO: items
+
+        orders.append(order);
     }
 
     Filesystem::mkdir(ORDERS_DIR);
@@ -965,8 +960,6 @@ static command_result orders_import_command(color_ostream & out, const std::stri
         return CR_FAILURE;
     }
 
-    CoreSuspender suspend;
-
     try
     {
         return orders_import(out, orders);
@@ -980,8 +973,6 @@ static command_result orders_import_command(color_ostream & out, const std::stri
 
 static command_result orders_clear_command(color_ostream & out)
 {
-    CoreSuspender suspend;
-
     for (auto order : world->manager_orders.all)
     {
         for (auto condition : order->item_conditions)
@@ -1025,8 +1016,6 @@ static bool orders_compare(df::manager_order *a, df::manager_order *b)
 
 static command_result orders_sort_command(color_ostream & out)
 {
-    CoreSuspender suspend;
-
     if (!std::is_sorted(world->manager_orders.all.begin(),
                         world->manager_orders.all.end(),
                         orders_compare))

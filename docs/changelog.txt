@@ -57,8 +57,15 @@ Template for new versions:
 - `clean`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
 
 ## Fixes
+- `preserve-rooms`: don't erroneously release reservations for units that have returned from their missions but have not yet entered the fort map
+- `preserve-rooms`: handle case where unit records are culled by DF immediately after a unit leaves the map
+- `preserve-tombs`: properly re-enable after loading a game that had the tool enabled
+- `zone`: assign animal to cage/restraint dialog now allows you to unassign a pet from the cage or restraint if the pet is already somehow assigned (e.g.  war dog was in cage and was subsequently assigned to a dwarf)
 
 ## Misc Improvements
+- `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
+- `stonesense`: changed announcements to be right-aligned and limited it to only show the most recent 10 announcements.
+- `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Documentation
 
@@ -69,6 +76,10 @@ Template for new versions:
 - ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 
 ## Removed
+
+## Internals
+- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access
+- Errors when unloading a plugin's DLL are now checked and reported
 
 # 50.15-r1.2
 

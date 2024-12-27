@@ -2,7 +2,6 @@
 // allows changing the material type of geological layers
 
 #include "Console.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -55,8 +54,6 @@ static bool warned = false;
 
 command_result changelayer (color_ostream &out, std::vector <std::string> & parameters)
 {
-    CoreSuspender suspend;
-
     string material;
     bool force = false;
     bool all_biomes = false;

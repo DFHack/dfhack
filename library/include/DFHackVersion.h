@@ -5,6 +5,7 @@ namespace DFHack {
         const char *dfhack_version();
         const char *dfhack_release();
         const char *dfhack_build_id();
+        const char *dfhack_run_url();
         int dfhack_abi_version();
 
         const char *git_description();
@@ -23,6 +24,7 @@ namespace DFHack {
     #define DFHACK_VERSION (DFHack::Version::dfhack_version())
     #define DFHACK_RELEASE (DFHack::Version::dfhack_release())
     #define DFHACK_BUILD_ID (DFHack::Version::dfhack_build_id())
+    #define DFHACK_RUN_URL (DFHack::Version::dfhack_run_url())
     #define DFHACK_ABI_VERSION (DFHack::Version::dfhack_abi_version())
 
     #define DFHACK_GIT_DESCRIPTION (DFHack::Version::git_description())

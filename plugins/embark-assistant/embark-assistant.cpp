@@ -1,6 +1,5 @@
 #include <time.h>
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -260,8 +259,6 @@ command_result embark_assistant(color_ostream &out, std::vector <std::string> & 
     } else if (!parameters.empty()) {
         return CR_WRONG_USAGE;
     }
-
-    CoreSuspender suspend;
 
     auto screen = Gui::getViewscreenByType<df::viewscreen_choose_start_sitest>(0);
     if (!screen) {

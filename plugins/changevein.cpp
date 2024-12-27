@@ -1,6 +1,5 @@
 // Allow changing the material of a mineral inclusion
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -207,8 +206,6 @@ command_result df_changevein (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size() != 1)
         return CR_WRONG_USAGE;
-
-    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {

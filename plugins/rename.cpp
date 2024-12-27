@@ -1,4 +1,3 @@
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -329,8 +328,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
 
 static command_result rename(color_ostream &out, vector <string> &parameters)
 {
-    CoreSuspender suspend;
-
     string cmd;
     if (!parameters.empty())
         cmd = parameters[0];

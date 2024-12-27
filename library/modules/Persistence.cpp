@@ -23,14 +23,18 @@ distribution.
 */
 
 #include "Core.h"
+#include "DFHackVersion.h"
 #include "Debug.h"
 #include "Internal.h"
 #include "LuaTools.h"
+#include "MemAccess.h"
 
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
+
+#include "df/world.h"
 
 #include <json/json.h>
 
@@ -186,11 +190,33 @@ static std::string getSaveFilePath(const std::string &world, const std::string &
 }
 
 void Persistence::Internal::save(color_ostream& out) {
-    if (!Core::getInstance().isWorldLoaded())
+    Core &core = Core::getInstance();
+
+    if (!core.isWorldLoaded())
         return;
 
     CoreSuspender suspend;
 
+    // write status
+    {
+        auto file = std::ofstream(getSaveFilePath("current", "status"));
+        file << "DF version:  " << core.p->getDescriptor()->getVersion() << std::endl;
+        file << "DFHack version: " << Version::dfhack_version() << " (" << Version::git_commit(true) << ")" << std::endl;
+        file << "Tagged release: " << (Version::is_release() ? "yes" : "no") << std::endl;
+        file << "Pre-release:    " << (Version::is_prerelease() ? "yes" : "no") << std::endl;
+        if (strlen(Version::dfhack_run_url())) {
+            file << "Build url:  " << Version::dfhack_run_url() << std::endl;
+        }
+        if (df::global::world and df::global::version) {
+            file << std::endl;
+            file << "World name: " << World::getWorldName() << " (" << World::getWorldName(true) << ")" << std::endl;
+            file << "World generated in version:  " << df::global::world->original_save_version << std::endl;
+            file << "World last saved in version: " << df::global::world->save_version << std::endl;
+            file << "World loaded in version:     " << *df::global::version << std::endl;
+        }
+    }
+
+    // write entity data
     for (auto & entity_store_entry : store) {
         int entity_id = entity_store_entry.first;
         Json::Value json(Json::arrayValue);
@@ -205,6 +231,7 @@ void Persistence::Internal::save(color_ostream& out) {
         file << json;
     }
 
+    // write perf counters
     {
         auto file = std::ofstream(getSaveFilePath("current", "perf-counters"));
         color_ostream_wrapper wrapper(file);
@@ -286,7 +313,6 @@ void Persistence::Internal::load(color_ostream& out) {
     const std::string legacy_fname = getSaveFilePath(world_name, "legacy-data");
     if (Filesystem::exists(legacy_fname)) {
         int synthesized_entity_id = Persistence::WORLD_ENTITY_ID;
-        using df::global::world;
         if (World::IsSiteLoaded())
             synthesized_entity_id = World::GetCurrentSiteId();
         load_file(legacy_fname, synthesized_entity_id);

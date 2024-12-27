@@ -40,6 +40,7 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "Memory.h"
+#include "MiscUtils.h"
 #include "VersionInfo.h"
 #include "VersionInfoFactory.h"
 #include "modules/Filesystem.h"
@@ -120,13 +121,18 @@ Process::~Process()
 
 string Process::doReadClassName (void * vptr)
 {
-    //FIXME: BAD!!!!!
-    char * typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
-    char * typestring = Process::readPtr(typeinfo + sizeof(void*));
+    char* typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
+    char* typestring = Process::readPtr(typeinfo + sizeof(void*));
     string raw = readCString(typestring);
-    size_t start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
-    size_t end = raw.length();
-    return raw.substr(start,end-start);
+
+    string status;
+    string demangled = cxx_demangle(raw, &status);
+
+    if (demangled.length() == 0) {
+        return "dummy";
+    }
+
+    return demangled;
 }
 
 //FIXME: cross-reference with ELF segment entries?

@@ -234,7 +234,7 @@ static bool clean_block(color_ostream &out, df::map_block *block, const cuboid &
 #undef DEL_BLEV
 
 command_result cleanmap(color_ostream &out, const cuboid &bounds, const clean_options &options)
-{   // Invoked from clean(), already suspended
+{
     DEBUG(log, out).print("Cleaning map...\n");
     cuboid my_bounds; // Local copy
     if (bounds.isValid())
@@ -260,7 +260,7 @@ command_result cleanmap(color_ostream &out, const cuboid &bounds, const clean_op
 }
 
 command_result cleanitems(color_ostream &out, const cuboid &bounds)
-{   // Invoked from clean(), already suspended
+{
     DEBUG(log, out).print("Cleaning items...\n");
     bool valid_cuboid = bounds.isValid(); // Allow for items outside map if false
     int cleaned_items = 0, cleaned_total = 0;
@@ -304,7 +304,7 @@ command_result cleanitems(color_ostream &out, const cuboid &bounds)
 }
 
 command_result cleanunits(color_ostream &out, const cuboid &bounds)
-{   // Invoked from clean(), already suspended
+{
     DEBUG(log, out).print("Cleaning units...\n");
     bool valid_cuboid = bounds.isValid(); // Allow for dead/inactive units if false
     int cleaned_units = 0, cleaned_total = 0;

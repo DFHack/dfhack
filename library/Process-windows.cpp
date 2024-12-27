@@ -34,6 +34,7 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "Memory.h"
+#include "MiscUtils.h"
 #include "VersionInfo.h"
 #include "VersionInfoFactory.h"
 
@@ -128,21 +129,28 @@ Process::~Process()
 
 string Process::doReadClassName (void * vptr)
 {
-    char * rtti = readPtr((char *)vptr - sizeof(void*));
+    char* rtti = readPtr((char *)vptr - sizeof(void*));
 #ifdef DFHACK64
-    void *base;
+    void* base;
     if (!RtlPcToFileHeader(rtti, &base))
         return "dummy";
-    char * typeinfo = (char *)base + readDWord(rtti + 0xC);
-    string raw = readCString(typeinfo + 0x10+4); // skips the .?AV
+    char* typeinfo = (char *)base + readDWord(rtti + 0xC);
+    std::string raw = readCString(typeinfo + 0x10);
 #else
-    char * typeinfo = readPtr(rtti + 0xC);
-    string raw = readCString(typeinfo + 0xC); // skips the .?AV
+    char* typeinfo = readPtr(rtti + 0xC);
+    std::string raw = readCString(typeinfo + 0x8);
 #endif
-    if (!raw.length())
+    if (raw.length() == 0)
         return "dummy";
-    raw.resize(raw.length() - 2);// trim @@ from end
-    return raw;
+
+    string status;
+    string demangled = cxx_demangle(raw, &status);
+
+    if (demangled.length() == 0) {
+        return "dummy";
+    }
+
+    return demangled;
 }
 
 /*

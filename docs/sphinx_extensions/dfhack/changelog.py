@@ -2,7 +2,6 @@ import collections
 import copy
 import itertools
 import os
-import sys
 
 from sphinx.errors import ExtensionError, SphinxError, SphinxWarning
 
@@ -12,6 +11,7 @@ CHANGELOG_PATHS = (
     'docs/changelog.txt',
     'scripts/changelog.txt',
     'library/xml/changelog.txt',
+    'plugins/stonesense/changelog.txt',
 )
 CHANGELOG_PATHS = (os.path.join(DFHACK_ROOT, p) for p in CHANGELOG_PATHS)
 

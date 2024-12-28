@@ -69,8 +69,10 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
 
 ## Lua
+- ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
 
 ## Removed
 

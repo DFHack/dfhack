@@ -329,7 +329,7 @@ elseif(UNIX)
     set(PROJECT_LIBS rt dl dfhack-md5 ${DFHACK_TINYXML})
 else(WIN32)
     # FIXME: do we really need psapi?
-    set(PROJECT_LIBS psapi dfhack-md5 ${DFHACK_TINYXML})
+    set(PROJECT_LIBS psapi dbghelp dfhack-md5 ${DFHACK_TINYXML})
 endif()
 
 set(VERSION_SRCS DFHackVersion.cpp)
@@ -418,6 +418,9 @@ target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-ve
 set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static)
+if(WIN32)
+    target_link_libraries(dfhack-client dbghelp)
+endif()
 target_link_libraries(dfhack-run dfhack-client)
 
 if(APPLE)

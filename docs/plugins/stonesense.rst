@@ -68,7 +68,7 @@ at least a dual core CPU to avoid slowing down your game of DF.
 
 Useful links
 ------------
-- `Report issues on Github <https://github.com/DFHack/stonesense/issues>`
+- Report issues on `Github <https://github.com/DFHack/stonesense/issues>`__
 - :forums:`Official Stonesense thread <106497>` for feedback,
   questions, or requests
 - :forums:`Screenshots thread <48172>`

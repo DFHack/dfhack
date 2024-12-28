@@ -498,6 +498,8 @@ changelogs are combined as part of the changelog build process:
 * ``docs/changelog.txt`` for changes in the main ``dfhack`` repo
 * ``scripts/changelog.txt`` for changes made to scripts in the ``scripts`` repo
 * ``library/xml/changelog.txt`` for changes made in the ``df-structures`` repo
+* ``plugins/stonesense/changelog.txt`` for changes made in the ``stonesense``
+  repo
 
 Building the changelogs generates two files: ``docs/changelogs/news.rst`` and
 ``docs/changelogs/news-dev.rst``. These correspond to `changelog` and

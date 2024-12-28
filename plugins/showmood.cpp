@@ -1,6 +1,5 @@
 // Show details of currently active strange mood, if any
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -39,8 +38,6 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         out.printerr("Translation data unavailable!\n");
         return CR_FAILURE;
     }
-
-    CoreSuspender suspend;
 
     bool found = false;
     for (df::job_list_link *cur = world->jobs.list.next; cur != NULL; cur = cur->next)

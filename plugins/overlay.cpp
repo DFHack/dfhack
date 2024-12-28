@@ -173,8 +173,6 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 #undef INTERPOSE_HOOKS_FAILED
 
 static command_result overlay_cmd(color_ostream &out, vector<string> & parameters) {
-    CoreSuspender suspend;
-
     bool show_help = false;
     Lua::CallLuaModuleFunction(out, "plugins.overlay", "overlay_command", std::make_tuple(parameters),
         1, [&](lua_State *L) {

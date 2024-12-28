@@ -1,7 +1,6 @@
 #include "pause.h"
 
 #include "Debug.h"
-#include "Core.h"
 #include "Export.h"
 #include "PluginManager.h"
 

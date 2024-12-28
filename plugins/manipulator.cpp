@@ -1,6 +1,5 @@
 // Dwarf Manipulator - a Therapist-style labor editor
 
-#include "Core.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>

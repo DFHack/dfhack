@@ -4,7 +4,6 @@
 // config for autobutcher (state and sleep setting) is saved the first time autobutcher is started
 // config for watchlist entries is saved when they are created or modified
 
-#include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
@@ -395,8 +394,6 @@ static void autobutcher_target(color_ostream &out, const autobutcher_options &op
 static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_options &opts);
 
 static command_result df_autobutcher(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

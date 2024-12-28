@@ -1,7 +1,6 @@
 // Make the camera follow the selected unit
 
 #include "Console.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "DFHack.h"
 #include "Export.h"
@@ -137,8 +136,6 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
 
 command_result follow (color_ostream &out, std::vector <std::string> & parameters)
 {
-    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
-
     if (!parameters.empty())
         return CR_WRONG_USAGE;
 

@@ -18,7 +18,7 @@ DFhackCExport void dfhooks_init() {
 
     // we need to init DF globals before we can check the commandline
     if (!DFHack::Core::getInstance().InitMainThread() || !df::global::game) {
-        disabled = true;
+        // we don't set disabled to true here so symbol generation can work
         return;
     }
 
@@ -51,7 +51,7 @@ DFhackCExport void dfhooks_update() {
 DFhackCExport void dfhooks_prerender() {
     if (disabled)
         return;
-    // TODO: render overlay widgets that are not attached to a viewscreen
+    // TODO: potentially render overlay elements that are not attached to a viewscreen
 }
 
 // called from the main thread for each SDL event. if true is returned, then
@@ -60,6 +60,14 @@ DFhackCExport bool dfhooks_sdl_event(SDL_Event* event) {
     if (disabled)
         return false;
     return DFHack::Core::getInstance().DFH_SDL_Event(event);
+}
+
+// called from the main thread just after setting mouse state in gps and just
+// before rendering the screen buffer to the screen.
+DFhackCExport void dfhooks_sdl_loop() {
+    if (disabled)
+        return;
+    // TODO: wire this up to the new SDL-based console once it is merged
 }
 
 // called from the main thread for each utf-8 char read from the ncurses input

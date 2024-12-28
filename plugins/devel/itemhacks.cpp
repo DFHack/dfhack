@@ -1,4 +1,3 @@
-#include "Core.h"
 #include <Export.h>
 #include <PluginManager.h>
 #include <modules/Items.h>

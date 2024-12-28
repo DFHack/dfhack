@@ -1,7 +1,6 @@
 // This is a generic plugin that does nothing useful apart from acting as an example... of a plugin that does nothing :D
 
 // some headers required for a plugin. Nothing special, just the basics.
-#include "Core.h"
 #include <Console.h>
 #include <Export.h>
 #include <PluginManager.h>
@@ -51,8 +50,6 @@ struct xyz
 
 command_result tilesieve(color_ostream &out, std::vector<std::string> & params)
 {
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

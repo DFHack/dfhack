@@ -33,6 +33,7 @@ distribution.
 // We don't want min and max macros
 #define NOMINMAX
     #include <Windows.h>
+    #include <DbgHelp.h>
 #else
     #include <sys/time.h>
     #include <ctime>
@@ -687,10 +688,35 @@ DFHACK_EXPORT std::string cxx_demangle(const std::string &mangled_name, std::str
         else *status_out = "unknown error";
     }
     return out;
-#else
-    if (status_out) {
-        *status_out = "not implemented on this platform";
+#elif defined(_WIN32)
+    const char* mangled_cstr = mangled_name.c_str();
+
+    char demangledBuf[MAX_SYM_NAME];
+    DWORD flags = UNDNAME_NAME_ONLY;
+
+    if (mangled_cstr[0] == '.') {
+        // Symbol is a type, demangle as such
+        // Flag is actually "UNDNAME_TYPE_ONLY", but hasn't been renamed for this method yet.
+        flags |= UNDNAME_NO_ARGUMENTS;
+        mangled_cstr++;
     }
-    return "";
+
+    DWORD res = UnDecorateSymbolName(mangled_cstr, (char*)&demangledBuf, MAX_SYM_NAME, flags);
+
+    std::string out;
+    if (res == 0) {
+        // Demangling failed
+        *status_out = "demangling failed";
+        return out;
+    }
+    if (demangledBuf[0] == '?') {
+        // Wine failed to demangle symbol
+        *status_out = "wine demangling failed";
+        return out;
+    }
+    out = (char*)&demangledBuf;
+    return out;
+#else
+    #error Platform does not support symbol demangling
 #endif
 }

@@ -59,8 +59,15 @@ Template for new versions:
 - ``Units::getPosition``, ``Items::getPosition``: return invalid coord for inactive units, items held by units off map
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
 - ``Units::isActive``: return false for units off map
+- `preserve-rooms`: don't erroneously release reservations for units that have returned from their missions but have not yet entered the fort map
+- `preserve-rooms`: handle case where unit records are culled by DF immediately after a unit leaves the map
+- `preserve-tombs`: properly re-enable after loading a game that had the tool enabled
+- `zone`: assign animal to cage/restraint dialog now allows you to unassign a pet from the cage or restraint if the pet is already somehow assigned (e.g.  war dog was in cage and was subsequently assigned to a dwarf)
 
 ## Misc Improvements
+- `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
+- `stonesense`: changed announcements to be right-aligned and limited it to only show the most recent 10 announcements.
+- `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Documentation
 
@@ -69,6 +76,28 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+## Internals
+- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access
+- Errors when unloading a plugin's DLL are now checked and reported
+
+# 50.15-r1.2
+
+## Misc Improvements
+
+- Updated support for Itch
+
+# 50.15-r1.1
+
+## Misc Improvements
+
+- Updated support for Classic (Itch not available for analysis yet)
+
+# 50.15-r1
+
+# Fixes
+
+- `gui/prerelease-warning`: don't pop up during worldgen, only after a fort has been loaded
 
 # 50.14-r2
 

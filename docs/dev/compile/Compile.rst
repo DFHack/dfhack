@@ -162,8 +162,8 @@ or VC2022_32, depending on the architecture you specified. Open the file
 ``dfhack.sln`` inside that folder. If you have multiple versions of Visual
 Studio installed, make sure you open with Visual Studio 2022.
 
-The first thing you must then do is change the build type. It defaults to Debug,
-but this cannot be used on Windows. Debug is not binary-compatible with DF.
+The first thing you must then do is ensure the build type is not Debug, which
+cannot be used on Windows. Debug is not binary-compatible with DF.
 If you try to use a debug build with DF, you'll only get crashes and for this
 reason the Windows "debug" scripts actually do RelWithDebInfo builds.
 After loading the Solution, change the Build Type to either ``Release``

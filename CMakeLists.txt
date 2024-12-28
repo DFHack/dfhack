@@ -4,16 +4,26 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0074 NEW)
-project(dfhack)
 
 # set up versioning.
-set(DF_VERSION "50.14")
-set(DFHACK_RELEASE "r2.1")
+set(DF_VERSION "50.15")
+set(DFHACK_RELEASE "r1.2")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 set(DFHACK_ABI_VERSION 2)
 set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
+
+# set up ccache
+find_program(CCACHE_EXECUTABLE "ccache" HINTS /usr/local/bin /opt/local/bin)
+if(CCACHE_EXECUTABLE)
+    message(STATUS "using ccache")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+endif()
+
+# project must be declared *after* ccache setup
+project(dfhack)
 
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
@@ -108,6 +118,9 @@ if(MSVC)
     # (such as double -> int or int32_t -> int16_t). dfhack has many of these, mostly related to Lua
     # this is equivalent to gcc -Wno_conversions which is the default as gcc -Wall doesn't enable -Wconversions
     add_compile_options("/wd4244")
+
+    # Enable C5038 - This is equivalent to gcc's -Werror=reorder, which is enabled by default by gcc -Wall
+    add_compile_options("/w15038")
 
     # MSVC panics if an object file contains more than 65,279 sections. this
     # happens quite frequently with code that uses templates, such as vectors.
@@ -258,6 +271,13 @@ elseif(MSVC)
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Od")
     string(REPLACE "/O2" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
     string(REPLACE "/DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+
+    option(BUILD_PDBS "Build PDB debug symbol files." OFF)
+    if(BUILD_PDBS)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Z7")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DEBUG")
+        set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /DEBUG")
+    endif()
 endif()
 
 # use shared libraries for protobuf

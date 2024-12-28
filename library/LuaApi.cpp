@@ -2170,7 +2170,8 @@ static int units_isUnitInBox(lua_State *state) {
         int y2 = luaL_checkint(state, 6);
         int z2 = luaL_checkint(state, 7);
         lua_pushboolean(state, Units::isUnitInBox(u, x1, y1, z1, x2, y2, z2));
-    } else {
+    }
+    else {
         df::coord pos1, pos2;
         Lua::CheckDFAssign(state, &pos1, 2);
         Lua::CheckDFAssign(state, &pos2, 3);
@@ -2185,9 +2186,15 @@ static int units_getUnitsInBox(lua_State *state) {
 
     int max_arg = lua_gettop(state);
     if (max_arg > 3) {
-        box = cuboid(luaL_checkint(state, 1), luaL_checkint(state, 2), luaL_checkint(state, 3),
-            luaL_checkint(state, 4), luaL_checkint(state, 5), luaL_checkint(state, 6));
-    } else {
+        int x1 = luaL_checkint(state, 1);
+        int y1 = luaL_checkint(state, 2);
+        int z1 = luaL_checkint(state, 3);
+        int x2 = luaL_checkint(state, 4);
+        int y2 = luaL_checkint(state, 5);
+        int z2 = luaL_checkint(state, 6);
+        box = cuboid(x1,y1,z1,x2,y2,z2);
+    }
+    else {
         df::coord pos1, pos2;
         Lua::CheckDFAssign(state, &pos1, 1);
         Lua::CheckDFAssign(state, &pos2, 2);

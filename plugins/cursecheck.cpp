@@ -127,7 +127,7 @@ curses determineCurse(df::unit * unit)
 
 command_result cursecheck (color_ostream &out, vector <string> & parameters)
 {
-    df::unit* selected_unit = Gui::getSelectedUnit(out, true);
+    vector<df::unit*> selected_unit = {Gui::getSelectedUnit(out, true)};
 
     bool giveDetails = false;
     bool giveUnitID = false;
@@ -157,7 +157,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
     }
 
     // check whole map if no unit is selected
-    for(df::unit *unit : selected_unit ? vector{ selected_unit } : world->units.all)
+    for(df::unit *unit : selected_unit[0] ? selected_unit : world->units.all)
     {
         // filter out all "living" units that are currently removed from play
         // don't spam all completely dead creatures if not explicitly wanted
@@ -208,9 +208,9 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
         }
     }
 
-    if (selected_unit && !giveDetails)
+    if (selected_unit[0] && !giveDetails)
         out.print("Selected unit is %scursed\n", cursecount == 0 ? "not " : "");
-    else if (!selected_unit)
+    else if (!selected_unit[0])
         out.print("%zd cursed creatures on map\n", cursecount);
 
     return CR_OK;

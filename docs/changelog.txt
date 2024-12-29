@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Fixes
 - `preserve-rooms`: don't erroneously release reservations for units that have returned from their missions but have not yet entered the fort map
@@ -63,8 +64,6 @@ Template for new versions:
 
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
-- `stonesense`: changed announcements to be right-aligned and limited it to only show the most recent 10 announcements.
-- `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Documentation
 
@@ -94,7 +93,7 @@ Template for new versions:
 
 # 50.15-r1
 
-# Fixes
+## Fixes
 
 - `gui/prerelease-warning`: don't pop up during worldgen, only after a fort has been loaded
 

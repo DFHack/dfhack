@@ -59,7 +59,7 @@ views, fog, and rotation. Here's the important section:
 
 Streaming stonesense
 --------------------
-If you wish to stream stonesense thru the broadcasting software `OBS <https://obsproject.com/>_` then you may find that opening
+If you wish to stream stonesense thru the broadcasting software `OBS <https://obsproject.com/>`_ then you may find that opening
 stonesense causes your main DF window to flicker between DF and stonesense.
 While it is unknown exactly what causes this, a fix does exist. Simply make
 sure that both DF and stonesense are using ``Window Capture`` and NOT

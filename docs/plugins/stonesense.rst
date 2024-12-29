@@ -65,7 +65,7 @@ between DF and stonesense. While it is unknown exactly what causes this, a fix
 does exist. Simply make sure that both DF and stonesense are using ``Window Capture``
 and NOT ``Game Capture``. This will stop the flickering from happening and enable
 you to stream stonesense for all to enjoy. This has been tested in OBS on Windows 10 but
-should work on all operating systems the OBS supports and `Streamlabs <https://streamlabs.com/>`_
+should work on all operating systems the OBS supports and `Streamlabs <https://streamlabs.com/>`_.
 
 Known Issues
 ------------

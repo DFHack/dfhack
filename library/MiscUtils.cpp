@@ -33,7 +33,12 @@ distribution.
 // We don't want min and max macros
 #define NOMINMAX
     #include <Windows.h>
+    // Suppress warning which occurs in header on some WinSDK versions
+    // See dfhack/dfhack#5147 for more information
+    #pragma warning(push)
+    #pragma warning(disable:4091)
     #include <DbgHelp.h>
+    #pragma warning(pop)
 #else
     #include <sys/time.h>
     #include <ctime>

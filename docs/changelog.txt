@@ -94,7 +94,7 @@ Template for new versions:
 
 # 50.15-r1
 
-# Fixes
+## Fixes
 
 - `gui/prerelease-warning`: don't pop up during worldgen, only after a fort has been loaded
 

@@ -62,7 +62,7 @@ Streaming stonesense
 If you wish to stream stonesense thru OBS then you may find that opening
 stonesense causes your main DF window to flicker between DF and stonesense.
 While it is unknown exactly what causes this, a fix does exist. Simply make
-sure that both DF and stonesense are using ``Window Capture``s and NOT 
+sure that both DF and stonesense are using ``Window Capture``s and NOT
 ``Game Capture``s. This will stop the flickering from happening and enable
 you to stream stonesense for all to enjoy. 
 

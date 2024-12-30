@@ -290,9 +290,11 @@ struct work_hook : df::building_workshopst{
     }
     DEFINE_VMETHOD_INTERPOSE(void, setTriggerState,(int32_t state))
     {
-        CoreSuspendClaimer suspend;
-        color_ostream_proxy out(Core::getInstance().getConsole());
-        onSetTriggerState(out, this,state);
+        {
+            CoreSuspender suspend;
+            color_ostream_proxy out(Core::getInstance().getConsole());
+            onSetTriggerState(out, this, state);
+        }
         INTERPOSE_NEXT(setTriggerState)(state); //pretty sure default workshop has nothing related to this, but to be future proof lets do it like this
     }
     DEFINE_VMETHOD_INTERPOSE(void, drawBuilding, (uint32_t curtick,df::building_drawbuffer *db, int16_t z_offset))

@@ -462,13 +462,12 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
             }
             lua_pop(L, 1); //pop current row
         }
-        
         def.frames.push_back(frame);
         frame_index++;
         lua_pop(L, 1); //pop current frame
     }
 
-    return ;
+    return;
 }
 
 //fixImpassible(workshop_type) - changes how impassible tiles work with liquids.

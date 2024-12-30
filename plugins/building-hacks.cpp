@@ -391,9 +391,44 @@ void clear_mapping()
 {
     hacked_workshops.clear();
 }
+static void load_graphics_tile(lua_State* L,graphic_tile& t)
+{
+    lua_getfield(L, -1, "ch");
+    t.tile = luaL_optinteger(L, -1, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, -1, "fg");
+    t.fore = luaL_optinteger(L, -1, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, -1, "bg");
+    t.back = luaL_optinteger(L, -1, -1);
+    lua_pop(L, 1);
+
+    lua_getfield(L, -1, "bold");
+    t.bright = luaL_optinteger(L, -1, 0);
+    lua_pop(L, 1);
+
+    lua_getfield(L, -1, "tile");
+    t.graphics_tile = luaL_optinteger(L, -1, invalid_tile);
+    lua_pop(L, 1);
+
+    lua_getfield(L, -1, "tile_overlay");
+    t.overlay_tile = luaL_optinteger(L, -1, invalid_tile);
+    lua_pop(L, 1);
+
+    lua_getfield(L, -1, "tile_signpost");
+    t.signpost_tile = luaL_optinteger(L, -1, invalid_tile);
+    lua_pop(L, 1);
+
+    lua_getfield(L, -1, "tile_item");
+    t.item_tile = luaL_optinteger(L, -1, invalid_tile);
+    lua_pop(L, 1);
+}
 static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
 {
-    const int max_idx = 31 * 31;
+    const int max_side = 31;
+    const int max_idx = max_side * max_side;
 
     luaL_checktype(L,stack_pos,LUA_TTABLE);
 
@@ -403,56 +438,31 @@ static void loadFrames(lua_State* L,workshop_hack_data& def,int stack_pos)
     while (lua_geti(L,stack_pos,frame_index) != LUA_TNIL) { //get frame[i]
         luaL_checktype(L,-1,LUA_TTABLE); //ensure that it's a table
         std::vector<graphic_tile> frame(max_idx);
-
-        for (int idx = 0; idx < max_idx; idx++)
+        for (int x = 1; x <= max_side; x++)
         {
-            auto& t = frame[idx];
-            lua_geti(L, -1, idx); //get tile at idx i.e. frame[i][idx] where idx=x+y*31
-
+            lua_geti(L, -1, x); //get row at x
             if (lua_isnil(L, -1))//allow sparse indexing
             {
                 lua_pop(L, 1); //pop current tile (nil in this case)
                 continue;
             }
-            else
+
+            for (int y = 1; y <= max_side; y++)
             {
-                //load up tile, color, optionally graphics stuff
-                lua_geti(L, -1, 1);
-                //not sure why would anyone do nil tile, but for api consitency lets allow it
-                t.tile= luaL_optinteger(L,-1,-1);
-                lua_pop(L,1);
+                lua_geti(L, -1, y); //get cell at y
+                if (lua_isnil(L, -1))//allow sparse indexing
+                {
+                    lua_pop(L, 1); //pop current tile (nil in this case)
+                    continue;
+                }
 
-                lua_geti(L, -1, 2);
-                t.fore= luaL_optinteger(L,-1,0);
-                lua_pop(L,1);
-
-                lua_geti(L, -1, 3);
-                t.back= luaL_optinteger(L,-1,0);
-                lua_pop(L,1);
-
-                lua_geti(L, -1, 4);
-                t.bright=luaL_optinteger(L,-1,0);
-                lua_pop(L,1);
-
-                lua_geti(L, -1, 5);
-                t.graphics_tile = luaL_optinteger(L, -1,invalid_tile);
-                lua_pop(L, 1);
-
-                lua_geti(L, -1, 6);
-                t.overlay_tile = luaL_optinteger(L, -1, invalid_tile);
-                lua_pop(L, 1);
-
-                lua_geti(L, -1, 7);
-                t.signpost_tile = luaL_optinteger(L, -1, invalid_tile);
-                lua_pop(L, 1);
-
-                lua_geti(L, -1, 8);
-                t.item_tile = luaL_optinteger(L, -1, invalid_tile);
-                lua_pop(L, 1);
+                load_graphics_tile(L, frame[(x-1)+(y-1)*max_side]);
 
                 lua_pop(L, 1); //pop current tile
             }
+            lua_pop(L, 1); //pop current row
         }
+        
         def.frames.push_back(frame);
         frame_index++;
         lua_pop(L, 1); //pop current frame

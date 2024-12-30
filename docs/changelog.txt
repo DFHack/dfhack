@@ -69,6 +69,7 @@ Template for new versions:
 
 ## API
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
+- ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
 
 ## Lua
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments

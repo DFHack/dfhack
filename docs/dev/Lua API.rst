@@ -6522,7 +6522,9 @@ building-hacks
 
 This plugin extends DF workshops to support custom powered buildings.
 
-.. note:: when using numeric ids for workshops be aware that those id can change between worlds
+.. note::
+    When using numeric ids for workshops be aware that those id can change between worlds,
+    depending on what other custom types exist in the raws for that world.
 
 .. contents::
   :local:
@@ -6532,41 +6534,42 @@ Functions
 
 * ``setOwnableBuilding(workshop_type)``
 
-  Set workshop to be included in zones (such as bedroom or inn).
+  Set workshop to be included in zones (such as a bedroom or tavern).
 
-  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :workshop_type:   custom workshop string id, e.g. ``SOAPMAKER`` or numeric id
 
 * ``fixImpassible(workshop_type)``
 
   Set workshop non walkable tiles to also block liquids (i.e. water and magma).
 
-  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :workshop_type:   custom workshop string id, e.g. ``SOAPMAKER`` or numeric id
 
 * ``setMachineInfo(workshop_type, needs_power, power_consumed, power_produced, connection_points)``
 
   Setup and enable machine-like functionality for the workshop. All workshops of this type will have
-  this as default power consumption/production. Note: due to implementation limitations
-  workshop only connects to other machines if the other machine is build later than this one.
+  this as their default power consumption/production. Note: due to implementation limitations,
+  workshops only connect to other machines if the other machines are planned after than this one.
 
   :workshop_type:       custom workshop string id e.g. ``SOAPMAKER`` or numeric id
-  :needs_power:         only function if it has sufficient power
-  :power_consumed:      building consumes this amount of power
-  :power_produced:      output this amount of power
+  :needs_power:         true if the workshop should only be usable if it has sufficient power
+  :power_consumed:      buildings of this type consume this amount of power by default
+  :power_produced:      buildings of this type output this amount of power by default
   :connection_points:   a table of ``{x=?,y=?}`` zero-based coordinates that can connect to other machines
 
 * ``setMachineInfoAuto(workshop_type, needs_power, power_consumed, power_produced, [gear_tiles])``
 
-  Same as ``setMachineInfo`` but fills out the ``connection_points`` table from raws placing connection
-  points on tiles which have the gear tile. ``gear_tiles`` is an optional array of two tiles that are
-  counted as gears in the workshop ascii tile raws. The default gear tiles are ``42`` and ``15``.
+  Same as ``setMachineInfo`` but fills out the ``connection_points`` table based on the
+  building definition in the raws. It places connection points on tiles which have the gear
+  tile. ``gear_tiles`` is an optional array of two tiles that are counted as gears in the
+  workshop ascii tile raws. The default gear tiles are ``42`` and ``15``.
 
 * ``setAnimationInfo(workshop_type, frames, frame_skip)``
 
   Animate workshop by replacing displayed tiles (or graphical tiles). There are two ways this works:
   if ``frame_skip>=0`` then it shows each frame for ``frame_skip`` of frames or if ``frame_skip<0``
-  Frames are synchronized to the machine this building is connected to.
+  Frames are synchronized with the machines this building is connected to.
 
-  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :workshop_type:   custom workshop string id, e.g. ``SOAPMAKER`` or numeric id
   :frames:          table of frames. Each frame is sparse flat table with ids from ``0`` to ``31*31-1``.
                     Each frame tile is table of integers from 4 to 8 members long. Tile members are as
                     follow: ``tile``, ``foreground color``, ``background color``, ``bright``,
@@ -6577,38 +6580,40 @@ Functions
   :frame_skip:      How many ticks to display one frame. If set to negative number (or skipped) frames
                     are synchronized with machine animation.
 
-* ``setAnimationInfoAuto(workshop_type, make_graphics_too, [frame_length], [gear_tiles])``
+* ``setAnimationInfoAuto(workshop_type, make_graphics_too[, frame_length][, gear_tiles])``
 
   Animate workshop as with function above but generate frames automatically. This works by finding
   tiles which have gears and animating them with alternating gear tiles.
 
-  :workshop_type:     custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :workshop_type:     custom workshop string id, e.g. ``SOAPMAKER`` or numeric id
   :make_graphics_too:  replace same tiles in graphics mode with tiles from vanilla df mechanism
   :frame_length:      How many ticks to display one frame. If set to negative number (or skipped) frames
                       are synchronized with machine animation.
   :gear_tiles:        Optional array of 2 or 4 indexes. First two define ascii tiles and next two graphics tiles.
                       This overrides default gear tiles.
 
-* ``setOnUpdate(workshop_type,interval,callback)``
+* ``setOnUpdate(workshop_type, interval, callback)``
 
-  Setup callback to be called every ``interval`` of ticks for each building of this type. Note: low interval
-  numbers and/or many workshops that use this might reduce DF performance.
+  Register callback to be called every ``interval`` ticks for each building of this
+  type. This can be very expensive if the interval is low and/or there are many
+  workshops of this type. Keep these callbacks light!
 
-  :workshop_type:   custom workshop string id e.g. ``SOAPMAKER`` or numeric id
+  :workshop_type:   custom workshop string id, e.g. ``SOAPMAKER`` or numeric id
   :interval:        how many ticks to skip between event triggers
   :callback:        function to call. Function signature is ``func(workshop)`` where ``workshop`` is of type
                     ``df.building_workshopst``
 
 * ``getPower(building)``
 
-  Returns two number - produced and consumed power if building can be modified and returns nothing otherwise.
+  If this building is of a type registered with building-hacks, returns values for
+  consumed and produced power. Otherwise, returns ``nil``.
 
   :building:   specific workshop that produces or consumes power
 
 * ``setPower(building, power_consumed, power_produced)``
 
-  Sets current power production and consumption for a specific workshop building. Can be used to make buildings that
-  dynamically change power consumption and production.
+  Dynamically sets current power production and consumption for a specific workshop
+  (which must be of a type registered with building-hacks).
 
   :building:   specific workshop that produces or consumes power
   :power_consumed:   set building to consume this amount of power
@@ -6621,7 +6626,7 @@ Events
 This module exports two events. However only one is documented here and is intended to be used directly. To use
 ``onUpdateAction`` instead call ``setOnUpdate`` function.
 
-* ``onSetTriggerState(workshop,state)``
+* ``onSetTriggerState(workshop, state)``
 
   Notify when building is triggered from linked lever or trap.
 

@@ -1120,10 +1120,9 @@ template<typename T>
 T* dfhack_lua_viewscreen::getSelected(const char* method_name)
 {
     Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, name);
+    lua_pushstring(Lua::Core::State, method_name);
     safe_call_lua(do_notify, 1, 1);
     return Lua::GetDFObject<T>(Lua::Core::State, -1);
-
 }
 
 df::unit* dfhack_lua_viewscreen::getSelectedUnit()

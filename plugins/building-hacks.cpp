@@ -539,9 +539,7 @@ static int setAnimationInfo(lua_State* L)
     //animation
     loadFrames(L, def, 2);
     def.frame_skip = luaL_optinteger(L, 3, -1);
-    if (def.frame_skip == 0)
-        def.frame_skip = 1;
-    if (def.frame_skip < 0)
+    if (def.frame_skip <= 0)
         def.machine_timing = true;
     else
         def.machine_timing = false;

@@ -6566,7 +6566,7 @@ Functions
 * ``setAnimationInfo(workshop_type, frames, frame_skip)``
 
   Animate workshop by replacing displayed tiles (or graphical tiles). There are two ways this works:
-  if ``frame_skip>=0`` then it shows each frame for ``frame_skip`` of frames or if ``frame_skip<0``
+  if ``frame_skip>0`` then it shows each frame for ``frame_skip`` of frames or if ``frame_skip<=0``
   Frames are synchronized with the machines this building is connected to.
 
   :workshop_type:   custom workshop string id, e.g. ``SOAPMAKER`` or numeric id

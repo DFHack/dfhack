@@ -6,8 +6,8 @@ local _ENV = mkmodule('plugins.building-hacks')
         setUpdateSkip(workshop_type,int=0)
         setMachineInfo(workshop_type,bool need_power,int consume=0,int produce=0,table connection_points)
         fixImpassible(workshop_type)
-        getPower(building) -- 2 or 0 returns, produced and consumed
-        setPower(building,produced, consumed)
+        getPower(building) -- 2 or 0 returns, consumed and produced
+        setPower(building, consumed, produced)
     from here:
         setMachineInfoAuto(name,int consume,int produce,bool need_power)
         setAnimationInfoAuto(name,bool make_graphics_too)
@@ -59,37 +59,28 @@ local function registerUpdateAction(shopId,callback)
     onUpdateAction._library=onUpdateLocal
     dfhack.onStateChange.building_hacks=unregall
 end
---take in tiles with {x=?, y=? ,...} and output a table flat sparse 31x31 table
-local function generateFrame(tiles,w,h)
+--take in tiles with {x=?, y=? ,...} and output a table in format needed for setAnimationInfo
+local function generateFrame(tiles)
     local mTiles={}
     local ret={}
     for k,v in ipairs(tiles) do
-        ret[v.x+v.y*31]=v
+        ensure_key(ret, v.x)[v.y]=v
     end
     return ret
 end
---convert frames to flat arrays if needed
-local function processFrames(shop_def,frames)
-    local w,h=shop_def.dim_x,shop_def.dim_y
-    for frame_id,frame in ipairs(frames) do
-        if frame[1].x~=nil then
-            frames[frame_id]=generateFrame(frame,w,h)
-        end
-    end
-    return frames
-end
+
 --locate gears on the workshop from the raws definition
 local function findGears( shop_def ,gear_tiles) --finds positions of all gears and inverted gears
-    gear_tiles=gear_tiles or {42,15}
+    gear_tiles=gear_tiles or {ch=42,ch_alt=15}
     local w,h=shop_def.dim_x,shop_def.dim_y
     local stage=shop_def.build_stages
     local ret={}
     for x=0,w-1 do
     for y=0,h-1 do
         local tile=shop_def.tile[stage][x][y]
-        if tile==gear_tiles[1] then --gear icon
+        if tile==gear_tiles.ch then --gear icon
             table.insert(ret,{x=x,y=y,invert=false})
-        elseif tile==gear_tiles[2] then --inverted gear icon
+        elseif tile==gear_tiles.ch_alt then --inverted gear icon
             table.insert(ret,{x=x,y=y,invert=true})
         end
     end
@@ -105,8 +96,7 @@ local function lookup_color( shop_def,x,y,stage )
 end
 --adds frames for all gear icons and inverted gear icons
 local function processFramesAuto( shop_def ,gears,auto_graphics,gear_tiles)
-    gear_tiles=gear_tiles or {42,15,graphics_cache[1],graphics_cache[2]}
-    local w,h=shop_def.dim_x,shop_def.dim_y
+    gear_tiles=gear_tiles or {ch=42,ch_alt=15,tile=graphics_cache[1],tile_alt=graphics_cache[2]}
     local frames={{},{}} --two frames only
     local stage=shop_def.build_stages
 
@@ -114,25 +104,25 @@ local function processFramesAuto( shop_def ,gears,auto_graphics,gear_tiles)
 
         local tile,tile_inv
         if v.inverted then
-            tile=gear_tiles[1]
-            tile_inv=gear_tiles[2]
+            tile=gear_tiles.ch
+            tile_inv=gear_tiles.ch_alt
         else
-            tile=gear_tiles[2]
-            tile_inv=gear_tiles[1]
+            tile=gear_tiles.ch_alt
+            tile_inv=gear_tiles.ch
         end
 
-        table.insert(frames[1],{x=v.x,y=v.y,tile,lookup_color(shop_def,v.x,v.y,stage)})
-        table.insert(frames[2],{x=v.x,y=v.y,tile_inv,lookup_color(shop_def,v.x,v.y,stage)})
+        table.insert(frames[1],{x=v.x,y=v.y,ch=tile,fg=lookup_color(shop_def,v.x,v.y,stage)})
+        table.insert(frames[2],{x=v.x,y=v.y,ch=tile_inv,fg=lookup_color(shop_def,v.x,v.y,stage)})
 
         --insert default gear graphics if auto graphics is on
         if auto_graphics then
-            frames[1][#frames[1]][5]=gear_tiles[3]
-            frames[2][#frames[2]][5]=gear_tiles[4]
+            frames[1][#frames[1]].tile=gear_tiles.tile
+            frames[2][#frames[2]].tile=gear_tiles.tile_alt
         end
     end
 
     for frame_id,frame in ipairs(frames) do
-        frames[frame_id]=generateFrame(frame,w,h)
+        frames[frame_id]=generateFrame(frame)
     end
     return frames
 end

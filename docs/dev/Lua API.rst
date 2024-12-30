@@ -6576,8 +6576,8 @@ Functions
                     First 4 are function same as ascii workshop definition. The latter 4 are graphics
                     layers. ``tile_signpost `` is only valid in first row and it shows up above the workshop.
 
-  :frame_skip:      How many ticks to display one frame. If set to negative number, zero or skipped frames
-                    are synchronized with other connected machines animations.
+  :frame_skip:     How many ticks to display one frame. If set to negative number, zero or skipped, frames
+                   are synchronized with machine animation.
 
 * ``setAnimationInfoAuto(workshop_type, make_graphics_too[, frame_length][, gear_tiles])``
 
@@ -6586,9 +6586,9 @@ Functions
 
   :workshop_type:     custom workshop string id, e.g. ``SOAPMAKER`` or numeric id
   :make_graphics_too:  replace same tiles in graphics mode with tiles from vanilla df mechanism
-  :frame_length:      How many ticks to display one frame. If set to negative number (or skipped) frames
+  :frame_length:      How many ticks to display one frame. If set to negative number, zero or skipped, frames
                       are synchronized with machine animation.
-  :gear_tiles:        Optional array of 2 or 4 indexes. First two define ascii tiles and next two graphics tiles.
+  :gear_tiles:        Optional table with of 2 or 4 indexes. First two define ascii tiles and next two graphics tiles.
                       This overrides default gear tiles.
 
 * ``setOnUpdate(workshop_type, interval, callback)``

@@ -6633,11 +6633,11 @@ Examples
 
 Simple mechanical workshop::
 
-  local bld=require('plugins.building-hacks')
+  local bhacks = require('plugins.building-hacks')
   --work only powered, consume 15 power and one connection point at 0,0
-  bld.setMachineInfo("BONE_GRINDER",true,15,0,{{x=0,y=0}})
+  bhacks.setMachineInfo("BONE_GRINDER",true,15,0,{{x=0,y=0}})
   --set animation to switch between gear tiles at 0,0
-  bld.setAnimationInfo("BONE_GRINDER",{
+  bhacks.setAnimationInfo("BONE_GRINDER",{
       {[0]={42,7,0,0}}, --first frame, 1 changed tile
       {[0]={15,7,0,0}} -- second frame, same
       }
@@ -6645,9 +6645,9 @@ Simple mechanical workshop::
 
 Or with auto_gears::
 
-  local bld=require('plugins.building-hacks')
-  bld.setMachineInfoAuto("BONE_GRINDER",true,15)
-  bld.setAnimationInfoAuto("BONE_GRINDER",true)
+  local bhacks = require('plugins.building-hacks')
+  bhacks.setMachineInfoAuto("BONE_GRINDER",true,15)
+  bhacks.setAnimationInfoAuto("BONE_GRINDER",true)
 
 buildingplan
 ============

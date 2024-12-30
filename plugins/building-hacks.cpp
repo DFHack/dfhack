@@ -572,8 +572,8 @@ static int getPower(lua_State*L)
     {
         df::power_info info;
         ptr->get_current_power(&info);
-        lua_pushinteger(L, info.produced);
         lua_pushinteger(L, info.consumed);
+        lua_pushinteger(L, info.produced);
         return 2;
     }
     return 0;

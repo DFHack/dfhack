@@ -71,7 +71,7 @@ distribution.
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
-lua_State *DFHack::Lua::Core::State = NULL;
+//lua_State *DFHack::DFHack::Core::getInstance().getLuaState() = NULL;
 
 void dfhack_printerr(lua_State *S, const std::string &str);
 
@@ -523,7 +523,7 @@ static void interrupt_hook (lua_State *L, lua_Debug *ar)
 
 bool DFHack::Lua::Interrupt (bool force)
 {
-    lua_State *L = Lua::Core::State;
+    lua_State *L = DFHack::Core::getInstance().getLuaState();
     if (L->hook != interrupt_hook && !force)
         return false;
     if (force)
@@ -1492,8 +1492,8 @@ bool Lua::IsCoreContext(lua_State *state)
     // This uses a private field of the lua state to
     // evaluate the condition without accessing the lua
     // stack, and thus requiring a lock on the core state.
-    return state && Lua::Core::State &&
-           state->l_G == Lua::Core::State->l_G;
+    return state && DFHack::Core::getInstance().getLuaState() &&
+           state->l_G == DFHack::Core::getInstance().getLuaState()->l_G;
 }
 
 static const luaL_Reg dfhack_funcs[] = {
@@ -2029,7 +2029,7 @@ int dfhack_timeout_active(lua_State *L)
 
 static void cancel_timers(std::multimap<int,int> &timers)
 {
-    using Lua::Core::State;
+    auto State = DFHack::Core::getInstance().getLuaState();
 
     Lua::StackUnwinder frame(State);
     lua_rawgetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
@@ -2044,6 +2044,7 @@ static void cancel_timers(std::multimap<int,int> &timers)
 }
 
 void DFHack::Lua::Core::onStateChange(color_ostream &out, int code) {
+    auto State = DFHack::Core::getInstance().getLuaState();
     if (!State) return;
 
     switch (code)
@@ -2084,6 +2085,7 @@ static void run_timers(color_ostream &out, lua_State *L,
 
 void DFHack::Lua::Core::onUpdate(color_ostream &out)
 {
+    auto State = DFHack::Core::getInstance().getLuaState();
     using df::global::world;
 
     if (frame_timers.empty() && tick_timers.empty())
@@ -2098,21 +2100,9 @@ void DFHack::Lua::Core::onUpdate(color_ostream &out)
         run_timers(out, State, tick_timers, frame[1], world->frame_counter);
 }
 
-bool DFHack::Lua::Core::Init(color_ostream &out)
-{
-    if (State) {
-        out.printerr("state already exists\n");
-        return false;
-    }
-
-    State = luaL_newstate();
-
-    // Calls InitCoreContext after checking IsCoreContext
-    return (Lua::Open(out, State) != NULL);
-}
-
 static void Lua::Core::InitCoreContext(color_ostream &out)
 {
+    auto State = DFHack::Core::getInstance().getLuaState();
     lua_newtable(State);
     lua_rawsetp(State, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
 
@@ -2150,6 +2140,7 @@ static void Lua::Core::InitCoreContext(color_ostream &out)
 void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)
 {
     // This can happen if DFHack fails to initialize.
+    auto State = DFHack::Core::getInstance().getLuaState();
     if (!State)
         return;
 

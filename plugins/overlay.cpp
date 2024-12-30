@@ -54,7 +54,7 @@ static void overlay_interpose_lua(const char *fn_name, int nargs = 0, int nres =
     CoreSuspender guard;
 
     color_ostream & out = Core::getInstance().getConsole();
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
 
     auto & core = Core::getInstance();
     auto & counters = core.perf_counters;

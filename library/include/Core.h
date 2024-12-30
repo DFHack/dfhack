@@ -48,6 +48,7 @@ distribution.
 #define DFH_MOD_ALT 4
 
 struct WINDOW;
+struct lua_State;
 
 namespace df
 {
@@ -243,6 +244,8 @@ namespace DFHack
 
         PerfCounters perf_counters;
 
+        lua_State* getLuaState() { return State; }
+
     private:
         DFHack::Console con;
 
@@ -349,6 +352,8 @@ namespace DFHack
 
         std::thread::id df_render_thread;
         std::thread::id df_simulation_thread;
+
+        lua_State* State;
 
         friend class CoreService;
         friend class ServerConnection;

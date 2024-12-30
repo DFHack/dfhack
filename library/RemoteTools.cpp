@@ -757,7 +757,7 @@ command_result CoreService::RunLua(color_ostream &stream,
                                    const dfproto::CoreRunLuaRequest *in,
                                    StringListMessage *out)
 {
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     LuaFunctionData data = { CR_FAILURE, in, out };
 
     lua_pushcfunction(L, doRunLuaFunction);

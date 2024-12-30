@@ -1117,7 +1117,7 @@ void dfhack_lua_viewscreen::onDismiss()
 }
 
 template<typename T>
-T* dfhack_lua_viewscreen::getSelected(const char* name)
+T* dfhack_lua_viewscreen::getSelected(const char* method_name)
 {
     Lua::StackUnwinder frame(Lua::Core::State);
     lua_pushstring(Lua::Core::State, name);

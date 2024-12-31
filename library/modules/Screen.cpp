@@ -1116,60 +1116,48 @@ void dfhack_lua_viewscreen::onDismiss()
     safe_call_lua(do_notify, 1, 0);
 }
 
-df::unit *dfhack_lua_viewscreen::getSelectedUnit()
+template<typename T>
+T* dfhack_lua_viewscreen::getSelected(const char* method_name)
 {
     Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedUnit");
+    lua_pushstring(Lua::Core::State, method_name);
     safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::unit>(Lua::Core::State, -1);
+    return Lua::GetDFObject<T>(Lua::Core::State, -1);
+}
+
+df::unit* dfhack_lua_viewscreen::getSelectedUnit()
+{
+    return getSelected<df::unit>("onGetSelectedUnit");
 }
 
 df::item *dfhack_lua_viewscreen::getSelectedItem()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedItem");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::item>(Lua::Core::State, -1);
+    return getSelected<df::item>("onGetSelectedItem");
 }
 
 df::job *dfhack_lua_viewscreen::getSelectedJob()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedJob");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::job>(Lua::Core::State, -1);
+    return getSelected<df::job>("onGetSelectedJob");
 }
 
 df::building *dfhack_lua_viewscreen::getSelectedBuilding()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedBuilding");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::building>(Lua::Core::State, -1);
+    return getSelected<df::building>("onGetSelectedBuilding");
 }
 
 df::building_stockpilest *dfhack_lua_viewscreen::getSelectedStockpile()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedStockpile");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::building_stockpilest>(Lua::Core::State, -1);
+    return getSelected<df::building_stockpilest>("onGetSelectedStockpile");
 }
 
 df::building_civzonest *dfhack_lua_viewscreen::getSelectedCivZone()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedCivZone");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::building_civzonest>(Lua::Core::State, -1);
+    return getSelected<df::building_civzonest>("onGetSelectedCivZone");
 }
 
 df::plant *dfhack_lua_viewscreen::getSelectedPlant()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedPlant");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::plant>(Lua::Core::State, -1);
+    return getSelected<df::plant>("onGetSelectedPlant");
 }
 
 #include "DataStaticsFields.inc"

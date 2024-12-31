@@ -346,7 +346,7 @@ static command_result runLuaScript(color_ostream &out, std::string name, std::ve
     data.pcmd = &name;
     data.pargs = &args;
 
-    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(), init_run_script, &data);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_run_script, &data);
 
     return ok ? CR_OK : CR_FAILURE;
 }

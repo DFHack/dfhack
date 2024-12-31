@@ -6,7 +6,6 @@ add_subdirectory(lodepng)
 add_subdirectory(lua)
 add_subdirectory(md5)
 add_subdirectory(protobuf)
-target_include_directories(protobuf INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/protobuf)
 target_include_directories(protobuf-lite INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/protobuf)
 
 if(UNIX)

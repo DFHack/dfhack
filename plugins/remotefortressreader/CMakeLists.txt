@@ -30,4 +30,6 @@ endif()
 
 # this makes sure all the stuff is put in proper places and linked to dfhack
 dfhack_plugin(RemoteFortressReader ${PROJECT_SRCS} LINK_LIBRARIES ${PROJECT_LIBS} PROTOBUFS ${PROJECT_PROTO})
-target_include_directories(RemoteFortressReader PRIVATE ${SDL2_INCLUDE_DIRS})
+if(BUILD_PLUGINS)
+    target_include_directories(RemoteFortressReader PRIVATE ${SDL2_INCLUDE_DIRS})
+endif()

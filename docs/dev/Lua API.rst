@@ -6574,7 +6574,7 @@ Functions
                     Each frame tile is table of with following optional members: ``ch``, ``fg``,
                     ``bg``, ``bold``, ``tile``, ``tile_overlay``, ``tile_signpost``, ``tile_item``.
                     First 4 are function same as ascii workshop definition. The latter 4 are graphics
-                    layers. ``tile_signpost `` is only valid in first row and it shows up above the workshop.
+                    layers. ``tile_signpost`` is only valid in first row and it shows up above the workshop.
 
   :frame_skip:     How many ticks to display one frame. If set to negative number, zero or skipped, frames
                    are synchronized with machine animation.
@@ -6588,8 +6588,9 @@ Functions
   :make_graphics_too:  replace same tiles in graphics mode with tiles from vanilla df mechanism
   :frame_length:      How many ticks to display one frame. If set to negative number, zero or skipped, frames
                       are synchronized with machine animation.
-  :gear_tiles:        Optional table with of 2 or 4 indexes. First two define ascii tiles and next two graphics tiles.
-                      This overrides default gear tiles.
+  :gear_tiles:        Optional table with ``ch``, ``ch_alt``, ``tile``, ``tile_alt``. First two are ascii
+                      gear tiles and are used to find tiles in workshop raw and animate them. Second two are
+                      used to animate graphical tiles.
 
 * ``setOnUpdate(workshop_type, interval, callback)``
 
@@ -6638,20 +6639,35 @@ Examples
 Simple mechanical workshop::
 
   local bhacks = require('plugins.building-hacks')
-  --work only powered, consume 15 power and one connection point at 0,0
-  bhacks.setMachineInfo("BONE_GRINDER",true,15,0,{{x=0,y=0}})
-  --set animation to switch between gear tiles at 0,0
-  bhacks.setAnimationInfo("BONE_GRINDER",{
-      {[0]={42,7,0,0}}, --first frame, 1 changed tile
-      {[0]={15,7,0,0}} -- second frame, same
-      }
-    )
+
+  --work only powered, consume 15 power and one connection point at 0, 0
+  bhacks.setMachineInfo("BONE_GRINDER", true, 15, 0, {{x=0, y=0}})
+
+  --load custom graphical tiles for use if graphics is enabled
+  local tile1=dfhack.screen.findGraphicsTile('DRAGON_ENGINE_TILES', 0, 0)
+  local tile2=dfhack.screen.findGraphicsTile('DRAGON_ENGINE_TILES', 1, 0)
+
+  local frames={}
+  --first frame - tile (1, 1) changed to character 42
+  ensure_key(frames, 1, 1)[1]={ch=42, fg=7, bg=0, bold=0, tile=tile1}
+  --second frame - tile (1,1) changed to character 15
+  ensure_key(frames, 2, 1)[1]={ch=15, fg=7, bg=0, bold=0, tile=tile2}
+
+  --set animation to switch between gear tiles at 1,1
+  bhacks.setAnimationInfo("BONE_GRINDER", frames)
 
 Or with auto_gears::
 
   local bhacks = require('plugins.building-hacks')
-  bhacks.setMachineInfoAuto("BONE_GRINDER",true,15)
-  bhacks.setAnimationInfoAuto("BONE_GRINDER",true)
+
+  --load custom graphical tiles for use if graphics is enabled
+  local tile1=dfhack.screen.findGraphicsTile('DRAGON_ENGINE_TILES', 0, 0)
+  local tile2=dfhack.screen.findGraphicsTile('DRAGON_ENGINE_TILES', 1, 0)
+
+  --work only powered, consume 15 power and find connection point from building raws
+  bhacks.setMachineInfoAuto("BONE_GRINDER", true, 15)
+  --set animation to switch between default ascii gears and specific graphic tiles loaded above
+  bhacks.setAnimationInfoAuto("BONE_GRINDER", true, -1, {tile=tile1, tile_alt=tile2})
 
 buildingplan
 ============

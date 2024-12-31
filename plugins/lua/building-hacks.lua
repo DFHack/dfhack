@@ -15,6 +15,10 @@ local _ENV = mkmodule('plugins.building-hacks')
 ]]
 
 _registeredStuff={}
+
+local CHAR_GEAR=42
+local CHAR_GEAR_ALT=15
+
 --cache graphics tiles for mechanical gears
 local graphics_cache
 function reload_graphics_cache(  )
@@ -71,7 +75,7 @@ end
 
 --locate gears on the workshop from the raws definition
 local function findGears( shop_def ,gear_tiles) --finds positions of all gears and inverted gears
-    gear_tiles=gear_tiles or {ch=42,ch_alt=15}
+    gear_tiles=gear_tiles or {ch=CHAR_GEAR,ch_alt=CHAR_GEAR_ALT}
     local w,h=shop_def.dim_x,shop_def.dim_y
     local stage=shop_def.build_stages
     local ret={}
@@ -96,7 +100,7 @@ local function lookup_color( shop_def,x,y,stage )
 end
 --adds frames for all gear icons and inverted gear icons
 local function processFramesAuto( shop_def ,gears,auto_graphics,gear_tiles)
-    gear_tiles=gear_tiles or {ch=42,ch_alt=15,tile=graphics_cache[1],tile_alt=graphics_cache[2]}
+    gear_tiles=gear_tiles or {ch=CHAR_GEAR,ch_alt=CHAR_GEAR_ALT,tile=graphics_cache[1],tile_alt=graphics_cache[2]}
     local frames={{},{}} --two frames only
     local stage=shop_def.build_stages
 
@@ -104,11 +108,11 @@ local function processFramesAuto( shop_def ,gears,auto_graphics,gear_tiles)
 
         local tile,tile_inv
         if v.inverted then
-            tile=gear_tiles.ch
-            tile_inv=gear_tiles.ch_alt
+            tile=gear_tiles.ch or CHAR_GEAR
+            tile_inv=gear_tiles.ch_alt or CHAR_GEAR_ALT
         else
-            tile=gear_tiles.ch_alt
-            tile_inv=gear_tiles.ch
+            tile=gear_tiles.ch_alt or CHAR_GEAR_ALT
+            tile_inv=gear_tiles.ch or CHAR_GEAR
         end
 
         table.insert(frames[1],{x=v.x,y=v.y,ch=tile,fg=lookup_color(shop_def,v.x,v.y,stage)})
@@ -116,8 +120,8 @@ local function processFramesAuto( shop_def ,gears,auto_graphics,gear_tiles)
 
         --insert default gear graphics if auto graphics is on
         if auto_graphics then
-            frames[1][#frames[1]].tile=gear_tiles.tile
-            frames[2][#frames[2]].tile=gear_tiles.tile_alt
+            frames[1][#frames[1]].tile=gear_tiles.tile or graphics_cache[1]
+            frames[2][#frames[2]].tile=gear_tiles.tile_alt or graphics_cache[2]
         end
     end
 

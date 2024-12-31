@@ -2,6 +2,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/EventManager.h"
 #include "modules/Maps.h"

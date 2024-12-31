@@ -68,6 +68,7 @@ set(MAIN_HEADERS
     include/Module.h
     include/MemAccess.h
     include/ModuleFactory.h
+    include/PluginLua.h
     include/PluginManager.h
     include/PluginStatics.h
     include/RemoteClient.h

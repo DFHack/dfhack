@@ -1,5 +1,6 @@
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "VTableInterpose.h"
 
 #include "modules/EventManager.h"

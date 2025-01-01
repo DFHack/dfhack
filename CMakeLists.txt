@@ -320,14 +320,12 @@ else()
     endif()
 endif()
 find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIRS})
 
 set(USE_SYSTEM_SDL2 OFF CACHE BOOL "Set to ON to use the system SDL2 headers.")
 
 if(BUILD_LIBRARY)
     if(USE_SYSTEM_SDL2)
         find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
-        include_directories(${SDL2_INCLUDE_DIRS})
     else()
         # Download SDL release and extract into depends in the build dir
         # all we need are the header files (including generated headers), so the same release package
@@ -342,7 +340,7 @@ if(BUILD_LIBRARY)
             ${SDL_ZIP_MD5})
         file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
             DESTINATION ${SDL_ZIP_PATH})
-        include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
+        set(SDL2_INCLUDE_DIRS ${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
     endif()
 endif()
 
@@ -404,10 +402,6 @@ endif()
 
 #### expose depends ####
 
-include_directories(depends/protobuf)
-include_directories(depends/lua/include)
-include_directories(depends/md5)
-
 # Support linking against external tinyxml
 # If we find an external tinyxml, set the DFHACK_TINYXML variable to "tinyxml"
 # Otherwise, set it to "dfhack-tinyxml"
@@ -419,13 +413,8 @@ if(EXTERNAL_TINYXML)
     endif()
     set(DFHACK_TINYXML "tinyxml")
 else()
-    include_directories(depends/tinyxml)
     set(DFHACK_TINYXML "dfhack-tinyxml")
 endif()
-
-include_directories(depends/lodepng)
-include_directories(depends/clsocket/src)
-include_directories(depends/xlsxio/include)
 
 if(BUILD_LIBRARY)
     add_subdirectory(depends)

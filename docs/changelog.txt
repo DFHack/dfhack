@@ -73,6 +73,7 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
+- ``widgets.FilteredList``: search keys for list items can now be functions that return a string
 
 ## Removed
 

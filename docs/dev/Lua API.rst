@@ -6298,7 +6298,7 @@ supports:
 The list choices may include the following attributes:
 
 :search_key: If specified, used instead of **text** to match against the filter.
-    This is required for any entries where **text** is not a string.
+    Can be a string or a function that returns a string.
 
 The widget implements:
 

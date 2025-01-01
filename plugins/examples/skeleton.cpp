@@ -13,7 +13,7 @@
 #include "PluginManager.h"
 // this include is only required if the plugin is going to bind to Lua
 // events, functions, or commands
-#include "PluginLua.h"
+// #include "PluginLua.h"
 
 #include "modules/Gui.h"
 #include "modules/Persistence.h"

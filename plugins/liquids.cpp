@@ -24,6 +24,7 @@
 #include "Export.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/Gui.h"

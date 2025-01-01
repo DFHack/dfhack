@@ -4,6 +4,7 @@
 #include "Export.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "MiscUtils.h"
 #include "DataDefs.h"
 

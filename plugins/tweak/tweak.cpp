@@ -3,6 +3,7 @@
 
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "VTableInterpose.h"
 
 DFHACK_PLUGIN("tweak");

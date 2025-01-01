@@ -1,9 +1,6 @@
 
-#include "Console.h"
-#include "Export.h"
 #include "PluginManager.h"
 #include "DataDefs.h"
-#include "VTableInterpose.h"
 
 #include "modules/EventManager.h"
 

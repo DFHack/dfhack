@@ -29,6 +29,7 @@
 #include "LuaTools.h"
 #include "MemAccess.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "VTableInterpose.h"
 
 #include "modules/Gui.h"

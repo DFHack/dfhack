@@ -51,8 +51,6 @@ static void overlay_interpose_lua(const char *fn_name, int nargs = 0, int nres =
         Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
     DEBUG(event).print("calling overlay lua function: '%s'\n", fn_name);
 
-    CoreSuspender guard;
-
     color_ostream & out = Core::getInstance().getConsole();
     auto L = Lua::Core::State;
 

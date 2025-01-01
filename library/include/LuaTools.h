@@ -472,10 +472,10 @@ namespace DFHack {namespace Lua {
      * All accesses must be done under CoreSuspender.
      */
     namespace Core {
-        DFHACK_EXPORT extern lua_State *State;
+//        DFHACK_EXPORT extern lua_State *State;
 
         // Not exported; for use by the Core class
-        bool Init(color_ostream &out);
+        lua_State* Init(color_ostream &out);
         DFHACK_EXPORT void Reset(color_ostream &out, const char *where);
 
         // Events signalled by the core
@@ -483,17 +483,32 @@ namespace DFHack {namespace Lua {
         // Signals timers
         void onUpdate(color_ostream &out);
 
-        template<class T> inline void Push(T &arg) { Lua::Push(State, arg); }
-        template<class T> inline void Push(const T &arg) { Lua::Push(State, arg); }
-        template<class T> inline void PushVector(const T &arg) { Lua::PushVector(State, arg); }
+        template<class T> inline void Push(T &arg)
+        {
+            auto State = DFHack::Core::getInstance().getLuaState();
+            Lua::Push(State, arg);
+        }
+        template<class T> inline void Push(const T &arg)
+        {
+            auto State = DFHack::Core::getInstance().getLuaState();
+            Lua::Push(State, arg);
+        }
+        template<class T> inline void PushVector(const T &arg)
+        {
+            auto State = DFHack::Core::getInstance().getLuaState();
+            Lua::PushVector(State, arg);
+        }
 
         inline bool SafeCall(color_ostream &out, int nargs, int nres, bool perr = true) {
+            auto State = DFHack::Core::getInstance().getLuaState();
             return Lua::SafeCall(out, State, nargs, nres, perr);
         }
         inline bool PushModule(color_ostream &out, const char *module) {
+            auto State = DFHack::Core::getInstance().getLuaState();
             return Lua::PushModule(out, State, module);
         }
         inline bool PushModulePublic(color_ostream &out, const char *module, const char *name) {
+            auto State = DFHack::Core::getInstance().getLuaState();
             return Lua::PushModulePublic(out, State, module, name);
         }
     }
@@ -507,7 +522,7 @@ namespace DFHack {namespace Lua {
         color_ostream &out, const char* module_name, const char* fn_name, std::tuple<aT...>&& args = {},
         size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
     {
-        auto L = Lua::Core::State;
+        auto L = DFHack::Core::getInstance().getLuaState();
         bool ok;
 
         ok = Lua::CallLuaModuleFunction(out, L, module_name, fn_name, sizeof...(aT), nres,
@@ -523,7 +538,7 @@ namespace DFHack {namespace Lua {
         color_ostream &out, const char* module_name, const char* fn_name, const std::vector<aT> &args,
         size_t nres = 0, Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA)
     {
-        auto L = Lua::Core::State;
+        auto L = DFHack::Core::getInstance().getLuaState();
         bool ok;
 
         ok = Lua::CallLuaModuleFunction(out, L, module_name, fn_name, args.size(), nres,

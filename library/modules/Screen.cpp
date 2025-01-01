@@ -863,7 +863,7 @@ bool dfhack_lua_viewscreen::safe_call_lua(int (*pf)(lua_State *), int args, int 
     CoreSuspender suspend;
     color_ostream_proxy out(Core::getInstance().getConsole());
 
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     lua_pushcfunction(L, pf);
     if (args > 0) lua_insert(L, -args-1);
     lua_pushlightuserdata(L, this);
@@ -1065,7 +1065,7 @@ void dfhack_lua_viewscreen::logic()
 
     dfhack_viewscreen::logic();
 
-    lua_pushstring(Lua::Core::State, "onIdle");
+    lua_pushstring(DFHack::Core::getInstance().getLuaState(), "onIdle");
     safe_call_lua(do_notify, 1, 0);
 }
 
@@ -1080,7 +1080,7 @@ void dfhack_lua_viewscreen::help()
 {
     if (Screen::isDismissed(this)) return;
 
-    lua_pushstring(Lua::Core::State, "onHelp");
+    lua_pushstring(DFHack::Core::getInstance().getLuaState(), "onHelp");
     safe_call_lua(do_notify, 1, 0);
 }
 
@@ -1088,7 +1088,7 @@ void dfhack_lua_viewscreen::resize(int w, int h)
 {
     if (Screen::isDismissed(this)) return;
 
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     lua_pushstring(L, "onResize");
     lua_pushinteger(L, w);
     lua_pushinteger(L, h);
@@ -1099,30 +1099,31 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 {
     if (Screen::isDismissed(this)) return;
 
-    lua_pushlightuserdata(Lua::Core::State, keys);
+    lua_pushlightuserdata(DFHack::Core::getInstance().getLuaState(), keys);
     safe_call_lua(do_input, 1, 0);
     df::global::enabler->last_text_input[0] = '\0';
 }
 
 void dfhack_lua_viewscreen::onShow()
 {
-    lua_pushstring(Lua::Core::State, "onShow");
+    lua_pushstring(DFHack::Core::getInstance().getLuaState(), "onShow");
     safe_call_lua(do_notify, 1, 0);
 }
 
 void dfhack_lua_viewscreen::onDismiss()
 {
-    lua_pushstring(Lua::Core::State, "onDismiss");
+    lua_pushstring(DFHack::Core::getInstance().getLuaState(), "onDismiss");
     safe_call_lua(do_notify, 1, 0);
 }
 
 template<typename T>
 T* dfhack_lua_viewscreen::getSelected(const char* method_name)
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, method_name);
+    auto L = DFHack::Core::getInstance().getLuaState();
+    Lua::StackUnwinder frame(L);
+    lua_pushstring(L, method_name);
     safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<T>(Lua::Core::State, -1);
+    return Lua::GetDFObject<T>(L, -1);
 }
 
 df::unit* dfhack_lua_viewscreen::getSelectedUnit()

@@ -346,7 +346,7 @@ static command_result runLuaScript(color_ostream &out, std::string name, std::ve
     data.pcmd = &name;
     data.pargs = &args;
 
-    bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_run_script, &data);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_run_script, &data);
 
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -370,7 +370,7 @@ static command_result enableLuaScript(color_ostream &out, std::string name, bool
     data.pcmd = &name;
     data.pstate = state;
 
-    bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_enable_script, &data);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(), init_enable_script, &data);
 
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -399,7 +399,7 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
 
 bool is_builtin(color_ostream &con, const std::string &command) {
     CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -427,7 +427,7 @@ void get_commands(color_ostream &con, std::vector<std::string> &commands) {
         return;
     }
 
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -632,7 +632,7 @@ void help_helper(color_ostream &con, const std::string &entry_name) {
         con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
         return;
     }
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 2) ||
@@ -650,7 +650,7 @@ void help_helper(color_ostream &con, const std::string &entry_name) {
 
 void tags_helper(color_ostream &con, const std::string &tag) {
     CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -687,7 +687,7 @@ void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
     }
 
     CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 5) ||
@@ -1366,7 +1366,7 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     loadScriptFiles(core, out, prefixes, CONFIG_PATH + "init");
 
     // show the terminal if requested
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
         Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
             if (!lua_toboolean(L, -1))
@@ -1805,7 +1805,10 @@ bool Core::InitSimulationThread()
     loadScriptPaths(con);
 
     // initialize common lua context
-    if (!Lua::Core::Init(con))
+    // Calls InitCoreContext after checking IsCoreContext
+    State = luaL_newstate();
+    State = Lua::Open(con, State);
+    if (!State)
     {
         fatal("Lua failed to initialize");
         return false;
@@ -2319,7 +2322,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         Persistence::Internal::load(out);
         plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
+        auto L = DFHack::Core::getInstance().getLuaState();
         Lua::StackUnwinder top(L);
         Lua::CallLuaModuleFunction(con, "script-manager", "reload", std::make_tuple(true));
         if (world && world->cur_savegame.save_dir.size())

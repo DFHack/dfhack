@@ -995,7 +995,7 @@ static void post_process_dug_tiles(color_ostream &out,
 static bool get_options(color_ostream &out,
                         dig_now_options &opts,
                         const std::vector<std::string> &parameters) {
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, parameters.size() + 2) ||

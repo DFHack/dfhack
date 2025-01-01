@@ -51,6 +51,7 @@ set(MAIN_HEADERS
     include/ColorText.h
     include/Console.h
     include/Core.h
+    include/CoreDefs.h
     include/DataDefs.h
     include/DataFuncs.h
     include/DataIdentity.h

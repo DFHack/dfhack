@@ -52,7 +52,6 @@ struct my_contaminate : df::item_actual {
     typedef df::item_actual interpose_base;
     DEFINE_VMETHOD_INTERPOSE(void, contaminateWound, (df::unit* unit, df::unit_wound* wound, uint8_t unk1, int16_t unk2)) {
         INTERPOSE_NEXT(contaminateWound)(unit,wound,unk1,unk2);
-        CoreSuspender suspend;
         Core::getInstance().print("contaminateWound: item=%d, unit=%d, wound attacker = %d, unk1 = %d, unk2 = %d\n", this->id, unit->id, wound->unit_id, (int32_t)unk1, (int32_t)unk2);
     }
 };

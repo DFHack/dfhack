@@ -57,15 +57,16 @@ views, fog, and rotation. Here's the important section:
    :end-before: VALID ACTIONS:
 
 
-Streaming stonesense
---------------------
+Streaming stonesense on Windows
+-------------------------------
 If you wish to stream stonesense thru a broadcasting software such as `OBS <https://obsproject.com/>`_
 then you may find that opening stonesense causes your main DF window to flicker
 between DF and stonesense. While it is unknown exactly what causes this, a fix
 does exist. Simply make sure that both DF and stonesense are using ``Window Capture``
 and NOT ``Game Capture``. This will stop the flickering from happening and enable
 you to stream stonesense for all to enjoy. This has been tested in OBS on Windows 10 but
-should work on all operating systems the OBS supports and `Streamlabs <https://streamlabs.com/>`_.
+should work on Windows 11 and in `Streamlabs <https://streamlabs.com/>`_. Linux, having no
+``Game Capture`` option should be unaffected by this issue.
 
 Known Issues
 ------------

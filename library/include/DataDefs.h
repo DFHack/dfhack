@@ -586,6 +586,36 @@ namespace df
     }
 
     namespace enums {}
+
+    /**
+     * A trait to obtain return type and class identity from an invokable
+     * used for invoking C++ methods from Lua and for vtable interposes
+     * moved here from DataFuncs.h to minimize header dependencies
+     */
+
+    template<typename T> struct return_type {};
+
+    template<typename RT, typename ...AT>
+    struct return_type<RT(*)(AT...)> {
+        using type = RT;
+        static const bool is_method = false;
+    };
+
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT(CT::*)(AT...)> {
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
+    };
+
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT(CT::*)(AT...) const> {
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
+    };
+
+
 }
 
 /*

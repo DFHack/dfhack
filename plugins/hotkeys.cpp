@@ -8,6 +8,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 DFHACK_PLUGIN("hotkeys");
 

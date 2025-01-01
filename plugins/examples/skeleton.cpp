@@ -216,11 +216,9 @@ static command_result command_callback1(color_ostream &out, vector<string> &para
     // sourced from the associated rst file in docs/plugins/. The same help will
     // also be returned by 'help your-command'.
 
-    // simple commandline parsing can be done in C++, but there are lua libraries
-    // that can easily handle more complex commandlines. see the dwarfvet plugin
+    // Simple commandline parsing can be done in C++, but there are lua libraries
+    // that can easily handle more complex commandlines. See the dwarfvet plugin
     // for an example.
-
-    // TODO: do something according to the flags set in the options struct
 
     return CR_OK;
 }

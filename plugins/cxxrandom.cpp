@@ -25,9 +25,6 @@ Updated: Dec. 21 2017
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "Console.h"
-#include "Error.h"
-#include "Export.h"
 #include "DataFuncs.h"
 #include "PluginManager.h"
 #include "PluginLua.h"

@@ -157,6 +157,14 @@ if(BUILD_SUPPORTED)
     dfhack_plugin(work-now work-now.cpp)
     dfhack_plugin(xlsxreader xlsxreader.cpp LINK_LIBRARIES lua xlsxio_read_STATIC zip expat)
     dfhack_plugin(zone zone.cpp LINK_LIBRARIES lua)
+
+    # remove when VTableInterpose.h no longer has a dependency on DataFuncs.h
+    if(BUILD_PLUGINS)
+        get_target_property(lua_INCLUDES lua INTERFACE_INCLUDE_DIRECTORIES)
+        target_include_directories(add-spatter PRIVATE ${lua_INCLUDES})
+        target_include_directories(spectate PRIVATE ${lua_INCLUDES})
+    endif()
+
 endif(BUILD_SUPPORTED)
 
 # If you are adding a plugin that you do not intend to commit to the DFHack repo,

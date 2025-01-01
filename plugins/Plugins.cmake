@@ -126,10 +126,6 @@ macro(dfhack_plugin)
         endif()
         target_link_libraries(${PLUGIN_NAME} dfhack dfhack-version ${PLUGIN_LINK_LIBRARIES})
 
-        # since PluginManager currently uses Lua headers, even when Lua is not used
-        get_target_property(lua_INCLUDES lua INTERFACE_INCLUDE_DIRECTORIES)
-        target_include_directories(${PLUGIN_NAME} PRIVATE ${lua_INCLUDES})
-
         if(UNIX)
             set(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} ${PLUGIN_COMPILE_FLAGS_GCC}")
         else()

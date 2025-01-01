@@ -382,8 +382,6 @@ namespace DFHack
             if (tid == std::thread::id{})
                 Lua::Core::Reset(core.getConsole(), "suspend");
             core.ownerThread.store(tid, std::memory_order_release);
-            //if (tid == std::thread::id{})
-            //    Lua::Core::Reset(core.getConsole(), "suspend");
             parent_t::unlock();
         }
 

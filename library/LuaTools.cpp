@@ -71,8 +71,6 @@ distribution.
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
 
-//lua_State *DFHack::DFHack::Core::getInstance().getLuaState() = NULL;
-
 void dfhack_printerr(lua_State *S, const std::string &str);
 
 inline bool is_null_userdata(lua_State *L, int idx)

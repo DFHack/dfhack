@@ -66,6 +66,7 @@ Template for new versions:
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
 
 ## Documentation
+- Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API
 
 ## API
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments

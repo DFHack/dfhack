@@ -29,6 +29,9 @@ for p in glob.iglob('library/proto/*.proto'):
                 expected[''][parts[2]] = (parts[4], parts[6])
 
 for p in itertools.chain(glob.iglob('plugins/proto/*.proto'), glob.iglob('plugins/*/proto/*.proto')):
+    if 'plugins/proto/example.proto' in p:
+        continue
+
     plugin_name = ''
     with open(p) as f:
         for line in f:

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import glob
 import itertools
+import os
 import sys
 
 actual = {'': {}}
@@ -29,7 +30,7 @@ for p in glob.iglob('library/proto/*.proto'):
                 expected[''][parts[2]] = (parts[4], parts[6])
 
 for p in itertools.chain(glob.iglob('plugins/proto/*.proto'), glob.iglob('plugins/*/proto/*.proto')):
-    if 'plugins/proto/example.proto' in p:
+    if os.path.join('plugins', 'proto', 'example.proto') in p:
         continue
 
     plugin_name = ''

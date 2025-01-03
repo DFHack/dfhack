@@ -32,6 +32,7 @@ for p in glob.iglob('library/proto/*.proto'):
 for p in itertools.chain(glob.iglob('plugins/proto/*.proto'), glob.iglob('plugins/*/proto/*.proto')):
     if os.path.join('plugins', 'proto', 'example.proto') in p:
         continue
+    print('Checking ' + p)
 
     plugin_name = ''
     with open(p) as f:

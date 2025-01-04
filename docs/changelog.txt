@@ -55,6 +55,7 @@ Template for new versions:
 
 ## New Features
 - `clean`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
+- `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Fixes
 - `preserve-rooms`: don't erroneously release reservations for units that have returned from their missions but have not yet entered the fort map
@@ -64,16 +65,19 @@ Template for new versions:
 
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
-- `stonesense`: changed announcements to be right-aligned and limited it to only show the most recent 10 announcements.
-- `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Documentation
+- Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API
 
 ## API
 - ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
+- ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
 
 ## Lua
 - ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
+- ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
+- ``widgets.FilteredList``: search keys for list items can now be functions that return a string
 
 ## Removed
 
@@ -95,7 +99,7 @@ Template for new versions:
 
 # 50.15-r1
 
-# Fixes
+## Fixes
 
 - `gui/prerelease-warning`: don't pop up during worldgen, only after a fort has been loaded
 

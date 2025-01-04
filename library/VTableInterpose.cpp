@@ -29,8 +29,9 @@ distribution.
 #include <vector>
 #include <map>
 
-#include "MemAccess.h"
 #include "Core.h"
+#include "DataFuncs.h"
+#include "MemAccess.h"
 #include "VersionInfo.h"
 #include "VTableInterpose.h"
 

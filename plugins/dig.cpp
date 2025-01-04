@@ -2,6 +2,7 @@
 #include "LuaTools.h"
 #include "MemAccess.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/EventManager.h"
 #include "modules/Gui.h"

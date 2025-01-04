@@ -22,6 +22,7 @@
 #include "LuaTools.h"
 #include "MemAccess.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "VTableInterpose.h"
 
 #include "modules/Gui.h"
@@ -51,10 +52,8 @@ static void overlay_interpose_lua(const char *fn_name, int nargs = 0, int nres =
         Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
     DEBUG(event).print("calling overlay lua function: '%s'\n", fn_name);
 
-    CoreSuspender guard;
-
     color_ostream & out = Core::getInstance().getConsole();
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
 
     auto & core = Core::getInstance();
     auto & counters = core.perf_counters;

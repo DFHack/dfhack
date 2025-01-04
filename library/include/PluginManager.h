@@ -34,7 +34,6 @@ distribution.
 #include <vector>
 
 #include "Core.h"
-#include "DataFuncs.h"
 
 typedef struct lua_State lua_State;
 
@@ -323,19 +322,6 @@ extern "C" { \
 #define DFHACK_PLUGIN_IS_ENABLED(varname) \
     DFhackDataExport bool plugin_is_enabled = false; \
     bool &varname = plugin_is_enabled;
-
-#define DFHACK_PLUGIN_LUA_COMMANDS \
-    DFhackCExport const DFHack::CommandReg plugin_lua_commands[] =
-#define DFHACK_PLUGIN_LUA_FUNCTIONS \
-    DFhackCExport const DFHack::FunctionReg plugin_lua_functions[] =
-#define DFHACK_PLUGIN_LUA_EVENTS \
-    DFhackCExport const DFHack::EventReg plugin_lua_events[] =
-
-#define DFHACK_LUA_COMMAND(name) { #name, name }
-#define DFHACK_LUA_FUNCTION(name) { #name, df::wrap_function(name,true) }
-#define DFHACK_LUA_EVENT(name) { #name, &name##_event }
-#define DFHACK_LUA_END { NULL, NULL }
-
 
 #define REQUIRE_GLOBAL_NO_USE(global_name) \
     static int VARIABLE_IS_NOT_USED CONCAT_TOKENS(required_globals_, __LINE__) = \

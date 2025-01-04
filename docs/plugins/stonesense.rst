@@ -16,7 +16,7 @@ Usage
 
 The viewer window has read-only access to the game, and can follow the game view
 or be moved independently. Configuration for stonesense can be set in the
-``stonesense/init.txt`` file in your DF game directory. If the window refresh
+``dfhack-config/stonesense/init.txt`` file in your DF game directory. If the window refresh
 rate is too low, change ``SEGMENTSIZE_Z`` to ``2`` in this file, and if you are
 unable to see the edges of the map with the overlay active, try decreasing the
 value for ``SEGMENTSIZE_XY`` -- normal values are ``50`` to ``80``, depending
@@ -48,13 +48,25 @@ You can take screenshots with :kbd:`F5`, larger screenshots with
 Note that feedback is printed to the DFHack console, and you may need
 to zoom out before taking very large screenshots.
 
-See ``stonesense/keybinds.txt`` to learn or set keybindings, including
+See ``dfhack-config/stonesense/keybinds.txt`` to learn or set keybindings, including
 zooming, changing the dimensions of the rendered area, toggling various
 views, fog, and rotation. Here's the important section:
 
 .. include:: ../../plugins/stonesense/resources/keybinds.txt
    :literal:
    :end-before: VALID ACTIONS:
+
+
+Streaming stonesense on Windows
+-------------------------------
+If you wish to stream stonesense thru a broadcasting software such as `OBS <https://obsproject.com/>`_
+then you may find that opening stonesense causes your main DF window to flicker
+between DF and stonesense. While it is unknown exactly what causes this, a fix
+does exist. Simply make sure that both DF and stonesense are using ``Window Capture``
+and NOT ``Game Capture``. This will stop the flickering from happening and enable
+you to stream stonesense for all to enjoy. This has been tested in OBS on Windows 10 but
+should work on Windows 11 and in `Streamlabs <https://streamlabs.com/>`_. Linux, having no
+``Game Capture`` option should be unaffected by this issue.
 
 Known Issues
 ------------
@@ -68,8 +80,9 @@ at least a dual core CPU to avoid slowing down your game of DF.
 
 Useful links
 ------------
-- :forums:`Official Stonesense thread <106497>` for feedback,
-  questions, requests or bug reports
+- Report issues on `Github <https://github.com/DFHack/stonesense/issues>`_
+- `support`
+- :forums:`Official Stonesense thread <106497>``
 - :forums:`Screenshots thread <48172>`
 - :wiki:`Main wiki page <Utility:Stonesense>`
 - :wiki:`How to add content <Utility:Stonesense/Adding_Content>`

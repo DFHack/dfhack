@@ -24,7 +24,8 @@ distribution.
 
 #pragma once
 
-#include "DataFuncs.h"
+#include "DataDefs.h"
+#include "DataIdentity.h"
 
 namespace DFHack
 {
@@ -45,9 +46,6 @@ namespace DFHack
            // You may define additional methods here, but NOT non-static fields
 
            DEFINE_VMETHOD_INTERPOSE(int, foo, (int arg)) {
-               // If needed by the code, claim the suspend lock.
-               // CoreSuspender suspend;
-               ...
                ... this->field ... // access fields of the df::someclass object
                ...
                int orig_retval = INTERPOSE_NEXT(foo)(arg); // call the original method

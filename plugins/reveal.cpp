@@ -1,4 +1,5 @@
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/EventManager.h"

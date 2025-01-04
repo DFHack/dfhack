@@ -53,6 +53,7 @@
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
 #include "MiscUtils.h"
+#include "Core.h"
 
 
 using namespace DFHack;

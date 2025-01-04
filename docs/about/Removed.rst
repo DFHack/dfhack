@@ -314,6 +314,12 @@ plants
 ======
 Renamed to `plant`.
 
+.. _rename:
+
+rename
+======
+Superseded by vanilla rename capabilities and `gui/rename`.
+
 .. _resume:
 
 resume

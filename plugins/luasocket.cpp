@@ -1,6 +1,7 @@
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "DataDefs.h"
 
 #include <vector>

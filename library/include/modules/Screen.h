@@ -380,6 +380,8 @@ namespace DFHack
         bool safe_call_lua(int (*pf)(lua_State *), int args, int rvs);
         static dfhack_lua_viewscreen *get_self(lua_State *L);
 
+        template<typename T> T* getSelected(const char* method_name);
+
         static int do_destroy(lua_State *L);
         static int do_render(lua_State *L);
         static int do_notify(lua_State *L);

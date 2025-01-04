@@ -72,11 +72,13 @@ jobs:
       if: inputs.os == 'ubuntu'
       run: Xvfb :0 -screen 0 1600x1200x24 &
     - name: Run lua tests
-      timeout-minutes: 10
+      uses: nick-fields/retry@v3
       env:
         DISPLAY: :0
         TERM: xterm-256color
-      run: python ci/run-tests.py --keep-status "${{ env.DF_FOLDER }}"
+      with:
+        timeout_minutes: 1
+        command: python ci/run-tests.py --keep-status "${{ env.DF_FOLDER }}"
     - name: Check RPC interface
       run: python ci/check-rpc.py "${{ env.DF_FOLDER }}/dfhack-rpc.txt"
     - name: Upload test artifacts

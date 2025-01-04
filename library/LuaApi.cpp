@@ -2162,32 +2162,55 @@ static int units_getNoblePositions(lua_State *L) {
 
 static int units_isUnitInBox(lua_State *state) {
     auto u = Lua::CheckDFObject<df::unit>(state, 1);
-    int x1 = luaL_checkint(state, 2);
-    int y1 = luaL_checkint(state, 3);
-    int z1 = luaL_checkint(state, 4);
-    int x2 = luaL_checkint(state, 5);
-    int y2 = luaL_checkint(state, 6);
-    int z2 = luaL_checkint(state, 7);
-
-    lua_pushboolean(state, Units::isUnitInBox(u, x1, y1, z1, x2, y2, z2));
+    if (lua_gettop(state) > 3) {
+        int x1 = luaL_checkint(state, 2);
+        int y1 = luaL_checkint(state, 3);
+        int z1 = luaL_checkint(state, 4);
+        int x2 = luaL_checkint(state, 5);
+        int y2 = luaL_checkint(state, 6);
+        int z2 = luaL_checkint(state, 7);
+        lua_pushboolean(state, Units::isUnitInBox(u, x1, y1, z1, x2, y2, z2));
+    }
+    else {
+        df::coord pos1, pos2;
+        Lua::CheckDFAssign(state, &pos1, 2);
+        Lua::CheckDFAssign(state, &pos2, 3);
+        lua_pushboolean(state, Units::isUnitInBox(u, pos1, pos2));
+    }
     return 1;
 }
 
 static int units_getUnitsInBox(lua_State *state) {
     vector<df::unit *> units;
-    int x1 = luaL_checkint(state, 1);
-    int y1 = luaL_checkint(state, 2);
-    int z1 = luaL_checkint(state, 3);
-    int x2 = luaL_checkint(state, 4);
-    int y2 = luaL_checkint(state, 5);
-    int z2 = luaL_checkint(state, 6);
+    cuboid box;
 
-    bool ok = false;
-    if (lua_gettop(state) < 7 || lua_isnil(state, 7)) // Default filter
-        ok = Units::getUnitsInBox(units, x1, y1, z1, x2, y2, z2);
+    int max_arg = lua_gettop(state);
+    if (max_arg > 3) {
+        int x1 = luaL_checkint(state, 1);
+        int y1 = luaL_checkint(state, 2);
+        int z1 = luaL_checkint(state, 3);
+        int x2 = luaL_checkint(state, 4);
+        int y2 = luaL_checkint(state, 5);
+        int z2 = luaL_checkint(state, 6);
+        box = cuboid(x1,y1,z1,x2,y2,z2);
+    }
     else {
-        luaL_checktype(state, 7, LUA_TFUNCTION);
-        ok = Units::getUnitsInBox(units, x1, y1, z1, x2, y2, z2, [&state](df::unit *unit) {
+        df::coord pos1, pos2;
+        Lua::CheckDFAssign(state, &pos1, 1);
+        Lua::CheckDFAssign(state, &pos2, 2);
+        box = cuboid(pos1, pos2);
+    }
+
+    int fn_arg = max_arg > 3 ? 7 : 3;
+    bool ok = false;
+    if (max_arg < fn_arg || lua_isnil(state, fn_arg)) // Default filter
+        ok = Units::getUnitsInBox(units, box);
+    else {
+        luaL_checktype(state, fn_arg, LUA_TFUNCTION);
+        if (max_arg > fn_arg) // Something after filter on stack
+            luaL_argerror(state, fn_arg+1, "too many arguments!");
+
+        ok = Units::getUnitsInBox(units, box, [&state](df::unit *unit) {
             lua_dup(state); // Copy function
             Lua::PushDFObject(state, unit);
             lua_call(state, 1, 1);

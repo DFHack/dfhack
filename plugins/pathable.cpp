@@ -1,6 +1,7 @@
 #include "Debug.h"
 #include "Error.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "df/building_type.h"

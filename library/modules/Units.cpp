@@ -903,8 +903,12 @@ df::language_name *Units::getVisibleName(df::historical_figure *hf) {
 
 df::language_name *Units::getVisibleName(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
-    auto hf = df::historical_figure::find(unit->hist_figure_id);
-    return hf ? getVisibleName(hf) : &unit->name;
+    if (auto identity = getIdentity(unit))
+    {
+        auto imp_hf = df::historical_figure::find(identity->impersonated_hf);
+        return (imp_hf && imp_hf->name.has_name) ? &imp_hf->name : &identity->name;
+    }
+    return &unit->name;
 }
 
 bool Units::assignTrainer(df::unit *unit, int32_t trainer_id) {

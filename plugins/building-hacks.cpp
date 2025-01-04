@@ -251,7 +251,6 @@ struct work_hook : df::building_workshopst{
             {
                 if(world->frame_counter % def->skip_updates == 0)
                 {
-                    CoreSuspender suspend;
                     color_ostream_proxy out(Core::getInstance().getConsole());
                     onUpdateAction(out,this);
                 }

@@ -704,7 +704,7 @@ void Plugin::index_lua(DFLibrary *lib)
             cmd->event = evlist->event;
             if (cmd->active)
             {
-                cmd->event->bind(Lua::Core::State, cmd);
+                cmd->event->bind(DFHack::Core::getInstance().getLuaState(), cmd);
                 if (cmd->count > 0)
                     cmd->event->on_count_changed(cmd->count, 0);
             }
@@ -830,7 +830,7 @@ void Plugin::open_lua(lua_State *state, int table)
 
             it->second->active = true;
             if (it->second->event)
-                it->second->event->bind(Lua::Core::State, it->second);
+                it->second->event->bind(DFHack::Core::getInstance().getLuaState(), it->second);
 
             lua_setfield(state, table, it->first.c_str());
         }

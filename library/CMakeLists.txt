@@ -39,13 +39,9 @@ endif()
 
 add_custom_target(generate_headers DEPENDS ${CODEGEN_OUT})
 
-include_directories(include)
-
 add_subdirectory(xml)
 
 if(BUILD_LIBRARY)
-
-include_directories(proto)
 
 set(MAIN_HEADERS
     include/Internal.h
@@ -55,6 +51,7 @@ set(MAIN_HEADERS
     include/ColorText.h
     include/Console.h
     include/Core.h
+    include/CoreDefs.h
     include/DataDefs.h
     include/DataFuncs.h
     include/DataIdentity.h
@@ -71,6 +68,7 @@ set(MAIN_HEADERS
     include/Module.h
     include/MemAccess.h
     include/ModuleFactory.h
+    include/PluginLua.h
     include/PluginManager.h
     include/PluginStatics.h
     include/RemoteClient.h
@@ -347,6 +345,7 @@ set_property(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
     DFHACK_ABI_VERSION=${DFHACK_ABI_VERSION}
     DFHACK_RUN_URL="${DFHACK_RUN_URL}"
 )
+target_include_directories(dfhack-version PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(DFHACK_PRERELEASE)
     set_property(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
         DFHACK_PRERELEASE=1
@@ -369,13 +368,19 @@ if(EXISTS ${dfhack_SOURCE_DIR}/.git/index AND EXISTS ${dfhack_SOURCE_DIR}/.git/m
 endif()
 
 add_library(dfhack SHARED ${PROJECT_SOURCES})
+target_include_directories(dfhack PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
+
+get_target_property(xlsxio_INCLUDES xlsxio_read_STATIC INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(dfhack PRIVATE ${xlsxio_INCLUDES} ${SDL2_INCLUDE_DIRS})
 add_dependencies(dfhack generate_proto_core)
 add_dependencies(dfhack generate_headers)
 
 add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS} ${CONSOLE_SOURCES})
+target_include_directories(dfhack-client PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
 add_dependencies(dfhack-client dfhack)
 
 add_executable(dfhack-run dfhack-run.cpp)
+target_include_directories(dfhack-run PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
 
 add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)

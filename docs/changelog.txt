@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Fixes
 - ``Units::getPosition``, ``Items::getPosition``: return invalid coord for inactive units, items held by units off map
@@ -66,14 +67,17 @@ Template for new versions:
 
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
-- `stonesense`: changed announcements to be right-aligned and limited it to only show the most recent 10 announcements.
-- `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Documentation
+- Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API
 
 ## API
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
+- ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
 
 ## Lua
+- ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
+- ``widgets.FilteredList``: search keys for list items can now be functions that return a string
 
 ## Removed
 
@@ -95,7 +99,7 @@ Template for new versions:
 
 # 50.15-r1
 
-# Fixes
+## Fixes
 
 - `gui/prerelease-warning`: don't pop up during worldgen, only after a fort has been loaded
 

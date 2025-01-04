@@ -5,6 +5,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/Materials.h"
 #include "modules/Persistence.h"

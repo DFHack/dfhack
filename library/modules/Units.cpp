@@ -664,7 +664,8 @@ bool Units::isGreatDanger(df::unit *unit) {
 
 bool Units::isUnitInBox(df::unit *u, const cuboid &box) {
     CHECK_NULL_POINTER(u);
-    return isActive(u) ? box.containsPos(getPosition(u)) : false;
+    auto pos = getPosition(u);
+    return pos.isValid() ? box.containsPos(pos) : false;
 }
 
 bool Units::getUnitsInBox(vector<df::unit *> &units, const cuboid &box, std::function<bool(df::unit *)> filter) {

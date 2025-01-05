@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- ``Translation::GenerateName``: generates in-game names, reimplemented based on DF's own logic. Also available in Lua as "dfhack.GenerateName".
 - `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Fixes
@@ -66,6 +67,7 @@ Template for new versions:
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
 - `suspendmanager`: add more specific messages for submerged jobsites and those managed by `buildingplan`
+- `strangemood`: moved name generation logic into Translation module (and fixed some bugs)
 
 ## Documentation
 - Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API

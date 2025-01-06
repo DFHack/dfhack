@@ -15,9 +15,7 @@ submodules:
 sphinx:
   configuration: conf.py
 
-formats:
-  - epub
-  - htmlzip
+formats: all
 
 python:
   install:

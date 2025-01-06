@@ -3702,6 +3702,8 @@ functions. These are invoked just like standard string functions, e.g.::
 script-manager
 ==============
 
+.. highlight:: none
+
 This module contains functions useful for mods that contain DFHack scripts to
 retrieve source and state paths. The value to pass as ``mod_id`` must be the
 same as the mod ID in the mod's :file:`info.txt` metadata file. The returned
@@ -3729,16 +3731,18 @@ paths will be relative to the top level game directory and will end in a slash
   Retrieve the directory path where a mod with the given ID should store its
   persistent state. Example::
 
-      local json = require("json")
-      local scriptmanager = require("script-manager")
-      local path = scriptmanager.getModStatePath("my_awesome_mod")
-      config = config or json.open(path .. "settings.json")
+      local json = require('json')
+      local scriptmanager = require('script-manager')
+      local path = scriptmanager.getModStatePath('my_awesome_mod')
+      config = config or json.open(path .. 'settings.json')
 
   Which would open ``dfhack-config/mods/my_awesome_mod/settings.json``. After
   calling ``getModStatePath``, the returned directory is guaranteed to exist.
 
 utils
 =====
+
+.. highlight:: lua
 
 * ``utils.compare(a,b)``
 

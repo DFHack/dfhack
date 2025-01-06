@@ -3155,15 +3155,14 @@ unless otherwise noted.
 
 * ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
-  Lists all files/directories in a directory and its subdirectories. All directories
-  are listed before their contents. Returns a table with subtables of the format::
+  Lists all files/directories in a directory and its subdirectories. All
+  directories are listed before their contents. Returns a table with subtables
+  of the format: ``{path: 'path to file', isdir: true|false}``
 
-    {path: 'path to file', isdir: true|false}
-
-  Note that ``listdir()`` returns only the base name of each directory entry, while
-  ``listdir_recursive()`` returns the initial path and all components following it
-  for each entry. Set ``include_prefix`` to false if you don't want the ``path``
-  string prepended to the returned filenames.
+  Note that ``listdir()`` returns only the base name of each directory entry,
+  while ``listdir_recursive()`` returns the initial path and all components
+  following it for each entry. Set ``include_prefix`` to false if you don't
+  want the ``path`` string prepended to the returned filenames.
 
 Console API
 -----------
@@ -3730,10 +3729,10 @@ paths will be relative to the top level game directory and will end in a slash
   Retrieve the directory path where a mod with the given ID should store its
   persistent state. Example::
 
-      local json = require('json')
-      local scriptmanager = require('script-manager')
-      local path = scriptmanager.getModStatePath('my_awesome_mod')
-      config = config or json.open(path .. 'settings.json')
+      local json = require("json")
+      local scriptmanager = require("script-manager")
+      local path = scriptmanager.getModStatePath("my_awesome_mod")
+      config = config or json.open(path .. "settings.json")
 
   Which would open ``dfhack-config/mods/my_awesome_mod/settings.json``. After
   calling ``getModStatePath``, the returned directory is guaranteed to exist.

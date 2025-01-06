@@ -3155,14 +3155,15 @@ unless otherwise noted.
 
 * ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
-  Lists all files/directories in a directory and its subdirectories. All
-  directories are listed before their contents. Returns a table with subtables
-  of the format: ``{path: 'path to file', isdir: true|false}``
+  Lists all files/directories in a directory and its subdirectories. All directories
+  are listed before their contents. Returns a table with subtables of the format::
 
-  Note that ``listdir()`` returns only the base name of each directory entry,
-  while ``listdir_recursive()`` returns the initial path and all components
-  following it for each entry. Set ``include_prefix`` to false if you don't
-  want the ``path`` string prepended to the returned filenames.
+    {path: 'path to file', isdir: true|false}
+
+  Note that ``listdir()`` returns only the base name of each directory entry, while
+  ``listdir_recursive()`` returns the initial path and all components following it
+  for each entry. Set ``include_prefix`` to false if you don't want the ``path``
+  string prepended to the returned filenames.
 
 Console API
 -----------
@@ -3702,8 +3703,6 @@ functions. These are invoked just like standard string functions, e.g.::
 script-manager
 ==============
 
-.. highlight:: none
-
 This module contains functions useful for mods that contain DFHack scripts to
 retrieve source and state paths. The value to pass as ``mod_id`` must be the
 same as the mod ID in the mod's :file:`info.txt` metadata file. The returned
@@ -3741,8 +3740,6 @@ paths will be relative to the top level game directory and will end in a slash
 
 utils
 =====
-
-.. highlight:: lua
 
 * ``utils.compare(a,b)``
 

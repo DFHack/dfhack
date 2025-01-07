@@ -3155,15 +3155,14 @@ unless otherwise noted.
 
 * ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
-  Lists all files/directories in a directory and its subdirectories. All directories
-  are listed before their contents. Returns a table with subtables of the format::
+  Lists all files/directories in a directory and its subdirectories. All
+  directories are listed before their contents. Returns a table with subtables
+  of the format: ``{path: 'path to file', isdir: true|false}``
 
-    {path: 'path to file', isdir: true|false}
-
-  Note that ``listdir()`` returns only the base name of each directory entry, while
-  ``listdir_recursive()`` returns the initial path and all components following it
-  for each entry. Set ``include_prefix`` to false if you don't want the ``path``
-  string prepended to the returned filenames.
+  Note that ``listdir()`` returns only the base name of each directory entry,
+  while ``listdir_recursive()`` returns the initial path and all components
+  following it for each entry. Set ``include_prefix`` to false if you don't
+  want the ``path`` string prepended to the returned filenames.
 
 Console API
 -----------

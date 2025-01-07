@@ -82,7 +82,7 @@ Useful links
 ------------
 - Report issues on `Github <https://github.com/DFHack/stonesense/issues>`_
 - `support`
-- :forums:`Official Stonesense thread <106497>``
+- :forums:`Official Stonesense thread <106497>`
 - :forums:`Screenshots thread <48172>`
 - :wiki:`Main wiki page <Utility:Stonesense>`
 - :wiki:`How to add content <Utility:Stonesense/Adding_Content>`

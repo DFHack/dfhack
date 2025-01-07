@@ -238,8 +238,6 @@ immensely, and you can always ask for help in the `right places <support>`.
 Reading and writing files and other persistent state
 ----------------------------------------------------
 
-.. highlight:: none
-
 There are several locations and APIs that a mod might need to read or store
 data:
 
@@ -255,8 +253,6 @@ for reading and writing JSON data. For example::
 
     -- modify state in the config.data table and persist it when it changes with
     -- config:write()
-
-.. highlight:: lua
 
 State that should be saved with a world or a specific fort within that world
 should use `persistent-api` API. You can attach a state change hook for new

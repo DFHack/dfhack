@@ -3702,8 +3702,6 @@ functions. These are invoked just like standard string functions, e.g.::
 script-manager
 ==============
 
-.. highlight:: none
-
 This module contains functions useful for mods that contain DFHack scripts to
 retrieve source and state paths. The value to pass as ``mod_id`` must be the
 same as the mod ID in the mod's :file:`info.txt` metadata file. The returned
@@ -3741,8 +3739,6 @@ paths will be relative to the top level game directory and will end in a slash
 
 utils
 =====
-
-.. highlight:: lua
 
 * ``utils.compare(a,b)``
 

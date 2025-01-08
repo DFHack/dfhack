@@ -87,14 +87,18 @@ inline bool isExternalReason(Reason reason) {
 
 static string reasonToString(Reason reason) {
   switch (reason) {
-    case Reason::DEADEND:
-        return "Blocks another build job";
+    case Reason::UNDER_WATER:
+        return "Jobsite is submerged";
+    case Reason::BUILDINGPLAN:
+        return "Managed by buildingplan";
     case Reason::RISK_BLOCKING:
         return "May block another build job";
-    case Reason::UNSUPPORTED:
-        return "Would collapse immediately";
     case Reason::ERASE_DESIGNATION:
         return "Waiting for carve/smooth/engrave";
+    case Reason::DEADEND:
+        return "Blocks another build job";
+    case Reason::UNSUPPORTED:
+        return "Would collapse immediately";
     case Reason::ITEM_IN_JOB:
         return "Blocked by an unmovable item";
     default:

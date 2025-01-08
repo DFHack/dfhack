@@ -52,7 +52,7 @@ jobs:
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: dfhack-symbols-linux64-build
       append-date-and-hash: false
-      cache-id: release
+      cache-id: test
       cache-readonly: true
       plugins: false
     secrets: inherit
@@ -65,7 +65,7 @@ jobs:
       structures_ref: ${{ inputs.structures_ref }}
       artifact-name: dfhack-symbols-windows64-build
       append-date-and-hash: false
-      cache-id: release
+      cache-id: test
       cache-readonly: true
       plugins: false
     secrets: inherit

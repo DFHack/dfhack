@@ -171,7 +171,7 @@ namespace DFHack
         /// returns a named pointer.
         void *GetData(std::string key);
 
-        command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters);
+        command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
         command_result runCommand(color_ostream &out, const std::string &command);
         bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
 

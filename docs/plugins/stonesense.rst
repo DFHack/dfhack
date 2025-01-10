@@ -19,7 +19,7 @@ or be moved independently. Configuration for stonesense can be set in the
 ``dfhack-config/stonesense/init.txt`` file in your DF game directory. If the window refresh
 rate is too low, change ``SEGMENTSIZE_Z`` to ``2`` in this file, and if you are
 unable to see the edges of the map with the overlay active, try decreasing the
-value for ``SEGMENTSIZE_XY`` -- normal values are ``50`` to ``80``, depending
+value for ``SEGMENTSIZE_X`` and ``SEGMENTSIZE_Y`` -- normal values are ``50`` to ``80``, depending
 on your screen resolution.
 
 .. figure:: ../images/stonesense-roadtruss.jpg
@@ -52,7 +52,7 @@ See ``dfhack-config/stonesense/keybinds.txt`` to learn or set keybindings, inclu
 zooming, changing the dimensions of the rendered area, toggling various
 views, fog, and rotation. Here's the important section:
 
-.. include:: ../../plugins/stonesense/resources/keybinds.txt
+.. include:: ../../plugins/stonesense/configs/keybinds.txt
    :literal:
    :end-before: VALID ACTIONS:
 
@@ -77,6 +77,20 @@ line containing that folder, or :dffd:`use these smaller sprites <6096>`.
 
 Stonesense requires working graphics acceleration, and we recommend
 at least a dual core CPU to avoid slowing down your game of DF.
+
+If you are on Windows, you may find that using OpenGL runs better and more stable.
+Simply open :file:`dfhack-config/stonesense/init.txt` and set the renderer to ``[RENDERER:OPENGL]``
+
+Yellow Cubes and Missing Sprites
+--------------------------------
+If you are seeing yellow cubes in Stonesense, that is simply things we don't have sprites for.
+
+.. figure:: ../images/stonesense-yellowcubes.jpg
+   :align: center
+
+   An example of the yellow cubes.
+
+If you would like to help us in fixing this, please see the wiki page on :wiki:`adding content <Utility:Stonesense/Adding_Content>`
 
 Useful links
 ------------

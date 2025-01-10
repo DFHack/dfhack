@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `clean`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
 - `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Fixes
@@ -71,10 +72,12 @@ Template for new versions:
 - Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API
 
 ## API
+- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
 - ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
 
 ## Lua
+- ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
 - ``widgets.FilteredList``: search keys for list items can now be functions that return a string
 

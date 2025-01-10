@@ -721,7 +721,9 @@ command_result CoreService::RunCommand(color_ostream &stream,
     for (int i = 0; i < in->arguments_size(); i++)
         args.push_back(in->arguments(i));
 
-    return Core::getInstance().runCommand(stream, cmd, args);
+    // disable try_autocomplete in runCommand so misspellings of kill-lua won't cause deadlocks
+    // this remote server connection could be the last chance for recovering from stuck Lua scripts
+    return Core::getInstance().runCommand(stream, cmd, args, true);
 }
 
 command_result CoreService::CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)

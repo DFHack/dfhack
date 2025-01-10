@@ -706,7 +706,7 @@ void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
     }
 }
 
-command_result Core::runCommand(color_ostream &con, const std::string &first_, std::vector<std::string> &parts)
+command_result Core::runCommand(color_ostream &con, const std::string &first_, std::vector<std::string> &parts, bool no_autocomplete)
 {
     std::string first = first_;
     CommandDepthCounter counter;
@@ -1273,7 +1273,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             }
             if ( lua )
                 res = runLuaScript(con, first, parts);
-            else if ( try_autocomplete(con, first, completed) )
+            else if (!no_autocomplete && try_autocomplete(con, first, completed))
                 res = CR_NOT_IMPLEMENTED;
             else
                 con.printerr("%s is not a recognized command.\n", first.c_str());

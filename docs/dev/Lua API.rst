@@ -953,6 +953,10 @@ can be omitted.
 
   Convert a ``df.language_name`` (or only the last name part) to string.
 
+* ``dfhack.GenerateName(name,language,type,major_selector,minor_selector)``
+
+  Dynamically generate a name using the same logic the game itself uses.
+
 * ``dfhack.df2utf(string)``
 
   Convert a string from DF's CP437 encoding to UTF-8.

@@ -88,6 +88,7 @@ distribution.
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_material_category.h"
+#include "df/language_word_table.h"
 #include "df/material.h"
 #include "df/map_block.h"
 #include "df/nemesis_record.h"
@@ -1374,6 +1375,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(isMapLoaded),
     WRAP(isSiteLoaded),
     WRAPM(Translation, TranslateName),
+    WRAPM(Translation, GenerateName),
     WRAP(df2utf),
     WRAP(utf2df),
     WRAP(df2console),

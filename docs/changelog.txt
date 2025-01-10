@@ -54,7 +54,6 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- ``Translation::GenerateName``: generates in-game names, reimplemented based on DF's own logic. Also available in Lua as "dfhack.GenerateName".
 - `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 
 ## Fixes
@@ -63,11 +62,11 @@ Template for new versions:
 - `preserve-tombs`: properly re-enable after loading a game that had the tool enabled
 - `zone`: assign animal to cage/restraint dialog now allows you to unassign a pet from the cage or restraint if the pet is already somehow assigned (e.g.  war dog was in cage and was subsequently assigned to a dwarf)
 - `stockpiles`: don't set ``use_links_only`` flag to a random value when the flag is not set to anything in the settings that are being imported
+- `strangemood`: ensure generated names for artifacts match what the game itself would generate
 
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
 - `suspendmanager`: add more specific messages for submerged jobsites and those managed by `buildingplan`
-- `strangemood`: moved name generation logic into Translation module (and fixed some bugs)
 
 ## Documentation
 - Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API
@@ -75,10 +74,12 @@ Template for new versions:
 ## API
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
 - ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
+- ``Translation::GenerateName``: generates in-game names, reimplemented based on DF's own logic
 
 ## Lua
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
 - ``widgets.FilteredList``: search keys for list items can now be functions that return a string
+- ``dfhack.GenerateName``: Lua API for ``Translation::GenerateName``
 
 ## Removed
 

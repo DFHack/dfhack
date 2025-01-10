@@ -85,7 +85,7 @@ Yellow Cubes and Missing Sprites
 --------------------------------
 If you are seeing yellow cubes in Stonesense, that is simply things we don't have sprites for.
 
-.. figure:: ../images/stonesense-yellowcubes.jpg
+.. figure:: ../images/stonesense-yellowcubes.png
    :align: center
 
    An example of the yellow cubes.

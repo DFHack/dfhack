@@ -75,7 +75,7 @@ Template for new versions:
 ## API
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
 - ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
-- ``Translation::GenerateName``: generates in-game names, reimplemented based on DF's own logic
+- ``Translation::GenerateName``: generates in-game names, mirroring DF's internal logic
 
 ## Lua
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
@@ -85,7 +85,7 @@ Template for new versions:
 ## Removed
 
 ## Internals
-- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access
+- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access without extra steps
 - Errors when unloading a plugin's DLL are now checked and reported
 
 # 50.15-r1.2

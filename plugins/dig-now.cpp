@@ -438,8 +438,6 @@ static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
     df::tiletype_material mat = tileMaterial(tt);
     switch (mat) {
     case df::tiletype_material::CONSTRUCTION:
-    case df::tiletype_material::POOL:
-    case df::tiletype_material::RIVER:
     case df::tiletype_material::TREE:
     case df::tiletype_material::ROOT:
     case df::tiletype_material::MAGMA:

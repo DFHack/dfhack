@@ -67,6 +67,7 @@ Template for new versions:
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
 - `suspendmanager`: add more specific messages for submerged jobsites and those managed by `buildingplan`
+- `dig-now`: handle digging in pool and river tiles
 
 ## Documentation
 - Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API

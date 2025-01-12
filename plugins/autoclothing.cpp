@@ -7,7 +7,6 @@
 #include "modules/Items.h"
 #include "modules/Materials.h"
 #include "modules/Persistence.h"
-#include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
@@ -698,7 +697,7 @@ static void generate_control(color_ostream &out) {
             missingGloves[unit->race]++;
         if (numPants == 0)
             missingPants[unit->race]++;
-        DEBUG(control, out) << Translation::TranslateName(Units::getVisibleName(unit)) <<
+        DEBUG(control, out) << DF2CONSOLE(Units::getReadableName(unit)) <<
             " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms <<
             " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
     });

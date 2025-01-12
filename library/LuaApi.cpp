@@ -1374,8 +1374,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
     WRAP(isSiteLoaded),
-    WRAPM(Translation, TranslateName),
-    WRAPM(Translation, GenerateName),
+    WRAPN(Translation, Translation::translateName), // left for backward compatibility
     WRAP(df2utf),
     WRAP(utf2df),
     WRAP(df2console),
@@ -1402,6 +1401,14 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 
 static const luaL_Reg dfhack_funcs[] = {
     { "getCommandHistory", getCommandHistory },
+    { NULL, NULL }
+};
+
+/***** Translation module *****/
+
+static const LuaWrapper::FunctionReg dfhack_translation_module[] = {
+    WRAPM(Translation, translateName),
+    WRAPM(Translation, generateName),
     { NULL, NULL }
 };
 
@@ -4248,6 +4255,7 @@ void OpenDFHackApi(lua_State *state)
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     luaL_setfuncs(state, dfhack_funcs, 0);
+    OpenModule(state, "translation", dfhack_translation_module);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "textures", dfhack_textures_funcs);

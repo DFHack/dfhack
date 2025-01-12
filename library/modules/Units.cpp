@@ -1147,7 +1147,7 @@ string Units::getReadableName(df::historical_figure *hf) {
             prof_name = "Ghostly " + prof_name;
     }
 
-    string name = Translation::TranslateName(getVisibleName(hf));
+    string name = Translation::translateName(getVisibleName(hf));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1170,7 +1170,7 @@ string Units::getReadableName(df::unit *unit) {
     if (isTame(unit))
         prof_name += " (" + getTameTag(unit) + ")";
 
-    string name = Translation::TranslateName(getVisibleName(unit));
+    string name = Translation::translateName(getVisibleName(unit));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1692,7 +1692,7 @@ static string get_land_title(Units::NoblePosition *np)
         if (site_link->flags.bits.land_for_holding && site_link->position_profile_id == np->assignment->id)
         {
             auto site = df::world_site::find(site_link->target);
-            return site ? " of " + Translation::TranslateName(&site->name, true) : "";
+            return site ? " of " + Translation::translateName(&site->name, true) : "";
         }
     return "";
 }

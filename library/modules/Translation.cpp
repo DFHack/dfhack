@@ -170,7 +170,7 @@ static string translate_english_word(const df::language_name * name, size_t part
     return words->forms[part];
 }
 
-string Translation::TranslateName(const df::language_name * name, bool inEnglish, bool onlyLastPart)
+string Translation::translateName(const df::language_name * name, bool inEnglish, bool onlyLastPart)
 {
     CHECK_NULL_POINTER(name);
 
@@ -262,7 +262,7 @@ string Translation::TranslateName(const df::language_name * name, bool inEnglish
 Random::MersenneRNG rng;
 bool rng_inited = false;
 // void word_selectorst::choose_word(int32_t &index,short &asp,WordPlace place)
-void ChooseWord (const df::language_word_table *table, int32_t &index, df::part_of_speech &asp, df::language_word_table_index place)
+static void chooseWord (const df::language_word_table *table, int32_t &index, df::part_of_speech &asp, df::language_word_table_index place)
 {
     if (table->parts[place].size())
     {
@@ -279,7 +279,7 @@ void ChooseWord (const df::language_word_table *table, int32_t &index, df::part_
 }
 
 // void generatename(namest &name,int32_t language_index,short nametype,word_selectorst &major_selector,word_selectorst &minor_selector)
-void Translation::GenerateName(df::language_name *name, int language_index, df::language_name_type nametype, df::language_word_table *major_selector, df::language_word_table *minor_selector)
+void Translation::generateName(df::language_name *name, int language_index, df::language_name_type nametype, df::language_word_table *major_selector, df::language_word_table *minor_selector)
 {
     CHECK_NULL_POINTER(name);
     CHECK_NULL_POINTER(major_selector);
@@ -315,7 +315,7 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
                 name->first_name = "";
                 int32_t index;
                 df::part_of_speech asp;
-                ChooseWord(major_selector, index, asp, language_word_table_index::FirstName);
+                chooseWord(major_selector, index, asp, language_word_table_index::FirstName);
                 // language_handlerst::addnativesyllable(index, name->first_name, name->language)
                 if (name->language >= 0 && (size_t)name->language < world->raws.language.translations.size())
                 {
@@ -329,12 +329,12 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
                 switch (rng.df_trandom(2))
                 {
                 case 0:
-                    ChooseWord(major_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
-                    ChooseWord(minor_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
+                    chooseWord(major_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
+                    chooseWord(minor_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
                     break;
                 case 1:
-                    ChooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
-                    ChooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
+                    chooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
+                    chooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
                     break;
                 }
             }
@@ -348,12 +348,12 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
                 switch (rng.df_trandom(2))
                 {
                 case 0:
-                    ChooseWord(major_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
-                    ChooseWord(minor_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
+                    chooseWord(major_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
+                    chooseWord(minor_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
                     break;
                 case 1:
-                    ChooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
-                    ChooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
+                    chooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
+                    chooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
                     break;
                 }
             }
@@ -365,33 +365,33 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
             // 40d didn't appear to have this logic
             if (nametype == language_name_type::LegendaryFigure && !rng.df_trandom(3))
             {
-                ChooseWord(major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
+                chooseWord(major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
                 break;
             }
             // fall through
         case language_name_type::ArtImage:
             r = rng.df_trandom(2);
-            ChooseWord(r ? major_selector : minor_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
+            chooseWord(r ? major_selector : minor_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
 
             switch (rng.df_trandom(50) ? rng.df_trandom(2) : rng.df_trandom(3))
             {
             case 0:
-                ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                 break;
             case 2:
-                ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                 r = rng.df_trandom(2);
                 // fall through
             case 1:
-                ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
+                chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
                 if (!rng.df_trandom(100))
-                    ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
+                    chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
                 break;
             }
             if (!rng.df_trandom(100))
             {
                 r = rng.df_trandom(2);
-                ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
+                chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
             }
             break;
         case language_name_type::Civilization:
@@ -432,51 +432,51 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
         case language_name_type::Guildhall:
         case language_name_type::NecromancerTower:
         case language_name_type::Hospital:
-            ChooseWord(major_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
+            chooseWord(major_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
 
             switch (rng.df_trandom(50) ? rng.df_trandom(2) : rng.df_trandom(3))
             {
             case 0:
-                ChooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                chooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                 break;
             case 2:
-                ChooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                chooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                 // fall through
             case 1:
-                ChooseWord(minor_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
+                chooseWord(minor_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
                 if (!rng.df_trandom(100))
-                    ChooseWord(minor_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
+                    chooseWord(minor_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
                 break;
             }
             if (!rng.df_trandom(100))
             {
                 r = rng.df_trandom(2);
-                ChooseWord(minor_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
+                chooseWord(minor_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
             }
             break;
         case language_name_type::Squad:
             r = rng.df_trandom(2);
-            ChooseWord(r ? major_selector : minor_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
+            chooseWord(r ? major_selector : minor_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
 
             switch (rng.df_trandom(50) ? rng.df_trandom(2) : rng.df_trandom(3))
             {
             case 0:
-                ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                 break;
             case 2:
-                ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                 r = rng.df_trandom(2);
                 // fall through
             case 1:
-                ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
+                chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
                 if (!rng.df_trandom(100))
-                    ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
+                    chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
                 break;
             }
             if (!rng.df_trandom(100))
             {
                 r = rng.df_trandom(2);
-                ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
+                chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
             }
             // If TheX is a singular noun, then switch it to Plural if possible
             if (name->parts_of_speech[language_name_component::TheX] == part_of_speech::Noun)
@@ -492,12 +492,12 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
             switch (rng.df_trandom(2))
             {
             case 0:
-                ChooseWord(major_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
-                ChooseWord(minor_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
+                chooseWord(major_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
+                chooseWord(minor_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
                 break;
             case 1:
-                ChooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
-                ChooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
+                chooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
+                chooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
                 break;
             }
             break;
@@ -505,30 +505,30 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
             r = rng.df_trandom(3);
             if (r < 2)
             {
-                ChooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
-                ChooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
+                chooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
+                chooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
             }
             if (r != 0)
             {
-                ChooseWord((r == 2 || rng.df_trandom(2)) ? major_selector : minor_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
+                chooseWord((r == 2 || rng.df_trandom(2)) ? major_selector : minor_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
                 switch (rng.df_trandom(50) ? rng.df_trandom(2) : rng.df_trandom(3))
                 {
                 case 0:
-                    ChooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                    chooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                     break;
                 case 2:
-                    ChooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                    chooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                     // fall through
                 case 1:
-                    ChooseWord(minor_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
+                    chooseWord(minor_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
                     if (!rng.df_trandom(100))
-                        ChooseWord(minor_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
+                        chooseWord(minor_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
                     break;
                 }
                 if (!rng.df_trandom(100))
                 {
                     r = rng.df_trandom(2);
-                    ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
+                    chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
                 }
             }
             break;
@@ -536,27 +536,27 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
             if (rng.df_trandom(3))
             {
                 r = rng.df_trandom(2);
-                ChooseWord(r ? major_selector : minor_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
+                chooseWord(r ? major_selector : minor_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
 
                 switch (rng.df_trandom(50) ? rng.df_trandom(2) : rng.df_trandom(3))
                 {
                 case 0:
-                    ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                    chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                     break;
                 case 2:
-                    ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                    chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                     r = rng.df_trandom(2);
                     // fall through
                 case 1:
-                    ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
+                    chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
                     if (!rng.df_trandom(100))
-                        ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
+                        chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
                     break;
                 }
                 if (!rng.df_trandom(100))
                 {
                     r = rng.df_trandom(2);
-                    ChooseWord(r ? minor_selector : major_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
+                    chooseWord(r ? minor_selector : major_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
                 }
                 // If TheX is a plural noun, then switch it to singular if possible
                 if (name->parts_of_speech[language_name_component::TheX] == part_of_speech::NounPlural)
@@ -572,12 +572,12 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
                 switch (rng.df_trandom(2))
                 {
                 case 0:
-                    ChooseWord(major_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
-                    ChooseWord(minor_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
+                    chooseWord(major_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
+                    chooseWord(minor_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
                     break;
                 case 1:
-                    ChooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
-                    ChooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
+                    chooseWord(minor_selector, name->words[language_name_component::FrontCompound], name->parts_of_speech[language_name_component::FrontCompound], language_word_table_index::FrontCompound);
+                    chooseWord(major_selector, name->words[language_name_component::RearCompound], name->parts_of_speech[language_name_component::RearCompound], language_word_table_index::RearCompound);
                     break;
                 }
             }
@@ -586,7 +586,7 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
                 name->first_name = "";
                 int32_t index;
                 df::part_of_speech asp;
-                ChooseWord(major_selector, index, asp, language_word_table_index::FirstName);
+                chooseWord(major_selector, index, asp, language_word_table_index::FirstName);
                 // language_handlerst::addnativesyllable(index, name->first_name, name->language)
                 if (name->language >= 0 && (size_t)name->language < world->raws.language.translations.size())
                 {
@@ -595,31 +595,31 @@ void Translation::GenerateName(df::language_name *name, int language_index, df::
                         name->first_name.append(trans->words[index]->c_str());
                 }
             }
-            ChooseWord(major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
+            chooseWord(major_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
             break;
         case language_name_type::MerchantCompany:
         case language_name_type::CraftGuild:
-            ChooseWord(major_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
+            chooseWord(major_selector, name->words[language_name_component::TheX], name->parts_of_speech[language_name_component::TheX], language_word_table_index::FirstName);
 
             switch (rng.df_trandom(50) ? rng.df_trandom(2) : rng.df_trandom(3))
             {
             case 0:
-                ChooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                chooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                 break;
             case 2:
-                ChooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
+                chooseWord(minor_selector, name->words[language_name_component::OfX], name->parts_of_speech[language_name_component::OfX], language_word_table_index::OfX);
                 r = rng.df_trandom(2);
                 // fall through
             case 1:
-                ChooseWord(minor_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
+                chooseWord(minor_selector, name->words[language_name_component::FirstAdjective], name->parts_of_speech[language_name_component::FirstAdjective], language_word_table_index::Adjectives);
                 if (!rng.df_trandom(100))
-                    ChooseWord(minor_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
+                    chooseWord(minor_selector, name->words[language_name_component::SecondAdjective], name->parts_of_speech[language_name_component::SecondAdjective], language_word_table_index::Adjectives);
                 break;
             }
             if (!rng.df_trandom(100))
             {
                 r = rng.df_trandom(2);
-                ChooseWord(minor_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
+                chooseWord(minor_selector, name->words[language_name_component::HyphenCompound], name->parts_of_speech[language_name_component::HyphenCompound], language_word_table_index::TheX);
             }
             // If TheX is a plural noun, then switch it to Singular if possible
             if (name->parts_of_speech[language_name_component::TheX] == part_of_speech::NounPlural)

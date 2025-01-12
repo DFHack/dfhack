@@ -53,7 +53,7 @@ Overlays
 
 The orders plugin provides several overlays managed by the `overlay` framework.
 You can toggle them via the ``Overlays`` tab in `gui/control-panel` or
-reposition the ones with onscreen widgets with `gui/overlay.`
+reposition the ones with onscreen widgets with `gui/overlay`.
 
 orders.importexport
 ~~~~~~~~~~~~~~~~~~~

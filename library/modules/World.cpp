@@ -226,7 +226,7 @@ int32_t World::GetCurrentSiteId() {
         DEBUG(world).print("adv_pos: (%d, %d, %d)\n", adv_pos.x, adv_pos.y, adv_pos.z);
         df::coord2d rgn_pos(world_map.region_x + adv_pos.x/48, world_map.region_y + adv_pos.y/48);
         for (auto site : world->world_data->sites) {
-            DEBUG(world).print("scanning site %d: %s\n", site->id, Translation::TranslateName(&site->name, true).c_str());
+            DEBUG(world).print("scanning site %d: %s\n", site->id, Translation::translateName(&site->name, true).c_str());
             DEBUG(world).print("  rgn_pos: (%d, %d); site bounds: (%d, %d), (%d, %d) \n",
                 rgn_pos.x, rgn_pos.y, site->global_min_x, site->global_min_y, site->global_max_x, site->global_max_y);
             if (rgn_pos.x >= site->global_min_x && rgn_pos.x <= site->global_max_x

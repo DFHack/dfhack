@@ -45,7 +45,6 @@ if(BUILD_LIBRARY)
 
 set(MAIN_HEADERS
     include/Internal.h
-    include/DFHack.h
     include/DFHackVersion.h
     include/BitArray.h
     include/ColorText.h

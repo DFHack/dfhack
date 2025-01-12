@@ -9,8 +9,9 @@
 #include "modules/Units.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
-#include "modules/Translation.h"
 #include "modules/Random.h"
+#include "modules/World.h"
+#include "modules/Translation.h"
 
 #include "df/builtin_mats.h"
 #include "df/caste_raw.h"
@@ -147,11 +148,11 @@ int getCreatedMetalBars (int32_t idx)
 
 command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 {
-    if (!Translation::IsValid())
-    {
-        out.printerr("Translation data unavailable!\n");
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
+
     bool force = false;
     df::unit *unit = NULL;
     df::mood_type type = mood_type::None;
@@ -415,7 +416,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     if (unit->job.current_job)
     {
         // TODO: cancel job
-        out.printerr("Chosen unit '%s' has active job, cannot start mood!\n", Translation::TranslateName(&unit->name).c_str());
+        out.printerr("Chosen unit '%s' has active job, cannot start mood!\n",
+            DF2CONSOLE(Units::getReadableName(unit)).c_str());
         return CR_FAILURE;
     }
 
@@ -449,7 +451,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     // Display announcement and start setting up the mood job
     int color = 0;
     bool bright = false;
-    string msg = Translation::TranslateName(&unit->name, false) + ", " + Units::getProfessionName(unit);
+    string msg = Units::getReadableName(unit);
 
     switch (type)
     {
@@ -1097,10 +1099,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 
     // Generate the artifact's name
     if (type == mood_type::Fell || type == mood_type::Macabre)
-        Translation::GenerateName(&unit->status.artifact_name, unit->name.language, language_name_type::Artifact, &world->raws.language.word_table[0][language_name_category::ArtifactEvil], &world->raws.language.word_table[1][language_name_category::ArtifactEvil]);
+        Translation::generateName(&unit->status.artifact_name, unit->name.language, language_name_type::Artifact, &world->raws.language.word_table[0][language_name_category::ArtifactEvil], &world->raws.language.word_table[1][language_name_category::ArtifactEvil]);
     else
     {
-        Translation::GenerateName(&unit->status.artifact_name, unit->name.language, language_name_type::Artifact, &world->raws.language.word_table[0][language_name_category::Artifact], &world->raws.language.word_table[1][language_name_category::Artifact]);
+        Translation::generateName(&unit->status.artifact_name, unit->name.language, language_name_type::Artifact, &world->raws.language.word_table[0][language_name_category::Artifact], &world->raws.language.word_table[1][language_name_category::Artifact]);
         if (!rng.df_trandom(100))
             unit->status.artifact_name = unit->name;
     }

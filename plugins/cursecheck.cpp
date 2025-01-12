@@ -21,7 +21,6 @@
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
-#include "modules/Translation.h"
 #include "modules/Units.h"
 
 #include "df/incident.h"

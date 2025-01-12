@@ -48,7 +48,7 @@ function get_religion_string(religion_id, religion_type)
         end
     end
     if not entity then return end
-    return ('%s %s'):format(dfhack.TranslateName(entity.name, true), stringify_spheres(spheres))
+    return ('%s %s'):format(dfhack.translation.translateName(entity.name, true), stringify_spheres(spheres))
 end
 
 function get_profession_string(profession)

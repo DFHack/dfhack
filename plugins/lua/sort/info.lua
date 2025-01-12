@@ -56,7 +56,8 @@ end
 
 -- get name in both dwarven and English
 local function get_artifact_search_key(artifact)
-    return ('%s %s'):format(dfhack.TranslateName(artifact.name), dfhack.TranslateName(artifact.name, true))
+    return ('%s %s'):format(dfhack.translation.translateName(artifact.name),
+        dfhack.translation.translateName(artifact.name, true))
 end
 
 local function work_details_search(vec, data, text, incremental)

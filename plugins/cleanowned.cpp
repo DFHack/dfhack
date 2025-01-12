@@ -9,7 +9,7 @@
 
 #include "modules/Items.h"
 #include "modules/Units.h"
-#include "modules/Translation.h"
+#include "modules/World.h"
 
 #include "df/item.h"
 #include "df/unit.h"
@@ -46,6 +46,11 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
 {
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
     bool dump_scattered = false;
     bool confiscate_all = false;
     bool dry_run = false;
@@ -69,12 +74,6 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             nodump = true;
         else
             return CR_WRONG_USAGE;
-    }
-
-    if (!Translation::IsValid())
-    {
-        out.printerr("Translation data unavailable!\n");
-        return CR_FAILURE;
     }
 
     for (auto item : world->items.other.IN_PLAY) {
@@ -165,7 +164,7 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             df::unit *owner = Items::getOwner(item);
 
             if (owner)
-                out.print(", owner %s", DF2CONSOLE(Translation::TranslateName(&owner->name)).c_str());
+                out.print(", owner %s", DF2CONSOLE(Units::getReadableName(owner)).c_str());
 
             if (!dry_run)
             {

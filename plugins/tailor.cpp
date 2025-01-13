@@ -9,7 +9,6 @@
 
 #include "modules/Materials.h"
 #include "modules/Persistence.h"
-#include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
@@ -313,7 +312,7 @@ public:
                     {
                         DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement\n",
                                             DF2CONSOLE(description).c_str(), isize,
-                                            DF2CONSOLE(Translation::TranslateName(&u->name)).c_str(), usize);
+                                            DF2CONSOLE(Units::getReadableName(u)).c_str(), usize);
                         needed[std::make_pair(ty, usize)] += 1;
                         ordered.insert(ty);
                     }
@@ -329,7 +328,7 @@ public:
                             "tailor: %s %s from %s.\n",
                             (confiscated ? "confiscated" : "could not confiscate"),
                             DF2CONSOLE(description).c_str(),
-                            DF2CONSOLE(Translation::TranslateName(&u->name)).c_str()
+                            DF2CONSOLE(Units::getReadableName(u)).c_str()
                         );
                     }
 
@@ -346,7 +345,7 @@ public:
                     TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
                         ENUM_KEY_STR(item_type, ty).c_str(),
                         usize,
-                        DF2CONSOLE(Translation::TranslateName(&u->name)).c_str());
+                        DF2CONSOLE(Units::getReadableName(u)).c_str());
                     needed[std::make_pair(ty, usize)] += 1;
                 }
             }

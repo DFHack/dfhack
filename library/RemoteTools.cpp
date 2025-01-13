@@ -235,11 +235,11 @@ void DFHack::describeName(NameInfo *info, df::language_name *name)
     if (name->language >= 0)
         info->set_language_id(name->language);
 
-    std::string lname = Translation::TranslateName(name, false, true);
+    std::string lname = Translation::translateName(name, false, true);
     if (!lname.empty())
         info->set_last_name(DF2UTF(lname));
 
-    lname = Translation::TranslateName(name, true, true);
+    lname = Translation::translateName(name, true, true);
     if (!lname.empty())
         info->set_english_name(DF2UTF(lname));
 }

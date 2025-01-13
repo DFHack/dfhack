@@ -55,6 +55,7 @@ Template for new versions:
 
 ## New Features
 - `stockpiles`: add simple import/export dialogs to stockpile overlay panel
+- `orders`: add overlays to the manager orders screen that allow right clicks to cancel edit of quantities or condition details instead of exiting to the main screen
 
 ## Fixes
 - `preserve-rooms`: don't erroneously release reservations for units that have returned from their missions but have not yet entered the fort map
@@ -67,6 +68,7 @@ Template for new versions:
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
 - `suspendmanager`: add more specific messages for submerged jobsites and those managed by `buildingplan`
+- `dig-now`: handle digging in pool and river tiles
 
 ## Documentation
 - Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API
@@ -74,17 +76,19 @@ Template for new versions:
 ## API
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
 - ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
-- ``Translation::GenerateName``: generates in-game names, reimplemented based on DF's own logic
+- ``Translation::generateName``: generates in-game names, mirroring DF's internal logic
 
 ## Lua
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
 - ``widgets.FilteredList``: search keys for list items can now be functions that return a string
-- ``dfhack.GenerateName``: Lua API for ``Translation::GenerateName``
+- ``dfhack.translation.generateName``: Lua API for ``Translation::generateName``
 
 ## Removed
+- ``dfhack.TranslateName`` has been renamed to ``dfhack.translation.translateName``
+- ``Translation::TranslateName`` has been renamed to ``Translation::translateName``
 
 ## Internals
-- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access
+- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access without extra steps
 - Errors when unloading a plugin's DLL are now checked and reported
 
 # 50.15-r1.2

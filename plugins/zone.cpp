@@ -42,7 +42,6 @@ DFHACK_PLUGIN("zone");
 #include "modules/Buildings.h"
 #include "modules/Gui.h"
 #include "modules/Units.h"
-#include "modules/Translation.h"
 
 using std::function;
 using std::make_pair;
@@ -1898,8 +1897,7 @@ public:
 
             if (!search_string_l.empty())
             {
-                string desc = Translation::TranslateName(
-                    Units::getVisibleName(curr_unit), false);
+                string desc = Units::getReadableName(curr_unit);
 
                 desc += Units::getProfessionName(curr_unit);
                 desc = toLower_cp437(desc);

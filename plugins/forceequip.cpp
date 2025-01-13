@@ -35,8 +35,6 @@
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
 
-#include "DFHack.h"
-
 using namespace DFHack;
 using namespace df::enums;
 

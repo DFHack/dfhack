@@ -444,8 +444,13 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
             break;
         }
         case df::enums::info_interface_mode_type::WORK_ORDERS:
-            if (game->main_interface.info.work_orders.conditions.open)
+            if (game->main_interface.info.work_orders.conditions.open) {
                 newFocusString += "/Conditions";
+                if (game->main_interface.info.work_orders.conditions.change_type != df::work_order_condition_change_type::NONE)
+                    newFocusString += '/' + enum_item_key(game->main_interface.info.work_orders.conditions.change_type);
+                else
+                    newFocusString += "/Default";
+            }
             else if (game->main_interface.create_work_order.open)
                 newFocusString += "/Create";
             else

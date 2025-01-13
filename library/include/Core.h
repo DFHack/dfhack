@@ -376,8 +376,6 @@ namespace DFHack
 
         void unlock()
         {
-            if (!owns_lock())
-                return;
             /* Restore core owner to previous value */
             if (tid == std::thread::id{})
                 Lua::Core::Reset(core.getConsole(), "suspend");
@@ -386,7 +384,8 @@ namespace DFHack
         }
 
         ~CoreSuspenderBase() {
-            unlock();
+            if (owns_lock())
+                unlock();
         }
 
     protected:
@@ -438,7 +437,8 @@ namespace DFHack
 
         // note that this is needed so the destructor will call CoreSuspender::unlock instead of CoreSuspenderBase::unlock
         ~CoreSuspender() {
-            unlock();
+            if (owns_lock())
+                unlock();
         }
 
     protected:
@@ -465,8 +465,6 @@ namespace DFHack
 
         void unlock()
         {
-            if (!owns_lock())
-                return;
             parent_t::unlock();
             dec_tool_count();
         }

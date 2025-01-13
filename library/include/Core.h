@@ -465,6 +465,8 @@ namespace DFHack
 
         void unlock()
         {
+            if (!owns_lock())
+                return;
             parent_t::unlock();
             dec_tool_count();
         }

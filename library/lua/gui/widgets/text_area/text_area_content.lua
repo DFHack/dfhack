@@ -7,20 +7,10 @@ local HistoryStore = require('gui.widgets.text_area.history_store')
 local CLIPBOARD_MODE = {LOCAL = 1, LINE = 2}
 local HISTORY_ENTRY = HistoryStore.HISTORY_ENTRY
 
+OneLineWrappedText = defclass(OneLineWrappedText, WrappedText)
 
-PassthroughText = defclass(PassthroughText)
-
-function PassthroughText:init()
-end
-
-function PassthroughText:update(text)
+function OneLineWrappedText:update(text)
     self.lines = {text}
-end
-function PassthroughText:coordsToIndex(x, y)
-    return x or 1
-end
-function PassthroughText:indexToCoords(index)
-    return index or 1, 1
 end
 
 TextAreaContent = defclass(TextAreaContent, Widget)
@@ -57,7 +47,7 @@ function TextAreaContent:init()
         bold=true
     })
 
-    local TextWrapper = self.one_line_mode and PassthroughText or WrappedText
+    local TextWrapper = self.one_line_mode and OneLineWrappedText or WrappedText
     self.wrapped_text = TextWrapper{
         text=self.text,
         wrap_width=256

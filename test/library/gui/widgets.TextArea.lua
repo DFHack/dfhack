@@ -66,8 +66,8 @@ local function arrange_textarea(options)
 
     if options.w then
         local border_width = 2
-        local scrollbar_width = 3
-        local cursor_buffor = 1
+        local scrollbar_width = options.one_line_mode and 0 or 3
+        local cursor_buffor = options.one_line_mode and 0 or 1
         window_width = options.w + border_width + scrollbar_width + cursor_buffor
     end
 
@@ -90,6 +90,7 @@ local function arrange_textarea(options)
                     init_text=options.text or '',
                     init_cursor=options.cursor or 1,
                     frame={l=0,r=0,t=0,b=0},
+                    one_line_mode=options.one_line_mode,
                     on_cursor_change=options.on_cursor_change,
                     on_text_change=options.on_text_change,
                 }
@@ -3312,6 +3313,26 @@ function test.clear_undo_redo_history()
     simulate_input_keys('CUSTOM_CTRL_Z')
 
     expect.eq(read_rendered_text(text_area), text .. 'A longer text_')
+
+    screen:dismiss()
+end
+
+function test.render_new_lines_in_one_line_mode()
+    local text_area, screen, window, widget = arrange_textarea({
+        w=80,
+        one_line_mode=true
+    })
+
+    local text = table.concat({
+        'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
+        'Pellentesque dignissim volutpat orci, sed molestie metus elementum vel.',
+        'Donec sit amet mattis ligula, ac vestibulum lorem.',
+    }, '\n')
+
+    widget:setText(text)
+    widget:setCursor(1)
+
+    expect.eq(read_rendered_text(text_area), '_' .. text:sub(2, 80))
 
     screen:dismiss()
 end

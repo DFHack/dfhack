@@ -7,6 +7,22 @@ local HistoryStore = require('gui.widgets.text_area.history_store')
 local CLIPBOARD_MODE = {LOCAL = 1, LINE = 2}
 local HISTORY_ENTRY = HistoryStore.HISTORY_ENTRY
 
+
+PassthroughText = defclass(PassthroughText)
+
+function PassthroughText:init()
+end
+
+function PassthroughText:update(text)
+    self.lines = {text}
+end
+function PassthroughText:coordsToIndex(x, y)
+    return x or 1
+end
+function PassthroughText:indexToCoords(index)
+    return index or 1, 1
+end
+
 TextAreaContent = defclass(TextAreaContent, Widget)
 
 TextAreaContent.ATTRS{
@@ -41,22 +57,13 @@ function TextAreaContent:init()
         bold=true
     })
 
-    self.text = self:normalizeText(self.text)
-
-    self.wrapped_text = WrappedText{
+    local TextWrapper = self.one_line_mode and PassthroughText or WrappedText
+    self.wrapped_text = TextWrapper{
         text=self.text,
         wrap_width=256
     }
 
     self.history = HistoryStore{history_size=self.history_size}
-end
-
-function TextAreaContent:normalizeText(text)
-    if self.one_line_mode then
-        return text:gsub("\r?\n", "")
-    end
-
-    return text
 end
 
 function TextAreaContent:setRenderStartLineY(render_start_line_y)
@@ -192,7 +199,7 @@ end
 function TextAreaContent:setText(text)
     local old_text = self.text
 
-    self.text = self:normalizeText(text)
+    self.text = text
 
     self:recomputeLines()
 
@@ -212,11 +219,19 @@ function TextAreaContent:insert(text)
     self:setCursor(self.cursor + #text)
 end
 
+function TextAreaContent:normalizeLine(text_line)
+    if self.one_line_mode or self.debug then
+        return text_line
+    else
+        -- do not render new lines symbol in multiline mode
+        return text_line:gsub(NEWLINE, '')
+    end
+end
+
 function TextAreaContent:onRenderBody(dc)
     dc:pen(self.main_pen)
 
     local max_width = dc.width
-    local new_line = self.debug and NEWLINE or ''
 
     local lines_to_render = math.min(
         dc.height,
@@ -225,8 +240,7 @@ function TextAreaContent:onRenderBody(dc)
 
     dc:seek(0, self.render_start_line_y - 1)
     for i = self.render_start_line_y, self.render_start_line_y + lines_to_render - 1 do
-        -- do not render new lines symbol
-        local line = self.wrapped_text.lines[i]:gsub(NEWLINE, new_line)
+        local line = self:normalizeLine(self.wrapped_text.lines[i])
         dc:string(line)
         dc:newline()
     end
@@ -245,7 +259,6 @@ function TextAreaContent:onRenderBody(dc)
     end
 
     if self:hasSelection() then
-        local sel_new_line = self.debug and PERIOD or ''
         local from, to = self.cursor, self.sel_end
         if (from > to) then
             from, to = to, from
@@ -254,24 +267,26 @@ function TextAreaContent:onRenderBody(dc)
         local from_x, from_y = self.wrapped_text:indexToCoords(from)
         local to_x, to_y = self.wrapped_text:indexToCoords(to)
 
-        local line = self.wrapped_text.lines[from_y]
-            :sub(from_x, to_y == from_y and to_x or nil)
-            :gsub(NEWLINE, sel_new_line)
+        local line = self:normalizeLine(
+            self.wrapped_text.lines[from_y]:sub(
+                from_x, to_y == from_y and to_x or nil
+            )
+        )
 
         dc:pen(self.sel_pen)
             :seek(from_x - 1, from_y - 1)
             :string(line)
 
         for y = from_y + 1, to_y - 1 do
-            line = self.wrapped_text.lines[y]:gsub(NEWLINE, sel_new_line)
+            line = self:normalizeLine(self.wrapped_text.lines[y])
             dc:seek(0, y - 1)
                 :string(line)
         end
 
         if (to_y > from_y) then
-            local line = self.wrapped_text.lines[to_y]
-                :sub(1, to_x)
-                :gsub(NEWLINE, sel_new_line)
+            local line = self:normalizeLine(
+                self.wrapped_text.lines[to_y]:sub(1, to_x)
+            )
             dc:seek(0, to_y - 1)
                 :string(line)
         end

@@ -17,7 +17,7 @@ TextFieldArea.ATTRS{
 
 function TextFieldArea:onInput(keys)
     if self.on_char and keys._STRING and keys._STRING ~= 0 then
-        if  not self.on_char(string.char(keys._STRING), self.text) then
+        if not self.on_char(string.char(keys._STRING), self.text) then
             return self.modal
         end
     end
@@ -26,6 +26,7 @@ function TextFieldArea:onInput(keys)
         if self.key then
             self:setFocus(false)
         end
+
         if keys.SELECT_ALL then
             if self.on_submit2 then
                 self.on_submit2(self:getText())
@@ -37,6 +38,7 @@ function TextFieldArea:onInput(keys)
                 return true
             end
         end
+
         return not not self.key
     end
 

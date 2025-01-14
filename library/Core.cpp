@@ -799,30 +799,35 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                         all = true;
                 }
             }
+            auto ret = CR_OK;
             if (all)
             {
-                if (load)
-                    plug_mgr->loadAll();
-                else if (unload)
-                    plug_mgr->unloadAll();
-                else
-                    plug_mgr->reloadAll();
-                return CR_OK;
+                if (load && !plug_mgr->loadAll())
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unloadAll())
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reloadAll())
+                    ret = CR_FAILURE;
             }
             for (auto p = parts.begin(); p != parts.end(); p++)
             {
                 if (!p->size() || (*p)[0] == '-')
                     continue;
-                if (load)
-                    plug_mgr->load(*p);
-                else if (unload)
-                    plug_mgr->unload(*p);
-                else
-                    plug_mgr->reload(*p);
+                if (load && !plug_mgr->load(*p))
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unload(*p))
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reload(*p))
+                    ret = CR_FAILURE;
             }
+            if (ret != CR_OK)
+                con.printerr("%s failed\n", first.c_str());
+            return ret;
         }
-        else
+        else {
             con.printerr("%s: no arguments\n", first.c_str());
+            return CR_FAILURE;
+        }
     }
     else if( first == "enable" || first == "disable" )
     {

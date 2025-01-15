@@ -1343,6 +1343,7 @@ static string getArchitectureName()
 
 static string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
 static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
+static uint32_t getCurSaveDur() { return Persistence::getSaveDur(); }
 
 static string getDFPath() { return Core::getInstance().p->getPath(); }
 static string getHackPath() { return Core::getInstance().getHackPath(); }
@@ -1370,6 +1371,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getDFVersion),
     WRAP(getDFPath),
     WRAP(getTickCount),
+    WRAP(getCurSaveDur),
     WRAP(getHackPath),
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),

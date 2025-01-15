@@ -49,6 +49,8 @@ using namespace DFHack;
 static std::unordered_map<int, std::multimap<std::string, std::shared_ptr<Persistence::DataEntry>>> store;
 static std::unordered_map<size_t, std::shared_ptr<Persistence::DataEntry>> entry_cache;
 
+static uint32_t lastTickCount = 0;
+
 size_t next_entry_id = 0;   // goes more positive
 int next_fake_df_id = -101; // goes more negative
 
@@ -198,6 +200,7 @@ void Persistence::Internal::save(color_ostream& out) {
     CoreSuspender suspend;
 
     // write status
+    lastTickCount = Core::getInstance().p->getTickCount();
     {
         auto file = std::ofstream(getSaveFilePath("current", "status"));
         file << "DF version:  " << core.p->getDescriptor()->getVersion() << std::endl;
@@ -307,6 +310,7 @@ void Persistence::Internal::load(color_ostream& out) {
     }
 
     if (found)
+        lastTickCount = Core::getInstance().p->getTickCount();
         return;
 
     // new file formats not found; attempt to load legacy file
@@ -416,4 +420,9 @@ void Persistence::getAllByKey(std::vector<PersistentDataItem> &vec, int entity_i
     auto range = store[entity_id].equal_range(key);
     for (auto it = range.first; it != range.second; ++it)
         vec.emplace_back(it->second);
+}
+
+uint32_t Persistence::getSaveDur() {
+    uint32_t durMS =  Core::getInstance().p->getTickCount() - lastTickCount;
+    return durMS / (60 * 1000);
 }

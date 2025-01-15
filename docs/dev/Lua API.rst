@@ -771,6 +771,10 @@ arbitrary Lua tables.
   Same semantics as for the ``Site`` functions, but will associated the data
   with the global world context.
 
+* ``dfhack.persistent.getUnsavedSecs()``
+
+  Returns the number of seconds since last save or load of a save
+
 The data is kept in memory, so no I/O occurs when getting or saving keys. It is
 all written to a json file in the game save directory when the game is saved.
 

@@ -353,6 +353,11 @@ static int dfhack_persistent_delete_world_data(lua_State *L) {
     return delete_site_data(L, get_world_data);
 }
 
+static int dfhack_persistent_get_last_save_time(lua_State *L) {
+    lua_pushinteger(L, Persistence::getUnsavedSeconds());
+    return 1;
+}
+
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "getSiteDataString", dfhack_persistent_get_site_data_string },
     { "saveSiteDataString", dfhack_persistent_save_site_data_string },
@@ -360,6 +365,7 @@ static const luaL_Reg dfhack_persistent_funcs[] = {
     { "getWorldDataString", dfhack_persistent_get_world_data_string },
     { "saveWorldDataString", dfhack_persistent_save_world_data_string },
     { "deleteWorldData", dfhack_persistent_delete_world_data },
+    { "getUnsavedSecs", dfhack_persistent_get_last_save_time },
     { NULL, NULL }
 };
 
@@ -1343,7 +1349,7 @@ static string getArchitectureName()
 
 static string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
 static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
-static uint32_t getCurSaveDur() { return Persistence::getSaveDur(); }
+static uint32_t getCurSaveDur() { return Persistence::getUnsavedSeconds(); }
 
 static string getDFPath() { return Core::getInstance().p->getPath(); }
 static string getHackPath() { return Core::getInstance().getHackPath(); }

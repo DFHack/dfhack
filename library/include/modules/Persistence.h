@@ -213,7 +213,7 @@ namespace DFHack
         // Fills the vector with references to each persistent item with a key that is
         // equal to the given key.
         DFHACK_EXPORT void getAllByKey(std::vector<PersistentDataItem> &vec, int entity_id, const std::string &key);
-        // Returns the tickcount of the most recent save.
+        // Returns the number of seconds since the current savegame was saved or loaded.
         DFHACK_EXPORT uint32_t getUnsavedSeconds();
     }
 }

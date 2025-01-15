@@ -239,6 +239,7 @@ void Persistence::Internal::save(color_ostream& out) {
         color_ostream_wrapper wrapper(file);
         Lua::CallLuaModuleFunction(wrapper, "script-manager", "print_timers");
     }
+
     lastLoadSaveTickCount = Core::getInstance().p->getTickCount();
 }
 
@@ -424,5 +425,5 @@ void Persistence::getAllByKey(std::vector<PersistentDataItem> &vec, int entity_i
 
 uint32_t Persistence::getUnsavedSeconds() {
     uint32_t durMS =  Core::getInstance().p->getTickCount() - lastLoadSaveTickCount;
-    return durMS / (1000);
+    return durMS / 1000;
 }

@@ -365,7 +365,7 @@ static const luaL_Reg dfhack_persistent_funcs[] = {
     { "getWorldDataString", dfhack_persistent_get_world_data_string },
     { "saveWorldDataString", dfhack_persistent_save_world_data_string },
     { "deleteWorldData", dfhack_persistent_delete_world_data },
-    { "getUnsavedSecs", dfhack_persistent_get_last_save_time },
+    { "getUnsavedSeconds", dfhack_persistent_get_last_save_time },
     { NULL, NULL }
 };
 

@@ -191,6 +191,12 @@ static std::string getSaveFilePath(const std::string &world, const std::string &
     return getSavePath(world) + "/dfhack-" + filterSaveFileName(name) + ".dat";
 }
 
+struct LastLoadSaveTickCountUpdater {
+    ~LastLoadSaveTickCountUpdater() {
+        lastLoadSaveTickCount = Core::getInstance().p->getTickCount();
+    }
+};
+
 void Persistence::Internal::save(color_ostream& out) {
     Core &core = Core::getInstance();
 
@@ -198,6 +204,7 @@ void Persistence::Internal::save(color_ostream& out) {
         return;
 
     CoreSuspender suspend;
+    LastLoadSaveTickCountUpdater tickCountUpdater;
 
     // write status
     {
@@ -240,7 +247,6 @@ void Persistence::Internal::save(color_ostream& out) {
         Lua::CallLuaModuleFunction(wrapper, "script-manager", "print_timers");
     }
 
-    lastLoadSaveTickCount = Core::getInstance().p->getTickCount();
 }
 
 static bool get_entity_id(const std::string & fname, int & entity_id) {
@@ -287,6 +293,7 @@ static bool load_file(const std::string & path, int entity_id) {
 
 void Persistence::Internal::load(color_ostream& out) {
     CoreSuspender suspend;
+    LastLoadSaveTickCountUpdater tickCountUpdater;
 
     clear(out);
 
@@ -310,7 +317,6 @@ void Persistence::Internal::load(color_ostream& out) {
             out.printerr("Cannot load data from: '%s'\n", path.c_str());
     }
 
-    lastLoadSaveTickCount = Core::getInstance().p->getTickCount();
     if (found)
         return;
 

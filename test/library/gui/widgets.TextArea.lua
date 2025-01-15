@@ -3,6 +3,8 @@ local widgets = require('gui.widgets')
 
 config.target = 'core'
 
+local CP437_NEW_LINE = '◙'
+
 local function simulate_input_keys(...)
     local keys = {...}
     for _,key in ipairs(keys) do
@@ -124,7 +126,7 @@ local function read_rendered_text(text_area)
             if pen == nil or pen.ch == nil or pen.ch == 0 or pen.fg == 0 then
                 break
             else
-                text = text .. string.char(pen.ch)
+                text = text .. (pen.ch == 10 and CP437_NEW_LINE or string.char(pen.ch))
             end
         end
 
@@ -3323,16 +3325,74 @@ function test.render_new_lines_in_one_line_mode()
         one_line_mode=true
     })
 
-    local text = table.concat({
-        'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        'Pellentesque dignissim volutpat orci, sed molestie metus elementum vel.',
-        'Donec sit amet mattis ligula, ac vestibulum lorem.',
-    }, '\n')
+    local text_table = {
+        'Lorem ipsum dolor sit amet, ',
+        'consectetur adipiscing elit.',
+    }
+
+    widget:setText(table.concat(text_table, '\n'))
+
+    widget:setCursor(1)
+
+    expect.eq(read_rendered_text(text_area), '_' .. table.concat(text_table, CP437_NEW_LINE):sub(2))
+
+    widget:setText('')
+    simulate_input_text(' test')
+    simulate_input_text('\n')
+    simulate_input_text(' test')
+
+    expect.eq(
+        read_rendered_text(text_area),
+        ' test' .. CP437_NEW_LINE .. ' test' .. '_'
+    )
+
+    screen:dismiss()
+end
+
+function test.should_ignore_submit_in_one_line_mode()
+    local text_area, screen, window, widget = arrange_textarea({
+        w=80,
+        one_line_mode=true
+    })
+
+    local text = 'Lorem ipsum dolor sit amet'
 
     widget:setText(text)
+
+    widget:setCursor(1)
+
+    simulate_input_keys('SELECT')
+
+    expect.eq(read_rendered_text(text_area), '_' .. text:sub(2))
+
+    screen:dismiss()
+end
+
+function test.should_scroll_horizontally_in_one_line_mode()
+    local text_area, screen, window, widget = arrange_textarea({
+        w=80,
+        one_line_mode=true
+    })
+
+    local text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque dignissim volutpat orci, sed'
+
+    widget:setText(text)
+
     widget:setCursor(1)
 
     expect.eq(read_rendered_text(text_area), '_' .. text:sub(2, 80))
+
+    widget:setCursor(81)
+
+    expect.eq(read_rendered_text(text_area), text:sub(2, 80) .. '_')
+
+    widget:setCursor(90)
+
+    expect.eq(read_rendered_text(text_area), text:sub(11, 89) .. '_')
+
+    widget:setCursor(2)
+
+    expect.eq(read_rendered_text(text_area), '_' .. text:sub(3, 81))
 
     screen:dismiss()
 end

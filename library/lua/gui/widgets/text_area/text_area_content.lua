@@ -570,12 +570,13 @@ end
 function TextAreaContent:onTextManipulationInput(keys)
     if keys.SELECT then
         -- handle enter
+        self.history:store(
+            HISTORY_ENTRY.WHITESPACE_BLOCK,
+            self.text,
+            self.cursor
+        )
+
         if not self.one_line_mode then
-            self.history:store(
-                HISTORY_ENTRY.WHITESPACE_BLOCK,
-                self.text,
-                self.cursor
-            )
             self:insert(NEWLINE)
         end
 

@@ -3,8 +3,15 @@ local utils = require('utils')
 local Widget = require('gui.widgets.widget')
 local HotkeyLabel = require('gui.widgets.labels.hotkey_label')
 local TextArea = require('gui.widgets.text_area')
+local WrappedText = require('gui.widgets.text_area.wrapped_text')
 
 local getval = utils.getval
+
+OneLineWrappedText = defclass(OneLineWrappedText, WrappedText)
+
+function OneLineWrappedText:update(text)
+    self.lines = {text}
+end
 
 TextFieldArea = defclass(TextFieldArea, TextArea)
 TextFieldArea.ATTRS{

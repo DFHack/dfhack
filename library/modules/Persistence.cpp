@@ -49,6 +49,8 @@ using namespace DFHack;
 static std::unordered_map<int, std::multimap<std::string, std::shared_ptr<Persistence::DataEntry>>> store;
 static std::unordered_map<size_t, std::shared_ptr<Persistence::DataEntry>> entry_cache;
 
+static uint32_t lastLoadSaveTickCount = 0;
+
 size_t next_entry_id = 0;   // goes more positive
 int next_fake_df_id = -101; // goes more negative
 
@@ -189,6 +191,12 @@ static std::string getSaveFilePath(const std::string &world, const std::string &
     return getSavePath(world) + "/dfhack-" + filterSaveFileName(name) + ".dat";
 }
 
+struct LastLoadSaveTickCountUpdater {
+    ~LastLoadSaveTickCountUpdater() {
+        lastLoadSaveTickCount = Core::getInstance().p->getTickCount();
+    }
+};
+
 void Persistence::Internal::save(color_ostream& out) {
     Core &core = Core::getInstance();
 
@@ -196,6 +204,7 @@ void Persistence::Internal::save(color_ostream& out) {
         return;
 
     CoreSuspender suspend;
+    LastLoadSaveTickCountUpdater tickCountUpdater;
 
     // write status
     {
@@ -237,6 +246,7 @@ void Persistence::Internal::save(color_ostream& out) {
         color_ostream_wrapper wrapper(file);
         Lua::CallLuaModuleFunction(wrapper, "script-manager", "print_timers");
     }
+
 }
 
 static bool get_entity_id(const std::string & fname, int & entity_id) {
@@ -283,6 +293,7 @@ static bool load_file(const std::string & path, int entity_id) {
 
 void Persistence::Internal::load(color_ostream& out) {
     CoreSuspender suspend;
+    LastLoadSaveTickCountUpdater tickCountUpdater;
 
     clear(out);
 
@@ -416,4 +427,9 @@ void Persistence::getAllByKey(std::vector<PersistentDataItem> &vec, int entity_i
     auto range = store[entity_id].equal_range(key);
     for (auto it = range.first; it != range.second; ++it)
         vec.emplace_back(it->second);
+}
+
+uint32_t Persistence::getUnsavedSeconds() {
+    uint32_t durMS =  Core::getInstance().p->getTickCount() - lastLoadSaveTickCount;
+    return durMS / 1000;
 }

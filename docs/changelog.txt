@@ -77,11 +77,13 @@ Template for new versions:
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
 - ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
 - ``Translation::generateName``: generates in-game names, mirroring DF's internal logic
+- ``Persistence::getUnsavedSeconds``: returns the number of seconds since last save or last load
 
 ## Lua
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
 - ``widgets.FilteredList``: search keys for list items can now be functions that return a string
 - ``dfhack.translation.generateName``: Lua API for ``Translation::generateName``
+- ``dfhack.persistent.getUnsavedSeconds``: Lua API for ``Persistence::getUnsavedSeconds``
 
 ## Removed
 - ``dfhack.TranslateName`` has been renamed to ``dfhack.translation.translateName``

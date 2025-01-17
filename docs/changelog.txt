@@ -54,6 +54,22 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.15-r2
+
+## New Features
 - `stockpiles`: add simple import/export dialogs to stockpile overlay panel
 - `orders`: add transparent overlays to the manager orders screen that allow right clicks to cancel edit of quantities or condition details instead of exiting to the main screen
 

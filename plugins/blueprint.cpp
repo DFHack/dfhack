@@ -1106,13 +1106,13 @@ static const char * get_tile_place(const df::coord &pos,
 
 static const char * get_zone_keys(const df::building_civzonest *zone) {
     static const uint32_t DEFAULT_GATHER_FLAGS =
-            df::building_civzonest::T_gather_flags::mask_pick_trees |
-            df::building_civzonest::T_gather_flags::mask_pick_shrubs |
-            df::building_civzonest::T_gather_flags::mask_gather_fallen;
+            df::building_civzonest::T_zone_settings::T_gather::T_flags::pick_trees |
+            df::building_civzonest::T_zone_settings::T_gather::T_flags::pick_shrubs |
+            df::building_civzonest::T_zone_settings::T_gather::T_flags::gather_fallen;
     static const df::hospital_supplies DEFAULT_HOSPITAL;
 
     ostringstream keys;
-    const df::building_civzonest::T_zone_flags &flags = zone->zone_flags;
+    const df::building_civzonest::T_zone_settings &flags = zone->zone_settings;
 
     // inverted logic for Active since it's on by default
     if (!flags.bits.active) keys << 'a';

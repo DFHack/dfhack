@@ -98,7 +98,7 @@ function TextAreaContent:setCursor(cursor_offset)
 end
 
 function TextAreaContent:setSelection(from_offset, to_offset)
-    -- text selection is always start on self.cursor and on self.sel_end
+    -- text selection is always start on self.cursor and end on self.sel_end
     self:setCursor(from_offset)
     self.sel_end = to_offset
 
@@ -512,10 +512,20 @@ end
 
 function TextAreaContent:onCursorInput(keys)
     if keys.KEYBOARD_CURSOR_LEFT then
-        self:setCursor(self.cursor - 1)
+        if self:hasSelection() then
+            self:setCursor(math.min(self.cursor, self.sel_end))
+        else
+            self:setCursor(self.cursor - 1)
+        end
+
         return true
     elseif keys.KEYBOARD_CURSOR_RIGHT then
-        self:setCursor(self.cursor + 1)
+        if self:hasSelection() then
+            self:setCursor(math.max(self.cursor, self.sel_end))
+        else
+            self:setCursor(self.cursor + 1)
+        end
+
         return true
     elseif keys.KEYBOARD_CURSOR_UP and not self.one_line_mode then
         local x, y = self.wrapped_text:indexToCoords(self.cursor)

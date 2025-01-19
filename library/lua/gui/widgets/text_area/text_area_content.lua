@@ -517,7 +517,7 @@ function TextAreaContent:onCursorInput(keys)
     elseif keys.KEYBOARD_CURSOR_RIGHT then
         self:setCursor(self.cursor + 1)
         return true
-    elseif keys.KEYBOARD_CURSOR_UP then
+    elseif keys.KEYBOARD_CURSOR_UP and not self.one_line_mode then
         local x, y = self.wrapped_text:indexToCoords(self.cursor)
         local last_cursor_x = self.last_cursor_x or x
         local offset = y > 1 and
@@ -526,7 +526,7 @@ function TextAreaContent:onCursorInput(keys)
         self:setCursor(offset)
         self.last_cursor_x = last_cursor_x
         return true
-    elseif keys.KEYBOARD_CURSOR_DOWN then
+    elseif keys.KEYBOARD_CURSOR_DOWN and not self.one_line_mode then
         local x, y = self.wrapped_text:indexToCoords(self.cursor)
         local last_cursor_x = self.last_cursor_x or x
         local offset = y < #self.wrapped_text.lines and

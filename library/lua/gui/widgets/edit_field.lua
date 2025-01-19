@@ -132,8 +132,6 @@ function EditField:init()
         on_focus = self.on_focus,
         on_unfocus = self.on_unfocus,
         ignore_keys={
-            'KEYBOARD_CURSOR_UP',
-            'KEYBOARD_CURSOR_DOWN',
             table.unpack(self.ignore_keys)
         },
         on_text_change=self:callback('onTextAreaTextChange'),

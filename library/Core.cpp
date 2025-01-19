@@ -419,9 +419,6 @@ bool is_builtin(color_ostream &con, const std::string &command) {
 }
 
 void get_commands(color_ostream &con, std::vector<std::string> &commands) {
-#ifdef LINUX_BUILD
-    CoreSuspender suspend;
-#else
     ConditionalCoreSuspender suspend{};
 
     if (!suspend) {
@@ -429,7 +426,6 @@ void get_commands(color_ostream &con, std::vector<std::string> &commands) {
         commands.clear();
         return;
     }
-#endif
 
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
@@ -630,16 +626,12 @@ static std::string sc_event_name (state_change_event id) {
 }
 
 void help_helper(color_ostream &con, const std::string &entry_name) {
-#ifdef LINUX_BUILD
-    CoreSuspender suspend;
-#else
     ConditionalCoreSuspender suspend{};
 
     if (!suspend) {
         con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
         return;
     }
-#endif
 
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
@@ -658,16 +650,12 @@ void help_helper(color_ostream &con, const std::string &entry_name) {
 }
 
 void tags_helper(color_ostream &con, const std::string &tag) {
-#ifdef LINUX_BUILD
-    CoreSuspender suspend;
-#else
     ConditionalCoreSuspender suspend{};
 
     if (!suspend) {
         con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
         return;
     }
-#endif
 
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
@@ -705,16 +693,12 @@ void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
             filter.push_back(str);
     }
 
-#ifdef LINUX_BUILD
-    CoreSuspender suspend;
-#else
     ConditionalCoreSuspender suspend{};
 
     if (!suspend) {
         con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
         return;
     }
-#endif
 
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
@@ -815,30 +799,35 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                         all = true;
                 }
             }
+            auto ret = CR_OK;
             if (all)
             {
-                if (load)
-                    plug_mgr->loadAll();
-                else if (unload)
-                    plug_mgr->unloadAll();
-                else
-                    plug_mgr->reloadAll();
-                return CR_OK;
+                if (load && !plug_mgr->loadAll())
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unloadAll())
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reloadAll())
+                    ret = CR_FAILURE;
             }
             for (auto p = parts.begin(); p != parts.end(); p++)
             {
                 if (!p->size() || (*p)[0] == '-')
                     continue;
-                if (load)
-                    plug_mgr->load(*p);
-                else if (unload)
-                    plug_mgr->unload(*p);
-                else
-                    plug_mgr->reload(*p);
+                if (load && !plug_mgr->load(*p))
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unload(*p))
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reload(*p))
+                    ret = CR_FAILURE;
             }
+            if (ret != CR_OK)
+                con.printerr("%s failed\n", first.c_str());
+            return ret;
         }
-        else
+        else {
             con.printerr("%s: no arguments\n", first.c_str());
+            return CR_FAILURE;
+        }
     }
     else if( first == "enable" || first == "disable" )
     {

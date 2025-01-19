@@ -353,6 +353,11 @@ static int dfhack_persistent_delete_world_data(lua_State *L) {
     return delete_site_data(L, get_world_data);
 }
 
+static int dfhack_persistent_get_unsaved_seconds(lua_State *L) {
+    lua_pushinteger(L, Persistence::getUnsavedSeconds());
+    return 1;
+}
+
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "getSiteDataString", dfhack_persistent_get_site_data_string },
     { "saveSiteDataString", dfhack_persistent_save_site_data_string },
@@ -360,6 +365,7 @@ static const luaL_Reg dfhack_persistent_funcs[] = {
     { "getWorldDataString", dfhack_persistent_get_world_data_string },
     { "saveWorldDataString", dfhack_persistent_save_world_data_string },
     { "deleteWorldData", dfhack_persistent_delete_world_data },
+    { "getUnsavedSeconds", dfhack_persistent_get_unsaved_seconds },
     { NULL, NULL }
 };
 
@@ -1374,8 +1380,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
     WRAP(isSiteLoaded),
-    WRAPM(Translation, TranslateName),
-    WRAPM(Translation, GenerateName),
+    WRAPN(Translation, Translation::translateName), // left for backward compatibility
     WRAP(df2utf),
     WRAP(utf2df),
     WRAP(df2console),
@@ -1402,6 +1407,14 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 
 static const luaL_Reg dfhack_funcs[] = {
     { "getCommandHistory", getCommandHistory },
+    { NULL, NULL }
+};
+
+/***** Translation module *****/
+
+static const LuaWrapper::FunctionReg dfhack_translation_module[] = {
+    WRAPM(Translation, translateName),
+    WRAPM(Translation, generateName),
     { NULL, NULL }
 };
 
@@ -4248,6 +4261,7 @@ void OpenDFHackApi(lua_State *state)
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     luaL_setfuncs(state, dfhack_funcs, 0);
+    OpenModule(state, "translation", dfhack_translation_module);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "textures", dfhack_textures_funcs);

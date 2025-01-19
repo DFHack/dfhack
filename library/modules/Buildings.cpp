@@ -278,24 +278,6 @@ uint32_t Buildings::getNumBuildings()
     return world->buildings.all.size();
 }
 
-bool Buildings::Read (const uint32_t index, t_building & building)
-{
-    df::building *bld = world->buildings.all[index];
-
-    building.x1 = bld->x1;
-    building.x2 = bld->x2;
-    building.y1 = bld->y1;
-    building.y2 = bld->y2;
-    building.z = bld->z;
-    building.material.index = bld->mat_index;
-    building.material.type = bld->mat_type;
-    building.type = bld->getType();
-    building.subtype = bld->getSubtype();
-    building.custom_type = bld->getCustomType();
-    building.origin = bld;
-    return true;
-}
-
 bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
 {
     vector <building_def *> & bld_def = world->raws.buildings.all;

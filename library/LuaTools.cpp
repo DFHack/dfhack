@@ -41,7 +41,6 @@ distribution.
 #include "modules/Gui.h"
 #include "modules/Job.h"
 #include "modules/Screen.h"
-#include "modules/Translation.h"
 #include "modules/Units.h"
 
 #include "df/building.h"

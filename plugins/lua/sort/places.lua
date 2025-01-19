@@ -93,7 +93,7 @@ local function get_zone_search_key(zone)
         if success and building.name then
             table.insert(result, language_name_types[building.name.type] or '')
             if building.name.has_name then
-                table.insert(result, dfhack.TranslateName(building.name, true))
+                table.insert(result, dfhack.translation.translateName(building.name, true))
             end
         end
     end
@@ -115,7 +115,7 @@ local function get_location_search_key(zone)
     if success and building.name then
         table.insert(result, language_name_types[building.name.type] or '')
         if building.name.has_name then
-            table.insert(result, dfhack.TranslateName(building.name, true))
+            table.insert(result, dfhack.translation.translateName(building.name, true))
         end
 
         -- for temples and guildhalls, get assigned organization

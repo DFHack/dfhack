@@ -771,6 +771,10 @@ arbitrary Lua tables.
   Same semantics as for the ``Site`` functions, but will associated the data
   with the global world context.
 
+* ``dfhack.persistent.getUnsavedSeconds()``
+
+  Returns the number of seconds since last save or load of a save.
+
 The data is kept in memory, so no I/O occurs when getting or saving keys. It is
 all written to a json file in the game save directory when the game is saved.
 
@@ -949,14 +953,6 @@ can be omitted.
 
   Checks if a site (e.g., a player fort) is loaded.
 
-* ``dfhack.TranslateName(name[,in_english[,only_last_name]])``
-
-  Convert a ``df.language_name`` (or only the last name part) to string.
-
-* ``dfhack.GenerateName(name,language,type,major_selector,minor_selector)``
-
-  Dynamically generate a name using the same logic the game itself uses.
-
 * ``dfhack.df2utf(string)``
 
   Convert a string from DF's CP437 encoding to UTF-8.
@@ -969,8 +965,8 @@ can be omitted.
 .. warning::
 
   When printing CP437-encoded text to the console (for example, names returned
-  from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
-  ensure proper display on all platforms.
+  from ``dfhack.units.getReadableName()``), use
+  ``print(dfhack.df2console(text))`` to ensure proper display on all platforms.
 
 * ``dfhack.utf2df(string)``
 
@@ -1037,6 +1033,17 @@ can be omitted.
   Similar to ``run_command()``, but instead of printing to the console,
   returns an ``output, command_result`` pair. ``output`` is a single string -
   see ``dfhack.internal.runCommand()`` to obtain colors as well.
+
+Translation module
+------------------
+
+* ``dfhack.translation.translateName(name[,in_english[,only_last_name]])``
+
+  Convert a ``df.language_name`` (or only the last name part) to string.
+
+* ``dfhack.translation.generateName(name,language,type,major_selector,minor_selector)``
+
+  Dynamically generate a name using the same logic the game itself uses.
 
 Gui module
 ----------

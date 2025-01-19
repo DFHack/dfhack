@@ -25,9 +25,6 @@ jobs:
             structures_ref: adv-beta
             dfhack_ref: adv-beta
             steam_branch: adventure-beta
-          - df_steam_branch: testing
-            structures_ref: testing
-            dfhack_ref: testing
     steps:
     - name: Fetch state
       uses: actions/cache/restore@v4

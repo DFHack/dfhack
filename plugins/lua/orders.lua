@@ -69,6 +69,8 @@ local function do_recheck()
     dfhack.run_command('orders', 'recheck')
 end
 
+local mi = df.global.game.main_interface
+
 OrdersOverlay = defclass(OrdersOverlay, overlay.OverlayWidget)
 OrdersOverlay.ATTRS{
     desc='Adds import, export, and other functions to the manager orders screen.',
@@ -161,7 +163,7 @@ function OrdersOverlay:init()
 end
 
 function OrdersOverlay:onInput(keys)
-    if df.global.game.main_interface.job_details.open then return end
+    if mi.job_details.open then return end
     if keys.CUSTOM_ALT_M then
         self.minimized = not self.minimized
         return true
@@ -172,14 +174,14 @@ function OrdersOverlay:onInput(keys)
 end
 
 function OrdersOverlay:render(dc)
-    if df.global.game.main_interface.job_details.open then return end
+    if mi.job_details.open then return end
     OrdersOverlay.super.render(self, dc)
 end
 
 -- Resets the selected work order to the `Checking` state
 
 local function set_current_inactive()
-    local scrConditions = df.global.game.main_interface.info.work_orders.conditions
+    local scrConditions = mi.info.work_orders.conditions
     if scrConditions.open then
         dfhack.run_command('orders', 'recheck', 'this')
     else
@@ -188,7 +190,7 @@ local function set_current_inactive()
 end
 
 local function can_recheck()
-    local scrConditions = df.global.game.main_interface.info.work_orders.conditions
+    local scrConditions = mi.info.work_orders.conditions
     local order = scrConditions.wq
     return order.status.active and #order.item_conditions > 0
 end
@@ -197,7 +199,7 @@ end
 -- RecheckOverlay
 --
 
-local focusString = 'dwarfmode/Info/WORK_ORDERS/Conditions'
+local focusString = 'dwarfmode/Info/WORK_ORDERS/Conditions/Default'
 
 RecheckOverlay = defclass(RecheckOverlay, overlay.OverlayWidget)
 RecheckOverlay.ATTRS{
@@ -413,7 +415,7 @@ end
 
 function SkillRestrictionOverlay:onInput(keys)
     if can_set_skill_level() and
-        not df.global.game.main_interface.view_sheets.building_entering_nickname
+        not mi.view_sheets.building_entering_nickname
     then
         return SkillRestrictionOverlay.super.onInput(self, keys)
     end
@@ -635,9 +637,75 @@ end
 
 function LaborRestrictionsOverlay:onInput(keys)
     if can_set_labors() and
-        not df.global.game.main_interface.view_sheets.building_entering_nickname
+        not mi.view_sheets.building_entering_nickname
     then
         return LaborRestrictionsOverlay.super.onInput(self, keys)
+    end
+end
+
+---
+--- ConditionsRightClickOverlay
+---
+
+ConditionsRightClickOverlay = defclass(ConditionsRightClickOverlay, overlay.OverlayWidget)
+ConditionsRightClickOverlay.ATTRS{
+    desc='When adjusting condition details, makes right click cancel selection instead of exiting.',
+    default_enabled=true,
+    fullscreen=true,
+    viewscreens={
+        'dwarfmode/Info/WORK_ORDERS/Conditions/TYPE',
+        'dwarfmode/Info/WORK_ORDERS/Conditions/MATERIAL',
+        'dwarfmode/Info/WORK_ORDERS/Conditions/ADJECTIVE',
+        },
+}
+
+function ConditionsRightClickOverlay:onInput(keys)
+    if keys._MOUSE_R or keys.LEAVESCREEN then
+        mi.info.work_orders.conditions.change_type = df.work_order_condition_change_type.NONE
+        return true
+    end
+end
+
+---
+--- ConditionsQuantityRightClickOverlay
+---
+
+ConditionsQuantityRightClickOverlay = defclass(ConditionsQuantityRightClickOverlay, overlay.OverlayWidget)
+ConditionsQuantityRightClickOverlay.ATTRS{
+    desc='When adjusting condition quantities, makes right click cancel selection instead of exiting.',
+    default_enabled=true,
+    fullscreen=true,
+    viewscreens='dwarfmode/Info/WORK_ORDERS/Conditions/Default',
+}
+
+function ConditionsQuantityRightClickOverlay:onInput(keys)
+    if mi.info.work_orders.conditions.entering_logic_number and (keys._MOUSE_R or keys.LEAVESCREEN) then
+        mi.info.work_orders.conditions.entering_logic_number = false
+        return true
+    end
+end
+
+---
+--- QuantityRightClickOverlay
+---
+
+QuantityRightClickOverlay = defclass(QuantityRightClickOverlay, overlay.OverlayWidget)
+QuantityRightClickOverlay.ATTRS{
+    desc='When adjusting order quantity details, makes right click cancel selection instead of exiting.',
+    default_enabled=true,
+    fullscreen=true,
+    viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
+}
+
+function QuantityRightClickOverlay:onInput(keys)
+    if keys._MOUSE_R or keys.LEAVESCREEN then
+        if mi.info.work_orders.entering_number then
+            mi.info.work_orders.entering_number = false
+            return true
+        elseif mi.info.work_orders.b_entering_number then
+            mi.info.work_orders.b_entering_number = false
+            return true
+        end
     end
 end
 
@@ -648,6 +716,9 @@ OVERLAY_WIDGETS = {
     importexport=OrdersOverlay,
     skillrestrictions=SkillRestrictionOverlay,
     laborrestrictions=LaborRestrictionsOverlay,
+    conditionsrightclick=ConditionsRightClickOverlay,
+    conditionsquantityrightclick=ConditionsQuantityRightClickOverlay,
+    quantityrightclick=QuantityRightClickOverlay,
 }
 
 return _ENV

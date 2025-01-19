@@ -234,17 +234,8 @@ function pickUniqueTargets(reachable)
     return unique
 end
 
-function describeUnit(unit)
-    local desc = dfhack.units.getProfessionName(unit)
-    local name = dfhack.units.getVisibleName(unit)
-    if name.has_name then
-        return desc .. ' ' .. dfhack.TranslateName(name)
-    end
-    return desc
-end
-
 function produceCombatReport(operator, item, target)
-    local msg = describeUnit(operator) .. ' launches ' ..
+    local msg = dfhack.units.getReadableName(operator) .. ' launches ' ..
                 utils.getItemDescriptionPrefix(item) ..
                 utils.getItemDescription(item) ..
                 ' at '

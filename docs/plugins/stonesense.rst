@@ -78,9 +78,6 @@ line containing that folder, or :dffd:`use these smaller sprites <6096>`.
 Stonesense requires working graphics acceleration, and we recommend
 at least a dual core CPU to avoid slowing down your game of DF.
 
-If you are on Windows, you may find that using OpenGL runs better and more stable.
-Simply open :file:`dfhack-config/stonesense/init.txt` and set the renderer to ``[RENDERER:OPENGL]``
-
 Yellow Cubes and Missing Sprites
 --------------------------------
 If you are seeing yellow cubes in Stonesense, that is simply things we don't have sprites for.

@@ -54,8 +54,24 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 50.15-r2
+
+## New Features
 - `stockpiles`: add simple import/export dialogs to stockpile overlay panel
-- `orders`: add overlays to the manager orders screen that allow right clicks to cancel edit of quantities or condition details instead of exiting to the main screen
+- `orders`: add transparent overlays to the manager orders screen that allow right clicks to cancel edit of quantities or condition details instead of exiting to the main screen
 
 ## Fixes
 - `preserve-rooms`: don't erroneously release reservations for units that have returned from their missions but have not yet entered the fort map
@@ -67,7 +83,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
-- `suspendmanager`: add more specific messages for submerged jobsites and those managed by `buildingplan`
+- `suspendmanager`: add more specific messages for submerged job sites and those managed by `buildingplan`
 - `dig-now`: handle digging in pool and river tiles
 
 ## Documentation
@@ -77,15 +93,16 @@ Template for new versions:
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
 - ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
 - ``Translation::generateName``: generates in-game names, mirroring DF's internal logic
+- ``Persistence::getUnsavedSeconds``: returns the number of seconds since last save or load
 
 ## Lua
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
 - ``widgets.FilteredList``: search keys for list items can now be functions that return a string
 - ``dfhack.translation.generateName``: Lua API for ``Translation::generateName``
+- ``dfhack.persistent.getUnsavedSeconds``: Lua API for ``Persistence::getUnsavedSeconds``
 
 ## Removed
 - ``dfhack.TranslateName`` has been renamed to ``dfhack.translation.translateName``
-- ``Translation::TranslateName`` has been renamed to ``Translation::translateName``
 
 ## Internals
 - Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access without extra steps

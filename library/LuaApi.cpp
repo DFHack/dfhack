@@ -353,6 +353,11 @@ static int dfhack_persistent_delete_world_data(lua_State *L) {
     return delete_site_data(L, get_world_data);
 }
 
+static int dfhack_persistent_get_unsaved_seconds(lua_State *L) {
+    lua_pushinteger(L, Persistence::getUnsavedSeconds());
+    return 1;
+}
+
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "getSiteDataString", dfhack_persistent_get_site_data_string },
     { "saveSiteDataString", dfhack_persistent_save_site_data_string },
@@ -360,6 +365,7 @@ static const luaL_Reg dfhack_persistent_funcs[] = {
     { "getWorldDataString", dfhack_persistent_get_world_data_string },
     { "saveWorldDataString", dfhack_persistent_save_world_data_string },
     { "deleteWorldData", dfhack_persistent_delete_world_data },
+    { "getUnsavedSeconds", dfhack_persistent_get_unsaved_seconds },
     { NULL, NULL }
 };
 

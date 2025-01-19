@@ -93,6 +93,7 @@ Useful links
 ------------
 - Report issues on `Github <https://github.com/DFHack/stonesense/issues>`_
 - `support`
+- `Stonesense Subreddit <https://www.reddit.com/r/stonesense/>`_
 - :forums:`Official Stonesense thread <106497>`
 - :forums:`Screenshots thread <48172>`
 - :wiki:`Main wiki page <Utility:Stonesense>`

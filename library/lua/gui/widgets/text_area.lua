@@ -197,6 +197,10 @@ function TextArea:onInput(keys)
         self:setFocus(true)
     end
 
+    if not self.focus then
+        return false
+    end
+
     return TextArea.super.onInput(self, keys)
 end
 

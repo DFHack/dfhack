@@ -24,7 +24,7 @@ TextFieldArea.ATTRS{
 
 function TextFieldArea:onInput(keys)
     if self.on_char and keys._STRING and keys._STRING ~= 0 then
-        if not self.on_char(string.char(keys._STRING), self.text) then
+        if not self.on_char(string.char(keys._STRING), self:getText()) then
             return self.modal
         end
     end
@@ -50,6 +50,11 @@ function TextFieldArea:onInput(keys)
     end
 
     return TextFieldArea.super.onInput(self, keys)
+end
+
+function TextFieldArea:getPreferredFocusState()
+    -- allow EditField to manage focus
+    return false
 end
 
 ----------------
@@ -124,6 +129,8 @@ function EditField:init()
         key = self.key,
         on_submit = self.on_submit,
         on_submit2 = self.on_submit2,
+        on_focus = self.on_focus,
+        on_unfocus = self.on_unfocus,
         ignore_keys={
             'KEYBOARD_CURSOR_UP',
             'KEYBOARD_CURSOR_DOWN',
@@ -134,11 +141,8 @@ function EditField:init()
     }
 
     self:addviews{self.label, self.text_area}
-    self.text_area.frame.l = self.label:getTextWidth()
 
-    if self.key then
-        self.text_area:setFocus(false)
-    end
+    self.text_area.frame.l = self.label:getTextWidth()
 end
 
 function EditField:getPreferredFocusState()
@@ -170,6 +174,7 @@ end
 
 function EditField:onTextAreaTextChange(text)
     if self.text ~= text then
+        local old = self.text
         self.text = text
         if self.on_change then
             self.on_change(self.text, old)
@@ -190,11 +195,8 @@ function EditField:insert(text)
 end
 
 function EditField:onInput(keys)
-    if not self.text_area.focus then
-        return self.label:onInput(keys)
-    end
-
-    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R) then
+    if self.text_area.focus and self.key and
+     (keys.LEAVESCREEN or keys._MOUSE_R) then
         self:setText(self.saved_text)
         self:setFocus(false)
         return true

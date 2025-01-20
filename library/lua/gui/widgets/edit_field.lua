@@ -104,7 +104,6 @@ end
 
 function EditField:init()
     local function on_activate()
-        self.saved_text = self.text
         self:setFocus(true)
     end
 
@@ -129,7 +128,7 @@ function EditField:init()
         key = self.key,
         on_submit = self.on_submit,
         on_submit2 = self.on_submit2,
-        on_focus = self.on_focus,
+        on_focus = self:callback('onFocus'),
         on_unfocus = self.on_unfocus,
         ignore_keys={
             table.unpack(self.ignore_keys)
@@ -141,6 +140,14 @@ function EditField:init()
     self:addviews{self.label, self.text_area}
 
     self.text_area.frame.l = self.label:getTextWidth()
+end
+
+function EditField:onFocus()
+    self.saved_text = self.text
+
+    if self.on_focus then
+        self:on_focus()
+    end
 end
 
 function EditField:getPreferredFocusState()

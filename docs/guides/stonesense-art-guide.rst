@@ -11,14 +11,16 @@ The way sprites are loaded is fairly generalized. With the exception of floors, 
 all sprites are 32x32 pixels big and come in groups known as Sprite Sheets. All sprites are loaded and
 rendered in 32-bit full-color PNGs.
 
-Here's an example of a typical Stonesense sprite: 
+Here's an example of a typical Stonesense sprite:
+
 .. figure:: ../images/Stonesene_sprite_sample.png
-   :align: left
+    :align: left
 
 Note that, in order not to conflict with neighboring sprites, a sprite must actually be within a smaller
 area than its 32x32 block. A template for the area used by most sprites is:
+
 .. figure:: ../images/Stonesene_sprite_template.png
-   :align: left
+    :align: left
 
 The solid area is the floor space taken up by a sprite, while the dotted box indicates the volume above this
 area corresponding to one z-level.

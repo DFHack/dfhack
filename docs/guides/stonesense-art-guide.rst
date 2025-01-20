@@ -11,10 +11,11 @@ The way sprites are loaded is fairly generalized. With the exception of floors, 
 all sprites are 32x32 pixels big and come in groups known as Sprite Sheets. All sprites are loaded and
 rendered in 32-bit full-color PNGs.
 
-Here's an example of a typical Stonesense sprite:
 
 .. figure:: ../images/Stonesene_sprite_sample.png
     :align: left
+
+Here's an example of a typical Stonesense sprite.
 
 Note that, in order not to conflict with neighboring sprites, a sprite must actually be within a smaller
 area than its 32x32 block. A template for the area used by most sprites is:
@@ -42,7 +43,8 @@ the sheet will not affect it.
 
 This image shows how sprites are indexed. Note: Grid added for readability.
 .. figure:: ../images/Stonesense_indexed_sprites.png
-   :align: left
+    :align: left
+
 
 Specific Sprite Sheets
 ----------------------

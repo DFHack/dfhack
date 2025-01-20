@@ -87,7 +87,7 @@ If you are seeing yellow cubes in Stonesense, that is simply things we don't hav
 
    An example of the yellow cubes.
 
-If you would like to help us in fixing this, please see the wiki page on `stonesense-art-guide`
+If you would like to help us in fixing this, please see the `stonesense-art-guide`
 
 Useful links
 ------------

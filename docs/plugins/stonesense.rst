@@ -80,7 +80,8 @@ at least a dual core CPU to avoid slowing down your game of DF.
 
 Yellow Cubes and Missing Sprites
 --------------------------------
-If you are seeing yellow cubes in Stonesense, that is simply things we don't have sprites for.
+If you are seeing yellow cubes in Stonesense, then there is something on the map that
+Stonesense does not have a sprite for.
 
 .. figure:: ../images/stonesense-yellowcubes.png
    :align: center
@@ -89,8 +90,8 @@ If you are seeing yellow cubes in Stonesense, that is simply things we don't hav
 
 If you would like to help us in fixing this, there are 2 things you can do:
 
-* Make an issue on Github with what item is missing and pictures of what it looks like in DF
-* Create the art yourself. For help with this, please see the `stonesense-art-guide`
+* Make an issue on `Github <https://github.com/DFHack/stonesense/issues>`_ with what item is missing and pictures of what it looks like in DF
+* Create the art yourself. For help with this, please see the `stonesense-art-guide`.
 
 Useful links
 ------------

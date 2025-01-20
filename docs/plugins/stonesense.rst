@@ -88,6 +88,7 @@ If you are seeing yellow cubes in Stonesense, that is simply things we don't hav
    An example of the yellow cubes.
 
 If you would like to help us in fixing this, there are 2 things you can do:
+---
 * Make an issue on Github with what item is missing and pictures of what it looks like in DF
 * Create the art yourself. For help with this, please see the `stonesense-art-guide`
 

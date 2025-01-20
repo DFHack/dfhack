@@ -17,8 +17,11 @@ rendered in 32-bit full-color PNGs.
 
 Here's an example of a typical Stonesense sprite.
 
+
+
 Note that, in order not to conflict with neighboring sprites, a sprite must actually be within a smaller
-area than its 32x32 block. A template for the area used by most sprites is:
+area than its 32x32 block.
+A template for the area used by most sprites is:
 
 .. figure:: ../images/Stonesene_sprite_template.png
     :align: left
@@ -42,6 +45,7 @@ Index 19. The first sprite on the second row has index 20. This boundary is hard
 the sheet will not affect it.
 
 This image shows how sprites are indexed. Note: Grid added for readability.
+
 .. figure:: ../images/Stonesense_indexed_sprites.png
     :align: left
 

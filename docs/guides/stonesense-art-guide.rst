@@ -21,7 +21,7 @@ area than its 32x32 block. A template for the area used by most sprites is:
    :align: left
 
 The solid area is the floor space taken up by a sprite, while the dotted box indicates the volume above this
-area corresponding to one z-level. 
+area corresponding to one z-level.
 
 Sprite Sheets
 -------------

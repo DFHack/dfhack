@@ -200,14 +200,17 @@ function EditField:insert(text)
 end
 
 function EditField:onInput(keys)
-    if self.text_area.focus and self.key and
-     (keys.LEAVESCREEN or keys._MOUSE_R) then
+    if not self.text_area.focus then
+        return self:inputToSubviews(keys)
+    end
+
+    if self.key and (keys.LEAVESCREEN or keys._MOUSE_R) then
         self:setText(self.saved_text)
         self:setFocus(false)
         return true
     end
 
-    if EditField.super.onInput(self, keys) then
+    if self.text_area:onInput(keys) then
         return true
     end
 

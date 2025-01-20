@@ -52,7 +52,7 @@ See ``dfhack-config/stonesense/keybinds.txt`` to learn or set keybindings, inclu
 zooming, changing the dimensions of the rendered area, toggling various
 views, fog, and rotation. Here's the important section:
 
-.. include:: ../../plugins/stonesense/resources/keybinds.txt
+.. include:: ../../plugins/stonesense/configs/keybinds.txt
    :literal:
    :end-before: VALID ACTIONS:
 

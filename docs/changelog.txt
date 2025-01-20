@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- DFHack edit field widgets, such as the commandline editor in `gui/launcher`, now support text selection and other advanced text editing features from `gui/journal`
 
 ## Documentation
 

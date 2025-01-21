@@ -26,7 +26,7 @@ The scheme is not very complicated, and this guide will give a short introductio
 The way sprites are loaded is fairly generalized. With the exception of floors, which we will discuss later,
 all sprites are 32x32 pixels big and come in groups known as Sprite Sheets. All sprites are loaded and
 rendered in 32-bit full-color PNGs. The image files should have a transparent background but pure magenta
-(RGB: 255,0,255) is also treated as transparent. 
+(RGB: 255,0,255) is also treated as transparent.
 
 Sprite sheets
 -------------
@@ -50,7 +50,7 @@ This image shows how sprites are indexed. Note: Grid added for readability.
 
 
 Important sprite sheets
-----------------------
+-----------------------
 `objects.png <https://github.com/DFHack/stonesense/blob/master/resources/objects.png>`_ is the default sheet
 for buildings and vegetation. Also used for all hard-coded content, like default plants, the cursor, default
 walls and liquid.

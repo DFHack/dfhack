@@ -48,8 +48,8 @@ This image shows how sprites are indexed. Note: Grid added for readability.
     :align: left
 
 
-Specific sprite sheets
-----------------------
+Important sprite sheets
+-----------------------
 **objects.png** is the default sheet for buildings and vegetation. Also used for all hard-coded content, like default
 plants, the cursor, default walls and liquid.
 

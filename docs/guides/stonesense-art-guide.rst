@@ -48,7 +48,7 @@ This image shows how sprites are indexed. Note: Grid added for readability.
     :align: left
 
 
-Specific sprite sheets
+Important sprite sheets
 ----------------------
 `objects.png <https://github.com/DFHack/stonesense/blob/master/resources/objects.png>`_ is the default sheet
 for buildings and vegetation. Also used for all hard-coded content, like default plants, the cursor, default

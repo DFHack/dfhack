@@ -78,7 +78,7 @@ line containing that folder, or :dffd:`use these smaller sprites <6096>`.
 Stonesense requires working graphics acceleration, and we recommend
 at least a dual core CPU to avoid slowing down your game of DF.
 
-Yellow Cubes and Missing Sprites
+Yellow cubes and missing sprites
 --------------------------------
 If you are seeing yellow cubes in Stonesense, then there is something on the map that
 Stonesense does not have a sprite for.
@@ -88,9 +88,10 @@ Stonesense does not have a sprite for.
 
    An example of the yellow cubes.
 
-If you would like to help us in fixing this, there are 2 things you can do:
+If you would like to help us in fixing this, there are two things you can do:
 
-* Make an issue on `Github <https://github.com/DFHack/stonesense/issues>`_ with what item is missing and pictures of what it looks like in DF
+* Make an issue on `GitHub <https://github.com/DFHack/stonesense/issues>`_ with what
+  item is missing and pictures of what it looks like in DF.
 * Create the art yourself. For help with this, please see the `stonesense-art-guide`.
 
 Useful links

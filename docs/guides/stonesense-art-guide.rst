@@ -50,11 +50,12 @@ This image shows how sprites are indexed. Note: Grid added for readability.
 
 Specific sprite sheets
 ----------------------
-`objects.png <https://github.com/DFHack/stonesense/blob/master/resources/objects.png>`_ is the default sheet for buildings and vegetation. Also used for all hard-coded content, like default
-plants, the cursor, default walls and liquid.
+`objects.png <https://github.com/DFHack/stonesense/blob/master/resources/objects.png>`_ is the default sheet
+for buildings and vegetation. Also used for all hard-coded content, like default plants, the cursor, default
+walls and liquid.
 
-`creatures.png <https://github.com/DFHack/stonesense/blob/master/resources/creatures.png>`_ is the default sprite sheet for creatures. If no file is specified in a creature node, this is the
-sheet it will use.
+`creatures.png <https://github.com/DFHack/stonesense/blob/master/resources/creatures.png>`_ is the default
+sprite sheet for creatures. If no file is specified in a creature node, this is the sheet it will use.
 
-`floors.png <https://github.com/DFHack/stonesense/blob/master/resources/floors.png>`_ holds all the Stonesense floors. Unlike the other sprite sheet, this sheet is hard-coded with sprite
-dimensions of 32x20 pixels.
+`floors.png <https://github.com/DFHack/stonesense/blob/master/resources/floors.png>`_ holds all the Stonesense
+floors. Unlike the other sprite sheet, this sheet is hard-coded with sprite dimensions of 32x20 pixels.

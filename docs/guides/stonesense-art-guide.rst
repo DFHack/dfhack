@@ -12,8 +12,8 @@ Understanding sprites
 Here's an example of a typical Stonesense sprite.
 
 Note that, in order not to conflict with neighboring sprites, a sprite must actually be within a smaller
-area than its 32x32 block.
-A template for the area used by sprites is:
+area than its 32x32 block, typically 30x30.
+To illustrate this, here is a template for the area used by sprites:
 
 .. image:: ../images/stonesense-sprite-template.png
     :align: left

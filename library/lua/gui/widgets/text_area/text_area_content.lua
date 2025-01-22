@@ -37,15 +37,15 @@ function TextAreaContent:init()
     self.cursor = nil
 
     self.main_pen = dfhack.pen.parse({
-        fg=self.text_pen,
         bg=COLOR_RESET,
         bold=true
-    })
-    self.sel_pen = dfhack.pen.parse({
-        fg=self.text_pen,
-        bg=self.pen_selection,
-        bold=true
-    })
+    }, self.text_pen)
+
+    if type(self.pen_selection) == 'number' then
+        self.sel_pen = dfhack.pen.parse(self.main_pen, nil, self.pen_selection)
+    else
+        self.sel_pen = dfhack.pen.parse(self.pen_selection)
+    end
 
     local TextWrapper = self.one_line_mode and OneLineWrappedText or WrappedText
     self.wrapped_text = TextWrapper{
@@ -281,7 +281,7 @@ function TextAreaContent:onRenderBody(dc)
                 :string(line)
         end
 
-        dc:pen({fg=self.text_pen, bg=COLOR_RESET})
+        dc:pen({bg=COLOR_RESET}, self.text_pen)
     end
 
     if self.debug then

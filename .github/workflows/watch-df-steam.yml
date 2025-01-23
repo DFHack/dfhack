@@ -48,8 +48,13 @@ jobs:
           mkdir -p state
           touch state/timestamp
           last_timestamp=$(cat state/timestamp)
-          echo "stored timestamp of last branch update: $last_timestamp"
-          if [ "$timestamp" != "$last_timestamp" ]; then
+          if [ -z "$last_timestamp" ]; then
+              echo "no stored timestamp"
+              last_timestamp=0
+          else
+              echo "stored timestamp of last branch update: $last_timestamp"
+          fi
+          if [ "$timestamp" > "$last_timestamp" ]; then
             echo "$timestamp" >state/timestamp
             echo TIMESTAMP=$timestamp >> $GITHUB_ENV
           fi

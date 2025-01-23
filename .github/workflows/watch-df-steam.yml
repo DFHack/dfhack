@@ -51,9 +51,10 @@ jobs:
           else
               echo "stored timestamp of last branch update: $last_timestamp"
           fi
-          if [ "$timestamp" > "$last_timestamp" ]; then
-            echo "$timestamp" >state/timestamp
-            echo TIMESTAMP=$timestamp >> $GITHUB_ENV
+          if [ "$timestamp" -gt "$last_timestamp" ]; then
+              echo "branch updated"
+              echo "$timestamp" >state/timestamp
+              echo TIMESTAMP=$timestamp >> $GITHUB_ENV
           fi
     - name: Discord Webhook Action
       uses: tsickert/discord-webhook@v5.3.0

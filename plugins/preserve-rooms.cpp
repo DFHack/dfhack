@@ -446,7 +446,7 @@ static void handle_missing_assignments(color_ostream &out,
         if (!hf || hf->died_year > -1 || was_expelled(hf))
             continue;
         if (auto unit = df::unit::find(hf->unit_id)) {
-            if (Units::isActive(unit) && !Units::isDead(unit) && active_unit_ids.contains(unit->id)) {
+            if (!Units::isDead(unit) && Units::isActive(unit) && active_unit_ids.contains(unit->id)) {
                 // unit is still alive on the map; assume the unassigment was intentional/expected
                 continue;
             }
@@ -458,7 +458,7 @@ static void handle_missing_assignments(color_ostream &out,
         auto spouse_hf = df::historical_figure::find(spouse_hfid);
         auto spouse = spouse_hf ? df::unit::find(spouse_hf->unit_id) : nullptr;
         if (spouse_hf && share_with_spouse) {
-            if (spouse && Units::isActive(spouse) && !Units::isDead(spouse) && active_unit_ids.contains(spouse->id))
+            if (spouse && !Units::isDead(spouse) && Units::isActive(spouse) && active_unit_ids.contains(spouse->id))
             {
                 DEBUG(cycle,out).print("assigning zone %d (%s) to spouse %s\n",
                     zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(),

@@ -584,7 +584,7 @@ static command_result ListUnits(color_ostream &stream,
 
     if (in->scan_all())
     {
-        auto &vec = df::unit::get_vector();
+        auto &vec = df::global::world->units.active;
 
         for (size_t i = 0; i < vec.size(); i++)
         {

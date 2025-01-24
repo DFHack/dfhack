@@ -140,7 +140,7 @@ This collection of orders handles basic fort necessities:
 - lye/soap
 - ash/potash
 - beds/wheelbarrows/minecarts
-- scrolls
+- paper/scrolls
 
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.

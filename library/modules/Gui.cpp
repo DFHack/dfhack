@@ -43,6 +43,7 @@ distribution.
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/adventurest.h"
 #include "df/announcement_alertst.h"
 #include "df/announcement_flags.h"
 #include "df/announcement_infost.h"
@@ -87,6 +88,7 @@ distribution.
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_new_regionst.h"
@@ -822,6 +824,42 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
 
         focusStrings.push_back(newFocusString);
     }
+    if (game->main_interface.adventure.aim_projectile.open) {
+        focusStrings.push_back(baseFocus + "/AimProjectile");
+    }
+    if (game->main_interface.adventure.announcements.open) {
+        focusStrings.push_back(baseFocus + "/Announcements");
+    }
+    if (game->main_interface.adventure.attack.open) {
+        focusStrings.push_back(baseFocus + "/Attack");
+    }
+    if (game->main_interface.adventure.combat_pref.open) {
+        focusStrings.push_back(baseFocus + "/CombatPref");
+    }
+    if (game->main_interface.adventure.companions.open) {
+        focusStrings.push_back(baseFocus + "/Companions");
+    }
+    if (game->main_interface.adventure.conversation.open) {
+        focusStrings.push_back(baseFocus + "/Conversation");
+    }
+    if (game->main_interface.adventure.inventory.open) {
+        focusStrings.push_back(baseFocus + "/Inventory");
+    }
+    if (game->main_interface.adventure.jump.open) {
+        focusStrings.push_back(baseFocus + "/Jump");
+    }
+    if (game->main_interface.adventure.movement_options.open) {
+        focusStrings.push_back(baseFocus + "/MovementOptions");
+    }
+    if (game->main_interface.adventure.option_list.open) {
+        focusStrings.push_back(baseFocus + "/OptionList");
+    }
+    if (game->main_interface.adventure.perform.open) {
+        focusStrings.push_back(baseFocus + "/Perform");
+    }
+    if (game->main_interface.adventure.sleep.open) {
+        focusStrings.push_back(baseFocus + "/Sleep");
+    }
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
@@ -851,17 +889,21 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     }
 }
 
-/* TODO: understand how this changes for v50
 DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 {
-    using df::global::adventure;
+    std::string newFocusString;
 
-    if (!adventure)
-        return;
+    if (df::global::gametype && !World::isAdventureMode()) {
+        newFocusString = baseFocus;
+        newFocusString += '/' + enum_item_key(*df::global::gametype);
+        focusStrings.push_back(newFocusString);
+    }
+    add_main_interface_focus_strings(baseFocus, focusStrings);
 
-    focus += '/' + enum_item_key(adventure->menu);
+    if (!focusStrings.size()) {
+        focusStrings.push_back(baseFocus + '/' + enum_item_key(df::global::adventure->menu));
+    }
 }
-*/
 
 static std::unordered_map<df::viewscreen *, vector<string>> cached_focus_strings;
 

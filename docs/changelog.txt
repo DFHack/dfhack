@@ -58,7 +58,6 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
-- DFHack edit field widgets, such as the commandline editor in `gui/launcher`, now support text selection and other advanced text editing features from `gui/journal`
 
 ## Documentation
 
@@ -67,6 +66,11 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+# 51.02-r1
+
+## Misc Improvements
+- DFHack edit field widgets, such as the commandline editor in `gui/launcher`, now support text selection and other advanced text editing features from `gui/journal`
 
 # 50.15-r2
 

@@ -57,7 +57,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `gui/gm-editor`: fix Enter key not being recognized for opening the selected object
 
 ## Misc Improvements
 
@@ -68,6 +67,11 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+# 51.03-r1
+
+## Fixes
+- `gui/gm-editor`: fix Enter key not being recognized for opening the selected object
 
 # 51.02-r1
 

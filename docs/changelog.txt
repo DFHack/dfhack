@@ -57,6 +57,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `gui/gm-editor`: fix Enter key not being recognized for opening the selected object
 
 ## Misc Improvements
 

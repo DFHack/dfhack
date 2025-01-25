@@ -37,6 +37,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 
 ## Removed
 

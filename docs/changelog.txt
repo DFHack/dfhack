@@ -68,6 +68,11 @@ Template for new versions:
 
 ## Removed
 
+# 51.03-r1.1
+
+## Misc Improvements
+- Compatibility with Itch release of DF 51.03
+
 # 51.03-r1
 
 ## Fixes

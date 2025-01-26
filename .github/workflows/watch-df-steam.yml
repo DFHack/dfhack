@@ -22,9 +22,6 @@ jobs:
         include:
           - df_steam_branch: public
           - df_steam_branch: beta
-            structures_ref: adv-beta
-            dfhack_ref: adv-beta
-            steam_branch: adventure-beta
     steps:
     - name: Fetch state
       uses: actions/cache/restore@v4
@@ -48,10 +45,16 @@ jobs:
           mkdir -p state
           touch state/timestamp
           last_timestamp=$(cat state/timestamp)
-          echo "stored timestamp of last branch update: $last_timestamp"
-          if [ "$timestamp" != "$last_timestamp" ]; then
-            echo "$timestamp" >state/timestamp
-            echo TIMESTAMP=$timestamp >> $GITHUB_ENV
+          if [ -z "$last_timestamp" ]; then
+              echo "no stored timestamp"
+              last_timestamp=0
+          else
+              echo "stored timestamp of last branch update: $last_timestamp"
+          fi
+          if [ "$timestamp" -gt "$last_timestamp" ]; then
+              echo "branch updated"
+              echo "$timestamp" >state/timestamp
+              echo TIMESTAMP=$timestamp >> $GITHUB_ENV
           fi
     - name: Discord Webhook Action
       uses: tsickert/discord-webhook@v5.3.0

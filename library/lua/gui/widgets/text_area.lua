@@ -84,6 +84,10 @@ function TextArea:clearHistory()
     return self.text_area.history:clear()
 end
 
+function TextArea:hasFocus()
+    return self.focus
+end
+
 function TextArea:onCursorChange(cursor, old_cursor)
     local x, y = self.text_area.wrapped_text:indexToCoords(
         self.text_area.cursor
@@ -197,7 +201,7 @@ function TextArea:onInput(keys)
         self:setFocus(true)
     end
 
-    if not self.focus then
+    if not self:hasFocus() then
         return false
     end
 

@@ -216,7 +216,9 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
         migrate_old_config(out);
     }
 
-    plugin_enable(out, config.get_bool(CONFIG_IS_ENABLED));
+    if (config.get_bool(CONFIG_IS_ENABLED)) {
+        plugin_enable(out, true);
+    }
     DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 

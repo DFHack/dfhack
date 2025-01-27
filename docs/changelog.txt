@@ -37,6 +37,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 
 ## Removed
 
@@ -66,6 +67,21 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+# 51.04-r1
+
+## Misc Improvements
+- Compatibility with Steam release of DF 51.04
+
+# 51.03-r1.1
+
+## Misc Improvements
+- Compatibility with Itch release of DF 51.03
+
+# 51.03-r1
+
+## Fixes
+- `gui/gm-editor`: fix Enter key not being recognized for opening the selected object
 
 # 51.02-r1
 

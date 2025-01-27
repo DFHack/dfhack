@@ -238,7 +238,7 @@ function TextAreaContent:onRenderBody(dc)
     local show_focus = not self.enable_cursor_blink
         or (
             not self:hasSelection()
-            and self.parent_view.focus
+            and self.parent_view:hasFocus()
             and gui.blink_visible(530)
         )
 
@@ -486,7 +486,6 @@ function TextAreaContent:onMouseInput(keys)
         end
 
     elseif keys._MOUSE_L_DOWN then
-
         local mouse_x, mouse_y = self:getMousePos()
 
         if mouse_x and mouse_y then

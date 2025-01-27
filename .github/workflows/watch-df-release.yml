@@ -64,7 +64,7 @@ jobs:
               echo "branch updated"
               echo "$buildid" >state/buildid
               echo "$timestamp" >state/timestamp
-              echo BUILDID=$timestamp >> $GITHUB_ENV
+              echo BUILDID=$buildid >> $GITHUB_ENV
           fi
     - name: Discord Webhook Action
       uses: tsickert/discord-webhook@v5.3.0

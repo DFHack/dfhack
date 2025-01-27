@@ -55,7 +55,7 @@ jobs:
           last_timestamp=$(cat state/timestamp)
           if [ -z "$last_timestamp" ]; then
               echo "no stored timestamp"
-              buildid=0
+              last_buildid=0
               last_timestamp=0
           else
               echo "stored buildid and timestamp of last branch update: $last_buildid, $last_timestamp"

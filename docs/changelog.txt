@@ -68,6 +68,11 @@ Template for new versions:
 
 ## Removed
 
+# 51.04-r1
+
+## Misc Improvements
+- Compatibility with Steam release of DF 51.04
+
 # 51.03-r1.1
 
 ## Misc Improvements

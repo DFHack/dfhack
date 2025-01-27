@@ -1,0 +1,153 @@
+name: Watch DF Releases
+
+on:
+  schedule:
+  - cron: '8/10 * * * *'
+  workflow_dispatch:
+
+jobs:
+  check-steam:
+    if: github.repository == 'DFHack/dfhack'
+    name: Check Steam for new DF releases (${{ matrix.df_steam_branch }} branch)
+    runs-on: ubuntu-latest
+    concurrency: watch-release-steam-${{ matrix.df_steam_branch }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # df_steam_branch: which DF Steam branch to watch
+        # platform: leave blank to default to all
+        # structures_ref: leave blank to default to master
+        # dfhack_ref: leave blank if no structures update is desired
+        # steam_branch: leave blank if no DFHack steam push is desired
+        include:
+          - df_steam_branch: public
+          - df_steam_branch: beta
+    steps:
+    - name: Fetch state
+      uses: actions/cache/restore@v4
+      with:
+        path: state
+        key: watch-release-steam-${{ matrix.df_steam_branch }}
+    - name: Compare branch metadata
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 2
+        command: |
+          blob=$(wget 'https://api.steamcmd.net/v1/info/975370?pretty=1' -O- | \
+              awk '/^ *"branches"/,0' | \
+              awk '/^ *"${{ matrix.df_steam_branch }}"/,0')
+          buildid=$(echo "$blob" | \
+              fgrep buildid | \
+              head -n1 | \
+              cut -d'"' -f4)
+          timestamp=$(echo "$blob" | \
+              fgrep timeupdated | \
+              head -n1 | \
+              cut -d'"' -f4)
+          test -z "$buildid" && echo "no buildid result" && exit 1
+          test -z "$timestamp" && echo "no timestamp result" && exit 1
+          test "$buildid" -gt 0 || exit 1
+          test "$timestamp" -gt 0 || exit 1
+          echo "buildid and timestamp of last branch update:        $buildid, $timestamp"
+          mkdir -p state
+          touch state/buildid state/timestamp
+          last_buildid=$(cat state/buildid)
+          last_timestamp=$(cat state/timestamp)
+          if [ -z "$last_timestamp" ]; then
+              echo "no stored timestamp"
+              buildid=0
+              last_timestamp=0
+          else
+              echo "stored buildid and timestamp of last branch update: $last_buildid, $last_timestamp"
+          fi
+          if [ "$buildid" -ne "$last_buildid" -a "$timestamp" -gt "$last_timestamp" ]; then
+              echo "branch updated"
+              echo "$buildid" >state/buildid
+              echo "$timestamp" >state/timestamp
+              echo BUILDID=$timestamp >> $GITHUB_ENV
+          fi
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      if: env.BUILDID
+      with:
+        webhook-url: ${{ secrets.DISCORD_TEAM_PRIVATE_WEBHOOK_URL }}
+        content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> DF Steam branch updated: ${{ matrix.df_steam_branch }} (build id: ${{ env.BUILDID }})"
+    - name: Launch symbol generation workflow
+      if: env.BUILDID && matrix.dfhack_ref
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        gh workflow run generate-symbols.yml \
+          -R DFHack/dfhack \
+          -r ${{ matrix.dfhack_ref }} \
+          -f structures_ref=${{ matrix.structures_ref }} \
+          -f version=auto \
+          -f platform=${{ matrix.platform }} \
+          -f channel=steam \
+          -f df_steam_branch=${{ matrix.df_steam_branch }} \
+          -f steam_branch=${{ matrix.steam_branch }}
+    - name: Save state
+      uses: actions/cache/save@v4
+      if: env.BUILDID
+      with:
+        path: state
+        key: watch-release-steam-${{ matrix.df_steam_branch }}-${{ env.BUILDID }}
+
+  check-non-steam:
+    if: github.repository == 'DFHack/dfhack'
+    name: Check ${{ matrix.channel }} for new DF releases
+    runs-on: ubuntu-latest
+    concurrency: watch-release-${{ matrix.channel }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - channel: itch
+            url: 'https://kitfoxgames.itch.io/dwarf-fortress'
+            prefix: 'dwarf_fortress'
+          - channel: classic
+            url: 'https://www.bay12games.com/dwarves/'
+            prefix: 'df'
+    steps:
+    - name: Fetch state
+      uses: actions/cache/restore@v4
+      with:
+        path: state
+        key: watch-release-${{ matrix.channel }}
+    - name: Compare versions
+      uses: nick-fields/retry@v3
+      with:
+        timeout_minutes: 2
+        command: |
+          version=$(wget "${{ matrix.url }}" -qO- | tr '"' '\n' | fgrep 'tar.bz2' | head -n1 | sed -r 's/${{ matrix.prefix }}_([0-9]{2})_([0-9]{2})_linux.tar.bz2/\1.\2/')
+          echo "latest ${{ matrix.channel }} version: $version"
+          if ! grep -qE '^[0-9]+\.[0-9]+$' <<<"$version"; then
+              echo "invalid version"
+              exit 1
+          fi
+          mkdir -p state
+          touch state/last_version
+          last_version=$(cat state/last_version)
+          if [ -z "$last_version" ]; then
+              echo "no stored version"
+              last_version=0
+          else
+              echo "stored version: $last_version"
+          fi
+          if [ "$(tr -d '.' <<<"$version")" -gt "$(tr -d '.' <<<"$last_version")" ]; then
+              echo "${{ matrix.channel }} has been updated"
+              echo "$version" >state/last_version
+              echo NEW_VERSION=$version >> $GITHUB_ENV
+          fi
+    - name: Discord Webhook Action
+      uses: tsickert/discord-webhook@v5.3.0
+      if: env.NEW_VERSION
+      with:
+        webhook-url: ${{ secrets.DISCORD_TEAM_PRIVATE_WEBHOOK_URL }}
+        content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> DF ${{ matrix.channel }} updated to ${{ env.NEW_VERSION }}"
+    - name: Save state
+      uses: actions/cache/save@v4
+      if: env.NEW_VERSION
+      with:
+        path: state
+        key: watch-release-${{ matrix.channel }}-${{ env.NEW_VERSION }}

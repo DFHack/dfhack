@@ -1106,9 +1106,9 @@ static const char * get_tile_place(const df::coord &pos,
 
 static const char * get_zone_keys(const df::building_civzonest *zone) {
     static const uint32_t DEFAULT_GATHER_FLAGS =
-            df::building_civzonest::T_zone_settings::T_gather::T_flags::pick_trees |
-            df::building_civzonest::T_zone_settings::T_gather::T_flags::pick_shrubs |
-            df::building_civzonest::T_zone_settings::T_gather::T_flags::gather_fallen;
+            df::building_civzonest::T_zone_settings::T_gather::T_flags::mask_pick_trees |
+            df::building_civzonest::T_zone_settings::T_gather::T_flags::mask_pick_shrubs |
+            df::building_civzonest::T_zone_settings::T_gather::T_flags::mask_gather_fallen;
     static const df::hospital_supplies DEFAULT_HOSPITAL;
 
     ostringstream keys;
@@ -1122,12 +1122,12 @@ static const char * get_zone_keys(const df::building_civzonest *zone) {
     if (flags.bits.fishing) keys << 'f';
     if (flags.bits.gather) {
         keys << 'g';
-        if (zone->gather_flags.whole != DEFAULT_GATHER_FLAGS) {
+        if (zone->zone_settings.gather.flags.whole != DEFAULT_GATHER_FLAGS) {
             keys << 'G';
             // logic is inverted since they're all on by default
-            if (!zone->gather_flags.bits.pick_trees) keys << 't';
-            if (!zone->gather_flags.bits.pick_shrubs) keys << 's';
-            if (!zone->gather_flags.bits.gather_fallen) keys << 'f';
+            if (!zone->zone_settings.gather.flags.bits.pick_trees) keys << 't';
+            if (!zone->zone_settings.gather.flags.bits.pick_shrubs) keys << 's';
+            if (!zone->zone_settings.gather.flags.bits.gather_fallen) keys << 'f';
             keys << '^';
         }
     }

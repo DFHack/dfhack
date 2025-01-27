@@ -1817,6 +1817,10 @@ Units module
   in the in-game labor management screens (including DFHack's `labor
   manipulator screen <manipulator>`).
 
+* ``dfhack.units.setAutomaticProfessions(unit)``
+
+  Set appropriate labors on a unit based on current work detail settings.
+
 * ``dfhack.units.computeMovementSpeed(unit)``
 
   Computes number of frames * 100 it takes the unit to move in its current

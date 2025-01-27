@@ -19,7 +19,7 @@ LocationSelectorOverlay.ATTRS{
 
 local function add_spheres(hf, spheres)
     if not hf then return end
-    for _, sphere in ipairs(hf.info.spheres.spheres) do
+    for _, sphere in ipairs(hf.info.metaphysical.spheres) do
         spheres[sphere] = true
     end
 end

@@ -6,6 +6,13 @@ Stonesense art creation guide
 Understanding sprites
 ---------------------
 
+Understanding how Stonesense deals with sprites is central to anyone who wishes to modify the content. The
+scheme is not very complicated, and this guide will give a short introduction to how they work. With the
+exception of floors, which we will discuss later, all sprites are 32x32 pixels big and come in groups known
+as Sprite Sheets. All sprites are loaded and rendered in 32-bit full-color PNGs. The image files should have
+a transparent background but pure magenta (RGB: 255,0,255) is also treated as transparent.
+
+
 .. image:: ../images/stonesense-sprite-sample.png
     :align: left
 
@@ -21,12 +28,7 @@ To illustrate this, here is a template for the area used by sprites:
 The solid area is the floor space taken up by a sprite, while the dotted box indicates the volume above this
 area corresponding to one z-level.
 
-Understanding how Stonesense deals with sprites is central to anyone who wishes to modify the content.
-The scheme is not very complicated, and this guide will give a short introduction to how they work.
-The way sprites are loaded is fairly generalized. With the exception of floors, which we will discuss later,
-all sprites are 32x32 pixels big and come in groups known as Sprite Sheets. All sprites are loaded and
-rendered in 32-bit full-color PNGs. The image files should have a transparent background but pure magenta
-(RGB: 255,0,255) is also treated as transparent.
+The way sprites are loaded is fairly generalized: Sprite sheets, and the index of a sprite within that sheet.
 
 Sprite sheets
 -------------

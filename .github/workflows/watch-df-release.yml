@@ -132,7 +132,7 @@ jobs:
               echo "no stored version"
               last_version=0
           else
-              echo "stored version: $last_version"
+              echo "stored ${{ matrix.channel }} version: $last_version"
           fi
           if [ "$(tr -d '.' <<<"$version")" -gt "$(tr -d '.' <<<"$last_version")" ]; then
               echo "${{ matrix.channel }} has been updated"

@@ -71,7 +71,7 @@ jobs:
       if: env.BUILDID
       with:
         webhook-url: ${{ secrets.DISCORD_TEAM_PRIVATE_WEBHOOK_URL }}
-        content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> DF Steam branch updated: ${{ matrix.df_steam_branch }} (build id: ${{ env.BUILDID }})"
+        content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> Steam ${{ matrix.df_steam_branch }} branch updated (build id: ${{ env.BUILDID }})"
     - name: Launch symbol generation workflow
       if: env.BUILDID && matrix.dfhack_ref
       env:
@@ -144,7 +144,7 @@ jobs:
       if: env.NEW_VERSION
       with:
         webhook-url: ${{ secrets.DISCORD_TEAM_PRIVATE_WEBHOOK_URL }}
-        content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> DF ${{ matrix.channel }} updated to ${{ env.NEW_VERSION }}"
+        content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> ${{ matrix.channel }} updated to ${{ env.NEW_VERSION }}"
     - name: Save state
       uses: actions/cache/save@v4
       if: env.NEW_VERSION

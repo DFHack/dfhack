@@ -8,7 +8,7 @@ on:
 jobs:
   check-steam:
     if: github.repository == 'DFHack/dfhack'
-    name: Check Steam for new DF releases (${{ matrix.df_steam_branch }} branch)
+    name: Check Steam (${{ matrix.df_steam_branch }}) for new DF releases
     runs-on: ubuntu-latest
     concurrency: watch-release-steam-${{ matrix.df_steam_branch }}
     strategy:

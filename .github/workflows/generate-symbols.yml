@@ -99,12 +99,6 @@ jobs:
       run: Xvfb :0 -screen 0 1600x1200x24 &
 
     # Steam
-    - name: Preload steamcmd
-      if: inputs.channel == 'all' || inputs.channel == 'steam'
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ env.HOME }}/Steam
-        key: steamcmd
     - name: Setup steamcmd
       if: inputs.channel == 'all' || inputs.channel == 'steam'
       id: steamcmd
@@ -232,12 +226,6 @@ jobs:
         path: metasm
 
     # Steam
-    - name: Preload steamcmd
-      if: inputs.channel == 'all' || inputs.channel == 'steam'
-      uses: actions/cache/restore@v4
-      with:
-        path: ${{ env.HOME }}/Steam
-        key: steamcmd
     - name: Setup steamcmd
       if: inputs.channel == 'all' || inputs.channel == 'steam'
       id: steamcmd

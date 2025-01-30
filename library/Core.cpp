@@ -114,30 +114,10 @@ public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
     //! thread exit.
     static CoreSuspenderBase& suspend() {
-        static thread_local CoreSuspenderBase lock(std::defer_lock);
+        static thread_local CoreSuspenderBase lock{};
         return lock;
     }
 };
-}
-
-CoreSuspendReleaseMain::CoreSuspendReleaseMain()
-{
-    MainThread::suspend().unlock();
-}
-
-CoreSuspendReleaseMain::~CoreSuspendReleaseMain()
-{
-    MainThread::suspend().lock();
-}
-
-CoreSuspendClaimMain::CoreSuspendClaimMain()
-{
-    MainThread::suspend().lock();
-}
-
-CoreSuspendClaimMain::~CoreSuspendClaimMain()
-{
-    MainThread::suspend().unlock();
 }
 
 struct Core::Private
@@ -367,7 +347,7 @@ static command_result runLuaScript(color_ostream &out, std::string name, std::ve
     data.pcmd = &name;
     data.pargs = &args;
 
-    bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_run_script, &data);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_run_script, &data);
 
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -391,7 +371,7 @@ static command_result enableLuaScript(color_ostream &out, std::string name, bool
     data.pcmd = &name;
     data.pstate = state;
 
-    bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_enable_script, &data);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(), init_enable_script, &data);
 
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -420,7 +400,7 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
 
 bool is_builtin(color_ostream &con, const std::string &command) {
     CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -440,8 +420,15 @@ bool is_builtin(color_ostream &con, const std::string &command) {
 }
 
 void get_commands(color_ostream &con, std::vector<std::string> &commands) {
-    CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Cannot acquire core lock in helpdb.get_commands\n");
+        commands.clear();
+        return;
+    }
+
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -461,9 +448,7 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
 {
     std::vector<std::string> commands, possible;
 
-    // restore call to get_commands once we have updated the core lock to a deferred lock
-    // so calling Lua from the console thread won't deadlock if Lua is currently busy
-    //get_commands(con, commands);
+    get_commands(con, commands);
     for (auto &command : commands)
         if (command.substr(0, first.size()) == first)
             possible.push_back(command);
@@ -655,8 +640,14 @@ static std::string sc_event_name (state_change_event id) {
 }
 
 void help_helper(color_ostream &con, const std::string &entry_name) {
-    CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
+
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 2) ||
@@ -673,8 +664,14 @@ void help_helper(color_ostream &con, const std::string &entry_name) {
 }
 
 void tags_helper(color_ostream &con, const std::string &tag) {
-    CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
+
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -710,8 +707,14 @@ void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
             filter.push_back(str);
     }
 
-    CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
+
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 5) ||
@@ -730,7 +733,7 @@ void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
     }
 }
 
-command_result Core::runCommand(color_ostream &con, const std::string &first_, std::vector<std::string> &parts)
+command_result Core::runCommand(color_ostream &con, const std::string &first_, std::vector<std::string> &parts, bool no_autocomplete)
 {
     std::string first = first_;
     CommandDepthCounter counter;
@@ -810,30 +813,35 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                         all = true;
                 }
             }
+            auto ret = CR_OK;
             if (all)
             {
-                if (load)
-                    plug_mgr->loadAll();
-                else if (unload)
-                    plug_mgr->unloadAll();
-                else
-                    plug_mgr->reloadAll();
-                return CR_OK;
+                if (load && !plug_mgr->loadAll())
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unloadAll())
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reloadAll())
+                    ret = CR_FAILURE;
             }
             for (auto p = parts.begin(); p != parts.end(); p++)
             {
                 if (!p->size() || (*p)[0] == '-')
                     continue;
-                if (load)
-                    plug_mgr->load(*p);
-                else if (unload)
-                    plug_mgr->unload(*p);
-                else
-                    plug_mgr->reload(*p);
+                if (load && !plug_mgr->load(*p))
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unload(*p))
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reload(*p))
+                    ret = CR_FAILURE;
             }
+            if (ret != CR_OK)
+                con.printerr("%s failed\n", first.c_str());
+            return ret;
         }
-        else
+        else {
             con.printerr("%s: no arguments\n", first.c_str());
+            return CR_FAILURE;
+        }
     }
     else if( first == "enable" || first == "disable" )
     {
@@ -1297,7 +1305,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             }
             if ( lua )
                 res = runLuaScript(con, first, parts);
-            else if ( try_autocomplete(con, first, completed) )
+            else if (!no_autocomplete && try_autocomplete(con, first, completed))
                 res = CR_NOT_IMPLEMENTED;
             else
                 con.printerr("%s is not a recognized command.\n", first.c_str());
@@ -1390,7 +1398,7 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     loadScriptFiles(core, out, prefixes, CONFIG_PATH + "init");
 
     // show the terminal if requested
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
         Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
             if (!lua_toboolean(L, -1))
@@ -1554,6 +1562,9 @@ df::viewscreen * Core::getTopViewscreen() {
 }
 
 bool Core::InitMainThread() {
+    // this hook is always called from DF's main (render) thread, so capture this thread id
+    df_render_thread = std::this_thread::get_id();
+
     Filesystem::init();
 
     // Re-route stdout and stderr again - DF seems to set up stdout and
@@ -1570,8 +1581,11 @@ bool Core::InitMainThread() {
     if (!freopen("stderr.log", "w", stderr))
         std::cerr << "Could not redirect stderr to stderr.log" << std::endl;
 
-    std::cerr << "DFHack build: " << Version::git_description() << "\n"
-         << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
+    std::cerr << "DFHack build: " << Version::git_description() << std::endl;
+    if (strlen(Version::dfhack_run_url())) {
+        std::cerr << "Build url: " << Version::dfhack_run_url() << std::endl;
+    }
+    std::cerr << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
 
     std::cerr << "Binding to SDL.\n";
     if (!DFSDL::init(con)) {
@@ -1717,6 +1731,8 @@ bool Core::InitMainThread() {
 
 bool Core::InitSimulationThread()
 {
+    // the update hook is only called from the simulation thread, so capture this thread id
+    df_simulation_thread = std::this_thread::get_id();
     if(started)
         return true;
     if(errorstate)
@@ -1828,7 +1844,10 @@ bool Core::InitSimulationThread()
     loadScriptPaths(con);
 
     // initialize common lua context
-    if (!Lua::Core::Init(con))
+    // Calls InitCoreContext after checking IsCoreContext
+    State = luaL_newstate();
+    State = Lua::Open(con, State);
+    if (!State)
     {
         fatal("Lua failed to initialize");
         return false;
@@ -2119,6 +2138,13 @@ void Core::doUpdate(color_ostream &out)
 // should always be from simulation thread!
 int Core::Update()
 {
+    if (shutdown)
+    {
+        // release the suspender
+        MainThread::suspend().unlock();
+        return -1;
+    }
+
     if(errorstate)
         return -1;
 
@@ -2335,7 +2361,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         Persistence::Internal::load(out);
         plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
+        auto L = DFHack::Core::getInstance().getLuaState();
         Lua::StackUnwinder top(L);
         Lua::CallLuaModuleFunction(con, "script-manager", "reload", std::make_tuple(true));
         if (world && world->cur_savegame.save_dir.size())
@@ -2416,9 +2442,7 @@ int Core::Shutdown ( void )
         return true;
     errorstate = 1;
 
-    // Make sure we release main thread if this is called from main thread
-    if (MainThread::suspend().owns_lock())
-        MainThread::suspend().unlock();
+    shutdown = true;
 
     // Make sure the console thread shutdowns before clean up to avoid any
     // unlikely data races.
@@ -2437,7 +2461,6 @@ int Core::Shutdown ( void )
     d->hotkeythread.join();
     d->iothread.join();
 
-    CoreSuspendClaimer suspend;
     if(plug_mgr)
     {
         delete plug_mgr;
@@ -2536,6 +2559,9 @@ bool Core::DFH_SDL_Event(SDL_Event* ev) {
 
 bool Core::doSdlInputEvent(SDL_Event* ev)
 {
+    // this should only ever be called from the render thread
+    assert(std::this_thread::get_id() == df_render_thread);
+
     static std::map<int, bool> hotkey_states;
 
     // do NOT process events before we are ready.

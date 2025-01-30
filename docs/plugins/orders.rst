@@ -48,25 +48,32 @@ Examples
     Import manager orders from the library that keep your fort stocked with
     basic essentials.
 
-Overlay
--------
+Overlays
+--------
 
-Fort-wide work orders screen
-~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+The orders plugin provides several overlays managed by the `overlay` framework.
+You can toggle them via the ``Overlays`` tab in `gui/control-panel` or
+reposition the ones with onscreen widgets with `gui/overlay`.
 
-Orders plugin functionality is directly available via an `overlay` widget when
-the fort-wide work orders screen is open. There are hotkeys assigned to export,
-import, sort, clear, and recheck conditions. You can also click on the hotkey
-hints as if they were buttons. Clearing will ask for confirmation before acting.
+orders.importexport
+~~~~~~~~~~~~~~~~~~~
 
-When you open the conditions screen for a manager order, there is also a small
+Adds a panel to the fort-wide work orders screen that allows access to `orders`
+plugin functionality. There are hotkeys assigned to export, import, sort,
+clear, and recheck conditions. You can also click on the hotkey hints as if
+they were buttons. Clearing will ask for confirmation before acting.
+
+orders.recheck
+~~~~~~~~~~~~~~
+
+When you open the conditions screen for a manager order, there is a small
 overlay that allows you to recheck conditions for just that order. This is
 useful for when the conditions were true when the order started, but they have
 become false and now you're just getting repeated cancellation spam as the
 order cannot be fulfilled.
 
-Workshop Workers tab
-~~~~~~~~~~~~~~~~~~~~
+orders.skillrestrictions and orders.laborrestrictions
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 For workshops that do *not* have a workshop master assigned, there is a slider
 you can use to restrict the units that perform jobs at that workshop by their
@@ -106,8 +113,11 @@ Veteran players may remember these overlays as vanilla features in pre-v50 Dwarf
 Fortress. This is actually still the case. The DFHack overlay simply provides a
 UI for the vanilla feature hiding beneath the surface.
 
-If you want to change where the overlay panels appear, you can move them with
-`gui/overlay`.
+orders.\*rightclick
+~~~~~~~~~~~~~~~~~~~
+
+These overlays are invisible interface improvements. They allow you to cancel
+out of data entry with Escape or right mouse click without exiting the screen.
 
 The orders library
 ------------------
@@ -130,7 +140,7 @@ This collection of orders handles basic fort necessities:
 - lye/soap
 - ash/potash
 - beds/wheelbarrows/minecarts
-- scrolls
+- paper/scrolls
 
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.

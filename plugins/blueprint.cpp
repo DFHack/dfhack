@@ -15,6 +15,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/Buildings.h"
@@ -1591,8 +1592,6 @@ static bool do_transform(color_ostream &out,
 static command_result do_blueprint(color_ostream &out,
                                    const vector<string> &parameters,
                                    vector<string> &files) {
-    CoreSuspender suspend;
-
     if (parameters.size() >= 1 && parameters[0] == "gui") {
         ostringstream command;
         command << "gui/blueprint";

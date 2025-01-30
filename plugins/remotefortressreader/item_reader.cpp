@@ -1,5 +1,4 @@
 #include "item_reader.h"
-#include "Core.h"
 #include "VersionInfo.h"
 #include "ItemdefInstrument.pb.h"
 
@@ -54,6 +53,7 @@
 #include "modules/MapCache.h"
 #include "modules/Materials.h"
 #include "MiscUtils.h"
+#include "Core.h"
 
 
 using namespace DFHack;

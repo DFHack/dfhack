@@ -31,4 +31,5 @@ DFhackCExport void dfhooks_shutdown();
 DFhackCExport void dfhooks_update();
 DFhackCExport void dfhooks_prerender();
 DFhackCExport bool dfhooks_sdl_event(SDL_Event* event);
+DFhackCExport void dfhooks_sdl_loop();
 DFhackCExport bool dfhooks_ncurses_key(int key);

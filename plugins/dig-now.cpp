@@ -6,6 +6,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/Buildings.h"
@@ -437,8 +438,6 @@ static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
     df::tiletype_material mat = tileMaterial(tt);
     switch (mat) {
     case df::tiletype_material::CONSTRUCTION:
-    case df::tiletype_material::POOL:
-    case df::tiletype_material::RIVER:
     case df::tiletype_material::TREE:
     case df::tiletype_material::ROOT:
     case df::tiletype_material::MAGMA:
@@ -995,7 +994,7 @@ static void post_process_dug_tiles(color_ostream &out,
 static bool get_options(color_ostream &out,
                         dig_now_options &opts,
                         const std::vector<std::string> &parameters) {
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, parameters.size() + 2) ||
@@ -1043,8 +1042,6 @@ bool dig_now_impl(color_ostream &out, const dig_now_options &options) {
 }
 
 command_result dig_now(color_ostream &out, std::vector<std::string> &params) {
-    CoreSuspender suspend;
-
     dig_now_options options;
     if (!get_options(out, options, params) || options.help)
         return CR_WRONG_USAGE;

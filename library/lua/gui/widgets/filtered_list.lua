@@ -190,7 +190,7 @@ function FilteredList:setFilter(filter, pos)
         pos = nil
 
         for i,v in ipairs(self.choices) do
-            local search_key = v.search_key
+            local search_key = getval(v.search_key)
             if not search_key then
                 if type(v.text) ~= 'table' then
                     search_key = v.text

@@ -23,14 +23,18 @@ distribution.
 */
 
 #include "Core.h"
+#include "DFHackVersion.h"
 #include "Debug.h"
 #include "Internal.h"
 #include "LuaTools.h"
+#include "MemAccess.h"
 
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
+
+#include "df/world.h"
 
 #include <json/json.h>
 
@@ -44,6 +48,8 @@ using namespace DFHack;
 
 static std::unordered_map<int, std::multimap<std::string, std::shared_ptr<Persistence::DataEntry>>> store;
 static std::unordered_map<size_t, std::shared_ptr<Persistence::DataEntry>> entry_cache;
+
+static uint32_t lastLoadSaveTickCount = 0;
 
 size_t next_entry_id = 0;   // goes more positive
 int next_fake_df_id = -101; // goes more negative
@@ -185,12 +191,41 @@ static std::string getSaveFilePath(const std::string &world, const std::string &
     return getSavePath(world) + "/dfhack-" + filterSaveFileName(name) + ".dat";
 }
 
+struct LastLoadSaveTickCountUpdater {
+    ~LastLoadSaveTickCountUpdater() {
+        lastLoadSaveTickCount = Core::getInstance().p->getTickCount();
+    }
+};
+
 void Persistence::Internal::save(color_ostream& out) {
-    if (!Core::getInstance().isWorldLoaded())
+    Core &core = Core::getInstance();
+
+    if (!core.isWorldLoaded())
         return;
 
     CoreSuspender suspend;
+    LastLoadSaveTickCountUpdater tickCountUpdater;
 
+    // write status
+    {
+        auto file = std::ofstream(getSaveFilePath("current", "status"));
+        file << "DF version:  " << core.p->getDescriptor()->getVersion() << std::endl;
+        file << "DFHack version: " << Version::dfhack_version() << " (" << Version::git_commit(true) << ")" << std::endl;
+        file << "Tagged release: " << (Version::is_release() ? "yes" : "no") << std::endl;
+        file << "Pre-release:    " << (Version::is_prerelease() ? "yes" : "no") << std::endl;
+        if (strlen(Version::dfhack_run_url())) {
+            file << "Build url:  " << Version::dfhack_run_url() << std::endl;
+        }
+        if (df::global::world and df::global::version) {
+            file << std::endl;
+            file << "World name: " << World::getWorldName() << " (" << World::getWorldName(true) << ")" << std::endl;
+            file << "World generated in version:  " << df::global::world->original_save_version << std::endl;
+            file << "World last saved in version: " << df::global::world->save_version << std::endl;
+            file << "World loaded in version:     " << *df::global::version << std::endl;
+        }
+    }
+
+    // write entity data
     for (auto & entity_store_entry : store) {
         int entity_id = entity_store_entry.first;
         Json::Value json(Json::arrayValue);
@@ -205,11 +240,13 @@ void Persistence::Internal::save(color_ostream& out) {
         file << json;
     }
 
+    // write perf counters
     {
         auto file = std::ofstream(getSaveFilePath("current", "perf-counters"));
         color_ostream_wrapper wrapper(file);
         Lua::CallLuaModuleFunction(wrapper, "script-manager", "print_timers");
     }
+
 }
 
 static bool get_entity_id(const std::string & fname, int & entity_id) {
@@ -256,6 +293,7 @@ static bool load_file(const std::string & path, int entity_id) {
 
 void Persistence::Internal::load(color_ostream& out) {
     CoreSuspender suspend;
+    LastLoadSaveTickCountUpdater tickCountUpdater;
 
     clear(out);
 
@@ -286,7 +324,6 @@ void Persistence::Internal::load(color_ostream& out) {
     const std::string legacy_fname = getSaveFilePath(world_name, "legacy-data");
     if (Filesystem::exists(legacy_fname)) {
         int synthesized_entity_id = Persistence::WORLD_ENTITY_ID;
-        using df::global::world;
         if (World::IsSiteLoaded())
             synthesized_entity_id = World::GetCurrentSiteId();
         load_file(legacy_fname, synthesized_entity_id);
@@ -390,4 +427,9 @@ void Persistence::getAllByKey(std::vector<PersistentDataItem> &vec, int entity_i
     auto range = store[entity_id].equal_range(key);
     for (auto it = range.first; it != range.second; ++it)
         vec.emplace_back(it->second);
+}
+
+uint32_t Persistence::getUnsavedSeconds() {
+    uint32_t durMS =  Core::getInstance().p->getTickCount() - lastLoadSaveTickCount;
+    return durMS / 1000;
 }

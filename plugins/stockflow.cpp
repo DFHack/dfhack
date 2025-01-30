@@ -94,10 +94,6 @@ public:
     bool command_method(const char *method, color_ostream &out) {
         // Calls a lua function with no parameters.
 
-        // Suspension is required for "stockflow enable" from the command line,
-        // but may be overkill for other situations.
-        CoreSuspender suspend;
-
         auto L = Lua::Core::State;
         Lua::StackUnwinder top(L);
 
@@ -116,8 +112,6 @@ public:
     bool stockpile_method(const char *method, building_stockpilest *sp) {
         // Combines the select_order and toggle_trigger method calls,
         // because they share the same signature.
-        CoreSuspendClaimer suspend;
-
         auto L = Lua::Core::State;
         color_ostream_proxy out(Core::getInstance().getConsole());
 
@@ -146,7 +140,7 @@ public:
         auto L = Lua::Core::State;
         color_ostream_proxy out(Core::getInstance().getConsole());
 
-        CoreSuspendClaimer suspend;
+        CoreSuspender suspend;
         Lua::StackUnwinder top(L);
 
         if (!lua_checkstack(L, 2))

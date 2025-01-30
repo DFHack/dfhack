@@ -9,7 +9,6 @@
 #include <algorithm>
 #include <set>
 
-#include "Core.h"
 #include "Debug.h"
 #include "Console.h"
 #include "Export.h"
@@ -35,8 +34,6 @@
 #include "df/body_part_template.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
-
-#include "DFHack.h"
 
 using namespace DFHack;
 using namespace df::enums;

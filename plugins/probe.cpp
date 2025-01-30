@@ -37,8 +37,6 @@ DFHACK_PLUGIN("probe");
 REQUIRE_GLOBAL(world);
 
 static command_result df_cprobe(color_ostream &out, vector<string> & parameters) {
-    CoreSuspender suspend;
-
     auto unit = Gui::getSelectedUnit(out);
     if (!unit)
         return CR_FAILURE;
@@ -88,8 +86,6 @@ static void describeTile(color_ostream &out, df::tiletype tiletype) {
 }
 
 static command_result df_probe(color_ostream &out, vector<string> & parameters) {
-    CoreSuspender suspend;
-
     DFHack::Materials *Materials = Core::getInstance().getMaterials();
 
     vector<t_matglossInorganic> inorganic;
@@ -324,8 +320,6 @@ union Subtype {
 };
 
 static command_result df_bprobe(color_ostream &out, vector<string> & parameters) {
-    CoreSuspender suspend;
-
     auto bld = Gui::getSelectedBuilding(out);
     if (!bld)
         return CR_FAILURE;

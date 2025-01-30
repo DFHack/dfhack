@@ -1,4 +1,3 @@
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -219,8 +218,6 @@ static command_result job_material_in_build(color_ostream &out, MaterialInfo &ne
 
 static command_result job_material(color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
-
     MaterialInfo new_mat;
     if (parameters.size() == 1)
     {
@@ -294,8 +291,6 @@ static df::job_item *getJobItem(color_ostream &out, df::job *job, std::string id
 
 static command_result job_cmd(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     std::string cmd = (parameters.empty() ? "query" : parameters[0]);
     if (cmd == "query" || cmd == "list")
     {

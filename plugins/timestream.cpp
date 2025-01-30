@@ -1,6 +1,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/EventManager.h"
 #include "modules/Items.h"
@@ -215,7 +216,9 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
         migrate_old_config(out);
     }
 
-    plugin_enable(out, config.get_bool(CONFIG_IS_ENABLED));
+    if (config.get_bool(CONFIG_IS_ENABLED)) {
+        plugin_enable(out, true);
+    }
     DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 
@@ -240,8 +243,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

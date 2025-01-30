@@ -179,6 +179,7 @@ DFHACK_EXPORT bool isGreatDanger(df::unit *unit);
 DFHACK_EXPORT bool isUnitInBox(df::unit *u, const cuboid &box);
 DFHACK_EXPORT inline bool isUnitInBox(df::unit *u, int16_t x1, int16_t y1, int16_t z1,
     int16_t x2, int16_t y2, int16_t z2) { return isUnitInBox(u, cuboid(x1, y1, z1, x2, y2, z2)); }
+DFHACK_EXPORT inline bool isUnitInBox(df::unit *u, df::coord pos1, df::coord pos2) { return isUnitInBox(u, cuboid(pos1, pos2)); }
 
 // Fill vector with units in box matching filter.
 DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit *> &units, const cuboid &box,
@@ -186,6 +187,9 @@ DFHACK_EXPORT bool getUnitsInBox(std::vector<df::unit *> &units, const cuboid &b
 DFHACK_EXPORT inline bool getUnitsInBox(std::vector<df::unit *> &units, int16_t x1, int16_t y1, int16_t z1,
     int16_t x2, int16_t y2, int16_t z2, std::function<bool(df::unit *)> filter = [](df::unit *u) { return true; })
     { return getUnitsInBox(units, cuboid(x1, y1, z1, x2, y2, z2), filter); }
+DFHACK_EXPORT inline bool getUnitsInBox(std::vector<df::unit *> &units, df::coord pos1, df::coord pos2,
+    std::function<bool(df::unit *)> filter = [](df::unit *u) { return true; })
+    { return getUnitsInBox(units, cuboid(pos1, pos2), filter); }
 
 // Noble string must be in form "CAPTAIN_OF_THE_GUARD", etc.
 DFHACK_EXPORT bool getUnitsByNobleRole(std::vector<df::unit *> &units, std::string noble);

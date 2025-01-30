@@ -22,29 +22,37 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include <cstdio>
 #include <cstring>
-#include <dirent.h>
-#include <errno.h>
+#include <cstdio>
+#include <cstdlib>
 #include <map>
 #include <set>
 #include <string>
+#include <vector>
+
+#include <dirent.h>
+#include <errno.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
-#include <vector>
 
 #include "Error.h"
 #include "Internal.h"
-#include "md5wrapper.h"
 #include "MemAccess.h"
 #include "Memory.h"
-#include "modules/Filesystem.h"
+#include "MiscUtils.h"
 #include "VersionInfo.h"
 #include "VersionInfoFactory.h"
+#include "modules/Filesystem.h"
+#include "md5wrapper.h"
 
-using namespace std;
 using namespace DFHack;
+
+using std::string;
+using std::map;
+using std::vector;
+using std::endl;
+using std::cerr;
 
 Process::Process(const VersionInfoFactory& known_versions) : identified(false), my_pe(0)
 {
@@ -69,8 +77,8 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false), 
     auto vinfo = known_versions.getVersionInfoByMD5(my_md5);
     if(vinfo)
     {
-        my_descriptor = std::make_shared<VersionInfo>(*vinfo);
         identified = true;
+        my_descriptor = std::make_shared<VersionInfo>(*vinfo);
     }
     else
     {
@@ -113,13 +121,18 @@ Process::~Process()
 
 string Process::doReadClassName (void * vptr)
 {
-    //FIXME: BAD!!!!!
-    char * typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
-    char * typestring = Process::readPtr(typeinfo + sizeof(void*));
+    char* typeinfo = Process::readPtr(((char *)vptr - sizeof(void*)));
+    char* typestring = Process::readPtr(typeinfo + sizeof(void*));
     string raw = readCString(typestring);
-    size_t start = raw.find_first_of("abcdefghijklmnopqrstuvwxyz");// trim numbers
-    size_t end = raw.length();
-    return raw.substr(start,end-start);
+
+    string status;
+    string demangled = cxx_demangle(raw, &status);
+
+    if (demangled.length() == 0) {
+        return "dummy";
+    }
+
+    return demangled;
 }
 
 //FIXME: cross-reference with ELF segment entries?

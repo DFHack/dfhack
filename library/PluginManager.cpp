@@ -388,7 +388,7 @@ bool Plugin::unload(color_ostream &con)
     // get the mutex
     access->lock();
     // if we are actually loaded
-    if(state == PS_LOADED)
+    if (state == PS_LOADED)
     {
         if (Screen::hasActiveScreens(this))
         {
@@ -408,14 +408,23 @@ bool Plugin::unload(color_ostream &con)
         // wait for all calls to finish
         access->wait();
         state = PS_UNLOADING;
-        access->unlock();
-        // enter suspend
-        CoreSuspender suspend;
-        access->lock();
-        if (Core::getInstance().isMapLoaded() && plugin_save_site_data && World::IsSiteLoaded() && plugin_save_site_data(con) != CR_OK)
-            con.printerr("Plugin %s has failed to save site data.\n", name.c_str());
-        if (Core::getInstance().isWorldLoaded() && plugin_save_world_data && plugin_save_world_data(con) != CR_OK)
-            con.printerr("Plugin %s has failed to save world data.\n", name.c_str());
+        // only attempt to unload site or world data if the core is in a valid state
+        if (Core::getInstance().isValid())
+        {
+            // enter suspend
+            access->unlock();
+            {
+                CoreSuspender suspend;
+                access->lock();
+                if (Core::getInstance().isMapLoaded() && plugin_save_site_data && World::IsSiteLoaded() && plugin_save_site_data(con) != CR_OK)
+                    con.printerr("Plugin %s has failed to save site data.\n", name.c_str());
+                if (Core::getInstance().isWorldLoaded() && plugin_save_world_data && plugin_save_world_data(con) != CR_OK)
+                    con.printerr("Plugin %s has failed to save world data.\n", name.c_str());
+                // holding the access lock while releasing the CoreSuspender creates a deadlock risk
+                access->unlock();
+            }
+            access->lock();
+        }
         // notify plugin about shutdown, if it has a shutdown function
         command_result cr = CR_OK;
         if(plugin_shutdown)
@@ -430,20 +439,19 @@ bool Plugin::unload(color_ostream &con)
         reset_lua();
         parent->unregisterCommands(this);
         commands.clear();
-        if(cr == CR_OK)
-        {
-            ClosePlugin(plugin_lib);
+
+        bool closed_safely = (cr == CR_OK) && ClosePlugin(plugin_lib);
+
+        if (closed_safely) {
             state = PS_UNLOADED;
-            access->unlock();
-            return true;
         }
         else
         {
             con.printerr("Plugin %s has failed to shutdown!\n",name.c_str());
             state = PS_BROKEN;
-            access->unlock();
-            return false;
         }
+        access->unlock();
+        return closed_safely;
     }
     else if(state == PS_UNLOADED || state == PS_DELETED)
     {
@@ -469,43 +477,31 @@ bool Plugin::reload(color_ostream &out)
 
 command_result Plugin::invoke(color_ostream &out, const std::string & command, std::vector <std::string> & parameters)
 {
-    Core & c = Core::getInstance();
     command_result cr = CR_NOT_IMPLEMENTED;
     access->lock_add();
-    if(state == PS_LOADED)
-    {
-        for (size_t i = 0; i < commands.size();i++)
+    if (state == PS_LOADED) {
+        if (auto cmdIt = std::ranges::find_if(commands, [&](const PluginCommand &cmd) { return cmd.name == command; });
+            commands.end() != cmdIt)
         {
-            PluginCommand &cmd = commands[i];
-            if(cmd.name == command)
-            {
-                // running interactive things from some other source than the console would break it
-                if(!out.is_console() && cmd.interactive)
-                    cr = CR_NEEDS_CONSOLE;
-                else if (cmd.guard)
-                {
-                    // Execute hotkey commands in a way where they can
-                    // expect their guard conditions to be matched,
-                    // so as to avoid duplicating checks.
-                    // This means suspending the core beforehand.
-                    CoreSuspender suspend(&c);
-                    df::viewscreen *top = c.getTopViewscreen();
-
-                    if (!cmd.guard(top))
-                    {
-                        out.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
-                        cr = CR_WRONG_USAGE;
-                    }
-                    else
-                    {
-                        cr = cmd.function(out, parameters);
-                    }
+            // running interactive things from some other source than the console would break it
+            if (!out.is_console() && cmdIt->interactive)
+                cr = CR_NEEDS_CONSOLE;
+            else if (cmdIt->guard) {
+                CoreSuspender suspend;
+                if (!cmdIt->guard(Core::getInstance().getTopViewscreen())) {
+                    out.printerr("Could not invoke %s: unsuitable UI state.\n", command.c_str());
+                    cr = CR_WRONG_USAGE;
                 }
-                else
-                {
-                    cr = cmd.function(out, parameters);
+                else {
+                    cr = cmdIt->function(out, parameters);
                 }
-                break;
+            }
+            else if (cmdIt->unlocked) {
+                cr = cmdIt->function(out, parameters);
+            }
+            else {
+                CoreSuspender suspend;
+                cr = cmdIt->function(out, parameters);
             }
         }
     }
@@ -708,7 +704,7 @@ void Plugin::index_lua(DFLibrary *lib)
             cmd->event = evlist->event;
             if (cmd->active)
             {
-                cmd->event->bind(Lua::Core::State, cmd);
+                cmd->event->bind(DFHack::Core::getInstance().getLuaState(), cmd);
                 if (cmd->count > 0)
                     cmd->event->on_count_changed(cmd->count, 0);
             }
@@ -834,7 +830,7 @@ void Plugin::open_lua(lua_State *state, int table)
 
             it->second->active = true;
             if (it->second->event)
-                it->second->event->bind(Lua::Core::State, it->second);
+                it->second->event->bind(DFHack::Core::getInstance().getLuaState(), it->second);
 
             lua_setfield(state, table, it->first.c_str());
         }

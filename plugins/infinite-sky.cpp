@@ -1,8 +1,8 @@
 
-#include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/EventManager.h"
 #include "modules/Maps.h"
@@ -31,9 +31,9 @@ REQUIRE_GLOBAL(world);
 
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(infiniteSky, control, DebugCategory::LINFO);
+    DBG_DECLARE(infinitesky, control, DebugCategory::LINFO);
     // for logging during creation of z-levels
-    DBG_DECLARE(infiniteSky, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(infinitesky, cycle, DebugCategory::LINFO);
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
@@ -98,7 +98,9 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     }
 
     // Call plugin_enable to set value to ensure the event handler is properly registered
-    plugin_enable(out, config.get_bool(CONFIG_IS_ENABLED));
+    if (config.get_bool(CONFIG_IS_ENABLED)) {
+        plugin_enable(out, true);
+    }
     DEBUG(control, out)
         .print("loading persisted enabled state: %s\n",
                is_enabled ? "true" : "false");
@@ -128,7 +130,6 @@ static void constructionEventHandler(color_ostream &out, void *ptr) {
 }
 
 void doInfiniteSky(color_ostream& out, int32_t howMany) {
-    CoreSuspender suspend;
     int32_t z_count_block = world->map.z_count_block;
     df::map_block ****block_index = world->map.block_index;
 
@@ -240,7 +241,6 @@ struct_identity infinitesky_options::_identity{sizeof(infinitesky_options), &df:
 
 command_result infiniteSky(color_ostream &out,
                            std::vector<std::string> &parameters) {
-    CoreSuspender suspend;
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

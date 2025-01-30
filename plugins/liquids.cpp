@@ -21,10 +21,10 @@
 // - maybe store the last parameters in a file to make them persistent after dfhack is closed?
 
 #include "Console.h"
-#include "Core.h"
 #include "Export.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/Gui.h"
@@ -71,7 +71,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
         "liquids",
         "Place magma, water or obsidian.",
         df_liquids,
-        true)); // interactive, needs console for prompt
+        true, true)); // interactive, needs console for prompt
     commands.push_back(PluginCommand(
         "liquids-here",
         "Use settings from liquids at cursor position.",
@@ -368,6 +368,7 @@ command_result df_liquids (color_ostream &out_, vector <string> & parameters)
             cur_mode.amount = 7;
         else if(command.empty())
         {
+            CoreSuspender suspend;
             df_liquids_execute(out);
         }
         else
@@ -395,8 +396,6 @@ command_result df_liquids_here (color_ostream &out, vector <string> & parameters
 
 command_result df_liquids_execute(color_ostream &out)
 {
-    CoreSuspender suspend;
-
     auto cursor = Gui::getCursorPos();
     if (!cursor.isValid())
     {

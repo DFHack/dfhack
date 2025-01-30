@@ -2,11 +2,11 @@
 
 #include "Debug.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/Items.h"
 #include "modules/Materials.h"
 #include "modules/Persistence.h"
-#include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
@@ -395,9 +395,7 @@ static bool validateMaterialCategory(ClothingRequirement *requirement) {
 
 // A command! It sits around and looks pretty. And it's nice and friendly.
 command_result autoclothing(color_ostream &out, vector<string> &parameters)
-{   // Be sure to suspend the core if any DF state is read or modified
-    CoreSuspender suspend;
-
+{
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
@@ -699,7 +697,7 @@ static void generate_control(color_ostream &out) {
             missingGloves[unit->race]++;
         if (numPants == 0)
             missingPants[unit->race]++;
-        DEBUG(control, out) << Translation::TranslateName(Units::getVisibleName(unit)) <<
+        DEBUG(control, out) << DF2CONSOLE(Units::getReadableName(unit)) <<
             " has " << numArmor << " armor, " << numShoes << " shoes, " << numHelms <<
             " helms, " << numGloves << " gloves, " << numPants << " pants" << endl;
     });

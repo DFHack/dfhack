@@ -25,12 +25,14 @@ distribution.
 #pragma once
 
 #include "Console.h"
+#include "CoreDefs.h"
 #include "Export.h"
 #include "Hooks.h"
 
 #include "modules/Graphic.h"
 
 #include <atomic>
+#include <chrono>
 #include <condition_variable>
 #include <map>
 #include <memory>
@@ -47,6 +49,7 @@ distribution.
 #define DFH_MOD_ALT 4
 
 struct WINDOW;
+struct lua_State;
 
 namespace df
 {
@@ -73,31 +76,6 @@ namespace DFHack
     {
         struct Hide;
     }
-
-    enum command_result
-    {
-        CR_LINK_FAILURE = -3,    // RPC call failed due to I/O or protocol error
-        CR_NEEDS_CONSOLE = -2,   // Attempt to call interactive command without console
-        CR_NOT_IMPLEMENTED = -1, // Command not implemented, or plugin not loaded
-        CR_OK = 0,               // Success
-        CR_FAILURE = 1,          // Failure
-        CR_WRONG_USAGE = 2,      // Wrong arguments or ui state
-        CR_NOT_FOUND = 3         // Target object not found (for RPC mainly)
-    };
-
-    enum state_change_event
-    {
-        SC_UNKNOWN = -1,
-        SC_WORLD_LOADED = 0,
-        SC_WORLD_UNLOADED = 1,
-        SC_MAP_LOADED = 2,
-        SC_MAP_UNLOADED = 3,
-        SC_VIEWSCREEN_CHANGED = 4,
-        SC_CORE_INITIALIZED = 5,
-        SC_BEGIN_UNLOAD = 6,
-        SC_PAUSED = 7,
-        SC_UNPAUSED = 8
-    };
 
     class DFHACK_EXPORT PerfCounters
     {
@@ -193,7 +171,7 @@ namespace DFHack
         /// returns a named pointer.
         void *GetData(std::string key);
 
-        command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters);
+        command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
         command_result runCommand(color_ostream &out, const std::string &command);
         void getAutoCompletePossibles(const std::string &command, std::vector<std::string> &possibles);
         bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
@@ -245,6 +223,11 @@ namespace DFHack
         static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
         PerfCounters perf_counters;
+
+        lua_State* getLuaState(bool bypass_assertion = false) {
+            assert(bypass_assertion || isSuspended());
+            return State;
+        }
 
     private:
         DFHack::Console& con;
@@ -343,11 +326,17 @@ namespace DFHack
          * \sa DFHack::CoreSuspender
          * \{
          */
-        std::recursive_mutex CoreSuspendMutex;
+        std::recursive_timed_mutex CoreSuspendMutex;
         std::condition_variable_any CoreWakeup;
         std::atomic<std::thread::id> ownerThread;
         std::atomic<size_t> toolCount;
+        std::atomic<bool> shutdown;
         //! \}
+
+        std::thread::id df_render_thread;
+        std::thread::id df_simulation_thread;
+
+        lua_State* State;
 
         friend class CoreService;
         friend class ServerConnection;
@@ -357,47 +346,59 @@ namespace DFHack
         friend struct CoreSuspendReleaseMain;
     };
 
-    class CoreSuspenderBase  : protected std::unique_lock<std::recursive_mutex> {
+    class CoreSuspenderBase : protected std::unique_lock< decltype(Core::CoreSuspendMutex) > {
     protected:
-        using parent_t = std::unique_lock<std::recursive_mutex>;
+        using mutex_type = decltype(Core::CoreSuspendMutex);
+        using parent_t = std::unique_lock< mutex_type >;
         std::thread::id tid;
+        Core& core;
 
-        CoreSuspenderBase(std::defer_lock_t d) : CoreSuspenderBase{&Core::getInstance(), d} {}
+        CoreSuspenderBase() : CoreSuspenderBase{ Core::getInstance() } {}
 
-        CoreSuspenderBase(Core* core, std::defer_lock_t) :
-            /* Lock the core */
-            parent_t{core->CoreSuspendMutex,std::defer_lock},
+        CoreSuspenderBase(Core& core) :
+            /* Lock the core (jk not really) */
+            parent_t{core.CoreSuspendMutex,std::defer_lock},
             /* Mark this thread to be the core owner */
-            tid{}
-        {}
+            tid{},
+            core{ core }
+        {
+            assert(core.df_render_thread != std::thread::id{} && core.df_render_thread != std::this_thread::get_id());
+        }
     public:
         void lock()
         {
-            auto& core = Core::getInstance();
             parent_t::lock();
-            tid = core.ownerThread.exchange(std::this_thread::get_id(),
-                    std::memory_order_acquire);
+            complete_lock();
+        }
+
+        bool try_lock()
+        {
+            bool locked = parent_t::try_lock_for(std::chrono::milliseconds(100));
+            if (locked) complete_lock();
+            return locked;
         }
 
         void unlock()
         {
-            auto& core = Core::getInstance();
             /* Restore core owner to previous value */
-            core.ownerThread.store(tid, std::memory_order_release);
             if (tid == std::thread::id{})
                 Lua::Core::Reset(core.getConsole(), "suspend");
+            core.ownerThread.store(tid, std::memory_order_release);
             parent_t::unlock();
-        }
-
-        bool owns_lock() const noexcept
-        {
-            return parent_t::owns_lock();
         }
 
         ~CoreSuspenderBase() {
             if (owns_lock())
                 unlock();
         }
+
+    protected:
+        void complete_lock()
+        {
+            tid = core.ownerThread.exchange(std::this_thread::get_id(),
+                std::memory_order_acquire);
+        }
+
         friend class MainThread;
     };
 
@@ -423,34 +424,62 @@ namespace DFHack
      *   The last step is to decrement Core::toolCount and wakeup main thread if
      *   no more tools are queued trying to acquire the
      *   Core::CoreSuspenderMutex.
+     *
+     * The public API for CoreSuspender only supports construction and destruction;
+     * all other locking operations are reserved
      */
-    class CoreSuspender : public CoreSuspenderBase {
+
+    class CoreSuspender : protected CoreSuspenderBase {
         using parent_t = CoreSuspenderBase;
     public:
-        CoreSuspender() : CoreSuspender{&Core::getInstance()} { }
-        CoreSuspender(std::defer_lock_t d) : CoreSuspender{&Core::getInstance(),d} { }
-        CoreSuspender(bool) : CoreSuspender{&Core::getInstance()} { }
-        CoreSuspender(Core* core, bool) : CoreSuspender{core} { }
-        CoreSuspender(Core* core) :
-            CoreSuspenderBase{core, std::defer_lock}
+        CoreSuspender() : CoreSuspender{Core::getInstance()} {}
+
+        CoreSuspender(Core& core) : CoreSuspenderBase{core}
         {
             lock();
         }
-        CoreSuspender(Core* core, std::defer_lock_t) :
-            CoreSuspenderBase{core, std::defer_lock}
-        {}
+
+        // note that this is needed so the destructor will call CoreSuspender::unlock instead of CoreSuspenderBase::unlock
+        ~CoreSuspender() {
+            if (owns_lock())
+                unlock();
+        }
+
+    protected:
+        // deferred locking is not part of CoreSuspender's public API
+        // these constructors are only for use in derived classes,
+        // specifically ConditionalCoreSuspender
+        CoreSuspender(std::defer_lock_t d) : CoreSuspender{ Core::getInstance(),d } {}
+        CoreSuspender(Core& core, std::defer_lock_t d) : CoreSuspenderBase{ core } {}
 
         void lock()
         {
-            auto& core = Core::getInstance();
-            core.toolCount.fetch_add(1, std::memory_order_relaxed);
+            inc_tool_count();
             parent_t::lock();
+        }
+
+        bool try_lock()
+        {
+            inc_tool_count();
+            if (parent_t::try_lock())
+                return true;
+            dec_tool_count();
+            return false;
         }
 
         void unlock()
         {
-            auto& core = Core::getInstance();
             parent_t::unlock();
+            dec_tool_count();
+        }
+
+        void inc_tool_count()
+        {
+            core.toolCount.fetch_add(1, std::memory_order_relaxed);
+        }
+
+        void dec_tool_count()
+        {
             /* Notify core to continue when all queued tools have completed
              * 0 = None wants to own the core
              * 1+ = There are tools waiting core access
@@ -459,32 +488,24 @@ namespace DFHack
             if (core.toolCount.fetch_add(-1, std::memory_order_relaxed) == 1)
                 core.CoreWakeup.notify_one();
         }
-
-        ~CoreSuspender() {
-            if (owns_lock())
-                unlock();
-        }
     };
 
     /*!
-     * Temporary release main thread ownership to allow alternative thread
-     * implement DF logic thread loop
+     * ConditionalCoreSuspender attempts to acquire a CoreSuspender, but will fail if doing so
+     * would cause a thread wait. The caller can determine if the suspender was acquired by casting
+     * the created object to bool:
+     *     ConditionalCoreSuspender suspend;
+     *     if (suspend) {
+     *         ...
+     *     }
      */
-    struct DFHACK_EXPORT CoreSuspendReleaseMain {
-        CoreSuspendReleaseMain();
-        ~CoreSuspendReleaseMain();
+
+    class ConditionalCoreSuspender : protected CoreSuspender {
+    public:
+        ConditionalCoreSuspender() : ConditionalCoreSuspender{ Core::getInstance() } { }
+        ConditionalCoreSuspender(Core& core) : CoreSuspender{ core, std::defer_lock } { try_lock(); }
+
+        operator bool() const { return owns_lock(); }
     };
 
-    /*!
-     * Temporary claim main thread ownership. This allows caller to call
-     * Core::Update from a different thread than original DF logic thread if
-     * logic thread has released main thread ownership with
-     * CoreSuspendReleaseMain
-     */
-    struct DFHACK_EXPORT CoreSuspendClaimMain {
-        CoreSuspendClaimMain();
-        ~CoreSuspendClaimMain();
-    };
-
-    using CoreSuspendClaimer = CoreSuspender;
 }

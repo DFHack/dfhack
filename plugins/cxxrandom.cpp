@@ -25,12 +25,9 @@ Updated: Dec. 21 2017
 #include <stdio.h>
 #include <stdlib.h>
 
-#include "Error.h"
-#include "Core.h"
 #include "DataFuncs.h"
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
+#include "PluginManager.h"
+#include "PluginLua.h"
 
 using namespace DFHack;
 DFHACK_PLUGIN("cxxrandom");

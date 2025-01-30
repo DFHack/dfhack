@@ -1,4 +1,3 @@
-#include "Core.h"
 #include "Console.h"
 #include "DataDefs.h"
 #include "Export.h"
@@ -48,8 +47,6 @@ command_result df_frozenlava (color_ostream &out, vector <string> & parameters)
     if (parameters.size())
         return CR_WRONG_USAGE;
 
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -66,8 +63,6 @@ command_result df_frozenwater (color_ostream &out, vector <string> & parameters)
 {
     if (parameters.size())
         return CR_WRONG_USAGE;
-
-    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {

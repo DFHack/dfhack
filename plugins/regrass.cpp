@@ -5,6 +5,7 @@
 #include "Error.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/Gui.h"
@@ -433,8 +434,6 @@ command_result df_regrass(color_ostream &out, vector<string> &parameters)
 {
     regrass_options options;
     df::coord pos_1, pos_2;
-
-    CoreSuspender suspend;
 
     if (!Lua::CallLuaModuleFunction(out, "plugins.regrass", "parse_commandline",
         std::make_tuple(&options, &pos_1, &pos_2, parameters)))

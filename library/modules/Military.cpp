@@ -30,7 +30,7 @@ std::string Military::getSquadName(int32_t squad_id)
         return "";
     if (squad->alias.size() > 0)
         return squad->alias;
-    return Translation::TranslateName(&squad->name, true);
+    return Translation::translateName(&squad->name, true);
 }
 
 //only works for making squads for fort mode player controlled dwarf squads

@@ -215,7 +215,6 @@ namespace CSP {
     }
 
     void UnpauseEvent(bool full_scan = false){
-        CoreSuspender suspend; // we need exclusive access to df memory and this call stack doesn't already have a lock
         DEBUG(plugin).print("UnpauseEvent()\n");
         ChannelManager::Get().build_groups(full_scan);
         ChannelManager::Get().manage_groups();
@@ -361,7 +360,6 @@ namespace CSP {
     }
 
     void OnUpdate(color_ostream &out) {
-        CoreSuspender suspend;
         if (World::ReadPauseState())
             return;
 

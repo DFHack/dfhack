@@ -18,6 +18,11 @@ on:
         default: DFHack/df-structures
       structures_ref:
         type: string
+      stonesense_repo:
+        type: string
+        default: DFHack/stonesense
+      stonesense_ref:
+        type: string
       artifact-name:
         type: string
       append-date-and-hash:
@@ -88,6 +93,13 @@ jobs:
           repository: ${{ inputs.structures_repo }}
           ref: ${{ inputs.structures_ref }}
           path: library/xml
+      - name: Clone stonesense
+        if: inputs.stonesense_ref
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ inputs.stonesense_repo }}
+          ref: ${{ inputs.stonesense_ref }}
+          path: plugins/stonesense
       - name: Get 3rd party SDKs
         if: inputs.launchdf
         uses: actions/checkout@v4
@@ -107,7 +119,7 @@ jobs:
             win-msvc
       - name: Cross-compile
         env:
-          CMAKE_EXTRA_ARGS: -DBUILD_LIBRARY=${{ inputs.platform-files }} -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files && inputs.plugins }} -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} -DBUILD_DOCS:BOOL=${{ inputs.docs }} -DBUILD_DOCS_NO_HTML:BOOL=${{ !inputs.html }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} -DBUILD_TESTS:BOOL=${{ inputs.tests }} -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} ${{ inputs.xml-dump-type-sizes && '-DINSTALL_XMLDUMP:BOOL=1' || '' }}
+          CMAKE_EXTRA_ARGS: -DBUILD_PDBS:BOOL=${{ inputs.cache-id == 'release' }} -DDFHACK_RUN_URL='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' -DBUILD_LIBRARY=${{ inputs.platform-files }} -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files && inputs.plugins }} -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} -DBUILD_DOCS:BOOL=${{ inputs.docs }} -DBUILD_DOCS_NO_HTML:BOOL=${{ !inputs.html }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} -DBUILD_TESTS:BOOL=${{ inputs.tests }} -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} ${{ inputs.xml-dump-type-sizes && '-DINSTALL_XMLDUMP:BOOL=1' || '' }}
         run: |
           cd build
           bash -x build-win64-from-linux.sh
@@ -115,9 +127,9 @@ jobs:
         run: |
           cd build
           ccache -d win64-cross/ccache --show-stats --verbose
-          ccache -d win64-cross/ccache --max-size 150M
+          ccache -d win64-cross/ccache --max-size ${{ inputs.cache-id == 'release' && '500M' || '150M' }}
           ccache -d win64-cross/ccache --cleanup
-          ccache -d win64-cross/ccache --max-size 500M
+          ccache -d win64-cross/ccache --max-size ${{ inputs.cache-id == 'release' && '2G' || '500M' }}
           ccache -d win64-cross/ccache --zero-stats
       - name: Save ccache
         if: inputs.platform-files && !inputs.cache-readonly
@@ -145,3 +157,9 @@ jobs:
         with:
           name: ${{ steps.artifactname.outputs.name }}
           path: ${{ steps.artifactname.outputs.name }}.tar.bz2
+      - name: Upload PDBs
+        if: inputs.artifact-name && inputs.cache-id == 'release'
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.artifactname.outputs.name }}_pdb
+          path: build/win64-cross/pdb

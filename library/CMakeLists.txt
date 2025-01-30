@@ -41,22 +41,18 @@ endif()
 
 add_custom_target(generate_headers DEPENDS ${CODEGEN_OUT})
 
-include_directories(include)
-
 add_subdirectory(xml)
 
 if(BUILD_LIBRARY)
 
-include_directories(proto)
-
 set(MAIN_HEADERS
     include/Internal.h
-    include/DFHack.h
     include/DFHackVersion.h
     include/BitArray.h
     include/ColorText.h
     include/Console.h
     include/Core.h
+    include/CoreDefs.h
     include/DataDefs.h
     include/DataFuncs.h
     include/DataIdentity.h
@@ -73,6 +69,7 @@ set(MAIN_HEADERS
     include/Module.h
     include/MemAccess.h
     include/ModuleFactory.h
+    include/PluginLua.h
     include/PluginManager.h
     include/PluginStatics.h
     include/RemoteClient.h
@@ -109,6 +106,7 @@ set(MAIN_SOURCES
     Types.cpp
     PluginManager.cpp
     PluginStatics.cpp
+    PlugLoad.cpp
     TileTypes.cpp
     VersionInfoFactory.cpp
     RemoteClient.cpp
@@ -140,7 +138,6 @@ set(DFCLIENT_CONSOLE_SOURCES Console.cpp)
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
     Hooks.cpp
-    PlugLoad-windows.cpp
     Process-windows.cpp
 )
 
@@ -151,7 +148,6 @@ endif()
 
 set(MAIN_SOURCES_LINUX
     ${CONSOLE_SOURCES}
-    PlugLoad-posix.cpp
     Process-linux.cpp
 )
 
@@ -342,7 +338,7 @@ elseif(UNIX)
     set(PROJECT_LIBS rt dl dfhack-md5 ${DFHACK_TINYXML})
 else(WIN32)
     # FIXME: do we really need psapi?
-    set(PROJECT_LIBS psapi dfhack-md5 ${DFHACK_TINYXML})
+    set(PROJECT_LIBS psapi dbghelp dfhack-md5 ${DFHACK_TINYXML})
 endif()
 
 set(VERSION_SRCS DFHackVersion.cpp)
@@ -358,7 +354,9 @@ set_property(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
     DF_VERSION="${DF_VERSION}"
     DFHACK_RELEASE="${DFHACK_RELEASE}"
     DFHACK_ABI_VERSION=${DFHACK_ABI_VERSION}
+    DFHACK_RUN_URL="${DFHACK_RUN_URL}"
 )
+target_include_directories(dfhack-version PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 if(DFHACK_PRERELEASE)
     set_property(TARGET dfhack-version APPEND PROPERTY COMPILE_DEFINITIONS
         DFHACK_PRERELEASE=1
@@ -381,14 +379,21 @@ if(EXISTS ${dfhack_SOURCE_DIR}/.git/index AND EXISTS ${dfhack_SOURCE_DIR}/.git/m
 endif()
 
 add_library(dfhack SHARED ${PROJECT_SOURCES})
+target_include_directories(dfhack PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
+
+get_target_property(xlsxio_INCLUDES xlsxio_read_STATIC INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(dfhack PRIVATE ${xlsxio_INCLUDES} ${SDL2_INCLUDE_DIRS})
 add_dependencies(dfhack generate_proto_core)
 add_dependencies(dfhack generate_headers)
 
 add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS} ${DFCLIENT_CONSOLE_SOURCES})
+target_include_directories(dfhack-client PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
 target_compile_definitions(dfhack-client PUBLIC BUILD_DFHACK_CLIENT)
+
 add_dependencies(dfhack-client dfhack)
 
 add_executable(dfhack-run dfhack-run.cpp)
+target_include_directories(dfhack-run PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
 
 add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)
@@ -431,6 +436,9 @@ target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-ve
 set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
 target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static)
+if(WIN32)
+    target_link_libraries(dfhack-client dbghelp)
+endif()
 target_link_libraries(dfhack-run dfhack-client)
 
 if(APPLE)

@@ -8,6 +8,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 DFHACK_PLUGIN("hotkeys");
 
@@ -194,14 +195,12 @@ static bool invoke_command(color_ostream &out, const size_t index) {
 static command_result hotkeys_cmd(color_ostream &out, vector <string> & parameters) {
     if (!parameters.size()) {
         DEBUG(log).print("invoking command: '%s'\n", INVOKE_MENU_DEFAULT_COMMAND.c_str());
-        return Core::getInstance().runCommand(out, INVOKE_MENU_DEFAULT_COMMAND );
+        return Core::getInstance().runCommand(out, INVOKE_MENU_DEFAULT_COMMAND);
     } else if (parameters.size() == 2 && parameters[0] == "menu") {
         string cmd = INVOKE_MENU_BASE_COMMAND + parameters[1];
         DEBUG(log).print("invoking command: '%s'\n", cmd.c_str());
         return Core::getInstance().runCommand(out, cmd);
     }
-
-    CoreSuspender guard;
 
     if (parameters[0] == "list") {
         list(out);

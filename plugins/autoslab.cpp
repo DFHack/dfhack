@@ -9,12 +9,11 @@
  *                   whose remains are unreachable.
  */
 
-#include "Core.h"
 #include "Debug.h"
 #include "PluginManager.h"
 
 #include "modules/Persistence.h"
-#include "modules/Translation.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/historical_figure.h"
@@ -174,8 +173,8 @@ static void checkslabs(color_ostream &out)
             )
         {
             createSlabJob(ghost);
-            auto fullName = Translation::TranslateName(&ghost->name);
-            out.print("Added slab order for ghost %s\n", fullName.c_str());
+            auto fullName = Units::getReadableName(ghost);
+            out.print("Added slab order for %s\n", DF2CONSOLE(fullName).c_str());
         }
     }
 }

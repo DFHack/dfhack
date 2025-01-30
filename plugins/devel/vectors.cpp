@@ -8,7 +8,6 @@
 
 #include <stdio.h>
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -180,8 +179,6 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
     while (start % 4 != 0)
         start++;
 
-    CoreSuspender suspend;
-
     std::vector<t_memrange> ranges;
 
     if (!getRanges(con, ranges))
@@ -288,8 +285,6 @@ command_result df_clearvec (color_ostream &con, vector <string> & parameters)
         vectorsUsage(con);
         return CR_FAILURE;
     }
-
-    CoreSuspender suspend;
 
     std::vector<t_memrange> ranges;
 

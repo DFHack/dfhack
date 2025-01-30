@@ -709,8 +709,8 @@ static string get_base_desc(df::item *item) {
     if (auto name = Items::getBookTitle(item); !name.empty())
         return name;
     if (auto artifact = get_artifact(item); artifact && artifact->name.has_name)
-        return Translation::TranslateName(&artifact->name) +
-            ", " + Translation::TranslateName(&artifact->name, true) +
+        return Translation::translateName(&artifact->name) +
+            ", " + Translation::translateName(&artifact->name, true) +
             " (" + get_item_type_str(item) + ")";
     return Items::getDescription(item, 0, true);
 }

@@ -1,4 +1,5 @@
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/EventManager.h"
@@ -246,8 +247,6 @@ command_result reveal(color_ostream &out, vector<string> & params) {
         return CR_FAILURE;
     }
 
-    CoreSuspender suspend;
-
     if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
@@ -307,8 +306,6 @@ command_result unreveal(color_ostream &out, vector<string> & params) {
         out.printerr("There's nothing to revert!\n");
         return CR_FAILURE;
     }
-
-    CoreSuspender suspend;
 
     if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
@@ -470,8 +467,6 @@ command_result revflood(color_ostream &out, vector<string> & params) {
         if (param == "help" || param == "?")
             return CR_WRONG_USAGE;
     }
-
-    CoreSuspender suspend;
 
     if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");

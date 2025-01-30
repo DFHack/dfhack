@@ -798,7 +798,10 @@ function AssignAnimal:toggle_item_base(choice, target_value, bld_assignments)
         return target_value
     end
 
-    if self.initial_min_disposition ~= DISPOSITION.PET.value and choice.data.disposition == DISPOSITION.PET.value then
+    if self.initial_min_disposition ~= DISPOSITION.PET.value and
+        choice.data.disposition == DISPOSITION.PET.value and
+        choice.data.status ~= true_value
+    then
         return target_value
     end
 
@@ -1114,7 +1117,7 @@ local CAGE_STATUS = {
     ASSIGNED_HERE={label='Assigned here', value=1},
     PASTURED={label='In pasture', value=2},
     PITTED={label='In pit/pond', value=3},
-    RESTRAINED={label='On other chain', value=4},
+    RESTRAINED={label='On restraint', value=4},
     BUILT_CAGE={label='In built cage', value=5},
     ITEM_CAGE={label='In stockpiled cage', value=6},
     ROAMING={label='Roaming', value=7},
@@ -1142,9 +1145,6 @@ local function get_cage_status(unit_or_vermin, bld_assignments)
     end
     local built_chain = get_built_chain(unit_or_vermin)
     if built_chain then
-        if bld and bld == built_chain then
-            return CAGE_STATUS.ASSIGNED_HERE.value
-        end
         return CAGE_STATUS.RESTRAINED.value
     end
     local assigned_zone_ref = get_general_ref(unit_or_vermin, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED)
@@ -1208,8 +1208,9 @@ end
 local mi = df.global.game.main_interface
 
 local function location_details_is_on_top()
-    return not dfhack.gui.matchFocusString('dwarfmode/NameCreator') and
-        not dfhack.gui.matchFocusString('dwarfmode/UnitSelector')
+    local vs = dfhack.gui.getDFViewscreen(true)
+    return not dfhack.gui.matchFocusString('dwarfmode/NameCreator', vs) and
+        not dfhack.gui.matchFocusString('dwarfmode/UnitSelector', vs)
 end
 
 RetireLocationOverlay = defclass(RetireLocationOverlay, overlay.OverlayWidget)

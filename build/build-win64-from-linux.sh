@@ -13,6 +13,7 @@ builder_uid=$(id -u)
 
 mkdir -p win64-cross
 mkdir -p win64-cross/output
+mkdir -p win64-cross/pdb
 mkdir -p win64-cross/ccache
 
 # Check for sudo; we want to use the real user
@@ -43,7 +44,7 @@ if ! docker run --rm -i -v "$srcdir":/src -v "$srcdir/build/win64-cross/":/src/b
     -e steam_password \
     --name dfhack-win \
     ghcr.io/dfhack/build-env:master \
-    bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output -DBUILD_DOCS=1 $CMAKE_EXTRA_ARGS && dfhack-make -j$jobs install" \
+    bash -c "cd /src/build && dfhack-configure windows 64 Release -DCMAKE_INSTALL_PREFIX=/src/build/output -DBUILD_DOCS=1 $CMAKE_EXTRA_ARGS && dfhack-make -j$jobs install && find . \! -path './pdb/*' -name '*.pdb' -type f -exec cp '{}' pdb/ \;" \
     ; then
     echo
     echo "Build failed"

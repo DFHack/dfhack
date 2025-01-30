@@ -57,6 +57,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
 
 ## Misc Improvements
 

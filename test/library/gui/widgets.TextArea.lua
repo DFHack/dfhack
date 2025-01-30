@@ -3391,3 +3391,24 @@ function test.should_scroll_horizontally_in_one_line_mode()
 
     screen:dismiss()
 end
+
+function test.should_reset_horizontal_in_one_line_mode()
+    local text_area, screen, window, widget = arrange_textarea({
+        w=40,
+        one_line_mode=true
+    })
+
+    local text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque dignissim volutpat orci, sed'
+
+    widget:setText(text)
+
+    widget:setCursor(#text + 1)
+
+    expect.eq(read_rendered_text(text_area), text:sub(-39) .. '_')
+
+    widget:setText('Lorem ipsum')
+
+    expect.eq(read_rendered_text(text_area), 'Lorem ipsum_')
+
+    screen:dismiss()
+end

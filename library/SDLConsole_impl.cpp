@@ -2279,7 +2279,7 @@ public:
         });
     }
 
-    void push(std::u32string s)
+    void push(const std::u32string& s)
     {
         {
             std::scoped_lock lock(mutex_);
@@ -3174,7 +3174,7 @@ int set_draw_color(SDL_Renderer* renderer, const SDL_Color& color)
 struct SDLConsole_pshare {
     Property props;
     std::weak_ptr<SDLConsole_impl> impl_weak;
-    std::thread::id render_thread_id;
+    std::thread::id render_thread_id{};
 };
 
 class SDLConsole_impl : public std::enable_shared_from_this<SDLConsole_impl> {

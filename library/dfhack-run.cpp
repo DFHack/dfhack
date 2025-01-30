@@ -54,13 +54,13 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
-#if defined(_WIN32) || defined(_WIN64)
+#if defined(_WIN32)
 #include <windows.h>
 
-void enablevt100() {
+bool enableAnsiColors() {
     HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
     if (hOut == INVALID_HANDLE_VALUE || hOut == NULL) {
-        return;
+        return false;
     }
     DWORD dwMode = 0;
     if (GetConsoleMode(hOut, &dwMode)) {
@@ -68,13 +68,15 @@ void enablevt100() {
             dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
             SetConsoleMode(hOut, dwMode);
         }
+        return true;
     }
+    return false;
 }
 
 const char* exeName = "Dwarf Fortress.exe";
 #else
     // Assume Posix
-    void enablevt100() { return; }
+    bool enableAnsiColors() { return true; }
     const char* exeName = "./dfhack";
 #endif
 
@@ -85,6 +87,7 @@ int main (int argc, char *argv[])
 {
     auto conPtr = Console::makeConsole();
     Console& out = *conPtr;
+    out.use_ansi_colors(enableAnsiColors());
 
     if (argc <= 1)
     {
@@ -100,8 +103,6 @@ int main (int argc, char *argv[])
 #endif
         return 2;
     }
-
-    enablevt100();
 
     // Connect to DFHack
     RemoteClient client(&out);
@@ -125,7 +126,6 @@ int main (int argc, char *argv[])
 
         if (!run_call.bind(&client, "RunLua"))
         {
-            out.shutdown();
             fprintf(stderr, "No RunLua protocol function found.");
             return 3;
         }
@@ -157,7 +157,6 @@ int main (int argc, char *argv[])
     }
 
     out.flush();
-    out.shutdown();
 
     if (rv != CR_OK)
         return 1;

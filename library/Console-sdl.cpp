@@ -203,24 +203,6 @@ namespace DFHack
 
             return ret;
         }
-        /// Position cursor at x,y. 1,1 = top left corner
-        void gotoxy(int x, int y)
-        {
-        }
-
-        /// Set color (ANSI color number)
-        /// Note: unimplemented because widgets share the same font atlas,
-        /// which will change color for all widgets.
-        void color(Console::color_value index)
-        {
-        }
-
-        /// Set color (ANSI color number)
-        /// Note: unimplemented because widgets share the same font atlas,
-        /// which will change color for all widgets.
-        void reset_color(void)
-        {
-        }
 
         /// Enable or disable the caret/cursor
         void cursor(bool enable = true)
@@ -232,7 +214,7 @@ namespace DFHack
     };
 }
 
-SDLConsoleDriver::SDLConsoleDriver() : Console(Console::Type::SDL)
+SDLConsoleDriver::SDLConsoleDriver() : Console(this)
 {
     d = new Private();
     inited.store(false);
@@ -343,11 +325,6 @@ int SDLConsoleDriver::lineedit(const std::string & prompt, std::string & output,
         return Console::SHUTDOWN;
 
     return d->lineedit(prompt,output,ch);
-}
-
-void SDLConsoleDriver::msleep (unsigned int msec)
-{
-    std::this_thread::sleep_for(std::chrono::milliseconds(msec));
 }
 
 bool SDLConsoleDriver::hide()

@@ -409,7 +409,7 @@ namespace DFHack
 }
 
 
-WindowsConsole::WindowsConsole() : Console(Console::Type::Windows)
+WindowsConsole::WindowsConsole() : Console(this)
 {
     d = 0;
     wlock = 0;
@@ -596,11 +596,6 @@ int WindowsConsole::lineedit(const std::string & prompt, std::string & output, C
         ret = d->lineedit(prompt,output,wlock,ch);
     wlock->unlock();
     return ret;
-}
-
-void WindowsConsole::msleep (unsigned int msec)
-{
-    Sleep(msec);
 }
 
 bool WindowsConsole::hide()

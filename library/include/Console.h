@@ -120,81 +120,46 @@ namespace  DFHack
         std::deque <std::string> history;
     };
 
+    enum class ConsoleType {
+        Base,
+        Posix,
+        Windows,
+        SDL
+    };
+
     class DFHACK_EXPORT Console : public color_ostream
     {
-    public:
-        const char * ANSI_CLS = "\033[2J";
-        const char * ANSI_BLACK = "\033[22;30m";
-        const char * ANSI_RED = "\033[22;31m";
-        const char * ANSI_GREEN = "\033[22;32m";
-        const char * ANSI_BROWN = "\033[22;33m";
-        const char * ANSI_BLUE = "\033[22;34m";
-        const char * ANSI_MAGENTA = "\033[22;35m";
-        const char * ANSI_CYAN = "\033[22;36m";
-        const char * ANSI_GREY = "\033[22;37m";
-        const char * ANSI_DARKGREY = "\033[01;30m";
-        const char * ANSI_LIGHTRED = "\033[01;31m";
-        const char * ANSI_LIGHTGREEN = "\033[01;32m";
-        const char * ANSI_YELLOW = "\033[01;33m";
-        const char * ANSI_LIGHTBLUE = "\033[01;34m";
-        const char * ANSI_LIGHTMAGENTA = "\033[01;35m";
-        const char * ANSI_LIGHTCYAN = "\033[01;36m";
-        const char * ANSI_WHITE = "\033[01;37m";
-        const char * RESETCOLOR = "\033[0m";
-
-
-        enum class Type {
-            Posix,
-            SDL,
-            Windows,
-            DUMMY
-        };
-
-        const char * getANSIColor(const int c)
-        {
-            switch (c)
-            {
-                case -1: return RESETCOLOR; // HACK! :P
-                case 0 : return ANSI_BLACK;
-                case 1 : return ANSI_BLUE; // non-ANSI
-                case 2 : return ANSI_GREEN;
-                case 3 : return ANSI_CYAN; // non-ANSI
-                case 4 : return ANSI_RED; // non-ANSI
-                case 5 : return ANSI_MAGENTA;
-                case 6 : return ANSI_BROWN;
-                case 7 : return ANSI_GREY;
-                case 8 : return ANSI_DARKGREY;
-                case 9 : return ANSI_LIGHTBLUE; // non-ANSI
-                case 10: return ANSI_LIGHTGREEN;
-                case 11: return ANSI_LIGHTCYAN; // non-ANSI;
-                case 12: return ANSI_LIGHTRED; // non-ANSI;
-                case 13: return ANSI_LIGHTMAGENTA;
-                case 14: return ANSI_YELLOW; // non-ANSI
-                case 15: return ANSI_WHITE;
-                default: return "";
-            }
-        }
+    private:
+        bool use_ansi_colors_{false};
 
     protected:
-        Type con_type{Type::DUMMY};
+        ConsoleType con_type{type_tag};
 
         virtual void begin_batch() {};
-        virtual void add_text(color_value color, const std::string &text) {
-            std::cout << getANSIColor(color);
-            std::cout << text;
-            std::cout << RESETCOLOR;
-        };
+        virtual void add_text(color_value color, const std::string &text);
         virtual void end_batch() {};
-        virtual void flush_proxy() {};
+        virtual void flush_proxy() { std::cout << std::flush; }
 
     public:
+        static const char * getANSIColor(const int c);
+
+        //! \defgroup lineedit_return_values Possible errors from lineedit
+        //! \{
+        static constexpr int FAILURE = -1;
+        static constexpr int SHUTDOWN = -2;
+        static constexpr int RETRY = -3;
+        //! \}
+        static constexpr ConsoleType type_tag = ConsoleType::Base;
+
         ///ctor, NOT thread-safe
         Console() = default;
-        Console(Type type) : con_type(type) {}
+        template <typename Derived>
+        Console(Derived*) : con_type(Derived::type_tag) {}
         ///dtor, NOT thread-safe
         virtual ~Console() = default;
+
         /// initialize the console. NOT thread-safe
-        virtual bool init( bool dont_redirect ) { return false; };
+        virtual bool init( bool dont_redirect ) { return true; };
         /// shutdown the console. NOT thread-safe
         virtual bool shutdown( void ) { return true; };
 
@@ -204,37 +169,39 @@ namespace  DFHack
         virtual void gotoxy(int x, int y) {};
         /// Enable or disable the caret/cursor
         virtual void cursor(bool enable = true) {};
-        /// Waits given number of milliseconds before continuing.
-        virtual void msleep(unsigned int msec) {};
         /// get the current number of columns
-        virtual int  get_columns(void) { return FAILURE; };
+        virtual int  get_columns(void) { return -1; };
         /// get the current number of rows
-        virtual int  get_rows(void) { return FAILURE; };
+        virtual int  get_rows(void) { return -1; };
         /// beep. maybe?
         //void beep (void);
-        //! \defgroup lineedit_return_values Possible errors from lineedit
-        //! \{
-        static constexpr int FAILURE = -1;
-        static constexpr int SHUTDOWN = -2;
-        static constexpr int RETRY = -3;
-        //! \}
         /// A simple line edit (raw mode)
         virtual int lineedit(const std::string& prompt, std::string& output, CommandHistory & history ) { return SHUTDOWN; };
-        virtual bool isInited (void) { return false; };
-
-        bool is_console() { return true; }
+        virtual bool isInited (void) { return true; };
 
         virtual bool hide() { return false; };
         virtual bool show() { return false; };
 
         virtual void cleanup() {};
-        Type get_type() const { return con_type; }
+
+        /// Platform independent. Waits given number of milliseconds before continuing.
+        void msleep(unsigned int msec);
+        bool is_console() { return true; }
+        ConsoleType get_type() const { return con_type; }
+        void use_ansi_colors(bool choice) { use_ansi_colors_ = choice; };
 
         template <typename T>
         T& as() {
             return static_cast<T&>(*this);
         }
 
+        template <typename T>
+        T* try_as() {
+            return (get_type() == T::type_tag) ? static_cast<T*>(this) : nullptr;
+        }
+
+        static std::unique_ptr<Console> makeConsole();
+        template <typename T>
         static std::unique_ptr<Console> makeConsole();
     };
 }

@@ -92,51 +92,6 @@ static int isUnsupportedTerm(void)
     return 0;
 }
 
-const char * ANSI_CLS = "\033[2J";
-const char * ANSI_BLACK = "\033[22;30m";
-const char * ANSI_RED = "\033[22;31m";
-const char * ANSI_GREEN = "\033[22;32m";
-const char * ANSI_BROWN = "\033[22;33m";
-const char * ANSI_BLUE = "\033[22;34m";
-const char * ANSI_MAGENTA = "\033[22;35m";
-const char * ANSI_CYAN = "\033[22;36m";
-const char * ANSI_GREY = "\033[22;37m";
-const char * ANSI_DARKGREY = "\033[01;30m";
-const char * ANSI_LIGHTRED = "\033[01;31m";
-const char * ANSI_LIGHTGREEN = "\033[01;32m";
-const char * ANSI_YELLOW = "\033[01;33m";
-const char * ANSI_LIGHTBLUE = "\033[01;34m";
-const char * ANSI_LIGHTMAGENTA = "\033[01;35m";
-const char * ANSI_LIGHTCYAN = "\033[01;36m";
-const char * ANSI_WHITE = "\033[01;37m";
-const char * RESETCOLOR = "\033[0m";
-
-const char * getANSIColor(const int c)
-{
-    switch (c)
-    {
-        case -1: return RESETCOLOR; // HACK! :P
-        case 0 : return ANSI_BLACK;
-        case 1 : return ANSI_BLUE; // non-ANSI
-        case 2 : return ANSI_GREEN;
-        case 3 : return ANSI_CYAN; // non-ANSI
-        case 4 : return ANSI_RED; // non-ANSI
-        case 5 : return ANSI_MAGENTA;
-        case 6 : return ANSI_BROWN;
-        case 7 : return ANSI_GREY;
-        case 8 : return ANSI_DARKGREY;
-        case 9 : return ANSI_LIGHTBLUE; // non-ANSI
-        case 10: return ANSI_LIGHTGREEN;
-        case 11: return ANSI_LIGHTCYAN; // non-ANSI;
-        case 12: return ANSI_LIGHTRED; // non-ANSI;
-        case 13: return ANSI_LIGHTMAGENTA;
-        case 14: return ANSI_YELLOW; // non-ANSI
-        case 15: return ANSI_WHITE;
-        default: return "";
-    }
-}
-
-
 #ifdef HAVE_CUCHAR
 // Use u32string for GCC 6 and later and msvc to allow potable implementation
 using u32string = std::u32string;
@@ -331,10 +286,10 @@ namespace DFHack
         void color(Console::color_value index)
         {
             if(!rawmode)
-                fprintf(dfout_C, "%s", getANSIColor(index));
+                fprintf(dfout_C, "%s", Console::getANSIColor(index));
             else
             {
-                const char * colstr = getANSIColor(index);
+                const char * colstr = Console::getANSIColor(index);
                 int lstr = strlen(colstr);
                 if (::write(STDIN_FILENO,colstr,lstr) == -1)
                     ;
@@ -834,7 +789,7 @@ namespace DFHack
     };
 }
 
-PosixConsole::PosixConsole() : Console(Console::Type::Posix)
+PosixConsole::PosixConsole() : Console(this)
 {
     d = nullptr;
     inited = false;
@@ -988,12 +943,6 @@ int PosixConsole::lineedit(const std::string & prompt, std::string & output, Com
         }
     }
     return ret;
-}
-
-void PosixConsole::msleep (unsigned int msec)
-{
-    if (msec > 1000) sleep(msec/1000000);
-    usleep((msec % 1000000) * 1000);
 }
 
 bool PosixConsole::hide()

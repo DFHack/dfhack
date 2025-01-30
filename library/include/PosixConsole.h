@@ -52,8 +52,6 @@ namespace  DFHack
         void gotoxy(int x, int y) override;
         /// Enable or disable the caret/cursor
         void cursor(bool enable = true) override;
-        /// Waits given number of milliseconds before continuing.
-        void msleep(unsigned int msec) override;
         /// get the current number of columns
         int  get_columns(void) override;
         /// get the current number of rows
@@ -65,6 +63,8 @@ namespace  DFHack
         bool show() override;
 
         static bool is_supported();
+
+        static constexpr ConsoleType type_tag = ConsoleType::Posix;
 
     private:
         Private * d;

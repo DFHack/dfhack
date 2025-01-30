@@ -58,6 +58,7 @@ end
 local function do_export()
     dialogs.InputBox{
         frame_title='Export Manager Orders',
+        text='Please enter a filename',
         on_input=function(text)
             dfhack.run_command('orders', 'export', text)
         end
@@ -67,6 +68,8 @@ end
 local function do_recheck()
     dfhack.run_command('orders', 'recheck')
 end
+
+local mi = df.global.game.main_interface
 
 OrdersOverlay = defclass(OrdersOverlay, overlay.OverlayWidget)
 OrdersOverlay.ATTRS{
@@ -160,7 +163,7 @@ function OrdersOverlay:init()
 end
 
 function OrdersOverlay:onInput(keys)
-    if df.global.game.main_interface.job_details.open then return end
+    if mi.job_details.open then return end
     if keys.CUSTOM_ALT_M then
         self.minimized = not self.minimized
         return true
@@ -171,14 +174,14 @@ function OrdersOverlay:onInput(keys)
 end
 
 function OrdersOverlay:render(dc)
-    if df.global.game.main_interface.job_details.open then return end
+    if mi.job_details.open then return end
     OrdersOverlay.super.render(self, dc)
 end
 
 -- Resets the selected work order to the `Checking` state
 
 local function set_current_inactive()
-    local scrConditions = df.global.game.main_interface.info.work_orders.conditions
+    local scrConditions = mi.info.work_orders.conditions
     if scrConditions.open then
         dfhack.run_command('orders', 'recheck', 'this')
     else
@@ -187,7 +190,7 @@ local function set_current_inactive()
 end
 
 local function can_recheck()
-    local scrConditions = df.global.game.main_interface.info.work_orders.conditions
+    local scrConditions = mi.info.work_orders.conditions
     local order = scrConditions.wq
     return order.status.active and #order.item_conditions > 0
 end
@@ -196,7 +199,7 @@ end
 -- RecheckOverlay
 --
 
-local focusString = 'dwarfmode/Info/WORK_ORDERS/Conditions'
+local focusString = 'dwarfmode/Info/WORK_ORDERS/Conditions/Default'
 
 RecheckOverlay = defclass(RecheckOverlay, overlay.OverlayWidget)
 RecheckOverlay.ATTRS{
@@ -266,7 +269,7 @@ SkillRestrictionOverlay.ATTRS{
         'dwarfmode/ViewSheets/BUILDING/Furnace',
         'dwarfmode/ViewSheets/BUILDING/Workshop',
     },
-    frame={w=54, h=7},
+    frame={w=57, h=7},
 }
 
 local function can_set_skill_level()
@@ -330,7 +333,7 @@ function SkillRestrictionOverlay:init()
     panel:addviews{
         widgets.CycleHotkeyLabel{
             view_id='min_skill',
-            frame={l=0, t=0, w=16},
+            frame={l=1, t=0, w=16},
             label='Min skill:',
             label_below=true,
             key_back='CUSTOM_SHIFT_C',
@@ -365,7 +368,7 @@ function SkillRestrictionOverlay:init()
             end,
         },
         widgets.RangeSlider{
-            frame={l=0, t=3},
+            frame={l=1, t=3},
             num_stops=#SKILL_OPTIONS,
             get_left_idx_fn=function()
                 return self.subviews.min_skill:getOptionValue()
@@ -412,7 +415,7 @@ end
 
 function SkillRestrictionOverlay:onInput(keys)
     if can_set_skill_level() and
-        not df.global.game.main_interface.view_sheets.building_entering_nickname
+        not mi.view_sheets.building_entering_nickname
     then
         return SkillRestrictionOverlay.super.onInput(self, keys)
     end
@@ -445,10 +448,10 @@ LaborRestrictionsOverlay.ATTRS{
         'dwarfmode/ViewSheets/BUILDING/Workshop/Quern/Workers',
         'dwarfmode/ViewSheets/BUILDING/Workshop/Still/Workers',
     },
-    frame={w=37, h=17},
+    frame={w=57, h=15},
 }
 
-local function can_set_labors()
+function can_set_labors()
     for _,fs in ipairs(dfhack.gui.getFocusStrings(dfhack.gui.getDFViewscreen(true))) do
         if fs:endswith('WORKER_ASSIGNMENT') then
             return false
@@ -527,7 +530,7 @@ end
 
 function make_labor_panel(bld_type, bld_subtype, labors)
     local list = widgets.List{
-        frame={t=2, l=0, r=0, b=2},
+        frame={t=2, l=1, w=28, b=0},
         on_double_click=toggle_labor,
     }
 
@@ -536,7 +539,7 @@ function make_labor_panel(bld_type, bld_subtype, labors)
         frame_background=gui.CLEAR_PEN,
         -- will get clamped to parent frame and a scrollbar will appear if the list
         -- is too long
-        frame={l=0, r=0, t=0, h=#labors+7},
+        frame={l=0, r=0, t=0, h=math.max(#labors+5,9)},
         visible=function()
             local bld = dfhack.gui.getSelectedBuilding(true)
             return bld and bld:getType() == bld_type and bld.type == bld_subtype
@@ -548,7 +551,7 @@ function make_labor_panel(bld_type, bld_subtype, labors)
             },
             list,
             widgets.HotkeyLabel{
-                frame={l=0, b=1},
+                frame={l=30, t=2},
                 key='CUSTOM_CTRL_A',
                 label='Toggle all',
                 auto_width=true,
@@ -563,12 +566,16 @@ function make_labor_panel(bld_type, bld_subtype, labors)
                 end,
             },
             widgets.HotkeyLabel{
-                frame={l=0, b=0},
+                frame={l=30, t=4},
                 key='SELECT',
-                label='Or double click to toggle',
+                label='Toggle selected',
                 auto_width=true,
                 on_activate=function() toggle_labor(list:getSelected()) end,
             },
+            widgets.Label{
+                frame={l=37, t=5},
+                text='(or double click)'
+            }
         },
     }
 
@@ -630,9 +637,75 @@ end
 
 function LaborRestrictionsOverlay:onInput(keys)
     if can_set_labors() and
-        not df.global.game.main_interface.view_sheets.building_entering_nickname
+        not mi.view_sheets.building_entering_nickname
     then
         return LaborRestrictionsOverlay.super.onInput(self, keys)
+    end
+end
+
+---
+--- ConditionsRightClickOverlay
+---
+
+ConditionsRightClickOverlay = defclass(ConditionsRightClickOverlay, overlay.OverlayWidget)
+ConditionsRightClickOverlay.ATTRS{
+    desc='When adjusting condition details, makes right click cancel selection instead of exiting.',
+    default_enabled=true,
+    fullscreen=true,
+    viewscreens={
+        'dwarfmode/Info/WORK_ORDERS/Conditions/TYPE',
+        'dwarfmode/Info/WORK_ORDERS/Conditions/MATERIAL',
+        'dwarfmode/Info/WORK_ORDERS/Conditions/ADJECTIVE',
+        },
+}
+
+function ConditionsRightClickOverlay:onInput(keys)
+    if keys._MOUSE_R or keys.LEAVESCREEN then
+        mi.info.work_orders.conditions.change_type = df.work_order_condition_change_type.NONE
+        return true
+    end
+end
+
+---
+--- ConditionsQuantityRightClickOverlay
+---
+
+ConditionsQuantityRightClickOverlay = defclass(ConditionsQuantityRightClickOverlay, overlay.OverlayWidget)
+ConditionsQuantityRightClickOverlay.ATTRS{
+    desc='When adjusting condition quantities, makes right click cancel selection instead of exiting.',
+    default_enabled=true,
+    fullscreen=true,
+    viewscreens='dwarfmode/Info/WORK_ORDERS/Conditions/Default',
+}
+
+function ConditionsQuantityRightClickOverlay:onInput(keys)
+    if mi.info.work_orders.conditions.entering_logic_number and (keys._MOUSE_R or keys.LEAVESCREEN) then
+        mi.info.work_orders.conditions.entering_logic_number = false
+        return true
+    end
+end
+
+---
+--- QuantityRightClickOverlay
+---
+
+QuantityRightClickOverlay = defclass(QuantityRightClickOverlay, overlay.OverlayWidget)
+QuantityRightClickOverlay.ATTRS{
+    desc='When adjusting order quantity details, makes right click cancel selection instead of exiting.',
+    default_enabled=true,
+    fullscreen=true,
+    viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
+}
+
+function QuantityRightClickOverlay:onInput(keys)
+    if keys._MOUSE_R or keys.LEAVESCREEN then
+        if mi.info.work_orders.entering_number then
+            mi.info.work_orders.entering_number = false
+            return true
+        elseif mi.info.work_orders.b_entering_number then
+            mi.info.work_orders.b_entering_number = false
+            return true
+        end
     end
 end
 
@@ -643,6 +716,9 @@ OVERLAY_WIDGETS = {
     importexport=OrdersOverlay,
     skillrestrictions=SkillRestrictionOverlay,
     laborrestrictions=LaborRestrictionsOverlay,
+    conditionsrightclick=ConditionsRightClickOverlay,
+    conditionsquantityrightclick=ConditionsQuantityRightClickOverlay,
+    quantityrightclick=QuantityRightClickOverlay,
 }
 
 return _ENV

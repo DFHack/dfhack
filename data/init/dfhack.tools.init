@@ -7,12 +7,13 @@
 # Enable system services
 enable buildingplan
 enable burrow
-enable faststart
 enable logistics
 enable overlay
+enable preserve-rooms
 
 # aliases
 alias add autounsuspend suspendmanager
 alias add drain-aquifer aquifer drain --all
 alias add gui/dig gui/design
 alias add version help
+alias add gui/pregnancy gui/family-affairs --pregnancy

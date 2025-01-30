@@ -1,4 +1,3 @@
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -608,9 +607,6 @@ static void process_constraints(color_ostream &out);
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    if (!enabled)
-        return CR_OK;
-
     // Every 5 frames check the jobs for disappearance
     static unsigned cnt = 0;
     if ((++cnt % 5) != 0)
@@ -1670,8 +1666,6 @@ static void print_job(color_ostream &out, ProtectedJob *pj)
 
 static command_result workflow_cmd(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isWorldLoaded()) {
         out.printerr("World is not loaded: please load a game first.\n");
         return CR_FAILURE;

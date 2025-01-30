@@ -2,6 +2,7 @@
 #include "LuaTools.h"
 #include "MemAccess.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/EventManager.h"
 #include "modules/Gui.h"
@@ -222,7 +223,7 @@ static void do_cycle(color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_cycle(out);
     return CR_OK;
 }
@@ -737,7 +738,6 @@ command_result digcircle (color_ostream &out, vector <string> & parameters)
         return CR_OK;
     }
     int32_t cx, cy, cz;
-    CoreSuspender suspend;
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -1313,7 +1313,6 @@ command_result digexp (color_ostream &out, vector <string> & parameters)
             );
         return CR_OK;
     }
-    CoreSuspender suspend;
     uint32_t x_max, y_max, z_max;
     if (!Maps::IsValid())
     {
@@ -1418,7 +1417,6 @@ command_result digexp (color_ostream &out, vector <string> & parameters)
 
 command_result digvx (color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
     lol.push_back("x");
     lol.push_back(forward_priority(out, parameters));
@@ -1427,7 +1425,6 @@ command_result digvx (color_ostream &out, vector <string> & parameters)
 
 command_result digv (color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     uint32_t x_max,y_max,z_max;
     bool updown = false;
     int32_t priority = parse_priority(out, parameters);
@@ -1588,7 +1585,6 @@ command_result digv (color_ostream &out, vector <string> & parameters)
 
 command_result diglx (color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     vector <string> lol;
     lol.push_back("x");
     lol.push_back(forward_priority(out, parameters));
@@ -1603,7 +1599,6 @@ command_result diglx (color_ostream &out, vector <string> & parameters)
 // "vein" or "layer" mode)
 command_result digl (color_ostream &out, vector <string> & parameters)
 {
-    // HOTKEY COMMAND: CORE ALREADY SUSPENDED
     uint32_t x_max,y_max,z_max;
     bool updown = false;
     bool undo = false;
@@ -1804,7 +1799,6 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
 {
     //mostly copy-pasted from digv
     int32_t priority = parse_priority(out, parameters);
-    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {

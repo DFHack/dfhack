@@ -50,6 +50,10 @@ namespace DFHack
     class color_ostream;
 
     namespace Job {
+
+        // add a general reference with the specified general type and id
+        DFHACK_EXPORT bool addGeneralRef(df::job *job, df::general_ref_type type, int32_t id);
+
         // Duplicate the job structure. It is not linked into any DF lists.
         DFHACK_EXPORT df::job *cloneJobStruct(df::job *job, bool keepEverything=false);
 
@@ -66,6 +70,9 @@ namespace DFHack
         DFHACK_EXPORT df::unit *getWorker(df::job *job);
 
         DFHACK_EXPORT void setJobCooldown(df::building *workshop, df::unit *worker, int cooldown = 100);
+
+        // assign the job to a worker, clearing up the job posting (if it exists)
+        DFHACK_EXPORT bool addWorker(df::job *job, df::unit *unit);
         DFHACK_EXPORT bool removeWorker(df::job *job, int cooldown = 100);
 
         // This helpful method only removes the backref from the item to the job, but it doesn't
@@ -106,6 +113,14 @@ namespace DFHack
                                               int mat_index,
                                               df::item_type itype);
         DFHACK_EXPORT std::string getName(df::job *job);
+
+        struct JobDeleter {
+            void operator()(df::job *ptr) const {
+                if (ptr)
+                    Job::deleteJobStruct(ptr, true);
+            }
+        };
+        using JobUniquePtr = std::unique_ptr<df::job, JobDeleter>;
     }
 
     DFHACK_EXPORT bool operator== (const df::job_item &a, const df::job_item &b);

@@ -30,6 +30,7 @@ distribution.
 #include <map>
 #include <type_traits>
 
+#include "ColorText.h"
 #include "DataIdentity.h"
 #include "LuaWrapper.h"
 
@@ -41,46 +42,41 @@ namespace df {
         operator DFHack::color_ostream& () { return *out; }
     };
 
-    template<class T> struct return_type {};
-
-    template<typename RT, typename ...AT>
-    struct return_type<RT (*)(AT...)>{
-        using type = RT;
-        static const bool is_method = false;
-    };
-
-    template<typename RT, class CT, typename ...AT>
-    struct return_type<RT (CT::*)(AT...)>{
-        using type = RT;
-        using class_type = CT;
-        static const bool is_method = true;
-    };
-
-    template<typename RT, class CT, typename ...AT>
-    struct return_type<RT (CT::*)(AT...) const>{
-        using type = RT;
-        using class_type = CT;
-        static const bool is_method = true;
-    };
-
     // the std::is_enum_v alternative is because pushing is_primitive
     // into all the enum identities would require changing codegen
 
     template<typename RT>
     concept isPrimitive = identity_traits<RT>::is_primitive || std::is_enum_v<RT> || std::is_void_v<RT>;
 
-    template<typename T>
-    T get_from_lua_state(lua_State* L, int idx) {
-        T val;
+    // handle call-by-reference function arguments by converting pointers to a reference
+    // will throw if lua code tries to pass a null pointer
+    template<typename T> requires std::is_reference_v<T>
+    T get_from_lua_state(lua_State* L, int idx)
+    {
+        using DFHack::LuaWrapper::field_error;
+        using Ptr = std::add_pointer_t<std::remove_reference_t<T>>;
+        Ptr ptr{};
+        df::identity_traits<Ptr>::get()->lua_write(L, UPVAL_METHOD_NAME, &ptr, idx);
+        if (ptr == nullptr)
+        {
+            field_error(L, UPVAL_METHOD_NAME, "cannot convert null pointer to reference", "call");
+        }
+        return *ptr;
+    }
+
+    // handle call-by-value function arguments. only semi-regular types are allowed
+    // (semi-regular covers copyable and default-constructible)
+    template<std::semiregular T>
+    T get_from_lua_state(lua_State* L, int idx)
+    {
+        T val{};
         df::identity_traits<T>::get()->lua_write(L, UPVAL_METHOD_NAME, &val, idx);
         return val;
     }
 
-
-    template<typename RT, typename... AT, typename FT, typename... ET, std::size_t... I>
+    template<isPrimitive RT, typename... AT, typename FT, typename... ET, std::size_t... I>
         requires std::is_invocable_r_v<RT, FT, ET..., AT...>
-        && isPrimitive<RT>
-        void call_and_push_impl(lua_State* L, int base, std::index_sequence<I...>, FT fun, ET... extra)
+    void call_and_push_impl(lua_State* L, int base, std::index_sequence<I...>, FT fun, ET... extra)
     {
         if constexpr (std::is_same_v<RT, void>) {
             std::invoke(fun, extra..., (get_from_lua_state<AT>(L, base+I))...);
@@ -93,10 +89,8 @@ namespace df {
         }
     }
 
-    template<typename RT, typename... AT, typename FT, typename... ET, typename indices = std::index_sequence_for<AT...> >
+    template<isPrimitive RT, typename... AT, typename FT, typename... ET, typename indices = std::index_sequence_for<AT...> >
         requires std::is_invocable_r_v<RT, FT, ET..., AT...>
-        && isPrimitive<RT>
-
     void call_and_push(lua_State* L, int base, FT fun, ET... extra)
     {
         call_and_push_impl<RT, AT...>(L, base, indices{}, fun, extra...);
@@ -104,8 +98,7 @@ namespace df {
 
     template<typename T> struct function_wrapper {};
 
-    template<typename RT, typename ...AT>
-        requires isPrimitive<RT>
+    template<isPrimitive RT, typename ...AT>
     struct function_wrapper<RT(*)(DFHack::color_ostream&, AT...)> {
         static const int num_args = sizeof...(AT);
         static void execute(lua_State *L, int base, RT (fun)(DFHack::color_ostream& out, AT...)) {
@@ -114,8 +107,7 @@ namespace df {
         }
     };
 
-    template<typename RT, typename ...AT>
-        requires isPrimitive<RT>
+    template<isPrimitive RT, typename ...AT>
     struct function_wrapper<RT(*)(AT...)> {
         static const int num_args = sizeof...(AT);
         static void execute(lua_State *L, int base, RT (fun)(AT...)) {
@@ -123,8 +115,7 @@ namespace df {
         }
     };
 
-    template<typename RT, class CT, typename ...AT>
-        requires isPrimitive<RT>
+    template<isPrimitive RT, class CT, typename ...AT>
     struct function_wrapper<RT(CT::*)(AT...)> {
         static const int num_args = sizeof...(AT)+1;
         static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...)) {
@@ -133,8 +124,7 @@ namespace df {
         };
     };
 
-    template<typename RT, class CT, typename ...AT>
-        requires isPrimitive<RT>
+    template<isPrimitive RT, class CT, typename ...AT>
     struct function_wrapper<RT(CT::*)(AT...) const> {
         static const int num_args = sizeof...(AT)+1;
         static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...) const) {

@@ -8,9 +8,8 @@
 #include <string>
 #include <algorithm>
 #include <set>
-using namespace std;
 
-#include "Core.h"
+#include "Debug.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -18,7 +17,6 @@ using namespace std;
 #include "modules/Gui.h"
 #include "modules/Items.h"
 #include "modules/Materials.h"
-#include "modules/MapCache.h"
 #include "DataDefs.h"
 #include "df/item.h"
 #include "df/itemdef.h"
@@ -36,19 +34,20 @@ using namespace std;
 #include "df/body_part_template.h"
 #include "df/unit_soul.h"
 #include "df/unit_skill.h"
-#include "df/general_ref.h"
-#include "df/caste_raw.h"
-
-#include "DFHack.h"
 
 using namespace DFHack;
 using namespace df::enums;
 
-using MapExtras::Block;
-using MapExtras::MapCache;
+using std::string;
+using std::vector;
+using std::endl;
 
 DFHACK_PLUGIN("forceequip");
 REQUIRE_GLOBAL(world);
+
+namespace DFHack {
+    DBG_DECLARE(forceequip, log, DebugCategory::LINFO);
+}
 
 const int const_GloveRightHandedness = 1;
 const int const_GloveLeftHandedness = 2;
@@ -70,18 +69,18 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
     return CR_OK;
 }
 
-static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *unit, df::body_part_raw * targetBodyPart, bool ignoreRestrictions, int multiEquipLimit, bool verbose)
+static bool moveToInventory(df::item *item, df::unit *unit, df::body_part_raw * targetBodyPart, bool ignoreRestrictions, int multiEquipLimit, bool verbose)
 {
     // Step 1: Check for anti-requisite conditions
     df::unit * itemOwner = Items::getOwner(item);
     if (ignoreRestrictions)
     {
         // If the ignoreRestrictions cmdline switch was specified, then skip all of the normal preventative rules
-        if (verbose) { Core::print("Skipping integrity checks...\n"); }
+        if (verbose) { DEBUG(log).print("Skipping integrity checks...\n"); }
     }
     else if(!item->isClothing() && !item->isArmorNotClothing())
     {
-        if (verbose) { Core::printerr("Item %d is not clothing or armor; it cannot be equipped.  Please choose a different item (or use the Ignore option if you really want to equip an inappropriate item).\n", item->id); }
+        if (verbose) { WARN(log).print("Item %d is not clothing or armor; it cannot be equipped.  Please choose a different item (or use the Ignore option if you really want to equip an inappropriate item).\n", item->id); }
         return false;
     }
     else if (item->getType() != df::enums::item_type::GLOVES &&
@@ -91,22 +90,22 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
         item->getType() != df::enums::item_type::SHOES &&
         !targetBodyPart)
     {
-        if (verbose) { Core::printerr("Item %d is of an unrecognized type; it cannot be equipped (because the module wouldn't know where to put it).\n", item->id); }
+        if (verbose) { WARN(log).print("Item %d is of an unrecognized type; it cannot be equipped (because the module wouldn't know where to put it).\n", item->id); }
         return false;
     }
     else if (itemOwner && itemOwner->id != unit->id)
     {
-        if (verbose) { Core::printerr("Item %d is owned by someone else.  Equipping it on this unit is not recommended.  Please use DFHack's Confiscate plugin, choose a different item, or use the Ignore option to proceed in spite of this warning.\n", item->id); }
+        if (verbose) { WARN(log).print("Item %d is owned by someone else.  Equipping it on this unit is not recommended.  Please use DFHack's Confiscate plugin, choose a different item, or use the Ignore option to proceed in spite of this warning.\n", item->id); }
         return false;
     }
     else if (item->flags.bits.in_inventory)
     {
-        if (verbose) { Core::printerr("Item %d is already in a unit's inventory.  Direct inventory transfers are not recommended; please move the item to the ground first (or use the Ignore option).\n", item->id); }
+        if (verbose) { WARN(log).print("Item %d is already in a unit's inventory.  Direct inventory transfers are not recommended; please move the item to the ground first (or use the Ignore option).\n", item->id); }
         return false;
     }
     else if (item->flags.bits.in_job)
     {
-        if (verbose) { Core::printerr("Item %d is reserved for use in a queued job.  Equipping it is not recommended, as this might interfere with the completion of vital jobs.  Use the Ignore option to ignore this warning.\n", item->id); }
+        if (verbose) { WARN(log).print("Item %d is reserved for use in a queued job.  Equipping it is not recommended, as this might interfere with the completion of vital jobs.  Use the Ignore option to ignore this warning.\n", item->id); }
         return false;
     }
 
@@ -133,55 +132,55 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
         else if (bpIndex < unit->body.body_plan->body_parts.size())
         {
             // The current body part is not the one that was specified in the function call, but we can keep searching
-            if (verbose) { Core::printerr("Found bodypart %s; not a match; continuing search.\n", currPart->token.c_str()); }
+            if (verbose) { WARN(log).print("Found bodypart %s; not a match; continuing search.\n", currPart->token.c_str()); }
             continue;
         }
         else
         {
             // The specified body part has not been found, and we've reached the end of the list.  Report failure.
-            if (verbose) { Core::printerr("The specified body part (%s) does not belong to the chosen unit.  Please double-check to ensure that your spelling is correct, and that you have not chosen a dismembered bodypart.\n",targetBodyPart->token.c_str()); }
+            if (verbose) { WARN(log).print("The specified body part (%s) does not belong to the chosen unit.  Please double-check to ensure that your spelling is correct, and that you have not chosen a dismembered bodypart.\n",targetBodyPart->token.c_str()); }
             return false;
         }
 
-        if (verbose) { Core::print("Inspecting bodypart %s.\n", currPart->token.c_str()); }
+        if (verbose) { DEBUG(log).print("Inspecting bodypart %s.\n", currPart->token.c_str()); }
 
         // Inspect the current bodypart
         if (item->getType() == df::enums::item_type::GLOVES && currPart->flags.is_set(df::body_part_raw_flags::GRASP) &&
             ((item->getGloveHandedness() == const_GloveLeftHandedness && currPart->flags.is_set(df::body_part_raw_flags::LEFT)) ||
             (item->getGloveHandedness() == const_GloveRightHandedness && currPart->flags.is_set(df::body_part_raw_flags::RIGHT))))
         {
-            if (verbose) { Core::print("Hand found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Hand found (%s)...", currPart->token.c_str()); }
         }
         else if (item->getType() == df::enums::item_type::HELM && currPart->flags.is_set(df::body_part_raw_flags::HEAD))
         {
-            if (verbose) { Core::print("Head found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Head found (%s)...", currPart->token.c_str()); }
         }
         else if (item->getType() == df::enums::item_type::ARMOR && currPart->flags.is_set(df::body_part_raw_flags::UPPERBODY))
         {
-            if (verbose) { Core::print("Upper body found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Upper body found (%s)...", currPart->token.c_str()); }
         }
         else if (item->getType() == df::enums::item_type::PANTS && currPart->flags.is_set(df::body_part_raw_flags::LOWERBODY))
         {
-            if (verbose) { Core::print("Lower body found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Lower body found (%s)...", currPart->token.c_str()); }
         }
         else if (item->getType() == df::enums::item_type::SHOES && currPart->flags.is_set(df::body_part_raw_flags::STANCE))
         {
-            if (verbose) { Core::print("Foot found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Foot found (%s)...", currPart->token.c_str()); }
         }
         else if (targetBodyPart && ignoreRestrictions)
         {
             // The BP in question would normally be considered ineligible for equipment.  But since it was deliberately specified by the user, we'll proceed anyways.
-            if (verbose) { Core::print("Non-standard bodypart found (%s)...", targetBodyPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Non-standard bodypart found (%s)...", targetBodyPart->token.c_str()); }
         }
         else if (targetBodyPart)
         {
             // The BP in question is not eligible for equipment and the ignore flag was not specified.  Report failure.
-            if (verbose) { Core::printerr("Non-standard bodypart found, but it is ineligible for standard equipment.  Use the Ignore flag to override this warning.\n"); }
+            if (verbose) { WARN(log).print("Non-standard bodypart found, but it is ineligible for standard equipment.  Use the Ignore flag to override this warning.\n"); }
             return false;
         }
         else
         {
-            if (verbose) { Core::print("Skipping ineligible bodypart.\n"); }
+            if (verbose) { DEBUG(log).print("Skipping ineligible bodypart.\n"); }
             // This body part is not eligible for the equipment in question; skip it
             continue;
         }
@@ -191,7 +190,7 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
         if (multiEquipLimit == INT_MAX)
         {
             // Note: this loop/check is skipped if the MultiEquip option is specified; we'll simply add the item to the bodyPart even if it's already holding a dozen gloves, shoes, and millstones (or whatever)
-            if (verbose) { Core::print(" inventory checking skipped..."); }
+            if (verbose) { DEBUG(log).print(" inventory checking skipped..."); }
             confirmedBodyPart = currPart;
             break;
         }
@@ -206,7 +205,7 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
                     // Collision detected; have we reached the limit?
                     if (++collisions >= multiEquipLimit)
                     {
-                        if (verbose) { Core::printerr(" but it already carries %d piece(s) of equipment.  Either remove the existing equipment or use the Multi option.\n", multiEquipLimit); }
+                        if (verbose) { WARN(log).print(" but it already carries %d piece(s) of equipment.  Either remove the existing equipment or use the Multi option.\n", multiEquipLimit); }
                         confirmedBodyPart = NULL;
                         break;
                     }
@@ -216,7 +215,7 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
             if (confirmedBodyPart)
             {
                 // Match found; no need to examine any other BPs
-                if (verbose) { Core::print(" eligibility confirmed..."); }
+                if (verbose) { DEBUG(log).print(" eligibility confirmed..."); }
                 break;
             }
             else if (!targetBodyPart)
@@ -235,17 +234,17 @@ static bool moveToInventory(MapExtras::MapCache &mc, df::item *item, df::unit *u
 
     if (!confirmedBodyPart) {
         // No matching body parts found; report failure
-        if (verbose) { Core::printerr("\nThe item could not be equipped because the relevant body part(s) of the unit are missing or already occupied.  Try again with the Multi option if you're like to over-equip a body part, or choose a different unit-item combination (e.g. stop trying to put shoes on a trout).\n" ); }
+        if (verbose) { WARN(log).print("\nThe item could not be equipped because the relevant body part(s) of the unit are missing or already occupied.  Try again with the Multi option if you're like to over-equip a body part, or choose a different unit-item combination (e.g. stop trying to put shoes on a trout).\n" ); }
         return false;
     }
 
-    if (!Items::moveToInventory(mc, item, unit, df::unit_inventory_item::Worn, bpIndex))
+    if (!Items::moveToInventory(item, unit, df::unit_inventory_item::Worn, bpIndex))
     {
-        if (verbose) { Core::printerr("\nEquipping failed - failed to retrieve item from its current location/container/inventory.  Please move it to the ground and try again.\n"); }
+        if (verbose) { WARN(log).print("\nEquipping failed - failed to retrieve item from its current location/container/inventory.  Please move it to the ground and try again.\n"); }
         return false;
     }
 
-    if (verbose) { Core::print("  Success!\n"); }
+    if (verbose) { DEBUG(log).print("  Success!\n"); }
     return true;
 }
 
@@ -319,7 +318,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
             // must be followed by bodypart code (e.g. NECK)
             if(i == parameters.size()-1 || parameters[i+1].size() == 0)
             {
-                out.printerr("The bp switch must be followed by a bodypart code!\n");
+                WARN(log).print("The bp switch must be followed by a bodypart code!\n");
                 return CR_FAILURE;
             }
             targetBodyPartCode = parameters[i+1];
@@ -335,7 +334,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     // Ensure that the map information is available (e.g. a game is actually in-progress)
     if (!Maps::IsValid())
     {
-        out.printerr("Map is not available!\n");
+        WARN(log).print("Map is not available!\n");
         return CR_FAILURE;
     }
 
@@ -346,7 +345,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     // needs a cursor
     if (!Gui::getCursorCoords(cx,cy,cz))
     {
-        out.printerr("Cursor position not found. Please enable the cursor.\n");
+        WARN(log).print("Cursor position not found. Please enable the cursor.\n");
         return CR_FAILURE;
     }
     pos_cursor = DFCoord(cx,cy,cz);
@@ -367,7 +366,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
 
     if (!targetUnit)
     {
-        out.printerr("No unit found at cursor!\n");
+        WARN(log).print("No unit found at cursor!\n");
         return CR_FAILURE;
     }
 
@@ -383,13 +382,13 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
             if (targetBodyPart->token.compare(targetBodyPartCode) == 0)
             {
                 // It is indeed a match; exit the loop (while leaving the variable populated)
-                if (verbose) { out.print("Matching bodypart (%s) found.\n", targetBodyPart->token.c_str()); }
+                if (verbose) { INFO(log).print("Matching bodypart (%s) found.\n", targetBodyPart->token.c_str()); }
                 break;
             }
             else
             {
                 // Not a match; nullify the variable (it will get re-populated on the next pass through the loop)
-                if (verbose) { out.printerr("Bodypart \"%s\" does not match \"%s\".\n", targetBodyPart->token.c_str(), targetBodyPartCode.c_str()); }
+                if (verbose) { WARN(log).print("Bodypart \"%s\" does not match \"%s\".\n", targetBodyPart->token.c_str(), targetBodyPartCode.c_str()); }
                 targetBodyPart = NULL;
             }
         }
@@ -397,14 +396,12 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
         if (!targetBodyPart)
         {
             // Loop iteration is complete but no match was found.
-            out.printerr("The unit does not possess a bodypart of type \"%s\".  Please check the spelling or choose a different unit.\n", targetBodyPartCode.c_str());
+            WARN(log).print("The unit does not possess a bodypart of type \"%s\".  Please check the spelling or choose a different unit.\n", targetBodyPartCode.c_str());
             return CR_FAILURE;
         }
     }
 
     // Search for item(s)
-    MapCache mc;
-
     // iterate over all items, process those where pos == pos_cursor
     int itemsEquipped = 0;
     int itemsFound = 0;
@@ -437,7 +434,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
             else if (currentItem->flags.bits.forbid == 1)
             {
                 // The item is forbidden; skip it
-                if (verbose) { out.printerr("Forbidden item encountered; skipping to next item.\n"); }
+                if (verbose) { WARN(log).print("Forbidden item encountered; skipping to next item.\n"); }
             }
 
         }
@@ -446,16 +443,16 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
         if (currentItem->flags.bits.in_inventory == 1)
         {
             // The item is in a unit's inventory; skip it
-            if (verbose) { out.printerr("Inventory item encountered; skipping to next item.\n"); }
+            if (verbose) { WARN(log).print("Inventory item encountered; skipping to next item.\n"); }
         }
         else
         {
             itemsFound ++;                        // Track the number of items found under the cursor (for feedback purposes)
-            if (moveToInventory(mc, currentItem, targetUnit, targetBodyPart, ignore, multiEquipLimit, verbose))
+            if (moveToInventory(currentItem, targetUnit, targetBodyPart, ignore, multiEquipLimit, verbose))
             {
 //                // TODO TEMP EXPERIMENTAL - try to alter the item size in order to conform to its wearer
 //                currentItem->getRace();
-//                out.print("Critter size: %d| %d | Armor size: %d", world->raws.creatures.all[targetUnit->race]->caste[targetUnit->caste]->body_size_1, world->raws.creatures.all[targetUnit->race]->caste[targetUnit->caste]->body_size_2, currentItem->getTotalDimension());
+//                INFO(log).print("Critter size: %d| %d | Armor size: %d", world->raws.creatures.all[targetUnit->race]->caste[targetUnit->caste]->body_size_1, world->raws.creatures.all[targetUnit->race]->caste[targetUnit->caste]->body_size_2, currentItem->getTotalDimension());
 
                 itemsEquipped++;                // Track the number of items successfully processed (for feedback purposes)
             }
@@ -463,16 +460,13 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
     }
 
     if (itemsFound == 0) {
-        out.printerr("No usable items found at the cursor position.  Please choose a different location and try again.\n");
+        WARN(log).print("No usable items found at the cursor position.  Please choose a different location and try again.\n");
         return CR_OK;
     }
 
 
-    if (itemsEquipped == 0 && !verbose) { out.printerr("Some items were found but no equipment changes could be made.  Use the /verbose switch to display the reasons for failure.\n"); }
-    if (itemsEquipped > 0) { out.print("%d items equipped.\n", itemsEquipped); }
-    // At this point, some changes may have been made (such as detaching items from their original position), regardless of whether any equipment changes succeeded.
-    // Therefore, we must update the map.
-    mc.WriteAll();
+    if (itemsEquipped == 0 && !verbose) { WARN(log).print("Some items were found but no equipment changes could be made.  Use the /verbose switch to display the reasons for failure.\n"); }
+    if (itemsEquipped > 0) { INFO(log).print("%d items equipped.\n", itemsEquipped); }
 
     // Note: we might expect to recalculate the unit's weight at this point, in order to account for the
     // added items.  In fact, this recalculation occurs automatically during each dwarf's "turn".

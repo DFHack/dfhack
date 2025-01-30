@@ -1,13 +1,12 @@
 // Show details of currently active strange mood, if any
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
 #include "modules/Materials.h"
-#include "modules/Translation.h"
 #include "modules/Items.h"
 #include "modules/Units.h"
+#include "modules/World.h"
 
 #include "DataDefs.h"
 #include "df/world.h"
@@ -31,16 +30,13 @@ REQUIRE_GLOBAL(world);
 
 command_result df_showmood (color_ostream &out, vector <string> & parameters)
 {
-    if (!parameters.empty())
-        return CR_WRONG_USAGE;
-
-    if (!Translation::IsValid())
-    {
-        out.printerr("Translation data unavailable!\n");
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
-    CoreSuspender suspend;
+    if (!parameters.empty())
+        return CR_WRONG_USAGE;
 
     bool found = false;
     for (df::job_list_link *cur = world->jobs.list.next; cur != NULL; cur = cur->next)
@@ -69,7 +65,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             out.printerr("Dwarf with strange mood does not have a mood type!\n");
             continue;
         }
-        out.print("%s is currently ", DF2CONSOLE(out, Translation::TranslateName(&unit->name, false)).c_str());
+        out.print("%s is currently ", DF2CONSOLE(out, Units::getReadableName(unit)).c_str());
         switch (unit->mood)
         {
         case mood_type::Macabre:

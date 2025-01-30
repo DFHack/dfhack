@@ -48,7 +48,7 @@ also broadly maps to the ``df`` namespace in the headers generated for C++.
 
     The wrapper provides almost raw access to the memory of the game, so
     mistakes in manipulating objects are as likely to crash the game as
-    equivalent plain C++ code would be - e.g. null pointer access is safely
+    equivalent plain C++ code would be - e.g., null pointer access is safely
     detected, but dangling pointers aren't.
 
 Objects managed by the wrapper can be broadly classified into the following groups:
@@ -182,7 +182,7 @@ They implement the following features:
 
   Valid fields of the structure may be accessed by subscript.
 
-  Primitive typed fields, i.e. numbers & strings, are converted
+  Primitive typed fields, i.e., numbers & strings, are converted
   to/from matching lua values. The value of a pointer is a reference
   to the target, or ``nil``/NULL. Complex types are represented by
   a reference to the field within the structure; unless recursive
@@ -292,7 +292,7 @@ Since currently there is no API to allocate a bitfield
 object fully in GC-managed lua heap, consider using the
 lua table assignment feature outlined below in order to
 pass bitfield values to dfhack API functions that need
-them, e.g. ``matinfo:matches{metal=true}``.
+them, e.g., ``matinfo:matches{metal=true}``.
 
 
 Named types
@@ -315,6 +315,10 @@ All types and the global object have the following features:
 
 All compound types (structs, classes, unions, and the global object) support:
 
+* ``type._union``
+
+  ``true`` if the type represents a union, otherwise ``nil``.
+
 * ``type._fields``
 
   Contains a table mapping field names to descriptions of the type's fields,
@@ -333,7 +337,7 @@ All compound types (structs, classes, unions, and the global object) support:
 
   * ``type_name``: present for most fields; a string representation of the field's type
   * ``type``: the type object matching the field's type; present if such an object exists
-    (e.g. present for DF types, absent for primitive types)
+    (e.g., present for DF types, absent for primitive types)
   * ``type_identity``: present for most fields; a lightuserdata pointing to the field's underlying ``DFHack::type_identity`` object
   * ``index_enum``, ``ref_target``: the type object corresponding to the field's similarly-named XML attribute, if present
   * ``union_tag_field``, ``union_tag_attr``, ``original_name``: the string value of the field's similarly-named XML attribute, if present
@@ -383,7 +387,8 @@ Struct and class types with an instance-vector attribute in the XML also support
 
 * ``type.find(key)``
 
-  Returns an object from the instance vector that matches the key, where the field is determined by the 'key-field' specified in the XML.
+  Returns an object from the instance vector that matches the key, where the
+  field is determined by the 'key-field' specified in the XML.
 
 * ``type.get_vector()``
 
@@ -451,7 +456,7 @@ Recursive table assignment
 ==========================
 
 Recursive assignment is invoked when a lua table is assigned
-to a C++ object or field, i.e. one of:
+to a C++ object or field, i.e., one of:
 
 * ``ref:assign{...}``
 * ``ref.field = {...}``
@@ -666,7 +671,7 @@ Miscellaneous
 * ``dfhack.curry(func,args...)``, or ``curry(func,args...)``
 
   Returns a closure that invokes the function with args combined
-  both from the curry call and the closure call itself. I.e.
+  both from the curry call and the closure call itself. I.e.,
   ``curry(func,a,b)(c,d)`` equals ``func(a,b,c,d)``.
 
 
@@ -735,16 +740,17 @@ arbitrary Lua tables.
 
     local state = dfhack.persistent.getSiteData('my-script-name', {somedata={}})
 
-* ``dfhack.peristent.getSiteDataString(key)``
+* ``dfhack.persistent.getSiteDataString(key)``
 
   Retrieves the underlying serialized string associated with the current site
   and the given string ``key``. Returns *nil* if the key isn't found in the
   current site's persistent data. Most scripts will want to use ``getSiteData``
   instead.
 
-* ``dfhack.peristent.saveSiteData(key, data)``
+* ``dfhack.persistent.saveSiteData(key, data)``
 
-  Persists the given ``data`` (usually a table; can be of arbitrary complexity and depth) in the world save, associated with the current site and the given ``key``.
+  Persists the given ``data`` (usually a table; can be of arbitrary complexity and depth)
+  in the world save, associated with the current site and the given ``key``.
 
 * ``dfhack.persistent.saveSiteDataString(key, data_str)``
 
@@ -757,13 +763,17 @@ arbitrary Lua tables.
   ``key``. Returns *true* if succeeded.
 
 * ``dfhack.persistent.getWorldData(key[, default])``
-* ``dfhack.peristent.getWorldDataString(key)``
-* ``dfhack.peristent.saveWorldData(key, data)``
+* ``dfhack.persistent.getWorldDataString(key)``
+* ``dfhack.persistent.saveWorldData(key, data)``
 * ``dfhack.persistent.saveWorldDataString(key, data_str)``
 * ``dfhack.persistent.deleteWorldData(key)``
 
   Same semantics as for the ``Site`` functions, but will associated the data
   with the global world context.
+
+* ``dfhack.persistent.getUnsavedSeconds()``
+
+  Returns the number of seconds since last save or load of a save.
 
 The data is kept in memory, so no I/O occurs when getting or saving keys. It is
 all written to a json file in the game save directory when the game is saved.
@@ -921,7 +931,7 @@ can be omitted.
 
 * ``dfhack.getHackPath()``
 
-  Returns the dfhack directory path, i.e. ``".../df/hack/"``.
+  Returns the dfhack directory path, i.e., ``".../df/hack/"``.
 
 * ``dfhack.getSavePath()``
 
@@ -941,11 +951,7 @@ can be omitted.
 
 * ``dfhack.isSiteLoaded()``
 
-  Checks if a site (e.g. a player fort) is loaded.
-
-* ``dfhack.TranslateName(name[,in_english,only_last_name])``
-
-  Convert a language_name or only the last name part to string.
+  Checks if a site (e.g., a player fort) is loaded.
 
 * ``dfhack.df2utf(string)``
 
@@ -959,8 +965,8 @@ can be omitted.
 .. warning::
 
   When printing CP437-encoded text to the console (for example, names returned
-  from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
-  ensure proper display on all platforms.
+  from ``dfhack.units.getReadableName()``), use
+  ``print(dfhack.df2console(text))`` to ensure proper display on all platforms.
 
 * ``dfhack.utf2df(string)``
 
@@ -997,13 +1003,13 @@ can be omitted.
 * ``dfhack.formatInt(num)``
 
   Formats an integer value as a string according to the current system locale.
-  E.g. for American English, it would transform like: ``12345`` ->
+  E.g., for American English, it would transform like: ``12345`` ->
   ``'12,345'``
 
 * ``dfhack.formatFloat(num)``
 
   Formats a floating point value as a string according to the current system
-  locale. E.g. for American English, it would transform like: ``-12345.6789``
+  locale. E.g., for American English, it would transform like: ``-12345.6789``
   -> ``'-12,345.678711'`` (because float imprecision).
 
 * ``dfhack.run_command(command[, ...])``
@@ -1028,6 +1034,17 @@ can be omitted.
   returns an ``output, command_result`` pair. ``output`` is a single string -
   see ``dfhack.internal.runCommand()`` to obtain colors as well.
 
+Translation module
+------------------
+
+* ``dfhack.translation.translateName(name[,in_english[,only_last_name]])``
+
+  Convert a ``df.language_name`` (or only the last name part) to string.
+
+* ``dfhack.translation.generateName(name,language,type,major_selector,minor_selector)``
+
+  Dynamically generate a name using the same logic the game itself uses.
+
 Gui module
 ----------
 
@@ -1042,10 +1059,10 @@ Screens
 * ``dfhack.gui.getFocusStrings(viewscreen)``
 
   Returns a table of string representations of the current UI focuses.
-  The strings have a "screen/foo/bar/baz..." format e.g..::
+  The strings have a "screen/foo/bar/baz..." format e.g.::
 
     [1] = "dwarfmode/Info/CREATURES/CITIZEN"
-    [2] = "dwardmode/Squads"
+    [2] = "dwarfmode/Squads"
 
 * ``dfhack.gui.matchFocusString(focus_string[, viewscreen])``
 
@@ -1061,7 +1078,7 @@ Screens
 * ``dfhack.gui.getViewscreenByType(type[, depth])``
 
   Returns the topmost viewscreen out of the top ``depth`` viewscreens with
-  the specified type (e.g. ``df.viewscreen_titlest``), or ``nil`` if none match.
+  the specified type (e.g., ``df.viewscreen_titlest``), or ``nil`` if none match.
   If ``depth`` is not specified or is less than 1, all viewscreens are checked.
 
 * ``dfhack.gui.getDFViewscreen([skip_dismissed[, viewscreen]])``
@@ -1096,8 +1113,8 @@ General-purpose selections
   Returns the currently selected in-game object or the indicated thing
   associated with the selected in-game object. For example, Calling
   ``getSelectedJob`` when a building is selected will return the job associated
-  with the building (e.g. the ``ConstructBuilding`` job). If ``silent`` is
-  ommitted or set to ``false`` and a selected object cannot be found, then an
+  with the building (e.g., the ``ConstructBuilding`` job). If ``silent`` is
+  omitted or set to ``false`` and a selected object cannot be found, then an
   error is printed to the console.
 
 * ``dfhack.gui.getAnyWorkshopJob(screen)``
@@ -1129,8 +1146,10 @@ Fortress mode
 * ``dfhack.gui.pauseRecenter(pos[,pause])``
   ``dfhack.gui.pauseRecenter(x,y,z[,pause])``
 
-  Same as ``resetDwarfmodeView``, but also recenter if position is valid. If ``pause`` is false, skip pausing. Respects
-  ``RECENTER_INTERFACE_SHUTDOWN_MS`` in DF's ``init.txt`` (the delay before input is recognized when a recenter occurs.)
+  Same as ``resetDwarfmodeView``, but also recenter if position is valid. If
+  ``pause`` is false, skip pausing. Respects ``RECENTER_INTERFACE_SHUTDOWN_MS``
+  in DF's ``init.txt`` (the delay before input is recognized when a recenter
+  occurs.)
 
 * ``dfhack.gui.revealInDwarfmodeMap(pos[,center[,highlight]])``
   ``dfhack.gui.revealInDwarfmodeMap(x,y,z[,center[,highlight]])``
@@ -1140,14 +1159,16 @@ Fortress mode
   If ``highlight`` is true, then mark the target tile with a pulsing highlight
   until the player clicks somewhere else.
 
-  ``pos`` can be a ``df.coord`` instance or a table assignable to a ``df.coord`` (see `lua-api-table-assignment`),
+  ``pos`` can be a ``df.coord`` instance or a table assignable to a ``df.coord``
+  (see `lua-api-table-assignment`),
   e.g.::
 
     {x = 5, y = 7, z = 11}
     getSelectedUnit().pos
     copyall(df.global.cursor)
 
-  If the position is invalid, the function will simply ensure the current window position is clamped between valid values.
+  If the position is invalid, the function will simply ensure the current
+  window position is clamped between valid values.
 
 * ``dfhack.gui.refreshSidebar()``
 
@@ -1166,7 +1187,7 @@ Announcements
 
   Writes a string to :file:`gamelog.txt` without doing an announcement.
 
-* ``dfhack.gui.makeAnnouncement(type,flags,pos,text[,color,is_bright])``
+* ``dfhack.gui.makeAnnouncement(type,flags,pos,text[,color[,is_bright]])``
 
   Adds an announcement with given announcement_type, text, color, and brightness.
 
@@ -1190,18 +1211,18 @@ Announcements
   based on the unit's current job and as requested by the flags.
   Always updates alert badges. Returns ``true`` on any success.
 
-* ``dfhack.gui.showAnnouncement(text[,color,is_bright])``
+* ``dfhack.gui.showAnnouncement(text[,color[,is_bright]])``
 
   Adds a regular announcement with given text, color, and brightness.
   The announcement type is always ``df.announcement_type.REACHED_PEAK``,
   which uses the alert badge for ``df.announcement_alert_type.GENERAL``.
 
-* ``dfhack.gui.showZoomAnnouncement(type,pos,text[,color,is_bright])``
+* ``dfhack.gui.showZoomAnnouncement(type,pos,text[,color[,is_bright]])``
 
   Like above, but also specifies a position you can zoom to from the announcement menu,
   as well as being able to set the announcement type.
 
-* ``dfhack.gui.showPopupAnnouncement(text[,color,is_bright])``
+* ``dfhack.gui.showPopupAnnouncement(text[,color[,is_bright]])``
 
   Displays a megabeast-style modal announcement window.
   DF is currently ignoring the color and brightness settings
@@ -1217,42 +1238,55 @@ Announcements
 
   ``[R]``: (NEW_LINE) Ends the current line and begins on the next.
 
-  ``[B]``: (BLANK_LINE) Ends the current line and adds an additional blank line, beginning on the line after that.
+  ``[B]``: (BLANK_LINE) Ends the current line and adds an additional blank line,
+  beginning on the line after that.
 
   ``[P]``: (INDENT) Ends the current line and begins four spaces indented on the next.
 
-  ``[CHAR:`` n ``]``, ``[CHAR:~`` ch ``]``: Add a single character. First version takes a base-10 integer ``n`` representing a CP437 character.
-  Second version accepts a character ``ch`` instead. ``"[CHAR:154]"`` and ``"[CHAR:~"..string.char(154).."]"`` both result in ``Ü``.
-  Use ``[CHAR:32]`` or ``[CHAR:~ ]`` to add extra spaces, which would normally be trimmed by the parser.
+  ``[CHAR:`` n ``]``, ``[CHAR:~`` ch ``]``: Add a single character. First version
+  takes a base-10 integer ``n`` representing a CP437 character.
+  Second version accepts a character ``ch`` instead. ``"[CHAR:154]"`` and
+  ``"[CHAR:~"..string.char(154).."]"`` both result in ``Ü``. Use ``[CHAR:32]`` or
+  ``[CHAR:~ ]`` to add extra spaces, which would normally be trimmed by the parser.
 
-  ``[LPAGE:`` link_type ``:`` id ``]``, ``[LPAGE:`` link_type ``:`` id`` :`` subid ``]``: Start a ``markup_text_linkst``.
-  These are intended for Legends mode page links and don't work in popups. The text will just be colored based on ``link_type``.
-  Valid link types are: ``HF`` (``HIST_FIG``,) ``SITE``, ``ARTIFACT``, ``BOOK``, ``SR`` (``SUBREGION``,) ``FL`` (``FEATURE_LAYER``,)
-  ``ENT`` (``ENTITY``,) ``AB`` (``ABSTRACT_BUILDING``,) ``EPOP`` (``ENTITY_POPULATION``,) ``ART_IMAGE``, ``ERA``, ``HEC``.
+  ``[LPAGE:`` link_type ``:`` id ``]``, ``[LPAGE:`` link_type ``:`` id ``:`` subid ``]``:
+  Start a ``markup_text_linkst``. These are intended for Legends mode page links and
+  don't work in popups. The text will just be colored based on ``link_type``.
+  Valid link types are: ``HF`` (``HIST_FIG``,) ``SITE``, ``ARTIFACT``, ``BOOK``,
+  ``SR`` (``SUBREGION``,) ``FL`` (``FEATURE_LAYER``,) ``ENT`` (``ENTITY``,)
+  ``AB`` (``ABSTRACT_BUILDING``,) ``EPOP`` (``ENTITY_POPULATION``,) ``ART_IMAGE``,
+  ``ERA``, ``HEC``.
   ``subid`` is only used for ``AB`` and ``ART_IMAGE``. ``[/LPAGE]`` ends the link text.
 
-  ``[C:`` screenf ``:`` screenb ``:`` screenbright ``]``: Color text. Sets the repective values in ``df.global.gps`` and then sets text color.
-  ``color`` = ``screenf``, ``bright`` = ``screenbright``, ``screenb`` does nothing since popup backgrounds are always black.
+  ``[C:`` screenf ``:`` screenb ``:`` screenbright ``]``: Color text. Sets the
+  respective values in ``df.global.gps`` and then sets text color.
+  ``color`` = ``screenf``, ``bright`` = ``screenbright``, ``screenb`` does nothing
+  since popup backgrounds are always black.
   Example: ``"Light gray, [C:4:0:0]red, [C:4:0:1]orange, [C:7:0:0]light gray."``
 
-  ``[KEY:`` n ``]``: Keybinding. Shows the (first) keybinding for the ``df.interface_key`` ``n``.
-  The keybinding will be displayed in light green, but the previous text color will be restored afterwards.
+  ``[KEY:`` n ``]``: Keybinding. Shows the (first) keybinding for the
+  ``df.interface_key`` ``n``. The keybinding will be displayed in light green, but
+  the previous text color will be restored afterwards.
 
-* ``dfhack.gui.showAutoAnnouncement(type,pos,text[,color,is_bright,unit1,unit2])``
+* ``dfhack.gui.showAutoAnnouncement(type,pos,text[,color[,is_bright[,unit_a[,unit_d]]]])``
 
   Uses the type to look up options from announcements.txt, and calls the above
   operations accordingly. The units are used to call ``addCombatReportAuto``.
 
 * ``dfhack.gui.autoDFAnnouncement(report,text)``
-  ``dfhack.gui.autoDFAnnouncement(type,pos,text[,color,is_bright,unit_a,unit_d,is_sparring])``
+  ``dfhack.gui.autoDFAnnouncement(type,pos,text[,color[,is_bright[,unit_a[,unit_d[,is_sparring]]]]])``
 
-  Takes a ``df.announcement_infost`` (see: `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_)
-  and a string and processes them just like DF does. Can also be built from parameters instead of an ``announcement_infost``.
-  Setting ``is_sparring`` to ``true`` means the report will be added to sparring logs (if applicable) rather than hunting or combat.
+  Takes a ``df.announcement_infost`` (see:
+  `structure definition <https://github.com/DFHack/df-structures/blob/master/df.announcements.xml>`_)
+  and a string and processes them just like DF does. Can also be built from parameters instead of
+  an ``announcement_infost``. Setting ``is_sparring`` to ``true`` means the report will be added
+  to sparring logs (if applicable) rather than hunting or combat.
 
-  The announcement will not display if units are involved and the player can't see them (or hear, for adventure mode sound announcement types.)
+  The announcement will not display if units are involved and the player can't see
+  them (or hear, for adventure mode sound announcement types.)
   Returns ``true`` if a report was created or repeated.
-  For detailed info on why an announcement failed to display, enable ``debugfilter set Debug core gui`` in the DFHack console.
+  For detailed info on why an announcement failed to display, enable
+  ``debugfilter set Debug core gui`` in the DFHack console.
   If you want a guaranteed announcement, use ``dfhack.gui.showAutoAnnouncement`` instead.
 
 * ``dfhack.gui.getMousePos([allow_out_of_bounds])``
@@ -1290,6 +1324,11 @@ Job module
 
   Cancels a job, cleans up all references to it, and removes it from the world.
 
+* ``dfhack.job.addGeneralRef(job, type, id)``
+
+  Create a general reference of the given type, pointing to the object with the
+  specified id, and add the created general reference to the provided job.
+
 * ``dfhack.job.getGeneralRef(job, type)``
 
   Searches for a general_ref with the given type.
@@ -1311,6 +1350,11 @@ Job module
   Prevent the worker from taking jobs at the specified workshop for the
   specified cooldown period (in ticks). This doesn't decrease the cooldown
   period in any circumstances.
+
+* ``dfhack.job.addWorker(job, unit)``
+
+  Assign the specified job to the provided unit, unless the unit already has an
+  active job. Also cleans up a potential job posting for the provided job.
 
 * ``dfhack.job.removeWorker(job,cooldown)``
 
@@ -1371,21 +1415,17 @@ Job module
 Units module
 ------------
 
-* ``dfhack.units.isUnitInBox(unit,x1,y1,z1,x2,y2,z2)``
-
-  The unit is within the specified coordinates.
-
 * ``dfhack.units.isActive(unit)``
 
-  The unit is active (alive and on the map).
+  The unit is active (non-dead and on the map).
 
 * ``dfhack.units.isVisible(unit)``
 
-  The unit is visible on the map.
+  The unit is on a visible map tile. Doesn't account for sneaking.
 
 * ``dfhack.units.isCitizen(unit[,include_insane])``
 
-  The unit is an alive sane citizen of the fortress; wraps the
+  The unit is a non-dead sane citizen of the fortress; wraps the
   same checks the game uses to decide game-over by extinction,
   with an additional sanity check. You can identify citizens,
   regardless of their sanity, by passing ``true`` as the optional
@@ -1416,7 +1456,7 @@ Units module
 
 * ``dfhack.units.isAlive(unit)``
 
-  The unit isn't dead or undead.
+  The unit isn't dead or undead. Naturally inorganic is okay.
 
 * ``dfhack.units.isDead(unit)``
 
@@ -1429,12 +1469,13 @@ Units module
 
 * ``dfhack.units.isSane(unit)``
 
-  The unit is capable of rational action, i.e. not dead, insane, zombie, or active werewolf.
+  The unit is normally capable of rational action. I.e., not dead, insane, zombie,
+  nor crazed (unless active werebeast).
 
-* ``dfhack.units.isCrazed``
+* ``dfhack.units.isCrazed(unit)``
 
-  The unit is berserk and will attack all other creatures except members of its own species
-  that are also crazed. (can be modified by curses)
+  The unit is berserk and will attack all other creatures except crazed members of
+  its own species. (Can be modified by curses.)
 
 * ``dfhack.units.isGhost(unit)``
 
@@ -1446,23 +1487,28 @@ Units module
 
 * ``dfhack.units.isHidingCurse(unit)``
 
-  The unit is hiding a curse.
-
+  The unit is currently hiding a curse (i.e., vampire).
 
 * ``dfhack.units.isMale(unit)``
 * ``dfhack.units.isFemale(unit)``
 * ``dfhack.units.isBaby(unit)``
 * ``dfhack.units.isChild(unit)``
 * ``dfhack.units.isAdult(unit)``
-* ``dfhack.units.isGay(unit)``
-* ``dfhack.units.isNaked(unit)``
 
   Simple unit property checks
 
+* ``dfhack.units.isGay(unit)``
+
+  Not willing to breed. Also includes any creature caste without a gender.
+
+* ``dfhack.units.isNaked(unit[,no_items])``
+
+  Not wearing anything (including rings, etc.). Can optionally check for
+  empty inventory.
+
 * ``dfhack.units.isVisiting(unit)``
 
-  The unit is visiting. eg. Merchants, Diplomatics, travelers.
-
+  The unit is visiting. E.g., merchants, diplomats, and travelers.
 
 * ``dfhack.units.isTrainableHunting(unit)``
 
@@ -1474,7 +1520,7 @@ Units module
 
 * ``dfhack.units.isTrained(unit)``
 
-  The unit is trained.
+  The unit is trained for hunting or war, or is non-wild and non-domesticated.
 
 * ``dfhack.units.isHunter(unit)``
 
@@ -1508,23 +1554,25 @@ Units module
 
 * ``dfhack.units.isMischievous(unit)``
 
-  The unit is mischievous.
+  The unit is mischievous and will randomly pull levers, etc.
 
 * ``dfhack.units.isAvailableForAdoption(unit)``
 
   The unit is available for adoption.
 
 * ``dfhack.units.isPet(unit)``
-* ``dfhack.units.isOpposedToLife(unit)``
+
+  Unit has pet owner.
+
 * ``dfhack.units.hasExtravision(unit)``
+* ``dfhack.units.isOpposedToLife(unit)``
 * ``dfhack.units.isBloodsucker(unit)``
 
   Simple checks of caste attributes that can be modified by curses.
 
-
 * ``dfhack.units.isDwarf(unit)``
 
-  The unit is of the correct race for the fortress.
+  The unit is of the same race for the fortress. (Includes active werebeasts.)
 
 * ``dfhack.units.isAnimal(unit)``
 * ``dfhack.units.isMerchant(unit)``
@@ -1534,104 +1582,109 @@ Units module
 
 * ``dfhack.units.isVisitor(unit)``
 
-  The unit is a regular visitor with no special purpose (eg. merchant).
+  The unit is a regular visitor with no special purpose (e.g., merchant).
+
+* ``dfhack.units.isWildlife(unit)``
+
+  The unit is surface or cavern wildlife.
+
+* ``dfhack.units.isAgitated(unit)``
+
+  The unit is an agitated creature.
 
 * ``dfhack.units.isInvader(unit)``
 
   The unit is an active invader or marauder.
 
-* ``dfhack.units.isUndead(unit[,include_vamps])``
+* ``dfhack.units.isUndead(unit[,hiding_curse])``
 
   The unit is undead. Pass ``true`` as the optional second parameter to
-  count vampires as undead.
+  count undead hiding their curse (i.e., vampires).
 
 * ``dfhack.units.isNightCreature(unit)``
 * ``dfhack.units.isSemiMegabeast(unit)``
-* ``dfhack.units.isForgottenBeast(unit)``
 * ``dfhack.units.isMegabeast(unit)``
 * ``dfhack.units.isTitan(unit)``
+* ``dfhack.units.isForgottenBeast(unit)``
 * ``dfhack.units.isDemon(unit)``
 
   Simple enemy type checks.
 
 * ``dfhack.units.isDanger(unit)``
 
-  The unit is dangerous, and probably hostile. This includes
-  Great Dangers (see below), semi-megabeasts, night creatures,
-  undead, invaders, agitated wildlife, and crazed units.
+  The unit is dangerous and probably hostile. This includes night creatures,
+  semi-megabeasts, invaders, agitated wildlife, crazed units, and Great Dangers
+  (see below).
 
 * ``dfhack.units.isGreatDanger(unit)``
 
-  The unit is of Great Danger. This include demons, titans, forgotten
-  beasts, and megabeasts.
+  The unit is of Great Danger. This includes megabeasts, titans,
+  forgotten beasts, and demons.
 
-* ``dfhack.units.getPosition(unit)``
+* ``dfhack.units.isUnitInBox(unit, pos1, pos2)``
+* ``dfhack.units.isUnitInBox(unit,x1,y1,z1,x2,y2,z2)``
 
-  Returns true *x,y,z* of the unit, or *nil* if invalid; may be not equal to unit.pos if caged.
+  Returns true if the unit is within a box defined by the
+  specified coordinates.
 
+``dfhack.units.getUnitsInBox(pos1, pos2[, filter])``
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
-  Returns a table of all units within the specified coordinates. If the ``filter``
-  argument is given, only units where ``filter(unit)`` returns true will be included.
-  Note that ``pos2xyz()`` cannot currently be used to convert coordinate objects to
-  the arguments required by this function.
+  Returns a table of all units within the specified coordinates.
+  If the ``filter`` argument is given, only units where ``filter(unit)``
+  returns true will be included.
 
 * ``dfhack.units.getUnitByNobleRole(role_name)``
 
-  Returns the unit assigned to the given noble role, if any. ``role_name`` must
-  be one of the position codes associated with the active fort or civilization
-  government. For example: ``CAPTAIN_OF_THE_GUARD``, ``MAYOR``, or ``BARON``.
+  Returns the unit assigned to the given noble role, if any.
+  ``role_name`` must be one of the position codes associated with the
+  active fort or civilization government. For example:
+  ``CAPTAIN_OF_THE_GUARD``, ``MAYOR``, or ``BARON``.
   Note that if more than one unit has the role, only the first will be
-  returned. See ``getUnitsByNobleRole`` below for retrieving all units with a
-  particular role.
+  returned. See ``getUnitsByNobleRole`` below for retrieving all units
+  with a particular role.
 
 * ``dfhack.units.getUnitsByNobleRole(role_name)``
 
   Returns a list of units (possibly empty) assigned to the given noble role.
 
-* ``dfhack.units.getCitizens([exclude_residents, [include_insane]])``
+* ``dfhack.units.getCitizens([exclude_residents[,include_insane]])``
 
-  Returns a list of all living, sane, citizens and residents that are currently
-  on the  map. Pass ``exclude_residents`` and ``include_insane`` both default
-  to ``false`` but can be overridden.
+  Returns a list of all living, sane citizens and residents that are
+  currently on the map. Can ``exclude_residents`` or ``include_insane``
+  (both default to ``false``).
+
+* ``dfhack.units.getPosition(unit)``
+
+  Returns the true *x,y,z* of the unit, or *nil* if invalid. You should
+  generally use this method instead of reading *unit.pos* directly since
+  that field can be inaccurate when the unit is caged.
 
 * ``dfhack.units.teleport(unit, pos)``
 
   Moves the specified unit and any riders to the target coordinates, setting
   tile occupancy flags appropriately. Returns true if successful.
 
-* ``dfhack.units.assignTrainer(unit[, trainer_id])``
-* ``dfhack.units.unassignTrainer(unit)``
-
-  Assignes (or unassigns) a trainer for the specified trainable unit. The
-  trainer ID can be omitted if "any trainer" is desired. Returns a boolean
-  indicating whether the operation was successful.
-
 * ``dfhack.units.getGeneralRef(unit, type)``
 
-  Searches for a general_ref with the given type.
+  Searches for a ``general_ref`` with the given type.
 
 * ``dfhack.units.getSpecificRef(unit, type)``
 
-  Searches for a specific_ref with the given type.
+  Searches for a ``specific_ref`` with the given type.
 
 * ``dfhack.units.getContainer(unit)``
 
-  Returns the container (cage) item or *nil*.
-
-* ``dfhack.units.setNickname(unit,nick)``
-
-  Sets the unit's nickname properly.
+  Returns the container (i.e., cage) holding the unit or *nil*.
 
 * ``dfhack.units.getOuterContainerRef(unit)``
 
-  Returns a table (in the style of a ``specific_ref`` struct) of the outermost object that contains the unit (or one of the unit itself.)
-  The ``type`` field contains a ``specific_ref_type`` of ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
-  The ``object`` field contains a pointer to a unit, item, or vermin, respectively.
-
-* ``dfhack.units.getVisibleName(unit)``
-
-  Returns the language_name object visible in game, accounting for false identities.
+  Returns a table (in the style of a ``specific_ref`` struct) of the
+  outermost object that contains the unit (or one of the unit itself).
+  The ``type`` field contains a
+  ``specific_ref_type`` of ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
+  The ``object`` field contains a pointer to a unit, item, or vermin,
+  respectively.
 
 * ``dfhack.units.getIdentity(unit)``
 
@@ -1641,19 +1694,49 @@ Units module
 
   Returns the nemesis record of the unit if it has one, or *nil*.
 
+* ``dfhack.units.setNickname(unit, nick)``
+
+  Sets the unit's nickname properly.
+
+* ``dfhack.units.getVisibleName(unit)``
+
+  Returns the ``language_name`` object visible in game, accounting for
+  false identities.
+
+* ``dfhack.units.assignTrainer(unit[,trainer_id])``
+* ``dfhack.units.unassignTrainer(unit)``
+
+  Assigns (or unassigns) a trainer for the specified trainable unit. The
+  trainer ID can be omitted if "any trainer" is desired. Returns a boolean
+  indicating whether the operation was successful.
+
 * ``dfhack.units.makeown(unit)``
 
   Makes the selected unit a member of the current fortress and site.
-  Note that this operation may silently fail for any of several reasons, so it may be prudent to check if the operation has succeeded by using ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit in question.
+  Note that this operation may silently fail for any of several reasons,
+  so it may be prudent to check if the operation has succeeded by using
+  ``dfhack.units.isOwnCiv`` or another appropriate predicate on the unit
+  in question.
+
+* ``dfhack.units.setPathGoal(unit, pos, goal)``
+
+  Set target coordinates and goal (of type ``df.unit_path_goal``) for the given
+  unit. In case of a change, also clears the unit's current path.
 
 * ``dfhack.units.create(race, caste)``
 
   Creates a new unit from scratch. The unit will be added to the
-  ``world.units.all`` vector, but not to the ``world.units.active`` vector. The
-  unit will not have an associated historical figure, nemesis record, map
-  position, labors, or any group associations. The unit *will* have a race,
-  caste, name, soul, and initialized body and mind (including personality). The
-  unit must be configured further as needed and put into play by the client.
+  ``world.units.all`` vector, but not to the ``world.units.active`` vector.
+  The unit will not have an associated historical figure, nemesis record,
+  map position, labors, or any group associations. The unit *will* have a
+  race, caste, name, soul, and initialized body and mind (including
+  personality). The unit must be configured further as needed and put into
+  play by the client.
+
+* ``dfhack.units.getCasteRaw(unit)``
+* ``dfhack.units.getCasteRaw(race, caste)``
+
+  Returns the relevant ``caste_raw`` or *nil*.
 
 * ``dfhack.units.getPhysicalAttrValue(unit, attr_type)``
 * ``dfhack.units.getMentalAttrValue(unit, attr_type)``
@@ -1669,10 +1752,59 @@ Units module
 
   Finds (or creates if requested) a misc trait object with the given id.
 
+* ``dfhack.units.getRaceNameById(race)``
+* ``dfhack.units.getRaceName(unit)``
+
+  Get raw token name (e.g., "DWARF").
+
+* ``dfhack.units.getRaceReadableNameById(race)``
+* ``dfhack.units.getRaceReadableName(unit)``
+* ``dfhack.units.getRaceNamePluralById(race)``
+* ``dfhack.units.getRaceNamePlural(unit)``
+
+  Get human-readable name (e.g., "dwarf" or "dwarves").
+
+* ``dfhack.units.getRaceBabyNameById(race[,plural])``
+* ``dfhack.units.getRaceBabyName(unit[,plural])``
+* ``dfhack.units.getRaceChildNameById(race[,plural])``
+* ``dfhack.units.getRaceChildName(unit[,plural])``
+
+  Get human-readable baby or child name (e.g., "dwarven baby" or
+  "dwarven child").
+
+* ``dfhack.units.getReadableName(unit or historical_figure)``
+
+  Returns a string that includes the language name of the unit (if any), the
+  race of the unit (if different from fort), whether it is trained for war or
+  hunting, any syndrome-given descriptions (such as "necromancer"), the
+  training level (if tame), and profession or noble role. If a
+  ``historical_figure`` is passed instead of a unit, some information
+  (e.g., agitation status) is not available, and the profession may be
+  different (e.g., "Monk") from what is displayed in fort mode.
+
 * ``dfhack.units.getAge(unit[,true_age])``
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
+
+* ``dfhack.units.getKillCount(unit)``
+
+  Returns the number of units the unit has killed.
+
+* ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
+
+  Retrieves the nominal skill level for the given unit. If ``use_rust``
+  is *true*, subtracts the rust penalty.
+
+* ``dfhack.units.getEffectiveSkill(unit, skill)``
+
+  Computes the effective rating for the given skill, taking into account
+  skill rust, exhaustion, pain, etc.
+
+* ``dfhack.units.getExperience(unit, skill[, total])``
+
+  Returns the experience value for the given skill. If ``total`` is true,
+  adds experience implied by the current skill level.
 
 * ``dfhack.units.isValidLabor(unit, unit_labor)``
 
@@ -1682,107 +1814,169 @@ Units module
 
   Sets the given labor to the given (boolean) validity for all units that are
   part of your fortress civilization. Valid labors are allowed to be toggled
-  in the in-game labor management screens (including DFHack's `labor manipulator
-  screen <manipulator>`).
+  in the in-game labor management screens (including DFHack's `labor
+  manipulator screen <manipulator>`).
 
-* ``dfhack.units.getNominalSkill(unit, skill[, use_rust])``
+* ``dfhack.units.setAutomaticProfessions(unit)``
 
-  Retrieves the nominal skill level for the given unit. If ``use_rust``
-  is *true*, subtracts the rust penalty.
-
-* ``dfhack.units.getEffectiveSkill(unit, skill)``
-
-  Computes the effective rating for the given skill, taking into account exhaustion, pain etc.
-
-* ``dfhack.units.getExperience(unit, skill[, total])``
-
-  Returns the experience value for the given skill. If ``total`` is true, adds experience implied by the current rating.
+  Set appropriate labors on a unit based on current work detail settings.
 
 * ``dfhack.units.computeMovementSpeed(unit)``
 
-  Computes number of frames * 100 it takes the unit to move in its current state of mind and body.
+  Computes number of frames * 100 it takes the unit to move in its current
+  state of mind and body. **Currently broken due to move speed changes,
+  will always return 0!**
 
 * ``dfhack.units.computeSlowdownFactor(unit)``
 
-  Meandering and floundering in liquid introduces additional slowdown. It is
-  random, but the function computes and returns the expected mean factor as a float.
+  Meandering and floundering in liquid introduces additional slowdown.
+  It is random, but the function computes and returns the expected mean
+  factor as a float.
 
-* ``dfhack.units.getNoblePositions(unit)``
+* ``dfhack.units.getNoblePositions(unit or historical_figure)``
 
   Returns a list of tables describing noble position assignments, or *nil*.
-  Every table has fields ``entity``, ``assignment`` and ``position``.
+  Every table has fields ``entity``, ``assignment``, and ``position``.
 
-* ``dfhack.units.getProfessionName(unit[,ignore_noble,plural])``
+* ``dfhack.units.getProfession(unit)``
 
-  Retrieves the profession name using custom profession, noble assignments
-  or raws. The ``ignore_noble`` boolean disables the use of noble positions.
+  Returns unit's profession ID (``df.profession``), accounting for
+  false identity.
 
-* ``dfhack.units.getCasteProfessionName(race,caste,prof_id[,plural])``
+* ``dfhack.units.getProfessionName(unit[,ignore_noble[,plural[,land_title]]])``
+* ``dfhack.units.getProfessionName(historical_figure[,ignore_noble[,plural[,land_title]]])``
 
-  Retrieves the profession name for the given race/caste using raws.
+  Retrieves the profession name using custom profession, noble assignments,
+  or raws. The ``ignore_noble`` boolean disables the use of noble positions
+  ("Prisoner", "Slave", and noble spouse titles included). The ``land_title``
+  boolean causes ``of Sitename`` to be appended when applicable. If a
+  ``historical_figure`` is passed instead of a unit, some information (e.g.,
+  agitation status) is not available, and the profession may be different
+  (e.g., "Monk") from what is displayed in fort mode.
+
+* ``dfhack.units.getCasteProfessionName(race, caste, prof_id[, plural])``
+
+  Retrieves the profession name for the given race and caste using raws.
 
 * ``dfhack.units.getProfessionColor(unit[,ignore_noble])``
 
   Retrieves the color associated with the profession, using noble assignments
   or raws. The ``ignore_noble`` boolean disables the use of noble positions.
 
-* ``dfhack.units.getCasteProfessionColor(race,caste,prof_id)``
+* ``dfhack.units.getCasteProfessionColor(race, caste, prof_id)``
 
-  Retrieves the profession color for the given race/caste using raws.
+  Retrieves the profession color for the given race and caste using raws.
 
 * ``dfhack.units.getGoalType(unit[,goalIndex])``
 
   Retrieves the goal type of the dream that the given unit has.
   By default the goal of the first dream is returned.
-  The goalIndex parameter may be used to retrieve additional dream goals.
+  The ``goalIndex`` parameter may be used to retrieve additional dream goals.
   Currently only one dream per unit is supported by Dwarf Fortress.
-  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+  Support for multiple dreams may be added in future versions of
+  Dwarf Fortress.
 
 * ``dfhack.units.getGoalName(unit[,goalIndex])``
 
-  Retrieves the short name describing the goal of the dream that the given unit has.
-  By default the goal of the first dream is returned.
-  The goalIndex parameter may be used to retrieve additional dream goals.
-  Currently only one dream per unit is supported by Dwarf Fortress.
-  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+  Retrieves the short name describing the goal of the dream that the given
+  unit has. By default the goal of the first dream is returned (see above).
 
 * ``dfhack.units.isGoalAchieved(unit[,goalIndex])``
 
   Checks if given unit has achieved the goal of the dream.
-  By default the status of the goal of the first dream is returned.
-  The goalIndex parameter may be used to check additional dream goals.
-  Currently only one dream per unit is supported by Dwarf Fortress.
-  Support for multiple dreams may be added in future versions of Dwarf Fortress.
+  By default the status of the goal of the first dream is returned (see above).
 
-* ``dfhack.units.getReadableName(unit)``
+* ``dfhack.units.getMainSocialActivity(unit)``
+* ``dfhack.units.getMainSocialEvent(unit)``
 
-  Returns a string that includes the language name of the unit (if any), the
-  race of the unit, whether it is trained for war or hunting, any
-  syndrome-given descriptions (such as "necromancer"), and the training level
-  (if tame).
+  Return the ``df.activity_entry`` or ``df.activity_event`` representing the
+  unit's current social activity.
 
 * ``dfhack.units.getStressCategory(unit)``
 
   Returns a number from 0-6 indicating stress. 0 is most stressed; 6 is least.
-  Note that 0 is guaranteed to remain the most stressed but 6 could change in the future.
+  Note that 0 is guaranteed to remain the most stressed but 6 could change in
+  the future.
 
 * ``dfhack.units.getStressCategoryRaw(stress_level)``
 
-  Identical to ``getStressCategory`` but takes a raw stress level instead of a unit.
+  Identical to ``getStressCategory`` but takes a raw stress level instead
+  of a unit.
 
 * ``dfhack.units.getStressCutoffs()``
 
   Returns a table of the cutoffs used by the above stress level functions.
 
+Action Timer API
+~~~~~~~~~~~~~~~~
+
+This is an API to allow manipulation of unit action timers, to speed them up or slow
+them down. All functions in this API have overflow/underflow protection when modifying
+action timers (the value will cap out). Actions with a timer of 0 (or less) will not
+be modified as they are completed (or invalid in the case of negatives).
+Timers will be capped to go no lower than 1.
+``affectedActionType`` parameters are values from the DF enum ``unit_action_type``
+(e.g., ``df.unit_action_type.Move``).
+``affectedActionTypeGroup`` parameters are values from the (custom) DF enum
+``unit_action_type_group`` (see
+`unit_action_type definition <https://github.com/DFHack/df-structures/blob/master/df.units.xml>`_
+for which action types each group contains). They are as follows:
+
+  * ``All``
+  * ``Movement``
+  * ``MovementFeet`` (affects only walking and crawling speed. If you need to
+    differentiate between walking and crawling, check the unit's ``flags1.on_ground`` flag,
+    like the Pegasus boots do in the `modding-guide`).
+  * ``MovementFeet`` (for walking speed, such as with pegasus boots from the `modding-guide`).
+  * ``Combat`` (includes bloodsucking).
+  * ``Work``
+
+API functions:
+
+* ``dfhack.units.subtractActionTimers(unit, amount, affectedActionType)``
+
+  Subtract ``amount`` (32-bit integer) from the timers of any actions the unit is performing
+  of ``affectedActionType`` (usually one or zero actions in normal gameplay). Negative
+  amount adds to timers.
+
+* ``dfhack.units.subtractGroupActionTimers(unit, amount, affectedActionTypeGroup)``
+
+  Subtract ``amount`` (32-bit integer) from the timers of any actions the unit is performing
+  that match the ``affectedActionTypeGroup`` category. Negative amount adds to timers.
+
+* ``dfhack.units.multiplyActionTimers(unit, amount, affectedActionType)``
+
+  Multiply the timers of any actions of ``affectedActionType`` the unit is performing by
+  ``amount`` (float) (usually one or zero actions in normal gameplay).
+
+* ``dfhack.units.multiplyGroupActionTimers(unit, amount, affectedActionTypeGroup)``
+
+  Multiply the timers of any actions that match the ``affectedActionTypeGroup`` category
+  the unit is performing by ``amount`` (float).
+
+* ``dfhack.units.setActionTimers(unit, amount, affectedActionType)``
+
+  Set the timers of any action the unit is performing of ``affectedActionType`` to ``amount``
+  (32-bit integer) (usually one or zero actions in normal gameplay).
+
+* ``dfhack.units.setGroupActionTimers(unit, amount, affectedActionTypeGroup)``
+
+  Set the timers of any action the unit is performing that match the
+  ``affectedActionTypeGroup`` category to ``amount`` (32-bit integer).
+
 Military module
-~~~~~~~~~~~~~~~~~~~
+---------------
 
 * ``dfhack.military.makeSquad(assignment_id)``
 
-  Creates a new squad associated with the assignment (ie ``df::entity_position_assignment``, via ``id``) and returns it.
-  Fails if a squad already exists that is associated with that assignment, or if the assignment is not a fort mode player controlled squad.
-  Note: This function does not name the squad: consider setting a nickname (under ``squad.name.nickname``), and/or filling out the ``language_name`` object at ``squad.name``.
-  The returned squad is otherwise complete and requires no more setup to work correctly.
+  Creates a new squad associated with the assignment (i.e.,
+  ``df::entity_position_assignment``, via ``id``) and returns it.
+  Fails if a squad already exists that is associated with that assignment, or if
+  the assignment is not a fort mode player controlled squad.
+  Note: This function does not name the squad. Consider setting a nickname
+  (under ``squad.name.nickname``), and/or filling out the ``language_name`` object
+  at ``squad.name``. The returned squad is otherwise complete and requires no more
+  setup to work correctly.
 
 * ``dfhack.military.updateRoomAssignments(squad_id, assignment_id, squad_use_flags)``
 
@@ -1792,75 +1986,32 @@ Military module
 
   Returns the name of a squad as a string.
 
-Action Timer API
-~~~~~~~~~~~~~~~~
-
-This is an API to allow manipulation of unit action timers, to speed them up or slow them down.
-All functions in this API have overflow/underflow protection when modifying action timers (the value will cap out).
-Actions with a timer of 0 (or less) will not be modified as they are completed (or invalid in the case of negatives).
-Timers will be capped to go no lower than 1.
-``affectedActionType`` parameters are integers from the DF enum ``unit_action_type``. E.g. ``df.unit_action_type.Move``.
-``affectedActionTypeGroup`` parameters are integers from the (custom) DF enum ``unit_action_type_group``. They are as follows:
-
-  * ``All`` (does not include unknown unit action types)
-  * ``Movement``
-  * ``MovementFeet`` (affects only walking and crawling speed. if you need to differentiate between walking and crawling, check the unit's ``flags1.on_ground`` flag, like the Pegasus boots do in the `modding-guide`)
-  * ``MovementFeet`` (for walking speed, such as with pegasus boots from the `modding-guide`)
-  * ``Combat`` (includes bloodsucking)
-  * ``Work``
-
-API functions:
-
-* ``dfhack.units.subtractActionTimers(unit, amount, affectedActionType)``
-
-  Subtract ``amount`` (32-bit integer) from the timers of any actions the unit is performing of ``affectedActionType``
-  (usually one or zero actions in normal gameplay).
-
-* ``dfhack.units.subtractGroupActionTimers(unit, amount, affectedActionTypeGroup)``
-
-  Subtract ``amount`` (32-bit integer) from the timers of any actions the unit is performing that match the ``affectedActionTypeGroup`` category.
-
-* ``dfhack.units.multiplyActionTimers(unit, amount, affectedActionType)``
-
-  Multiply the timers of any actions of ``affectedActionType`` the unit is performing by ``amount`` (float)
-  (usually one or zero actions in normal gameplay).
-
-* ``dfhack.units.multiplyGroupActionTimers(unit, amount, affectedActionTypeGroup)``
-
-  Multiply the timers of any actions that match the ``affectedActionTypeGroup`` category the unit is performing by ``amount`` (float).
-
-* ``dfhack.units.setActionTimers(unit, amount, affectedActionType)``
-
-  Set the timers of any action the unit is performing of ``affectedActionType`` to ``amount`` (32-bit integer)
-  (usually one or zero actions in normal gameplay).
-
-* ``dfhack.units.setGroupActionTimers(unit, amount, affectedActionTypeGroup)``
-
-  Set the timers of any action the unit is performing that match the ``affectedActionTypeGroup`` category to ``amount`` (32-bit integer).
-
 Items module
 ------------
 
-* ``dfhack.items.getPosition(item)``
+* ``dfhack.items.findType(string)``
 
-  Returns true *x,y,z* of the item, or *nil* if invalid; may be not equal to item.pos if in inventory.
+  Finds an item type by string and returns the ``df.item_type``. String is
+  case-sensitive (e.g., "TOOL").
 
-* ``dfhack.items.getBookTitle(item)``
+* ``dfhack.items.findSubtype(string)``
 
-  Returns the title of the "book" item, or an empty string if the item isn't a "book" or it doesn't
-  have a title. A "book" is a codex or a tool item that has page or writings improvements, such as
-  scrolls and quires.
+  Finds an item subtype by string and returns the subtype or *-1*. String is
+  case-sensitive (e.g., "TOOL:ITEM_TOOL_HIVE").
 
-* ``dfhack.items.getDescription(item, type[, decorate])``
+* ``dfhack.items.isCasteMaterial(item_type)``
 
-  Returns the string description of the item, as produced by the ``getItemDescription``
-  method. If decorate is true, also adds markings for quality and improvements.
+  Returns *true* if this item type uses a creature/caste pair as its material.
 
-* ``dfhack.items.getReadableDescription(item)``
+* ``dfhack.items.getSubtypeCount(item_type)``
 
-  Returns a string generally fit to usefully describe the item to the player.
-  When the item description appears anywhere in a script output or in the UI,
-  this is usually the string you should use.
+  Returns the number of raw-defined subtypes of the given item type, or *-1*
+  if not applicable.
+
+* ``dfhack.items.getSubtypeDef(item_type, subtype)``
+
+  Returns the raw definition for the given item type and subtype, or *nil*
+  if invalid.
 
 * ``dfhack.items.getGeneralRef(item, type)``
 
@@ -1881,12 +2032,13 @@ Items module
 
 * ``dfhack.items.getContainer(item)``
 
-  Returns the container item or *nil*.
+  Returns the item's container item or *nil*.
 
 * ``dfhack.items.getOuterContainerRef(item)``
 
-  Returns a table (in the style of a ``specific_ref`` struct) of the outermost object that contains the item (or one of the item itself.)
-  The ``type`` field contains a ``specific_ref_type`` of ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
+  Returns a table (in the style of a ``specific_ref`` struct) of the outermost object
+  that contains the item (or one of the item itself.) The ``type`` field contains a
+  ``specific_ref_type`` of ``UNIT``, ``ITEM_GENERAL``, or ``VERMIN_EVENT``.
   The ``object`` field contains a pointer to a unit, item, or vermin, respectively.
 
 * ``dfhack.items.getContainedItems(item)``
@@ -1901,6 +2053,32 @@ Items module
 
   Returns the holder unit or *nil*.
 
+* ``dfhack.items.getPosition(item)``
+
+  Returns the true *x,y,z* of the item, or *nil* if invalid. You should generally
+  use this method instead of reading *item.pos* directly since that field only stores
+  the last position where the item was on the ground.
+
+* ``dfhack.items.getBookTitle(item)``
+
+  Returns the title of the "book" item, or an empty string if the item isn't a "book"
+  or it doesn't have a title. A "book" is a codex or a tool item that has page or
+  writing improvements, such as scrolls and quires.
+
+* ``dfhack.items.getDescription(item, type[, decorate])``
+
+  Returns the string description of the item, as produced by the ``getItemDescription``
+  method. A ``type`` of ``0`` results in a string like ``prickle berries [2]``. ``1``
+  results in the singular ``prickle berry``, and ``2`` results in the plural
+  ``prickle berries``. If decorate is *true*, also adds markings for quality and
+  improvements, as well as ``(foreign)`` indicator (when applicable).
+
+* ``dfhack.items.getReadableDescription(item)``
+
+  Returns a string generally fit to usefully describe the item to the player.
+  When the item description appears anywhere in a script output or in the UI,
+  this is usually the string you should use.
+
 * ``dfhack.items.moveToGround(item,pos)``
 
   Move the item to the ground at position. Returns *false* if impossible.
@@ -1912,17 +2090,19 @@ Items module
 * ``dfhack.items.moveToBuilding(item,building[,use_mode[,force_in_building])``
 
   Move the item to the building. Returns *false* if impossible.
+  ``use_mode`` defaults to ``df.building_item_role_type.TEMP``.
+  If set to ``df.building_item_role_type.PERM``, the item will be treated as part
+  of the building. If ``force_in_building`` is true, the item will be considered
+  to be stored by the building (used for items temporarily used in traps in
+  vanilla DF).
 
-  ``use_mode`` defaults to 0. If set to 2, the item will be treated as part of the building.
-
-  If ``force_in_building`` is true, the item will be considered to be stored by the building
-  (used for items temporarily used in traps in vanilla DF)
-
-* ``dfhack.items.moveToInventory(item,unit,use_mode,body_part)``
+* ``dfhack.items.moveToInventory(item,unit[,use_mode[,body_part]])``
 
   Move the item to the unit inventory. Returns *false* if impossible.
+  ``use_mode`` defaults to ``df.unit_inventory_item.T_mode.Hauled``.
+  ``body_part`` defaults to ``-1``.
 
-* ``dfhack.items.remove(item[, no_uncat])``
+* ``dfhack.items.remove(item[,no_uncat])``
 
   Cancels any jobs associated with the item, removes the item from containers
   and inventories, hides the item from the UI, and, unless ``no_uncat`` is
@@ -1930,43 +2110,29 @@ Items module
 
 * ``dfhack.items.makeProjectile(item)``
 
-  Turns the item into a projectile, and returns the new object, or *nil* if impossible.
-
-* ``dfhack.items.isCasteMaterial(item_type)``
-
-  Returns *true* if this item type uses a creature/caste pair as its material.
-
-* ``dfhack.items.getSubtypeCount(item_type)``
-
-  Returns the number of raw-defined subtypes of the given item type, or *-1* if not applicable.
-
-* ``dfhack.items.getSubtypeDef(item_type, subtype)``
-
-  Returns the raw definition for the given item type and subtype, or *nil* if invalid.
+  Turns the item into a projectile, and returns the new object, or *nil*
+  if impossible.
 
 * ``dfhack.items.getItemBaseValue(item_type, subtype, material, mat_index)``
 
   Calculates the base value for an item of the specified type and material.
 
-* ``dfhack.items.getValue(item[, caravan_state])``
+* ``dfhack.items.getValue(item[,caravan_state])``
 
   Calculates the value of an item. If a ``df.caravan_state`` object is given
   (from ``df.global.plotinfo.caravans`` or
-  ``df.global.main_interface.trade.mer``), then the value is modified by civ
+  ``df.global.game.main_interface.trade.mer``), then the value is modified by civ
   properties and any trade agreements that might be in effect.
 
-* ``dfhack.items.isRequestedTradeGood(item[, caravan_state])``
+* ``dfhack.items.createItem(unit, item_type, item_subtype, mat_type, mat_index, no_floor)``
 
-  Returns whether a caravan will pay extra for the given item. If caravan_state
-  is not given, checks all active caravans.
-
-* ``dfhack.items.createItem(unit, item_type, item_subtype, mat_type, mat_index, growth_print, no_floor)``
-
-  Creates an item, similar to the `createitem` plugin.
+  Creates an item, similar to the `createitem` plugin. Returns a list of created
+  ``df.item`` objects.
 
 * ``dfhack.items.checkMandates(item)``
 
-  Returns true if the item is free from mandates, or false if mandates prevent trading the item.
+  Returns true if the item is free from mandates, or false if mandates prevent
+  trading the item.
 
 * ``dfhack.items.canTrade(item)``
 
@@ -1985,9 +2151,14 @@ Items module
 
   Marks the given item for trade at the given depot.
 
-* ``dfhack.items.canMelt(item[, game_ui])``
+* ``dfhack.items.isRequestedTradeGood(item[,caravan_state])``
 
-  Returns true if the item can be designated for melting. Unless ``game_ui`` is
+  Returns whether a caravan will pay extra for the given item. If caravan_state
+  is not given, checks all active caravans.
+
+* ``dfhack.items.canMelt(item[,game_ui])``
+
+  Returns true if the item can be melted (at a smelter). Unless ``game_ui`` is
   given and true, bars, non-empty metal containers, and items in unit
   inventories are not considered meltable, even though they can be designated
   for melting using the game UI.
@@ -2035,15 +2206,16 @@ World module
 
 * ``dfhack.world.ReadCurrentTick()``
 
-  Returns the number of game ticks (``df.global.world.frame_counter``) since the start of the current game year.
+  Returns the number of game ticks (``df.global.world.frame_counter``) since the
+  start of the current game year.
 
 * ``dfhack.world.ReadCurrentMonth()``
 
-  Returns the current game month, ranging from 0-11 (The Dwarven year has 12 months).
+  Returns the current game month, ranging from 0-11. The Dwarven year has 12 months.
 
 * ``dfhack.world.ReadCurrentDay()``
 
-  Returns the current game day, ranging from 1-28 (Each Dwarven month as 28 days)
+  Returns the current game day, ranging from 1-28. Each Dwarven month has 28 days.
 
 * ``dfhack.world.ReadCurrentWeather()``
 
@@ -2055,19 +2227,20 @@ World module
 
 * ``dfhack.world.ReadWorldFolder()``
 
-  Returns the name of the directory/folder the current saved game is under, or an empty string if no game was loaded this session.
+  Returns the name of the directory/folder the current saved game is under, or an
+  empty string if no game was loaded this session.
 
 * ``dfhack.world.isFortressMode([gametype])``
 * ``dfhack.world.isAdventureMode([gametype])``
 * ``dfhack.world.isArena([gametype])``
 * ``dfhack.world.isLegends([gametype])``
 
-  Without any arguments, returns *true* if the current gametype matches. Optionally accepts a gametype id to match against.
+  Without any arguments, returns *true* if the current gametype matches.
+  Optionally accepts a ``gametype`` id to match against.
 
 * ``dfhack.world.getCurrentSite()``
 
-  Returns the currently loaded ``df.world_site`` or ``nil`` if no site is
-  loaded.
+  Returns the currently loaded ``df.world_site`` or ``nil`` if no site is loaded.
 
 * ``dfhack.world.getAdventurer()``
 
@@ -2100,7 +2273,8 @@ Maps module
 
 * ``dfhack.maps.getTileBlock(coords)``, or ``getTileBlock(x,y,z)``
 
-  Returns a map block object for given df::coord or x,y,z in local tile coordinates.
+  Returns a map block object for given df::coord or x,y,z in local
+  tile coordinates.
 
 * ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
 
@@ -2112,7 +2286,8 @@ Maps module
 
 * ``dfhack.maps.getTileFlags(coords)``, or ``getTileFlags(x,y,z)``
 
-  Returns designation and occupancy references for the given coordinates, or *nil, nil* if invalid.
+  Returns designation and occupancy references for the given coordinates, or
+  *nil, nil* if invalid.
 
 * ``dfhack.maps.getRegionBiome(region_coord2d)``, or ``getRegionBiome(x,y)``
 
@@ -2122,13 +2297,13 @@ Maps module
 
   Returns the biome_type for the given global map region.
 
-* ``dfhack.maps.enableBlockUpdates(block[,flow,temperature])``
+* ``dfhack.maps.enableBlockUpdates(block[,flow[,temperature]])``
 
   Enables updates for liquid flow or temperature, unless already active.
 
 * ``dfhack.maps.spawnFlow(pos,type,mat_type,mat_index,dimension)``
 
-  Spawns a new flow (i.e. steam/mist/dust/etc) at the given pos, and with
+  Spawns a new flow (i.e., steam/mist/dust/etc) at the given pos, and with
   the given parameters. Returns it, or *nil* if unsuccessful.
 
 * ``dfhack.maps.getGlobalInitFeature(index)``
@@ -2149,8 +2324,8 @@ Maps module
 
 * ``dfhack.maps.getWalkableGroup(pos)``
 
-  Returns the walkability group for the given tile position. A return value of
-  ``0`` indicates that the tile is not walkable. The data comes from a
+  Returns the walkability group for the given tile position. A return value
+  of ``0`` indicates that the tile is not walkable. The data comes from a
   pathfinding cache maintained by DF.
 
   .. note::
@@ -2166,11 +2341,13 @@ Maps module
 
 * ``dfhack.maps.hasTileAssignment(tilemask)``
 
-  Checks if the tile_bitmask object is not *nil* and contains any set bits; returns *true* or *false*.
+  Checks if the tile_bitmask object is not *nil* and contains any set bits.
+  Returns *true* or *false*.
 
 * ``dfhack.maps.getTileAssignment(tilemask,x,y)``
 
-  Checks if the tile_bitmask object is not *nil* and has the relevant bit set; returns *true* or *false*.
+  Checks if the tile_bitmask object is not *nil* and has the relevant bit set.
+  Returns *true* or *false*.
 
 * ``dfhack.maps.setTileAssignment(tilemask,x,y,enable)``
 
@@ -2182,21 +2359,23 @@ Maps module
 
 * ``dfhack.maps.isTileAquifer(pos)``, or ``isTileAquifer(x,y,z)``
 
-  Checks if there's an aquifer on the given tile position; returns *true* or *false*.
+  Checks if there's an aquifer on the given tile position.
+  Returns *true* or *false*.
 
 * ``dfhack.maps.isTileHeavyAquifer(pos)``, or ``isTileHeavyAquifer(x,y,z)``
 
-  Checks if there's a heavy aquifer on the given tile position; returns *true* or *false*.
+  Checks if there's a heavy aquifer on the given tile position.
+  Returns *true* or *false*.
 
 * ``dfhack.maps.setTileAquifer(pos[,heavy])``, or ``setTileAquifer(x,y,z[,heavy])``
 
-  Adds a light aquifer on the given tile position, or a heavy aquifer if the *heavy* argument is *true*;
-  returns *true* or *false* depending on success.
+  Adds a light aquifer on the given tile position, or a heavy aquifer if the
+  *heavy* argument is *true*. Returns *true* or *false* depending on success.
 
 * ``dfhack.maps.removeTileAquifer(pos)``, or ``removeTileAquifer(x,y,z)``
 
-  Removes an aquifer from the given tile position; returns *true* or *false* depending on success.
-
+  Removes an aquifer from the given tile position.
+  Returns *true* or *false* depending on success.
 
 Burrows module
 --------------
@@ -2233,7 +2412,8 @@ Burrows module
 
 * ``dfhack.burrows.setAssignedTile(burrow,tile_coord,enable)``
 
-  Adds or removes the tile from the burrow. Returns *false* if invalid coords.
+  Adds or removes the tile from the burrow.
+  Returns *false* if invalid coords.
 
 * ``dfhack.burrows.isAssignedBlockTile(burrow,block,x,y)``
 
@@ -2241,8 +2421,8 @@ Burrows module
 
 * ``dfhack.burrows.setAssignedBlockTile(burrow,block,x,y,enable)``
 
-  Adds or removes the tile from the burrow. Returns *false* if invalid coords.
-
+  Adds or removes the tile from the burrow.
+  Returns *false* if invalid coords.
 
 Buildings module
 ----------------
@@ -2288,7 +2468,7 @@ General
   using width and height for flexible dimensions.
   Returns *is_flexible, width, height, center_x, center_y*.
 
-* ``dfhack.buildings.checkFreeTiles(pos,size[,extents,change_extents,allow_occupied,allow_wall,allow_flow])``
+* ``dfhack.buildings.checkFreeTiles(pos,size[,extents[,change_extents[,allow_occupied[,allow_wall[,allow_flow]]]]])``
 
   Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
   can be used for placing a building. If ``change_extents`` is true, bad tiles
@@ -2303,9 +2483,9 @@ General
 
 * ``dfhack.buildings.containsTile(building, x, y)``
 
-  Checks if the building contains the specified tile. If the building contains extents,
-  then the extents are checked. Otherwise, returns whether the x and y map coordinates
-  are within the building's bounding box.
+  Checks if the building contains the specified tile. If the building contains
+  extents, then the extents are checked. Otherwise, returns whether the x and y
+  map coordinates are within the building's bounding box.
 
 * ``dfhack.buildings.hasSupport(pos,size)``
 
@@ -2315,7 +2495,8 @@ General
 * ``dfhack.buildings.getStockpileContents(stockpile)``
 
   Returns a list of items stored on the given stockpile.
-  Ignores empty bins, barrels, and wheelbarrows assigned as storage and transport for that stockpile.
+  Ignores empty bins, barrels, and wheelbarrows assigned as storage and
+  transport for that stockpile.
 
 * ``dfhack.buildings.getCageOccupants(cage)``
 
@@ -2349,7 +2530,7 @@ Low-level building creation functions:
 * ``dfhack.buildings.constructAbstract(building)``
 
   Links a fully configured object created by ``allocInstance`` into the
-  world. The object must be an abstract building, i.e. a stockpile or civzone.
+  world. The object must be an abstract building, i.e., a stockpile or civzone.
   Returns *true*, or *false* if impossible.
 
 * ``dfhack.buildings.constructWithItems(building, items)``
@@ -2385,7 +2566,7 @@ Low-level building creation functions:
 * ``dfhack.buildings.getRoomDescription(building[, unit])``
 
   If the building is a room, returns a description including quality modifiers,
-  e.g. "Royal Bedroom". Otherwise, returns an empty string.
+  e.g., "Royal Bedroom". Otherwise, returns an empty string.
 
   The unit argument is passed through to DF and may modify the room's value
   depending on the unit given.
@@ -2411,12 +2592,13 @@ Among them are:
   Uses tables defined in ``buildings.lua``.
 
   Argtable members ``material`` (the default name), ``bucket``, ``barrel``,
-  ``chain``, ``mechanism``, ``screw``, ``pipe``, ``anvil``, ``weapon`` are used to
-  augment the basic attributes with more detailed information if the
-  building has input items with the matching name (see the tables for naming details).
-  Note that it is impossible to *override* any properties this way, only supply those that
-  are not mentioned otherwise; one exception is that flags2.non_economic
-  is automatically cleared if an explicit material is specified.
+  ``chain``, ``mechanism``, ``screw``, ``pipe``, ``anvil``, ``weapon`` are used
+  to augment the basic attributes with more detailed information if the
+  building has input items with the matching name (see the tables for naming
+  details). Note that it is impossible to *override* any properties this way,
+  only supply those that are not mentioned otherwise. One exception is that
+  ``flags2.non_economic`` is automatically cleared if an explicit material
+  is specified.
 
 * ``dfhack.buildings.constructBuilding{...}``
 
@@ -2426,7 +2608,7 @@ Among them are:
   .. note::
     Despite the name, unless the building is abstract,
     the function creates it in an 'unconstructed' stage, with
-    a queued in-game job that will actually construct it. I.e.
+    a queued in-game job that will actually construct it. I.e.,
     the function replicates programmatically what can be done
     through the construct building menu in the game ui, except
     that it does less environment constraint checking.
@@ -2499,8 +2681,8 @@ Constructions module
 
 * ``dfhack.constructions.insert(construction)``
 
-  Properly inserts the given construction into the game. Returns false and fails to
-  insert if there was already a construction at the position.
+  Properly inserts the given construction into the game. Returns false and fails
+  to insert if there was already a construction at the position.
 
 Kitchen module
 --------------
@@ -2520,7 +2702,7 @@ Kitchen module
 
   Adds or removes a kitchen exclusion, using the same parameters as
   ``findExclusion``. Both return ``true`` on success and ``false`` on failure,
-  e.g. when adding an exclusion that already exists or removing one that does
+  e.g., when adding an exclusion that already exists or removing one that does
   not.
 
 Screen API
@@ -2569,11 +2751,12 @@ Functions:
 
   Checks if [GRAPHICS:YES] was specified in init.
 
-* ``dfhack.screen.paintTile(pen,x,y[,char,tile,map])``
+* ``dfhack.screen.paintTile(pen,x,y[,char[,tile[,map]]])``
 
-  Paints a tile using given parameters. `See below <lua-screen-pen>` for a description of ``pen``.
+  Paints a tile using given parameters. `See below <lua-screen-pen>` for a
+  description of ``pen``.
 
-  Returns *false* on error, e.g. if coordinates are out of bounds
+  Returns *false* on error, e.g., if coordinates are out of bounds
 
 * ``dfhack.screen.readTile(x,y[,map])``
 
@@ -2589,12 +2772,13 @@ Functions:
 
 * ``dfhack.screen.fillRect(pen,x1,y1,x2,y2[,map])``
 
-  Fills the rectangle specified by the coordinates with the given `pen <lua-screen-pen>`.
-  Returns *true* if painting at least one character succeeded.
+  Fills the rectangle specified by the coordinates with the given
+  `pen <lua-screen-pen>`. Returns *true* if painting at least one
+  character succeeded.
 
 * ``dfhack.screen.findGraphicsTile(pagename,x,y)``
 
-  Finds a tile from a graphics set (i.e. the raws used for creatures),
+  Finds a tile from a graphics set (i.e., the raws used for creatures),
   if in graphics mode and loaded.
 
   Returns: *tile, tile_grayscale*, or *nil* if not found.
@@ -2602,9 +2786,9 @@ Functions:
 
 * ``dfhack.screen.hideGuard(screen,callback[,args...])``
 
-  Removes screen from the viewscreen stack, calls the callback (with optional
-  supplied arguments), and then restores the screen on the top of the viewscreen
-  stack.
+  Removes screen from the viewscreen stack, calls the callback
+  (with optional supplied arguments), and then restores the screen on
+  the top of the viewscreen stack.
 
 * ``dfhack.screen.clear()``
 
@@ -2636,8 +2820,8 @@ Functions:
 Pen API
 ~~~~~~~
 
-The ``pen`` argument used by ``dfhack.screen`` functions may be represented by
-a table with the following possible fields:
+The ``pen`` argument used by ``dfhack.screen`` functions may be represented
+by a table with the following possible fields:
 
   ``ch``
     Provides the ordinary tile character, as either a 1-character string or a number.
@@ -2670,7 +2854,7 @@ a table with the following possible fields:
 
 Alternatively, it may be a pre-parsed native object with the following API:
 
-* ``dfhack.pen.make(base[,pen_or_fg,bg,bold])``
+* ``dfhack.pen.make(base[,pen_or_fg[,bg[,bold]]])``
 
   Creates a new pre-parsed pen by combining its arguments according to the
   following rules:
@@ -2691,7 +2875,7 @@ Alternatively, it may be a pre-parsed native object with the following API:
 
   This function always returns a new pre-parsed pen, or *nil*.
 
-* ``dfhack.pen.parse(base[,pen_or_fg,bg,bold])``
+* ``dfhack.pen.parse(base[,pen_or_fg[,bg[,bold]]])``
 
   Exactly like the above function, but returns ``base`` or ``pen_or_fg``
   directly if they are already a pre-parsed native object.
@@ -2796,7 +2980,8 @@ Supported callbacks and fields are:
   The table also may contain special keys:
 
   ``_STRING``
-    Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code for convenience.
+    Maps to an integer in range 0-255. Duplicates a separate "STRING_A???" code
+    for convenience.
 
   ``_MOUSE_L, _MOUSE_R, _MOUSE_M``
     If the left, right, and/or middle mouse button was just pressed.
@@ -2804,7 +2989,8 @@ Supported callbacks and fields are:
   ``_MOUSE_L_DOWN, _MOUSE_R_DOWN, _MOUSE_M_DOWN``
     If the left, right, and/or middle mouse button is being held down.
 
-  If this method is omitted, the screen is dismissed on reception of the ``LEAVESCREEN`` key.
+  If this method is omitted, the screen is dismissed on reception of the
+  ``LEAVESCREEN`` key.
 
 * ``function screen:onGetSelectedUnit()``
 * ``function screen:onGetSelectedItem()``
@@ -2870,8 +3056,8 @@ raw ``texpos``. When we need to draw a particular tile, we can look up the curre
 ``texpos`` value via the handle.
 Texture module can register textures in two ways: to reserved and dynamic ranges.
 Reserved range is a limit buffer in a game texture vector, that will never be wiped.
-It is good for static assets, which need to be loaded at the very beginning and will be used during the process running.
-In other cases, it is better to use dynamic range.
+It is good for static assets, which need to be loaded at the very beginning and will
+be used during the process running. In other cases, it is better to use dynamic range.
 If reserved range buffer limit has been reached, dynamic range will be used by default.
 
 * ``loadTileset(file, tile_px_w, tile_px_h[, reserved])``
@@ -2936,7 +3122,8 @@ unless otherwise noted.
 
 * ``dfhack.filesystem.getcwd()``
 
-  Returns the current working directory. To retrieve the DF path, use ``dfhack.getDFPath()`` instead.
+  Returns the current working directory. To retrieve the DF path, use
+  ``dfhack.getDFPath()`` instead.
 
 * ``dfhack.filesystem.chdir(path)``
 
@@ -2952,12 +3139,14 @@ unless otherwise noted.
 
 * ``dfhack.filesystem.mkdir(path)``
 
-  Creates a new directory. Returns ``false`` if unsuccessful, including if ``path`` already exists.
+  Creates a new directory. Returns ``false`` if unsuccessful, including if
+  ``path`` already exists.
 
 * ``dfhack.filesystem.mkdir_recursive(path)``
 
-  Creates a new directory, including any intermediate directories that don't exist yet.
-  Returns ``true`` if the folder was created or already existed, or ``false`` if unsuccessful.
+  Creates a new directory, including any intermediate directories that
+  don't exist yet. Returns ``true`` if the folder was created or already
+  existed, or ``false`` if unsuccessful.
 
 * ``dfhack.filesystem.rmdir(path)``
 
@@ -2965,14 +3154,15 @@ unless otherwise noted.
 
 * ``dfhack.filesystem.mtime(path)``
 
-  Returns the modification time (in seconds) of the file or directory specified by ``path``,
-  or -1 if ``path`` does not exist. This depends on the system clock and should only be used locally.
+  Returns the modification time (in seconds) of the file or directory
+  specified by ``path``, or -1 if ``path`` does not exist.
+  This depends on the system clock and should only be used locally.
 
 * ``dfhack.filesystem.atime(path)``
 * ``dfhack.filesystem.ctime(path)``
 
-  Return values vary across operating systems - return the ``st_atime`` and ``st_ctime``
-  fields of a C++ stat struct, respectively.
+  Return values vary across operating systems - return the ``st_atime`` and
+  ``st_ctime`` fields of a C++ stat struct, respectively.
 
 * ``dfhack.filesystem.listdir(path)``
 
@@ -2980,15 +3170,14 @@ unless otherwise noted.
 
 * ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
-  Lists all files/directories in a directory and its subdirectories. All directories
-  are listed before their contents. Returns a table with subtables of the format::
+  Lists all files/directories in a directory and its subdirectories. All
+  directories are listed before their contents. Returns a table with subtables
+  of the format: ``{path: 'path to file', isdir: true|false}``
 
-    {path: 'path to file', isdir: true|false}
-
-  Note that ``listdir()`` returns only the base name of each directory entry, while
-  ``listdir_recursive()`` returns the initial path and all components following it
-  for each entry. Set ``include_prefix`` to false if you don't want the ``path``
-  string prepended to the returned filenames.
+  Note that ``listdir()`` returns only the base name of each directory entry,
+  while ``listdir_recursive()`` returns the initial path and all components
+  following it for each entry. Set ``include_prefix`` to false if you don't
+  want the ``path`` string prepended to the returned filenames.
 
 Console API
 -----------
@@ -3024,7 +3213,8 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.setAddress(name, value)``
 
-  Sets the global address ``name``. Returns the value of ``getAddress`` before the change.
+  Sets the global address ``name``. Returns the value of ``getAddress``
+  before the change.
 
 * ``dfhack.internal.getVTable(name)``
 
@@ -3050,7 +3240,7 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.patchMemory(dest,src,count)``
 
-  Like memmove below, but works even if dest is read-only memory, e.g. code.
+  Like memmove below, but works even if dest is read-only memory, e.g., code.
   If destination overlaps a completely invalid memory region, or another error
   occurs, returns false.
 
@@ -3080,7 +3270,7 @@ and are only documented here for completeness:
   using ``count`` steps of ``step`` bytes.
   Returns: *step_idx, sum_idx, found_ptr*, or *nil* if not found.
 
-* ``dfhack.internal.diffscan(old_data, new_data, start_idx, end_idx, eltsize[, oldval, newval, delta])``
+* ``dfhack.internal.diffscan(old_data, new_data, start_idx, end_idx, eltsize[, oldval[, newval[, delta]]])``
 
   Searches for differences between buffers at ptr1 and ptr2, as integers of size eltsize.
   The oldval, newval or delta arguments may be used to specify additional constraints.
@@ -3104,10 +3294,10 @@ and are only documented here for completeness:
 
   Registers ``path`` as a `script path <script-paths>`.
   If ``search_before`` is passed and ``true``, the path will be searched before
-  the default paths (e.g. ``dfhack-config/scripts``, ``hack/scripts``); otherwise,
+  the default paths (e.g., ``dfhack-config/scripts``, ``hack/scripts``); otherwise,
   it will be searched after.
 
-  Returns ``true`` if successful or ``false`` otherwise (e.g. if the path does
+  Returns ``true`` if successful or ``false`` otherwise (e.g., if the path does
   not exist or has already been registered).
 
 * ``dfhack.internal.removeScriptPath(path)``
@@ -3141,7 +3331,7 @@ and are only documented here for completeness:
   Returns a table with a ``status`` key set to a ``command_result`` constant
   (``status = CR_OK`` indicates success). Additionally, if ``use_console`` is
   not true, enumerated table entries of the form ``{color, text}`` are included,
-  e.g. ``result[1][0]`` is the color of the first piece of text printed (a
+  e.g., ``result[1][0]`` is the color of the first piece of text printed (a
   ``COLOR_`` constant). These entries can be iterated over with ``ipairs()``.
 
 * ``dfhack.internal.md5(string)``
@@ -3170,15 +3360,14 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.getHeapState()``
 
-  Returns the state of the heap. 0 == ok or empty, 1 == heap bad ptr, 2 == heap bad begin, 3 == heap bad node.
-  Does not require a heap snapshot. This may be unsafe to use directly from lua if the heap is corrupt.
-  Windows only.
+  Returns the state of the heap. 0 == ok or empty, 1 == heap bad ptr, 2 == heap bad begin,
+  3 == heap bad node. Does not require a heap snapshot. This may be unsafe to use directly
+  from lua if the heap is corrupt. Windows only.
 
 * ``dfhack.internal.heapTakeSnapshot()``
 
-  Clears any existing heap snapshot, and takes an internal heap snapshot for later consumption.
-  Windows only.
-  Returns the same values as getHeapState()
+  Clears any existing heap snapshot, and takes an internal heap snapshot for later
+  consumption. Windows only. Returns the same values as getHeapState()
 
 * ``dfhack.internal.isAddressInHeap(address)``
 
@@ -3187,27 +3376,27 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.isAddressActiveInHeap(address)``
 
-  Checks if an address is a member of the heap, and actively in use (ie valid).
+  Checks if an address is a member of the heap, and actively in use (i.e., valid).
   Requires a heap snapshot.
 
 * ``dfhack.internal.isAddressUsedAfterFreeInHeap(address)``
 
-  Checks if an address is a member of the heap, but is not currently allocated (ie use after free).
-  Requires a heap snapshot.
-  Note that Windows eagerly removes freed pointers from the heap, so this is unlikely to trigger.
+  Checks if an address is a member of the heap, but is not currently allocated
+  (i.e., use after free). Requires a heap snapshot.
+  Note that Windows eagerly removes freed pointers from the heap,
+  so this is unlikely to trigger.
 
 * ``dfhack.internal.getAddressSizeInHeap(address)``
 
-  Gets the allocated size of a member of the heap. Useful for detecting misaligns, as this does not return block size.
-  Requires a heap snapshot.
+  Gets the allocated size of a member of the heap. Useful for detecting misaligns,
+  as this does not return block size. Requires a heap snapshot.
 
 * ``dfhack.internal.getRootAddressOfHeapObject(address)``
 
-  Gets the base heap allocation address of a address that lies internally within a piece of allocated memory.
-  Eg, if you have a heap allocated struct and call this function on the address of the second member,
-  it will return the address of the struct.
-  Returns 0 if the address is not found.
-  Requires a heap snapshot.
+  Gets the base heap allocation address of a address that lies internally within
+  a piece of allocated memory. E.g., if you have a heap allocated struct and call
+  this function on the address of the second member, it will return the address
+  of the struct. Returns 0 if the address is not found. Requires a heap snapshot.
 
 * ``dfhack.internal.getClipboardTextCp437()``
 
@@ -3244,11 +3433,11 @@ and are only documented here for completeness:
 * ``dfhack.internal.setPreferredNumberFormat(value)``
 * ``dfhack.internal.getPreferredNumberFormat()``
 
-  Sets (gets) the preferred numeric format. ``0`` means no formatting (e.g.
-  ``1234567``), ``1`` means English formatting (e.g. ``1,234,567``), ``2``
-  means system locale formatting (e.g. ``12.345`` on German systems,
+  Sets (gets) the preferred numeric format. ``0`` means no formatting (e.g.,
+  ``1234567``), ``1`` means English formatting (e.g., ``1,234,567``), ``2``
+  means system locale formatting (e.g., ``12.345`` on German systems,
   ``12,34,567`` on Indian systems, etc.), ``3`` means SI suffix formatting
-  (e.g. ``12.3M``), and ``4`` means scientific notation (e.g. ``1.23457e+06``).
+  (e.g., ``12.3M``), and ``4`` means scientific notation (e.g., ``1.23457e+06``).
 
 For the internal preference values, be aware that setting the values via these
 functions will not persist the choice across program invocations. You must set
@@ -3356,7 +3545,8 @@ The following module management functions are provided:
     ...
     return _ENV
 
-  If called the second time, returns the same table; thus providing reload support.
+  If called the second time, returns the same table,
+  thus providing reload support.
 
 * ``reload(name)``
 
@@ -3491,13 +3681,13 @@ functions. These are invoked just like standard string functions, e.g.::
   Split a string by the given delimiter. If no delimiter is specified, space
   (``' '``) is used. The delimiter is treated as a pattern unless a ``plain`` is
   specified and set to ``true``. To treat multiple successive delimiter
-  characters as a single delimiter, e.g. to avoid getting empty string elements,
+  characters as a single delimiter, e.g., to avoid getting empty string elements,
   pass a pattern like ``' +'``. Be aware that passing patterns that match empty
   strings (like ``' *'``) will result in improper string splits.
 
 * ``string:trim()``
 
-  Removes spaces (i.e. everything that matches ``'%s'``) from the start and end
+  Removes spaces (i.e., everything that matches ``'%s'``) from the start and end
   of a string. Spaces between non-space characters are left untouched.
 
 * ``string:wrap([width[, opts]])``
@@ -3506,7 +3696,7 @@ functions. These are invoked just like standard string functions, e.g.::
   Lines are split at space-separated word boundaries. Any existing newlines are
   kept in place. If a single word is longer than width, it is split over
   multiple lines. If ``width`` is not specified, 72 is used. The ``opts``
-  parameter can be a table with the following boolean fields specified::
+  parameter can be a table with the following boolean fields specified:
 
     :return_as_table: if ``true``, then the function will return a table of
         strings, with each string representing one wrapped line. Otherwise, a
@@ -3514,10 +3704,13 @@ functions. These are invoked just like standard string functions, e.g.::
     :keep_trailing_spaces: if ``true``, then spaces at the end of a wrapped
         line will be kept. Normally, spaces at the end of a wrapped line are
         elided.
+    :keep_original_newlines: if ``true`` (and ``return_as_table`` is also
+        ``true``), then if a newline was encountered in the original string, it
+        will be included in the relevant table entry.
 
 * ``string:escape_pattern()``
 
-  Escapes regex special chars in a string. E.g. ``'a+b'`` -> ``'a%+b'``.
+  Escapes regex special chars in a string. E.g., ``'a+b'`` -> ``'a%+b'``.
 
 .. _script-manager:
 
@@ -3700,17 +3893,19 @@ utils
 
 * ``utils.erase_sorted_key(vector,key,field,cmpfun)``
 
-  Removes the item with the given key from the list. Returns: *did_erase, vector[idx], idx*.
+  Removes the item with the given key from the list.
+  Returns: *did_erase, vector[idx], idx*.
 
 * ``utils.erase_sorted(vector,item,field,cmpfun)``
 
-  Exactly like ``erase_sorted_key``, but if field is specified, takes the key from ``item[field]``.
+  Exactly like ``erase_sorted_key``, but if field is specified,
+  takes the key from ``item[field]``.
 
 * ``utils.search_text(text,search_tokens)``
 
   Returns true if all the search tokens are found within ``text``. The text and
-  search tokens are normalized to lower case and special characters (e.g. ``A``
-  with a circle on it) are converted to their "basic" forms (e.g. ``a``).
+  search tokens are normalized to lower case and special characters (e.g., ``A``
+  with a circle on it) are converted to their "basic" forms (e.g., ``a``).
   ``search_tokens`` can be a string or a table of strings. If it is a string,
   it is split into space-separated tokens before matching. The search tokens
   are treated literally, so any special regular expression characters do not
@@ -3804,13 +3999,13 @@ parameters.
   popular ``getopt`` library. You would use this instead of the simpler
   ``processArgs`` function if any of the following are true:
 
-  * You want both short (e.g. ``-f``) and aliased long-form (e.g.
+  * You want both short (e.g., ``-f``) and aliased long-form (e.g.,
     ``--filename``) options
-  * You have commandline components that are not arguments to options (e.g. you
+  * You have commandline components that are not arguments to options (e.g., you
     want to run your script like ``yourscript command --verbose arg1 arg2 arg3``
     instead of
     ``yourscript command --verbose --opt1 arg1 --opt2 arg2 --opt3 arg3)``.
-  * You want the convenience of combining options into shorter strings (e.g.
+  * You want the convenience of combining options into shorter strings (e.g.,
     ``'-abcarg'`` instead of ``'-a -b -c arg``)
   * You want to be able to parse and validate the option arguments as the
     commandline is being processed, as opposed to validating everything after
@@ -3822,20 +4017,20 @@ parameters.
   make them very easy to type quickly by users who are familiar with your script
   options. Long options, on the other hand, are easily understandable by
   everyone and are useful in places where clarity is more important than
-  brevity, e.g. in example commands. Each option can be configured to take an
+  brevity, e.g., in example commands. Each option can be configured to take an
   argument, which will be the string token that follows the option name on the
   commandline.
 
   Short options are a single letter long and are specified on a commandline by
-  prefixing them with a single dash (e.g. the short option ``a`` would appear
+  prefixing them with a single dash (e.g., the short option ``a`` would appear
   on the commandline as ``-a``). Multiple successive short options that do not
-  take arguments can be combined into a single option string (e.g. ``'-abc'``
+  take arguments can be combined into a single option string (e.g., ``'-abc'``
   instead of ``'-a -b -c'``). Moreover, the argument for a short option can be
   appended directly to the single-letter option without an intervening space
-  (e.g. ``-d param`` can be written as ``-dparam``). These two convenience
+  (e.g., ``-d param`` can be written as ``-dparam``). These two convenience
   shorthand forms can be combined, allowing groups of short parameters to be
   written together, as long as at most the last short option takes an argument
-  (e.g. combining the previous two examples into ``-abcdparam``)
+  (e.g., combining the previous two examples into ``-abcdparam``)
 
   Long options focus on clarity. They are usually entire words, or several words
   combined with hyphens (``-``) or underscores (``_``). If they take an
@@ -3854,7 +4049,7 @@ parameters.
       optionActions: list of option specifications
 
   and returns a list of positional parameters -- that is, all strings that are
-  neither options nor argruments to options. Options and positional parameters
+  neither options nor arguments to options. Options and positional parameters
   can appear in any order on the commandline, as long as arguments to options
   immediately follow the option itself.
 
@@ -3863,7 +4058,7 @@ parameters.
 
   * ``shortOptionName`` is a one-character string (or ``''`` or ``nil`` if the
     parameter only has a long form). Numbers cannot be short options, and
-    negative numbers (e.g. ``'-10'``) will be interpreted as positional
+    negative numbers (e.g., ``'-10'``) will be interpreted as positional
     parameters and returned in the positional parameters list.
   * ``longOptionAlias`` is an optional longer form of the short option name. If
     no short option name is specified, then this element is required.
@@ -4029,7 +4224,7 @@ Each entry has several properties associated with it:
 
   Returns a list of names for entries that match the given filters. The list is
   alphabetized by their last path component, with populated path components
-  coming before null path components (e.g. ``autobutcher`` will immediately
+  coming before null path components (e.g., ``autobutcher`` will immediately
   follow ``gui/autobutcher``).
   The optional ``include`` and ``exclude`` filter params are maps (or lists of
   maps) with the following elements:
@@ -4041,7 +4236,7 @@ Each entry has several properties associated with it:
   :entry_type: if a string, matches entries of the given type. if a table of
           strings, includes entries that match any of the given types.
 
-  Elements in a map are ANDed together (e.g. if both ``str`` and ``tag`` are
+  Elements in a map are ANDed together (e.g., if both ``str`` and ``tag`` are
   specified, the match is on any of the ``str`` elements AND any of the ``tag``
   elements).
 
@@ -4129,13 +4324,14 @@ Implements a trivial single-inheritance class system.
 
 * ``Class.ATTRS { foo = xxx, bar = yyy }``
 
-  Declares certain instance fields to be attributes, i.e. auto-initialized
+  Declares certain instance fields to be attributes, i.e., auto-initialized
   from fields in the table used as the constructor argument. If omitted,
   they are initialized with the default values specified in this declaration.
 
   If the default value should be *nil*, use ``ATTRS { foo = DEFAULT_NIL }``.
 
-  Declaring an attribute is mostly the same as defining your ``init`` method like this::
+  Declaring an attribute is mostly the same as defining your ``init`` method
+  like this::
 
     function Class.init(args)
         self.attr1 = args.attr1 or default1
@@ -4199,7 +4395,7 @@ Predefined instance methods:
 * ``instance:invoke_after(method_name, args...)``
 
   Like invoke_before, only the method is called after the recursive call to super,
-  i.e. invocations happen in the parent to child order.
+  i.e., invocations happen in the parent to child order.
 
   These two methods are inspired by the Common Lisp before and after methods, and
   are intended for implementing similar protocols for certain things. The class
@@ -4216,42 +4412,45 @@ A module for reading custom tokens added to the raws by mods.
 
 * ``customRawTokens.getToken(typeDefinition, token)``
 
-  Where ``typeDefinition`` is a type definition struct as seen in ``df.global.world.raws``
-  (e.g.: ``dfhack.gui.getSelectedItem().subtype``) and ``token`` is the name of the custom token
-  you want read. The arguments from the token will then be returned as strings using single or
-  multiple return values. If the token is not present, the result is false; if it is present
-  but has no arguments, the result is true. For ``creature_raw``, it checks against no caste.
-  For ``plant_raw``, it checks against no growth.
+  Where ``typeDefinition`` is a type definition struct as seen in
+  ``df.global.world.raws`` (e.g.: ``dfhack.gui.getSelectedItem().subtype``)
+  and ``token`` is the name of the custom token you want read. The arguments
+  from the token will then be returned as strings using single or multiple
+  return values. If the token is not present, the result is false; if it is present
+  but has no arguments, the result is true. For ``creature_raw``, it checks against
+  no caste. For ``plant_raw``, it checks against no growth.
 
 * ``customRawTokens.getToken(typeInstance, token)``
 
-  Where ``typeInstance`` is a unit, entity, item, job, projectile, building, plant, or interaction
-  instance. Gets ``typeDefinition`` and then returns the same as ``getToken(typeDefinition, token)``.
-  For units, it gets the token from the race or caste instead if applicable. For plant growth items,
-  it gets the token from the plant or plant growth instead if applicable. For plants it does the same
-  but with growth number -1.
+  Where ``typeInstance`` is a unit, entity, item, job, projectile, building,
+  plant, or interaction instance. Gets ``typeDefinition`` and then returns the same
+  as ``getToken(typeDefinition, token)``. For units, it gets the token from the race
+  or caste instead if applicable. For plant growth items, it gets the token from the
+  plant or plant growth instead if applicable. For plants it does the same but with
+  growth number -1.
 
 * ``customRawTokens.getToken(raceDefinition, casteNumber, token)``
 
-  The same as ``getToken(unit, token)`` but with a specified race and caste. Caste number -1 is no caste.
+  The same as ``getToken(unit, token)`` but with a specified race and caste.
+  Caste number -1 is no caste.
 
 * ``customRawTokens.getToken(raceDefinition, casteName, token)``
 
-  The same as ``getToken(unit, token)`` but with a specified race and caste, using caste name (e.g. "FEMALE")
-  instead of number.
+  The same as ``getToken(unit, token)`` but with a specified race and caste, using
+  caste name (e.g., "FEMALE") instead of number.
 
 * ``customRawTokens.getToken(plantDefinition, growthNumber, token)``
 
-  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth. Growth number -1
-  is no growth.
+  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and
+  growth. Growth number -1 is no growth.
 
 * ``customRawTokens.getToken(plantDefinition, growthName, token)``
 
-  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and growth, using growth name
-  (e.g. "LEAVES") instead of number.
+  The same as ``getToken(plantGrowthItem, token)`` but with a specified plant and
+  growth, using growth name (e.g., "LEAVES") instead of number.
 
-It is recommended to prefix custom raw tokens with the name of your mod to avoid duplicate behaviour where
-two mods make callbacks that work on the same tag.
+It is recommended to prefix custom raw tokens with the name of your mod to avoid
+duplicate behaviour where two mods make callbacks that work on the same tag.
 
 Examples:
 
@@ -4337,7 +4536,10 @@ Misc
   Every argument after the initial screen may be *nil*, a numeric keycode,
   a string keycode, a sequence of numeric or string keycodes, or a mapping
   of keycodes to *true* or *false*. For instance, it is possible to use the
-  table passed as argument to ``onInput``.
+  table passed as argument to ``onInput``. The ``_STRING`` convenience field of
+  an ``onInput`` keys table will be ignored; the presence (or absence) of a
+  ``STRING_A???`` keycode will determine the text content of the simulated
+  input.
 
   You can send mouse clicks as well by setting the ``_MOUSE_L`` key or other
   mouse-related pseudo-keys documented with the ``screen:onInput(keys)``
@@ -4379,7 +4581,8 @@ Misc
 
 * ``getKeyDisplay(keycode)``
 
-  Wraps ``dfhack.screen.getKeyDisplay`` in order to allow using strings for the keycode argument.
+  Wraps ``dfhack.screen.getKeyDisplay`` in order to allow using strings for
+  the keycode argument.
 
 
 * ``invert_color(color, bold)``
@@ -4407,7 +4610,7 @@ clip area rectangle. It is the base of the ``Painter`` class, and is used by
 
 * ``rect:isDefunct()``
 
-  Returns *true* if the clip area is empty, i.e. no painting is possible.
+  Returns *true* if the clip area is empty, i.e., no painting is possible.
 
 * ``rect:inClipGlobalXY(x,y)``
 
@@ -4415,7 +4618,8 @@ clip area rectangle. It is the base of the ``Painter`` class, and is used by
 
 * ``rect:inClipLocalXY(x,y)``
 
-  Checks if these coordinates (specified relative to ``x1,y1``) are within the clip rectangle.
+  Checks if these coordinates (specified relative to ``x1,y1``) are within the
+  clip rectangle.
 
 * ``rect:localXY(x,y)``
 
@@ -4490,7 +4694,8 @@ for details).
 
 * ``painter:newline([dx])``
 
-  Advances the cursor to the start of the next line plus the given x offset, and returns *self*.
+  Advances the cursor to the start of the next line plus the given x offset,
+  and returns *self*.
 
 * ``painter:pen(...)``
 
@@ -4502,7 +4707,8 @@ for details).
 
 * ``painter:key_pen(...)``
 
-  Sets the current keybinding pen to ``dfhack.pen.parse(old_pen,...)``, and returns *self*.
+  Sets the current keybinding pen to ``dfhack.pen.parse(old_pen,...)``,
+  and returns *self*.
 
 * ``painter:map(to_map)``
 
@@ -4518,17 +4724,19 @@ for details).
 
 * ``painter:fill(x1,y1,x2,y2[,...])`` or ``painter:fill(rect[,...])``
 
-  Fills the specified local coordinate rectangle with ``dfhack.pen.parse(cur_pen,...)``,
-  and returns *self*.
+  Fills the specified local coordinate rectangle with
+  ``dfhack.pen.parse(cur_pen,...)``, and returns *self*.
 
 * ``painter:char([char[, ...]])``
 
-  Paints one character using ``char`` and ``dfhack.pen.parse(cur_pen,...)``; returns *self*.
-  The ``char`` argument, if not nil, is used to override the ``ch`` property of the pen.
+  Paints one character using ``char`` and ``dfhack.pen.parse(cur_pen,...)``.
+  Returns *self*. The ``char`` argument, if not nil, is used to override the
+  ``ch`` property of the pen.
 
 * ``painter:tile([char, tile[, ...]])``
 
-  Like ``char()`` above, but also allows overriding the ``tile`` property on ad-hoc basis.
+  Like ``char()`` above, but also allows overriding the ``tile`` property on
+  ad-hoc basis.
 
 * ``painter:string(text[, ...])``
 
@@ -4536,7 +4744,8 @@ for details).
 
 * ``painter:key(keycode[, ...])``
 
-  Paints the description of the keycode using ``dfhack.pen.parse(cur_key_pen,...)``; returns *self*.
+  Paints the description of the keycode using ``dfhack.pen.parse(cur_key_pen,...)``.
+  Returns *self*.
 
 * ``painter:key_string(keycode, text, ...)``
 
@@ -4544,7 +4753,8 @@ for details).
   the specified keycode description and text, separated by ``:``. Any extra
   arguments are passed directly to ``string()``. Returns *self*.
 
-Unless specified otherwise above, all Painter methods return *self*, in order to allow chaining them like this::
+Unless specified otherwise above, all Painter methods return *self*, in order to
+allow chaining them like this::
 
   painter:pen(foo):seek(x,y):char(1):advance(1):string('bar')...
 
@@ -4730,7 +4940,8 @@ It adds the following methods:
 
 * ``screen:renderParent()``
 
-  Asks the parent native screen to render itself, or clears the screen if impossible.
+  Asks the parent native screen to render itself, or clears the screen
+  if impossible.
 
 * ``screen:sendInputToParent(...)``
 
@@ -4742,10 +4953,10 @@ It adds the following methods:
   if parent is not specified, places this one one topmost. Before calling
   ``dfhack.screen.show``, calls ``self:onAboutToShow(parent)``. Note that
   ``onAboutToShow()`` can dismiss active screens, and therefore change the
-  potential parent. If parent is not specified, this function will re-detect the
-  current topmost window after ``self:onAboutToShow(parent)`` returns. This
-  function returns ``self`` as a convenience so you can write such code as
-  ``local view = MyScreen{params=val}:show()``.
+  potential parent. If parent is not specified, this function will re-detect
+  the current topmost window after ``self:onAboutToShow(parent)`` returns.
+  This function returns ``self`` as a convenience so you can write such code
+  as ``local view = MyScreen{params=val}:show()``.
 
 * ``screen:onAboutToShow(parent)`` *(for overriding)*
 
@@ -4822,8 +5033,8 @@ ZScreen provides the following functions:
 * ``zscreen:raise()``
 
   Raises the ZScreen to the top of the viewscreen stack, gives it keyboard
-  focus, and returns a reference to ``self``. A common pattern is to check if a
-  tool dialog is already active when the tool command is run and raise the
+  focus, and returns a reference to ``self``. A common pattern is to check if
+  a tool dialog is already active when the tool command is run and raise the
   existing dialog if it exists or show a new dialog if it doesn't. See the
   sample code below for an example.
 
@@ -4847,6 +5058,10 @@ ZScreen subclasses can set the following attributes:
   Whether the ZScreen loses keyboard focus when the player clicks on an area
   of the screen other than the tool window. If the player clicks on a different
   ZScreen window, focus still transfers to that other ZScreen.
+
+* ``defocused`` (default: ``false``)
+
+  Whether the ZScreen starts in a defocused state.
 
 * ``initial_pause`` (default: ``DEFAULT_INITIAL_PAUSE or not pass_mouse_clicks``)
 
@@ -5016,15 +5231,16 @@ Has attributes:
   If ``draggable`` is set to ``true``, then the above attributes come into play
   when the panel is dragged around the screen, either with the mouse or the
   keyboard. ``drag_anchors`` sets which parts of the panel can be clicked on
-  with the left mouse button to start dragging. The frame is a drag anchor by default only if ``resizable`` (below) is ``false``. ``drag_bound`` configures
+  with the left mouse button to start dragging. The frame is a drag anchor by
+  default only if ``resizable`` (below) is ``false``. ``drag_bound`` configures
   whether the frame of the panel (if any) can be dragged outside the containing
   parent's boundary. The body will never be draggable outside of the parent,
   but you can allow the frame to cross the boundary by setting ``drag_bound`` to
   ``'body'``. The boolean passed to the ``on_drag_end`` callback will be
-  ``true`` if the drag was "successful" (i.e. not canceled) and ``false``
+  ``true`` if the drag was "successful" (i.e., not canceled) and ``false``
   otherwise. Dragging can be canceled by right clicking while dragging with the
   mouse, hitting :kbd:`Esc` (while dragging with the mouse or keyboard), or by
-  calling ``Panel:setKeyboaredDragEnabled(false)`` (while dragging with the
+  calling ``Panel:setKeyboardDragEnabled(false)`` (while dragging with the
   keyboard). If it is more convenient to do so, you can choose to override the
   ``panel:onDragBegin`` and/or the ``panel:onDragEnd`` methods instead of
   setting the ``on_drag_begin`` and/or ``on_drag_end`` attributes.
@@ -5043,7 +5259,7 @@ Has attributes:
   resizing. The panel is also prevented from resizing beyond the boundaries of
   its parent. When the player clicks on a valid anchor, ``on_resize_begin()`` is
   called. The boolean passed to the ``on_resize_end`` callback will be ``true``
-  if the drag was "successful" (i.e. not canceled) and ``false`` otherwise.
+  if the drag was "successful" (i.e., not canceled) and ``false`` otherwise.
   Dragging can be canceled by right clicking while resizing with the mouse,
   hitting :kbd:`Esc` (while resizing with the mouse or keyboard), or by calling
   ``Panel:setKeyboardResizeEnabled(false)`` (while resizing with the keyboard).
@@ -5063,8 +5279,8 @@ Has attributes:
 
 * ``frame_style``, ``frame_title`` (default: ``nil``)
 
-  If defined, a frame will be drawn around the panel and subviews will be inset
-  by 1. The following predefined frame styles are defined:
+  If defined, a frame will be drawn around the panel and subviews will be
+  inset by 1. The following predefined frame styles are defined:
 
   * ``FRAME_WINDOW``
 
@@ -5100,7 +5316,7 @@ Has attributes:
     external frame for a DFHack-owned UI.
 
   When using the predefined frame styles in the ``gui`` module, remember to
-  ``require`` the gui module and prefix the identifier with ``gui.``, e.g.
+  ``require`` the gui module and prefix the identifier with ``gui.``, e.g.,
   ``gui.FRAME_THIN``.
 
 * ``no_force_pause_badge`` (default: ``false``)
@@ -5114,7 +5330,7 @@ Has functions:
 
   If called with ``true`` and the panel is not already in keyboard drag mode,
   then any current drag or resize operations are halted where they are (not
-  canceled), the panel siezes input focus (see `View class`_ above for
+  canceled), the panel seizes input focus (see `View class`_ above for
   information on the DFHack focus subsystem), and further keyboard cursor keys
   move the window as if it were being dragged. Shift-cursor keys move by larger
   amounts. Hit :kbd:`Enter` to commit the new window position or :kbd:`Esc` to
@@ -5125,7 +5341,7 @@ Has functions:
 
   If called with ``true`` and the panel is not already in keyboard resize mode,
   then any current drag or resize operations are halted where they are (not
-  canceled), the panel siezes input focus (see `View class`_ above for
+  canceled), the panel seizes input focus (see `View class`_ above for
   information on the DFHack focus subsystem), and further keyboard cursor keys
   resize the window as if it were being dragged from the lower right corner. If
   neither the bottom or right edge is a valid anchor, an appropriate corner will
@@ -5150,11 +5366,9 @@ If the panel has already been maximized in this fashion, then it will jump to
 its minimum size. Both jumps respect the resizable edges defined by the
 ``resize_anchors`` attribute.
 
-The time duration that a double click can span is defined by the global variable
-``DOUBLE_CLICK_MS``. The default value is ``500`` and can be changed by the end
-user with a command like::
-
-  :lua require('gui.widgets').DOUBLE_CLICK_MS=1000
+The time duration that a double click can span can be controlled via the
+`control-panel` or `gui/control-panel` interfaces (``Mouse double click speed``
+option). It defaults to 500 ms.
 
 Window class
 ------------
@@ -5221,7 +5435,7 @@ Attributes:
 
 * ``interior``
 
-    Whether the edge T-junction tiles should connect to interior lines (e.g. the
+    Whether the edge T-junction tiles should connect to interior lines (e.g., the
     vertical or horizontal segment of another ``Divider`` instance) or the
     exterior border of a ``Panel`` frame. Defaults to ``false``, meaning
     exterior T-junctions will be chosen.
@@ -5286,9 +5500,9 @@ The ``EditField`` cursor can be moved to where you want to insert/remove text.
 You can click where you want the cursor to move or you can use any of the
 following keyboard hotkeys:
 
-- Left/Right arrow: move the cursor one character to the left or right.
-- Ctrl-B/Ctrl-F: move the cursor one word back or forward.
-- Ctrl-A/Ctrl-E: move the cursor to the beginning/end of the text.
+- Left/Right arrow: move the cursor one character to the left or right
+- Ctrl-Left/Ctrl-Right: move the cursor one word back or forward
+- Home/End: move the cursor to the beginning/end of the text
 
 The widget also supports integration with the system clipboard:
 
@@ -5313,6 +5527,155 @@ The ``EditField`` class also provides the following functions:
 
   Inserts the given text at the current cursor position.
 
+TextArea class
+--------------
+
+Subclass of Panel; implements a multi-line text field with features such as
+text wrapping, mouse control, text selection, clipboard support, history,
+and typical text editor shortcuts.
+
+Cursor Behavior
+~~~~~~~~~~~~~~~
+
+The cursor in the ``TextArea`` class is index-based, starting from 1,
+consistent with Lua's text indexing conventions.
+
+Each character, including newlines (``string.char(10)``),
+occupies a single index in the text content.
+
+Cursor movement and position are fully aware of line breaks,
+meaning they count as one unit in the offset.
+
+The cursor always points to the position between characters,
+with 1 being the position before the first character and
+``#text + 1`` representing the position after the last character.
+
+Cursor positions are preserved during text operations like insertion,
+deletion, or replacement. If changes affect the cursor's position,
+it will be adjusted to the nearest valid index.
+
+TextArea Attributes:
+
+* ``init_text``: The initial text content for the text area.
+
+* ``init_cursor``: The initial cursor position within the text content.
+  If not specified, defaults to end of the text (length of ``init_text`` + 1).
+
+* ``text_pen``: Optional pen used to draw the text. Default is ``COLOR_LIGHTCYAN``.
+
+* ``select_pen``: Optional pen used for text selection. Default is ``COLOR_CYAN``.
+
+* ``ignore_keys``: List of input keys to ignore.
+  Functions similarly to the ``ignore_keys`` attribute in the ``EditField`` class.
+
+* ``on_text_change``: Callback function called whenever the text changes.
+  The function signature should be ``on_text_change(new_text, old_text)``.
+
+* ``on_cursor_change``: Callback function called whenever the cursor position changes.
+  Expected function signature is ``on_cursor_change(new_cursor, old_cursor)``.
+
+* ``one_line_mode``: If set to ``true``, disables multi-line text features.
+  In this mode the :kbd:`Enter` key is not handled by the widget
+  as if it were included in ``ignore_keys``.
+  If multiline text (including ``\n`` chars) is pasted into the widget, newlines are removed.
+
+TextArea Functions:
+
+* ``textarea:getText()``
+
+    Returns the current text content of the ``TextArea`` widget as a string.
+    "\n" characters (``string.char(10)``) should be interpreted as new lines
+
+* ``textarea:setText(text)``
+
+    Sets the content of the ``TextArea`` to the specified string ``text``.
+    The cursor position will not be adjusted, so should be set separately.
+
+* ``textarea:getCursor()``
+
+    Returns the current cursor position within the text content.
+    The position is represented as a single integer, starting from 1.
+
+* ``textarea:setCursor(cursor)``
+
+    Sets the cursor position within the text content.
+
+* ``textarea:scrollToCursor()``
+
+    Scrolls the text area view to ensure that the current cursor position is visible.
+    This happens automatically when the user interactively moves the cursor or
+    pastes text into the widget, but may need to be called when ``setCursor`` is
+    called programmatically.
+
+* ``textarea:clearHistory()``
+
+    Clears undo/redo history of the widget.
+
+Functionality
+~~~~~~~~~~~~~
+
+The TextArea widget provides a familiar and intuitive text editing experience with baseline features such as:
+
+- Text Wrapping: Automatically fits text within the display area.
+- Mouse and Keyboard Support: Standard keys like :kbd:`Home`, :kbd:`End`, :kbd:`Backspace`, and :kbd:`Delete` are supported,
+  along with gestures like double-click to select a word or triple-click to select a line.
+- Clipboard Operations: copy, cut, and paste,
+  with intuitive defaults when no text is selected.
+- Undo/Redo: :kbd:`Ctrl` + :kbd:`Z` and :kbd:`Ctrl` + :kbd:`Y` for quick changes.
+- Additional features include advanced navigation, line management,
+  and smooth scrolling for handling long text efficiently.
+
+Detailed list:
+
+- Cursor Control: Navigate through text using arrow keys (Left, Right, Up,
+  and Down) for precise cursor placement.
+- Mouse Control: Use the mouse to position the cursor within the text,
+  providing an alternative to keyboard navigation.
+- Text Selection: Select text with the mouse, with support for replacing or
+  removing selected text.
+- Select Word/Line: Use double click to select current word, or triple click to
+  select current line.
+- Move By Word: Use :kbd:`Ctrl` + :kbd:`Left` and :kbd:`Ctrl` + :kbd:`Right` to
+  move the cursor one word back or forward.
+- Line Navigation: :kbd:`Home` moves the cursor to the beginning of the current
+  line, and :kbd:`End` moves it to the end.
+- Jump to Beginning/End: Quickly move the cursor to the beginning or end of the
+  text using :kbd:`Ctrl` + :kbd:`Home` and :kbd:`Ctrl` + :kbd:`End`.
+- Longest X Position Memory: The cursor remembers the longest x position when
+  moving up or down, making vertical navigation more intuitive.
+- New Lines: Easily insert new lines using the :kbd:`Enter` key, supporting
+  multiline text input.
+- Text Wrapping: Text automatically wraps within the editor, ensuring lines fit
+  within the display without manual adjustments.
+- Scrolling for long text entries.
+- Backspace Support: Use the backspace key to delete characters to the left of
+  the cursor.
+- Delete Character: :kbd:`Delete` deletes the character under the cursor.
+- Delete Current Line: :kbd:`Ctrl` + :kbd:`U` deletes the entire current line
+  where the cursor is located.
+- Delete Rest of Line: :kbd:`Ctrl` + :kbd:`K` deletes text from the cursor to
+  the end of the line.
+- Delete Last Word: :kbd:`Ctrl` + :kbd:`W` removes the word immediately before
+  the cursor.
+- Select All: Select entire text by :kbd:`Ctrl` + :kbd:`A`.
+- Undo/Redo: Undo/Redo changes by :kbd:`Ctrl` + :kbd:`Z` / :kbd:`Ctrl` +
+  :kbd:`Y`.
+- Clipboard Operations: Perform OS clipboard cut, copy, and paste operations on
+  selected text, allowing you to paste the copied content into other
+  applications.
+- Copy Text: Use :kbd:`Ctrl` + :kbd:`C` to copy selected text.
+  - copy selected text, if available
+  - if no text is selected it copy the entire current line, including the
+  terminating newline if present
+- Cut Text: Use :kbd:`Ctrl` + :kbd:`X` to cut selected text.
+  - cut selected text, if available
+  - if no text is selected it will cut the entire current line, including the
+  terminating newline if present
+- Paste Text: Use :kbd:`Ctrl` + :kbd:`V` to paste text from the clipboard into
+  the editor.
+  - replace selected text, if available
+  - If no text is selected, paste text in the cursor position
+
 Scrollbar class
 ---------------
 
@@ -5323,11 +5686,11 @@ used in vanilla DF.
 
 Scrollbars have the following attributes:
 
-:on_scroll: A callback called when the scrollbar is scrolled. If the scrollbar is clicked,
-  the callback will be called with one of the following string parameters: "up_large",
-  "down_large", "up_small", or "down_small". If the scrollbar is dragged, the callback will
-  be called with the value that ``top_elem`` should be set to on the next call to
-  ``update()`` (see below).
+:on_scroll: A callback called when the scrollbar is scrolled. If the scrollbar
+  is clicked, the callback will be called with one of the following string parameters:
+  "up_large", "down_large", "up_small", or "down_small". If the scrollbar is dragged,
+  the callback will be called with the value that ``top_elem`` should be set to on
+  the next call to ``update()`` (see below).
 
 The Scrollbar widget implements the following methods:
 
@@ -5337,7 +5700,7 @@ The Scrollbar widget implements the following methods:
   The ``top_elem`` param is the (one-based) index of the first visible element.
   The ``elems_per_page`` param is the maximum number of elements that can be
   shown at one time. The ``num_elems`` param is the total number of elements
-  that the paried widget can scroll through. If ``elems_per_page`` or
+  that the paired widget can scroll through. If ``elems_per_page`` or
   ``num_elems`` is not specified, the most recently specified value for these
   parameters is used. The scrollbar will adjust its scrollbar size and position
   according to the values passed to this function.
@@ -5356,16 +5719,14 @@ while scrolling will result in faster movement.
 You can click and drag the scrollbar to scroll to a specific spot, or you can
 click and hold on the end arrows or in the unfilled portion of the scrollbar to
 scroll multiple times, just like in a normal browser scrollbar. The speed of
-scroll events when the mouse button is held down is controlled by two global
-variables:
+scroll events when the mouse button is held down can be controlled
+via the `control-panel` or `gui/control-panel` interfaces:
 
-:``SCROLL_INITIAL_DELAY_MS``: The delay before the second scroll event.
-:``SCROLL_DELAY_MS``: The delay between further scroll events.
+1. The delay before the second scroll event is the ``Mouse initial scroll repeat
+   delay`` setting (default is 300 ms)
 
-The defaults are 300 and 20, respectively, but they can be overridden by the
-user in their :file:`dfhack-config/init/dfhack.init` file, for example::
-
-  :lua require('gui.widgets').SCROLL_DELAY_MS = 100
+2. The delay between further scroll events is the ``Mouse scroll repeat delay`` option
+   (default is 20 ms)
 
 Label class
 -----------
@@ -5707,7 +6068,7 @@ a hotkey or mouse click.
 
 It has the following attributes:
 
-:key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:key: The hotkey keycode to display, e.g., ``'CUSTOM_A'``.
 :key_sep: If specified, will be used to customize how the activation key is
           displayed. See ``token.key_sep`` in the ``Label`` documentation.
 :label: The string (or a function that returns a string) to display after the
@@ -5733,7 +6094,7 @@ cycle through by pressing a specified hotkey or clicking on the text.
 
 It has the following attributes:
 
-:key: The hotkey keycode to display, e.g. ``'CUSTOM_A'``.
+:key: The hotkey keycode to display, e.g., ``'CUSTOM_A'``.
 :key_back: Similar to ``key``, but will cycle backwards (optional)
 :key_sep: If specified, will be used to customize how the activation key is
           displayed. See ``token.key_sep`` in the ``Label`` documentation.
@@ -5872,8 +6233,8 @@ It has the following attributes:
              calls the callback as ``on_submit2(index,choice)``.
 :on_double_click: Mouse double click callback; if specified, the list reacts to the
             click and calls the callback as ``on_double_click(index,choice)``.
-:on_double_click2: Shift-double click callback; if specified, the list reacts to the click and
-             calls the callback as ``on_double_click2(index,choice)``.
+:on_double_click2: Shift-double click callback; if specified, the list reacts to the
+             click and calls the callback as ``on_double_click2(index,choice)``.
 :row_height: Height of every row in text lines.
 :icon_width: If not *nil*, the specified number of character columns
              are reserved to the left of the list item for the icons.
@@ -5951,7 +6312,7 @@ supports:
 The list choices may include the following attributes:
 
 :search_key: If specified, used instead of **text** to match against the filter.
-    This is required for any entries where **text** is not a string.
+    Can be a string or a function that returns a string.
 
 The widget implements:
 
@@ -5995,52 +6356,95 @@ substring across the full text with a command like::
 TabBar class
 ------------
 
-This widget implements a set of one or more tabs to allow navigation between groups of content. Tabs automatically wrap on
-the width of the window and will continue rendering on the next line(s) if all tabs cannot fit on a single line.
+This widget implements a set of one or more tabs to allow navigation between groups
+of content.
 
+:wrap: If true, tabs automatically wrap on the width of the window and will
+       continue rendering on the next line(s) if all tabs cannot fit on a single line.
+       If false, tabs will be truncated and can be scrolled using ``scroll_key``
+       and ``scroll_key_back``, mouse wheel or by clicking on the scroll labels
+       that will automatically appear on the left and right sides of the tab bar
+       as needed. When clicking on a tab or using ``key`` or ``key_back`` to switch tabs,
+       the selected tab will be scrolled into view if it is not already visible.
+       Defaults to true.
 :key: Specifies a keybinding that can be used to switch to the next tab.
       Defaults to ``CUSTOM_CTRL_T``.
 :key_back: Specifies a keybinding that can be used to switch to the previous
       tab. Defaults to ``CUSTOM_CTRL_Y``.
-:labels: A table of strings; entry representing the label text for a single tab. The order of the entries
-         determines the order the tabs will appear in.
-:on_select: Callback executed when a tab is selected. It receives the selected tab index as an argument. The provided function
-            should update the value of whichever variable your script uses to keep track of the currently selected tab.
-:get_cur_page: The function used by the TabBar to determine which Tab is currently selected. The function you provide should
-               return an integer that corresponds to the non-zero index of the currently selected Tab (i.e. whatever variable
-               you update in your ``on_select`` callback)
-:active_tab_pens: A table of pens used to render active tabs. See the default implementation in widgets.lua for an example
-                  of how to construct the table. Leave unspecified to use the default pens.
-:inactive_tab_pens: A table of pens used to render inactive tabs. See the default implementation in widgets.lua for an example
-                    of how to construct the table. Leave unspecified to use the default pens.
-:get_pens: A function used to determine which pens should be used to render a tab. Receives the index of the tab as the first
-           argument and the TabBar widget itself as the second. The default implementation, which will handle most situations,
-           returns ``self.active_tab_pens``, if ``self.get_cur_page() == idx``, otherwise returns ``self.inactive_tab_pens``.
+:labels: A table of strings; entry representing the label text for a single tab.
+         The order of the entries determines the order the tabs will appear in.
+:on_select: Callback executed when a tab is selected. It receives the selected tab
+            index as an argument. The provided function should update the value of
+            whichever variable your script uses to keep track of the currently
+            selected tab.
+:get_cur_page: The function used by the TabBar to determine which Tab is currently
+               selected. The function you provide should return an integer that
+               corresponds to the non-zero index of the currently selected Tab
+               (i.e., whatever variable you update in your ``on_select`` callback).
+:active_tab_pens: A table of pens used to render active tabs. See the default
+                  implementation in widgets.lua for an example of how to construct
+                  the table. Leave unspecified to use the default pens.
+:inactive_tab_pens: A table of pens used to render inactive tabs. See the default
+                    implementation in widgets.lua for an example of how to
+                    construct the table. Leave unspecified to use the default pens.
+:get_pens: A function used to determine which pens should be used to render a tab.
+           Receives the index of the tab as the first argument and the TabBar widget
+           itself as the second. The default implementation, which will handle most
+           situations, returns ``self.active_tab_pens``, if ``self.get_cur_page() == idx``,
+           otherwise returns ``self.inactive_tab_pens``.
+:scroll_key: Specifies a keybinding that can be used to scroll the tabs to the right.
+             Defaults to ``CUSTOM_ALT_T``.
+:scroll_key_back: Specifies a keybinding that can be used to scroll the tabs to the left.
+                  Defaults to ``CUSTOM_ALT_Y``.
+:scroll_left_text: The text to display on the left scroll label.
+                   Defaults to "<<<".
+:scroll_right_text: The text to display on the right scroll label.
+                    Defaults to ">>>".
+:scroll_label_text_pen: The pen to use for the scroll label text.
+                        Defaults to ``Label`` default.
+:scroll_label_text_hpen: The pen to use for the scroll label text when hovered.
+                         Defaults to ``scroll_label_text_pen`` with the background
+                         and foreground colors swapped.
+:scroll_step: The number of units to scroll tabs by.
+              Defaults to 10.
+:fast_scroll_multiplier: The multiplier for fast scrolling (holding shift).
+                         Defaults to 3.
+:scroll_into_view_offset: After a selected tab is scrolled into view, this offset
+                          is added to the scroll position to ensure the tab is
+                          not flush against the edge of the tab bar, allowing
+                          some space for the user to see the next tab.
+                          Defaults to 5.
 
 Tab class
 ---------
 
-This widget implements a single clickable tab and is the main component of the TabBar widget. Usage of the ``TabBar``
-widget does not require direct usage of ``Tab``.
+This widget implements a single clickable tab and is the main component of the TabBar
+widget. Usage of the ``TabBar`` widget does not require direct usage of ``Tab``.
 
 :id: The id of the tab.
 :label: The text displayed on the tab.
 :on_select: Callback executed when the tab is selected.
-:get_pens: A function that is used during ``Tab:onRenderBody`` to determine the pens that should be used for drawing. See the
-           usage of ``Tab`` in ``TabBar:init()`` for an example. See the default value of ``active_tab_pens`` or ``inactive_tab_pens``
-           in ``TabBar`` for an example of how to construct pens.
+:get_pens: A function that is used during ``Tab:onRenderBody`` to determine the pens
+           that should be used for drawing. See the usage of ``Tab`` in
+           ``TabBar:init()`` for an example. See the default value of
+           ``active_tab_pens`` or ``inactive_tab_pens`` in ``TabBar``
+           for an example of how to construct pens.
 
 RangeSlider class
 -----------------
 
-This widget implements a mouse-interactable range-slider. The player can move its two handles to set minimum and maximum values
-to define a range, or they can drag the bar itself to move both handles at once.
-The parent widget owns the range values, and can control them independently (e.g. with ``CycleHotkeyLabels``). If the range values change, the ``RangeSlider`` appearance will adjust automatically.
+This widget implements a mouse-interactable range-slider. The player can move its two
+handles to set minimum and maximum values to define a range, or they can drag the bar
+itself to move both handles at once. The parent widget owns the range values, and can
+control them independently (e.g., with ``CycleHotkeyLabels``). If the range values
+change, the ``RangeSlider`` appearance will adjust automatically.
 
-:num_stops: Used to specify the number of "notches" in the range slider, the places where handles can stop.
-            (this should match the parents' number of options)
-:get_left_idx_fn: The function used by the RangeSlider to get the notch index on which to display the left handle.
-:get_right_idx_fn: The function used by the RangeSlider to get the notch index on which to display the right handle.
+:num_stops: Used to specify the number of "notches" in the range slider, the places
+            where handles can stop. (This should match the parents' number of options.)
+:get_left_idx_fn: The function used by the RangeSlider to get the notch index on which
+                  to display the left handle.
+:get_right_idx_fn: The function used by the RangeSlider to get the notch index on which
+                   to display the right handle.
 :on_left_change: Callback executed when moving the left handle.
 :on_right_change: Callback executed when moving the right handle.
 
@@ -6130,8 +6534,8 @@ The names of the functions are also available as the keys of the
 building-hacks
 ==============
 
-This plugin overwrites some methods in workshop df class so that mechanical workshops are possible. Although
-plugin export a function it's recommended to use lua decorated function.
+This plugin overwrites some methods in workshop df class so that mechanical workshops are
+possible. Although plugin export a function it's recommended to use lua decorated function.
 
 .. contents::
   :local:
@@ -6139,10 +6543,11 @@ plugin export a function it's recommended to use lua decorated function.
 Functions
 ---------
 
-``registerBuilding(table)`` where table must contain name, as a workshop raw name, the rest are optional:
+``registerBuilding(table)`` where table must contain name, as a workshop raw name,
+the rest are optional:
 
     :name:
-        custom workshop id e.g. ``SOAPMAKER``
+        custom workshop id e.g., ``SOAPMAKER``
 
         .. note:: this is the only mandatory field.
 
@@ -6169,20 +6574,24 @@ Functions
            this generates full frame useful for animations that change little (1-2 tiles)
 
     :canBeRoomSubset:
-        a flag if this building can be counted in room. 1 means it can, 0 means it can't and -1 default building behaviour
+        a flag if this building can be counted in room. 1 means it can,
+        0 means it can't and -1 default building behaviour
     :auto_gears:
-        a flag that automatically fills up gears and animations. It looks over the building definition for gear icons and maps them.
+        a flag that automatically fills up gears and animations.
+        It looks over the building definition for gear icons and maps them.
 
     Animate table also might contain:
 
     :frameLength:
         how many ticks does one frame take OR
     :isMechanical:
-        a bool that says to try to match to mechanical system (i.e. how gears are turning)
+        a bool that says to try to match to mechanical system (i.e., how gears are turning)
 
-``getPower(building)`` returns two number - produced and consumed power if building can be modified and returns nothing otherwise
+``getPower(building)`` returns two number - produced and consumed power if building can be
+modified and returns nothing otherwise
 
-``setPower(building,produced,consumed)`` sets current power production and consumption for a building.
+``setPower(building,produced,consumed)`` sets current power production and
+consumption for a building.
 
 Examples
 --------
@@ -6212,12 +6621,34 @@ buildingplan
 
 Native functions provided by the `buildingplan` plugin:
 
-* ``bool isPlannableBuilding(df::building_type type, int16_t subtype, int32_t custom)`` returns whether the building type is handled by buildingplan.
-* ``bool isPlanModeEnabled(df::building_type type, int16_t subtype, int32_t custom)`` returns whether the buildingplan UI is enabled for the specified building type.
-* ``bool isPlannedBuilding(df::building *bld)`` returns whether the given building is managed by buildingplan.
-* ``void addPlannedBuilding(df::building *bld)`` suspends the building jobs and adds the building to the monitor list.
-* ``void doCycle()`` runs a check for whether buildings in the monitor list can be assigned items and unsuspended. This method runs automatically twice a game day, so you only need to call it directly if you want buildingplan to do a check right now.
-* ``void scheduleCycle()`` schedules a cycle to be run during the next non-paused game frame. Can be called multiple times while the game is paused and only one cycle will be scheduled.
+* ``bool isPlannableBuilding(df::building_type type, int16_t subtype, int32_t custom)``
+
+  Returns whether the building type is handled by buildingplan.
+
+* ``bool isPlanModeEnabled(df::building_type type, int16_t subtype, int32_t custom)``
+
+  Returns whether the buildingplan UI is enabled for the specified building type.
+
+* ``bool isPlannedBuilding(df::building *bld)``
+
+  Returns whether the given building is managed by buildingplan.
+
+* ``void addPlannedBuilding(df::building *bld)``
+
+  Suspends the building jobs and adds the building to the monitor list.
+
+* ``void doCycle()``
+
+  Runs a check for whether buildings in the monitor list can be assigned
+  items and unsuspended. This method runs automatically twice a game day,
+  so you only need to call it directly if you want buildingplan to do a
+  check right now.
+
+* ``void scheduleCycle()``
+
+  Schedules a cycle to be run during the next non-paused game frame.
+  Can be called multiple times while the game is paused and only one
+  cycle will be scheduled.
 
 .. _cxxrandom-api:
 
@@ -6254,7 +6685,7 @@ Native functions (exported to Lua)
 
 - ``rollNormal(rngID, avg, stddev)``
 
-  generates random normal[gaus.]
+  generates random double drawn from a normal (Gaussian) distribution
 
 - ``rollBool(rngID, chance)``
 
@@ -6292,17 +6723,18 @@ crng
 
 - ``init(id, df, dist)``: constructor
 
-  - ``id``: Reference ID of engine to use in RNGenerations
-  - ``df`` (optional): bool indicating whether to destroy the Engine when the crng object is garbage collected
-  - ``dist`` (optional): lua number distribution to use
+  - ``id``: Reference ID of engine to use in RNGenerations.
+  - ``df`` (optional): bool indicating whether to destroy the Engine
+                       when the crng object is garbage collected.
+  - ``dist`` (optional): lua number distribution to use.
 
 - ``changeSeed(seed)``: alters engine's seed value
-- ``setNumDistrib(distrib)``: sets the number distribution crng object should use
+- ``setNumDistrib(distrib)``: sets the number distribution crng object should use.
 
-  - ``distrib``: number distribution object to use in RNGenerations
+  - ``distrib``: number distribution object to use in RNGenerations.
 
-- ``next()``: returns the next number in the distribution
-- ``shuffle()``: effectively shuffles the number distribution
+- ``next()``: returns the next number in the distribution.
+- ``shuffle()``: effectively shuffles the number distribution.
 
 normal_distribution
 ~~~~~~~~~~~~~~~~~~~
@@ -6353,7 +6785,7 @@ that engine state into random numbers.
 Example::
 
     local rng = require('plugins.cxxrandom')
-    local norm_dist = rng.normal_distribution(6820, 116)   -- avg, stddev
+    local norm_dist = rng.normal_distribution(6820, 116) -- avg, stddev
     local engID = rng.MakeNewEngine(0)
     print(norm_dist:next(engID))
 
@@ -6406,123 +6838,148 @@ List of events
 
 1. ``onReactionCompleting(reaction,reaction_product,unit,input_items,input_reagents,output_items,call_native)``
 
-   Is called once per reaction product, before the reaction has a chance to call native code for item creation.
-   Setting ``call_native.value=false`` cancels further processing: no items are created and ``onReactionComplete`` is not called.
+  Is called once per reaction product, before the reaction has a chance to
+  call native code for item creation. Setting ``call_native.value=false``
+  cancels further processing: no items are created and ``onReactionComplete``
+  is not called.
 
 2. ``onReactionComplete(reaction,reaction_product,unit,input_items,input_reagents,output_items)``
 
-   Is called once per reaction product, when reaction finishes and has at least one product.
+  Is called once per reaction product, when reaction finishes and has
+  at least one product.
 
 3. ``onItemContaminateWound(item,unit,wound,number1,number2)``
 
-   Is called when item tries to contaminate wound (e.g. stuck in).
+  Is called when item tries to contaminate wound (e.g., stuck in).
 
 4. ``onProjItemCheckMovement(projectile)``
 
-   Is called when projectile moves.
+  Is called when projectile moves.
 
 5. ``onProjItemCheckImpact(projectile,somebool)``
 
-   Is called when projectile hits something.
+  Is called when projectile hits something.
 
 6. ``onProjUnitCheckMovement(projectile)``
 
-   Is called when projectile moves.
+  Is called when projectile moves.
 
 7. ``onProjUnitCheckImpact(projectile,somebool)``
 
-   Is called when projectile hits something.
+  Is called when projectile hits something.
 
 8. ``onWorkshopFillSidebarMenu(workshop,callnative)``
 
-   Is called when viewing a workshop in 'q' mode, to populate reactions, useful for custom viewscreens for shops.
+  Is called when viewing a workshop in 'q' mode, to populate
+  reactions, useful for custom viewscreens for shops.
 
 9. ``postWorkshopFillSidebarMenu(workshop)``
 
-   Is called after calling (or not) native fillSidebarMenu(). Useful for job button
-   tweaking (e.g. adding custom reactions)
+  Is called after calling (or not) native fillSidebarMenu().
+  Useful for job button tweaking (e.g., adding custom reactions)
 
 .. _EventManager:
 
 Events from EventManager
 ------------------------
-These events are straight from EventManager module. Each of them first needs to be enabled. See functions for more info. If you register a listener before the game is loaded, be aware that no events will be triggered immediately after loading, so you might need to add another event listener for when the game first loads in some cases.
+These events are straight from EventManager module. Each of them first needs
+to be enabled. See functions for more info. If you register a listener before
+the game is loaded, be aware that no events will be triggered immediately
+after loading, so you might need to add another event listener for when the
+game first loads in some cases.
 
 1. ``onBuildingCreatedDestroyed(building_id)``
 
-   Gets called when building is created or destroyed.
+  Gets called when building is created or destroyed.
 
 2. ``onConstructionCreatedDestroyed(building_id)``
 
-   Gets called when construction is created or destroyed.
+  Gets called when construction is created or destroyed.
 
 3. ``onJobInitiated(job)``
 
-   Gets called when job is issued.
+  Gets called when job is issued.
 
 4. ``onJobCompleted(job)``
 
-   Gets called when job is finished. The job that is passed to this function is a copy. Requires a frequency of 0 in order to distinguish between workshop jobs that were canceled by the user and workshop jobs that completed successfully.
+  Gets called when job is finished. The job that is passed to this function
+  is a copy. Requires a frequency of 0 in order to distinguish between
+  workshop jobs that were canceled by the user and workshop jobs that
+  completed successfully.
 
 5. ``onUnitDeath(unit_id)``
 
-   Gets called on unit death.
+  Gets called on unit death.
 
 6. ``onItemCreated(item_id)``
 
-   Gets called when item is created (except due to traders, migrants, invaders and spider webs).
+  Gets called when item is created (except due to traders, migrants,
+  invaders, and spider webs).
 
 7. ``onSyndrome(unit_id,syndrome_index)``
 
-   Gets called when new syndrome appears on a unit.
+  Gets called when new syndrome appears on a unit.
 
 8. ``onInvasion(invasion_id)``
 
-   Gets called when new invasion happens.
+  Gets called when new invasion happens.
 
 9. ``onInventoryChange(unit_id,item_id,old_equip,new_equip)``
 
-   Gets called when someone picks up an item, puts one down, or changes the way they are holding it. If an item is picked up, old_equip will be null. If an item is dropped, new_equip will be null. If an item is re-equipped in a new way, then neither will be null. You absolutely must NOT alter either old_equip or new_equip or you might break other plugins.
+  Gets called when someone picks up an item, puts one down,
+  or changes the way they are holding it. If an item is picked up,
+  old_equip will be null. If an item is dropped, new_equip will be null.
+  If an item is re-equipped in a new way, then neither will be null.
+  You absolutely must NOT alter either old_equip or new_equip or you
+  might break other plugins.
 
 10. ``onReport(reportId)``
 
-    Gets called when a report happens. This happens more often than you probably think, even if it doesn't show up in the announcements.
+  Gets called when a report happens. This happens more often than
+  you probably think, even if it doesn't show up in the announcements.
 
 11. ``onUnitAttack(attackerId, defenderId, woundId)``
 
-    Called when a unit wounds another with a weapon. Is NOT called if blocked, dodged, deflected, or parried.
+  Called when a unit wounds another with a weapon.
+  Is NOT called if blocked, dodged, deflected, or parried.
 
 12. ``onUnload()``
 
-    A convenience event in case you don't want to register for every onStateChange event.
+  A convenience event in case you don't want to register for every onStateChange event.
 
 13. ``onInteraction(attackVerb, defendVerb, attackerId, defenderId, attackReportId, defendReportId)``
 
-    Called when a unit uses an interaction on another.
+  Called when a unit uses an interaction on another.
 
 Functions
 ---------
 
 1. ``registerReaction(reaction_name,callback)``
 
-   Simplified way of using onReactionCompleting; the callback is function (same params as event).
+  Simplified way of using onReactionCompleting; the callback is function (same params as event).
 
 2. ``removeNative(shop_name)``
 
-   Removes native choice list from the building.
+  Removes native choice list from the building.
 
 3. ``addReactionToShop(reaction_name,shop_name)``
 
-   Add a custom reaction to the building.
+  Add a custom reaction to the building.
 
 4. ``enableEvent(evType,frequency)``
 
-   Enable event checking for EventManager events. For event types use ``eventType`` table. Note that different types of events require different frequencies to be effective. The frequency is how many ticks EventManager will wait before checking if that type of event has happened. If multiple scripts or plugins use the same event type, the smallest frequency is the one that is used, so you might get events triggered more often than the frequency you use here.
+  Enable event checking for EventManager events. For event types use ``eventType`` table.
+  Note that different types of events require different frequencies to be effective. The
+  frequency is how many ticks EventManager will wait before checking if that type of event
+  has happened. If multiple scripts or plugins use the same event type, the smallest frequency
+  is the one that is used, so you might get events triggered more often than the frequency
+  you use here.
 
 5. ``registerSidebar(shop_name,callback)``
 
-   Enable callback when sidebar for ``shop_name`` is drawn. Useful for custom workshop views e.g. using gui.dwarfmode lib. Also accepts a ``class`` instead of function
-   as callback. Best used with ``gui.dwarfmode`` class ``WorkshopOverlay``.
+  Enable callback when sidebar for ``shop_name`` is drawn. Useful for custom workshop views,
+  e.g., using gui.dwarfmode lib. Also accepts a ``class`` instead of function as callback.
+  Best used with ``gui.dwarfmode`` class ``WorkshopOverlay``.
 
 Examples
 --------
@@ -6549,7 +7006,7 @@ Grenade example::
 
   b=require "plugins.eventful"
   b.onProjItemCheckImpact.one=function(projectile)
-    -- you can check if projectile.item e.g. has correct material
+    -- you can check if projectile.item e.g., has correct material
     dfhack.maps.spawnFlow(projectile.cur_pos,6,0,0,50000)
   end
 
@@ -6563,8 +7020,9 @@ Integrated tannery::
 luasocket
 =========
 
-A way to access csocket from lua. The usage is made similar to luasocket in vanilla lua distributions. Currently
-only a subset of the functions exist and only tcp mode is implemented.
+A way to access csocket from lua. The usage is made similar to luasocket in
+vanilla lua distributions. Currently only a subset of the functions exist
+and only TCP mode is implemented.
 
 .. contents::
   :local:
@@ -6572,9 +7030,8 @@ only a subset of the functions exist and only tcp mode is implemented.
 Socket class
 ------------
 
-This is a base class for ``client`` and ``server`` sockets. You can not create it - it's like a virtual
-base class in c++.
-
+This is a base class for ``client`` and ``server`` sockets. You can not create
+it - it's like a virtual base class in c++.
 
 * ``socket:close()``
 
@@ -6582,14 +7039,15 @@ base class in c++.
 
 * ``socket:setTimeout(sec,msec)``
 
-  Sets the operation timeout for this socket. It's possible to set timeout to 0. Then it performs like
-  a non-blocking socket.
+  Sets the operation timeout for this socket. It's possible to set timeout to 0.
+  Then it performs like a non-blocking socket.
 
 Client class
 ------------
 
-Client is a connection socket to a server. You can get this object either from ``tcp:connect(address,port)`` or
-from ``server:accept()``. It's a subclass of ``socket``.
+Client is a connection socket to a server. You can get this object either from
+``tcp:connect(address,port)`` or from ``server:accept()``.
+It's a subclass of ``socket``.
 
 * ``client:receive(pattern)``
 
@@ -6622,7 +7080,8 @@ A class with all the tcp functionality.
 
 * ``tcp:bind(address,port)``
 
-  Starts listening on that port for incoming connections. Returns ``server`` object.
+  Starts listening on that port for incoming connections.
+  Returns ``server`` object.
 
 * ``tcp:connect(address,port)``
 
@@ -6634,16 +7093,17 @@ A class with all the tcp functionality.
 map-render
 ==========
 
-A way to ask DF to render a section of the fortress mode map. This uses a native
-DF rendering function so it's highly dependent on DF settings (e.g. tileset,
-colors, etc.)
+A way to ask DF to render a section of the fortress mode map.
+This uses a native DF rendering function so it's highly dependent
+on DF settings (e.g., tileset, colors, etc.)
 
 Functions
 ---------
 
 - ``render_map_rect(x,y,z,w,h)``
 
-  returns a table with w*h*4 entries of rendered tiles. The format is the same as ``df.global.gps.screen`` (tile,foreground,bright,background).
+  Returns a table with w*h*4 entries of rendered tiles. The format is
+  the same as ``df.global.gps.screen`` (tile,foreground,bright,background).
 
 .. _pathable-api:
 
@@ -6848,7 +7308,7 @@ General script API
 
   Note that the ``dfhack.run_script()`` function allows Lua errors to propagate to the caller.
 
-  To run other types of commands (i.e. built-in commands or commands provided by plugins),
+  To run other types of commands (i.e., built-in commands or commands provided by plugins),
   see ``dfhack.run_command()``. Note that this is slightly slower than ``dfhack.run_script()``
   when running Lua scripts.
 
@@ -6872,7 +7332,7 @@ Importing scripts
 
 * ``dfhack.reqscript(name)`` or ``reqscript(name)``
 
-  Loads a Lua script and returns its environment (i.e. a table of all global
+  Loads a Lua script and returns its environment (i.e., a table of all global
   functions and variables). This is similar to the built-in ``require()``, but
   searches all `script-paths` for the first matching ``name.lua`` file instead
   of searching the Lua library paths (like ``hack/lua/``).
@@ -6923,7 +7383,7 @@ Importing scripts
     a local variable as in the example above. ``reqscript()`` is fast for
     scripts that have previously been loaded and haven't changed. If you retain
     a reference to a table returned by an old ``reqscript()`` call, this may
-    lead to unintended behavior if the location of the script changes (e.g. if a
+    lead to unintended behavior if the location of the script changes (e.g., if a
     save is loaded or unloaded, or if a `script path <script-paths>` is added in
     some other way).
 
@@ -7005,7 +7465,7 @@ loaded. For example::
 
     local function get_default_state()
         return {
-            -- add default config here, e.g.
+            -- add default config here, e.g.,
             -- enabled=false,
         }
     end

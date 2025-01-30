@@ -383,7 +383,11 @@ local function do_trigger(args, quiet)
     do_by_names_or_numbers(args[1], function(name, db_entry)
         local widget = db_entry.widget
         if widget.overlay_trigger then
-            register_trigger_lock_screen(widget:overlay_trigger(), name)
+            register_trigger_lock_screen(
+                widget:overlay_trigger(table.unpack(args, 2)),
+                name
+            )
+
             if not quiet then
                 print(('triggered widget %s'):format(name))
             end
@@ -502,15 +506,14 @@ local function _feed_viewscreen_widgets(vs_name, vs, keys)
     if not vs_widgets then return false end
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        if not utils.getval(w.active) or not utils.getval(w.visible) then
-            goto skip
-        end
         if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and
-                detect_frame_change(w, function() return w:onInput(keys) end) then
+            utils.getval(w.active) and
+            utils.getval(w.visible) and
+            detect_frame_change(w, function() return w:onInput(keys) end)
+        then
             --print('widget handled input:', w.name)
             return true
         end
-        ::skip::
     end
     return false
 end
@@ -531,11 +534,9 @@ local function _render_viewscreen_widgets(vs_name, vs, full_dc, scaled_dc)
     scaled_dc = scaled_dc or gui.Painter.new(scaled)
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
-        if not utils.getval(w.visible) then goto skip end
-        if not vs or matches_focus_strings(db_entry, vs_name, vs) then
+        if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and utils.getval(w.visible) then
             detect_frame_change(w, function() w:render(w.fullscreen and full_dc or scaled_dc) end)
         end
-        ::skip::
     end
     return full_dc, scaled_dc
 end

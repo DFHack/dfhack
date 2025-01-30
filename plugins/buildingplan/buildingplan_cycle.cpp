@@ -8,6 +8,7 @@
 #include "modules/Job.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/Units.h"
 
 #include "df/building_actual.h"
 #include "df/building_design.h"
@@ -45,13 +46,37 @@ struct BadFlags {
     }
 };
 
+// cache of walkability groups that have citizens in them
+static std::unordered_set<uint16_t> accessible_walkability_groups;
+
+void update_walkability_groups(){
+
+    // ensure that we update at most once per tick
+    auto frame_counter = df::global::world->frame_counter;
+    if (frame_counter == walkability_timestamp)
+        return;
+    else
+        walkability_timestamp = frame_counter;
+
+    accessible_walkability_groups.clear();
+    auto get_group = [](df::unit *unit){
+        auto group = Maps::getWalkableGroup(Units::getPosition(unit));
+        if (group != 0)
+        {
+            accessible_walkability_groups.insert(group);
+        }
+    };
+    Units::forCitizens(get_group);
+}
+
 // This is tricky. we want to choose an item that can be brought to the job site, but that's not
 // necessarily the same as job->pos. it could be many tiles off in any direction (e.g. for bridges), or
-// up or down (e.g. for stairs). For now, just return if the item is on a walkable tile.
+// up or down (e.g. for stairs). For now, just return if the item is in the same walkability group
+// as a citizen or resident
 static bool isAccessible(color_ostream& out, df::item* item) {
     df::coord item_pos = Items::getPosition(item);
     uint16_t walkability_group = Maps::getWalkableGroup(item_pos);
-    bool is_walkable = walkability_group != 0;
+    bool is_walkable = accessible_walkability_groups.contains(walkability_group);
     TRACE(cycle, out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
         item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "(probably) " : "not ");
     return is_walkable;
@@ -379,6 +404,8 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
     DEBUG(cycle,out).print(
             "running buildingplan cycle for %zu registered buildings\n",
             planned_buildings.size());
+
+    update_walkability_groups();
 
     for (auto it = tasks.begin(); it != tasks.end(); ) {
         auto vector_id = it->first;

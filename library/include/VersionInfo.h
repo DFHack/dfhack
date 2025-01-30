@@ -32,7 +32,6 @@ distribution.
 #include <vector>
 
 #include "Export.h"
-#include "Pragma.h"
 
 namespace DFHack
 {
@@ -75,6 +74,17 @@ namespace DFHack
             version = rhs.version;
             OS = rhs.OS;
         };
+
+        static OSType getCurOS() {
+#if defined(_WIN32)
+            const OSType expected = OS_WINDOWS;
+#elif defined(_DARWIN)
+            const OSType expected = OS_APPLE;
+#else
+            const OSType expected = OS_LINUX;
+#endif
+            return expected;
+        }
 
         uintptr_t getBase () const { return base; };
         intptr_t getRebaseDelta() const { return rebase_delta; }
@@ -172,13 +182,8 @@ namespace DFHack
         };
 
         void ValidateOS() {
-#if defined(_WIN32)
-            const OSType expected = OS_WINDOWS;
-#elif defined(_DARWIN)
-            const OSType expected = OS_APPLE;
-#else
-            const OSType expected = OS_LINUX;
-#endif
+            static const OSType expected = getCurOS();
+
             if (expected != getOS()) {
                 std::cerr << "OS mismatch; resetting to " << int(expected) << std::endl;
                 setOS(expected);

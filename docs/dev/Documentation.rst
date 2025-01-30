@@ -268,7 +268,7 @@ examples::
         Show help text.
     ``-l``, ``--quality <level>``
         Set the quality of the architecture for built architected
-        builtings.
+        buildings.
     ``-q``, ``--quiet``
         Suppress informational output (error messages are still
         printed).
@@ -498,6 +498,8 @@ changelogs are combined as part of the changelog build process:
 * ``docs/changelog.txt`` for changes in the main ``dfhack`` repo
 * ``scripts/changelog.txt`` for changes made to scripts in the ``scripts`` repo
 * ``library/xml/changelog.txt`` for changes made in the ``df-structures`` repo
+* ``plugins/stonesense/changelog.txt`` for changes made in the ``stonesense``
+  repo
 
 Building the changelogs generates two files: ``docs/changelogs/news.rst`` and
 ``docs/changelogs/news-dev.rst``. These correspond to `changelog` and

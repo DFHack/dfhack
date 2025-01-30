@@ -6,6 +6,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/Burrows.h"
 #include "modules/World.h"
@@ -70,6 +71,7 @@ void PlannedBuilding::remove(color_ostream &out) {
 
 static const int32_t CYCLE_TICKS = 599; // twice per game day
 static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
+int32_t walkability_timestamp = -1; // world->frame_counter at last update of walkability groups
 
 static int get_num_filters(color_ostream &out, BuildingTypeKey key) {
     int num_filters = 0;
@@ -192,6 +194,7 @@ static DefaultItemFilters & get_item_filters(color_ostream &out, const BuildingT
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
+void update_walkability_groups();
 void buildingplan_cycle(color_ostream &out, Tasks &tasks,
         unordered_map<int32_t, PlannedBuilding> &planned_buildings, bool unsuspend_on_finalize);
 
@@ -280,6 +283,7 @@ DFhackCExport command_result plugin_load_world_data (color_ostream &out) {
 
 DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
+    walkability_timestamp = -1;
     config = World::GetPersistentSiteData(CONFIG_KEY);
 
     if (!config.isValid()) {
@@ -343,15 +347,12 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode())
         return CR_OK;
 
-    if (is_enabled &&
-            (cycle_requested || world->frame_counter - cycle_timestamp >= CYCLE_TICKS))
+    if (cycle_requested || world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_cycle(out);
     return CR_OK;
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot configure %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
@@ -667,22 +668,25 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
     auto &jitem = job_items[index];
     auto vector_ids = getVectorIds(out, jitem, ignore_filters);
 
+    ItemFilter filter = filters[index];
+    set<string> special = specials;
+    if (ignore_filters || counts) {
+        // don't filter by material; we want counts for all materials
+        filter.setMaterialMask(0);
+        filter.setMaterials(set<MaterialInfo>());
+        special.clear();
+    }
+    if (ignore_quality) {
+        filter.setMinQuality(df::item_quality::Ordinary);
+        filter.setMaxQuality(df::item_quality::Artifact);
+    }
+
+    update_walkability_groups(); // ensure that itemPassesScreen is accurate
+
     int count = 0;
     for (auto vector_id : vector_ids) {
         auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
         for (auto &item : df::global::world->items.other[other_id]) {
-            ItemFilter filter = filters[index];
-            set<string> special = specials;
-            if (ignore_filters || counts) {
-                // don't filter by material; we want counts for all materials
-                filter.setMaterialMask(0);
-                filter.setMaterials(set<MaterialInfo>());
-                special.clear();
-            }
-            if (ignore_quality) {
-                filter.setMinQuality(df::item_quality::Ordinary);
-                filter.setMaxQuality(df::item_quality::Artifact);
-            }
             if (itemPassesScreen(out, item) && matchesFilters(item, jitem, heat, filter, special)) {
                 if (item_ids)
                     item_ids->emplace_back(item->id);

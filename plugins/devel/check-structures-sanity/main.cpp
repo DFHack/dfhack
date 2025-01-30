@@ -56,8 +56,6 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
     if (!perturb_byte)
         out.printerr("check-structures-sanity: MALLOC_PERTURB_ not set. Some checks may be bypassed or fail.\n");
 
-    CoreSuspender suspend;
-
     Checker checker(out);
     checker.perturb_byte = perturb_byte;
 
@@ -116,6 +114,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
         using namespace DFHack::Lua::Core;
         using namespace DFHack::LuaWrapper;
 
+        auto State = DFHack::Core::getInstance().getLuaState();
         StackUnwinder unwinder(State);
         PushModulePublic(out, "utils", "df_expr_to_ref");
         Push(parameters.at(0));

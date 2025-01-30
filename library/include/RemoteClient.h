@@ -23,10 +23,9 @@ distribution.
 */
 
 #pragma once
-#include "Pragma.h"
 #include "Export.h"
 #include "ColorText.h"
-#include "Core.h"
+#include "CoreDefs.h"
 
 class CPassiveSocket;
 class CActiveSocket;

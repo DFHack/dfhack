@@ -42,7 +42,6 @@ DFHACK_PLUGIN("zone");
 #include "modules/Buildings.h"
 #include "modules/Gui.h"
 #include "modules/Units.h"
-#include "modules/Translation.h"
 
 using std::function;
 using std::make_pair;
@@ -888,7 +887,10 @@ static struct zone_filters_init { zone_filters_init() {
     zone_filters["hunting"] = Units::isHunter;
     zone_filters["male"] = Units::isMale;
     zone_filters["milkable"] = Units::isMilkable;
-    zone_filters["naked"] = Units::isNaked;
+    zone_filters["naked"] = [](df::unit *unit) -> bool
+    {
+        return Units::isNaked(unit, true);
+    };
     zone_filters["own"] = Units::isOwnCiv;
     zone_filters["tamable"] = Units::isTamable;
     zone_filters["tame"] = Units::isTame;
@@ -914,6 +916,7 @@ static unordered_map<string, string> zone_filter_notes;
 static struct zone_filter_notes_init { zone_filter_notes_init() {
     zone_filter_notes["caged"] = "caged (ignores built cages)";
     zone_filter_notes["hunting"] = "trained hunting creature";
+    zone_filter_notes["naked"] = "striped of all items";
     zone_filter_notes["named"] = "has name or nickname";
     zone_filter_notes["own"] = "own civilization";
     zone_filter_notes["trainablehunt"] = "trainable for hunting";
@@ -1033,8 +1036,6 @@ static struct zone_param_filters_init { zone_param_filters_init() {
 }} zone_param_filters_init_;
 
 static command_result df_zone(color_ostream &out, vector <string> & parameters) {
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");
@@ -1896,8 +1897,7 @@ public:
 
             if (!search_string_l.empty())
             {
-                string desc = Translation::TranslateName(
-                    Units::getVisibleName(curr_unit), false);
+                string desc = Units::getReadableName(curr_unit);
 
                 desc += Units::getProfessionName(curr_unit);
                 desc = toLower_cp437(desc);

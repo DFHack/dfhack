@@ -444,7 +444,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream& out)
 
 DFhackCExport command_result plugin_onupdate(color_ostream& out)
 {
-    if (enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         autofarmInstance->process(out);
 
     return CR_OK;
@@ -515,8 +515,6 @@ static command_result autofarm(color_ostream& out, std::vector<std::string>& par
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
-
-    CoreSuspender suspend;
 
     if (parameters.size() == 1 && parameters[0] == "runonce")
     {

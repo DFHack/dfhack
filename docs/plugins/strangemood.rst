@@ -27,7 +27,7 @@ Options
     population, artifact limit not reached, etc.).
 ``--unit``
     Make the strange mood strike the selected unit instead of picking one
-    randomly. Unit eligibility is still enforced (unless ``-force`` is also
+    randomly. Unit eligibility is still enforced (unless ``--force`` is also
     specified).
 ``--type <type>``
     Force the mood to be of a particular type instead of choosing randomly based
@@ -36,9 +36,10 @@ Options
 ``--skill <skill>``
     Force the mood to use a specific skill instead of choosing the highest
     moodable skill. Valid values are "miner", "carpenter", "engraver", "mason",
-    "tanner", "weaver", "clothier", "weaponsmith",  "armorsmith", "metalsmith",
-    "gemcutter", "gemsetter", "woodcrafter", "stonecrafter", "metalcrafter",
-    "glassmaker", "leatherworker", "bonecarver", "bowyer", and "mechanic".
+    "stonecutter", "stonecarver", "tanner", "weaver", "clothier",
+    "weaponsmith",  "armorsmith", "metalsmith", "gemcutter", "gemsetter",
+    "woodcrafter", "stonecrafter", "metalcrafter", "glassmaker",
+    "leatherworker", "bonecarver", "bowyer", and "mechanic".
 
 Known limitations: if the selected unit is currently performing a job, the mood
 will not be triggered.

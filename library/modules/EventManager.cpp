@@ -208,10 +208,18 @@ std::array<eventManager_t,EventType::EVENT_MAX> compileManagerArray() {
 static int32_t lastJobId = -1;
 
 //job started
-static unordered_set<int32_t> startedJobs;
+static std::vector<int32_t> startedJobs;
 
 //job completed
-static unordered_map<int32_t, df::job*> prevJobs;
+struct JobCompleteData {
+    int32_t id;
+    int32_t completion_timer;
+    uint32_t flags_bits_repeat;
+};
+
+
+static std::unordered_map<int32_t, Job::JobUniquePtr> seenJobs;
+static std::vector<JobCompleteData> prevJobs;
 
 //active units
 static unordered_set<int32_t> activeUnits;
@@ -292,9 +300,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
     if ( event == DFHack::SC_MAP_UNLOADED ) {
         lastJobId = -1;
         startedJobs.clear();
-        for (auto &prevJob : prevJobs) {
-            Job::deleteJobStruct(prevJob.second, true);
-        }
+        seenJobs.clear();
         prevJobs.clear();
         tickQueue.clear();
         livingUnits.clear();
@@ -491,31 +497,31 @@ static void manageJobStartedEvent(color_ostream& out) {
     // iterate event handler callbacks
     multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_STARTED].begin(), handlers[EventType::JOB_STARTED].end());
 
-    unordered_set<int32_t> newStartedJobs;
+    std::vector<int32_t> newStartedJobs;
+    newStartedJobs.reserve(startedJobs.size());
 
-    for (df::job_list_link* link = &df::global::world->jobs.list; link->next != nullptr; link = link->next) {
-        df::job* job = link->next->item;
-        if (!job || !Job::getWorker(job))
-            continue;
-
-        int32_t j_id = job->id;
-        newStartedJobs.emplace(j_id);
-        if (!startedJobs.count(j_id)) {
-            for (auto &[_,handle] : copy) {
-                DEBUG(log,out).print("calling handler for job started event\n");
-                run_handler(out, EventType::JOB_STARTED, handle, job);
+    for (const auto jobPtr : df::global::world->jobs.list) {
+        // posting_index of -1 implies a worker has been assigned to a new job.
+        if (jobPtr->posting_index == -1) {
+            auto jobId = jobPtr->id;
+            newStartedJobs.push_back(jobId);
+            /*
+             * The startedJobs set peaks at the number of work-eligible citizens.
+             * This set is small enough to fit comfortably in the CPU caches,
+             * e.g., 200 workers * 4 bytes (jobId) = 800 bytes,
+             * ensuring better memory locality and thus more efficiency than a hashmap
+             * where memory access tends to be all over the place.
+             */
+            if (!std::binary_search(startedJobs.begin(), startedJobs.end(), jobId)) {
+                for (auto &[_,handle] : copy) {
+                    DEBUG(log,out).print("calling handler for job started event\n");
+                    run_handler(out, EventType::JOB_STARTED, handle, jobPtr);
+                }
             }
         }
     }
-
-    startedJobs = newStartedJobs;
+    startedJobs = std::move(newStartedJobs);
 }
-
-//helper function for manageJobCompletedEvent
-//static int32_t getWorkerID(df::job* job) {
-//    auto ref = findRef(job->general_refs, general_ref_type::UNIT_WORKER);
-//    return ref ? ref->getID() : -1;
-//}
 
 /*
 TODO: consider checking item creation / experience gain just in case
@@ -524,16 +530,64 @@ static void manageJobCompletedEvent(color_ostream& out) {
     if (!df::global::world)
         return;
 
-    int32_t tick0 = eventLastTick[EventType::JOB_COMPLETED];
-    int32_t tick1 = df::global::world->frame_counter;
+    multimap<Plugin*, EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
+    std::vector<JobCompleteData> nowJobs;
+    // predict the size in advance, this will prevent or reduce memory reallocation.
+    nowJobs.reserve(prevJobs.size());
+    for (const auto jobPtr : df::global::world->jobs.list) {
+        auto& job = *jobPtr;
 
-    multimap<Plugin*,EventHandler> copy(handlers[EventType::JOB_COMPLETED].begin(), handlers[EventType::JOB_COMPLETED].end());
-    unordered_map<int32_t, df::job*> nowJobs;
-    for ( df::job_list_link* link = &df::global::world->jobs.list; link != nullptr; link = link->next ) {
-        if ( link->item == nullptr )
-            continue;
-        nowJobs.emplace(link->item->id, link->item);
+        auto seenIt = seenJobs.find(job.id);
+        if (seenIt != seenJobs.end()) {
+            /*
+             * No reference here, to prevent dangling reference situation
+             * when job is re-cloned.
+             */
+            auto seenJob = seenIt->second.get();
+            // The key here is to strategically check the most important bits to reduce churn.
+            if (seenJob->flags.whole != job.flags.whole
+                    || (seenJob->items.size() != job.items.size())
+                    || (seenJob->general_refs.size() != job.general_refs.size())) {
+                seenIt->second = Job::JobUniquePtr(Job::cloneJobStruct(&job, true));
+            }
+        } else if (job.completion_timer != -1) {
+            // Restrict additions to seenJobs to jobs that we know have started.
+            seenJobs.emplace(job.id, Job::JobUniquePtr(Job::cloneJobStruct(&job, true)));
+        }
+        /*
+         * We still need to push back all jobs to maintain the invariant of the
+         * algorithm used with prevJobs and nowJobs.
+         *
+         * Consider a list of job IDs from the job list, including those
+         * that haven't started:
+         * 1, 2, 3, 4, 5, 6, 7, 8, 9, 10
+         *
+         * We push back all jobs, including those that haven't started or have
+         * been assigned yet. Jobs that haven't started or finished have a
+         * completion_timer of -1.
+         *
+         * If we don't push back all jobs to the vector, we could encounter
+         * this situation:
+         *
+         * prevJob IDs (jobs with completion_timer != -1):
+         * 2, 4, 8, 10
+         *
+         * nowJobs IDs (completion_timer != -1 or had completion_timer != -1):
+         * 1, 2, 4, 8, 10
+         *
+         * In this case, Job with ID 1 has started after jobs 2, 4, 8, and 10.
+         * But, nowJobs is not greater than or equal to prevJobs because the ID
+         * 1 in nowJobs is less than the smallest ID in prevJobs,
+         * which breaks the algorithm.
+         */
+        nowJobs.emplace_back(job.id, job.completion_timer, (bool)job.flags.bits.repeat);
     }
+
+    // Do we want this check?
+    //assert(std::is_sorted(nowJobs.begin(), nowJobs.end()));
+
+    // uncomment if bay12 changes things to make job IDs not be in ascending order.
+    //std::ranges::sort(nowJobs, {}, &JobCompleteData::id);
 
 #if 0
     //testing info on job initiation/completion
@@ -597,57 +651,72 @@ static void manageJobCompletedEvent(color_ostream& out) {
     }
 #endif
 
-    for (auto &prevJob : prevJobs) {
-        //if it happened within a tick, must have been cancelled by the user or a plugin: not completed
-        if ( tick1 <= tick0 )
-            continue;
-
-        if ( nowJobs.find(prevJob.first) != nowJobs.end() ) {
-            //could have just finished if it's a repeat job
-            df::job& job0 = *prevJob.second;
-            if ( !job0.flags.bits.repeat )
-                continue;
-            df::job& job1 = *nowJobs[prevJob.first];
-            if ( job0.completion_timer != 0 )
-                continue;
-            if ( job1.completion_timer != -1 )
-                continue;
-
-            //still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
-            for (auto &[_,handle] : copy) {
-                DEBUG(log,out).print("calling handler for repeated job completed event\n");
-                run_handler(out, EventType::JOB_COMPLETED, handle, (void*) &job0);
+    auto prevIt = prevJobs.begin();
+    auto nowIt = nowJobs.begin();
+    /*
+     * Iterate through two ordered sets, prevJobs and nowJobs, where job IDs in nowJobs are invariably
+     * greater than or equal to job IDs in prevJobs. The algorithm maintains the invariant that for each
+     * iteration nowIt is within valid range (not equal to nowJobs.end()), and prevIt->id is less than
+     * or equal to nowIt->id. Entries in nowJobs that are not found in prevJobs have IDs greater
+     * than any in prevJobs.
+     */
+    while (prevIt != prevJobs.end()) {
+        auto& prevJob = *prevIt;
+        if (nowIt == nowJobs.end() || prevJob.id != nowIt->id) { // job ID is in prevJobs. ID does not exist in nowJobs.
+            // recently finished or cancelled job
+            if (!prevJob.flags_bits_repeat && prevJob.completion_timer == 0) {
+                // It should be in seenJobs.
+                auto seenIt = seenJobs.find(prevJob.id);
+                if (seenIt != seenJobs.end()) {
+                    df::job& seenJob = *seenIt->second;
+                    for (auto& [_, handle] : copy) {
+                        DEBUG(log, out).print("calling handler for job completed event\n");
+                        run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
+                    }
+                    seenJobs.erase(prevJob.id);
+                }
             }
-            continue;
+        } else { // prevIt job ID and nowIt job ID are equal.
+            // could have just finished if it's a repeat job
+            if (prevJob.flags_bits_repeat && prevJob.completion_timer == 0
+                    && nowIt->completion_timer == -1) {
+                // It should be in seenJobs.
+                auto seenIt = seenJobs.find(prevJob.id);
+                if (seenIt != seenJobs.end()) {
+                    df::job& seenJob = *seenIt->second;
+                    // still false positive if cancelled at EXACTLY the right time, but experiments show this doesn't happen
+                    for (auto& [_, handle] : copy) {
+                        DEBUG(log, out).print("calling handler for repeated job completed event\n");
+                        run_handler(out, EventType::JOB_COMPLETED, handle, (void*)&seenJob);
+                    }
+                }
+            }
+            // prevIt has caught up to nowIt.
+            ++nowIt;
         }
+        ++prevIt;
+    }
 
-        //recently finished or cancelled job
-        df::job& job0 = *prevJob.second;
-        if ( job0.flags.bits.repeat || job0.completion_timer != 0 )
-            continue;
-
-        for (auto &[_,handle] : copy) {
-            DEBUG(log,out).print("calling handler for job completed event\n");
-            run_handler(out, EventType::JOB_COMPLETED, handle, (void*) &job0);
+    /*
+     * Clean up garbage, if any.
+     * Jobs may be missed if tick delta > zero,
+     * and possibly other circumstances.
+     * To prevent leaking memory, we need to cleanup
+     * these missed jobs.
+     */
+    if (seenJobs.size() > nowJobs.size() * 2) {
+        std::unordered_map<int32_t, Job::JobUniquePtr> newMap;
+        newMap.reserve(nowJobs.size());
+        for (auto& data : nowJobs) {
+            auto it = seenJobs.find(data.id);
+            if (it != seenJobs.end()) {
+                newMap.emplace(std::move(*it));
+            }
         }
+        seenJobs.swap(newMap);
     }
 
-    //erase old jobs, copy over possibly altered jobs
-    for (auto &[_,prev_job] : prevJobs) {
-        Job::deleteJobStruct(prev_job, true);
-    }
-    prevJobs.clear();
-
-    //create new jobs
-    for (auto &[_,now_job] : nowJobs) {
-        /*map<int32_t, df::job*>::iterator i = prevJobs.find((*j).first);
-        if ( i != prevJobs.end() ) {
-            continue;
-        }*/
-
-        df::job* newJob = Job::cloneJobStruct(now_job, true);
-        prevJobs.emplace(newJob->id, newJob);
-    }
+    prevJobs = std::move(nowJobs);
 }
 
 static void manageNewUnitActiveEvent(color_ostream& out) {
@@ -655,20 +724,22 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
         return;
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
-    // iterate event handler callbacks
-    vector<int32_t> new_active_unit_ids;
+    unordered_set<int32_t> next_activeUnits;
+    vector<int32_t> newly_active_unit_ids;
     for (df::unit* unit : df::global::world->units.active) {
-        if (!activeUnits.count(unit->id)) {
-            activeUnits.emplace(unit->id);
-            new_active_unit_ids.emplace_back(unit->id);
-        }
+        if (!Units::isActive(unit))
+            continue;
+        next_activeUnits.emplace(unit->id);
+        if (!activeUnits.count(unit->id))
+            newly_active_unit_ids.emplace_back(unit->id);
     }
-    for (int32_t unit_id : new_active_unit_ids) {
+    for (int32_t unit_id : newly_active_unit_ids) {
         for (auto &[_,handle] : copy) {
             DEBUG(log,out).print("calling handler for new unit event\n");
             run_handler(out, EventType::UNIT_NEW_ACTIVE, handle, (void*) intptr_t(unit_id)); // intptr_t() avoids cast from smaller type warning
         }
     }
+    activeUnits = std::move(next_activeUnits);
 }
 
 

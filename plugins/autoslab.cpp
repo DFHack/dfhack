@@ -9,12 +9,11 @@
  *                   whose remains are unreachable.
  */
 
-#include "Core.h"
 #include "Debug.h"
 #include "PluginManager.h"
 
 #include "modules/Persistence.h"
-#include "modules/Translation.h"
+#include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/historical_figure.h"
@@ -126,8 +125,7 @@ static const int32_t CYCLE_TICKS = 1289;
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    CoreSuspender suspend;
-    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_cycle(out);
     return CR_OK;
 }
@@ -175,8 +173,8 @@ static void checkslabs(color_ostream &out)
             )
         {
             createSlabJob(ghost);
-            auto fullName = Translation::TranslateName(&ghost->name, false);
-            out.print("Added slab order for ghost %s\n", fullName.c_str());
+            auto fullName = Units::getReadableName(ghost);
+            out.print("Added slab order for %s\n", DF2CONSOLE(fullName).c_str());
         }
     }
 }

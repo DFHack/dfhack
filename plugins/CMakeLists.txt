@@ -5,20 +5,6 @@ if(BUILD_STONESENSE)
     add_subdirectory(stonesense)
 endif()
 
-option(BUILD_ISOWORLD "Build isoworld (needs a checkout first)." OFF)
-if(BUILD_ISOWORLD)
-    #add_subdirectory(isoworld)
-    if(UNIX)
-        if(APPLE)
-            # TODO: add an OSX runner script
-        else()
-        # On linux, copy our version of the df launch script which sets LD_PRELOAD
-        install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/runisoworld
-            DESTINATION .)
-        endif()
-    endif()
-endif()
-
 option(BUILD_DEV_PLUGINS "Build developer plugins." OFF)
 if(BUILD_DEV_PLUGINS)
     add_subdirectory(devel)
@@ -36,44 +22,15 @@ if(INSTALL_DATA_FILES)
         FILES_MATCHING PATTERN "*.diff")
 endif()
 
-# Protobuf
-file(GLOB PROJECT_PROTOS ${CMAKE_CURRENT_SOURCE_DIR}/proto/*.proto)
-
-string(REPLACE ".proto" ".pb.cc" PROJECT_PROTO_SRCS "${PROJECT_PROTOS}")
-string(REPLACE ".proto" ".pb.h" PROJECT_PROTO_HDRS "${PROJECT_PROTOS}")
-string(REPLACE "/proto/" "/proto/tmp/" PROJECT_PROTO_TMP_FILES "${PROJECT_PROTO_SRCS};${PROJECT_PROTO_HDRS}")
-set_source_files_properties(${PROJECT_PROTO_SRCS} ${PROJECT_PROTO_HDRS}
-    PROPERTIES GENERATED TRUE)
-
-# Force a re-gen if any *.pb.* files are missing
-# (only runs when cmake is run, but better than nothing)
-foreach(file IN LISTS PROJECT_PROTO_SRCS PROJECT_PROTO_HDRS)
-    if(NOT EXISTS ${file})
-        # message("Resetting generate_proto because '${file}' is missing")
-        file(REMOVE ${PROJECT_PROTO_TMP_FILES})
-        break()
-    endif()
-endforeach()
-
-add_custom_command(
-    OUTPUT ${PROJECT_PROTO_TMP_FILES}
-    COMMAND protoc-bin -I=${dfhack_SOURCE_DIR}/library/proto/
-                       -I=${CMAKE_CURRENT_SOURCE_DIR}/proto/
-            --cpp_out=${CMAKE_CURRENT_SOURCE_DIR}/proto/tmp/
-            ${PROJECT_PROTOS}
-    COMMAND ${PERL_EXECUTABLE} ${dfhack_SOURCE_DIR}/depends/copy-if-different.pl
-            ${PROJECT_PROTO_TMP_FILES}
-            ${CMAKE_CURRENT_SOURCE_DIR}/proto/
-    COMMENT "Generating plugin protobufs"
-    DEPENDS protoc-bin ${PROJECT_PROTOS}
-)
-add_custom_target(generate_proto DEPENDS ${PROJECT_PROTO_TMP_FILES})
-
 set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 
 # Plugins
 # If you are adding a plugin that you do not intend to commit to the DFHack repo,
 # see instructions for adding "external" plugins at the end of this file.
+
+# Example plugin that uses protobufs
+# proto file must be in the proto/ folder
+# dfhack_plugin(rename rename.cpp LINK_LIBRARIES lua PROTOBUFS rename)
 
 option(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if(BUILD_SUPPORTED)
@@ -115,18 +72,16 @@ if(BUILD_SUPPORTED)
     #add_subdirectory(embark-assistant)
     dfhack_plugin(eventful eventful.cpp LINK_LIBRARIES lua)
     dfhack_plugin(fastdwarf fastdwarf.cpp)
-    dfhack_plugin(faststart faststart.cpp)
     dfhack_plugin(filltraffic filltraffic.cpp)
     dfhack_plugin(fix-occupancy fix-occupancy.cpp LINK_LIBRARIES lua)
     #dfhack_plugin(fixveins fixveins.cpp)
     dfhack_plugin(flows flows.cpp)
     #dfhack_plugin(follow follow.cpp)
-    #dfhack_plugin(forceequip forceequip.cpp)
+    dfhack_plugin(forceequip forceequip.cpp)
     #dfhack_plugin(generated-creature-renamer generated-creature-renamer.cpp)
     dfhack_plugin(getplants getplants.cpp)
     dfhack_plugin(hotkeys hotkeys.cpp LINK_LIBRARIES lua)
-    #dfhack_plugin(infiniteSky infiniteSky.cpp)
-    #dfhack_plugin(isoworldremote isoworldremote.cpp PROTOBUFS isoworldremote)
+    dfhack_plugin(infinite-sky infinite-sky.cpp LINK_LIBRARIES lua)
     #dfhack_plugin(jobutils jobutils.cpp)
     dfhack_plugin(lair lair.cpp)
     dfhack_plugin(liquids liquids.cpp Brushes.h LINK_LIBRARIES lua)
@@ -142,13 +97,13 @@ if(BUILD_SUPPORTED)
     dfhack_plugin(pathable pathable.cpp LINK_LIBRARIES lua)
     dfhack_plugin(pet-uncapper pet-uncapper.cpp)
     dfhack_plugin(plant plant.cpp LINK_LIBRARIES lua)
+    dfhack_plugin(preserve-rooms preserve-rooms.cpp LINK_LIBRARIES lua)
     dfhack_plugin(preserve-tombs preserve-tombs.cpp)
     dfhack_plugin(probe probe.cpp LINK_LIBRARIES lua)
     dfhack_plugin(prospector prospector.cpp LINK_LIBRARIES lua)
     #dfhack_plugin(power-meter power-meter.cpp LINK_LIBRARIES lua)
     dfhack_plugin(regrass regrass.cpp LINK_LIBRARIES lua)
     add_subdirectory(remotefortressreader)
-    #dfhack_plugin(rename rename.cpp LINK_LIBRARIES lua PROTOBUFS rename)
     #add_subdirectory(rendermax)
     dfhack_plugin(reveal reveal.cpp LINK_LIBRARIES lua)
     dfhack_plugin(seedwatch seedwatch.cpp LINK_LIBRARIES lua)
@@ -164,6 +119,7 @@ if(BUILD_SUPPORTED)
     dfhack_plugin(suspendmanager suspendmanager.cpp COMPILE_FLAGS_GCC -fno-gnu-unique LINK_LIBRARIES lua)
     dfhack_plugin(tailor tailor.cpp LINK_LIBRARIES lua)
     dfhack_plugin(tiletypes tiletypes.cpp Brushes.h LINK_LIBRARIES lua)
+    dfhack_plugin(timestream timestream.cpp LINK_LIBRARIES lua)
     #dfhack_plugin(title-folder title-folder.cpp)
     dfhack_plugin(tubefill tubefill.cpp)
     add_subdirectory(tweak)

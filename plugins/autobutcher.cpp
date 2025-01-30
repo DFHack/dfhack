@@ -4,10 +4,10 @@
 // config for autobutcher (state and sleep setting) is saved the first time autobutcher is started
 // config for watchlist entries is saved when they are created or modified
 
-#include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/Persistence.h"
 #include "modules/Units.h"
@@ -17,6 +17,7 @@
 #include "df/building_civzonest.h"
 #include "df/creature_raw.h"
 #include "df/general_ref.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/world.h"
 
@@ -31,6 +32,7 @@ using namespace DFHack;
 DFHACK_PLUGIN("autobutcher");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 // logging levels can be dynamically controlled with the `debugfilter` command.
@@ -89,7 +91,9 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
-        if (enable)
+        // don't autorun cycle on first frame of fortress so we don't mark animals for butchering before
+        // all initial configuration has been applied
+        if (enable && plotinfo->fortress_age > 0)
             autobutcher_cycle(out);
     } else {
         DEBUG(control,out).print("%s from the API, but already %s; no action\n",
@@ -146,7 +150,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         autobutcher_cycle(out);
     return CR_OK;
 }
@@ -213,22 +217,22 @@ static void doMarkForSlaughter(df::unit *unit) {
     unit->flags2.bits.slaughter = 1;
 }
 
-// returns true if a should be butchered before b
+// returns true if b should be butchered before a
 static bool compareKids(df::unit *a, df::unit *b) {
     if (isHighPriority(a) != isHighPriority(b))
-        return isHighPriority(a);
+        return isHighPriority(b);
     if (Units::isDomesticated(a) != Units::isDomesticated(b))
-        return Units::isDomesticated(b);
-    return Units::getAge(a, true) < Units::getAge(b, true);
+        return Units::isDomesticated(a);
+    return Units::getAge(a, true) > Units::getAge(b, true);
 }
 
-// returns true if a should be butchered before b
+// returns true if b should be butchered before a
 static bool compareAdults(df::unit* a, df::unit* b) {
     if (isHighPriority(a) != isHighPriority(b))
-        return isHighPriority(a);
+        return isHighPriority(b);
     if (Units::isDomesticated(a) != Units::isDomesticated(b))
-        return Units::isDomesticated(b);
-    return Units::getAge(a, true) > Units::getAge(b, true);
+        return Units::isDomesticated(a);
+    return Units::getAge(a, true) < Units::getAge(b, true);
 }
 
 struct WatchedRace {
@@ -391,8 +395,6 @@ static void autobutcher_target(color_ostream &out, const autobutcher_options &op
 static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_options &opts);
 
 static command_result df_autobutcher(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

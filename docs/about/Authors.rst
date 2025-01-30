@@ -57,7 +57,7 @@ David Timm              dtimm
 Dean Golden             LightHardt
 Deon
 dhthwy                  dhthwy
-dikbut                  Tjudge1
+dikbutdagrate           Tjudge1
 Dmitrii Kurkin          Kurkin
 DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
@@ -102,6 +102,7 @@ Joel Meador             janxious
 John Beisley            huin
 John Cosker             johncosker
 John Shade              gsvslto
+Johnny Fisher           jfisher446              JohnnyWing
 Jonas Ask
 Jonathan Clark          AridTag
 Josh Cooper             cppcooper               coope
@@ -125,6 +126,7 @@ Matthew Cline
 Matthew Lindner         mlindner
 Matthew Taylor          ymber                   yutna
 Max                     maxthyme                Max^TM
+Maxim Verkhov           nibirubingus
 McArcady                McArcady
 melkor217               melkor217
 Meneth32
@@ -146,6 +148,7 @@ Myk Taylor              myk002
 Najeeb Al-Shabibi       master-spike
 napagokc                napagokc
 Neil Little             nmlittle
+Nicholas McDaniel       NicksWorld
 Nick Rart               nickrart                comestible
 Nicolas Ayala           nicolasayala
 Nik Nyby                nikolas
@@ -171,6 +174,8 @@ PopnROFL                PopnROFL
 potato
 ppaawwll                ppaawwll                🐇🐇🐇🐇
 Priit Laes              plaes
+Przemysław Skrobot      frogi16
+psychowico              wiktor-obrebski
 Putnam                  Putnam3145
 quarque2                quarque2
 Quietust                quietust                _Q
@@ -217,6 +222,7 @@ Silver                  silverflyone
 simon
 Simon Jackson           sizeak
 Simon Lees              simotek
+Squid Coder             realSquidCoder
 stolencatkarma
 Stoyan Gaydarov         sgayda2
 Su                      Moth-Tolias
@@ -249,6 +255,7 @@ Varnavskii Aleksandr    Crystalwarrior
 Vitaly Pronkin          pronvit                 mifki
 ViTuRaS                 ViTuRaS
 Vjek                    vjek
+Vladimir Florov         foxxelias
 Warmist                 warmist
 Wes Malone              wesQ3
 Will H                  TSM-EVO

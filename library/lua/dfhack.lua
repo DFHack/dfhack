@@ -618,6 +618,15 @@ function string:trim()
     return self:match('^%s*(.-)%s*$')
 end
 
+local function insert_wrapped_line(wrapped_text, words, opts)
+    local wrapped_line = table.concat(words, '')
+    if not opts.keep_trailing_spaces then
+        local content, eol = wrapped_line:match('(.-)%s*(\n?)$')
+        wrapped_line = content .. eol
+    end
+    table.insert(wrapped_text, wrapped_line)
+end
+
 local function wrap_word(word, width, wrapped_text, words, cur_line_len, opts)
     local word_len = #word
     -- word fits within the current line
@@ -632,21 +641,21 @@ local function wrap_word(word, width, wrapped_text, words, cur_line_len, opts)
         -- trimmed word fits on the current line and ends it
         if cur_line_len + #trimmed_word <= width then
             table.insert(words, trimmed_word)
-            table.insert(wrapped_text, table.concat(words, ''))
+            insert_wrapped_line(wrapped_text, words, opts)
             return {}, 0
         end
     end
     -- word needs to go on the next line, but is not itself longer
     -- than the specified width
     if word_len <= width then
-        table.insert(wrapped_text, table.concat(words, ''))
+        insert_wrapped_line(wrapped_text, words, opts)
         return {word}, word_len
     end
     -- word is too long to fit on one line and needs to be split up
     local emitted_chars, trimmed_word_len = 0, #trimmed_word
     repeat
         if #words > 0 then
-            table.insert(wrapped_text, table.concat(words, ''))
+            insert_wrapped_line(wrapped_text, words, opts)
         end
         local word_frag = word:sub(emitted_chars + 1, emitted_chars + width)
         words, cur_line_len = {word_frag}, #word_frag
@@ -659,13 +668,13 @@ end
 ---@nodiscard
 ---@param self string
 ---@param width number
----@param opts {return_as_table:boolean, keep_trailing_spaces:boolean}
+---@param opts {return_as_table:boolean, keep_trailing_spaces:boolean, keep_original_newlines:boolean}
 ---@return string|string[]
 function string:wrap(width, opts)
     width, opts = width or 72, opts or {}
     if width <= 0 then error('expected width > 0; got: '..tostring(width)) end
     local wrapped_text = {}
-    for line in self:gmatch('[^\n]*') do
+    for line in self:gmatch('[^\n]*'..(opts.keep_original_newlines and '\n?' or '')) do
         local prespace = line:match('^(%s*)')
         local words, cur_line_len = {}, 0
         if #prespace > 0 then
@@ -674,7 +683,10 @@ function string:wrap(width, opts)
         for word in line:gmatch('%S+%s*') do
             words, cur_line_len = wrap_word(word, width, wrapped_text, words, cur_line_len, opts)
         end
-        table.insert(wrapped_text, table.concat(words, ''))
+        insert_wrapped_line(wrapped_text, words, opts)
+    end
+    if self:sub(#self) == '\n' then
+        table.insert(wrapped_text, '')
     end
     return opts.return_as_table and wrapped_text or table.concat(wrapped_text, '\n')
 end

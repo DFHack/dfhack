@@ -35,6 +35,7 @@ distribution.
 #include "modules/Job.h"
 #include "modules/Materials.h"
 #include "modules/Items.h"
+#include "modules/References.h"
 
 #include "df/building.h"
 #include "df/general_ref.h"
@@ -270,6 +271,18 @@ void DFHack::Job::printJobDetails(color_ostream &out, df::job *job)
         printItemDetails(out, job->job_items.elements[i], i);
 }
 
+bool Job::addGeneralRef(df::job *job, df::general_ref_type type, int32_t id)
+{
+    CHECK_NULL_POINTER(job)
+    auto ref = References::createGeneralRef(type);
+    if (!ref)
+        return false;
+    ref->setID(id);
+    job->general_refs.push_back(ref);
+    return true;
+}
+
+
 df::general_ref *Job::getGeneralRef(df::job *job, df::general_ref_type type)
 {
     CHECK_NULL_POINTER(job);
@@ -410,6 +423,24 @@ bool DFHack::Job::removeJob(df::job* job) {
     return true;
 }
 
+bool DFHack::Job::addWorker(df::job *job, df::unit *unit){
+    CHECK_NULL_POINTER(job);
+    CHECK_NULL_POINTER(unit);
+
+    if (unit->job.current_job)
+        return false;
+
+    if (job->posting_index != -1){
+        removePostings(job);
+    }
+
+    if (!addGeneralRef(job, general_ref_type::UNIT_WORKER, unit->id))
+        return false;
+    unit->job.current_job = job;
+    job->recheck_cntdn = 0;
+    return true;
+}
+
 bool DFHack::Job::removeWorker(df::job *job, int cooldown)
 {
     CHECK_NULL_POINTER(job);
@@ -493,18 +524,20 @@ bool DFHack::Job::removePostings(df::job *job, bool remove_all)
     {
         if (job->posting_index >= 0 && size_t(job->posting_index) < world->jobs.postings.size())
         {
-            world->jobs.postings[job->posting_index]->flags.bits.dead = true;
+            auto posting = world->jobs.postings[job->posting_index];
+            posting->flags.bits.dead = true;
+            posting->job = nullptr;
             removed = true;
         }
     }
     else
     {
-        for (auto it = world->jobs.postings.begin(); it != world->jobs.postings.end(); ++it)
+        for (auto posting : world->jobs.postings)
         {
-            if ((**it).job == job)
+            if (posting->job == job)
             {
-                (**it).job = NULL;
-                (**it).flags.bits.dead = true;
+                posting->flags.bits.dead = true;
+                posting->job = nullptr;
                 removed = true;
             }
         }

@@ -93,7 +93,9 @@ set_source_files_properties(${SRC_LIBLUA} PROPERTIES LANGUAGE CXX)
 list(APPEND SRC_LIBLUA ${HDR_LIBLUA})
 
 add_library(lua SHARED ${SRC_LIBLUA})
+set_target_properties(lua PROPERTIES OUTPUT_NAME lua53)
 target_link_libraries(lua ${LIBS})
+target_include_directories(lua INTERFACE ${CMAKE_CURRENT_SOURCE_DIR}/include)
 
 if(MSVC)
     # need no space to prevent /FI from being stripped: https://github.com/DFHack/dfhack/issues/1455

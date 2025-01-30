@@ -235,11 +235,11 @@ void DFHack::describeName(NameInfo *info, df::language_name *name)
     if (name->language >= 0)
         info->set_language_id(name->language);
 
-    std::string lname = Translation::TranslateName(name, false, true);
+    std::string lname = Translation::translateName(name, false, true);
     if (!lname.empty())
         info->set_last_name(DF2UTF(lname));
 
-    lname = Translation::TranslateName(name, true, true);
+    lname = Translation::translateName(name, true, true);
     if (!lname.empty())
         info->set_english_name(DF2UTF(lname));
 }
@@ -721,7 +721,9 @@ command_result CoreService::RunCommand(color_ostream &stream,
     for (int i = 0; i < in->arguments_size(); i++)
         args.push_back(in->arguments(i));
 
-    return Core::getInstance().runCommand(stream, cmd, args);
+    // disable try_autocomplete in runCommand so misspellings of kill-lua won't cause deadlocks
+    // this remote server connection could be the last chance for recovering from stuck Lua scripts
+    return Core::getInstance().runCommand(stream, cmd, args, true);
 }
 
 command_result CoreService::CoreSuspend(color_ostream &stream, const EmptyMessage*, IntMessage *cnt)
@@ -757,7 +759,7 @@ command_result CoreService::RunLua(color_ostream &stream,
                                    const dfproto::CoreRunLuaRequest *in,
                                    StringListMessage *out)
 {
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     LuaFunctionData data = { CR_FAILURE, in, out };
 
     lua_pushcfunction(L, doRunLuaFunction);

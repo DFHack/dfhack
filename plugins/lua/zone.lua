@@ -552,7 +552,7 @@ end
 
 local function get_unit_disposition(unit)
     local disposition = DISPOSITION.NONE
-    if dfhack.units.isInvader(unit) or dfhack.units.isOpposedToLife(unit) then
+    if dfhack.units.isDanger(unit) then
         disposition = DISPOSITION.HOSTILE
     elseif dfhack.units.isPet(unit) then
         disposition = DISPOSITION.PET
@@ -589,11 +589,16 @@ local function get_item_disposition(item)
 end
 
 local function is_assignable_unit(unit)
-    return dfhack.units.isActive(unit) and
-        ((dfhack.units.isAnimal(unit) and dfhack.units.isOwnCiv(unit)) or get_cage_ref(unit)) and
-        not dfhack.units.isDead(unit) and
-        not dfhack.units.isMerchant(unit) and
-        not dfhack.units.isForest(unit)
+    if not dfhack.units.isActive(unit) or dfhack.units.isDead(unit) then
+        return false
+    end
+    local caged = get_cage_ref(unit)
+    if dfhack.units.isAnimal(unit) then
+        return (dfhack.units.isOwnCiv(unit) or caged) and
+            not dfhack.units.isMerchant(unit) and
+            not dfhack.units.isForest(unit)
+    end
+    return caged
 end
 
 local function is_assignable_item(item)
@@ -620,7 +625,9 @@ function AssignAnimal:cache_choices()
     local bld_assignments = get_bld_assignments()
     local choices = {}
     for _, unit in ipairs(df.global.world.units.active) do
-        if not is_assignable_unit(unit) then goto continue end
+        if not get_general_ref(unit, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED) then
+            if not is_assignable_unit(unit) then goto continue end
+        end
         local raw = df.creature_raw.find(unit.race)
         local desc = dfhack.units.getReadableName(unit)
         if #unit.custom_profession > 0 then
@@ -791,7 +798,10 @@ function AssignAnimal:toggle_item_base(choice, target_value, bld_assignments)
         return target_value
     end
 
-    if self.initial_min_disposition ~= DISPOSITION.PET.value and choice.data.disposition == DISPOSITION.PET.value then
+    if self.initial_min_disposition ~= DISPOSITION.PET.value and
+        choice.data.disposition == DISPOSITION.PET.value and
+        choice.data.status ~= true_value
+    then
         return target_value
     end
 
@@ -1107,7 +1117,7 @@ local CAGE_STATUS = {
     ASSIGNED_HERE={label='Assigned here', value=1},
     PASTURED={label='In pasture', value=2},
     PITTED={label='In pit/pond', value=3},
-    RESTRAINED={label='On other chain', value=4},
+    RESTRAINED={label='On restraint', value=4},
     BUILT_CAGE={label='In built cage', value=5},
     ITEM_CAGE={label='In stockpiled cage', value=6},
     ROAMING={label='Roaming', value=7},
@@ -1135,9 +1145,6 @@ local function get_cage_status(unit_or_vermin, bld_assignments)
     end
     local built_chain = get_built_chain(unit_or_vermin)
     if built_chain then
-        if bld and bld == built_chain then
-            return CAGE_STATUS.ASSIGNED_HERE.value
-        end
         return CAGE_STATUS.RESTRAINED.value
     end
     local assigned_zone_ref = get_general_ref(unit_or_vermin, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED)
@@ -1201,8 +1208,9 @@ end
 local mi = df.global.game.main_interface
 
 local function location_details_is_on_top()
-    return not dfhack.gui.matchFocusString('dwarfmode/NameCreator') and
-        not dfhack.gui.matchFocusString('dwarfmode/UnitSelector')
+    local vs = dfhack.gui.getDFViewscreen(true)
+    return not dfhack.gui.matchFocusString('dwarfmode/NameCreator', vs) and
+        not dfhack.gui.matchFocusString('dwarfmode/UnitSelector', vs)
 end
 
 RetireLocationOverlay = defclass(RetireLocationOverlay, overlay.OverlayWidget)
@@ -1349,7 +1357,7 @@ AnimalActionsWidget.ATTRS {
     default_pos={x=-41,y=37},
     default_enabled=true,
     viewscreens='dwarfmode/ViewSheets/UNIT/Overview',
-    frame={w=25, h=6},
+    frame={w=25, h=8},
 }
 
 -- The above function already handles checking if valid unit
@@ -1417,6 +1425,14 @@ function AnimalActionsWidget:render(dc)
         self.subviews.geld_animal:setOption(dfhack.units.isMarkedForGelding(unit))
         self.subviews.adopt_animal:setOption(dfhack.units.isAvailableForAdoption(unit))
         self.subviews.tame_animal:setOption(dfhack.units.isMarkedForTraining(unit))
+
+        local frame = self.subviews.panel.frame
+        local t = unit.portrait_texpos > 0 and 2 or 0
+        if t ~= frame.t then
+            frame.t = t
+            frame.b = 2 - t
+            self:updateLayout()
+        end
     end
 
     AnimalActionsWidget.super.render(self, dc)
@@ -1425,6 +1441,8 @@ end
 function AnimalActionsWidget:init()
     self:addviews{
         widgets.Panel{
+            view_id='panel',
+            frame={t=0, b=2},
             frame_background=gui.CLEAR_PEN,
             frame_style=gui.FRAME_MEDIUM,
             visible=check_valid_unit,

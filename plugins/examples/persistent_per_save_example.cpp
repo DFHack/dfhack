@@ -5,7 +5,6 @@
 // should persist its state in the savegame and auto-re-enable itself when a
 // savegame that had this plugin enabled is loaded.
 
-#include "Core.h"
 #include "Debug.h"
 #include "PluginManager.h"
 
@@ -29,7 +28,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(world);
 
 // logging levels can be dynamically controlled with the `debugfilter` command.
-// the names "config" and "cycle" are arbitrary and are just used to categorize
+// the names "control" and "cycle" are arbitrary and are just used to categorize
 // your log messages.
 namespace DFHack {
     // for configuration-related logging
@@ -83,7 +82,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(config,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing %s\n", plugin_name);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -116,7 +115,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(config,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
 
     return CR_OK;
 }
@@ -127,7 +126,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 
     if (!config.isValid()) {
         DEBUG(config,out).print("no config found in this save; initializing\n");
-        config = World::AddPersistentData(CONFIG_KEY);
+        config = World::AddPersistentSiteData(CONFIG_KEY);
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         config.set_int(CONFIG_SOMETHING_ELSE, 6000);
     }
@@ -136,7 +135,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     // all the other state we can directly read/modify from the persistent
     // data structure.
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(config,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 
     // load other config elements, if applicable
@@ -155,7 +154,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(config,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -164,15 +163,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled && world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
+    if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_cycle(out);
     return CR_OK;
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    // be sure to suspend the core if any DF state is read or modified
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;

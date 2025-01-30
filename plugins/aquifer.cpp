@@ -1,6 +1,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/Maps.h"
@@ -33,8 +34,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded()) {
         out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
         return CR_FAILURE;

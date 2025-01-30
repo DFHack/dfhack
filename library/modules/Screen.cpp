@@ -979,10 +979,10 @@ df::viewscreen *dfhack_lua_viewscreen::get_pointer(lua_State *L, int idx, bool m
 
 bool dfhack_lua_viewscreen::safe_call_lua(int (*pf)(lua_State *), int args, int rvs)
 {
-    CoreSuspendClaimer suspend;
+    CoreSuspender suspend;
     color_ostream_proxy out(Core::getInstance().getConsole());
 
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     lua_pushcfunction(L, pf);
     if (args > 0) lua_insert(L, -args-1);
     lua_pushlightuserdata(L, this);
@@ -1184,7 +1184,7 @@ void dfhack_lua_viewscreen::logic()
 
     dfhack_viewscreen::logic();
 
-    lua_pushstring(Lua::Core::State, "onIdle");
+    lua_pushstring(DFHack::Core::getInstance().getLuaState(), "onIdle");
     safe_call_lua(do_notify, 1, 0);
 }
 
@@ -1199,7 +1199,7 @@ void dfhack_lua_viewscreen::help()
 {
     if (Screen::isDismissed(this)) return;
 
-    lua_pushstring(Lua::Core::State, "onHelp");
+    lua_pushstring(DFHack::Core::getInstance().getLuaState(), "onHelp");
     safe_call_lua(do_notify, 1, 0);
 }
 
@@ -1207,7 +1207,7 @@ void dfhack_lua_viewscreen::resize(int w, int h)
 {
     if (Screen::isDismissed(this)) return;
 
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     lua_pushstring(L, "onResize");
     lua_pushinteger(L, w);
     lua_pushinteger(L, h);
@@ -1218,77 +1218,66 @@ void dfhack_lua_viewscreen::feed(std::set<df::interface_key> *keys)
 {
     if (Screen::isDismissed(this)) return;
 
-    lua_pushlightuserdata(Lua::Core::State, keys);
+    lua_pushlightuserdata(DFHack::Core::getInstance().getLuaState(), keys);
     safe_call_lua(do_input, 1, 0);
     df::global::enabler->last_text_input[0] = '\0';
 }
 
 void dfhack_lua_viewscreen::onShow()
 {
-    lua_pushstring(Lua::Core::State, "onShow");
+    lua_pushstring(DFHack::Core::getInstance().getLuaState(), "onShow");
     safe_call_lua(do_notify, 1, 0);
 }
 
 void dfhack_lua_viewscreen::onDismiss()
 {
-    lua_pushstring(Lua::Core::State, "onDismiss");
+    lua_pushstring(DFHack::Core::getInstance().getLuaState(), "onDismiss");
     safe_call_lua(do_notify, 1, 0);
 }
 
-df::unit *dfhack_lua_viewscreen::getSelectedUnit()
+template<typename T>
+T* dfhack_lua_viewscreen::getSelected(const char* method_name)
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedUnit");
+    auto L = DFHack::Core::getInstance().getLuaState();
+    Lua::StackUnwinder frame(L);
+    lua_pushstring(L, method_name);
     safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::unit>(Lua::Core::State, -1);
+    return Lua::GetDFObject<T>(L, -1);
+}
+
+df::unit* dfhack_lua_viewscreen::getSelectedUnit()
+{
+    return getSelected<df::unit>("onGetSelectedUnit");
 }
 
 df::item *dfhack_lua_viewscreen::getSelectedItem()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedItem");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::item>(Lua::Core::State, -1);
+    return getSelected<df::item>("onGetSelectedItem");
 }
 
 df::job *dfhack_lua_viewscreen::getSelectedJob()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedJob");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::job>(Lua::Core::State, -1);
+    return getSelected<df::job>("onGetSelectedJob");
 }
 
 df::building *dfhack_lua_viewscreen::getSelectedBuilding()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedBuilding");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::building>(Lua::Core::State, -1);
+    return getSelected<df::building>("onGetSelectedBuilding");
 }
 
 df::building_stockpilest *dfhack_lua_viewscreen::getSelectedStockpile()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedStockpile");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::building_stockpilest>(Lua::Core::State, -1);
+    return getSelected<df::building_stockpilest>("onGetSelectedStockpile");
 }
 
 df::building_civzonest *dfhack_lua_viewscreen::getSelectedCivZone()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedCivZone");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::building_civzonest>(Lua::Core::State, -1);
+    return getSelected<df::building_civzonest>("onGetSelectedCivZone");
 }
 
 df::plant *dfhack_lua_viewscreen::getSelectedPlant()
 {
-    Lua::StackUnwinder frame(Lua::Core::State);
-    lua_pushstring(Lua::Core::State, "onGetSelectedPlant");
-    safe_call_lua(do_notify, 1, 1);
-    return Lua::GetDFObject<df::plant>(Lua::Core::State, -1);
+    return getSelected<df::plant>("onGetSelectedPlant");
 }
 
 #include "DataStaticsFields.inc"

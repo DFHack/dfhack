@@ -7,6 +7,10 @@
 
 #include <SDL_stdinc.h>
 
+#ifdef WIN32
+# include <regex>
+#endif
+
 namespace DFHack {
     DBG_DECLARE(core, dfsdl, DebugCategory::LINFO);
 }
@@ -18,16 +22,24 @@ using std::vector;
 static DFLibrary *g_sdl_handle = nullptr;
 static DFLibrary *g_sdl_image_handle = nullptr;
 static const vector<string> SDL_LIBS {
-    "SDL2.dll",
+#ifdef WIN32
+    "SDL2.dll"
+#elif defined(_DARWIN)
     "SDL.framework/Versions/A/SDL",
-    "SDL.framework/SDL",
+    "SDL.framework/SDL"
+#else
     "libSDL2-2.0.so.0"
+#endif
 };
 static const vector<string> SDL_IMAGE_LIBS {
-    "SDL2_image.dll",
+#ifdef WIN32
+    "SDL2_image.dll"
+#elif defined(_DARWIN)
     "SDL_image.framework/Versions/A/SDL_image",
-    "SDL_image.framework/SDL_image",
+    "SDL_image.framework/SDL_image"
+#else
     "libSDL2_image-2.0.so.0"
+#endif
 };
 
 SDL_Surface * (*g_IMG_Load)(const char *) = nullptr;
@@ -169,16 +181,32 @@ int DFSDL::DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const c
     return g_SDL_ShowSimpleMessageBox(flags, title, message, window);
 }
 
-DFHACK_EXPORT string DFHack::getClipboardTextCp437() {
-    if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
-        return "";
-    char *text = g_SDL_GetClipboardText();
-    // convert tabs to spaces so they don't get converted to '?'
-    for (char *c = text; *c; ++c) {
+// convert tabs to spaces so they don't get converted to '?'
+static char * tabs_to_spaces(char *str) {
+    for (char *c = str; *c; ++c) {
         if (*c == '\t')
             *c = ' ';
     }
-    string textcp437 = UTF2DF(text);
+    return str;
+}
+
+static string normalize_newlines(const string & str, bool to_spaces = false) {
+    string normalized_str = str;
+#ifdef WIN32
+    static const std::regex CRLF("\r\n");
+    normalized_str = std::regex_replace(normalized_str, CRLF, "\n");
+#endif
+    if (to_spaces)
+        std::replace(normalized_str.begin(), normalized_str.end(), '\n', ' ');
+
+    return normalized_str;
+}
+
+DFHACK_EXPORT string DFHack::getClipboardTextCp437() {
+    if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
+        return "";
+    char *text = tabs_to_spaces(g_SDL_GetClipboardText());
+    string textcp437 = UTF2DF(normalize_newlines(text, true));
     DFHack::DFSDL::DFSDL_free(text);
     return textcp437;
 }
@@ -188,14 +216,9 @@ DFHACK_EXPORT bool DFHack::getClipboardTextCp437Multiline(vector<string> * lines
 
     if (!g_sdl_handle || g_SDL_HasClipboardText() != SDL_TRUE)
         return false;
-    char *text = g_SDL_GetClipboardText();
-    // convert tabs to spaces so they don't get converted to '?'
-    for (char *c = text; *c; ++c) {
-        if (*c == '\t')
-            *c = ' ';
-    }
+    char *text = tabs_to_spaces(g_SDL_GetClipboardText());
     vector<string> utf8_lines;
-    split_string(&utf8_lines, text, "\n");
+    split_string(&utf8_lines, normalize_newlines(text), "\n");
     DFHack::DFSDL::DFSDL_free(text);
 
     for (auto utf8_line : utf8_lines)
@@ -218,8 +241,13 @@ DFHACK_EXPORT bool DFHack::setClipboardTextCp437Multiline(string text) {
     std::ostringstream str;
     for (size_t idx = 0; idx < lines.size(); ++idx) {
         str << DF2UTF(lines[idx]);
-        if (idx < lines.size() - 1)
+        if (idx < lines.size() - 1) {
+#ifdef WIN32
+            str << "\r\n";
+#else
             str << "\n";
+#endif
+        }
     }
     return 0 == DFHack::DFSDL::DFSDL_SetClipboardText(str.str().c_str());
 }

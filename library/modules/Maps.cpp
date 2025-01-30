@@ -70,6 +70,8 @@ distribution.
 #include <cstdlib>
 #include <iostream>
 
+using std::max;
+using std::min;
 using std::string;
 using std::vector;
 using namespace DFHack;
@@ -108,50 +110,67 @@ const char * DFHack::sa_feature(df::feature_type index)
 /*
  * Cuboid class fns
  */
-cuboid::cuboid(int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16_t z2)
-{
-    x_min = std::min(x1, x2);
-    x_max = std::max(x1, x2);
-    y_min = std::min(y1, y2);
-    y_max = std::max(y1, y2);
-    z_min = std::min(z1, z2);
-    z_max = std::max(z1, z2);
+cuboid::cuboid(int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16_t z2) {
+    x_min = min(x1, x2);
+    x_max = max(x1, x2);
+    y_min = min(y1, y2);
+    y_max = max(y1, y2);
+    z_min = min(z1, z2);
+    z_max = max(z1, z2);
 }
 
-cuboid::cuboid(int16_t x, int16_t y, int16_t z)
-{
+cuboid::cuboid(int16_t x, int16_t y, int16_t z) {
     x_min = x_max = x;
     y_min = y_max = y;
     z_min = z_max = z;
 }
 
-bool cuboid::isValid() const
-{
+cuboid::cuboid(const df::map_block *block) {
+    if (block) {
+        auto &pos = block->map_pos;
+        x_min = pos.x;
+        x_max = pos.x + 15;
+        y_min = pos.y;
+        y_max = pos.y + 15;
+        z_min = z_max = pos.z;
+    }
+}
+
+bool cuboid::isValid() const {
     return x_min >= 0 && y_min >= 0 && z_min >= 0 &&
         x_max >= x_min && y_max >= y_min && z_max >= z_min;
 }
 
-bool cuboid::clamp(bool block)
+cuboid cuboid::clamp(const cuboid &other)
 {
-    if (!Maps::IsValid() || x_min < 0 || y_min < 0 || z_min < 0 ||
-        x_max < 0 || y_max < 0 || z_max < 0)
-    {
-        return false;
+    if (isValid() && other.isValid()) {
+        x_min = max(x_min, other.x_min);
+        y_min = max(y_min, other.y_min);
+        z_min = max(z_min, other.z_min);
+        x_max = min(x_max, other.x_max);
+        y_max = min(y_max, other.y_max);
+        z_max = min(z_max, other.z_max);
+    }
+    else
+        clear();
+
+    return *this;
+}
+
+cuboid cuboid::clampMap(bool block)
+{
+    if (!Maps::IsValid() || !isValid()) {
+        clear();
+        return *this;
     }
 
-    int32_t xy_mult = block ? 1 : 16;
-    x_min = std::min(x_min, (int16_t)(world->map.x_count_block * xy_mult));
-    x_max = std::min(x_max, (int16_t)(world->map.x_count_block * xy_mult));
-    y_min = std::min(y_min, (int16_t)(world->map.y_count_block * xy_mult));
-    y_max = std::min(y_max, (int16_t)(world->map.y_count_block * xy_mult));
-    z_min = std::min(z_min, (int16_t)world->map.z_count_block);
-    z_max = std::min(z_max, (int16_t)world->map.z_count_block);
+    int32_t x, y, z;
+    if (block)
+        Maps::getSize(x, y, z);
+    else
+        Maps::getTileSize(x, y, z);
 
-    if (x_min > x_max) std::swap(x_min, x_max);
-    if (y_min > y_max) std::swap(y_min, y_max);
-    if (z_min > z_max) std::swap(z_min, z_max);
-
-    return true;
+    return clamp(cuboid(0, 0, 0, x-1, y-1, z-1));
 }
 
 bool cuboid::addPos(int16_t x, int16_t y, int16_t z)
@@ -171,23 +190,40 @@ bool cuboid::addPos(int16_t x, int16_t y, int16_t z)
     return true;
 }
 
-bool cuboid::containsPos(int16_t x, int16_t y, int16_t z) const
-{
+bool cuboid::containsPos(int16_t x, int16_t y, int16_t z) const {
     return x >= x_min && y >= y_min && z >= z_min &&
         x <= x_max && y <= y_max && z <= z_max;
 }
 
-void cuboid::forCoord(std::function<bool(df::coord)> fn)
+void cuboid::forCoord(std::function<bool(df::coord)> fn) const
 {
-    if (isValid()) // Only iterate if valid cuboid
+    if (isValid()) // Only iterate if valid cuboid.
         Maps::forCoord(fn, x_min, y_min, z_max, x_max, y_max, z_min);
+}
+
+void cuboid::forBlock(std::function<bool(df::map_block *, cuboid)> fn, bool ensure_block) const
+{
+    auto c = *this; // Create a copy to modify.
+    if (!c.clampMap().isValid()) // No intersection.
+        return;
+
+    // Process z, y, then x.
+    for (int16_t x = (c.x_min >> 4) << 4; x <= c.x_max; x += 16)
+        for (int16_t y = (c.y_min >> 4) << 4; y <= c.y_max; y += 16)
+            for (int16_t z = c.z_max; z >= c.z_min; z--)
+            {
+                auto *block = ensure_block ? Maps::ensureTileBlock(x, y, z) : Maps::getTileBlock(x, y, z);
+                if (!block) // Skip unallocated block.
+                    continue;
+                else if (!fn(block, cuboid(block).clamp(c)))
+                    return; // Break iterator.
+            }
 }
 
 /*
  * The Maps module
  */
-bool Maps::IsValid ()
-{
+bool Maps::IsValid() {
     return (world->map.block_index != NULL);
 }
 
@@ -198,12 +234,12 @@ void Maps::forCoord(std::function<bool(df::coord)> fn, int16_t x1, int16_t y1, i
     int16_t dy = y1 > y2 ? -1 : 1;
     int16_t dz = z1 > z2 ? -1 : 1;
 
-    // Process z, y, then x
+    // Process z, y, then x.
     for (int16_t x = x1; x != x2 + dx; x += dx)
         for (int16_t y = y1; y != y2 + dy; y += dy)
             for (int16_t z = z1; z != z2 + dz; z += dz)
                 if (!fn(df::coord(x, y, z)))
-                    return;
+                    return; // Break iterator.
 }
 
 // getter for map size in blocks
@@ -423,7 +459,7 @@ df::flow_info *Maps::spawnFlow(df::coord pos, df::flow_type type, int mat_type, 
     flow->type = type;
     flow->mat_type = mat_type;
     flow->mat_index = mat_index;
-    flow->density = std::min(100, density);
+    flow->density = min(100, density);
     flow->pos = pos;
 
     block->flows.push_back(flow);
@@ -877,25 +913,25 @@ df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
     {
         if (plant->pos.x == x && plant->pos.y == y && plant->pos.z == z)
             return plant;
-
-        auto &t = plant->tree_info;
-        if (!t)
+        else if (!plant->tree_info)
             continue;
 
-        int32_t x_index = (t->dim_x / 2) - (plant->pos.x % 48) + (x % 48);
-        int32_t y_index = (t->dim_y / 2) - (plant->pos.y % 48) + (y % 48);
-        int32_t z_dis = z - plant->pos.z;
-        if (x_index < 0 || x_index >= t->dim_x || y_index < 0 || y_index >= t->dim_y || z_dis >= t->body_height)
+        auto &t = *(plant->tree_info);
+        // Trees never cross MLT borders
+        int x_index = (t.dim_x / 2) - (plant->pos.x % 48) + (x % 48);
+        int y_index = (t.dim_y / 2) - (plant->pos.y % 48) + (y % 48);
+        int z_dis = z - plant->pos.z;
+        if (x_index < 0 || x_index >= t.dim_x || y_index < 0 || y_index >= t.dim_y || z_dis >= t.body_height)
             continue;
 
         if (z_dis < 0)
         {
-            if (z_dis < -(t->roots_depth))
+            if (z_dis < -(t.roots_depth))
                 continue;
-            else if ((t->roots[-1 - z_dis][x_index + y_index * t->dim_x].whole & 0x7F) != 0) // Any non-blocked tree_tile
+            else if ((t.roots[-1 - z_dis][x_index + y_index * t.dim_x].whole & 0x7F) != 0) // Any non-blocked
                 return plant;
         }
-        else if ((t->body[z_dis][x_index + y_index * t->dim_x].whole & 0x7F) != 0)
+        else if ((t.body[z_dis][x_index + y_index * t.dim_x].whole & 0x7F) != 0) // Any non-blocked
             return plant;
     }
 
@@ -1130,45 +1166,33 @@ bool Maps::setTileAquifer(int32_t x, int32_t y, int32_t z, bool heavy) {
 }
 
 int Maps::setAreaAquifer(df::coord pos1, df::coord pos2, bool heavy, std::function<bool(df::coord, df::map_block *)> filter) {
-    df::coord minPos = df::coord(std::min(pos1.x, pos2.x), std::min(pos1.y, pos2.y), std::min(pos1.z, pos2.z));
-    df::coord maxPos = df::coord(std::max(pos1.x, pos2.x), std::max(pos1.y, pos2.y), std::max(pos1.z, pos2.z));
-
     int totalAffectedCount = 0;
+    cuboid bounds(pos1, pos2);
+
     // Loop through the affected blocks
-    for (int16_t z = minPos.z; z <= maxPos.z; z++) {
-        for (int16_t blockX = (minPos.x >> 4) << 4; blockX <= maxPos.x; blockX += 16) {
-            for (int16_t blockY = (minPos.y >> 4) << 4; blockY <= maxPos.y; blockY += 16) {
-                df::map_block *block = Maps::getTileBlock(blockX, blockY, z);
-                if (!block)
-                    continue;
-
-                int blockAffectedCount = 0;
-                int16_t startX = std::max(minPos.x - blockX, 0);
-                int16_t startY = std::max(minPos.y - blockY, 0);
-                int16_t endX = std::min(maxPos.x - blockX, 15);
-                int16_t endY = std::min(maxPos.y - blockY, 15);
-                // Loop through the affected tiles in the block
-                for (int16_t xOffset = startX; xOffset <= endX; xOffset++) {
-                    for (int16_t yOffset = startY; yOffset <= endY; yOffset++) {
-                        if (filter(df::coord(blockX + xOffset, blockY + yOffset, z), block)) {
-                            blockAffectedCount++;
-                            block->designation[xOffset][yOffset].bits.water_table = true;
-                            block->occupancy[xOffset][yOffset].bits.heavy_aquifer = heavy;
-                        }
-                    }
-                }
-
-                // If any tile was set to be an aquifer, update the block
-                if (blockAffectedCount > 0) {
-                    block->flags.bits.has_aquifer = true;
-                    block->flags.bits.check_aquifer = true;
-                    block->flags.bits.update_liquid = true;
-                    block->flags.bits.update_liquid_twice = true;
-                    totalAffectedCount += blockAffectedCount;
-                }
+    bounds.forBlock([&](df::map_block *block, cuboid intersect) {
+        int blockAffectedCount = 0;
+        // Loop through the affected tiles in the block
+        intersect.forCoord([&](df::coord pos) {
+            if (filter(pos, block)) {
+                blockAffectedCount++;
+                block->designation[pos.x&15][pos.y&15].bits.water_table = true;
+                block->occupancy[pos.x&15][pos.y&15].bits.heavy_aquifer = heavy;
             }
+            return true; // Keep iterating tiles
+        });
+
+        // If any tile was set to be an aquifer, update the block
+        if (blockAffectedCount > 0) {
+            block->flags.bits.has_aquifer = true;
+            block->flags.bits.check_aquifer = true;
+            block->flags.bits.update_liquid = true;
+            block->flags.bits.update_liquid_twice = true;
+            totalAffectedCount += blockAffectedCount;
         }
-    }
+
+        return true; // Keep iterating blocks
+    });
 
     return totalAffectedCount;
 }
@@ -1202,52 +1226,40 @@ bool Maps::removeTileAquifer(int32_t x, int32_t y, int32_t z) {
 }
 
 int Maps::removeAreaAquifer(df::coord pos1, df::coord pos2, std::function<bool(df::coord, df::map_block *)> filter) {
-    df::coord minPos = df::coord(std::min(pos1.x, pos2.x), std::min(pos1.y, pos2.y), std::min(pos1.z, pos2.z));
-    df::coord maxPos = df::coord(std::max(pos1.x, pos2.x), std::max(pos1.y, pos2.y), std::max(pos1.z, pos2.z));
-
     int totalAffectedCount = 0;
+    cuboid bounds(pos1, pos2);
+
     // Loop through the affected blocks
-    for (int16_t z = minPos.z; z <= maxPos.z; z++) {
-        for (int16_t blockX = (minPos.x >> 4) << 4; blockX <= maxPos.x; blockX += 16) {
-            for (int16_t blockY = (minPos.y >> 4) << 4; blockY <= maxPos.y; blockY += 16) {
-                df::map_block *block = Maps::getTileBlock(blockX, blockY, z);
-                if (!block)
-                    continue;
+    bounds.forBlock([&](df::map_block *block, cuboid intersect) {
+        int blockAffectedCount = 0;
+        int aquiferCount = 0;
+        cuboid block_bounds(block);
 
-                int blockAffectedCount = 0;
-                int aquiferCount = 0;
-                int16_t startX = std::max(minPos.x - blockX, 0);
-                int16_t startY = std::max(minPos.y - blockY, 0);
-                int16_t endX = std::min(maxPos.x - blockX, 15);
-                int16_t endY = std::min(maxPos.y - blockY, 15);
-                // Loop through all tiles in the block
-                for (int16_t xOffset = 0; xOffset <= 15; xOffset++) {
-                    for (int16_t yOffset = 0; yOffset <= 15; yOffset++) {
-                        df::tile_designation &des = block->designation[xOffset][yOffset];
-                        if (des.bits.water_table) {
-                            if (xOffset >= startX && yOffset >= startY && xOffset <= endX && yOffset <= endY
-                                && filter(df::coord(blockX + xOffset, blockY + yOffset, z), block)
-                            ) {
-                                blockAffectedCount++;
-                                des.bits.water_table = false;
-                                block->occupancy[xOffset][yOffset].bits.heavy_aquifer = false;
-                            }
-                            else {
-                                aquiferCount++;
-                            }
-                        }
-                    }
+        // Loop through all tiles in the block
+        block_bounds.forCoord([&](df::coord pos) {
+            auto &des = block->designation[pos.x&15][pos.y&15];
+            if (des.bits.water_table) {
+                if (intersect.containsPos(pos) && filter(pos, block)) {
+                    blockAffectedCount++;
+                    des.bits.water_table = false;
+                    block->occupancy[pos.x&15][pos.y&15].bits.heavy_aquifer = false;
                 }
-
-                // If none of the block's tiles are now aquifers, update the block
-                if (aquiferCount == 0) {
-                    block->flags.bits.has_aquifer = false;
-                    block->flags.bits.check_aquifer = false;
-                }
-                totalAffectedCount += blockAffectedCount;
+                else
+                    aquiferCount++;
             }
+
+            return true; // Keep iterating tiles
+        });
+
+        // If none of the block's tiles are now aquifers, update the block
+        if (aquiferCount == 0) {
+            block->flags.bits.has_aquifer = false;
+            block->flags.bits.check_aquifer = false;
         }
-    }
+        totalAffectedCount += blockAffectedCount;
+
+        return true; // Keep iterating blocks
+    });
 
     return totalAffectedCount;
 }

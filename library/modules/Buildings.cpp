@@ -63,6 +63,7 @@ distribution.
 #include "df/buildings_other_id.h"
 #include "df/d_init.h"
 #include "df/dfhack_room_quality_level.h"
+#include "df/gamest.h"
 #include "df/general_ref_building_holderst.h"
 #include "df/general_ref_contains_unitst.h"
 #include "df/item.h"
@@ -74,6 +75,7 @@ distribution.
 #include "df/tile_occupancy.h"
 #include "df/inorganic_raw.h"
 #include "df/plotinfost.h"
+#include "df/punishment.h"
 #include "df/squad.h"
 #include "df/unit.h"
 #include "df/unit_relationship_type.h"
@@ -175,24 +177,16 @@ void buildings_onUpdate(color_ostream &out)
 
 static void building_into_zone_unidir(df::building* bld, df::building_civzonest* zone)
 {
-    for (auto contained_building : zone->contained_buildings)
-    {
-        if (contained_building == bld)
-            return;
-    }
-
-    insert_into_vector(zone->contained_buildings, &df::building::id, bld);
+    if (linear_index(zone->contained_buildings, bld) >= 0)
+        return;
+    zone->contained_buildings.push_back(bld);
 }
 
 static void zone_into_building_unidir(df::building* bld, df::building_civzonest* zone)
 {
-    for (auto relation : bld->relations)
-    {
-        if (relation == zone)
-            return;
-    }
-
-    insert_into_vector(bld->relations, &df::building_civzonest::id, zone);
+    if (linear_index(bld->relations, zone) >= 0)
+        return;
+    bld->relations.push_back(zone);
 }
 
 static bool is_suitable_building_for_zoning(df::building* bld)
@@ -258,36 +252,9 @@ static void add_zone_to_all_buildings(df::building* zone_as_building)
     }
 }
 
-static void remove_building_from_zone(df::building* bld, df::building_civzonest* zone)
-{
-    for (int bid = 0; bid < (int)zone->contained_buildings.size(); bid++)
-    {
-        if (zone->contained_buildings[bid] == bld)
-        {
-            zone->contained_buildings.erase(zone->contained_buildings.begin() + bid);
-            bid--;
-        }
-    }
-
-    for (int bid = 0; bid < (int)bld->relations.size(); bid++)
-    {
-        if (bld->relations[bid] == zone)
-        {
-            bld->relations.erase(bld->relations.begin() + bid);
-            bid--;
-        }
-    }
-}
-
-static void remove_building_from_all_zones(df::building* bld)
-{
-    df::coord coord(bld->centerx, bld->centery, bld->z);
-
-    std::vector<df::building_civzonest*> cv;
-    Buildings::findCivzonesAt(&cv, coord);
-
-    for (auto zone : cv)
-        remove_building_from_zone(bld, zone);
+static void remove_building_from_zone(df::building* bld, df::building_civzonest* zone) {
+    vector_erase_at(zone->contained_buildings, linear_index(zone->contained_buildings, bld));
+    vector_erase_at(bld->relations, linear_index(bld->relations, zone));
 }
 
 static void remove_zone_from_all_buildings(df::building* zone_as_building)
@@ -300,8 +267,8 @@ static void remove_zone_from_all_buildings(df::building* zone_as_building)
     if (zone == nullptr)
         return;
 
-    //this is a paranoid check and slower than it could be. Zones contain a list of children
-    //good for fixing potentially bad game states when deleting a zone
+    // this is a paranoid check and slower than it could be. Zones contain a list of children
+    // good for fixing potentially bad game states when deleting a zone
     for (auto bld : world->buildings.other.IN_PLAY)
         remove_building_from_zone(bld, zone);
 }
@@ -309,24 +276,6 @@ static void remove_zone_from_all_buildings(df::building* zone_as_building)
 uint32_t Buildings::getNumBuildings()
 {
     return world->buildings.all.size();
-}
-
-bool Buildings::Read (const uint32_t index, t_building & building)
-{
-    df::building *bld = world->buildings.all[index];
-
-    building.x1 = bld->x1;
-    building.x2 = bld->x2;
-    building.y1 = bld->y1;
-    building.y2 = bld->y2;
-    building.z = bld->z;
-    building.material.index = bld->mat_index;
-    building.material.type = bld->mat_type;
-    building.type = bld->getType();
-    building.subtype = bld->getSubtype();
-    building.custom_type = bld->getCustomType();
-    building.origin = bld;
-    return true;
 }
 
 bool Buildings::ReadCustomWorkshopTypes(map <uint32_t, string> & btypes)
@@ -1019,14 +968,11 @@ static void markBuildingTiles(df::building *bld, bool remove)
     if (remove)
         stockpile = complete = false;
 
-    for (int tx = bld->x1; tx <= bld->x2; tx++)
-    {
-        for (int ty = bld->y1; ty <= bld->y2; ty++)
-        {
-            df::coord tile(tx,ty,bld->z);
+    for (int tx = bld->x1; tx <= bld->x2; tx++) {
+        for (int ty = bld->y1; ty <= bld->y2; ty++) {
+            df::coord tile(tx, ty, bld->z);
 
-            if (use_extents)
-            {
+            if (use_extents) {
                 df::building_extents_type *etile = getExtentTile(bld->room, tile);
                 if (!etile || !*etile)
                     continue;
@@ -1043,60 +989,20 @@ static void markBuildingTiles(df::building *bld, bool remove)
 
             if (complete)
                 bld->updateOccupancy(tx, ty);
-            else
-            {
+            else {
                 auto &occ = block->occupancy[btile.x][btile.y];
 
-                if (remove)
+                if (remove) {
                     occ.bits.building = tile_building_occ::None;
-                else
+                    block->flags.bits.update_liquid = true;
+                    block->flags.bits.update_liquid_twice = true;
+                }
+                else {
                     occ.bits.building = tile_building_occ::Planned;
+                }
             }
         }
     }
-}
-
-static void linkRooms(df::building *bld)
-{
-/* TODO: understand how this changes for v50
-    auto &vec = world->buildings.other[buildings_other_id::IN_PLAY];
-
-    bool changed = false;
-
-    for (size_t i = 0; i < vec.size(); i++)
-    {
-        auto room = vec[i];
-        if (!room->is_room || room->z != bld->z || room == bld)
-            continue;
-
-        df::building_extents_type *pext = getExtentTile(room->room, df::coord2d(bld->x1, bld->y1));
-        if (!pext || !*pext)
-            continue;
-
-        changed = true;
-        room->children.push_back(bld);
-        bld->parents.push_back(room);
-
-        // TODO: the game updates room rent here if economy is enabled
-    }
-
-    if (changed)
-        df::global::plotinfo->equipment.update.bits.buildings = true;
-*/
-}
-
-static void unlinkRooms(df::building *bld)
-{
-/* TODO: understand how this changes for v50
-    for (size_t i = 0; i < bld->parents.size(); i++)
-    {
-        auto parent = bld->parents[i];
-        int idx = linear_index(parent->children, bld);
-        vector_erase_at(parent->children, idx);
-    }
-
-    bld->parents.clear();
-*/
 }
 
 static void linkBuilding(df::building *bld)
@@ -1108,8 +1014,6 @@ static void linkBuilding(df::building *bld)
 
     if (bld->isSettingOccupancy())
         markBuildingTiles(bld, false);
-
-    linkRooms(bld);
 
     Job::checkBuildingsNow();
 }
@@ -1376,61 +1280,131 @@ static void on_civzone_delete(df::building_civzonest* civzone)
 
 bool Buildings::deconstruct(df::building *bld)
 {
-    using df::global::plotinfo;
-    using df::global::world;
+    using df::global::game;
     using df::global::ui_look_list;
 
     CHECK_NULL_POINTER(bld);
 
-    if (bld->isActual() && bld->getBuildStage() > 0)
-    {
+    if (bld->isActual() && bld->getBuildStage() > 0) {
+        if (markedForRemoval(bld)) {
+            // already queued for destruction
+            return false;
+        }
         bld->queueDestroy();
         return false;
     }
 
-    /* Immediate destruction code path.
-       Should only happen for abstract and unconstructed buildings.*/
+    // Immediate destruction code path.
+    // Should only happen for abstract and unconstructed buildings.
 
-    if (bld->isSettingOccupancy())
-    {
+    if (bld->flags.bits.almost_deleted)
+        return true;
+    bld->flags.bits.almost_deleted = true;
+
+    if (bld->isSettingOccupancy()) {
         markBuildingTiles(bld, true);
         bld->cleanupMap();
     }
 
-    bld->removeUses(false, false);
-    // Assume: no parties.
-    unlinkRooms(bld);
-    // Assume: not unit destroy target
-    int id = bld->id;
-    vector_erase_at(plotinfo->tax_collection.rooms, linear_index(plotinfo->tax_collection.rooms, id));
-    // Assume: not used in punishment
-    // Assume: not used in non-own jobs
-    // Assume: does not affect pathfinding
-    bld->deconstructItems(false, false, false);
-    // Don't clear arrows.
+    bool destitem = bld->isFarmPlot();
+    bool insanify = false;
+    bool is_from_damage = false;
 
+    bld->removeUses(destitem, insanify);
+
+    const df::building_type btype = bld->getType();
+    if (btype == df::building_type::Civzone) {
+        if (auto zone = strict_virtual_cast<df::building_civzonest>(bld))
+            on_civzone_delete(zone);
+    } else {
+        while (bld->relations.size())
+            remove_building_from_zone(bld, bld->relations[bld->relations.size() - 1]);
+    }
+
+    for (auto unit : world->units.active) {
+        if (unit->job.destroy_target == bld)
+            unit->job.destroy_target = NULL;
+    }
+
+    const int id = bld->id;
+    erase_from_vector(plotinfo->tax_collection.rooms, id);
+
+    for (auto punishment : plotinfo->punishments) {
+        if (punishment->chain == id)
+            punishment->chain = -1;
+    }
+
+    const bool interrupt_rest =
+        btype == df::building_type::TractionBench ||
+        btype == df::building_type::Bed;
+    const bool interrupt_link =
+        btype == df::building_type::Door ||
+        btype == df::building_type::Floodgate ||
+        btype == df::building_type::Bridge ||
+        btype == df::building_type::Trap ||
+        btype == df::building_type::Support ||
+        btype == df::building_type::Chain ||
+        btype == df::building_type::Cage ||
+        btype == df::building_type::Weapon ||
+        btype == df::building_type::Hatch ||
+        btype == df::building_type::GrateWall ||
+        btype == df::building_type::GrateFloor ||
+        btype == df::building_type::BarsVertical ||
+        btype == df::building_type::BarsFloor ||
+        btype == df::building_type::GearAssembly;
+    const bool interrupt_well =
+        btype == df::building_type::Well;
+
+    vector<df::job *> to_cancel;
+    const df::coord pos(bld->x1, bld->y1, bld->z);
+    for (auto job : world->jobs.list) {
+        const auto jtype = job->job_type;
+        if (interrupt_rest && jtype == df::job_type::Rest && job->pos == pos)
+            to_cancel.push_back(job);
+        if (interrupt_link && jtype == df::job_type::LinkBuildingToTrigger && Job::getHolder(job) == bld)
+            to_cancel.push_back(job);
+        if (interrupt_well && (jtype == df::job_type::Drink || jtype == df::job_type::CleanSelf || jtype == df::job_type::FillWaterskin) && job->pos == pos)
+            to_cancel.push_back(job);
+        if (!job->flags.bits.dessource && !job->flags.bits.special)
+            continue;
+        for (int idx = (int)job->general_refs.size()-1; idx > 0; --idx) {
+            auto gref = job->general_refs[idx];
+            if (gref->getBuilding() == bld) {
+                delete gref;
+                vector_erase_at(job->general_refs, idx);
+            }
+        }
+    }
+    for (auto job : to_cancel)
+        Job::removeJob(job);
+
+    if (btype == df::building_type::Bridge ||
+        btype == df::building_type::Door ||
+        btype == df::building_type::Floodgate ||
+        btype == df::building_type::Hatch ||
+        btype == df::building_type::GrateWall ||
+        btype == df::building_type::GrateFloor ||
+        btype == df::building_type::BarsVertical ||
+        btype == df::building_type::BarsFloor)
+    {
+        world->reindex_pathfinding = true;
+    }
+
+    if (btype == df::building_type::Bridge)
+        world->buildings.check_bridge_collapse = true;
+
+    if (bld->getMachineInfo())
+        world->buildings.check_machine_collapse = true;
+
+    bld->deconstructItems(destitem, insanify, is_from_damage);
     bld->uncategorize();
 
-    remove_building_from_all_zones(bld);
-
-    if (bld->getType() == df::building_type::Civzone)
-    {
-        auto zone = strict_virtual_cast<df::building_civzonest>(bld);
-
-        if (zone)
-            on_civzone_delete(zone);
-    }
+    if (world->selected_building == bld)
+        world->selected_building = NULL;
 
     delete bld;
 
-    if (world->selected_building == bld)
-    {
-        world->selected_building = NULL;
-        world->update_selected_building = true;
-    }
-
-    for (int i = ui_look_list->size()-1; i >= 0; --i)
-    {
+    for (int i = ui_look_list->size()-1; i >= 0; --i) {
         auto item = (*ui_look_list)[i];
         if (item->type == df::lookinfost::Building &&
             item->data.building.bld_id == id)
@@ -1440,6 +1414,7 @@ bool Buildings::deconstruct(df::building *bld)
         }
     }
 
+    game->minimap.mustmake = true;
     Job::checkBuildingsNow();
     Job::checkDesignationsNow();
 

@@ -38,6 +38,7 @@ distribution.
 namespace df {
     struct language_name;
     struct language_translation;
+    struct language_word_table;
 }
 
 namespace DFHack
@@ -56,8 +57,11 @@ DFHACK_EXPORT void setNickname(df::language_name *name, std::string nick);
 DFHACK_EXPORT std::string capitalize(const std::string &str, bool all_words = false);
 
 // translate a name using the loaded dictionaries
-DFHACK_EXPORT std::string TranslateName (const df::language_name * name, bool inEnglish = true,
+DFHACK_EXPORT std::string translateName (const df::language_name * name, bool inEnglish = false,
                                          bool onlyLastPart = false);
+
+DFHACK_EXPORT void generateName(df::language_name *name, int language_index, df::language_name_type nametype,
+    df::language_word_table *major_selector, df::language_word_table *minor_selector);
 }
 }
 #endif

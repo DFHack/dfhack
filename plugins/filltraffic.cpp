@@ -5,7 +5,6 @@
 #include <algorithm>    //for min().
 #include <map>
 #include <vector>
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -69,8 +68,6 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 
 command_result filltraffic(color_ostream &out, std::vector<std::string> & params)
 {
-    // HOTKEY COMMAND; CORE ALREADY SUSPENDED
-
     //Maximum map size.
     uint32_t x_max,y_max,z_max;
     //Source and target traffic types.
@@ -275,9 +272,6 @@ command_result restrictIce(color_ostream &out, std::vector<std::string> & params
 command_result setAllMatching(color_ostream &out, checkTile checkProc,
                               DFCoord minCoord, DFCoord maxCoord)
 {
-    //Initialization.
-    CoreSuspender suspend;
-
     if (!Maps::IsValid())
     {
         out.printerr("Map is not available!\n");

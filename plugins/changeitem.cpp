@@ -10,7 +10,6 @@
 #include <set>
 using namespace std;
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -84,8 +83,6 @@ command_result changeitem_execute(
 
 command_result df_changeitem(color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     bool here = false;
     bool info = false;
     bool force = false;

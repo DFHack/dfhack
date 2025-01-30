@@ -3,37 +3,38 @@
  */
 
 #include "DataFuncs.h"
-#include "PluginManager.h"
-#include "TileTypes.h"
-#include "LuaTools.h"
 #include "Debug.h"
+#include "LuaTools.h"
+#include "PluginManager.h"
+#include "PluginLua.h"
+#include "TileTypes.h"
 
 #include "modules/Buildings.h"
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
+#include "modules/Job.h"
 #include "modules/Maps.h"
 #include "modules/MapCache.h"
 #include "modules/Random.h"
 #include "modules/Units.h"
 #include "modules/World.h"
-#include "modules/EventManager.h"
-#include "modules/Job.h"
 
 #include "df/building.h"
 #include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/map_block.h"
+#include "df/plotinfost.h"
 #include "df/reaction_product_itemst.h"
 #include "df/tile_designation.h"
 #include "df/tile_occupancy.h"
-#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/vermin.h"
 #include "df/world.h"
 #include "df/world_site.h"
 
 #include <cinttypes>
-#include <unordered_set>
 #include <unordered_map>
+#include <unordered_set>
 
 DFHACK_PLUGIN("dig-now");
 REQUIRE_GLOBAL(plotinfo);
@@ -437,8 +438,6 @@ static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
     df::tiletype_material mat = tileMaterial(tt);
     switch (mat) {
     case df::tiletype_material::CONSTRUCTION:
-    case df::tiletype_material::POOL:
-    case df::tiletype_material::RIVER:
     case df::tiletype_material::TREE:
     case df::tiletype_material::ROOT:
     case df::tiletype_material::MAGMA:
@@ -981,11 +980,8 @@ static void post_process_dug_tiles(color_ostream &out,
                     }
                 }
                 if (!items.empty()) {
-                    // fresh MapCache since tile properties are being actively changed
-                    MapExtras::MapCache mc;
                     for (auto item : items)
-                        Items::moveToGround(mc, item, resting_pos);
-                    mc.WriteAll();
+                        Items::moveToGround(item, resting_pos);
                 }
             }
         }
@@ -998,7 +994,7 @@ static void post_process_dug_tiles(color_ostream &out,
 static bool get_options(color_ostream &out,
                         dig_now_options &opts,
                         const std::vector<std::string> &parameters) {
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, parameters.size() + 2) ||
@@ -1046,8 +1042,6 @@ bool dig_now_impl(color_ostream &out, const dig_now_options &options) {
 }
 
 command_result dig_now(color_ostream &out, std::vector<std::string> &params) {
-    CoreSuspender suspend;
-
     dig_now_options options;
     if (!get_options(out, options, params) || options.help)
         return CR_WRONG_USAGE;

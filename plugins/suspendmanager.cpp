@@ -1,7 +1,7 @@
-#include "Core.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/Buildings.h"
@@ -87,14 +87,18 @@ inline bool isExternalReason(Reason reason) {
 
 static string reasonToString(Reason reason) {
   switch (reason) {
-    case Reason::DEADEND:
-        return "Blocks another build job";
+    case Reason::UNDER_WATER:
+        return "Jobsite is submerged";
+    case Reason::BUILDINGPLAN:
+        return "Managed by buildingplan";
     case Reason::RISK_BLOCKING:
         return "May block another build job";
-    case Reason::UNSUPPORTED:
-        return "Would collapse immediately";
     case Reason::ERASE_DESIGNATION:
         return "Waiting for carve/smooth/engrave";
+    case Reason::DEADEND:
+        return "Blocks another build job";
+    case Reason::UNSUPPORTED:
+        return "Would collapse immediately";
     case Reason::ITEM_IN_JOB:
         return "Blocked by an unmovable item";
     default:
@@ -696,9 +700,8 @@ public:
         Reason reason;
 
 
-        for (auto job : df::global::world->jobs.list) {
-            if (!isConstructionJob(job)) continue;
-
+        for (auto job : df::global::world->jobs.list | std::views::filter(isConstructionJob))
+        {
             if (job->flags.bits.suspend && !suspensions.contains(job->id)) {
                 unsuspend(job); // suspended for no reason
                 ++num_unsuspend;
@@ -796,8 +799,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             EventManager::registerListener(EventManager::EventType::JOB_INITIATED, *eventhandler_instance);
             do_cycle(out);
         } else {
-            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
-            EventManager::unregister(EventManager::EventType::JOB_COMPLETED, *eventhandler_instance);
+            EventManager::unregisterAll(plugin_self);
         }
 
     } else {
@@ -853,16 +855,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (is_enabled &&
-       (cycle_needed || world->frame_counter - cycle_timestamp >= CYCLE_TICKS))
+    if (cycle_needed || world->frame_counter - cycle_timestamp >= CYCLE_TICKS)
         do_cycle(out);
     return CR_OK;
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    // be sure to suspend the core if any DF state is read or modified
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
@@ -909,7 +907,6 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 }
 
 static command_result do_unsuspend_command(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
     auto ok = Lua::CallLuaModuleFunction(out, "plugins.suspendmanager", "unsuspend_command", parameters);
     return ok ? CR_OK : CR_FAILURE;
 }

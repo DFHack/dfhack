@@ -4,16 +4,26 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0074 NEW)
-project(dfhack)
 
 # set up versioning.
-set(DF_VERSION "50.13")
-set(DFHACK_RELEASE "r3rc3")
-set(DFHACK_PRERELEASE TRUE)
+set(DF_VERSION "51.04")
+set(DFHACK_RELEASE "r1")
+set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 set(DFHACK_ABI_VERSION 2)
 set(DFHACK_BUILD_ID "" CACHE STRING "Build ID (should be specified on command line)")
+
+# set up ccache
+find_program(CCACHE_EXECUTABLE "ccache" HINTS /usr/local/bin /opt/local/bin)
+if(CCACHE_EXECUTABLE)
+    message(STATUS "using ccache")
+    set(CMAKE_CXX_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+    set(CMAKE_C_COMPILER_LAUNCHER "${CCACHE_EXECUTABLE}" CACHE PATH "ccache" FORCE)
+endif()
+
+# project must be declared *after* ccache setup
+project(dfhack)
 
 # Set up build types
 if(CMAKE_CONFIGURATION_TYPES)
@@ -56,7 +66,7 @@ endif()
 
 if(WIN32)
     set(MSVC_MIN_VER 1930)
-    set(MSVC_MAX_VER 1940)
+    set(MSVC_MAX_VER 1942)
     if(NOT MSVC)
         message(SEND_ERROR "No MSVC found! MSVC 2022 version ${MSVC_MIN_VER} to ${MSVC_MAX_VER} is required.")
     elseif((MSVC_VERSION LESS MSVC_MIN_VER) OR (MSVC_VERSION GREATER MSVC_MAX_VER))
@@ -88,10 +98,29 @@ if(MSVC)
     # see https://msdn.microsoft.com/en-us/library/074af4b6.aspx
     add_compile_options("/wd4503")
 
-    # suppress C4267 - VC++ complains whenever we implicitly convert an integer to
-    # a smaller type, and most of the time this is just conversion from 64 to 32 bits
-    # for things like vector sizes, which are never that big anyway.
+    # suppress C4267 - VC++ considers a narrowing conversion from size_t to a smaller
+    # integer type a warning. this is technically correct but there are so many instances
+    # of this that we don't want to fix, so....
     add_compile_options("/wd4267")
+
+    # suppress C4251 - VC++ will warn when exporting an entire class which contains members
+    # referencing unexported compound types as this is potentially unsafe. because we don't
+    # guarantee a stable ABI for exports, we don't really care about this, and so we choose to
+    # be lazy and continue to export entire classes instead of exporting on a method-by-method basis
+    add_compile_options("/wd4251")
+
+    # suppress C4068 - VC++ will warn for unknown pragmas by default. this is equivalent to gcc
+    # -Wno-unknown-pragmas (which is enabled for gcc below).
+    # we could work around this with sufficiently complex macros
+    add_compile_options("/wd4068")
+
+    # suppress C4244 - VC++ warns by default (with /W3) about narrowing conversions that may lose data
+    # (such as double -> int or int32_t -> int16_t). dfhack has many of these, mostly related to Lua
+    # this is equivalent to gcc -Wno_conversions which is the default as gcc -Wall doesn't enable -Wconversions
+    add_compile_options("/wd4244")
+
+    # Enable C5038 - This is equivalent to gcc's -Werror=reorder, which is enabled by default by gcc -Wall
+    add_compile_options("/w15038")
 
     # MSVC panics if an object file contains more than 65,279 sections. this
     # happens quite frequently with code that uses templates, such as vectors.
@@ -224,7 +253,7 @@ if(UNIX)
     # default to hidden symbols
     # ensure compatibility with older CPUs
     add_definitions(-DLINUX_BUILD)
-    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror -Wl,--disable-new-dtags")
+    set(GCC_COMMON_FLAGS "-fvisibility=hidden -mtune=generic -Wall -Werror -Wl,--disable-new-dtags -Wno-unknown-pragmas")
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${GCC_COMMON_FLAGS}")
     set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} ${GCC_COMMON_FLAGS}")
     if(DFHACK_BUILD_64)
@@ -242,6 +271,13 @@ elseif(MSVC)
     set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} /Od")
     string(REPLACE "/O2" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
     string(REPLACE "/DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
+
+    option(BUILD_PDBS "Build PDB debug symbol files." OFF)
+    if(BUILD_PDBS)
+        set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /Z7")
+        set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} /DEBUG")
+        set(CMAKE_MODULE_LINKER_FLAGS "${CMAKE_MODULE_LINKER_FLAGS} /DEBUG")
+    endif()
 endif()
 
 # use shared libraries for protobuf
@@ -284,14 +320,12 @@ else()
     endif()
 endif()
 find_package(ZLIB REQUIRED)
-include_directories(${ZLIB_INCLUDE_DIRS})
 
 set(USE_SYSTEM_SDL2 OFF CACHE BOOL "Set to ON to use the system SDL2 headers.")
 
 if(BUILD_LIBRARY)
     if(USE_SYSTEM_SDL2)
         find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
-        include_directories(${SDL2_INCLUDE_DIRS})
     else()
         # Download SDL release and extract into depends in the build dir
         # all we need are the header files (including generated headers), so the same release package
@@ -306,7 +340,7 @@ if(BUILD_LIBRARY)
             ${SDL_ZIP_MD5})
         file(ARCHIVE_EXTRACT INPUT ${SDL_ZIP_PATH}${SDL_ZIP_FILE}
             DESTINATION ${SDL_ZIP_PATH})
-        include_directories(${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
+        set(SDL2_INCLUDE_DIRS ${SDL_ZIP_PATH}/SDL2-${SDL_VERSION}/include)
     endif()
 endif()
 
@@ -368,10 +402,6 @@ endif()
 
 #### expose depends ####
 
-include_directories(depends/protobuf)
-include_directories(depends/lua/include)
-include_directories(depends/md5)
-
 # Support linking against external tinyxml
 # If we find an external tinyxml, set the DFHACK_TINYXML variable to "tinyxml"
 # Otherwise, set it to "dfhack-tinyxml"
@@ -383,13 +413,8 @@ if(EXTERNAL_TINYXML)
     endif()
     set(DFHACK_TINYXML "tinyxml")
 else()
-    include_directories(depends/tinyxml)
     set(DFHACK_TINYXML "dfhack-tinyxml")
 endif()
-
-include_directories(depends/lodepng)
-include_directories(depends/clsocket/src)
-include_directories(depends/xlsxio/include)
 
 if(BUILD_LIBRARY)
     add_subdirectory(depends)

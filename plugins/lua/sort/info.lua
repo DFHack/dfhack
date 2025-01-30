@@ -56,7 +56,8 @@ end
 
 -- get name in both dwarven and English
 local function get_artifact_search_key(artifact)
-    return ('%s %s'):format(dfhack.TranslateName(artifact.name), dfhack.TranslateName(artifact.name, true))
+    return ('%s %s'):format(dfhack.translation.translateName(artifact.name),
+        dfhack.translation.translateName(artifact.name, true))
 end
 
 local function work_details_search(vec, data, text, incremental)
@@ -749,7 +750,7 @@ local function filter_matches(unit, subset)
     elseif dfhack.units.isDead(unit) or not dfhack.units.isActive(unit) then
         return subset == 'deceased'
     elseif dfhack.units.isInvader(unit) or dfhack.units.isOpposedToLife(unit)
-        or unit.flags2.visitor_uninvited or unit.flags4.agitated_wilderness_creature
+        or unit.flags2.visitor_uninvited or dfhack.units.isAgitated(unit)
     then
         return subset == 'others'
     elseif dfhack.units.isVisiting(unit) then

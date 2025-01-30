@@ -1,8 +1,10 @@
 // Grow and remove shrubs or trees.
 
 #include "Debug.h"
+#include "Error.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 #include "TileTypes.h"
 
 #include "modules/Gui.h"
@@ -15,10 +17,13 @@
 #include "df/map_block_column.h"
 #include "df/plant.h"
 #include "df/plant_raw.h"
+#include "df/plant_root_tile.h"
+#include "df/plant_tree_info.h"
+#include "df/plant_tree_tile.h"
 #include "df/world.h"
 
-using std::vector;
 using std::string;
+using std::vector;
 using namespace DFHack;
 
 DFHACK_PLUGIN("plant");
@@ -147,7 +152,7 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
 
     auto des = Maps::getTileDesignation(pos);
     CHECK_NULL_POINTER(des);
-    if (des->bits.flow_size > (des->bits.liquid_type == tile_liquid::Magma ? 0 : 3))
+    if (des->bits.flow_size > (des->bits.liquid_type == tile_liquid::Magma ? 0U : 3U))
     {
         out.printerr("Can't create plant: Too much liquid!\n");
         return CR_FAILURE;
@@ -246,6 +251,48 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
     return CR_OK;
 }
 
+static bool plant_in_cuboid(const df::plant *plant, const cuboid &bounds)
+{   // Will detect tree tiles
+    if (bounds.containsPos(plant->pos))
+        return true;
+    else if (!plant->tree_info)
+        return false;
+
+    auto &pos = plant->pos;
+    auto &t = *(plant->tree_info);
+
+    // Northwest x/y pos of tree bounds
+    int x_NW = pos.x - (t.dim_x >> 1);
+    int y_NW = pos.y - (t.dim_y >> 1);
+
+    if (!cuboid(std::max(0, x_NW), std::max(0, y_NW), std::max(0, pos.z - t.roots_depth),
+        x_NW + t.dim_x, y_NW + t.dim_y, pos.z + t.body_height - 1).clamp(bounds).isValid())
+    {   // No intersection of tree bounds with cuboid
+        return false;
+    }
+
+    int xy_size = t.dim_x * t.dim_y;
+    // Iterate tree body
+    for (int z_idx = 0; z_idx < t.body_height; z_idx++)
+        for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
+            if ((t.body[z_idx][xy_idx].whole & 0x7F) != 0 && // Any non-blocked
+                bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z + z_idx))
+            {
+                return true;
+            }
+
+    // Iterate tree roots
+    for (int z_idx = 0; z_idx < t.roots_depth; z_idx++)
+        for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
+            if ((t.roots[z_idx][xy_idx].whole & 0x7F) != 0 && // Any non-blocked
+                bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z - z_idx - 1))
+            {
+                return true;
+            }
+
+    return false;
+}
+
 command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_options &options, vector<int32_t> *filter = nullptr)
 {
     if (!bounds.isValid())
@@ -267,7 +314,7 @@ command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_opt
     {
         if (ENUM_ATTR(plant_type, is_shrub, plant->type))
             continue; // Shrub
-        else if (!bounds.containsPos(plant->pos))
+        else if (!plant_in_cuboid(plant, bounds))
             continue; // Outside cuboid
         else if (do_filter && (vector_contains(*filter, (int32_t)plant->material) == options.filter_ex))
             continue; // Filtered out
@@ -414,7 +461,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
                 continue; // Not removing saplings
         }
 
-        if (!bounds.containsPos(plant.pos))
+        if (!plant_in_cuboid(&plant, bounds))
             continue; // Outside cuboid
         else if (do_filter && (vector_contains(*filter, (int32_t)plant.material) == options.filter_ex))
             continue; // Filtered out
@@ -482,8 +529,6 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
     df::coord pos_1, pos_2;
     vector<int32_t> filter; // Unsorted
 
-    CoreSuspender suspend;
-
     if (!Lua::CallLuaModuleFunction(out, "plugins.plant", "parse_commandline",
         std::make_tuple(&options, &pos_1, &pos_2, &filter, parameters)))
     {
@@ -507,7 +552,7 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
         return CR_WRONG_USAGE;
     }
 
-    bool by_type = options.shrubs || options.saplings || options.trees; // Remove invalid plants otherwise
+    bool by_type = options.shrubs || options.saplings || options.trees; // Remove only invalid plants otherwise
     if (!options.del && (by_type || options.dead))
     {   // Don't use remove options outside remove
         out.printerr("Can't use remove's options without remove!\n");

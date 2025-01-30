@@ -153,6 +153,13 @@ embark-tools
 Replaced by `gui/embark-anywhere`. Other functionality was replaced by the DF
 v50 UI.
 
+.. _faststart:
+
+faststart
+=========
+Sped up the initial DF load sequence. Removed since Bay 12 rewrote the startup
+sequence and it is now sufficiently fast on its own.
+
 .. _fix-armory:
 
 fix-armory
@@ -243,7 +250,7 @@ Replaced by `gui/sandbox`.
 
 gui/dig
 =======
-Renamed to gui/design
+Renamed to `gui/design`.
 
 .. _gui/hack-wish:
 
@@ -283,6 +290,12 @@ max-wave
 ========
 Set population cap based on parameters. Merged into `pop-control`.
 
+.. _modtools/force:
+
+modtools/force
+==============
+Merged into `force`.
+
 .. _mousequery:
 
 mousequery
@@ -300,6 +313,12 @@ Renamed to `pet-uncapper`.
 plants
 ======
 Renamed to `plant`.
+
+.. _rename:
+
+rename
+======
+Superseded by vanilla rename capabilities and `gui/rename`.
 
 .. _resume:
 

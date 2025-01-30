@@ -57,6 +57,7 @@ distribution.
 #include "df/interfacest.h"
 #include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/viewscreen_export_regionst.h"
 #include "df/viewscreen_game_cleanerst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
@@ -92,6 +93,7 @@ using namespace DFHack;
 using namespace df::enums;
 using df::global::init;
 using df::global::world;
+using std::string;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
@@ -111,30 +113,10 @@ public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
     //! thread exit.
     static CoreSuspenderBase& suspend() {
-        static thread_local CoreSuspenderBase lock(std::defer_lock);
+        static thread_local CoreSuspenderBase lock{};
         return lock;
     }
 };
-}
-
-CoreSuspendReleaseMain::CoreSuspendReleaseMain()
-{
-    MainThread::suspend().unlock();
-}
-
-CoreSuspendReleaseMain::~CoreSuspendReleaseMain()
-{
-    MainThread::suspend().lock();
-}
-
-CoreSuspendClaimMain::CoreSuspendClaimMain()
-{
-    MainThread::suspend().lock();
-}
-
-CoreSuspendClaimMain::~CoreSuspendClaimMain()
-{
-    MainThread::suspend().unlock();
 }
 
 struct Core::Private
@@ -154,13 +136,51 @@ void PerfCounters::reset(bool ignorePauseState) {
 }
 
 void PerfCounters::incCounter(uint32_t &counter, uint32_t baseline_ms) {
-    if (!ignore_pause_state && World::ReadPauseState())
+    if (!ignore_pause_state && (!World::isFortressMode() || World::ReadPauseState()))
         return;
     counter += Core::getInstance().p->getTickCount() - baseline_ms;
 }
 
 bool PerfCounters::getIgnorePauseState() {
     return ignore_pause_state;
+}
+
+void PerfCounters::registerTick(uint32_t baseline_ms) {
+    if (!World::isFortressMode() || World::ReadPauseState()) {
+        last_tick_baseline_ms = 0;
+        return;
+    }
+
+    // only update when the tick counter has advanced
+    if (!world || last_frame_counter == world->frame_counter)
+        return;
+    last_frame_counter = world->frame_counter;
+
+    if (last_tick_baseline_ms == 0) {
+        last_tick_baseline_ms = baseline_ms;
+        return;
+    }
+
+    uint32_t elapsed_ms = baseline_ms - last_tick_baseline_ms;
+    last_tick_baseline_ms = baseline_ms;
+
+    recent_ticks.head_idx = (recent_ticks.head_idx + 1) % RECENT_TICKS_HISTORY_SIZE;
+
+    if (recent_ticks.full)
+        recent_ticks.sum_ms -= recent_ticks.history[recent_ticks.head_idx];
+    else if (recent_ticks.head_idx == 0)
+        recent_ticks.full = true;
+
+    recent_ticks.history[recent_ticks.head_idx] = elapsed_ms;
+    recent_ticks.sum_ms += elapsed_ms;
+}
+
+uint32_t PerfCounters::getUnpausedFps() {
+    uint32_t seconds = recent_ticks.sum_ms / 1000;
+    if (seconds == 0)
+        return 0;
+    size_t num_frames = recent_ticks.full ? RECENT_TICKS_HISTORY_SIZE : recent_ticks.head_idx;
+    return num_frames / seconds;
 }
 
 struct CommandDepthCounter
@@ -326,7 +346,7 @@ static command_result runLuaScript(color_ostream &out, std::string name, std::ve
     data.pcmd = &name;
     data.pargs = &args;
 
-    bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_run_script, &data);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_run_script, &data);
 
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -350,7 +370,7 @@ static command_result enableLuaScript(color_ostream &out, std::string name, bool
     data.pcmd = &name;
     data.pstate = state;
 
-    bool ok = Lua::RunCoreQueryLoop(out, Lua::Core::State, init_enable_script, &data);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(), init_enable_script, &data);
 
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -379,7 +399,7 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
 
 bool is_builtin(color_ostream &con, const std::string &command) {
     CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -399,8 +419,15 @@ bool is_builtin(color_ostream &con, const std::string &command) {
 }
 
 void get_commands(color_ostream &con, std::vector<std::string> &commands) {
-    CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Cannot acquire core lock in helpdb.get_commands\n");
+        commands.clear();
+        return;
+    }
+
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -413,13 +440,14 @@ void get_commands(color_ostream &con, std::vector<std::string> &commands) {
         con.printerr("Failed Lua call to helpdb.get_commands.\n");
     }
 
-    Lua::GetVector(L, commands);
+    Lua::GetVector(L, commands, top + 1);
 }
 
 static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
 {
     std::vector<std::string> commands, possible;
 
+    get_commands(con, commands);
     for (auto &command : commands)
         if (command.substr(0, first.size()) == first)
             possible.push_back(command);
@@ -598,8 +626,14 @@ static std::string sc_event_name (state_change_event id) {
 }
 
 void help_helper(color_ostream &con, const std::string &entry_name) {
-    CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
+
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 2) ||
@@ -616,8 +650,14 @@ void help_helper(color_ostream &con, const std::string &entry_name) {
 }
 
 void tags_helper(color_ostream &con, const std::string &tag) {
-    CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
+
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
@@ -653,8 +693,14 @@ void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
             filter.push_back(str);
     }
 
-    CoreSuspender suspend;
-    auto L = Lua::Core::State;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
+
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 5) ||
@@ -673,7 +719,7 @@ void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
     }
 }
 
-command_result Core::runCommand(color_ostream &con, const std::string &first_, std::vector<std::string> &parts)
+command_result Core::runCommand(color_ostream &con, const std::string &first_, std::vector<std::string> &parts, bool no_autocomplete)
 {
     std::string first = first_;
     CommandDepthCounter counter;
@@ -753,30 +799,35 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                         all = true;
                 }
             }
+            auto ret = CR_OK;
             if (all)
             {
-                if (load)
-                    plug_mgr->loadAll();
-                else if (unload)
-                    plug_mgr->unloadAll();
-                else
-                    plug_mgr->reloadAll();
-                return CR_OK;
+                if (load && !plug_mgr->loadAll())
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unloadAll())
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reloadAll())
+                    ret = CR_FAILURE;
             }
             for (auto p = parts.begin(); p != parts.end(); p++)
             {
                 if (!p->size() || (*p)[0] == '-')
                     continue;
-                if (load)
-                    plug_mgr->load(*p);
-                else if (unload)
-                    plug_mgr->unload(*p);
-                else
-                    plug_mgr->reload(*p);
+                if (load && !plug_mgr->load(*p))
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unload(*p))
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reload(*p))
+                    ret = CR_FAILURE;
             }
+            if (ret != CR_OK)
+                con.printerr("%s failed\n", first.c_str());
+            return ret;
         }
-        else
+        else {
             con.printerr("%s: no arguments\n", first.c_str());
+            return CR_FAILURE;
+        }
     }
     else if( first == "enable" || first == "disable" )
     {
@@ -1240,7 +1291,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             }
             if ( lua )
                 res = runLuaScript(con, first, parts);
-            else if ( try_autocomplete(con, first, completed) )
+            else if (!no_autocomplete && try_autocomplete(con, first, completed))
                 res = CR_NOT_IMPLEMENTED;
             else
                 con.printerr("%s is not a recognized command.\n", first.c_str());
@@ -1333,7 +1384,7 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     loadScriptFiles(core, out, prefixes, CONFIG_PATH + "init");
 
     // show the terminal if requested
-    auto L = Lua::Core::State;
+    auto L = DFHack::Core::getInstance().getLuaState();
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
         Lua::DEFAULT_LUA_LAMBDA, [&](lua_State* L) {
             if (!lua_toboolean(L, -1))
@@ -1453,7 +1504,7 @@ Core::Core() :
     color_ostream::log_errors_to_stderr = true;
 };
 
-void Core::fatal (std::string output)
+void Core::fatal (std::string output, const char * title)
 {
     errorstate = true;
     std::stringstream out;
@@ -1470,7 +1521,9 @@ void Core::fatal (std::string output)
     fprintf(stderr, "%s\n", out.str().c_str());
     out << "Check file stderr.log for details.\n";
     std::cout << "DFHack fatal error: " << out.str() << std::endl;
-    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, "DFHack error!", out.str().c_str(), NULL);
+    if (!title)
+        title = "DFHack error!";
+    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, title, out.str().c_str(), NULL);
 
     bool is_headless = bool(getenv("DFHACK_HEADLESS"));
     if (is_headless)
@@ -1493,6 +1546,9 @@ df::viewscreen * Core::getTopViewscreen() {
 }
 
 bool Core::InitMainThread() {
+    // this hook is always called from DF's main (render) thread, so capture this thread id
+    df_render_thread = std::this_thread::get_id();
+
     Filesystem::init();
 
     // Re-route stdout and stderr again - DF seems to set up stdout and
@@ -1509,8 +1565,11 @@ bool Core::InitMainThread() {
     if (!freopen("stderr.log", "w", stderr))
         std::cerr << "Could not redirect stderr to stderr.log" << std::endl;
 
-    std::cerr << "DFHack build: " << Version::git_description() << "\n"
-         << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
+    std::cerr << "DFHack build: " << Version::git_description() << std::endl;
+    if (strlen(Version::dfhack_run_url())) {
+        std::cerr << "Build url: " << Version::dfhack_run_url() << std::endl;
+    }
+    std::cerr << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
 
     std::cerr << "Binding to SDL.\n";
     if (!DFSDL::init(con)) {
@@ -1572,7 +1631,27 @@ bool Core::InitMainThread() {
         }
         else
         {
-            fatal("Not a known DF version.\n");
+            std::stringstream msg;
+            msg << "Not a supported DF version.\n"
+                   "\n"
+                   "Please make sure that you have a version of DFHack installed that\n"
+                   "matches the version of Dwarf Fortress.\n"
+                   "\n"
+                   "DFHack version: " << Version::dfhack_version() << "\n"
+                   "\n";
+            auto supported_versions = vif->getVersionInfosForCurOs();
+            if (supported_versions.size()) {
+                msg << "Dwarf Fortress releases supported by this version of DFHack:\n\n";
+                for (auto & sv : supported_versions) {
+                    string ver = sv->getVersion();
+                    if (ver.starts_with("v0.")) {  // translate "v0.50" to the standard format: "v50"
+                        ver = "v" + ver.substr(3);
+                    }
+                    msg << "    " << ver << "\n";
+                }
+                msg << "\n";
+            }
+            fatal(msg.str(), "DFHack version mismatch");
         }
         errorstate = true;
         return false;
@@ -1583,6 +1662,48 @@ bool Core::InitMainThread() {
     // Init global object pointers
     df::global::InitGlobals();
 
+    // check key game structure sizes against the global table
+    // this check is (silently) skipped if either `game` or `global_table` is not defined
+    // to faciliate the linux symbol discovery process (which runs without any symbols)
+    // or if --skip-size-check is discovered on the command line
+
+    if (!df::global::global_table || !df::global::game ||
+        df::global::game->command_line.original.find("--skip-size-check") != std::string::npos)
+    {
+        std::cerr << "Skipping structure size verification check." << std::endl;
+    } else {
+        std::stringstream msg;
+        bool gt_error = false;
+        static const std::map<const std::string, const size_t> sizechecks{
+            { "world", sizeof(df::world) },
+            { "game", sizeof(df::gamest) },
+            { "plotinfo", sizeof(df::plotinfost) },
+        };
+
+        for (auto& gte : *df::global::global_table)
+        {
+            // this will exit the loop when the terminator is hit, in the event the global table size in structures is incorrect
+            if (gte.address == nullptr || gte.name == nullptr)
+                break;
+            std::string name{ gte.name };
+            if (sizechecks.contains(name) && gte.size != sizechecks.at(name))
+            {
+                msg << "Global '" << name << "' size mismatch: is " << gte.size << ", expected " << sizechecks.at(name) << "\n";
+                gt_error = true;
+            }
+        }
+
+        if (gt_error)
+        {
+            msg << "DFHack cannot safely run under these conditions.\n";
+            fatal(msg.str(), "DFHack fatal error");
+            errorstate = true;
+            return false;
+        }
+
+        std::cerr << "Structure size verification check passed." << std::endl;
+    }
+
     perf_counters.reset();
 
     return true;
@@ -1590,6 +1711,8 @@ bool Core::InitMainThread() {
 
 bool Core::InitSimulationThread()
 {
+    // the update hook is only called from the simulation thread, so capture this thread id
+    df_simulation_thread = std::this_thread::get_id();
     if(started)
         return true;
     if(errorstate)
@@ -1700,7 +1823,10 @@ bool Core::InitSimulationThread()
     loadScriptPaths(con);
 
     // initialize common lua context
-    if (!Lua::Core::Init(con))
+    // Calls InitCoreContext after checking IsCoreContext
+    State = luaL_newstate();
+    State = Lua::Open(con, State);
+    if (!State)
     {
         fatal("Lua failed to initialize");
         return false;
@@ -1910,15 +2036,16 @@ void Core::doUpdate(color_ostream &out)
         vs_changed = true;
     }
 
-    bool is_load_save =
+    bool is_save = strict_virtual_cast<df::viewscreen_savegamest>(screen) ||
+        strict_virtual_cast<df::viewscreen_export_regionst>(screen);
+    bool is_load_save = is_save ||
         strict_virtual_cast<df::viewscreen_game_cleanerst>(screen) ||
-        strict_virtual_cast<df::viewscreen_loadgamest>(screen) ||
-        strict_virtual_cast<df::viewscreen_savegamest>(screen);
+        strict_virtual_cast<df::viewscreen_loadgamest>(screen);
 
     // save data (do this before updating last_world_data_ptr and triggering unload events)
     if ((df::global::game && df::global::game->main_interface.options.do_manual_save && !d->last_manual_save_request) ||
         (df::global::plotinfo && df::global::plotinfo->main.autosave_request && !d->last_autosave_request) ||
-        (is_load_save && !d->was_load_save && strict_virtual_cast<df::viewscreen_savegamest>(screen)))
+        (is_load_save && !d->was_load_save && is_save))
     {
         plug_mgr->doSaveData(out);
         Persistence::Internal::save(out);
@@ -1990,6 +2117,13 @@ void Core::doUpdate(color_ostream &out)
 // should always be from simulation thread!
 int Core::Update()
 {
+    if (shutdown)
+    {
+        // release the suspender
+        MainThread::suspend().unlock();
+        return -1;
+    }
+
     if(errorstate)
         return -1;
 
@@ -2007,6 +2141,7 @@ int Core::Update()
         }
 
         uint32_t start_ms = p->getTickCount();
+        perf_counters.registerTick(start_ms);
         doUpdate(out);
         perf_counters.incCounter(perf_counters.total_update_ms, start_ms);
     }
@@ -2205,7 +2340,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
         Persistence::Internal::load(out);
         plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);
-        auto L = Lua::Core::State;
+        auto L = DFHack::Core::getInstance().getLuaState();
         Lua::StackUnwinder top(L);
         Lua::CallLuaModuleFunction(con, "script-manager", "reload", std::make_tuple(true));
         if (world && world->cur_savegame.save_dir.size())
@@ -2286,9 +2421,7 @@ int Core::Shutdown ( void )
         return true;
     errorstate = 1;
 
-    // Make sure we release main thread if this is called from main thread
-    if (MainThread::suspend().owns_lock())
-        MainThread::suspend().unlock();
+    shutdown = true;
 
     // Make sure the console thread shutdowns before clean up to avoid any
     // unlikely data races.
@@ -2307,7 +2440,6 @@ int Core::Shutdown ( void )
     d->hotkeythread.join();
     d->iothread.join();
 
-    CoreSuspendClaimer suspend;
     if(plug_mgr)
     {
         delete plug_mgr;
@@ -2402,6 +2534,9 @@ bool Core::DFH_SDL_Event(SDL_Event* ev) {
 
 bool Core::doSdlInputEvent(SDL_Event* ev)
 {
+    // this should only ever be called from the render thread
+    assert(std::this_thread::get_id() == df_render_thread);
+
     static std::map<int, bool> hotkey_states;
 
     // do NOT process events before we are ready.

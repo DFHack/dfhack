@@ -694,12 +694,14 @@ and then using that label for each of the zones you want to attach::
     b{location=tavern/bigpub name="Rent me"}(3x1)
     h{location=tavern/bigpub name="Central pub" allow=residents}(25x40)
 
-Note that the label ("bigpub" in this case) will never appear in-game. It is only used in the context of the blueprint to identify a common location.
+Note that the label ("bigpub" in this case) will never appear in-game. It is
+only used in the context of the blueprint to identify a common location.
 
 #place mode
 -----------
 
-``#place`` mode is dedicated to stockpiles, which are a major design element in any fortress.
+``#place`` mode is dedicated to stockpiles, which are a major design element in
+any fortress.
 
 Stockpile designation syntax
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -1728,7 +1730,7 @@ The industry_ level: advanced linking
   :target: https://drive.google.com/file/d/1c8YTHxTgJY5tUII-BOWdLhmDFAHwIOEs
   :align: center
 
-The industry level is densely packed and has more intracate stockpile and
+The industry level is densely packed and has more intricate stockpile and
 hauling route configuration.
 
 .. topic:: Tip
@@ -1854,7 +1856,7 @@ With option 2, if you need a "better" bedroom, you'd just expand the zone to
 cover the neighboring "unit". Satisfying the monarch is also simple: plop down
 a new suites level and assign each block of 4 rooms to one zone. four units for
 the bedroom, four for the office, four for the dining hall, and four for the
-tomb. Smooth and engrave and you're done. Of course, more asthetic-minded
+tomb. Smooth and engrave and you're done. Of course, more aesthetic-minded
 players are always free to design custom areas too. These blueprints are
 designed to be functional more than beautiful.
 
@@ -2036,13 +2038,14 @@ Property           Description
 =================  ===========
 ``name``           the name of the zone
 ``active``         if set to ``false`` then the zone is deactivated
-``assigned_unit``  if set to the name of a noble position (like ``manager`` or
-                   ``bookkeeper`` or ``sheriff``) then the zone will be
-                   assigned to the unit appointed to the indicated noble
-                   position (if any). if the fort has progressed to the point
-                   that the sheriff role has been replaced by the captain of
-                   the guard, then ``assigned_unit=sheriff`` will be
-                   interpreted as ``assigned_unit=captain_of_the_guard``.
+``assigned_unit``  if set to the name of a noble or administrative position
+                   (like ``manager`` or ``bookkeeper`` or ``sheriff``) then the
+                   zone will be assigned to the unit appointed to the indicated
+                   position (if any). the assignment will be registered with
+                   `preserve-rooms`, so if the role is assumed by a different
+                   unit in the future, the zone assignment will automatically
+                   be updated. this property only has an effect for assignable
+                   zone types: bedrooms, dining halls, offices, and tombs.
 ``location``       the type of location to create and attach the zone to: one
                    of: ``hospital``, ``guildhall``, ``tavern``, ``library``, or
                    ``temple``. To attach multiple zones to the same location,
@@ -2054,7 +2057,7 @@ Property           Description
                    ``residents``, ``citizens``, or ``members``. defaults to
                    ``visitors``.
 ``profession``     (only if ``location=guildhall``) sets the profession of the
-                   guildhall. See possilbe values with ``:lua @df.profession``.
+                   guildhall. See possible values with ``:lua @df.profession``.
                    For example: ``profession=metalsmith``.
 ``desired_*``      (only if the location is set to the relevant type) sets the
                    desired number of stocked items for the attached location.

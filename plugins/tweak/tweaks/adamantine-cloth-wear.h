@@ -12,12 +12,15 @@ static bool inc_wear_timer (df::item_constructed *item, int amount) {
     if (item->flags.bits.artifact)
         return false;
 
-    MaterialInfo mat(item->mat_type, item->mat_index);
-    if (mat.isInorganic() && mat.inorganic->flags.is_set(df::inorganic_flags::DEEP_SPECIAL))
-        return false;
+    if (item->mat_type == 0) // INORGANIC only
+    {
+        auto inorganic = df::inorganic_raw::find(item->mat_index);
+        if (inorganic && inorganic->flags.is_set(df::inorganic_flags::DEEP_SPECIAL))
+            return false;
+    }
 
     item->wear_timer += amount;
-    return (item->wear_timer > 806400);
+    return (item->wear_timer >= 806400);
 }
 
 struct adamantine_cloth_wear_armor_hook : df::item_armorst {

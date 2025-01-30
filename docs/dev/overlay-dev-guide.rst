@@ -72,6 +72,21 @@ beyond your everyday `widgets.Widget <widget>`:
     screen, but the returned screen can instantiate and configure any new views
     that it wants to. See the `hotkeys` DFHack logo widget for an example.
 
+    The ``overlay_trigger()`` function enables the activation of overlay widgets
+    via the command line interface (CLI) or keybindings.
+    For example, executing ``overlay trigger notes.map_notes add Kitchen``::
+
+        function MyOverlayWidget:overlay_trigger(arg1, arg2)
+            if arg1 == 'add' then
+                -- Add a new note to the map
+                self:addSomething(arg2)
+            elseif arg1 == 'delete' then
+                self:deleteSomething(arg2)
+            end
+        end
+
+    This allows for dynamic updates to UI overlays directly from the CLI.
+
 If the widget can take up a variable amount of space on the screen, and you want
 the widget to adjust its position according to the size of its contents, you can
 modify ``self.frame.w`` and ``self.frame.h`` at any time -- in ``init()`` or in
@@ -152,6 +167,11 @@ The ``overlay.OverlayWidget`` superclass defines the following class attributes:
     updates, set it to ``0`` and it will be noticed immediately.
 
 Common widget attributes such as ``active`` and ``visible`` are also respected.
+Note that those properties are checked *after* matching ``viewscreens`` focus
+string(s), so you can assume they are evaluated in an consistent context. For
+example, if your widget has ``viewscreens='dwarfmode/Trade/Default'``, then you
+can assume your ``visible=function() ... end`` function will be executing while
+the trade screen is active.
 
 Registering a widget with the overlay framework
 ***********************************************
@@ -180,6 +200,33 @@ The overlay framework will instantiate widgets from the named classes and own
 the resulting objects. The instantiated widgets must not be added as subviews to
 any other View, including the Screen views that can be returned from the
 ``overlay_trigger()`` function.
+
+Performance considerations
+**************************
+
+Overlays that do any processing or rendering during unpaused gameplay (that is,
+nearly all of them) must be developed with performance in mind. DFHack has an
+overall service level objective of no more than 10% performance impact during
+unpaused gameplay with all overlays and background tools enabled. A single
+overlay should seek to take up no more than a fraction of 1% of elapsed
+gameplay time.
+
+Please see the Core `performance-monitoring` section for details on how to get
+a perf report while testing your overlay. The metric that you will be
+interested in is the percentage of elapsed time that your overlay accounts for.
+
+If you need to improve performance, here are some potential options:
+
+1. Shard scanning over multiple passes. For example, instead of checking every
+   item on the map in every update in your overlay, only check every Nth item
+   and change the start offset every time you scan.
+
+2. Reduce the frequency of state updates by moving calcuations to
+   ``overlay_onupdate`` and setting the value of the
+   ``overlay_onupdate_max_freq_seconds`` attribute appropriately
+
+3. Move hotspots into C++ code, either in a new core library function or in a
+   dedicated plugin
 
 Development workflows
 ---------------------
@@ -374,7 +421,7 @@ screen (by default, but the player can move it wherever).
     function MenuScreen:init()
         self.mouseover = false
 
-        -- derrive the menu frame from the hotspot frame so it
+        -- derive the menu frame from the hotspot frame so it
         -- can appear in a nearby location
         local frame = copyall(self.hotspot_frame)
         -- ...

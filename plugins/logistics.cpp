@@ -1,6 +1,7 @@
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
 #include "modules/Buildings.h"
 #include "modules/Job.h"
@@ -187,7 +188,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (!is_enabled || !Core::getInstance().isMapLoaded() || !World::isFortressMode())
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode())
         return CR_OK;
     if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
         logistics_cycle(out, true);
@@ -196,8 +197,6 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
-    CoreSuspender suspend;
-
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
@@ -431,7 +430,7 @@ private:
         df::item_flags flags;
         #define F(x) flags.bits.x = true;
         F(garbage_collect); F(hostile); F(on_fire);
-        F(rotten); F(trader); F(in_building); F(construction);
+        F(trader); F(in_building); F(construction);
         F(artifact); F(spider_web); F(owned); F(in_job);
         #undef F
         return flags.whole;
@@ -605,7 +604,7 @@ static int logistics_getStockpileData(lua_State *L) {
 
     ProcessorStats melt_stats, trade_stats, dump_stats, train_stats, forbid_stats, claim_stats;
 
-    for (auto bld : df::global::world->buildings.other.STOCKPILE) {
+    for (auto bld : world->buildings.other.STOCKPILE) {
         int32_t stockpile_number = bld->stockpile_number;
         MeltStockProcessor melt_stock_processor(stockpile_number, false, melt_stats, false);
         TradeStockProcessor trade_stock_processor(stockpile_number, false, trade_stats);
@@ -796,7 +795,7 @@ static int logistics_getGlobalCounts(lua_State *L) {
         out = &Core::getInstance().getConsole();
     DEBUG(control,*out).print("entering logistics_getGlobalCounts\n");
 
-    size_t num_melt = df::global::world->items.other.ANY_MELT_DESIGNATED.size();
+    size_t num_melt = world->items.other.ANY_MELT_DESIGNATED.size();
 
     size_t num_trade = 0;
     for (auto link = world->jobs.list.next; link; link = link->next) {

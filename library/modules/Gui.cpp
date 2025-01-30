@@ -43,6 +43,7 @@ distribution.
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/adventurest.h"
 #include "df/announcement_alertst.h"
 #include "df/announcement_flags.h"
 #include "df/announcement_infost.h"
@@ -87,6 +88,7 @@ distribution.
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_choose_start_sitest.h"
+#include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_legendsst.h"
 #include "df/viewscreen_new_regionst.h"
@@ -154,12 +156,12 @@ static std::map<virtual_identity*, getFocusStringsHandler> getFocusStringsHandle
 
 #define VIEWSCREEN(name) df::viewscreen_##name##st
 #define DEFINE_GET_FOCUS_STRING_HANDLER(screen_type) \
-    static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen);\
+    static void getFocusStrings_##screen_type(const std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen);\
     DFHACK_STATIC_ADD_TO_MAP(\
         &getFocusStringsHandlers, &VIEWSCREEN(screen_type)::_identity, \
         (getFocusStringsHandler)getFocusStrings_##screen_type \
     ); \
-    static void getFocusStrings_##screen_type(std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen)
+    static void getFocusStrings_##screen_type(const std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen)
 
 DEFINE_GET_FOCUS_STRING_HANDLER(title)
 {
@@ -258,7 +260,16 @@ DEFINE_GET_FOCUS_STRING_HANDLER(world)
 }
 
 static bool widget_is_visible(df::widget * w) {
-    return w && w->visibility_flags.bits.WIDGET_VISIBILITY_VISIBLE;
+    return w && w->flag.bits.VISIBILITY_VISIBLE;
+}
+
+static size_t get_num_children(df::widget * w) {
+    if (!w)
+        return 0;
+    df::widget_container *container = virtual_cast<df::widget_container>(w);
+    if (!container)
+        return 0;
+    return container->children.size();
 }
 
 static df::widget * get_visible_child(df::widget *parent) {
@@ -318,15 +329,9 @@ static void add_profile_tab_focus_string(
     focusStrings.push_back(fs);
 }
 
-DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
-{
+static void add_main_interface_focus_strings(const string &baseFocus, vector<string> &focusStrings) {
     std::string newFocusString;
 
-    if (df::global::gametype && !World::isFortressMode()) {
-        newFocusString = baseFocus;
-        newFocusString += '/' + enum_item_key(*df::global::gametype);
-        focusStrings.push_back(newFocusString);
-    }
     if (game->main_interface.main_designation_selected != -1) {
         newFocusString = baseFocus;
         newFocusString += "/Designate/" + enum_item_key(game->main_interface.main_designation_selected);
@@ -377,8 +382,8 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
                 WARN(gui).print("Labor tab widget not found\n");
             } else if (tab->name == "Work Details") {
                 newFocusString += "/WORK_DETAILS";
-                if (auto details = Gui::getWidget(virtual_cast<df::labor_work_details_interfacest>(tab), "Details");
-                        details && !details->visibility_flags.bits.WIDGET_VISIBILITY_CAN_KEY_ACTIVATE)
+                auto rp = Gui::getWidget(virtual_cast<df::labor_work_details_interfacest>(tab), "Right panel");
+                if (get_num_children(rp) == 2)
                     newFocusString += "/Details";
                 else
                     newFocusString += "/Default";
@@ -441,8 +446,13 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             break;
         }
         case df::enums::info_interface_mode_type::WORK_ORDERS:
-            if (game->main_interface.info.work_orders.conditions.open)
+            if (game->main_interface.info.work_orders.conditions.open) {
                 newFocusString += "/Conditions";
+                if (game->main_interface.info.work_orders.conditions.change_type != df::work_order_condition_change_type::NONE)
+                    newFocusString += '/' + enum_item_key(game->main_interface.info.work_orders.conditions.change_type);
+                else
+                    newFocusString += "/Default";
+            }
             else if (game->main_interface.create_work_order.open)
                 newFocusString += "/Create";
             else
@@ -545,7 +555,9 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
             break;
         case df::view_sheet_type::BUILDING:
             if (game->main_interface.view_sheets.linking_lever)
-                newFocusString = baseFocus + "/LinkingLever";
+                newFocusString += "/LinkingLever";
+            else if (game->main_interface.stockpile_link.open && game->main_interface.stockpile_link.adding_new_link)
+                newFocusString += "/LinkingStockpile";
             else if (auto bld = df::building::find(game->main_interface.view_sheets.viewing_bldid)) {
                 newFocusString += '/' + enum_item_key(bld->getType());
                 auto bld_type = bld->getType();
@@ -578,7 +590,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         focusStrings.push_back(newFocusString);
     }
 
-    if(game->main_interface.bottom_mode_selected != -1) {
+    if (game->main_interface.bottom_mode_selected != -1) {
         newFocusString = baseFocus;
 
         switch(game->main_interface.bottom_mode_selected) {
@@ -689,7 +701,7 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/ImageCreator";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.unit_selector.visibility_flags.bits.WIDGET_VISIBILITY_ACTIVE) {
+    if (game->main_interface.unit_selector.flag.bits.VISIBILITY_ACTIVE) {
         newFocusString = baseFocus;
         newFocusString += "/UnitSelector/";
         newFocusString += enum_item_key(game->main_interface.unit_selector.context);
@@ -708,11 +720,6 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
     if (game->main_interface.patrol_routes.open) {
         newFocusString = baseFocus;
         newFocusString += "/PatrolRoutes";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.squad_schedule.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/SquadSchedule";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.squad_selector.open) {
@@ -761,6 +768,31 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
         newFocusString += "/SquadSupplies";
         focusStrings.push_back(newFocusString);
     }
+    if (game->main_interface.squads.open) {
+        newFocusString = baseFocus;
+        newFocusString += "/Squads";
+        if (game->main_interface.squads.editing_squad_schedule_id >= 0) {
+            newFocusString += "/EditingSchedule";
+        } else if (game->main_interface.squad_schedule.open) {
+            newFocusString += "/Schedule";
+        } else if (game->main_interface.squad_equipment.open) {
+            newFocusString += "/Equipment";
+            if (game->main_interface.squad_equipment.customizing_equipment) {
+                newFocusString += "/Customizing";
+                if (game->main_interface.squad_equipment.cs_setting_material)
+                    newFocusString += "/Material";
+                else if (game->main_interface.squad_equipment.cs_setting_color_pattern)
+                    newFocusString += "/Color";
+                else
+                    newFocusString += "/Default";
+            }
+            else
+                newFocusString += "/Default";
+        } else {
+            newFocusString += "/Default";
+        }
+        focusStrings.push_back(newFocusString);
+    }
     if (game->main_interface.assign_uniform.open) {
         newFocusString = baseFocus;
         newFocusString += "/AssignUniform";
@@ -792,46 +824,86 @@ DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
 
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.squad_equipment.open) {
+    if (game->main_interface.adventure.aim_projectile.open) {
+        focusStrings.push_back(baseFocus + "/AimProjectile");
+    }
+    if (game->main_interface.adventure.announcements.open) {
+        focusStrings.push_back(baseFocus + "/Announcements");
+    }
+    if (game->main_interface.adventure.attack.open) {
+        focusStrings.push_back(baseFocus + "/Attack");
+    }
+    if (game->main_interface.adventure.combat_pref.open) {
+        focusStrings.push_back(baseFocus + "/CombatPref");
+    }
+    if (game->main_interface.adventure.companions.open) {
+        focusStrings.push_back(baseFocus + "/Companions");
+    }
+    if (game->main_interface.adventure.conversation.open) {
+        focusStrings.push_back(baseFocus + "/Conversation");
+    }
+    if (game->main_interface.adventure.inventory.open) {
+        focusStrings.push_back(baseFocus + "/Inventory");
+    }
+    if (game->main_interface.adventure.jump.open) {
+        focusStrings.push_back(baseFocus + "/Jump");
+    }
+    if (game->main_interface.adventure.movement_options.open) {
+        focusStrings.push_back(baseFocus + "/MovementOptions");
+    }
+    if (game->main_interface.adventure.option_list.open) {
+        focusStrings.push_back(baseFocus + "/OptionList");
+    }
+    if (game->main_interface.adventure.perform.open) {
+        focusStrings.push_back(baseFocus + "/Perform");
+    }
+    if (game->main_interface.adventure.sleep.open) {
+        focusStrings.push_back(baseFocus + "/Sleep");
+    }
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(dwarfmode)
+{
+    std::string newFocusString;
+
+    if (df::global::gametype && !World::isFortressMode()) {
         newFocusString = baseFocus;
-        newFocusString += "/SquadEquipment";
-        if (game->main_interface.squad_equipment.customizing_equipment) {
-            newFocusString += "/Customizing";
-            if (game->main_interface.squad_equipment.cs_setting_material)
-                newFocusString += "/Material";
-            else if (game->main_interface.squad_equipment.cs_setting_color_pattern)
-                newFocusString += "/Color";
+        newFocusString += '/' + enum_item_key(*df::global::gametype);
+        if (*df::global::gametype == df::game_type::DWARF_ARENA) {
+            if (game->main_interface.bottom_mode_selected != df::main_bottom_mode_type::NONE)
+                newFocusString += "/Paint/" + enum_item_key(game->main_interface.bottom_mode_selected);
+            else if (game->main_interface.arena_unit.open)
+                newFocusString += "/ConfigureUnit";
+            else if (game->main_interface.arena_tree.open)
+                newFocusString += "/ConfigureTree";
             else
                 newFocusString += "/Default";
         }
-        else
-            newFocusString += "/Default";
         focusStrings.push_back(newFocusString);
     }
+    add_main_interface_focus_strings(baseFocus, focusStrings);
 
-    if (!focusStrings.size()) {
+    static const string squads_default = "dwarfmode/Squads/Default";
+    if (!focusStrings.size() || (focusStrings.size() == 1 && focusStrings[0] == squads_default)) {
         focusStrings.push_back(baseFocus + "/Default");
     }
-
-    // squads panel is not exclusive with the others
-    if (game->main_interface.squads.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/Squads";
-        focusStrings.push_back(newFocusString);
-    }
 }
 
-/* TODO: understand how this changes for v50
 DEFINE_GET_FOCUS_STRING_HANDLER(dungeonmode)
 {
-    using df::global::adventure;
+    std::string newFocusString;
 
-    if (!adventure)
-        return;
+    if (df::global::gametype && !World::isAdventureMode()) {
+        newFocusString = baseFocus;
+        newFocusString += '/' + enum_item_key(*df::global::gametype);
+        focusStrings.push_back(newFocusString);
+    }
+    add_main_interface_focus_strings(baseFocus, focusStrings);
 
-    focus += '/' + enum_item_key(adventure->menu);
+    if (!focusStrings.size()) {
+        focusStrings.push_back(baseFocus + '/' + enum_item_key(df::global::adventure->menu));
+    }
 }
-*/
 
 static std::unordered_map<df::viewscreen *, vector<string>> cached_focus_strings;
 
@@ -2516,81 +2588,82 @@ void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
     return;
 }
 
-void Gui::MTB_set_width(df::markup_text_boxst *mtb, int32_t width)
-{   // Reverse-engineered from "markup_text_boxst::set_width" FUN_1409f6e80 (v50.11 win64 Steam)
-    if (mtb->current_width == width)
+void Gui::MTB_set_width(df::markup_text_boxst *mtb, int32_t n_width)
+{   // Reverse-engineered from void markup_text_boxst::set_width(markup_text_boxst *this,int n_width), 0x140a16b70 (v50.13 win64 Steam)
+
+    if (mtb->current_width == n_width)
         return;
 
     mtb->max_y = 0;
-    mtb->current_width = width;
+    mtb->current_width = n_width;
 
-    int32_t remain_width = width;
     int32_t px_val = 0;
     int32_t py_val = 0;
 
-    for (vector<df::markup_text_wordst *>::iterator it = mtb->word.begin(); it < mtb->word.end(); it++)
+    auto end = mtb->word.end();
+    for (auto it = mtb->word.begin(); it != end; it++)
     {
-        auto &cur_word = **it;
-
-        if (cur_word.flags.bits.NEW_LINE)
+        if (it[0]->flags.bits.NEW_LINE)
         {
-            remain_width = 0;
+            n_width = 0;
             continue;
         }
-        else if (cur_word.flags.bits.BLANK_LINE)
+        if (it[0]->flags.bits.BLANK_LINE)
         {
-            remain_width = 0;
+            n_width = 0;
             px_val = 0;
             py_val++;
             continue;
         }
-        else if (cur_word.flags.bits.INDENT)
+        if (it[0]->flags.bits.INDENT)
         {
-            remain_width = width;
+            n_width = mtb->current_width;
             px_val = 4;
             py_val++;
             continue;
         }
 
-        int32_t str_size = cur_word.str.size();
-        if (remain_width < str_size)
+        int32_t str_size = (int32_t)(it[0]->str.size());
+        if (n_width < str_size)
         {
-            remain_width = width;
+            n_width = mtb->current_width;
             px_val = 0;
             py_val++;
         }
 
-        char only_char = (str_size == 1) ? cur_word.str[0] : '\0';
-        if (only_char && (only_char == '.' || only_char == ',' || only_char == '?' || only_char == '!'))
+        if (it + 1 != end && it[1]->str.size() == 1)
         {
-            if (it + 1 < mtb->word.end() && px_val > 0 && remain_width < 3) // remain_width < str_size + 2
+            char ch = it[1]->str[0];
+            if ((ch == '.' || ch == ',' || ch == '?' || ch == '!') &&
+                0 < px_val && n_width < str_size + 2)
             {
-                remain_width = width;
+                n_width = mtb->current_width;
                 px_val = 0;
                 py_val++;
             }
-            else if (px_val > 0)
-            {
-                cur_word.px = px_val - 1;
-                cur_word.py = py_val;
+        }
 
+        if (str_size == 1) {
+            char ch = it[0]->str[0];
+            if ((ch == '.' || ch == ',' || ch == '?' || ch == '!') &&
+                0 < px_val)
+            {
+                it[0]->px = px_val - 1;
+                it[0]->py = py_val;
                 if (mtb->max_y < py_val)
                     mtb->max_y = py_val;
-
-                remain_width--; // remain_width -= str_size
-                px_val++; // px_val += str_size
+                n_width -= str_size;
+                px_val += str_size;
                 continue;
             }
         }
 
-        cur_word.px = px_val;
-        cur_word.py = py_val;
-
+        it[0]->px = px_val;
+        it[0]->py = py_val;
         if (mtb->max_y < py_val)
             mtb->max_y = py_val;
-
-        remain_width -= str_size + 1;
         px_val += str_size + 1;
+        n_width -= str_size + 1;
     }
 
     return;

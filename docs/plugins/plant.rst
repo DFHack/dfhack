@@ -73,8 +73,8 @@ Examples
     Attempt to grow all Maple, Acacia, and Sand Pear saplings on the current
     z-level into trees.
 ``plant grow 0,0,100 19,19,119 -a 10``
-    Set the age of all saplings and trees (with their original sapling tile)
-    in the defined 20 x 20 x 20 cube to at least 10 years.
+    Set the age of all saplings and trees in the defined 20 x 20 x 20 cube
+    to at least 10 years.
 ``plant remove``
     Remove all invalid plants from the map.
 ``plant remove here -sp``
@@ -82,7 +82,7 @@ Examples
 ``plant remove -spd``
     Remove all dead shrubs and saplings from the map.
 ``plant remove 0,0,49 0,0,51 -pz -e nether_cap``
-    Remove all saplings on z-levels 49 to 51, excluding Nether Cap.
+    Remove all saplings on z-levels 49 through 51, excluding Nether Cap.
 
 Create Options
 --------------

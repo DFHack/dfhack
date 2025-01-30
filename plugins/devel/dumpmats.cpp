@@ -1,5 +1,4 @@
 // Dump all hardcoded materials
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -24,8 +23,6 @@ command_result df_dumpmats (color_ostream &out, vector<string> &parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
-
-    CoreSuspender suspend;
 
     out.print("hardcoded_materials\n\n");
     out.print("[OBJECT:MATERIAL]\n");

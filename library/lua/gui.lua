@@ -46,10 +46,10 @@ end
 local MOUSE_KEYS = {
     _MOUSE_L = curry(set_and_get_undo, 'mouse_lbut'),
     _MOUSE_R = curry(set_and_get_undo, 'mouse_rbut'),
-    _MOUSE_M = true,
-    _MOUSE_L_DOWN = true,
-    _MOUSE_R_DOWN = true,
-    _MOUSE_M_DOWN = true,
+    _MOUSE_M = curry(set_and_get_undo, 'mouse_mbut'),
+    _MOUSE_L_DOWN = curry(set_and_get_undo, 'mouse_lbut_down'),
+    _MOUSE_R_DOWN = curry(set_and_get_undo, 'mouse_rbut_down'),
+    _MOUSE_M_DOWN = curry(set_and_get_undo, 'mouse_mbut_down'),
 }
 
 local FAKE_INPUT_KEYS = copyall(MOUSE_KEYS)
@@ -81,7 +81,7 @@ function simulateInput(screen,...)
                 for k,v in pairs(arg) do
                     if v == true then
                         push_key(k)
-                    else
+                    elseif k ~= '_STRING' then
                         push_key(v)
                     end
                 end
@@ -1007,6 +1007,7 @@ ZScreen = defclass(ZScreen, Screen)
 ZScreen.ATTRS{
     defocusable=true,
     initial_pause=DEFAULT_NIL,
+    defocused=false,
     force_pause=false,
     pass_pause=true,
     pass_movement_keys=false,
@@ -1028,7 +1029,6 @@ function ZScreen:init()
     if self.initial_pause and dfhack.isMapLoaded() then
         df.global.pause_state = true
     end
-    self.defocused = false
 end
 
 function ZScreen:dismiss()
@@ -1127,7 +1127,7 @@ function ZScreen:onInput(keys)
         self:dismiss()
     else
         local passit = self.pass_pause and keys.D_PAUSE
-        if not passit and self.pass_mouse_clicks then
+        if not passit and self.pass_mouse_clicks and not has_mouse then
             if keys.CONTEXT_SCROLL_UP or keys.CONTEXT_SCROLL_DOWN or
                     keys.CONTEXT_SCROLL_PAGEUP or keys.CONTEXT_SCROLL_PAGEDOWN then
                 passit = true
@@ -1164,7 +1164,7 @@ end
 
 function ZScreen:isMouseOver()
     for _,sv in ipairs(self.subviews) do
-        if sv.visible and sv:getMouseFramePos() then return true end
+        if utils.getval(sv.visible) and sv:getMouseFramePos() then return true end
     end
 end
 

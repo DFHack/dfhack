@@ -27,7 +27,6 @@ distribution.
 
 #include <memory>
 
-#include "Pragma.h"
 #include "Export.h"
 
 class TiXmlElement;
@@ -43,6 +42,7 @@ namespace DFHack
             bool isInErrorState() const {return error;};
             std::shared_ptr<const VersionInfo> getVersionInfoByMD5(std::string md5string) const;
             std::shared_ptr<const VersionInfo> getVersionInfoByPETimestamp(uintptr_t timestamp) const;
+            std::vector<std::shared_ptr<const VersionInfo>> getVersionInfosForCurOs() const;
             // trash existing list
             void clear();
         private:

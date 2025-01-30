@@ -904,11 +904,10 @@ void StockpileSettingsSerializer::read_general(color_ostream& out, DeserializeMo
 
 void StockpileSerializer::read_general(color_ostream& out, DeserializeMode mode) {
     StockpileSettingsSerializer::read_general(out, mode);
-    bool use_links_only;
-    read_elem<bool, bool>(out, "use_links_only", mode,
-            std::bind(&StockpileSettings::has_use_links_only, mBuffer),
-            std::bind(&StockpileSettings::use_links_only, mBuffer),
-            use_links_only);
+    if (!mBuffer.has_use_links_only())
+        return;
+    bool use_links_only = mBuffer.use_links_only();
+    DEBUG(log, out).print("setting use_links_only to %d\n", use_links_only);
     mPile->stockpile_flag.bits.use_links_only = use_links_only;
 }
 

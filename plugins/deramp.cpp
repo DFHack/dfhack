@@ -1,6 +1,5 @@
 // De-ramp.  All ramps marked for removal are replaced with given tile (presently, normal floor).
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -44,8 +43,6 @@ command_result df_deramp (color_ostream &out, vector <string> & parameters)
 {
     if (!parameters.empty())
         return CR_WRONG_USAGE;
-
-    CoreSuspender suspend;
 
     if (!Maps::IsValid())
     {

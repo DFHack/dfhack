@@ -119,22 +119,12 @@ macro(dfhack_plugin)
         add_library(${PLUGIN_NAME} MODULE ${PLUGIN_SOURCES})
         ide_folder(${PLUGIN_NAME} "Plugins")
 
-        target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/include")
-        target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/proto")
-        target_include_directories(${PLUGIN_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/proto")
-        target_include_directories(${PLUGIN_NAME} PRIVATE "${dfhack_SOURCE_DIR}/library/depends/xgetopt")
-
         if(NUM_PROTO)
             add_dependencies(${PLUGIN_NAME} generate_proto_${PLUGIN_NAME})
-            target_link_libraries(${PLUGIN_NAME} dfhack protobuf-lite dfhack-version ${PLUGIN_LINK_LIBRARIES})
-        else()
-            target_link_libraries(${PLUGIN_NAME} dfhack dfhack-version ${PLUGIN_LINK_LIBRARIES})
+            target_include_directories(${PLUGIN_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/proto")
+            target_link_libraries(${PLUGIN_NAME} protobuf-lite)
         endif()
-
-        add_dependencies(${PLUGIN_NAME} dfhack-version)
-
-        # Make sure the source is generated before the executable builds.
-        add_dependencies(${PLUGIN_NAME} generate_proto)
+        target_link_libraries(${PLUGIN_NAME} dfhack dfhack-version ${PLUGIN_LINK_LIBRARIES})
 
         if(UNIX)
             set(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} ${PLUGIN_COMPILE_FLAGS_GCC}")

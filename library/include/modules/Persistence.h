@@ -83,11 +83,8 @@ namespace DFHack
         void set_bool(int i, bool value) {
             set_int(i, value ? 1 : 0);
         }
-        const std::string & get_str() {
-            static const std::string empty;
-            return isValid() ? val() : empty;
-        }
-        void set_str(const std::string value) {
+        const std::string & get_str();
+        void set_str(const std::string & value) {
             if (isValid())
                 val() = value;
         }
@@ -216,5 +213,7 @@ namespace DFHack
         // Fills the vector with references to each persistent item with a key that is
         // equal to the given key.
         DFHACK_EXPORT void getAllByKey(std::vector<PersistentDataItem> &vec, int entity_id, const std::string &key);
+        // Returns the number of seconds since the current savegame was saved or loaded.
+        DFHACK_EXPORT uint32_t getUnsavedSeconds();
     }
 }

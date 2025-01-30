@@ -1,31 +1,28 @@
 // Create arbitrary items
 
-#include "Core.h"
 #include "Console.h"
-#include "Export.h"
-#include "PluginManager.h"
-#include "MiscUtils.h"
 #include "DataDefs.h"
+#include "Export.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
 
-#include "modules/Maps.h"
-#include "modules/MapCache.h"
 #include "modules/Gui.h"
 #include "modules/Items.h"
+#include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
 #include "df/building.h"
-#include "df/game_type.h"
-#include "df/world.h"
-#include "df/unit.h"
-#include "df/item.h"
-#include "df/creature_raw.h"
 #include "df/caste_raw.h"
-#include "df/tool_uses.h"
+#include "df/creature_raw.h"
+#include "df/game_type.h"
+#include "df/item.h"
 #include "df/plant_growth.h"
-#include "df/plant_growth_print.h"
 #include "df/plant_raw.h"
+#include "df/tool_uses.h"
+#include "df/unit.h"
+#include "df/world.h"
 
 using std::string;
 using std::vector;
@@ -40,10 +37,9 @@ REQUIRE_GLOBAL(cur_year_tick);
 
 int dest_container = -1, dest_building = -1;
 
-command_result df_createitem (color_ostream &out, vector <string> & parameters);
+command_result df_createitem(color_ostream &out, vector<string> &parameters);
 
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector<PluginCommand> &commands)
-{
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
     commands.push_back(
         PluginCommand("createitem",
                       "Create arbitrary items.",
@@ -51,14 +47,13 @@ DFhackCExport command_result plugin_init (color_ostream &out, std::vector<Plugin
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown ( color_ostream &out )
-{
+DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return CR_OK;
 }
 
-bool makeItem (df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_type, int32_t mat_index, int32_t growth_print = -1, bool move_to_cursor = false, bool second_item = false)
-{
-    // Special logic for making Gloves and Shoes in pairs
+bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_type, int32_t mat_index,
+    bool move_to_cursor = false, bool second_item = false)
+{   // Special logic for making Gloves and Shoes in pairs
     bool is_gloves = (type == item_type::GLOVES);
     bool is_shoes = (type == item_type::SHOES);
 
@@ -72,23 +67,20 @@ bool makeItem (df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_
     bool on_floor = (container == NULL) && (building == NULL) && !move_to_cursor;
 
     vector<df::item *> out_items;
-    if (!Items::createItem(out_items, unit, type, subtype, mat_type, mat_index, growth_print, !on_floor))
+    if (!Items::createItem(out_items, unit, type, subtype, mat_type, mat_index, !on_floor))
         return false;
 
-    MapExtras::MapCache mc;
-
-    for (size_t i = 0; i < out_items.size(); i++)
-    {
+    for (size_t i = 0; i < out_items.size(); i++) {
         if (container)
         {
             out_items[i]->flags.bits.removed = 1;
-            if (!Items::moveToContainer(mc, out_items[i], container))
+            if (!Items::moveToContainer(out_items[i], container))
                 out_items[i]->moveToGround(container->pos.x, container->pos.y, container->pos.z);
         }
         else if (building)
         {
             out_items[i]->flags.bits.removed = 1;
-            if (!Items::moveToBuilding(mc, out_items[i], (df::building_actual *)building, df::building_item_role_type::TEMP))
+            if (!Items::moveToBuilding(out_items[i], (df::building_actual *)building, df::building_item_role_type::TEMP))
                 out_items[i]->moveToGround(building->centerx, building->centery, building->z);
         }
         else if (move_to_cursor)
@@ -97,8 +89,7 @@ bool makeItem (df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_
 
         // Special logic for creating proper gloves in pairs
         if (is_gloves)
-        {
-            // If the gloves have non-zero handedness, then disable special pair-making logic
+        {   // If the gloves have non-zero handedness, then disable special pair-making logic
             // ("reaction-gloves" tweak is active, or Toady fixed glove-making reactions)
             // Otherwise, set them to be either Left or Right-handed
             if (out_items[i]->getGloveHandedness() > 0)
@@ -107,85 +98,170 @@ bool makeItem (df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_
                 out_items[i]->setGloveHandedness(second_item ? 2 : 1);
         }
     }
-
     // If we asked to make a Shoe and we got more than one, then disable special pair-making logic
     if (is_shoes && out_items.size() > 1)
         is_shoes = false;
-
     // If we asked for gloves/shoes and only got one (and we're making the first one), make another
     if ((is_gloves || is_shoes) && !second_item)
-        return makeItem(unit, type, subtype, mat_type, mat_index, growth_print, move_to_cursor, true);
-
+        return makeItem(unit, type, subtype, mat_type, mat_index, move_to_cursor, true);
     return true;
 }
 
-command_result df_createitem (color_ostream &out, vector <string> & parameters)
+static inline bool select_caste_mat(color_ostream &out, vector<string> &tokens,
+    int16_t &mat_type, int32_t &mat_index, const string &material_str)
 {
+    split_string(&tokens, material_str, ":");
+    if (tokens.size() == 1)
+    {   // Default to empty caste to display a list of valid castes later
+        tokens.push_back("");
+    }
+    else if (tokens.size() != 2) {
+        out.printerr("You must specify a creature ID and caste for this item type!\n");
+        return CR_FAILURE;
+    }
+
+    for (size_t i = 0; i < world->raws.creatures.all.size(); i++)
+    {
+        string castes = "";
+        auto creature = world->raws.creatures.all[i];
+        if (creature->creature_id == tokens[0])
+        {
+            for (size_t j = 0; j < creature->caste.size(); j++)
+            {
+                auto caste = creature->caste[j];
+                castes += " " + caste->caste_id;
+                if (caste->caste_id == tokens[1])
+                {
+                    mat_type = i;
+                    mat_index = j;
+                    break;
+                }
+            }
+            if (mat_type == -1) {
+                if (tokens[1].empty())
+                    out.printerr("You must also specify a caste.\n");
+                else
+                    out.printerr("The creature you specified has no such caste!\n");
+                out.printerr("Valid castes:%s\n", castes.c_str());
+                return false;
+            }
+        }
+    }
+    if (mat_type == -1) {
+        out.printerr("Unrecognized creature ID!\n");
+        return false;
+    }
+    return true;
+}
+
+static inline bool select_plant_growth(color_ostream &out, vector<string> &tokens, df::item_type &item_type,
+    int16_t &item_subtype, int16_t &mat_type, int32_t &mat_index, const string &material_str)
+{
+    split_string(&tokens, material_str, ":");
+    if (tokens.size() == 1)
+    {   // Default to empty to display a list of valid growths later
+        tokens.push_back("");
+    }
+    else if (tokens.size() == 3 && tokens[0] == "PLANT")
+        tokens.erase(tokens.begin());
+    else if (tokens.size() != 2) {
+        out.printerr("You must specify a plant and growth ID for this item type!\n");
+        return false;
+    }
+
+    for (size_t i = 0; i < world->raws.plants.all.size(); i++)
+    {
+        string growths = "";
+        auto plant = world->raws.plants.all[i];
+        if (plant->id != tokens[0])
+            continue;
+
+        for (size_t j = 0; j < plant->growths.size(); j++)
+        {
+            auto growth = plant->growths[j];
+            growths += " " + growth->id;
+            if (growth->id != tokens[1])
+                continue;
+
+            // Plant growths specify the actual item type/subtype
+            // so that certain growths can drop as SEEDS items
+            item_type = growth->item_type;
+            item_subtype = growth->item_subtype;
+            mat_type = growth->mat_type;
+            mat_index = growth->mat_index;
+            break;
+        }
+        if (mat_type == -1) {
+            if (tokens[1].empty())
+                out.printerr("You must also specify a growth ID.\n");
+            else
+                out.printerr("The plant you specified has no such growth!\n");
+            out.printerr("Valid growths:%s\n", growths.c_str());
+            return false;
+        }
+    }
+    if (mat_type == -1) {
+        out.printerr("Unrecognized plant ID!\n");
+        return false;
+    }
+    return true;
+}
+
+command_result df_createitem (color_ostream &out, vector<string> &parameters) {
     string item_str, material_str;
-    df::item_type item_type = item_type::NONE;
+    auto item_type = item_type::NONE;
     int16_t item_subtype = -1;
     int16_t mat_type = -1;
     int32_t mat_index = -1;
-    int32_t growth_print = -1;
     int count = 1;
     bool move_to_cursor = false;
 
-    if (parameters.size() == 1)
-    {
-        if (parameters[0] == "inspect")
-        {
-            CoreSuspender suspend;
-            df::item *item = Gui::getSelectedItem(out);
+    if (parameters.size() == 1) {
+        if (parameters[0] == "inspect") {
+            auto item = Gui::getSelectedItem(out);
             if (!item)
-            {
                 return CR_FAILURE;
-            }
 
             ItemTypeInfo iinfo(item->getType(), item->getSubtype());
             MaterialInfo minfo(item->getMaterial(), item->getMaterialIndex());
             out.print("%s %s\n", iinfo.getToken().c_str(), minfo.getToken().c_str());
             return CR_OK;
         }
-        else if (parameters[0] == "floor")
-        {
+        else if (parameters[0] == "floor") {
             dest_container = -1;
             dest_building = -1;
             out.print("Items created will be placed on the floor.\n");
             return CR_OK;
         }
-        else if (parameters[0] == "item")
-        {
+        else if (parameters[0] == "item") {
             dest_building = -1;
-            df::item *item = Gui::getSelectedItem(out);
-            if (!item)
-            {
+            auto item = Gui::getSelectedItem(out);
+            if (!item) {
                 out.printerr("You must select a container!\n");
                 return CR_FAILURE;
             }
             switch (item->getType())
-            {
-            case item_type::FLASK:
-            case item_type::BARREL:
-            case item_type::BUCKET:
-            case item_type::ANIMALTRAP:
-            case item_type::BOX:
-            case item_type::BAG:
-            case item_type::BIN:
-            case item_type::BACKPACK:
-            case item_type::QUIVER:
-                break;
-            case item_type::TOOL:
-                if (item->hasToolUse(tool_uses::LIQUID_CONTAINER))
+            {   using namespace df::enums::item_type;
+                case FLASK:
+                case BARREL:
+                case BUCKET:
+                case ANIMALTRAP:
+                case BOX:
+                case BAG:
+                case BIN:
+                case BACKPACK:
+                case QUIVER:
                     break;
-                if (item->hasToolUse(tool_uses::FOOD_STORAGE))
-                    break;
-                if (item->hasToolUse(tool_uses::SMALL_OBJECT_STORAGE))
-                    break;
-                if (item->hasToolUse(tool_uses::TRACK_CART))
-                    break;
-            default:
-                out.printerr("The selected item cannot be used for item storage!\n");
-                return CR_FAILURE;
+                case TOOL:
+                    if (item->hasToolUse(tool_uses::LIQUID_CONTAINER) ||
+                        item->hasToolUse(tool_uses::FOOD_STORAGE) ||
+                        item->hasToolUse(tool_uses::SMALL_OBJECT_STORAGE) ||
+                        item->hasToolUse(tool_uses::TRACK_CART)
+                    )
+                        break;
+                default:
+                    out.printerr("The selected item cannot be used for item storage!\n");
+                    return CR_FAILURE;
             }
             dest_container = item->id;
             string name;
@@ -193,40 +269,37 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
             out.print("Items created will be placed inside %s.\n", name.c_str());
             return CR_OK;
         }
-        else if (parameters[0] == "building")
-        {
+        else if (parameters[0] == "building") {
             dest_container = -1;
-            df::building *building = Gui::getSelectedBuilding(out);
-            if (!building)
-            {
+            auto building = Gui::getSelectedBuilding(out);
+            if (!building) {
                 out.printerr("You must select a building!\n");
                 return CR_FAILURE;
             }
             switch (building->getType())
-            {
-            case building_type::Coffin:
-            case building_type::Furnace:
-            case building_type::TradeDepot:
-            case building_type::Shop:
-            case building_type::Box:
-            case building_type::Weaponrack:
-            case building_type::Armorstand:
-            case building_type::Workshop:
-            case building_type::Cabinet:
-            case building_type::SiegeEngine:
-            case building_type::Trap:
-            case building_type::AnimalTrap:
-            case building_type::Cage:
-            case building_type::Wagon:
-            case building_type::NestBox:
-            case building_type::Hive:
-                break;
-            default:
-                out.printerr("The selected building cannot be used for item storage!\n");
-                return CR_FAILURE;
+            {   using namespace df::enums::building_type;
+                case Coffin:
+                case Furnace:
+                case TradeDepot:
+                case Shop:
+                case Box:
+                case Weaponrack:
+                case Armorstand:
+                case Workshop:
+                case Cabinet:
+                case SiegeEngine:
+                case Trap:
+                case AnimalTrap:
+                case Cage:
+                case Wagon:
+                case NestBox:
+                case Hive:
+                    break;
+                default:
+                    out.printerr("The selected building cannot be used for item storage!\n");
+                    return CR_FAILURE;
             }
-            if (building->getBuildStage() != building->getMaxBuildStage())
-            {
+            if (building->getBuildStage() != building->getMaxBuildStage()) {
                 out.printerr("The selected building has not yet been fully constructed!\n");
                 return CR_FAILURE;
             }
@@ -246,12 +319,10 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     item_str = parameters[0];
     material_str = parameters[1];
 
-    if (parameters.size() == 3)
-    {
+    if (parameters.size() == 3) {
         std::stringstream ss(parameters[2]);
         ss >> count;
-        if (count < 1)
-        {
+        if (count < 1) {
             out.printerr("You cannot produce less than one item!\n");
             return CR_FAILURE;
         }
@@ -261,234 +332,107 @@ command_result df_createitem (color_ostream &out, vector <string> & parameters)
     MaterialInfo material;
     vector<string> tokens;
 
-    if (item.find(item_str))
-    {
+    if (item.find(item_str)) {
         item_type = item.type;
         item_subtype = item.subtype;
     }
-    if (item_type == item_type::NONE)
-    {
+    if (item_type == item_type::NONE) {
         out.printerr("You must specify a valid item type to create!\n");
         return CR_FAILURE;
     }
     switch (item.type)
-    {
-    case item_type::INSTRUMENT:
-    case item_type::TOY:
-    case item_type::WEAPON:
-    case item_type::ARMOR:
-    case item_type::SHOES:
-    case item_type::SHIELD:
-    case item_type::HELM:
-    case item_type::GLOVES:
-    case item_type::AMMO:
-    case item_type::PANTS:
-    case item_type::SIEGEAMMO:
-    case item_type::TRAPCOMP:
-    case item_type::TOOL:
-        if (item_subtype == -1)
-        {
-            out.printerr("You must specify a subtype!\n");
+    {   using namespace df::enums::item_type;
+        case REMAINS:
+        case FISH:
+        case FISH_RAW:
+        case VERMIN:
+        case PET:
+        case EGG:
+            if (!select_caste_mat(out, tokens, mat_type, mat_index, material_str))
+                return CR_FAILURE;
+            break;
+        case PLANT_GROWTH:
+            if (!select_plant_growth(out, tokens, item_type, item_subtype,
+                mat_type, mat_index, material_str)
+                )
+                return CR_FAILURE;
+            break;
+        case CORPSE:
+        case CORPSEPIECE:
+        case FOOD:
+            out.printerr("Cannot create that type of item!\n");
             return CR_FAILURE;
-        }
-    default:
-        if (!material.find(material_str))
-        {
-            out.printerr("Unrecognized material!\n");
-            return CR_FAILURE;
-        }
-        mat_type = material.type;
-        mat_index = material.index;
-        break;
-
-    case item_type::REMAINS:
-    case item_type::FISH:
-    case item_type::FISH_RAW:
-    case item_type::VERMIN:
-    case item_type::PET:
-    case item_type::EGG:
-        split_string(&tokens, material_str, ":");
-        if (tokens.size() == 1)
-        {
-            // default to empty caste to display a list of valid castes later
-            tokens.push_back("");
-        }
-        else if (tokens.size() != 2)
-        {
-            out.printerr("You must specify a creature ID and caste for this item type!\n");
-            return CR_FAILURE;
-        }
-
-        for (size_t i = 0; i < world->raws.creatures.all.size(); i++)
-        {
-            string castes = "";
-            df::creature_raw *creature = world->raws.creatures.all[i];
-            if (creature->creature_id == tokens[0])
-            {
-                for (size_t j = 0; j < creature->caste.size(); j++)
-                {
-                    df::caste_raw *caste = creature->caste[j];
-                    castes += " " + caste->caste_id;
-                    if (caste->caste_id == tokens[1])
-                    {
-                        mat_type = i;
-                        mat_index = j;
-                        break;
-                    }
-                }
-                if (mat_type == -1)
-                {
-                    if (tokens[1].empty())
-                    {
-                        out.printerr("You must also specify a caste.\n");
-                    }
-                    else
-                    {
-                        out.printerr("The creature you specified has no such caste!\n");
-                    }
-                    out.printerr("Valid castes:%s\n", castes.c_str());
-                    return CR_FAILURE;
-                }
-            }
-        }
-        if (mat_type == -1)
-        {
-            out.printerr("Unrecognized creature ID!\n");
-            return CR_FAILURE;
-        }
-        break;
-
-    case item_type::PLANT_GROWTH:
-        split_string(&tokens, material_str, ":");
-        if (tokens.size() == 1)
-        {
-            // default to empty to display a list of valid growths later
-            tokens.push_back("");
-        }
-        else if (tokens.size() == 3 && tokens[0] == "PLANT")
-        {
-            tokens.erase(tokens.begin());
-        }
-        else if (tokens.size() != 2)
-        {
-            out.printerr("You must specify a plant and growth ID for this item type!\n");
-            return CR_FAILURE;
-        }
-
-        for (size_t i = 0; i < world->raws.plants.all.size(); i++)
-        {
-            string growths = "";
-            df::plant_raw *plant = world->raws.plants.all[i];
-            if (plant->id != tokens[0])
-                continue;
-
-            for (size_t j = 0; j < plant->growths.size(); j++)
-            {
-                df::plant_growth *growth = plant->growths[j];
-                growths += " " + growth->id;
-                if (growth->id != tokens[1])
-                    continue;
-
-                // Plant growths specify the actual item type/subtype
-                // so that certain growths can drop as SEEDS items
-                item_type = growth->item_type;
-                item_subtype = growth->item_subtype;
-                mat_type = growth->mat_type;
-                mat_index = growth->mat_index;
-
-                // Try and find a growth print matching the current time
-                // (in practice, only tree leaves use this for autumn color changes)
-                for (size_t k = 0; k < growth->prints.size(); k++)
-                {
-                    df::plant_growth_print *print = growth->prints[k];
-                    if (print->timing_start <= *cur_year_tick && *cur_year_tick <= print->timing_end)
-                    {
-                        growth_print = k;
-                        break;
-                    }
-                }
-                // If we didn't find one, then pick the first one (if it exists)
-                if (growth_print == -1 && growth->prints.size() > 0)
-                    growth_print = 0;
-                break;
-            }
-            if (mat_type == -1)
-            {
-                if (tokens[1].empty())
-                    out.printerr("You must also specify a growth ID.\n");
-                else
-                    out.printerr("The plant you specified has no such growth!\n");
-                out.printerr("Valid growths:%s\n", growths.c_str());
+        case INSTRUMENT:
+        case TOY:
+        case WEAPON:
+        case ARMOR:
+        case SHOES:
+        case SHIELD:
+        case HELM:
+        case GLOVES:
+        case AMMO:
+        case PANTS:
+        case SIEGEAMMO:
+        case TRAPCOMP:
+        case TOOL:
+            if (item_subtype == -1) {
+                out.printerr("You must specify a subtype!\n");
                 return CR_FAILURE;
             }
-        }
-        if (mat_type == -1)
-        {
-            out.printerr("Unrecognized plant ID!\n");
-            return CR_FAILURE;
-        }
-        break;
-
-    case item_type::CORPSE:
-    case item_type::CORPSEPIECE:
-    case item_type::FOOD:
-        out.printerr("Cannot create that type of item!\n");
-        return CR_FAILURE;
-        break;
+        default:
+            if (!material.find(material_str)) {
+                out.printerr("Unrecognized material!\n");
+                return CR_FAILURE;
+            }
+            mat_type = material.type;
+            mat_index = material.index;
     }
 
-    CoreSuspender suspend;
+    if (!Maps::IsValid()) {
+        out.printerr("Map is not available.\n");
+        return CR_FAILURE;
+    }
 
-    df::unit *unit = Gui::getSelectedUnit(out, true);
-    if (!unit)
-    {
+    auto unit = Gui::getSelectedUnit(out, true);
+    if (!unit) {
         if (*gametype == game_type::ADVENTURE_ARENA || World::isAdventureMode())
-        {
-            // Use the adventurer unit
+        {   // Use the adventurer unit
             unit = World::getAdventurer();
         }
         else if (cursor->x >= 0)
-        {
-            // Use the first possible citizen if possible, otherwise the first unit
+        {   // Use the first possible citizen if possible, otherwise the first unit
             for (auto u : Units::citizensRange(world->units.active)) {
                 unit = u;
                 break;
             }
-            if (!unit && world->units.active.size())
-                unit = world->units.active[0];
+            if (!unit)
+                unit = vector_get(world->units.active, 0);
             move_to_cursor = true;
         }
-        if (!unit)
-        {
+        if (!unit) {
             out.printerr("No unit selected!\n");
             return CR_FAILURE;
         }
     }
-    if (!Maps::IsValid())
-    {
-        out.printerr("Map is not available.\n");
-        return CR_FAILURE;
-    }
-    df::map_block *block = Maps::getTileBlock(unit->pos.x, unit->pos.y, unit->pos.z);
-    if (block == NULL)
-    {
+
+    auto block = Maps::getTileBlock(unit->pos);
+    if (!block) {
         out.printerr("Unit does not reside in a valid map block, somehow?\n");
         return CR_FAILURE;
     }
-    if ((dest_container != -1) && !df::item::find(dest_container))
+    if (dest_container != -1 && !df::item::find(dest_container))
     {
         dest_container = -1;
         out.printerr("Previously selected container no longer exists - item will be placed on the floor.\n");
     }
-    if ((dest_building != -1) && !df::building::find(dest_building))
+    if (dest_building != -1 && !df::building::find(dest_building))
     {
         dest_building = -1;
         out.printerr("Previously selected building no longer exists - item will be placed on the floor.\n");
     }
 
-    for (int i = 0; i < count; i++)
-    {
-        if (!makeItem(unit, item_type, item_subtype, mat_type, mat_index, growth_print, move_to_cursor, false))
+    for (int i = 0; i < count; i++) {
+        if (!makeItem(unit, item_type, item_subtype, mat_type, mat_index, move_to_cursor, false))
         {
             out.printerr("Failed to create item!\n");
             return CR_FAILURE;

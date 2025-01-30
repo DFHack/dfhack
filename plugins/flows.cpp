@@ -1,6 +1,5 @@
 // This tool counts static tiles and active flows of water and magma.
 
-#include "Core.h"
 #include "Console.h"
 #include "Export.h"
 #include "PluginManager.h"
@@ -20,8 +19,6 @@ REQUIRE_GLOBAL(world);
 
 command_result df_flows (color_ostream &out, vector <string> & parameters)
 {
-    CoreSuspender suspend;
-
     int flow1 = 0, flow2 = 0, flowboth = 0, water = 0, magma = 0;
     out.print("Counting flows and liquids ...\n");
 

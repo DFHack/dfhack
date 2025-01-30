@@ -92,8 +92,8 @@ the Ctrl-Shift-E hotkey or by selecting it from the logo menu list.
 In the control panel, you can also select which tools you'd like to be
 automatically enabled and popular commands you'd like to run when you start a
 new fort. On the "Preferences" tab, there are settings you can change, like
-the aforementioned "mortal mode" or whether you want DFHack windows to pause
-the game when they come up.
+"mortal mode" (you'll learn more about this in the next section) or whether you
+want DFHack windows to pause the game when they come up.
 
 Finally, you can explore the full extent of the DFHack catalog in
 `gui/launcher`, which is always listed first in the DFHack logo menu list. You

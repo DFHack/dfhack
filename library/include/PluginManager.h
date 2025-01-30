@@ -34,7 +34,6 @@ distribution.
 #include <vector>
 
 #include "Core.h"
-#include "DataFuncs.h"
 
 typedef struct lua_State lua_State;
 
@@ -68,8 +67,8 @@ namespace DFHack
     DFHACK_EXPORT DFLibrary * OpenPlugin (const char * filename);
     // find a symbol inside plugin
     DFHACK_EXPORT void * LookupPlugin (DFLibrary * plugin ,const char * function);
-    // Close a plugin library
-    DFHACK_EXPORT void ClosePlugin (DFLibrary * plugin);
+    // Close a plugin library. returns true on success, false on failure
+    DFHACK_EXPORT bool ClosePlugin (DFLibrary * plugin);
 
     struct DFHACK_EXPORT CommandReg {
         const char *name;
@@ -99,11 +98,12 @@ namespace DFHack
                       const char * _description,
                       command_function function_,
                       bool interactive_ = false,
+                      bool unlocked_ = false,
                       const char * usage_ = ""
                      )
-            : name(_name), description(_description),
-              function(function_), interactive(interactive_),
-              guard(NULL), usage(usage_)
+            : name{_name}, description{_description}, function{function_},
+              interactive{interactive_}, unlocked{unlocked_}, guard{NULL},
+              usage{usage_}
         {
             fix_usage();
         }
@@ -113,9 +113,9 @@ namespace DFHack
                       command_function function_,
                       command_hotkey_guard guard_,
                       const char * usage_ = "")
-            : name(_name), description(_description),
-              function(function_), interactive(false),
-              guard(guard_), usage(usage_)
+            : name{_name}, description{_description}, function{function_},
+              interactive{false}, unlocked{false}, guard{guard_},
+              usage{usage_}
         {
             fix_usage();
         }
@@ -128,11 +128,12 @@ namespace DFHack
 
         bool isHotkeyCommand() const { return guard != NULL; }
 
-        std::string name;
-        std::string description;
-        command_function function;
-        bool interactive;
-        command_hotkey_guard guard;
+        const std::string name;
+        const std::string description;
+        const command_function function;
+        const bool interactive;
+        const bool unlocked;
+        const command_hotkey_guard guard;
         std::string usage;
     };
     class Plugin
@@ -321,19 +322,6 @@ extern "C" { \
 #define DFHACK_PLUGIN_IS_ENABLED(varname) \
     DFhackDataExport bool plugin_is_enabled = false; \
     bool &varname = plugin_is_enabled;
-
-#define DFHACK_PLUGIN_LUA_COMMANDS \
-    DFhackCExport const DFHack::CommandReg plugin_lua_commands[] =
-#define DFHACK_PLUGIN_LUA_FUNCTIONS \
-    DFhackCExport const DFHack::FunctionReg plugin_lua_functions[] =
-#define DFHACK_PLUGIN_LUA_EVENTS \
-    DFhackCExport const DFHack::EventReg plugin_lua_events[] =
-
-#define DFHACK_LUA_COMMAND(name) { #name, name }
-#define DFHACK_LUA_FUNCTION(name) { #name, df::wrap_function(name,true) }
-#define DFHACK_LUA_EVENT(name) { #name, &name##_event }
-#define DFHACK_LUA_END { NULL, NULL }
-
 
 #define REQUIRE_GLOBAL_NO_USE(global_name) \
     static int VARIABLE_IS_NOT_USED CONCAT_TOKENS(required_globals_, __LINE__) = \

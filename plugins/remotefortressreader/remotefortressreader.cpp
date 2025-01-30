@@ -6,7 +6,6 @@
 #include <vector>
 
 #include "Console.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "Export.h"
 #include "Hooks.h"
@@ -47,10 +46,8 @@
 #include "df/building_wellst.h"
 
 #include "df/caste_raw.h"
-#include "df/caste_raw.h"
 #include "df/color_modifier_raw.h"
 #include "df/construction.h"
-#include "df/creature_raw.h"
 #include "df/creature_raw.h"
 #include "df/descriptor_color.h"
 #include "df/descriptor_pattern.h"
@@ -301,8 +298,6 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out)
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out)
 {
-    if (!enableUpdates)
-        return CR_OK;
     KeyUpdate();
     return CR_OK;
 }
@@ -1701,7 +1696,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
         size_info->set_length_base(unit->body.size_info.length_base);
         if (unit->name.has_name)
         {
-            send_unit->set_name(DF2UTF(Translation::TranslateName(Units::getVisibleName(unit))));
+            send_unit->set_name(DF2UTF(Translation::translateName(Units::getVisibleName(unit), true)));
         }
 
         auto appearance = send_unit->mutable_appearance();
@@ -1713,7 +1708,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
             appearance->add_colors(unit->appearance.colors[j]);
         appearance->set_size_modifier(unit->appearance.size_modifier);
 
-        appearance->set_physical_description(Units::getPhysicalDescription(unit));
+        appearance->set_physical_description(""); // TODO: Units::getPhysicalDescription(unit) removed, figure this out.
 
         send_unit->set_profession_id(unit->profession);
 
@@ -1896,8 +1891,8 @@ static command_result GetMapInfo(color_ostream &stream, const EmptyMessage *in, 
     out->set_block_pos_x(pos_x);
     out->set_block_pos_y(pos_y);
     out->set_block_pos_z(pos_z);
-    out->set_world_name(DF2UTF(Translation::TranslateName(&df::global::world->world_data->name, false)));
-    out->set_world_name_english(DF2UTF(Translation::TranslateName(&df::global::world->world_data->name, true)));
+    out->set_world_name(DF2UTF(Translation::translateName(&df::global::world->world_data->name, false)));
+    out->set_world_name_english(DF2UTF(Translation::translateName(&df::global::world->world_data->name, true)));
     out->set_save_name(df::global::world->cur_savegame.save_dir);
     return CR_OK;
 }
@@ -1961,8 +1956,8 @@ static command_result GetWorldMapCenter(color_ostream &stream, const EmptyMessag
     out->set_center_x(pos.x);
     out->set_center_y(pos.y);
     out->set_center_z(pos.z);
-    out->set_name(DF2UTF(Translation::TranslateName(&(data->name), false)));
-    out->set_name_english(DF2UTF(Translation::TranslateName(&(data->name), true)));
+    out->set_name(DF2UTF(Translation::translateName(&(data->name), false)));
+    out->set_name_english(DF2UTF(Translation::translateName(&(data->name), true)));
     out->set_cur_year(World::ReadCurrentYear());
     out->set_cur_year_tick(World::ReadCurrentTick());
     return CR_OK;
@@ -1987,8 +1982,8 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     int height = data->world_height;
     out->set_world_width(width);
     out->set_world_height(height);
-    out->set_name(DF2UTF(Translation::TranslateName(&(data->name), false)));
-    out->set_name_english(DF2UTF(Translation::TranslateName(&(data->name), true)));
+    out->set_name(DF2UTF(Translation::translateName(&(data->name), false)));
+    out->set_name_english(DF2UTF(Translation::translateName(&(data->name), true)));
     auto poles = data->flip_latitude;
 #if DF_VERSION_INT > 34011
     switch (poles)
@@ -2136,8 +2131,8 @@ static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *
     int height = data->world_height;
     out->set_world_width(width);
     out->set_world_height(height);
-    out->set_name(DF2UTF(Translation::TranslateName(&(data->name), false)));
-    out->set_name_english(DF2UTF(Translation::TranslateName(&(data->name), true)));
+    out->set_name(DF2UTF(Translation::translateName(&(data->name), false)));
+    out->set_name_english(DF2UTF(Translation::translateName(&(data->name), true)));
 #if DF_VERSION_INT > 34011
     auto poles = data->flip_latitude;
     switch (poles)

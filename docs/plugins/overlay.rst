@@ -49,6 +49,9 @@ Examples
 ``overlay trigger hotkeys.menu``
     Trigger the `hotkeys` menu widget so that it shows its popup menu. This is
     what is run when you hit :kbd:`Ctrl`:kbd:`Shift`:kbd:`C`.
+``overlay trigger notes.map_notes add Kitchen``
+    Trigger the `notes` overlay widget so that it shows its new note popup
+    with given title.
 
 Widget position
 ---------------

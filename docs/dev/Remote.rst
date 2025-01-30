@@ -55,7 +55,6 @@ Plugins that implement RPC methods include:
 
 - `rename`
 - `remotefortressreader`
-- `isoworldremote`
 
 Plugins that use the RPC API include:
 

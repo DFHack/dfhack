@@ -1,13 +1,14 @@
 // Allow changing the material of a mineral inclusion
 
 #include "Console.h"
+#include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "TileTypes.h"
 
-#include "DataDefs.h"
+#include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
-#include "TileTypes.h"
 
 #include "df/block_square_event.h"
 #include "df/block_square_event_mineralst.h"
@@ -21,7 +22,6 @@ using namespace df::enums;
 
 DFHACK_PLUGIN("changevein");
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(cursor);
 
 constexpr uint8_t NORTH = 0;
 constexpr uint8_t EAST = 1;
@@ -212,7 +212,8 @@ command_result df_changevein (color_ostream &out, vector <string> & parameters)
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
     }
-    if (!cursor || cursor->x == -30000)
+    auto pos = Gui::getCursorPos();
+    if (!pos.isValid())
     {
         out.printerr("No cursor detected - please place the cursor over a mineral vein.\n");
         return CR_FAILURE;
@@ -232,14 +233,14 @@ command_result df_changevein (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
-    df::map_block *block = Maps::getTileBlock(cursor->x, cursor->y, cursor->z);
+    auto block = Maps::getTileBlock(pos);
     if (!block)
     {
         out.printerr("Invalid tile selected.\n");
         return CR_FAILURE;
     }
     df::block_square_event_mineralst *mineral = NULL;
-    int tx = cursor->x % 16, ty = cursor->y % 16;
+    int tx = pos.x % 16, ty = pos.y % 16;
     for (auto evt : block->block_events)
     {
         if (evt->getType() != block_square_event_type::mineral)

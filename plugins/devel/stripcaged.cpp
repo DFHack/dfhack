@@ -35,7 +35,6 @@ using std::string;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
-using df::global::cursor;
 using df::global::plotinfo;
 
 using namespace DFHack::Gui;

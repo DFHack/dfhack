@@ -37,7 +37,6 @@ Template for new versions:
 ## API
 
 ## Lua
-- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 
 ## Removed
 
@@ -58,6 +57,7 @@ Template for new versions:
 
 ## Fixes
 - `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
+- `createitem`: output items will now end up at look cursor if active
 
 ## Misc Improvements
 
@@ -66,6 +66,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 
 ## Removed
 

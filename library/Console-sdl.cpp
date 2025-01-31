@@ -224,10 +224,8 @@ SDLConsoleDriver::SDLConsoleDriver() : Console(this)
 SDLConsoleDriver::~SDLConsoleDriver()
 {
     assert(!inited);
-    if(wlock)
-        delete wlock;
-    if(d)
-        delete d;
+    delete wlock;
+    delete d;
 }
 
 /**

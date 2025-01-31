@@ -398,6 +398,8 @@ target_include_directories(dfhack-run PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/includ
 add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)
 
+target_include_directories(dfhack-test PRIVATE ${SDL2_INCLUDE_DIRS})
+
 if(WIN32)
     set_target_properties(dfhack PROPERTIES OUTPUT_NAME "dfhooks_dfhack" )
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )

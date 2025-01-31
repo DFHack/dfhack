@@ -966,7 +966,7 @@ public:
             return default_value;
         }
 
-        if (std::holds_alternative<T>(it->second) == false) {
+        if (!std::holds_alternative<T>(it->second)) {
             return default_value; // TODO: log error
         }
         return std::get<T>(it->second);
@@ -1208,7 +1208,7 @@ public:
 
     void render(const std::u32string_view& text, int x, int y)
     {
-        for (auto& ch : text) {
+        for (const auto& ch : text) {
             char32_t index;
             if (ch <= 127)
                 index = ch;
@@ -3174,7 +3174,7 @@ int set_draw_color(SDL_Renderer* renderer, const SDL_Color& color)
 struct SDLConsole_pshare {
     Property props;
     std::weak_ptr<SDLConsole_impl> impl_weak;
-    std::thread::id render_thread_id{};
+    std::thread::id render_thread_id;
 };
 
 class SDLConsole_impl : public std::enable_shared_from_this<SDLConsole_impl> {
@@ -3216,7 +3216,7 @@ public:
 #endif
 
     OutputPane& outpane() {
-        return *main_window.outpane.get();
+        return *main_window.outpane;
     }
 
     bool sdl_event_hook(SDL_Event& e)
@@ -3287,7 +3287,7 @@ private:
     }
 };
 
-SDLConsole::SDLConsole() : state()
+SDLConsole::SDLConsole()
 {
     pshare = std::make_unique<SDLConsole_pshare>();
     state.set_state(State::inactive);
@@ -3305,7 +3305,7 @@ bool SDLConsole::init()
     if (state.is_failed()) return false;
     if (!state.is_inactive()) return true;
     bool success = true;
-    //std::cerr << "SDLConsole: init() from thread: " << std::this_thread::get_id() << std::endl;
+    std::cerr << "SDLConsole: init() from thread: " << std::this_thread::get_id() << std::endl;
     pshare->render_thread_id = std::this_thread::get_id();
     try {
         bind_sdl_symbols();

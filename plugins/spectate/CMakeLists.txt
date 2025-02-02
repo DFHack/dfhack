@@ -2,7 +2,6 @@
 project(spectate)
 
 SET(SOURCES
-        spectate.cpp
-        pause.cpp)
+        spectate.cpp)
 
 dfhack_plugin(${PROJECT_NAME} ${SOURCES})

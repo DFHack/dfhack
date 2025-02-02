@@ -64,6 +64,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
 
 ## Lua
 

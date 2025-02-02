@@ -58,6 +58,7 @@ Template for new versions:
 
 ## Fixes
 - `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
+- `gui/launcher`: flatten text when pasting multi-line text from the clipboard
 
 ## Misc Improvements
 

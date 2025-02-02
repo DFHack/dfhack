@@ -1,716 +1,391 @@
 #include "Debug.h"
-#include "Export.h"
+#include "LuaTools.h"
+#include "PluginLua.h"
 #include "PluginManager.h"
 
-#include "modules/EventManager.h"
-#include "modules/World.h"
-#include "modules/Maps.h"
 #include "modules/Gui.h"
-#include "modules/Job.h"
 #include "modules/Units.h"
+#include "modules/World.h"
 
-#include "df/job.h"
-#include "df/unit.h"
-#include "df/historical_figure.h"
-#include "df/global_objects.h"
+#include "df/announcements.h"
+#include "df/d_init.h"
 #include "df/plotinfost.h"
+#include "df/unit.h"
 #include "df/world.h"
-#include "df/viewscreen.h"
-#include "df/creature_raw.h"
 
-#include <array>
 #include <random>
-#include <cinttypes>
-
-// Debugging
-namespace DFHack {
-    DBG_DECLARE(log, plugin, DebugCategory::LINFO);
-}
-
-DFHACK_PLUGIN("spectate");
-DFHACK_PLUGIN_IS_ENABLED(enabled);
-
-REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(plotinfo);
-REQUIRE_GLOBAL(d_init); // used in pause.cpp
 
 using namespace DFHack;
-using namespace Pausing;
-using namespace df::enums;
 
-////////////
-// Locking mechanisms for control over pausing
-namespace Pausing
-{
-    class Lock
-    {
-        bool locked = false;
-    public:
-        const std::string name;
-        explicit Lock(const char* name) : name(name){}
-        virtual ~Lock()= default;
-        virtual bool isAnyLocked() const = 0;
-        virtual bool isOnlyLocked() const = 0;
-        bool isLocked() const   { return locked; }
-        virtual void lock()     { locked = true; } //simply locks the lock
-        void unlock()           { locked = false; }
-        virtual void reportLocks(color_ostream &out) = 0;
-    };
+using std::string;
+using std::vector;
 
-    // non-blocking lock resource used in conjunction with the announcement functions in World
-    class AnnouncementLock : public Lock
-    {
-        static std::unordered_set<Lock*> locks;
-    public:
-        explicit AnnouncementLock(const char* name): Lock(name) { locks.emplace(this); }
-        ~AnnouncementLock() override { locks.erase(this); }
-        bool captureState(); // captures the state of announcement settings, iff this is the only locked lock (note it does nothing if 0 locks are engaged)
-        void lock() override; // locks and attempts to capture state
-        bool isAnyLocked() const override; // returns true if any instance of AnnouncementLock is locked
-        bool isOnlyLocked() const override; // returns true if locked and no other instance is locked
-        void reportLocks(color_ostream &out) override;
-    };
+DFHACK_PLUGIN("spectate");
+DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
-    // non-blocking lock resource used in conjunction with the Player pause functions in World
-    class PlayerLock : public Lock
-    {
-        static std::unordered_set<Lock*> locks;
-    public:
-        explicit PlayerLock(const char* name): Lock(name) { locks.emplace(this); }
-        ~PlayerLock() override { locks.erase(this); }
-        bool isAnyLocked() const override; // returns true if any instance of PlayerLock is locked
-        bool isOnlyLocked() const override; // returns true if locked and no other instance is locked
-        void reportLocks(color_ostream &out) override;
-    };
+REQUIRE_GLOBAL(d_init);
+REQUIRE_GLOBAL(plotinfo);
+REQUIRE_GLOBAL(world);
 
-    // non-blocking lock resource used in conjunction with the pause set state function in World
-// todo: integrate with World::SetPauseState
-//        class PauseStateLock : public Lock
-//        {
-//            static std::unordered_set<Lock*> locks;
-//        public:
-//            explicit PauseStateLock(const char* name): Lock(name) { locks.emplace(this); }
-//            ~PauseStateLock() override { locks.erase(this); }
-//            bool isAnyLocked() const override; // returns true if any instance of PlayerLock is locked
-//            bool isOnlyLocked() const override; // returns true if locked and no other instance is locked
-//            void reportLocks(color_ostream &out) override;
-//        };
-}
-namespace World {
-    bool DisableAnnouncementPausing(); // disable announcement pausing if all locks are open
-    bool SaveAnnouncementSettings(); // save current announcement pause settings if all locks are open
-    bool RestoreAnnouncementSettings(); // restore saved announcement pause settings if all locks are open and there is state information to restore (returns true if a restore took place)
-
-    bool EnablePlayerPausing(); // enable player pausing if all locks are open
-    bool DisablePlayerPausing(); // disable player pausing if all locks are open
-    bool IsPlayerPausingEnabled(); // returns whether the player can pause or not
-
-    void Update();
+namespace DFHack {
+    DBG_DECLARE(spectate, control, DebugCategory::LINFO);
+    DBG_DECLARE(spectate, cycle, DebugCategory::LINFO);
 }
 
-std::unordered_set<Lock*> PlayerLock::locks;
-std::unordered_set<Lock*> AnnouncementLock::locks;
+static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
+static bool was_in_settings = false;         // whether we were in the vanilla settings screen last update
 
-namespace pausing {
-    AnnouncementLock announcementLock("monitor");
-    PlayerLock playerLock("monitor");
+static const size_t announcement_flag_arr_size = sizeof(decltype(df::announcements::flags)) / sizeof(df::announcement_flags);
+static std::unique_ptr<uint32_t *> saved_announcement_settings;
 
-    const size_t announcement_flag_arr_size = sizeof(decltype(df::announcements::flags)) / sizeof(df::announcement_flags);
-    bool state_saved = false; // indicates whether a restore state is ok
-    bool saved_states[announcement_flag_arr_size]; // state to restore
-    bool locked_states[announcement_flag_arr_size]; // locked state (re-applied each frame)
-    bool allow_player_pause = true; // toggles player pause ability
-
-    using namespace df::enums;
-    struct player_pause_hook : df::viewscreen_dwarfmodest {
-        typedef df::viewscreen_dwarfmodest interpose_base;
-        DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key>* input)) {
-            if ((plotinfo->main.mode == ui_sidebar_mode::Default) && !allow_player_pause) {
-                input->erase(interface_key::D_PAUSE);
-            }
-            INTERPOSE_NEXT(feed)(input);
-        }
-    };
-
-    IMPLEMENT_VMETHOD_INTERPOSE(player_pause_hook, feed);
-}
-using namespace pausing;
-
-template<typename Locks>
-inline bool any_lock(Locks locks) {
-    return std::any_of(locks.begin(), locks.end(), [](Lock* lock) { return lock->isLocked(); });
+static void save_announcement_settings(color_ostream &out) {
+    if (!saved_announcement_settings)
+        saved_announcement_settings = std::make_unique<uint32_t *>(new uint32_t[announcement_flag_arr_size]);
+    DEBUG(control,out).print("saving announcement settings\n");
+    for (size_t i = 0; i < announcement_flag_arr_size; ++i)
+        (*saved_announcement_settings)[i] = d_init->announcements.flags[i].whole;
 }
 
-template<typename Locks, typename LockT>
-inline bool only_lock(Locks locks, LockT* this_lock) {
-    return std::all_of(locks.begin(), locks.end(), [&](Lock* lock) {
-        if (lock == this_lock) {
-            return lock->isLocked();
-        }
-        return !lock->isLocked();
-    });
+static void restore_announcement_settings(color_ostream &out) {
+    if (!saved_announcement_settings)
+        return;
+    DEBUG(control,out).print("restoring saved announcement settings\n");
+    for (size_t i = 0; i < announcement_flag_arr_size; ++i)
+        d_init->announcements.flags[i].whole = (*saved_announcement_settings)[i];
 }
 
-template<typename Locks, typename LockT>
-inline bool only_or_none_locked(Locks locks, LockT* this_lock) {
-    for (auto &L: locks) {
-        if (L == this_lock) {
-            continue;
-        }
-        if (L->isLocked()) {
-            return false;
-        }
+static void scrub_announcements(color_ostream &out) {
+    if (Gui::matchFocusString("dwarfmode/Settings")) {
+        DEBUG(control,out).print("not modifying announcement settings; vanilla settings screen is active\n");
+        return;
     }
-    return true;
-}
 
-template<typename Locks>
-inline bool reportLockedLocks(color_ostream &out, Locks locks) {
-    out.color(DFHack::COLOR_YELLOW);
-    for (auto &L: locks) {
-        if (L->isLocked()) {
-            out.print("Lock: '%s'\n", L->name.c_str());
-        }
-    }
-    out.reset_color();
-    return true;
-}
-
-bool AnnouncementLock::captureState() {
-    if (only_or_none_locked(locks, this)) {
-        for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
-            locked_states[i] = d_init->announcements.flags[i].bits.PAUSE;
-        }
-        return true;
-    }
-    return false;
-}
-
-void AnnouncementLock::lock() {
-    Lock::lock();
-    captureState();
-}
-
-bool AnnouncementLock::isAnyLocked() const {
-    return any_lock(locks);
-}
-
-bool AnnouncementLock::isOnlyLocked() const {
-    return only_lock(locks, this);
-}
-
-void AnnouncementLock::reportLocks(color_ostream &out) {
-    reportLockedLocks(out, locks);
-}
-
-bool PlayerLock::isAnyLocked() const {
-    return any_lock(locks);
-}
-
-bool PlayerLock::isOnlyLocked() const {
-    return only_lock(locks, this);
-}
-
-void PlayerLock::reportLocks(color_ostream &out) {
-    reportLockedLocks(out, locks);
-}
-
-bool World::DisableAnnouncementPausing() {
-    if (!announcementLock.isAnyLocked()) {
-        for (auto& flag : d_init->announcements.flags) {
-            flag.bits.PAUSE = false;
-            //out.print("pause: %d\n", flag.bits.PAUSE);
-        }
-        return true;
-    }
-    return false;
-}
-
-bool World::SaveAnnouncementSettings() {
-    if (!announcementLock.isAnyLocked()) {
-        for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
-            saved_states[i] = d_init->announcements.flags[i].bits.PAUSE;
-        }
-        state_saved = true;
-        return true;
-    }
-    return false;
-}
-
-bool World::RestoreAnnouncementSettings() {
-    if (!announcementLock.isAnyLocked() && state_saved) {
-        for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
-            d_init->announcements.flags[i].bits.PAUSE = saved_states[i];
-        }
-        return true;
-    }
-    return false;
-}
-
-bool World::EnablePlayerPausing() {
-    if (!playerLock.isAnyLocked()) {
-        allow_player_pause = true;
-    }
-    return allow_player_pause;
-}
-
-bool World::DisablePlayerPausing() {
-    if (!playerLock.isAnyLocked()) {
-        allow_player_pause = false;
-    }
-    return !allow_player_pause;
-}
-
-bool World::IsPlayerPausingEnabled() {
-    return allow_player_pause;
-}
-
-void World::Update() {
-    static bool did_once = false;
-    if (!did_once) {
-        did_once = true;
-        INTERPOSE_HOOK(player_pause_hook, feed).apply();
-    }
-    if (announcementLock.isAnyLocked()) {
-        for (size_t i = 0; i < announcement_flag_arr_size; ++i) {
-            d_init->announcements.flags[i].bits.PAUSE = locked_states[i];
-        }
+    DEBUG(control,out).print("removing PAUSE from announcement settings\n");
+    for (auto& flag : d_init->announcements.flags) {
+        flag.bits.DO_MEGA = false;
+        flag.bits.PAUSE = false;
+        flag.bits.RECENTER = false;
     }
 }
 
 struct Configuration {
-    bool unpause = false;
-    bool disengage = false;
-    bool animals = false;
-    bool hostiles = true;
-    bool visitors = false;
-    int32_t tick_threshold = 1000;
+    bool auto_disengage;
+    bool auto_unpause;
+    bool cinematic_action;
+    bool include_animals;
+    bool include_hostiles;
+    bool include_visitors;
+    bool include_wildlife;
+    bool prefer_conflict;
+    bool prefer_new_arrivals;
+    int32_t follow_ms;
+
+    void reset() {
+        auto_disengage = true;
+        auto_unpause = false;
+        cinematic_action = true;
+        include_animals = false;
+        include_hostiles = false;
+        include_visitors = false;
+        include_wildlife = false;
+        prefer_conflict = true;
+        prefer_new_arrivals = true;
+        follow_ms = 10000;
+    }
 } config;
 
-Pausing::AnnouncementLock* pause_lock = nullptr;
-bool lock_collision = false;
-bool announcements_disabled = false;
+static command_result do_command(color_ostream &out, vector<string> &parameters);
+static void follow_a_dwarf(color_ostream &out);
 
-#define base 0.99
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    DEBUG(control,out).print("initializing %s\n", plugin_name);
 
-static const std::string CONFIG_KEY = std::string(plugin_name) + "/config";
-enum ConfigData {
-    UNPAUSE,
-    DISENGAGE,
-    TICK_THRESHOLD,
-    ANIMALS,
-    HOSTILES,
-    VISITORS
-};
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Automated spectator mode.",
+        do_command));
 
-static PersistentDataItem pconfig;
-
-DFhackCExport command_result plugin_enable(color_ostream &out, bool enable);
-command_result spectate (color_ostream &out, std::vector <std::string> & parameters);
-#define COORDARGS(id) id.x, id.y, id.z
-
-namespace SP {
-    bool following_dwarf = false;
-    df::unit* our_dorf = nullptr;
-    int32_t timestamp = -1;
-    std::default_random_engine RNG;
-
-    void DebugUnitVector(std::vector<df::unit*> units) {
-        if (debug_plugin.isEnabled(DFHack::DebugCategory::LDEBUG)) {
-            for (auto unit: units) {
-                DEBUG(plugin).print("[id: %d]\n animal: %d\n hostile: %d\n visiting: %d\n",
-                                    unit->id,
-                                    Units::isAnimal(unit),
-                                    Units::isDanger(unit),
-                                    Units::isVisiting(unit));
-            }
-        }
-    }
-
-    void PrintStatus(color_ostream &out) {
-        out.print("Spectate is %s\n", enabled ? "ENABLED." : "DISABLED.");
-        out.print(" FEATURES:\n");
-        out.print("  %-20s\t%s\n", "auto-unpause: ", config.unpause ? "on." : "off.");
-        out.print("  %-20s\t%s\n", "auto-disengage: ", config.disengage ? "on." : "off.");
-        out.print("  %-20s\t%s\n", "animals: ", config.animals ? "on." : "off.");
-        out.print("  %-20s\t%s\n", "hostiles: ", config.hostiles ? "on." : "off.");
-        out.print("  %-20s\t%s\n", "visiting: ", config.visitors ? "on." : "off.");
-        out.print(" SETTINGS:\n");
-        out.print("  %-20s\t%" PRIi32 "\n", "tick-threshold: ", config.tick_threshold);
-        if (following_dwarf)
-            out.print(" %-21s\t%s[id: %d]\n","FOLLOWING:", our_dorf ? our_dorf->name.first_name.c_str() : "nullptr", plotinfo->follow_unit);
-    }
-
-    void SetUnpauseState(bool state) {
-        // we don't need to do any of this yet if the plugin isn't enabled
-        if (enabled) {
-            // todo: R.E. UNDEAD_ATTACK event [still pausing regardless of announcement settings]
-            // lock_collision == true means: enable_auto_unpause() was already invoked and didn't complete
-            // The onupdate function above ensure the procedure properly completes, thus we only care about
-            // state reversal here ergo `enabled != state`
-            if (lock_collision && config.unpause != state) {
-                WARN(plugin).print("Spectate auto-unpause: Not enabled yet, there was a lock collision. When the other lock holder releases, auto-unpause will engage on its own.\n");
-                // if unpaused_enabled is true, then a lock collision means: we couldn't save/disable the pause settings,
-                // therefore nothing to revert and the lock won't even be engaged (nothing to unlock)
-                lock_collision = false;
-                config.unpause = state;
-                if (config.unpause) {
-                    // a collision means we couldn't restore the pause settings, therefore we only need re-engage the lock
-                    pause_lock->lock();
-                }
-                return;
-            }
-            // update the announcement settings if we can
-            if (state) {
-                if (World::SaveAnnouncementSettings()) {
-                    World::DisableAnnouncementPausing();
-                    announcements_disabled = true;
-                    pause_lock->lock();
-                } else {
-                    WARN(plugin).print("Spectate auto-unpause: Could not fully enable. There was a lock collision, when the other lock holder releases, auto-unpause will engage on its own.\n");
-                    lock_collision = true;
-                }
-            } else {
-                pause_lock->unlock();
-                if (announcements_disabled) {
-                    if (!World::RestoreAnnouncementSettings()) {
-                        // this in theory shouldn't happen, if others use the lock like we do in spectate
-                        WARN(plugin).print("Spectate auto-unpause: Could not fully disable. There was a lock collision, when the other lock holder releases, auto-unpause will disengage on its own.\n");
-                        lock_collision = true;
-                    } else {
-                        announcements_disabled = false;
-                    }
-                }
-            }
-            if (lock_collision) {
-                ERR(plugin).print("Spectate auto-unpause: Could not fully enable. There was a lock collision, when the other lock holder releases, auto-unpause will engage on its own.\n");
-                WARN(plugin).print(
-                            " auto-unpause: must wait for another Pausing::AnnouncementLock to be lifted.\n"
-                            " The action you were attempting will complete when the following lock or locks lift.\n");
-                pause_lock->reportLocks(Core::getInstance().getConsole());
-            }
-        }
-        config.unpause = state;
-    }
-
-    void SaveSettings() {
-        if (pconfig.isValid()) {
-            pconfig.ival(UNPAUSE) = config.unpause;
-            pconfig.ival(DISENGAGE) = config.disengage;
-            pconfig.ival(TICK_THRESHOLD) = config.tick_threshold;
-            pconfig.ival(ANIMALS) = config.animals;
-            pconfig.ival(HOSTILES) = config.hostiles;
-            pconfig.ival(VISITORS) = config.visitors;
-        }
-    }
-
-    void LoadSettings() {
-        pconfig = World::GetPersistentSiteData(CONFIG_KEY);
-
-        if (!pconfig.isValid()) {
-            pconfig = World::AddPersistentSiteData(CONFIG_KEY);
-            SaveSettings();
-        } else {
-            config.unpause = pconfig.ival(UNPAUSE);
-            config.disengage = pconfig.ival(DISENGAGE);
-            config.tick_threshold = pconfig.ival(TICK_THRESHOLD);
-            config.animals = pconfig.ival(ANIMALS);
-            config.hostiles = pconfig.ival(HOSTILES);
-            config.visitors = pconfig.ival(VISITORS);
-            pause_lock->unlock();
-            SetUnpauseState(config.unpause);
-        }
-    }
-
-    bool FollowADwarf() {
-        if (enabled && !World::ReadPauseState()) {
-            df::coord viewMin = Gui::getViewportPos();
-            df::coord viewMax{viewMin};
-            const auto &dims = Gui::getDwarfmodeViewDims().map().second;
-            viewMax.x += dims.x - 1;
-            viewMax.y += dims.y - 1;
-            viewMax.z = viewMin.z;
-            std::vector<df::unit*> units;
-            static auto add_if = [&](std::function<bool(df::unit*)> check) {
-                for (auto unit : world->units.active) {
-                    if (check(unit)) {
-                        units.push_back(unit);
-                    }
-                }
-            };
-            static auto valid = [](df::unit* unit) {
-                if (Units::isAnimal(unit)) {
-                    return config.animals;
-                }
-                if (Units::isVisiting(unit)) {
-                    return config.visitors;
-                }
-                if (Units::isDanger(unit)) {
-                    return config.hostiles;
-                }
-                return true;
-            };
-            static auto calc_extra_weight = [](size_t idx, double r1, double r2) {
-                switch(idx) {
-                    case 0:
-                        return r2;
-                    case 1:
-                        return (r2-r1)/1.3;
-                    case 2:
-                        return (r2-r1)/2;
-                    default:
-                        return 0.0;
-                }
-            };
-            /// Collecting our choice pool
-            ///////////////////////////////
-            std::array<int32_t, 10> ranges{};
-            std::array<bool, 5> range_exists{};
-            static auto build_range = [&](size_t idx){
-                size_t first = idx * 2;
-                size_t second = idx * 2 + 1;
-                size_t previous = first - 1;
-                // first we get the end of the range
-                ranges[second] = units.size() - 1;
-                // then we calculate whether the range exists, and set the first index appropriately
-                if (idx == 0) {
-                    range_exists[idx] = ranges[second] >= 0;
-                    ranges[first] = 0;
-                } else {
-                    range_exists[idx] = ranges[second] > ranges[previous];
-                    ranges[first] = ranges[previous] +  (range_exists[idx] ? 1 : 0);
-                }
-            };
-
-            /// RANGE 0 (in view + working)
-            // grab valid working units
-            add_if([&](df::unit* unit) {
-                return valid(unit) &&
-                       Units::isUnitInBox(unit, COORDARGS(viewMin), COORDARGS(viewMax)) &&
-                       Units::isCitizen(unit, true) &&
-                       unit->job.current_job;
-            });
-            build_range(0);
-
-            /// RANGE 1 (in view)
-            add_if([&](df::unit* unit) {
-                return valid(unit) && Units::isUnitInBox(unit, COORDARGS(viewMin), COORDARGS(viewMax));
-            });
-            build_range(1);
-
-            /// RANGE 2 (working citizens)
-            add_if([](df::unit* unit) {
-                return valid(unit) && Units::isCitizen(unit, true) && unit->job.current_job;
-            });
-            build_range(2);
-
-            /// RANGE 3 (citizens)
-            add_if([](df::unit* unit) {
-                return valid(unit) && Units::isCitizen(unit, true);
-            });
-            build_range(3);
-
-            /// RANGE 4 (any valid)
-            add_if(valid);
-            build_range(4);
-
-            // selecting from our choice pool
-            if (!units.empty()) {
-                std::array<double, 5> bw{23,17,13,7,1}; // probability weights for each range
-                std::vector<double> i;
-                std::vector<double> w;
-                bool at_least_one = false;
-                // in one word, elegance
-                for(size_t idx = 0; idx < range_exists.size(); ++idx) {
-                    if (range_exists[idx]) {
-                        at_least_one = true;
-                        const auto &r1 = ranges[idx*2];
-                        const auto &r2 = ranges[idx*2+1];
-                        double extra = calc_extra_weight(idx, r1, r2);
-                        i.push_back(r1);
-                        w.push_back(bw[idx] + extra);
-                        if (r1 != r2) {
-                            i.push_back(r2);
-                            w.push_back(bw[idx] + extra);
-                        }
-                    }
-                }
-                if (!at_least_one) {
-                    return false;
-                }
-                DebugUnitVector(units);
-                std::piecewise_linear_distribution<> follow_any(i.begin(), i.end(), w.begin());
-                // if you're looking at a warning about a local address escaping, it means the unit* from units (which aren't local)
-                size_t idx = follow_any(RNG);
-                our_dorf = units[idx];
-                plotinfo->follow_unit = our_dorf->id;
-                timestamp = world->frame_counter;
-                return true;
-            } else {
-                WARN(plugin).print("units vector is empty!\n");
-            }
-        }
-        return false;
-    }
-
-    void onUpdate(color_ostream &out) {
-        // keeps announcement pause settings locked
-        World::Update(); // from pause.h
-
-        // Plugin Management
-        if (lock_collision) {
-            if (config.unpause) {
-                // player asked for auto-unpause enabled
-                World::SaveAnnouncementSettings();
-                if (World::DisableAnnouncementPausing()) {
-                    // now that we've got what we want, we can lock it down
-                    lock_collision = false;
-                }
-            } else {
-                if (World::RestoreAnnouncementSettings()) {
-                    lock_collision = false;
-                }
-            }
-        }
-        int failsafe = 0;
-        while (config.unpause && !world->status.popups.empty() && ++failsafe <= 10) {
-            // dismiss announcement popup(s)
-            Gui::getCurViewscreen(true)->feed_key(interface_key::CLOSE_MEGA_ANNOUNCEMENT);
-            if (World::ReadPauseState()) {
-                // WARNING: This has a possibility of conflicting with `reveal hell` - if Hermes himself runs `reveal hell` on precisely the right moment that is
-                World::SetPauseState(false);
-            }
-        }
-        if (failsafe >= 10) {
-            out.printerr("spectate encountered a problem dismissing a popup!\n");
-        }
-
-        // plugin logic
-        static int32_t last_tick = -1;
-        int32_t tick = world->frame_counter;
-        if (!World::ReadPauseState() && tick - last_tick >= 1) {
-            last_tick = tick;
-            // validate follow state
-            if (!following_dwarf || !our_dorf || plotinfo->follow_unit < 0 || tick - timestamp >= config.tick_threshold) {
-                // we're not following anyone
-                following_dwarf = false;
-                if (!config.disengage) {
-                    // try to
-                    following_dwarf = FollowADwarf();
-                } else if (!World::ReadPauseState()) {
-                    plugin_enable(out, false);
-                }
-            }
-        }
-    }
-};
-
-DFhackCExport command_result plugin_init (color_ostream &out, std::vector <PluginCommand> &commands) {
-    commands.push_back(PluginCommand("spectate",
-                                     "Automated spectator mode.",
-                                     spectate,
-                                     false));
-    pause_lock = new AnnouncementLock("spectate");
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    delete pause_lock;
-    return CR_OK;
-}
-
-DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
-    SP::LoadSettings();
-    if (enabled) {
-        SP::following_dwarf = SP::FollowADwarf();
-        SP::PrintStatus(out);
+static void cleanup(color_ostream &out) {
+    if (saved_announcement_settings) {
+        restore_announcement_settings(out);
+        delete[] *saved_announcement_settings;
+        saved_announcement_settings.reset();
     }
-    return DFHack::CR_OK;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
-    if (enable && !enabled) {
-        out.print("Spectate mode enabled!\n");
-        enabled = true; // enable_auto_unpause won't do anything without this set now
-        SP::SetUnpauseState(config.unpause);
-    } else if (!enable && enabled) {
-        // warp 8, engage!
-        out.print("Spectate mode disabled!\n");
-        // we need to retain whether auto-unpause is enabled, but we also need to disable its effect
-        bool temp = config.unpause;
-        SP::SetUnpauseState(false);
-        config.unpause = temp;
+    if (enable != is_enabled) {
+        is_enabled = enable;
+        DEBUG(control,out).print("%s from the API; persisting\n",
+                                is_enabled ? "enabled" : "disabled");
+        if (enable) {
+            INFO(control,out).print("Spectate mode enabled!\n");
+            config.reset();
+            if (!Lua::CallLuaModuleFunction(out, "plugins.spectate", "refresh_cpp_config")) {
+                WARN(control,out).print("Failed to refresh config\n");
+            }
+            follow_a_dwarf(out);
+        } else {
+            INFO(control,out).print("Spectate mode disabled!\n");
+            plotinfo->follow_unit = -1;
+            cleanup(out);
+        }
+    } else {
+        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+                                is_enabled ? "enabled" : "disabled",
+                                is_enabled ? "enabled" : "disabled");
     }
-    enabled = enable;
-    return DFHack::CR_OK;
+    return CR_OK;
+}
+
+DFhackCExport command_result plugin_shutdown (color_ostream &out) {
+    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    cleanup(out);
+    return CR_OK;
 }
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
-    if (enabled) {
-        switch (event) {
-            case SC_WORLD_UNLOADED:
-                SP::our_dorf = nullptr;
-                SP::following_dwarf = false;
-                enabled = false;
-            default:
-                break;
+    switch (event) {
+    case SC_WORLD_LOADED:
+        next_cycle_unpaused_ms = 0;
+        break;
+    case SC_WORLD_UNLOADED:
+        if (is_enabled) {
+            DEBUG(control,out).print("world unloaded; disabling %s\n",
+                                    plugin_name);
+            is_enabled = false;
+            cleanup(out);
         }
+        break;
+    default:
+        break;
     }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    SP::onUpdate(out);
-    return DFHack::CR_OK;
+    if (Gui::matchFocusString("dwarfmode/Settings")) {
+        if (!was_in_settings) {
+            DEBUG(cycle,out).print("settings screen active; restoring announcement settings\n");
+            restore_announcement_settings(out);
+            was_in_settings = true;
+        }
+    } else if (was_in_settings) {
+        was_in_settings = false;
+        if (config.auto_unpause) {
+            DEBUG(cycle,out).print("settings screen now inactive; disabling announcement pausing\n");
+            save_announcement_settings(out);
+            scrub_announcements(out);
+        }
+    }
+
+    if (config.auto_disengage && plotinfo->follow_unit < 0) {
+        DEBUG(cycle,out).print("auto-disengage triggered\n");
+        is_enabled = false;
+        cleanup(out);
+        return CR_OK;
+    }
+
+    if ((!config.auto_disengage && plotinfo->follow_unit < 0) || Core::getInstance().getUnpausedMs() >= next_cycle_unpaused_ms)
+        follow_a_dwarf(out);
+    return CR_OK;
 }
 
-command_result spectate (color_ostream &out, std::vector <std::string> & parameters) {
-    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+static command_result do_command(color_ostream &out, vector<string> &parameters) {
+    bool show_help = false;
+    if (!Lua::CallLuaModuleFunction(out, "plugins.spectate", "parse_commandline", std::make_tuple(parameters),
+            1, [&](lua_State *L) {
+                show_help = !lua_toboolean(L, -1);
+            })) {
         return CR_FAILURE;
     }
 
-    if (!parameters.empty()) {
-        if (parameters.size() >= 2 && parameters.size() <= 3) {
-            bool state =false;
-            bool set = false;
-            if (parameters[0] == "enable") {
-                state = true;
-            } else if (parameters[0] == "disable") {
-                state = false;
-            } else if (parameters[0] == "set") {
-                set = true;
-            } else {
-                return DFHack::CR_WRONG_USAGE;
-            }
-            if(parameters[1] == "auto-unpause"){
-                SP::SetUnpauseState(state);
-            } else if (parameters[1] == "auto-disengage") {
-                config.disengage = state;
-            } else if (parameters[1] == "animals") {
-                config.animals = state;
-            } else if (parameters[1] == "hostiles") {
-                config.hostiles = state;
-            } else if (parameters[1] == "visiting") {
-                config.visitors = state;
-            } else if (parameters[1] == "tick-threshold" && set && parameters.size() == 3) {
-                try {
-                    config.tick_threshold = std::abs(std::stol(parameters[2]));
-                } catch (const std::exception &e) {
-                    out.printerr("%s\n", e.what());
-                }
-            } else {
-                return DFHack::CR_WRONG_USAGE;
-            }
-        }
-    } else {
-        SP::PrintStatus(out);
-    }
-    SP::SaveSettings();
-    return DFHack::CR_OK;
+    return show_help ? CR_WRONG_USAGE : CR_OK;
 }
+
+/////////////////////////////////////////////////////
+// cycle logic
+//
+
+static bool is_in_combat(df::unit *unit) {
+    return false;
+}
+
+static bool is_fleeing(df::unit *unit) {
+    return false;
+}
+
+static void get_dwarf_buckets(color_ostream &out,
+    vector<df::unit*> &active_combat_units,
+    vector<df::unit*> &passive_combat_units,
+    vector<df::unit*> &job_units,
+    vector<df::unit*> &other_units)
+{
+    static const std::unordered_set<int32_t> boring_jobs = {
+        df::job_type::Eat,
+        df::job_type::Drink,
+        df::job_type::Sleep,
+    };
+
+    for (auto unit : world->units.active) {
+        if (Units::isDead(unit) || !Units::isActive(unit) || unit->flags1.bits.caged || unit->flags1.bits.chained || Units::isHidden(unit))
+            continue;
+        if (!config.include_animals && Units::isAnimal(unit))
+            continue;
+        if (!config.include_hostiles && Units::isDanger(unit))
+            continue;
+        if (!config.include_visitors && Units::isVisitor(unit))
+            continue;
+        if (!config.include_wildlife && Units::isWildlife(unit))
+            continue;
+
+        if (is_in_combat(unit)) {
+            if (is_fleeing(unit))
+                passive_combat_units.push_back(unit);
+            else
+                active_combat_units.push_back(unit);
+        } else if (unit->job.current_job && !boring_jobs.contains(unit->job.current_job->job_type)) {
+            job_units.push_back(unit);
+        } else {
+            other_units.push_back(unit);
+        }
+    }
+}
+
+static std::default_random_engine rng;
+
+static uint32_t get_next_cycle_unpaused_ms(bool has_active_combat) {
+    int32_t delay_ms = config.follow_ms;
+    if (has_active_combat) {
+        std::normal_distribution<float> distribution(config.follow_ms / 2, config.follow_ms / 6);
+        int32_t delay_ms = distribution(rng);
+        delay_ms = std::min(config.follow_ms, std::max(1, delay_ms));
+    }
+    return Core::getInstance().getUnpausedMs() + delay_ms;
+}
+
+static void add_bucket(const vector<df::unit*> &bucket, vector<df::unit*> &units, vector<float> &intervals, vector<float> &weights, float weight) {
+    if (bucket.empty())
+        return;
+    intervals.push_back(units.size() + bucket.size());
+    weights.push_back(weight);
+    units.insert(units.end(), bucket.begin(), bucket.end());
+}
+
+#define DUMP_BUCKET(name) \
+    DEBUG(cycle,out).print("bucket: " #name ", size: %zd\n", name.size()); \
+    if (debug_cycle.isEnabled(DebugCategory::LTRACE)) { \
+        for (auto u : name) { \
+            DEBUG(cycle,out).print("  unit %d: %s\n", u->id, DF2CONSOLE(Units::getReadableName(u)).c_str()); \
+        } \
+    }
+
+#define DUMP_FLOAT_VECTOR(name) \
+    DEBUG(cycle,out).print(#name ":\n"); \
+    for (float f : name) { \
+        DEBUG(cycle,out).print("  %d\n", (int)f); \
+    }
+
+static const float ACTIVE_COMBAT_PREFERRED_WEIGHT = 25.0f;
+static const float PASSIVE_COMBAT_PREFERRED_WEIGHT = 8.0f;
+static const float JOB_WEIGHT = 3.0f;
+static const float OTHER_WEIGHT = 1.0f;
+
+static void follow_a_dwarf(color_ostream &out) {
+    DEBUG(cycle,out).print("choosing a unit to follow\n");
+
+    vector<df::unit*> active_combat_units;
+    vector<df::unit*> passive_combat_units;
+    vector<df::unit*> job_units;
+    vector<df::unit*> other_units;
+    get_dwarf_buckets(out, active_combat_units, passive_combat_units, job_units, other_units);
+
+    next_cycle_unpaused_ms = get_next_cycle_unpaused_ms(!active_combat_units.empty());
+
+    // coalesce the buckets and add weights
+    vector<df::unit*> units;
+    vector<float> intervals;
+    vector<float> weights;
+    intervals.push_back(0);
+    add_bucket(active_combat_units, units, intervals, weights, config.prefer_conflict ? ACTIVE_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
+    add_bucket(passive_combat_units, units, intervals, weights, config.prefer_conflict ? PASSIVE_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
+    add_bucket(job_units, units, intervals, weights, JOB_WEIGHT);
+    add_bucket(other_units, units, intervals, weights, OTHER_WEIGHT);
+
+    if (units.empty()) {
+        DEBUG(cycle,out).print("no units to follow\n");
+        return;
+    }
+
+    std::piecewise_constant_distribution<float> distribution(intervals.begin(), intervals.end(), weights.begin());
+    int unit_idx = distribution(rng);
+    df::unit *unit = units[unit_idx];
+
+    if (debug_cycle.isEnabled(DebugCategory::LDEBUG)) {
+        DUMP_BUCKET(active_combat_units);
+        DUMP_BUCKET(passive_combat_units);
+        DUMP_BUCKET(job_units);
+        DUMP_BUCKET(other_units);
+        DUMP_FLOAT_VECTOR(intervals);
+        DUMP_FLOAT_VECTOR(weights);
+        DEBUG(cycle,out).print("selected unit idx %d\n", unit_idx);
+    }
+
+    DEBUG(cycle,out).print("now following unit %d: %s\n", unit->id, Units::getReadableName(unit).c_str());
+    plotinfo->follow_unit = unit->id;
+}
+
+/////////////////////////////////////////////////////
+// Lua API
+//
+
+static void spectate_setSetting(color_ostream &out, string name, int val) {
+    DEBUG(control,out).print("entering spectate_setSetting %s = %d\n", name.c_str(), val);
+
+    if (name == "auto-disengage") {
+        config.auto_disengage = val;
+    } else if (name == "auto-unpause") {
+        if (val && !config.auto_unpause) {
+            save_announcement_settings(out);
+            scrub_announcements(out);
+        } else if (!val && config.auto_unpause) {
+            restore_announcement_settings(out);
+        }
+        config.auto_unpause = val;
+    } else if (name == "cinematic-action") {
+        config.cinematic_action = val;
+    } else if (name == "include-animals") {
+        config.include_animals = val;
+    } else if (name == "include-hostiles") {
+        config.include_hostiles = val;
+    } else if (name == "include-visitors") {
+        config.include_visitors = val;
+    } else if (name == "include-wildlife") {
+        config.include_wildlife = val;
+    } else if (name == "prefer-conflict") {
+        config.prefer_conflict = val;
+    } else if (name == "prefer-new-arrivals") {
+        config.prefer_new_arrivals = val;
+    } else if (name == "follow-seconds") {
+        if (val <= 0) {
+            WARN(control,out).print("follow-seconds must be a positive integer\n");
+            return;
+        }
+        config.follow_ms = val * 1000;
+    } else {
+        WARN(control,out).print("Unknown setting: %s\n", name.c_str());
+    }
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(spectate_setSetting),
+    DFHACK_LUA_END
+};

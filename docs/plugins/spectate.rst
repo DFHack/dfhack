@@ -35,6 +35,7 @@ Usage
 
     enable spectate
     spectate [status]
+    spectate toggle
     spectate set <setting> <value>
     spectate overlay <name> enable|disable
 
@@ -43,6 +44,10 @@ Examples
 
 ``enable spectate``
     Start following dwarves and observing life in your fort.
+
+``spectate toggle``
+    Toggle the plugin on or off. Intended for use with a keybinding. The
+    default is Ctrl-Shift-S.
 
 ``spectate``
     The plugin reports its configured status.
@@ -73,7 +78,8 @@ Settings
     Toggle whether to switch targets more rapidly when there is conflict.
 
 ``follow-seconds`` (default: 10)
-    Set the time interval for changing the followed unit.
+    Set the time interval for changing the followed unit. The interval does not
+    include time that the game is paused.
 
 ``include-animals`` (default: disabled)
     Toggle whether to sometimes follow fort animals.
@@ -82,7 +88,7 @@ Settings
     Toggle whether to sometimes follow hostiles (eg. undead, titans, invaders,
     etc.)
 
-``include-visiting`` (default: disabled)
+``include-visitors`` (default: disabled)
     Toggle whether to sometimes follow visiting units, like diplomats.
 
 ``include-wildlife`` (default: disabled)

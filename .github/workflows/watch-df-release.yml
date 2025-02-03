@@ -31,7 +31,8 @@ jobs:
     - name: Compare branch metadata
       uses: nick-fields/retry@v3
       with:
-        timeout_minutes: 2
+        timeout_minutes: 5
+        retry_wait_seconds: 60
         command: |
           blob=$(wget 'https://api.steamcmd.net/v1/info/975370?pretty=1' -O- | \
               awk '/^ *"branches"/,0' | \

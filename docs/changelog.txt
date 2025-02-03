@@ -57,20 +57,26 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
-- `gui/launcher`: flatten text when pasting multi-line text from the clipboard
-- Ctrl-a hotkeys have been changed to something else (Ctrl-n) for tools that also have an editable text field, where Ctrl-a is interpreted as select all text
 
 ## Misc Improvements
 
 ## Documentation
 
 ## API
-- ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
 
 ## Lua
 
 ## Removed
+
+# 51.04-r1.1
+
+## Fixes
+- `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
+- `gui/launcher`: flatten text when pasting multi-line text from the clipboard
+- Ctrl-a hotkeys have been changed to something else (Ctrl-n) for tools that also have an editable text field, where Ctrl-a is interpreted as select all text
+
+## API
+- ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
 
 # 51.04-r1
 

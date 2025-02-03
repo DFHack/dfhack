@@ -817,11 +817,12 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
         newFocusString = baseFocus;
         newFocusString += "/Settings";
         newFocusString += '/' + enum_item_key(game->main_interface.settings.current_mode);
-        if (game->main_interface.settings.doing_custom_settings)
-            newFocusString += "/CustomSettings";
-        else
-            newFocusString += "/Default";
-
+        if (game->main_interface.settings.current_mode == df::settings_tab_type::DIFFICULTY) {
+            if (game->main_interface.settings.doing_custom_settings)
+                newFocusString += "/CustomSettings";
+            else
+                newFocusString += "/Default";
+        }
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.adventure.aim_projectile.open) {

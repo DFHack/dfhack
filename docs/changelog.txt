@@ -55,10 +55,15 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit unit
+- `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
+- `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
 
 ## Fixes
+- `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 
 ## Misc Improvements
+- `spectate`: player-set configuration is now stored globally instead of per-fort
 
 ## Documentation
 

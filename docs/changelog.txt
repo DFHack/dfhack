@@ -59,7 +59,7 @@ Template for new versions:
 ## Fixes
 - `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
 - `gui/launcher`: flatten text when pasting multi-line text from the clipboard
-- Ctrl-a hotkeys have been changed to something else for tools that also have an editable text field, where Ctrl-a is interpreted as select all text
+- Ctrl-a hotkeys have been changed to something else (Ctrl-n) for tools that also have an editable text field, where Ctrl-a is interpreted as select all text
 
 ## Misc Improvements
 

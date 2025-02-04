@@ -145,20 +145,20 @@ bool PerfCounters::getIgnorePauseState() {
     return ignore_pause_state;
 }
 
-void PerfCounters::registerTick(uint32_t baseline_ms) {
+uint32_t PerfCounters::registerTick(uint32_t baseline_ms) {
     if (!World::isFortressMode() || World::ReadPauseState()) {
         last_tick_baseline_ms = 0;
-        return;
+        return 0;
     }
 
     // only update when the tick counter has advanced
     if (!world || last_frame_counter == world->frame_counter)
-        return;
+        return 0;
     last_frame_counter = world->frame_counter;
 
     if (last_tick_baseline_ms == 0) {
         last_tick_baseline_ms = baseline_ms;
-        return;
+        return 0;
     }
 
     uint32_t elapsed_ms = baseline_ms - last_tick_baseline_ms;
@@ -173,6 +173,8 @@ void PerfCounters::registerTick(uint32_t baseline_ms) {
 
     recent_ticks.history[recent_ticks.head_idx] = elapsed_ms;
     recent_ticks.sum_ms += elapsed_ms;
+
+    return elapsed_ms;
 }
 
 uint32_t PerfCounters::getUnpausedFps() {
@@ -1705,6 +1707,7 @@ bool Core::InitMainThread() {
     }
 
     perf_counters.reset();
+    unpaused_ms = 0;
 
     return true;
 }
@@ -2141,7 +2144,7 @@ int Core::Update()
         }
 
         uint32_t start_ms = p->getTickCount();
-        perf_counters.registerTick(start_ms);
+        unpaused_ms += perf_counters.registerTick(start_ms);
         doUpdate(out);
         perf_counters.incCounter(perf_counters.total_update_ms, start_ms);
     }
@@ -2337,6 +2340,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_WORLD_LOADED:
     {
         perf_counters.reset();
+        unpaused_ms = 0;
         Persistence::Internal::load(out);
         plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);

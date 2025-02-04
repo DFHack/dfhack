@@ -56,10 +56,15 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit unit
+- `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
+- `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
 
 ## Fixes
+- `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 
 ## Misc Improvements
+- `spectate`: player-set configuration is now stored globally instead of per-fort
 
 ## Documentation
 - Added a guide for making new sprite art for Stonesense
@@ -69,6 +74,16 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+# 51.04-r1.1
+
+## Fixes
+- `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
+- `gui/launcher`: flatten text when pasting multi-line text from the clipboard
+- Ctrl-a hotkeys have been changed to something else (Ctrl-n) for tools that also have an editable text field, where Ctrl-a is interpreted as select all text
+
+## API
+- ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
 
 # 51.04-r1
 

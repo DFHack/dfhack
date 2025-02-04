@@ -3,6 +3,14 @@
 Stonesense art creation guide
 =============================
 
+Understanding isometric perspective
+-----------------------------------
+
+Stonesense uses an isometric perspective, a form of pseudo-3D projection where objects are displayed at an
+angle, typically with a 2:1 pixel ratio for diagonal lines. This perspective allows for a detailed and visually
+appealing representation of a 3D world using 2D sprites. Unlike traditional top-down views, isometric projection
+simulates depth while maintaining a consistent scale without vanishing points.
+
 Understanding sprites
 ---------------------
 
@@ -18,8 +26,8 @@ a transparent background but pure magenta (RGB: 255,0,255) is also treated as tr
 
 Here's an example of a typical Stonesense sprite.
 
-Note that, in order not to conflict with neighboring sprites, a sprite must actually be within a smaller
-area than its 32x32 block, typically 30x30.
+When working with Stonesense sprites, it is important to understand how they fit into the isometric grid.
+Each sprite is designed to align with the isometric perspective and must fit within a specific bounding area.
 To illustrate this, here is a template for the area used by sprites:
 
 .. image:: ../images/stonesense-sprite-template.png
@@ -32,10 +40,9 @@ The way sprites are loaded is fairly generalized: Sprite sheets, and the index o
 
 Sprite sheets
 -------------
-There can be an arbitrary number of sprite sheets configured for Stonesense, though there are 3 sheets that are
-always present as they contain default sprites (see further down). Most of the content XML files allow users to
-specify sprite sheets, and this is done by adding a file attribute to the content nodes. By convention sprite
-sheets should be placed in their appropriate folder, with creature sprite sheets in the creatures folder etc.
+There can be an arbitrary number of sprite sheets for Stonesense, though there are 3 sheets that are
+always present as they contain default sprites (see further down). Configuring the XML to use new sheets is
+outside the scope of this guide but there may be a guide for such added in the future.
 
 Sprite index
 ------------

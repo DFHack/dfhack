@@ -39,7 +39,7 @@ sheets should be placed in their appropriate folder, with creature sprite sheets
 
 Sprite index
 ------------
-Sprite Index (sometimes referred to as Sheet Index) is a concept for referring to a specific sprite on a sheet.
+The sprite index, or sheet index, is the zero-indexed offset of a sprite on its sprite sheet.
 The index starts with the upper left sprite which has index zero. It then increments to the right. Stonesense
 is hardcoded to 20 sprites wide sheets, this means that anything past 20 "sprite slots" is ignored, though less
 than 20 slots is fine. The first sprite on the second row has index 20, the next row is 40, and so on. This

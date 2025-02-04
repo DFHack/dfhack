@@ -34,6 +34,7 @@ Template for new versions:
 
 ## Documentation
 
+
 ## API
 
 ## Lua
@@ -61,6 +62,7 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
+- Added a guide for making new sprite art for Stonesense
 
 ## API
 

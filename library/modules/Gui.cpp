@@ -848,6 +848,9 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
     if (game->main_interface.adventure.jump.open) {
         focusStrings.push_back(baseFocus + "/Jump");
     }
+    if (game->main_interface.adventure.look.open) {
+        focusStrings.push_back(baseFocus + "/Look");
+    }
     if (game->main_interface.adventure.movement_options.open) {
         focusStrings.push_back(baseFocus + "/MovementOptions");
     }

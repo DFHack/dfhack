@@ -35,9 +35,11 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Military::removeFromSquad``: removes unit from any squad assignments
 
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
+- ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
 
 ## Removed
 

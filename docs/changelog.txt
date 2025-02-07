@@ -34,7 +34,6 @@ Template for new versions:
 
 ## Documentation
 
-
 ## API
 
 ## Lua
@@ -67,7 +66,7 @@ Template for new versions:
 - `spectate`: player-set configuration is now stored globally instead of per-fort
 
 ## Documentation
-- Added a guide for making new sprite art for Stonesense
+- `stonesense-art-guide`: new guide for making sprite art for Stonesense
 
 ## API
 

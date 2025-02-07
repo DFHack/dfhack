@@ -329,7 +329,7 @@ static bool remove_soldier_entity_link(df::historical_figure* hf, df::squad* squ
 static bool remove_officer_entity_link(df::historical_figure* hf, df::squad* squad)
 {
     std::vector<Units::NoblePosition> nps;
-    if (! Units::getNoblePositions(&nps, hf))
+    if (!Units::getNoblePositions(&nps, hf))
         return false;
 
     int32_t assignment_id = -1;

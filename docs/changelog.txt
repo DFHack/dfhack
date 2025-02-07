@@ -61,6 +61,7 @@ Template for new versions:
 
 ## Fixes
 - `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
+- `changevein`: fix a crash that could occur when attempting to change a vein into itself
 
 ## Misc Improvements
 - `spectate`: player-set configuration is now stored globally instead of per-fort

@@ -7,6 +7,10 @@
 #include "modules/Units.h"
 #include "df/building.h"
 #include "df/building_civzonest.h"
+#include "df/histfig_entity_link_former_positionst.h"
+#include "df/histfig_entity_link_former_squadst.h"
+#include "df/histfig_entity_link_positionst.h"
+#include "df/histfig_entity_link_squadst.h"
 #include "df/historical_figure.h"
 #include "df/historical_entity.h"
 #include "df/entity_position.h"
@@ -17,6 +21,7 @@
 #include "df/squad_schedule_order.h"
 #include "df/squad_order.h"
 #include "df/squad_order_trainst.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 using namespace DFHack;
@@ -297,46 +302,51 @@ static bool remove_soldier_entity_link(df::historical_figure* hf, df::squad* squ
     for (size_t i = 0; i < hf->entity_links.size(); i++)
     {
         auto link = strict_virtual_cast<df::histfig_entity_link_squadst>(hf->entity_links[i]);
-        if (link == nullptr) continue;
-        if (link->squad_id != squad->id) continue;
-
+        if (link == nullptr || link->squad_id != squad->id)
+            continue;
+        
         hf->entity_links.erase(hf->entity_links.begin() + i);
-        delete link;
-
         start_year = link->start_year;
+
+        delete link;
         break;
     }
-    if (start_year == -1) return false;
+    
+    if (start_year == -1) 
+        return false;
 
-    auto former_squad = new df::histfig_entity_link_former_squadst();
+    auto former_squad = df::allocate<df::histfig_entity_link_former_squadst>();
     former_squad->squad_id = squad->id;
     former_squad->entity_id = squad->entity_id;
     former_squad->start_year = start_year;
     former_squad->end_year = *df::global::cur_year;
     former_squad->link_strength = 100;
 
-    hf->entity_links.push_back(former_pos);
+    hf->entity_links.push_back(former_squad);
     return true;
 }
 
-static bool remove_captain_entity_link(df::historical_figure* hf, df::squad* squad)
+static bool remove_officer_entity_link(df::historical_figure* hf, df::squad* squad)
 {
     std::vector<Units::NoblePosition> nps;
-    if (! Units::getNoblePositions(&nps, hf)) return false;
+    if (! Units::getNoblePositions(&nps, hf))
+        return false;
 
     int32_t assignment_id = -1;
     for (auto& np : nps)
     {
-        if (np.entity.id != squad->entity_id) continue;
-        if (np.assignment.squad_id != squad.id) continue;
-
+        if (np.entity->id != squad->entity_id || np.assignment->squad_id != squad->id) 
+            continue;
+        
         np.assignment->histfig = -1;
         np.assignment->histfig2 = -1;
 
         assignment_id = np.assignment->id;
         break;
     }
-    if (assignment_id == -1) return false;
+    
+    if (assignment_id == -1)
+        return false;
 
     int32_t start_year = -1;
     for (size_t i = 0; i < hf->entity_links.size(); i++)
@@ -346,14 +356,16 @@ static bool remove_captain_entity_link(df::historical_figure* hf, df::squad* squ
         if (link->assignment_id != assignment_id && link->entity_id != squad->entity_id) continue;
 
         hf->entity_links.erase(hf->entity_links.begin() + i);
-        delete link;
-
         start_year = link->start_year;
+        
+        delete link;
         break;
     }
-    if (start_year == -1) return false;
+    
+    if (start_year == -1)
+        return false;
 
-    auto former_pos = new df::histfig_entity_link_former_positionst();
+    auto former_pos = df::allocate<df::histfig_entity_link_former_positionst>();
     former_pos->assignment_id = assignment_id;
     former_pos->entity_id = squad->entity_id;
     former_pos->start_year = start_year;
@@ -366,13 +378,16 @@ static bool remove_captain_entity_link(df::historical_figure* hf, df::squad* squ
 
 bool Military::removeFromSquad(int32_t unit_id)
 {
-    df::unit* unit = df::unit::find(unit_id);
-    if (unit == nullptr) return false;
-    if (unit->military.squad_id == -1 || unit->military.squad_position == -1) return false;
+    df::unit *unit = df::unit::find(unit_id);
+    if (unit == nullptr)
+        return false;
+    if (unit->military.squad_id == -1 || unit->military.squad_position == -1)
+        return false;
 
     int32_t squad_id = unit->military.squad_id;
     df::squad* squad = df::squad::find(squad_id);
-    if (squad == nullptr) return false;
+    if (squad == nullptr)
+        return false;
 
     // remove from squad information
     int32_t squad_pos = unit->military.squad_position;
@@ -384,9 +399,10 @@ bool Military::removeFromSquad(int32_t unit_id)
     unit->military.squad_position = -1;
 
     df::historical_figure* hf = df::historical_figure::find(unit->hist_figure_id);
-    if (hf == nullptr) return false;
+    if (hf == nullptr)
+        return false;
 
     return squad_pos == 0 // is unit a commander?
-        ? remove_captain_entity_link(hf, squad)
+        ? remove_officer_entity_link(hf, squad)
         : remove_soldier_entity_link(hf, squad);
 }

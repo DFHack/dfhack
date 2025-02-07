@@ -304,14 +304,14 @@ static bool remove_soldier_entity_link(df::historical_figure* hf, df::squad* squ
         auto link = strict_virtual_cast<df::histfig_entity_link_squadst>(hf->entity_links[i]);
         if (link == nullptr || link->squad_id != squad->id)
             continue;
-        
+
         hf->entity_links.erase(hf->entity_links.begin() + i);
         start_year = link->start_year;
 
         delete link;
         break;
     }
-    
+
     if (start_year == -1)
         return false;
 
@@ -337,14 +337,14 @@ static bool remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
     {
         if (np.entity->id != squad->entity_id || np.assignment->squad_id != squad->id)
             continue;
-        
+
         np.assignment->histfig = -1;
         np.assignment->histfig2 = -1;
 
         assignment_id = np.assignment->id;
         break;
     }
-    
+
     if (assignment_id == -1)
         return false;
 
@@ -359,11 +359,11 @@ static bool remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
 
         hf->entity_links.erase(hf->entity_links.begin() + i);
         start_year = link->start_year;
-        
+
         delete link;
         break;
     }
-    
+
     if (start_year == -1)
         return false;
 

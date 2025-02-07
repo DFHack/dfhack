@@ -254,6 +254,12 @@ command_result df_changevein (color_ostream &out, vector <string> & parameters)
         return CR_FAILURE;
     }
 
+    if (mineral->inorganic_mat == mi.index)
+    {
+        out.printerr("Selected tile is already of the target material.\n");
+        return CR_FAILURE;
+    }
+
     VeinEdgeBitmask mask = VeinEdgeBitmask(mineral);
     mineral->inorganic_mat = mi.index;
     ChangeSameBlockVeins(block, mineral, mask, mi.index);

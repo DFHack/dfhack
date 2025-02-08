@@ -2962,22 +2962,8 @@ bool Gui::getCursorCoords(int32_t &x, int32_t &y, int32_t &z)
 
 bool Gui::getCursorCoords(df::coord &pos)
 {
-    using df::global::cursor;
-    df::coord p;
-    if (World::isAdventureMode())
-    {
-        if (game)
-        {
-            auto &look = game->main_interface.adventure.look;
-            if (look.open)
-                p = look.cursor;
-        }
-    }
-    else if (cursor)
-        p = df::coord(cursor->x, cursor->y, cursor->z);
-
-    pos = p;
-    return p.isValid();
+    pos = getCursorPos();
+    return pos.isValid();
 }
 
 //FIXME: confine writing of coords to map bounds?

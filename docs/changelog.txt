@@ -73,6 +73,7 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
+- ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 
 ## Removed
 
@@ -85,6 +86,7 @@ Template for new versions:
 
 ## API
 - ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
+- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 
 # 51.04-r1
 
@@ -129,14 +131,12 @@ Template for new versions:
 - Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API
 
 ## API
-- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
 - ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
 - ``Translation::generateName``: generates in-game names, mirroring DF's internal logic
 - ``Persistence::getUnsavedSeconds``: returns the number of seconds since last save or load
 
 ## Lua
-- ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
 - ``widgets.FilteredList``: search keys for list items can now be functions that return a string
 - ``dfhack.translation.generateName``: Lua API for ``Translation::generateName``

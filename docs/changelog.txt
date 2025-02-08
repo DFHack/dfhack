@@ -70,6 +70,7 @@ Template for new versions:
 - `stonesense-art-guide`: new guide for making sprite art for Stonesense
 
 ## API
+- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
@@ -86,7 +87,6 @@ Template for new versions:
 
 ## API
 - ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
-- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 
 # 51.04-r1
 

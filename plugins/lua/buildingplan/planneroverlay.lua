@@ -1348,7 +1348,7 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
                         dfhack.printerr(('item no longer available: %d'):format(item_id))
                         break
                     end
-                    if not dfhack.job.attachJobItem(job, item, df.job_item_ref.T_role.Hauled, idx-1, -1) then
+                    if not dfhack.job.attachJobItem(job, item, df.job_role_type.Hauled, idx-1, -1) then
                         dfhack.printerr(('cannot attach item: %d'):format(item_id))
                         break
                     end

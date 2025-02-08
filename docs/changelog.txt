@@ -54,14 +54,21 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit unit
+- `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
+- `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
 
 ## Fixes
 - `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
 - `createitem`: output items will now end up at look cursor if active
+- `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
+- `changevein`: fix a crash that could occur when attempting to change a vein into itself
 
 ## Misc Improvements
+- `spectate`: player-set configuration is now stored globally instead of per-fort
 
 ## Documentation
+- `stonesense-art-guide`: new guide for making sprite art for Stonesense
 
 ## API
 
@@ -69,6 +76,16 @@ Template for new versions:
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 
 ## Removed
+
+# 51.04-r1.1
+
+## Fixes
+- `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
+- `gui/launcher`: flatten text when pasting multi-line text from the clipboard
+- Ctrl-a hotkeys have been changed to something else (Ctrl-n) for tools that also have an editable text field, where Ctrl-a is interpreted as select all text
+
+## API
+- ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
 
 # 51.04-r1
 

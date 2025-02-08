@@ -242,6 +242,7 @@ thurin                  thurin
 Tim Siegel              softmoth
 Tim Walberg             twalberg
 Timothy Collett         danaris
+Timothy Torres          timothymtorres
 Timur Kelman            TymurGubayev
 Tom Jobbins             TheBloke
 Tom Prince

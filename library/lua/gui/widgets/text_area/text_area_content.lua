@@ -127,7 +127,11 @@ function TextAreaContent:eraseSelection()
 end
 
 function TextAreaContent:setClipboard(text)
-    dfhack.internal.setClipboardTextCp437Multiline(text)
+    if self.one_line_mode then
+        dfhack.internal.setClipboardTextCp437(text)
+    else
+        dfhack.internal.setClipboardTextCp437Multiline(text)
+    end
 end
 
 function TextAreaContent:copy()
@@ -151,7 +155,7 @@ function TextAreaContent:copy()
             self:lineStartOffset(),
             self:lineEndOffset()
         )
-        if curr_line:sub(-1,-1) ~= NEWLINE then
+        if not self.one_line_mode and curr_line:sub(-1,-1) ~= NEWLINE then
             curr_line = curr_line .. NEWLINE
         end
 
@@ -170,8 +174,9 @@ function TextAreaContent:cut()
 end
 
 function TextAreaContent:paste()
-    local clipboard_lines = dfhack.internal.getClipboardTextCp437Multiline()
-    local clipboard = table.concat(clipboard_lines, '\n')
+    local clipboard = self.one_line_mode and
+        dfhack.internal.getClipboardTextCp437() or
+        table.concat(dfhack.internal.getClipboardTextCp437Multiline(), '\n')
     if clipboard then
         if self.clipboard_mode == CLIPBOARD_MODE.LINE and not self:hasSelection() then
             local origin_offset = self.cursor

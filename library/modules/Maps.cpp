@@ -938,6 +938,47 @@ df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
     return NULL;
 }
 
+bool Maps::isPlantInBox(df::plant *plant, const cuboid &bounds)
+{
+    if (!bounds.isValid())
+        return false;
+    else if (bounds.containsPos(plant->pos))
+        return true;
+    else if (!plant->tree_info)
+        return false;
+
+    auto &pos = plant->pos;
+    auto &t = *(plant->tree_info);
+    // Northwest x/y pos of tree bounds
+    int x_NW = pos.x - (t.dim_x >> 1);
+    int y_NW = pos.y - (t.dim_y >> 1);
+
+    if (!cuboid(max(0, x_NW), max(0, y_NW), max(0, pos.z - t.roots_depth),
+        x_NW + t.dim_x, y_NW + t.dim_y, pos.z + t.body_height - 1).clamp(bounds).isValid())
+    {   // No intersection of tree bounds with cuboid
+        return false;
+    }
+
+    int xy_size = t.dim_x * t.dim_y;
+    // Iterate tree body
+    for (int z_idx = 0; z_idx < t.body_height; z_idx++)
+        for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
+            if ((t.body[z_idx][xy_idx].whole & 0x7F) != 0 && // Any non-blocked
+                bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z + z_idx))
+            {
+                return true;
+            }
+    // Iterate tree roots
+    for (int z_idx = 0; z_idx < t.roots_depth; z_idx++)
+        for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
+            if ((t.roots[z_idx][xy_idx].whole & 0x7F) != 0 && // Any non-blocked
+                bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z - z_idx - 1))
+            {
+                return true;
+            }
+    return false;
+}
+
 /*
 * Biomes
 */

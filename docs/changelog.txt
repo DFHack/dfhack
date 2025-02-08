@@ -37,7 +37,6 @@ Template for new versions:
 ## API
 
 ## Lua
-- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 
 ## Removed
 
@@ -55,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `clean`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
 - `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit unit
 - `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
@@ -70,8 +70,11 @@ Template for new versions:
 - `stonesense-art-guide`: new guide for making sprite art for Stonesense
 
 ## API
+- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 
 ## Lua
+- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
+- ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 
 ## Removed
 

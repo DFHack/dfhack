@@ -49,6 +49,9 @@ keybinding add Ctrl-T@dwarfmode/ViewSheets/UNIT|dwarfmode/ViewSheets/ITEM|dungeo
 # quicksave
 keybinding add Ctrl-Alt-S@dwarfmode quicksave
 
+# toggle spectate
+keybinding add Ctrl-Shift-S@dwarfmode/Default "spectate toggle"
+
 # designate the whole vein for digging
 keybinding add Ctrl-V@dwarfmode digv
 keybinding add Ctrl-Shift-V@dwarfmode "digv x"

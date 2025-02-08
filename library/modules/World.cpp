@@ -24,17 +24,17 @@ distribution.
 
 
 #include "Internal.h"
+#include "Debug.h"
 
 #include "modules/Gui.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
+#include "modules/Translation.h"
 
-#include "df/adventurest.h"
 #include "df/block_square_event_world_constructionst.h"
 #include "df/gamest.h"
 #include "df/map_block.h"
-#include "df/nemesis_record.h"
 #include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
@@ -48,6 +48,11 @@ using namespace df::enums;
 
 using df::global::plotinfo;
 using df::global::world;
+
+namespace DFHack
+{
+    DBG_DECLARE(core, world, DebugCategory::LINFO);
+}
 
 bool World::ReadPauseState()
 {
@@ -170,7 +175,7 @@ string World::getWorldName(bool in_english)
 {
     if (!world || !world->world_data)
         return "";
-    return Translation::TranslateName(&world->world_data->name, in_english);
+    return Translation::translateName(&world->world_data->name, in_english);
 }
 
 bool World::isFortressMode(df::game_type t)
@@ -203,15 +208,10 @@ bool World::isLegends(df::game_type t)
 }
 
 df::unit * World::getAdventurer() {
-    using df::global::adventure;
-
-    if (!isAdventureMode() || !adventure)
+    if (!isAdventureMode() || !world)
         return NULL;
 
-    if (auto nem = df::nemesis_record::find(adventure->player_id))
-        return nem->unit;
-
-    return NULL;
+    return world->units.adv_unit;
 }
 
 int32_t World::GetCurrentSiteId() {
@@ -219,18 +219,21 @@ int32_t World::GetCurrentSiteId() {
         return -1;
     if (isFortressMode())
         return plotinfo->site_id;
-    if (isAdventureMode() && world && world->world_data) {
-        if (auto adv = getAdventurer()) {
-            auto & world_map = world->map;
-            auto adv_pos = Units::getPosition(adv);
-            df::coord2d rgn_pos(world_map.region_x + adv_pos.x/48, world_map.region_y + adv_pos.y/48);
-            for (auto site : world->world_data->sites) {
-                df::coord2d rgn_base(site->pos.x*16, site->pos.y*16);
-                if (rgn_pos.x >= rgn_base.x+site->rgn_min_x && rgn_pos.x <= rgn_base.x+site->rgn_max_x
-                    && rgn_pos.y >= rgn_base.y+site->rgn_min_y && rgn_pos.y <= rgn_base.y+site->rgn_max_y)
-                {
-                    return site->id;
-                }
+    if (auto adv = getAdventurer(); adv && world->world_data) {
+        DEBUG(world).print("searching for adventure site\n");
+        auto & world_map = world->map;
+        auto adv_pos = Units::getPosition(adv);
+        DEBUG(world).print("adv_pos: (%d, %d, %d)\n", adv_pos.x, adv_pos.y, adv_pos.z);
+        df::coord2d rgn_pos(world_map.region_x + adv_pos.x/48, world_map.region_y + adv_pos.y/48);
+        for (auto site : world->world_data->sites) {
+            DEBUG(world).print("scanning site %d: %s\n", site->id, Translation::translateName(&site->name, true).c_str());
+            DEBUG(world).print("  rgn_pos: (%d, %d); site bounds: (%d, %d), (%d, %d) \n",
+                rgn_pos.x, rgn_pos.y, site->global_min_x, site->global_min_y, site->global_max_x, site->global_max_y);
+            if (rgn_pos.x >= site->global_min_x && rgn_pos.x <= site->global_max_x
+                && rgn_pos.y >= site->global_min_y && rgn_pos.y <= site->global_max_y)
+            {
+                DEBUG(world).print("found site: %d\n", site->id);
+                return site->id;
             }
         }
     }

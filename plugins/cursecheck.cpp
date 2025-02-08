@@ -21,7 +21,6 @@
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
-#include "modules/Translation.h"
 #include "modules/Units.h"
 
 #include "df/incident.h"
@@ -182,7 +181,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
 
             if (giveDetails)
             {
-                out << (Units::getReadableName(unit));
+                out << DF2CONSOLE(Units::getReadableName(unit));
 
                 auto death = df::incident::find(unit->counters.death_id);
                 out.print(", born in %d, cursed in %d to be a %s. (%s%s)\n",

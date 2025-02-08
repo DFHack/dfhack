@@ -20,7 +20,7 @@ local function get_rating(val, baseline, range, highest, high, med, low)
 end
 
 local function get_name(unit)
-    return unit and dfhack.toSearchNormalized(dfhack.TranslateName(dfhack.units.getVisibleName(unit)))
+    return unit and dfhack.toSearchNormalized(dfhack.translation.translateName(dfhack.units.getVisibleName(unit)))
 end
 
 local function sort_by_name_desc(unit1, unit2)

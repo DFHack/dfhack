@@ -771,6 +771,10 @@ arbitrary Lua tables.
   Same semantics as for the ``Site`` functions, but will associated the data
   with the global world context.
 
+* ``dfhack.persistent.getUnsavedSeconds()``
+
+  Returns the number of seconds since last save or load of a save.
+
 The data is kept in memory, so no I/O occurs when getting or saving keys. It is
 all written to a json file in the game save directory when the game is saved.
 
@@ -949,10 +953,6 @@ can be omitted.
 
   Checks if a site (e.g., a player fort) is loaded.
 
-* ``dfhack.TranslateName(name[,in_english[,only_last_name]])``
-
-  Convert a ``df.language_name`` (or only the last name part) to string.
-
 * ``dfhack.df2utf(string)``
 
   Convert a string from DF's CP437 encoding to UTF-8.
@@ -965,8 +965,8 @@ can be omitted.
 .. warning::
 
   When printing CP437-encoded text to the console (for example, names returned
-  from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
-  ensure proper display on all platforms.
+  from ``dfhack.units.getReadableName()``), use
+  ``print(dfhack.df2console(text))`` to ensure proper display on all platforms.
 
 * ``dfhack.utf2df(string)``
 
@@ -1033,6 +1033,17 @@ can be omitted.
   Similar to ``run_command()``, but instead of printing to the console,
   returns an ``output, command_result`` pair. ``output`` is a single string -
   see ``dfhack.internal.runCommand()`` to obtain colors as well.
+
+Translation module
+------------------
+
+* ``dfhack.translation.translateName(name[,in_english[,only_last_name]])``
+
+  Convert a ``df.language_name`` (or only the last name part) to string.
+
+* ``dfhack.translation.generateName(name,language,type,major_selector,minor_selector)``
+
+  Dynamically generate a name using the same logic the game itself uses.
 
 Gui module
 ----------
@@ -1805,6 +1816,10 @@ Units module
   part of your fortress civilization. Valid labors are allowed to be toggled
   in the in-game labor management screens (including DFHack's `labor
   manipulator screen <manipulator>`).
+
+* ``dfhack.units.setAutomaticProfessions(unit)``
+
+  Set appropriate labors on a unit based on current work detail settings.
 
 * ``dfhack.units.computeMovementSpeed(unit)``
 
@@ -3162,15 +3177,14 @@ unless otherwise noted.
 
 * ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
-  Lists all files/directories in a directory and its subdirectories. All directories
-  are listed before their contents. Returns a table with subtables of the format::
+  Lists all files/directories in a directory and its subdirectories. All
+  directories are listed before their contents. Returns a table with subtables
+  of the format: ``{path: 'path to file', isdir: true|false}``
 
-    {path: 'path to file', isdir: true|false}
-
-  Note that ``listdir()`` returns only the base name of each directory entry, while
-  ``listdir_recursive()`` returns the initial path and all components following it
-  for each entry. Set ``include_prefix`` to false if you don't want the ``path``
-  string prepended to the returned filenames.
+  Note that ``listdir()`` returns only the base name of each directory entry,
+  while ``listdir_recursive()`` returns the initial path and all components
+  following it for each entry. Set ``include_prefix`` to false if you don't
+  want the ``path`` string prepended to the returned filenames.
 
 Console API
 -----------

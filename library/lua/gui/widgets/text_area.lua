@@ -23,9 +23,10 @@ TextArea.ATTRS{
 
 function TextArea:init()
     self.render_start_line_y = 1
+    self.render_start_x = 1
 
     self.text_area = TextAreaContent{
-        frame={l=0,r=3,t=0},
+        frame={l=0,r=self.one_line_mode and 0 or 3,t=0},
         text=self.init_text,
 
         text_pen=self.text_pen,
@@ -35,7 +36,10 @@ function TextArea:init()
         one_line_mode=self.one_line_mode,
 
         on_text_change=function (text, old_text)
-            self:updateLayout()
+            if self.frame_body then
+                self:updateLayout()
+            end
+
             if self.on_text_change then
                 self.on_text_change(text, old_text)
             end
@@ -65,7 +69,15 @@ function TextArea:setText(text)
         self:getCursor()
     )
 
-    return self.text_area:setText(text)
+    self.text_area:setText(text)
+
+    if self.one_line_mode then
+        self.render_start_x = 1
+        local cursor = self:getCursor()
+        if cursor then
+            self:setCursor(math.min(self:getCursor(), #text + 1))
+        end
+    end
 end
 
 function TextArea:getCursor()
@@ -80,17 +92,34 @@ function TextArea:clearHistory()
     return self.text_area.history:clear()
 end
 
+function TextArea:hasFocus()
+    return self.focus
+end
+
 function TextArea:onCursorChange(cursor, old_cursor)
     local x, y = self.text_area.wrapped_text:indexToCoords(
         self.text_area.cursor
     )
 
-    if y >= self.render_start_line_y + self.text_area.frame_body.height then
-        self:updateScrollbar(
-            y - self.text_area.frame_body.height + 1
-        )
-    elseif  (y < self.render_start_line_y) then
-        self:updateScrollbar(y)
+    if self.text_area.frame_body then
+        if y >= self.render_start_line_y + self.text_area.frame_body.height then
+            self:updateScrollbar(
+                y - self.text_area.frame_body.height + 1
+            )
+        elseif  (y < self.render_start_line_y) then
+            self:updateScrollbar(y)
+        end
+
+        if self.one_line_mode then
+            local x_screen_offset_right = math.max(0, x - self.render_start_x - self.text_area.frame_body.width + 1)
+            local x_screen_offset_left = math.max(0, self.render_start_x - x)
+
+            if x_screen_offset_right > 0 then
+                self.render_start_x = self.render_start_x + x_screen_offset_right
+            elseif x_screen_offset_left > 0 then
+                self.render_start_x = self.render_start_x - x_screen_offset_left
+            end
+        end
     end
 
     if self.on_cursor_change then
@@ -164,6 +193,9 @@ end
 
 function TextArea:renderSubviews(dc)
     self.text_area.frame_body.y1 = self.frame_body.y1-(self.render_start_line_y - 1)
+    if self.one_line_mode then
+        self.text_area.frame_body.x1 = self.frame_body.x1-(self.render_start_x - 1)
+    end
     -- only visible lines of text_area will be rendered
     TextArea.super.renderSubviews(self, dc)
 end
@@ -175,6 +207,10 @@ function TextArea:onInput(keys)
 
     if keys._MOUSE_L and self:getMousePos() then
         self:setFocus(true)
+    end
+
+    if not self:hasFocus() then
+        return false
     end
 
     return TextArea.super.onInput(self, keys)

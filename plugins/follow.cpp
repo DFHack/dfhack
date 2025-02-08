@@ -2,8 +2,6 @@
 
 #include "Console.h"
 #include "DataDefs.h"
-#include "DFHack.h"
-#include "Export.h"
 #include "PluginManager.h"
 
 #include "modules/Gui.h"

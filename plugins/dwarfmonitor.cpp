@@ -46,7 +46,6 @@
 #include "df/unit_preference.h"
 #include "df/unit_soul.h"
 #include "df/viewscreen_unitst.h"
-#include "df/world_raws.h"
 
 using std::deque;
 
@@ -1184,7 +1183,7 @@ struct preference_map
         label = "";
 
         typedef df::unit_preference::T_type T_type;
-        df::world_raws &raws = world->raws;
+        auto &raws = world->raws;
         switch (pref.type)
         {
         case (T_type::LikeCreature):

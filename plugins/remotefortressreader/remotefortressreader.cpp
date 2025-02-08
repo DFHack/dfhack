@@ -42,6 +42,7 @@
 #include "df/body_part_layer_raw.h"
 #include "df/body_part_raw.h"
 #include "df/bp_appearance_modifier.h"
+#include "df/buildingitemst.h"
 #include "df/builtin_mats.h"
 #include "df/building_wellst.h"
 
@@ -64,6 +65,7 @@
 #include "df/inorganic_raw.h"
 #include "df/item.h"
 #include "df/job.h"
+#include "df/job_postingst.h"
 #include "df/job_type.h"
 #include "df/job_item.h"
 #include "df/job_material_category.h"
@@ -97,6 +99,7 @@
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_wound.h"
+#include "df/unit_wound_layerst.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_savegamest.h"
@@ -194,7 +197,6 @@ const char* growth_locations[] = {
 
 #include "df/art_image.h"
 #include "df/art_image_chunk.h"
-#include "df/art_image_ref.h"
 command_result loadArtImageChunk(color_ostream &out, std::vector<std::string> & parameters)
 {
     if (parameters.size() != 1)
@@ -210,7 +212,7 @@ command_result loadArtImageChunk(color_ostream &out, std::vector<std::string> & 
     if (GetArtImageChunk)
     {
         int index = atoi(parameters[0].c_str());
-        auto chunk = GetArtImageChunk(&(world->art_image_chunks), index);
+        auto chunk = GetArtImageChunk(&(world->art_image_chunks.all), index);
         out.print("Loaded chunk id: %d\n", chunk->id);
     }
     return CR_OK;
@@ -809,10 +811,10 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         return CR_OK;
     }
 
-    df::world_raws *raws = &world->raws;
+    auto *raws = &world->raws;
     // df::world_history *history = &world->history;
     MaterialInfo mat;
-    for (size_t i = 0; i < raws->inorganics.size(); i++)
+    for (size_t i = 0; i < raws->inorganics.all.size(); i++)
     {
         mat.decode(0, i);
         MaterialDefinition *mat_def = out->add_material_list();
@@ -820,9 +822,9 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         mat_def->mutable_mat_pair()->set_mat_index(i);
         mat_def->set_id(mat.getToken());
         mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
-        if (size_t(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)]) < raws->descriptors.colors.size())
+        if (size_t(raws->inorganics.all[i]->material.state_color[GetState(&raws->inorganics.all[i]->material)]) < raws->descriptors.colors.size())
         {
-            ConvertDFColorDescriptor(raws->inorganics[i]->material.state_color[GetState(&raws->inorganics[i]->material)], mat_def->mutable_state_color());
+            ConvertDFColorDescriptor(raws->inorganics.all[i]->material.state_color[GetState(&raws->inorganics.all[i]->material)], mat_def->mutable_state_color());
         }
     }
     for (int i = 0; i < 19; i++)
@@ -890,7 +892,7 @@ static command_result GetGrowthList(color_ostream &stream, const EmptyMessage *i
 
 
 
-    df::world_raws *raws = &world->raws;
+    auto *raws = &world->raws;
     if (!raws)
         return CR_OK;//'.
 
@@ -1154,7 +1156,7 @@ void CopyDesignation(df::map_block * DfBlock, RemoteFortressReader::MapBlock * N
 
 void CopyProjectiles(RemoteFortressReader::MapBlock * NetBlock)
 {
-    for (auto proj = world->proj_list.next; proj != NULL; proj = proj->next)
+    for (auto proj = world->projectiles.all.next; proj != NULL; proj = proj->next)
     {
         STRICT_VIRTUAL_CAST_VAR(projectile, df::proj_itemst, proj->item);
         if (projectile == NULL)
@@ -1187,7 +1189,7 @@ void CopyProjectiles(RemoteFortressReader::MapBlock * NetBlock)
     {
         bool isProj = false;
         auto vehicle = world->vehicles.active[i];
-        for (auto proj = world->proj_list.next; proj != NULL; proj = proj->next)
+        for (auto proj = world->projectiles.all.next; proj != NULL; proj = proj->next)
         {
             STRICT_VIRTUAL_CAST_VAR(projectile, df::proj_itemst, proj->item);
             if (!projectile)
@@ -1515,14 +1517,14 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("get_art_image_chunk"));
         if (GetArtImageChunk)
         {
-            chunk = GetArtImageChunk(&(world->art_image_chunks), engraving->art_id);
+            chunk = GetArtImageChunk(&(world->art_image_chunks.all), engraving->art_id);
         }
         else
         {
-            for (size_t i = 0; i < world->art_image_chunks.size(); i++)
+            for (size_t i = 0; i < world->art_image_chunks.all.size(); i++)
             {
-                if (world->art_image_chunks[i]->id == engraving->art_id)
-                    chunk = world->art_image_chunks[i];
+                if (world->art_image_chunks.all[i]->id == engraving->art_id)
+                    chunk = world->art_image_chunks.all[i];
             }
         }
         if (!chunk)
@@ -1534,8 +1536,8 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
         ConvertDFCoord(engraving->pos, netEngraving->mutable_pos());
         netEngraving->set_quality(engraving->quality);
         netEngraving->set_tile(engraving->tile);
-        if (chunk->images[engraving->art_subid]) {
-            CopyImage(chunk->images[engraving->art_subid], netEngraving->mutable_image());
+        if (chunk->images[engraving->art_subid].art_image) {
+            CopyImage(chunk->images[engraving->art_subid].art_image, netEngraving->mutable_image());
         }
         netEngraving->set_floor(engraving->flags.bits.floor);
         netEngraving->set_west(engraving->flags.bits.west);
@@ -1772,7 +1774,7 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
 
         if (unit->flags1.bits.projectile)
         {
-            for (auto proj = world->proj_list.next; proj != NULL; proj = proj->next)
+            for (auto proj = world->projectiles.all.next; proj != NULL; proj = proj->next)
             {
                 STRICT_VIRTUAL_CAST_VAR(item, df::proj_unitst, proj->item);
                 if (item == NULL)
@@ -1985,27 +1987,23 @@ static command_result GetWorldMap(color_ostream &stream, const EmptyMessage *in,
     out->set_name(DF2UTF(Translation::translateName(&(data->name), false)));
     out->set_name_english(DF2UTF(Translation::translateName(&(data->name), true)));
     auto poles = data->flip_latitude;
-#if DF_VERSION_INT > 34011
     switch (poles)
     {
-    case df::world_data::None:
+    case df::pole_type::None:
         out->set_world_poles(WorldPoles::NO_POLES);
         break;
-    case df::world_data::North:
+    case df::pole_type::North:
         out->set_world_poles(WorldPoles::NORTH_POLE);
         break;
-    case df::world_data::South:
+    case df::pole_type::South:
         out->set_world_poles(WorldPoles::SOUTH_POLE);
         break;
-    case df::world_data::Both:
+    case df::pole_type::Both:
         out->set_world_poles(WorldPoles::BOTH_POLES);
         break;
     default:
         break;
     }
-#else
-    out->set_world_poles(WorldPoles::NO_POLES);
-#endif
     for (int yy = 0; yy < height; yy++)
         for (int xx = 0; xx < width; xx++)
         {
@@ -2133,28 +2131,24 @@ static command_result GetWorldMapNew(color_ostream &stream, const EmptyMessage *
     out->set_world_height(height);
     out->set_name(DF2UTF(Translation::translateName(&(data->name), false)));
     out->set_name_english(DF2UTF(Translation::translateName(&(data->name), true)));
-#if DF_VERSION_INT > 34011
     auto poles = data->flip_latitude;
     switch (poles)
     {
-    case df::world_data::None:
+    case df::pole_type::None:
         out->set_world_poles(WorldPoles::NO_POLES);
         break;
-    case df::world_data::North:
+    case df::pole_type::North:
         out->set_world_poles(WorldPoles::NORTH_POLE);
         break;
-    case df::world_data::South:
+    case df::pole_type::South:
         out->set_world_poles(WorldPoles::SOUTH_POLE);
         break;
-    case df::world_data::Both:
+    case df::pole_type::Both:
         out->set_world_poles(WorldPoles::BOTH_POLES);
         break;
     default:
         break;
     }
-#else
-    out->set_world_poles(WorldPoles::NO_POLES);
-#endif
     for (int yy = 0; yy < height; yy++)
         for (int xx = 0; xx < width; xx++)
         {
@@ -2272,28 +2266,24 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     sprintf(name, "Region %d, %d", pos_x, pos_y);
     out->set_name_english(name);
     out->set_name(name);
-#if DF_VERSION_INT > 34011
     auto poles = worldData->flip_latitude;
     switch (poles)
     {
-    case df::world_data::None:
+    case df::pole_type::None:
         out->set_world_poles(WorldPoles::NO_POLES);
         break;
-    case df::world_data::North:
+    case df::pole_type::North:
         out->set_world_poles(WorldPoles::NORTH_POLE);
         break;
-    case df::world_data::South:
+    case df::pole_type::South:
         out->set_world_poles(WorldPoles::SOUTH_POLE);
         break;
-    case df::world_data::Both:
+    case df::pole_type::Both:
         out->set_world_poles(WorldPoles::BOTH_POLES);
         break;
     default:
         break;
     }
-#else
-    out->set_world_poles(WorldPoles::NO_POLES);
-#endif
 
     df::world_region_details * south = NULL;
     df::world_region_details * east = NULL;

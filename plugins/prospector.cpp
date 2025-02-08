@@ -223,9 +223,11 @@ void printVeins(color_ostream &con, MatMap &mat_map,
     MatMap gems;
     MatMap rest;
 
+    auto & inorganics = world->raws.inorganics.all;
+
     for (const auto &kv : mat_map)
     {
-        df::inorganic_raw *gloss = vector_get(world->raws.inorganics, kv.first);
+        df::inorganic_raw *gloss = vector_get(inorganics, kv.first);
         if (!gloss)
         {
             con.printerr("invalid material gloss: %hi\n", kv.first);
@@ -242,17 +244,17 @@ void printVeins(color_ostream &con, MatMap &mat_map,
 
     if (options.ores) {
         con << "Ores:" << std::endl;
-        printMats<df::inorganic_raw, std::greater>(con, ores, world->raws.inorganics, options);
+        printMats<df::inorganic_raw, std::greater>(con, ores, inorganics, options);
     }
 
     if (options.gems) {
         con << "Gems:" << std::endl;
-        printMats<df::inorganic_raw, std::greater>(con, gems, world->raws.inorganics, options);
+        printMats<df::inorganic_raw, std::greater>(con, gems, inorganics, options);
     }
 
     if (options.veins) {
         con << "Other vein stone:" << std::endl;
-        printMats<df::inorganic_raw, std::greater>(con, rest, world->raws.inorganics, options);
+        printMats<df::inorganic_raw, std::greater>(con, rest, inorganics, options);
     }
 }
 
@@ -604,7 +606,7 @@ static command_result embark_prospector(color_ostream &out,
     // Print the report
     if (options.layers) {
         out << "Layer materials:" << std::endl;
-        printMats<df::inorganic_raw, shallower>(out, layerMats, world->raws.inorganics, options);
+        printMats<df::inorganic_raw, shallower>(out, layerMats, world->raws.inorganics.all, options);
     }
 
     if (options.hidden) {
@@ -837,7 +839,7 @@ static command_result map_prospector(color_ostream &con,
 
     if (options.layers) {
         con << "Layer materials:" << std::endl;
-        printMats<df::inorganic_raw, shallower>(con, layerMats, world->raws.inorganics, options);
+        printMats<df::inorganic_raw, shallower>(con, layerMats, world->raws.inorganics.all, options);
     }
 
     if (options.features) {

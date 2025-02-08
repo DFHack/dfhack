@@ -276,7 +276,7 @@ public:
 
             for (auto inv : u->inventory)
             {
-                if (inv->mode != df::unit_inventory_item::Worn)
+                if (inv->mode != df::inv_item_role_type::Worn)
                     continue;
                 // skip non-clothing
                 if (!inv->item->isClothing())
@@ -456,7 +456,7 @@ public:
                     order->mat_index == -1 &&
                     order->specdata.hist_figure_id == hfid &&
                     order->material_category.whole == mcat.whole &&
-                    order->frequency == df::manager_order::T_frequency::OneTime)
+                    order->frequency == df::workquota_frequency_type::OneTime)
                 return order;
         }
         return NULL;

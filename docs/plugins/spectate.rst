@@ -84,7 +84,7 @@ Settings
     include time that the game is paused.
 
 ``include-animals`` (default: disabled)
-    Toggle whether to sometimes follow fort animals.
+    Toggle whether to sometimes follow fort animals and wildlife.
 
 ``include-hostiles`` (default: disabled)
     Toggle whether to sometimes follow hostiles (eg. undead, titans, invaders,

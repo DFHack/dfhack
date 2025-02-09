@@ -4,6 +4,7 @@
 #include "PluginManager.h"
 #include "VTableInterpose.h"
 
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -32,6 +33,7 @@ REQUIRE_GLOBAL(world);
 namespace DFHack {
     DBG_DECLARE(spectate, control, DebugCategory::LINFO);
     DBG_DECLARE(spectate, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(spectate, event, DebugCategory::LINFO);
 }
 
 static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
@@ -43,6 +45,7 @@ static const float PASSIVE_COMBAT_PREFERRED_WEIGHT = 8.0f;
 static const float JOB_WEIGHT = 3.0f;
 static const float OTHER_WEIGHT = 1.0f;
 
+static const int32_t RECENT_UNITS_SCAN_CYCLE = 51;
 static const float RECENT_UNIT_MULTIPLIER = 2.0f;
 static const int32_t RECENT_UNIT_MS = 15 * 60 * 1000; // 15 minutes
 
@@ -226,7 +229,12 @@ IMPLEMENT_VMETHOD_INTERPOSE(forward_back_interceptor, feed);
 
 static class RecentUnits {
     std::unordered_map<int32_t, uint32_t> units; // unit id -> time seen
+
 public:
+    void reset() {
+        units.clear();
+    }
+
     void add(int32_t unit_id) {
         units[unit_id] = Core::getInstance().getUnpausedMs();
     }
@@ -249,6 +257,14 @@ public:
     }
 } recent_units;
 
+static void on_new_active_unit(color_ostream& out, void* data) {
+    int32_t unit_id = reinterpret_cast<std::intptr_t>(data);
+    DEBUG(event,out).print("unit %d has arrived on map\n", unit_id);
+    recent_units.add(unit_id);
+}
+
+static EventManager::EventHandler new_unit_handler(plugin_self, on_new_active_unit, RECENT_UNITS_SCAN_CYCLE);
+
 /////////////////////////////////////////////////////
 // plugin API
 
@@ -267,6 +283,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 }
 
 static void on_disable(color_ostream &out, bool skip_restore_settings = false) {
+    EventManager::unregisterAll(plugin_self);
     INTERPOSE_HOOK(forward_back_interceptor, feed).apply(false);
     announcement_settings.reset(out, skip_restore_settings);
 }
@@ -298,6 +315,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             }
             INFO(control,out).print("Spectate mode enabled!\n");
             INTERPOSE_HOOK(forward_back_interceptor, feed).apply();
+            EventManager::registerListener(EventManager::EventType::UNIT_NEW_ACTIVE, new_unit_handler);
             follow_a_dwarf(out);
         } else {
             INFO(control,out).print("Spectate mode disabled!\n");
@@ -331,6 +349,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             is_enabled = false;
             on_disable(out, true);
             unit_history.reset();
+            recent_units.reset();
         }
         break;
     default:
@@ -350,8 +369,10 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         return CR_OK;
     }
 
-    if ((!config.auto_disengage && plotinfo->follow_unit < 0) || Core::getInstance().getUnpausedMs() >= next_cycle_unpaused_ms)
+    if ((!config.auto_disengage && plotinfo->follow_unit < 0) || Core::getInstance().getUnpausedMs() >= next_cycle_unpaused_ms) {
+        recent_units.trim();
         follow_a_dwarf(out);
+    }
     return CR_OK;
 }
 

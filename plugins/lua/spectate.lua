@@ -324,7 +324,6 @@ local function GetString(tokens)
     return table.concat(sb)
 end
 
-local once = false
 function TooltipOverlay:render_unit_banners(dc)
     if not AnyFollowOptionOn() then return end
 

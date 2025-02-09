@@ -13,9 +13,9 @@ to following a different dwarf. It can also switch to following animals,
 hostiles, or visiting units. You can switch to the next target (or a previous
 target) immediately with the left/right arrow keys.
 
-`spectate` will disengage and turn itself off when you move the map, just like
-the vanilla follow mechanic. It will also disengage immediately if you open the
-squads menu for military action.
+By default, `spectate` will disengage and turn itself off when you move the
+map, just like the vanilla follow mechanic. It will also disengage immediately
+if you open the squads menu for military action.
 
 It can also annotate your dwarves on the map with their name, job, and other
 information, either as floating tooltips or in a panel that comes up when you
@@ -37,7 +37,7 @@ Usage
     spectate [status]
     spectate toggle
     spectate set <setting> <value>
-    spectate overlay <name> enable|disable
+    spectate overlay enable|disable
 
 Examples
 --------
@@ -59,8 +59,9 @@ Examples
 ``spectate set follow-seconds 30``
     Configure `spectate` to switch targets every 30 seconds when in follow mode.
 
-``spectate overlay follow enable``
-    Show informative tooltips that follow each unit on the map.
+``spectate overlay enable``
+    Show informative tooltips that follow each unit on the map. Note that this
+    can be enabled independently of `spectate` itself.
 
 Settings
 --------
@@ -68,7 +69,8 @@ Settings
 ``auto-disengage`` (default: enabled)
     Toggle automatically disabling the plugin when the player moves the map or
     opens the squad panel. If this is disabled, you will need to manually
-    disable the plugin to turn off follow mode.
+    disable the plugin to turn off follow mode. You can still interact normally
+    with the DF UI.
 
 ``auto-unpause`` (default: disabled)
     Toggle auto-dismissal of announcements that pause the game, like sieges,
@@ -102,47 +104,36 @@ Settings
     arrived on the map.
 
 ``tooltip-follow-job`` (default: enabled)
-    If the ``spectate.follow`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     job of the dwarf in the tooltip.
 
 ``tooltip-follow-name`` (default: enabled)
-    If the ``spectate.follow`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     name of the dwarf in the tooltip.
 
 ``tooltip-follow-stress`` (default: enabled)
-    If the ``spectate.follow`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     happiness level (stress) of the dwarf in the tooltip.
 
 ``tooltip-hover-job`` (default: enabled)
-    If the ``spectate.follow`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     job of the dwarf in the hover panel.
 
 ``tooltip-hover-name`` (default: enabled)
-    If the ``spectate.follow`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     name of the dwarf in the hover panel.
 
 ``tooltip-hover-stress`` (default: enabled)
-    If the ``spectate.follow`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     happiness level (stress) of the dwarf in the hover panel.
 
 Overlays
 --------
 
-``spectate`` provides two overlays via the `overlay` framework to add
-information and functionality to the main map. These overlays can be controlled
-via the ``spectate overlay`` command or the ``Overlays`` tab in
-`gui/control-panel`.
+``spectate.tooltip``
 
-The information displayed by these overlays can be configured via the
-``spectate set`` command or the `gui/spectate` interface.
+``spectate`` can show informative tooltips that follow each unit on the map
+and/or a popup panel with information when your mouse cursor hovers over a unit.
 
-``spectate.follow``
-    Show informative tooltips that follow each unit on the map. You can enable
-    this overlay by running ``spectate overlay follow enable`` or,
-    equivalently, ``overlay enable spectate.follow``.
-
-``spectate.hover``
-    Show a popup panel with selected information when your mouse cursor hovers
-    over a unit. You can enable this overlay by running
-    ``spectate overlay hover enable`` or, equivalently,
-    ``overlay enable spectate.hover``.
+This overlay is managed via the `overlay` framework. It can be controlled via
+the ``spectate overlay`` command or the ``Overlays`` tab in `gui/control-panel`.

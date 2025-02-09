@@ -1,6 +1,7 @@
 local _ENV = mkmodule('plugins.spectate')
 
 local argparse = require('argparse')
+local dlg = require('gui.dialogs')
 local json = require('json')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
@@ -55,6 +56,20 @@ function refresh_cpp_config()
     end
 end
 
+function show_squads_warning()
+    local message = {
+        'Cannot start spectate mode while auto-disengage is enabled and',
+        'the squads panel is open. The auto-disengage feature automatically',
+        'stops spectate mode when you open the squads panel.',
+        '',
+        'Please either close the squads panel or disable auto-disengage by',
+        'running the following command:',
+        '',
+        'spectate set auto-disengage false',
+    }
+    dlg.showMessage("Spectate", table.concat(message, '\n'))
+end
+
 -----------------------------
 -- commandline interface
 
@@ -94,15 +109,9 @@ local function set_setting(key, value)
     end
 end
 
-local function set_overlay(name, value)
-    if not name:startswith('spectate.') then
-        name = 'spectate.' .. name
-    end
-    if name ~= 'spectate.follow' and name ~= 'spectate.hover' then
-        qerror('unknown overlay: ' .. name)
-    end
+local function set_overlay(value)
     value = argparse.boolean(value, name)
-    dfhack.run_command('overlay', value and 'enable' or 'disable', name)
+    dfhack.run_command('overlay', value and 'enable' or 'disable', 'spectate.tooltip')
 end
 
 function parse_commandline(args)
@@ -114,7 +123,7 @@ function parse_commandline(args)
     elseif command == 'set' then
         set_setting(args[1], args[2])
     elseif command == 'overlay' then
-        set_overlay(args[1], args[2])
+        set_overlay(args[1])
     else
         return false
     end
@@ -125,25 +134,16 @@ end
 -----------------------------
 -- overlays
 
-FollowOverlay = defclass(FollowOverlay, overlay.OverlayWidget)
-FollowOverlay.ATTRS{
-    desc='Adds info tooltips that follow units on the map.',
-    default_pos={x=1,y=1},
-    fullscreen=true,
-    viewscreens='dwarfmode/Default',
-}
-
-HoverOverlay = defclass(HoverOverlay, overlay.OverlayWidget)
-HoverOverlay.ATTRS{
-    desc='Shows info popup when hovering the mouse over units on the map.',
+TooltipOverlay = defclass(TooltipOverlay, overlay.OverlayWidget)
+TooltipOverlay.ATTRS{
+    desc='Adds info tooltips that follow units or appear when you hover the mouse.',
     default_pos={x=1,y=1},
     fullscreen=true,
     viewscreens='dwarfmode/Default',
 }
 
 OVERLAY_WIDGETS = {
-    follow=FollowOverlay,
-    hover=HoverOverlay,
+    tooltip=TooltipOverlay,
 }
 
 return _ENV

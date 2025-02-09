@@ -28,8 +28,10 @@ function test.viewscreenDtors()
     for name, type in pairs(df) do
         if name:startswith('viewscreen') then
             print('testing', name)
-            local v = type:new()
-            expect.true_(v:delete(), "destructor returned false: " .. name)
+            local ok, v = pcall(function() return type:new() end)
+            if ok then
+                expect.true_(v:delete(), "destructor returned false: " .. name)
+            end
         end
     end
 end

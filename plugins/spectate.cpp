@@ -79,7 +79,7 @@ static class AnnouncementSettings {
     }
 
 public:
-    void reset(color_ostream &out, bool skip_restore = false) {
+    void reset(color_ostream &out, bool skip_restore) {
         was_in_settings = false;
 
         if (saved) {
@@ -218,9 +218,13 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     return CR_OK;
 }
 
-void on_disable(color_ostream &out) {
+static void on_disable(color_ostream &out, bool skip_restore_settings = false) {
     INTERPOSE_HOOK(forward_back_interceptor, feed).apply(false);
-    announcement_settings.reset(out);
+    announcement_settings.reset(out, skip_restore_settings);
+}
+
+static bool is_squads_open() {
+    return Gui::matchFocusString("dwarfmode/Squads", Gui::getDFViewscreen());
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
@@ -234,11 +238,17 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         if (enable) {
-            INFO(control,out).print("Spectate mode enabled!\n");
             config.reset();
             if (!Lua::CallLuaModuleFunction(out, "plugins.spectate", "refresh_cpp_config")) {
                 WARN(control,out).print("Failed to refresh config\n");
             }
+            if (config.auto_disengage && is_squads_open()) {
+                out.printerr("Cannot enable %s while auto-disengage is enabled and the squads screen is open.\n", plugin_name);
+                Lua::CallLuaModuleFunction(out, "plugins.spectate", "show_squads_warning");
+                is_enabled = false;
+                return CR_FAILURE;
+            }
+            INFO(control,out).print("Spectate mode enabled!\n");
             INTERPOSE_HOOK(forward_back_interceptor, feed).apply();
             follow_a_dwarf(out);
         } else {
@@ -271,7 +281,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
-            announcement_settings.reset(out, true);
+            on_disable(out, true);
             unit_history.reset();
         }
         break;
@@ -284,9 +294,10 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     announcement_settings.on_update(out);
 
-    if (config.auto_disengage && plotinfo->follow_unit < 0) {
+    if (config.auto_disengage && (plotinfo->follow_unit < 0 || is_squads_open())) {
         DEBUG(cycle,out).print("auto-disengage triggered\n");
         is_enabled = false;
+        plotinfo->follow_unit = -1;
         on_disable(out);
         return CR_OK;
     }

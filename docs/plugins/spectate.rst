@@ -13,9 +13,9 @@ to following a different dwarf. It can also switch to following animals,
 hostiles, or visiting units. You can switch to the next target (or a previous
 target) immediately with the left/right arrow keys.
 
-`spectate` will disengage and turn itself off when you move the map, just like
-the vanilla follow mechanic. It will also disengage immediately if you open the
-squads menu for military action.
+By default, `spectate` will disengage and turn itself off when you move the
+map, just like the vanilla follow mechanic. It will also disengage immediately
+if you open the squads menu for military action.
 
 It can also annotate your dwarves on the map with their name, job, and other
 information, either as floating tooltips or in a panel that comes up when you

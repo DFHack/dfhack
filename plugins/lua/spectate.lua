@@ -1,6 +1,7 @@
 local _ENV = mkmodule('plugins.spectate')
 
 local argparse = require('argparse')
+local dlg = require('gui.dialogs')
 local json = require('json')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
@@ -53,6 +54,20 @@ function refresh_cpp_config()
             spectate_setSetting(name, value)
         end
     end
+end
+
+function show_squads_warning()
+    local message = {
+        'Cannot start spectate mode while auto-disengage is enabled and',
+        'the squads panel is open. The auto-disengage feature automatically',
+        'stops spectate mode when you open the squads panel.',
+        '',
+        'Please either close the squads panel or disable auto-disengage by',
+        'running the following command:',
+        '',
+        'spectate set auto-disengage false',
+    }
+    dlg.showMessage("Spectate", table.concat(message, '\n'))
 end
 
 -----------------------------

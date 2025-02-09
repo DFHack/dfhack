@@ -38,6 +38,17 @@ static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
 
 static const size_t MAX_HISTORY = 200;
 
+static const float ACTIVE_COMBAT_PREFERRED_WEIGHT = 25.0f;
+static const float PASSIVE_COMBAT_PREFERRED_WEIGHT = 8.0f;
+static const float JOB_WEIGHT = 3.0f;
+static const float OTHER_WEIGHT = 1.0f;
+
+static const float RECENT_UNIT_MULTIPLIER = 2.0f;
+static const int32_t RECENT_UNIT_MS = 15 * 60 * 1000; // 15 minutes
+
+/////////////////////////////////////////////////////
+// Configuration
+
 static struct Configuration {
     bool auto_disengage;
     bool auto_unpause;
@@ -63,6 +74,9 @@ static struct Configuration {
         follow_ms = 10000;
     }
 } config;
+
+/////////////////////////////////////////////////////
+// AnnouncementSettings
 
 static class AnnouncementSettings {
     bool was_in_settings = false; // whether we were in the vanilla settings screen last update
@@ -132,6 +146,9 @@ public:
         }
     }
 } announcement_settings;
+
+/////////////////////////////////////////////////////
+// UnitHistory
 
 static void follow_a_dwarf(color_ostream &out);
 
@@ -203,6 +220,37 @@ struct forward_back_interceptor : df::viewscreen_dwarfmodest {
     }
 };
 IMPLEMENT_VMETHOD_INTERPOSE(forward_back_interceptor, feed);
+
+/////////////////////////////////////////////////////
+// RecentUnits
+
+static class RecentUnits {
+    std::unordered_map<int32_t, uint32_t> units; // unit id -> time seen
+public:
+    void add(int32_t unit_id) {
+        units[unit_id] = Core::getInstance().getUnpausedMs();
+    }
+
+    bool contains(int32_t unit_id) {
+        return units.contains(unit_id);
+    }
+
+    void trim() {
+        uint32_t unpaused_ms = Core::getInstance().getUnpausedMs();
+        if (unpaused_ms < RECENT_UNIT_MS)
+            return;
+        uint32_t cutoff = unpaused_ms - RECENT_UNIT_MS;
+        for (auto it = units.begin(); it != units.end();) {
+            if (it->second < cutoff)
+                it = units.erase(it);
+            else
+                ++it;
+        }
+    }
+} recent_units;
+
+/////////////////////////////////////////////////////
+// plugin API
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static void follow_a_dwarf(color_ostream &out);
@@ -321,7 +369,6 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 
 /////////////////////////////////////////////////////
 // cycle logic
-//
 
 static bool is_in_combat(df::unit *unit) {
     return false;
@@ -370,22 +417,41 @@ static void get_dwarf_buckets(color_ostream &out,
 
 static std::default_random_engine rng;
 
-static uint32_t get_next_cycle_unpaused_ms(bool has_active_combat) {
+static uint32_t get_next_cycle_unpaused_ms(color_ostream &out, bool has_active_combat) {
     int32_t delay_ms = config.follow_ms;
     if (has_active_combat) {
         std::normal_distribution<float> distribution(config.follow_ms / 2, config.follow_ms / 6);
         int32_t delay_ms = distribution(rng);
         delay_ms = std::min(config.follow_ms, std::max(1, delay_ms));
     }
+    DEBUG(cycle,out).print("next cycle in %d ms\n", delay_ms);
     return Core::getInstance().getUnpausedMs() + delay_ms;
 }
 
-static void add_bucket(const vector<df::unit*> &bucket, vector<df::unit*> &units, vector<float> &intervals, vector<float> &weights, float weight) {
+static void add_bucket_to_vectors(const vector<df::unit*> &bucket, vector<df::unit*> &units, vector<float> &intervals, vector<float> &weights, float weight) {
     if (bucket.empty())
         return;
     intervals.push_back(units.size() + bucket.size());
     weights.push_back(weight);
     units.insert(units.end(), bucket.begin(), bucket.end());
+}
+
+static void add_bucket(const vector<df::unit*> &bucket, vector<df::unit*> &units, vector<float> &intervals, vector<float> &weights, float weight) {
+    if (bucket.empty())
+        return;
+    if (config.prefer_new_arrivals) {
+        vector<df::unit*> new_bucket, old_bucket;
+        for (auto unit : bucket) {
+            if (recent_units.contains(unit->id))
+                new_bucket.push_back(unit);
+            else
+                old_bucket.push_back(unit);
+        }
+        add_bucket_to_vectors(new_bucket, units, intervals, weights, weight * RECENT_UNIT_MULTIPLIER);
+        add_bucket_to_vectors(old_bucket, units, intervals, weights, weight);
+    } else {
+        add_bucket_to_vectors(bucket, units, intervals, weights, weight);
+    }
 }
 
 #define DUMP_BUCKET(name) \
@@ -402,11 +468,6 @@ static void add_bucket(const vector<df::unit*> &bucket, vector<df::unit*> &units
         DEBUG(cycle,out).print("  %d\n", (int)f); \
     }
 
-static const float ACTIVE_COMBAT_PREFERRED_WEIGHT = 25.0f;
-static const float PASSIVE_COMBAT_PREFERRED_WEIGHT = 8.0f;
-static const float JOB_WEIGHT = 3.0f;
-static const float OTHER_WEIGHT = 1.0f;
-
 static void follow_a_dwarf(color_ostream &out) {
     DEBUG(cycle,out).print("choosing a unit to follow\n");
 
@@ -416,7 +477,7 @@ static void follow_a_dwarf(color_ostream &out) {
     vector<df::unit*> other_units;
     get_dwarf_buckets(out, active_combat_units, passive_combat_units, job_units, other_units);
 
-    next_cycle_unpaused_ms = get_next_cycle_unpaused_ms(!active_combat_units.empty());
+    next_cycle_unpaused_ms = get_next_cycle_unpaused_ms(out, !active_combat_units.empty());
 
     // coalesce the buckets and add weights
     vector<df::unit*> units;
@@ -452,7 +513,6 @@ static void follow_a_dwarf(color_ostream &out) {
 
 /////////////////////////////////////////////////////
 // Lua API
-//
 
 static void spectate_setSetting(color_ostream &out, string name, int val) {
     DEBUG(control,out).print("entering spectate_setSetting %s = %d\n", name.c_str(), val);

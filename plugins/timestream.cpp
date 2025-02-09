@@ -32,6 +32,7 @@
 #include "df/activity_event_worshipst.h"
 #include "df/building_nest_boxst.h"
 #include "df/building_trapst.h"
+#include "df/buildingitemst.h"
 #include "df/init.h"
 #include "df/item_eggst.h"
 #include "df/unit.h"
@@ -409,7 +410,9 @@ static void adjust_activities(color_ostream &out, int32_t timeskip) {
     for (auto act : world->activities.all) {
         for (auto ev : act->events) {
             switch (ev->getType()) {
-                using namespace df::enums::activity_event_type;
+            using namespace df::enums::activity_event_type;
+            case NONE:
+                break;
 
             case TrainingSession:
                 // no counters

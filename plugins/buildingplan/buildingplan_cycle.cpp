@@ -337,7 +337,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
             }
             auto item = closest->second; // some item must be closest.
 
-            if (Job::attachJobItem(job, item, df::job_item_ref::Hauled, filter_idx)) {
+            if (Job::attachJobItem(job, item, df::job_role_type::Hauled, filter_idx)) {
                 MaterialInfo material;
                 material.decode(item);
                 ItemTypeInfo item_type;

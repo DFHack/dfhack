@@ -18,7 +18,6 @@
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_geo_biome.h"
-#include "df/world_raws.h"
 
 #include "defs.h"
 #include "embark-assistant.h"

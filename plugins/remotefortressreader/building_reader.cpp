@@ -529,7 +529,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             default:
                 break;
             }
-            if (actual->gate_flags.bits.closed)
+            if (actual->gate_flags.bits.raised)
                 remote_build->set_active(1);
             else
                 remote_build->set_active(0);
@@ -671,7 +671,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
         auto actual = strict_virtual_cast<df::building_weaponst>(local_build);
         if (actual)
         {
-            if (actual->gate_flags.bits.closed)
+            if (actual->gate_flags.bits.retracted)
                 remote_build->set_active(1);
             else
                 remote_build->set_active(0);

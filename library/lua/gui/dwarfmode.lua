@@ -249,7 +249,7 @@ end
 
 function get_hotkey_target(key)
     local hk = HOTKEY_KEYS[key]
-    if hk and hk.cmd == df.ui_hotkey.T_cmd.Zoom then
+    if hk and hk.cmd == df.hotkey_type.Zoom then
         return xyz2pos(hk.x, hk.y, hk.z)
     end
 end

@@ -7,6 +7,7 @@
 #include "modules/Units.h"
 #include "df/building.h"
 #include "df/building_civzonest.h"
+#include "df/building_squad_infost.h"
 #include "df/histfig_entity_link_former_positionst.h"
 #include "df/histfig_entity_link_former_squadst.h"
 #include "df/histfig_entity_link_positionst.h"
@@ -16,11 +17,16 @@
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
 #include "df/plotinfost.h"
+#include "df/military_routinest.h"
 #include "df/squad.h"
-#include "df/squad_position.h"
-#include "df/squad_schedule_order.h"
+#include "df/squad_barracks_infost.h"
+#include "df/squad_month_positionst.h"
 #include "df/squad_order.h"
 #include "df/squad_order_trainst.h"
+#include "df/squad_position.h"
+#include "df/squad_routine_schedulest.h"
+#include "df/squad_schedule_entry.h"
+#include "df/squad_schedule_order.h"
 #include "df/unit.h"
 #include "df/world.h"
 
@@ -96,7 +102,7 @@ df::squad* Military::makeSquad(int32_t assignment_id)
     result->id = *df::global::squad_next_id;
     result->uniform_priority = result->id + 1; //no idea why, but seems to hold
     result->supplies.carry_food = 2;
-    result->supplies.carry_water = df::squad::T_supplies::Water;
+    result->supplies.carry_water = df::squad_water_level_type::Water;
     result->entity_id = df::global::plotinfo->group_id;
     result->leader_position = corresponding_position->id;
     result->leader_assignment = found_assignment->id;
@@ -116,7 +122,8 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
     for (const auto& routine : routines)
     {
-        df::squad_schedule_entry* asched = (df::squad_schedule_entry*)malloc(sizeof(df::squad_schedule_entry) * 12);
+        df::squad_routine_schedulest* schedule = new df::squad_routine_schedulest[12];
+        auto &asched = schedule->month;
 
         for(int kk=0; kk < 12; kk++)
         {
@@ -124,14 +131,14 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
             for(int jj=0; jj < squad_size; jj++)
             {
-                int32_t* order_assignments = new int32_t();
-                *order_assignments = -1;
+                df::squad_month_positionst* order_assignments = new df::squad_month_positionst();
+                order_assignments->assigned_order_idx = -1;
 
                 asched[kk].order_assignments.push_back(order_assignments);
             }
         }
 
-        auto insert_training_order = [asched, squad_size](int month)
+        auto insert_training_order = [&](int month)
         {
             df::squad_schedule_order* order = new df::squad_schedule_order();
             order->min_count = squad_size;
@@ -212,7 +219,7 @@ df::squad* Military::makeSquad(int32_t assignment_id)
             }
         }
 
-        result->schedule.push_back(reinterpret_cast<df::squad::T_schedule*>(asched));
+        result->schedule.routine.push_back(schedule);
     }
 
     //Modify necessary world state
@@ -234,8 +241,8 @@ void Military::updateRoomAssignments(int32_t squad_id, int32_t civzone_id, df::s
     if (squad == nullptr || zone == nullptr)
         return;
 
-    df::squad::T_rooms* room_from_squad = nullptr;
-    df::building_civzonest::T_squad_room_info* room_from_building = nullptr;
+    df::squad_barracks_infost* room_from_squad = nullptr;
+    df::building_squad_infost* room_from_building = nullptr;
 
     for (auto room : squad->rooms)
     {
@@ -263,18 +270,18 @@ void Military::updateRoomAssignments(int32_t squad_id, int32_t civzone_id, df::s
 
     if (!avoiding_squad_roundtrip && room_from_squad == nullptr)
     {
-        room_from_squad = new df::squad::T_rooms();
+        room_from_squad = new df::squad_barracks_infost();
         room_from_squad->building_id = civzone_id;
 
-        insert_into_vector(squad->rooms, &df::squad::T_rooms::building_id, room_from_squad);
+        insert_into_vector(squad->rooms, &df::squad_barracks_infost::building_id, room_from_squad);
     }
 
     if (room_from_building == nullptr)
     {
-        room_from_building = new df::building_civzonest::T_squad_room_info();
+        room_from_building = new df::building_squad_infost();
         room_from_building->squad_id = squad_id;
 
-        insert_into_vector(zone->squad_room_info, &df::building_civzonest::T_squad_room_info::squad_id, room_from_building);
+        insert_into_vector(zone->squad_room_info, &df::building_squad_infost::squad_id, room_from_building);
     }
 
     if (room_from_squad)

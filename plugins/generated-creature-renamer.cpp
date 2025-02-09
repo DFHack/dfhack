@@ -3,7 +3,6 @@
 #include "Export.h"
 #include "PluginManager.h"
 #include "df/world.h"
-#include "df/world_raws.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "modules/World.h"

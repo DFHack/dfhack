@@ -6,6 +6,7 @@
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
+#include "df/buildingitemst.h"
 #include "df/building_nest_boxst.h"
 #include "df/item.h"
 #include "df/item_eggst.h"

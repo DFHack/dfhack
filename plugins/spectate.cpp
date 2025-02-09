@@ -209,7 +209,7 @@ struct forward_back_interceptor : df::viewscreen_dwarfmodest {
     typedef df::viewscreen_dwarfmodest interpose_base;
 
     DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input)) {
-        bool is_at_default_view = Gui::matchFocusString("dwarfmode/Default", Gui::getDFViewscreen());
+        bool is_at_default_view = Gui::matchFocusString("dwarfmode/Default");
         if (is_at_default_view && input->count(df::interface_key::CUSTOM_LEFT))
             unit_history.scan_back(Core::getInstance().getConsole());
         else if (is_at_default_view && input->count(df::interface_key::CUSTOM_RIGHT))

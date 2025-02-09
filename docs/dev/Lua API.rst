@@ -1986,6 +1986,14 @@ Military module
 
   Returns the name of a squad as a string.
 
+* ``dfhack.military.removeFromSquad(unit_id)``
+
+  Removes a unit from its squad. Unsets the unit's
+  military information (i.e., ``unit.military.squad_id`` and
+  ``unit.military.squad_pos``), the squad's position information (i.e.,
+  ``squad.positions[squad_pos].occupant``), and modifies the unit's entity links
+  to indicate former squad membership or command.
+
 Items module
 ------------
 

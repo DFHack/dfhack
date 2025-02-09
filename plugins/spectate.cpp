@@ -33,42 +33,8 @@ namespace DFHack {
 }
 
 static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
-static bool was_in_settings = false;         // whether we were in the vanilla settings screen last update
 
-static const size_t announcement_flag_arr_size = sizeof(decltype(df::announcements::flags)) / sizeof(df::announcement_flags);
-static std::unique_ptr<uint32_t *> saved_announcement_settings;
-
-static void save_announcement_settings(color_ostream &out) {
-    if (!saved_announcement_settings)
-        saved_announcement_settings = std::make_unique<uint32_t *>(new uint32_t[announcement_flag_arr_size]);
-    DEBUG(control,out).print("saving announcement settings\n");
-    for (size_t i = 0; i < announcement_flag_arr_size; ++i)
-        (*saved_announcement_settings)[i] = d_init->announcements.flags[i].whole;
-}
-
-static void restore_announcement_settings(color_ostream &out) {
-    if (!saved_announcement_settings)
-        return;
-    DEBUG(control,out).print("restoring saved announcement settings\n");
-    for (size_t i = 0; i < announcement_flag_arr_size; ++i)
-        d_init->announcements.flags[i].whole = (*saved_announcement_settings)[i];
-}
-
-static void scrub_announcements(color_ostream &out) {
-    if (Gui::matchFocusString("dwarfmode/Settings")) {
-        DEBUG(control,out).print("not modifying announcement settings; vanilla settings screen is active\n");
-        return;
-    }
-
-    DEBUG(control,out).print("removing PAUSE from announcement settings\n");
-    for (auto& flag : d_init->announcements.flags) {
-        flag.bits.DO_MEGA = false;
-        flag.bits.PAUSE = false;
-        flag.bits.RECENTER = false;
-    }
-}
-
-struct Configuration {
+static struct Configuration {
     bool auto_disengage;
     bool auto_unpause;
     bool cinematic_action;
@@ -94,6 +60,75 @@ struct Configuration {
     }
 } config;
 
+static class AnnouncementSettings {
+    bool was_in_settings = false; // whether we were in the vanilla settings screen last update
+
+    const size_t announcement_flag_arr_size = sizeof(decltype(df::announcements::flags)) / sizeof(df::announcement_flags);
+    std::unique_ptr<uint32_t *> saved;
+
+    void save_settings(color_ostream &out) {
+        if (!saved)
+            saved = std::make_unique<uint32_t *>(new uint32_t[announcement_flag_arr_size]);
+        DEBUG(control,out).print("saving announcement settings\n");
+        for (size_t i = 0; i < announcement_flag_arr_size; ++i)
+            (*saved)[i] = d_init->announcements.flags[i].whole;
+    }
+
+public:
+    void reset(color_ostream &out, bool skip_restore = false) {
+        was_in_settings = false;
+
+        if (saved) {
+            if (!skip_restore)
+                restore_settings(out);
+            delete[] *saved;
+            saved.reset();
+        }
+    }
+
+    void on_update(color_ostream &out) {
+        if (Gui::matchFocusString("dwarfmode/Settings")) {
+            if (!was_in_settings) {
+                DEBUG(cycle,out).print("settings screen active; restoring announcement settings\n");
+                restore_settings(out);
+                was_in_settings = true;
+            }
+        } else if (was_in_settings) {
+            was_in_settings = false;
+            if (config.auto_unpause) {
+                DEBUG(cycle,out).print("settings screen now inactive; disabling announcement pausing\n");
+                save_and_scrub_settings(out);
+            }
+        }
+    }
+
+    void restore_settings(color_ostream &out) {
+        if (!saved || was_in_settings)
+            return;
+        DEBUG(control,out).print("restoring saved announcement settings\n");
+        for (size_t i = 0; i < announcement_flag_arr_size; ++i)
+            d_init->announcements.flags[i].whole = (*saved)[i];
+    }
+
+    // remove pausing, popups, and recentering from all announcements
+    // saves first so the original settings can be restored
+    void save_and_scrub_settings(color_ostream &out) {
+        if (Gui::matchFocusString("dwarfmode/Settings")) {
+            DEBUG(control,out).print("not modifying announcement settings; vanilla settings screen is active\n");
+            return;
+        }
+
+        save_settings(out);
+
+        DEBUG(control,out).print("scrubbing announcement settings\n");
+        for (auto& flag : d_init->announcements.flags) {
+            flag.bits.DO_MEGA = false;
+            flag.bits.PAUSE = false;
+            flag.bits.RECENTER = false;
+        }
+    }
+} announcement_settings;
+
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static void follow_a_dwarf(color_ostream &out);
 
@@ -106,14 +141,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         do_command));
 
     return CR_OK;
-}
-
-static void cleanup(color_ostream &out) {
-    if (saved_announcement_settings) {
-        restore_announcement_settings(out);
-        delete[] *saved_announcement_settings;
-        saved_announcement_settings.reset();
-    }
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
@@ -136,7 +163,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         } else {
             INFO(control,out).print("Spectate mode disabled!\n");
             plotinfo->follow_unit = -1;
-            cleanup(out);
+            announcement_settings.reset(out);
         }
     } else {
         DEBUG(control,out).print("%s from the API, but already %s; no action\n",
@@ -148,7 +175,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     DEBUG(control,out).print("shutting down %s\n", plugin_name);
-    cleanup(out);
+    announcement_settings.reset(out);
     return CR_OK;
 }
 
@@ -162,7 +189,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
-            cleanup(out);
+            announcement_settings.reset(out, true);
         }
         break;
     default:
@@ -172,25 +199,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (Gui::matchFocusString("dwarfmode/Settings")) {
-        if (!was_in_settings) {
-            DEBUG(cycle,out).print("settings screen active; restoring announcement settings\n");
-            restore_announcement_settings(out);
-            was_in_settings = true;
-        }
-    } else if (was_in_settings) {
-        was_in_settings = false;
-        if (config.auto_unpause) {
-            DEBUG(cycle,out).print("settings screen now inactive; disabling announcement pausing\n");
-            save_announcement_settings(out);
-            scrub_announcements(out);
-        }
-    }
+    announcement_settings.on_update(out);
 
     if (config.auto_disengage && plotinfo->follow_unit < 0) {
         DEBUG(cycle,out).print("auto-disengage triggered\n");
         is_enabled = false;
-        cleanup(out);
+        announcement_settings.reset(out);
         return CR_OK;
     }
 
@@ -354,10 +368,9 @@ static void spectate_setSetting(color_ostream &out, string name, int val) {
         config.auto_disengage = val;
     } else if (name == "auto-unpause") {
         if (val && !config.auto_unpause) {
-            save_announcement_settings(out);
-            scrub_announcements(out);
+            announcement_settings.save_and_scrub_settings(out);
         } else if (!val && config.auto_unpause) {
-            restore_announcement_settings(out);
+            announcement_settings.restore_settings(out);
         }
         config.auto_unpause = val;
     } else if (name == "cinematic-action") {

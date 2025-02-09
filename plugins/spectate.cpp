@@ -2,6 +2,7 @@
 #include "LuaTools.h"
 #include "PluginLua.h"
 #include "PluginManager.h"
+#include "VTableInterpose.h"
 
 #include "modules/Gui.h"
 #include "modules/Units.h"
@@ -11,6 +12,7 @@
 #include "df/d_init.h"
 #include "df/plotinfost.h"
 #include "df/unit.h"
+#include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
 
 #include <random>
@@ -33,6 +35,8 @@ namespace DFHack {
 }
 
 static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
+
+static const size_t MAX_HISTORY = 200;
 
 static struct Configuration {
     bool auto_disengage;
@@ -129,6 +133,77 @@ public:
     }
 } announcement_settings;
 
+static void follow_a_dwarf(color_ostream &out);
+
+static class UnitHistory {
+    std::deque<int32_t> history;
+    size_t offset = 0;
+
+public:
+    void reset() {
+        history.clear();
+        offset = 0;
+    }
+
+    void add(color_ostream &out, df::unit *unit) {
+        int32_t id = unit->id;
+        DEBUG(cycle,out).print("now following unit %d: %s\n", id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
+        Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+        plotinfo->follow_unit = id;
+        if (offset > 0) {
+            DEBUG(cycle,out).print("trimming history forward of offset %zd\n", offset);
+            history.resize(history.size() - offset);
+            offset = 0;
+        }
+        history.push_back(id);
+        if (history.size() > MAX_HISTORY) {
+            DEBUG(cycle,out).print("history full, truncating\n");
+            history.pop_front();
+        }
+        DEBUG(cycle,out).print("history now has %zd entries\n", history.size());
+    }
+
+    void scan_back(color_ostream &out) {
+        if (history.empty() || offset >= history.size()-1)
+            return;
+        int unit_id = history[history.size() - (1 + ++offset)];
+        DEBUG(cycle,out).print("scanning back to unit %d at offset %zd\n", unit_id, offset);
+        if (auto unit = df::unit::find(unit_id))
+            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+        plotinfo->follow_unit = unit_id;
+    }
+
+    void scan_forward(color_ostream &out) {
+        if (history.empty() || offset == 0) {
+            DEBUG(cycle,out).print("already at most recent unit; following new unit\n");
+            follow_a_dwarf(out);
+            return;
+        }
+
+        int unit_id = history[history.size() - (1 + --offset)];
+        DEBUG(cycle,out).print("scanning forward to unit %d at offset %zd\n", unit_id, offset);
+        if (auto unit = df::unit::find(unit_id))
+            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+        plotinfo->follow_unit = unit_id;
+    }
+} unit_history;
+
+struct forward_back_interceptor : df::viewscreen_dwarfmodest {
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input)) {
+        bool is_at_default_view = Gui::matchFocusString("dwarfmode/Default", Gui::getDFViewscreen());
+        if (is_at_default_view && input->count(df::interface_key::CUSTOM_LEFT))
+            unit_history.scan_back(Core::getInstance().getConsole());
+        else if (is_at_default_view && input->count(df::interface_key::CUSTOM_RIGHT))
+            unit_history.scan_forward(Core::getInstance().getConsole());
+        else {
+            INTERPOSE_NEXT(feed)(input);
+        }
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(forward_back_interceptor, feed);
+
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static void follow_a_dwarf(color_ostream &out);
 
@@ -141,6 +216,11 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
         do_command));
 
     return CR_OK;
+}
+
+void on_disable(color_ostream &out) {
+    INTERPOSE_HOOK(forward_back_interceptor, feed).apply(false);
+    announcement_settings.reset(out);
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
@@ -159,11 +239,13 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             if (!Lua::CallLuaModuleFunction(out, "plugins.spectate", "refresh_cpp_config")) {
                 WARN(control,out).print("Failed to refresh config\n");
             }
+            INTERPOSE_HOOK(forward_back_interceptor, feed).apply();
             follow_a_dwarf(out);
         } else {
             INFO(control,out).print("Spectate mode disabled!\n");
             plotinfo->follow_unit = -1;
-            announcement_settings.reset(out);
+            on_disable(out);
+            // don't reset the unit history since we may want to re-enable
         }
     } else {
         DEBUG(control,out).print("%s from the API, but already %s; no action\n",
@@ -175,7 +257,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     DEBUG(control,out).print("shutting down %s\n", plugin_name);
-    announcement_settings.reset(out);
+    on_disable(out);
     return CR_OK;
 }
 
@@ -190,6 +272,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                                     plugin_name);
             is_enabled = false;
             announcement_settings.reset(out, true);
+            unit_history.reset();
         }
         break;
     default:
@@ -204,7 +287,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (config.auto_disengage && plotinfo->follow_unit < 0) {
         DEBUG(cycle,out).print("auto-disengage triggered\n");
         is_enabled = false;
-        announcement_settings.reset(out);
+        on_disable(out);
         return CR_OK;
     }
 
@@ -353,8 +436,7 @@ static void follow_a_dwarf(color_ostream &out) {
         DEBUG(cycle,out).print("selected unit idx %d\n", unit_idx);
     }
 
-    DEBUG(cycle,out).print("now following unit %d: %s\n", unit->id, Units::getReadableName(unit).c_str());
-    plotinfo->follow_unit = unit->id;
+    unit_history.add(out, unit);
 }
 
 /////////////////////////////////////////////////////

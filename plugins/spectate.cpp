@@ -13,6 +13,7 @@
 #include "df/d_init.h"
 #include "df/plotinfost.h"
 #include "df/unit.h"
+#include "df/activity_entry.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
 
@@ -40,14 +41,22 @@ static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
 
 static const size_t MAX_HISTORY = 200;
 
-static const float ACTIVE_COMBAT_PREFERRED_WEIGHT = 25.0f;
-static const float PASSIVE_COMBAT_PREFERRED_WEIGHT = 8.0f;
-static const float JOB_WEIGHT = 3.0f;
+static const float CITIZEN_COMBAT_PREFERRED_WEIGHT = 25.0f;
+static const float OTHER_COMBAT_PREFERRED_WEIGHT = 10.0f;
+static const float JOB_WEIGHT = 5.0f;
 static const float OTHER_WEIGHT = 1.0f;
 
 static const int32_t RECENT_UNITS_SCAN_CYCLE = 51;
-static const float RECENT_UNIT_MULTIPLIER = 2.0f;
-static const int32_t RECENT_UNIT_MS = 15 * 60 * 1000; // 15 minutes
+static const float RECENT_UNIT_MULTIPLIER = 2.0f;      // weight multiplier for recent units
+static const int32_t RECENT_UNIT_MS = 15 * 60 * 1000;  // 15 minutes
+
+// jobs that get "other" weight instad of "job" weight
+static const std::unordered_set<int32_t> boring_jobs = {
+    df::job_type::Eat,
+    df::job_type::Drink,
+    df::job_type::Sleep,
+};
+
 
 /////////////////////////////////////////////////////
 // Configuration
@@ -392,25 +401,22 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 // cycle logic
 
 static bool is_in_combat(df::unit *unit) {
-    return false;
-}
-
-static bool is_fleeing(df::unit *unit) {
+    if (Units::isCrazed(unit) || unit->mood == df::mood_type::Berserk)
+        return true;
+    for (auto activity_id : unit->activities) {
+        auto activity = df::activity_entry::find(activity_id);
+        if (activity && activity->type == df::activity_entry_type::Conflict)
+            return true;
+    }
     return false;
 }
 
 static void get_dwarf_buckets(color_ostream &out,
-    vector<df::unit*> &active_combat_units,
-    vector<df::unit*> &passive_combat_units,
+    vector<df::unit*> &citizen_combat_units,
+    vector<df::unit*> &other_combat_units,
     vector<df::unit*> &job_units,
     vector<df::unit*> &other_units)
 {
-    static const std::unordered_set<int32_t> boring_jobs = {
-        df::job_type::Eat,
-        df::job_type::Drink,
-        df::job_type::Sleep,
-    };
-
     for (auto unit : world->units.active) {
         if (Units::isDead(unit) || !Units::isActive(unit) || unit->flags1.bits.caged || unit->flags1.bits.chained || Units::isHidden(unit))
             continue;
@@ -424,10 +430,11 @@ static void get_dwarf_buckets(color_ostream &out,
             continue;
 
         if (is_in_combat(unit)) {
-            if (is_fleeing(unit))
-                passive_combat_units.push_back(unit);
+            INFO(cycle).print("unit %d is in combat: %s\n", unit->id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
+            if (Units::isCitizen(unit, true) || Units::isResident(unit, true))
+                citizen_combat_units.push_back(unit);
             else
-                active_combat_units.push_back(unit);
+                other_combat_units.push_back(unit);
         } else if (unit->job.current_job && !boring_jobs.contains(unit->job.current_job->job_type)) {
             job_units.push_back(unit);
         } else {
@@ -440,9 +447,9 @@ static std::default_random_engine rng;
 
 static uint32_t get_next_cycle_unpaused_ms(color_ostream &out, bool has_active_combat) {
     int32_t delay_ms = config.follow_ms;
-    if (has_active_combat) {
+    if (config.cinematic_action && has_active_combat) {
         std::normal_distribution<float> distribution(config.follow_ms / 2, config.follow_ms / 6);
-        int32_t delay_ms = distribution(rng);
+        delay_ms = distribution(rng);
         delay_ms = std::min(config.follow_ms, std::max(1, delay_ms));
     }
     DEBUG(cycle,out).print("next cycle in %d ms\n", delay_ms);
@@ -492,21 +499,21 @@ static void add_bucket(const vector<df::unit*> &bucket, vector<df::unit*> &units
 static void follow_a_dwarf(color_ostream &out) {
     DEBUG(cycle,out).print("choosing a unit to follow\n");
 
-    vector<df::unit*> active_combat_units;
-    vector<df::unit*> passive_combat_units;
+    vector<df::unit*> citizen_combat_units;
+    vector<df::unit*> other_combat_units;
     vector<df::unit*> job_units;
     vector<df::unit*> other_units;
-    get_dwarf_buckets(out, active_combat_units, passive_combat_units, job_units, other_units);
+    get_dwarf_buckets(out, citizen_combat_units, other_combat_units, job_units, other_units);
 
-    next_cycle_unpaused_ms = get_next_cycle_unpaused_ms(out, !active_combat_units.empty());
+    next_cycle_unpaused_ms = get_next_cycle_unpaused_ms(out, !citizen_combat_units.empty());
 
     // coalesce the buckets and add weights
     vector<df::unit*> units;
     vector<float> intervals;
     vector<float> weights;
     intervals.push_back(0);
-    add_bucket(active_combat_units, units, intervals, weights, config.prefer_conflict ? ACTIVE_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
-    add_bucket(passive_combat_units, units, intervals, weights, config.prefer_conflict ? PASSIVE_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
+    add_bucket(citizen_combat_units, units, intervals, weights, config.prefer_conflict ? CITIZEN_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
+    add_bucket(other_combat_units, units, intervals, weights, config.prefer_conflict ? OTHER_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
     add_bucket(job_units, units, intervals, weights, JOB_WEIGHT);
     add_bucket(other_units, units, intervals, weights, OTHER_WEIGHT);
 
@@ -520,8 +527,8 @@ static void follow_a_dwarf(color_ostream &out) {
     df::unit *unit = units[unit_idx];
 
     if (debug_cycle.isEnabled(DebugCategory::LDEBUG)) {
-        DUMP_BUCKET(active_combat_units);
-        DUMP_BUCKET(passive_combat_units);
+        DUMP_BUCKET(citizen_combat_units);
+        DUMP_BUCKET(other_combat_units);
         DUMP_BUCKET(job_units);
         DUMP_BUCKET(other_units);
         DUMP_FLOAT_VECTOR(intervals);

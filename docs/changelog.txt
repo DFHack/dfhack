@@ -59,7 +59,6 @@ Template for new versions:
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
 
 ## Fixes
-- `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
 - `createitem`: output items will now end up at look cursor if active
 - `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 - `changevein`: fix a crash that could occur when attempting to change a vein into itself

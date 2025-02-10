@@ -76,6 +76,7 @@ Template for new versions:
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
+- ``gui.dwarfmode`` module: ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` now operate on the adventure mode look cursor, if active. Clearing the cursor sets it to the active adventurer's position.
 
 ## Removed
 

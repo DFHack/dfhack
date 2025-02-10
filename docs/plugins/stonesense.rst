@@ -19,7 +19,7 @@ or be moved independently. Configuration for stonesense can be set in the
 ``dfhack-config/stonesense/init.txt`` file in your DF game directory. If the window refresh
 rate is too low, change ``SEGMENTSIZE_Z`` to ``2`` in this file, and if you are
 unable to see the edges of the map with the overlay active, try decreasing the
-value for ``SEGMENTSIZE_XY`` -- normal values are ``50`` to ``80``, depending
+value for ``SEGMENTSIZE_X`` and ``SEGMENTSIZE_Y`` -- normal values are ``50`` to ``80``, depending
 on your screen resolution.
 
 .. figure:: ../images/stonesense-roadtruss.jpg

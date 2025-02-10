@@ -68,6 +68,7 @@ Template for new versions:
 ## Misc Improvements
 - `spectate`: player-set configuration is now stored globally instead of per-fort
 - `autobutcher`: treat animals on restraints as unavailable for slaughter
+- `stockpiles`: add property filters for brewable, millable, and processable organic materials
 
 ## Documentation
 - `stonesense-art-guide`: new guide for making sprite art for Stonesense

@@ -54,9 +54,10 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit unit
+- `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit
 - `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
+- `spectate`: when spectate mode is enabled, left/right arrow will cycle through following next/prevous units
 
 ## Fixes
 - `createitem`: output items will now end up at look cursor if active
@@ -66,10 +67,10 @@ Template for new versions:
 ## Misc Improvements
 - `spectate`: player-set configuration is now stored globally instead of per-fort
 - `autobutcher`: treat animals on restraints as unavailable for slaughter
-- `stockpiles`: add property filters for brewable, millable, and processable organic materials
+- `stockpiles`: add property filters for brewable, millable, and processable (e.g. at a Farmer's workshop) organic materials
 
 ## Documentation
-- `stonesense-art-guide`: new guide for making sprite art for Stonesense
+- `stonesense-art-guide`: guide for making sprite art for Stonesense
 
 ## API
 - ``Military::removeFromSquad``: removes unit from any squad assignments
@@ -77,7 +78,7 @@ Template for new versions:
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
-- ``gui.dwarfmode`` module: ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` now operate on the adventure mode look cursor, if active. Clearing the cursor sets it to the active adventurer's position.
+- ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
 
 ## Removed
 

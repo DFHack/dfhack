@@ -449,7 +449,9 @@ static bool serialize_list_organic_mat(color_ostream& out, FuncWriteExport add_v
             all = false;
             continue;
         }
-        string token = OrganicMatLookup::food_token_by_idx(out, cat, i);
+        OrganicMatLookup::FoodMat food_mat;
+        OrganicMatLookup::food_mat_by_idx(out, cat, i, food_mat);
+        string token = OrganicMatLookup::food_token_by_idx(out, food_mat);
         if (token.empty()) {
             DEBUG(log, out).print("food mat invalid :(\n");
             continue;
@@ -460,6 +462,24 @@ static bool serialize_list_organic_mat(color_ostream& out, FuncWriteExport add_v
     return all;
 }
 
+static string get_filter_string(color_ostream& out, const OrganicMatLookup::FoodMat& food_mat) {
+    auto str = OrganicMatLookup::food_token_by_idx(out, food_mat);
+    if (auto plant = food_mat.material.plant) {
+        if (plant->flags.is_set(df::plant_raw_flags::DRINK))
+            str += "/brewable";
+        if (plant->flags.is_set(df::plant_raw_flags::MILL))
+            str += "/millable";
+        if (auto mat = food_mat.material.material) {
+            if (mat->flags.is_set(df::material_flags::STRUCTURAL_PLANT_MAT) &&
+                (plant->flags.is_set(df::plant_raw_flags::THREAD) ||
+                 plant->flags.is_set(df::plant_raw_flags::EXTRACT_VIAL) ||
+                 plant->flags.is_set(df::plant_raw_flags::EXTRACT_BARREL)))
+                str += "/processable";
+        }
+    }
+    return str;
+}
+
 static void unserialize_list_organic_mat(color_ostream& out, const char* subcat, bool all, char val, const vector<string>& filters,
         FuncReadImport read_value, size_t list_size, vector<char>& pile_list,
         organic_mat_category::organic_mat_category cat) {
@@ -467,8 +487,9 @@ static void unserialize_list_organic_mat(color_ostream& out, const char* subcat,
     pile_list.resize(num_elems, '\0');
     if (all) {
         for (size_t idx = 0; idx < num_elems; ++idx) {
-            string token = OrganicMatLookup::food_token_by_idx(out, cat, idx);
-            set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
+            OrganicMatLookup::FoodMat food_mat;
+            OrganicMatLookup::food_mat_by_idx(out, cat, idx, food_mat);
+            set_filter_elem(out, subcat, filters, val, get_filter_string(out, food_mat), idx, pile_list.at(idx));
         }
         return;
     }
@@ -480,7 +501,9 @@ static void unserialize_list_organic_mat(color_ostream& out, const char* subcat,
             WARN(log, out).print("organic mat index too large! idx[%d] max_size[%zd]\n", idx, num_elems);
             continue;
         }
-        set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
+        OrganicMatLookup::FoodMat food_mat;
+        OrganicMatLookup::food_mat_by_idx(out, cat, idx, food_mat);
+        set_filter_elem(out, subcat, filters, val, get_filter_string(out, food_mat), idx, pile_list.at(idx));
     }
 }
 

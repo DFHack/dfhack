@@ -35,11 +35,8 @@ Template for new versions:
 ## Documentation
 
 ## API
-- ``Military::removeFromSquad``: removes unit from any squad assignments
 
 ## Lua
-- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
-- ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
 
 ## Removed
 
@@ -62,6 +59,7 @@ Template for new versions:
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
 
 ## Fixes
+- `createitem`: output items will now end up at look cursor if active
 - `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 - `changevein`: fix a crash that could occur when attempting to change a vein into itself
 
@@ -73,8 +71,12 @@ Template for new versions:
 - `stonesense-art-guide`: new guide for making sprite art for Stonesense
 
 ## API
+- ``Military::removeFromSquad``: removes unit from any squad assignments
 
 ## Lua
+- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
+- ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
+- ``gui.dwarfmode`` module: ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` now operate on the adventure mode look cursor, if active. Clearing the cursor sets it to the active adventurer's position.
 
 ## Removed
 

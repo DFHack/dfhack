@@ -848,6 +848,9 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
     if (game->main_interface.adventure.jump.open) {
         focusStrings.push_back(baseFocus + "/Jump");
     }
+    if (game->main_interface.adventure.look.open) {
+        focusStrings.push_back(baseFocus + "/Look");
+    }
     if (game->main_interface.adventure.movement_options.open) {
         focusStrings.push_back(baseFocus + "/MovementOptions");
     }
@@ -2744,9 +2747,18 @@ df::coord Gui::getViewportPos()
 df::coord Gui::getCursorPos()
 {
     using df::global::cursor;
+    if (World::isAdventureMode())
+    {
+        if (!game)
+            return df::coord();
+        auto &look = game->main_interface.adventure.look;
+        if (!look.open)
+            return df::coord();
+        return look.cursor;
+    }
+
     if (!cursor)
         return df::coord();
-
     return df::coord(cursor->x, cursor->y, cursor->z);
 }
 
@@ -2911,7 +2923,7 @@ bool Gui::inRenameBuilding()
     return false;
 }
 
-bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
+bool Gui::getViewCoords(int32_t &x, int32_t &y, int32_t &z)
 {
     x = *df::global::window_x;
     y = *df::global::window_y;
@@ -2919,7 +2931,7 @@ bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
     return true;
 }
 
-bool Gui::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
+bool Gui::setViewCoords(const int32_t x, const int32_t y, const int32_t z)
 {
     (*df::global::window_x) = x;
     (*df::global::window_y) = y;
@@ -2927,32 +2939,53 @@ bool Gui::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
     return true;
 }
 
-bool Gui::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
+bool Gui::getCursorCoords(int32_t &x, int32_t &y, int32_t &z)
 {
-    x = df::global::cursor->x;
-    y = df::global::cursor->y;
-    z = df::global::cursor->z;
+    using df::global::cursor;
+    bool is_adv = World::isAdventureMode();
+    if (is_adv || !cursor)
+    {
+        df::coord p;
+        if (is_adv && game)
+        {
+            auto &look = game->main_interface.adventure.look;
+            if (look.open)
+                p = look.cursor;
+        }
+        x = p.x; y = p.y; z = p.z;
+        return p.isValid();
+    }
+
+    x = cursor->x; y = cursor->y; z = cursor->z;
     return has_cursor();
 }
 
-bool Gui::getCursorCoords (df::coord &pos)
+bool Gui::getCursorCoords(df::coord &pos)
 {
-    pos.x = df::global::cursor->x;
-    pos.y = df::global::cursor->y;
-    pos.z = df::global::cursor->z;
-    return has_cursor();
+    pos = getCursorPos();
+    return pos.isValid();
 }
 
 //FIXME: confine writing of coords to map bounds?
-bool Gui::setCursorCoords (const int32_t x, const int32_t y, const int32_t z)
+bool Gui::setCursorCoords(const int32_t x, const int32_t y, const int32_t z)
 {
-    df::global::cursor->x = x;
-    df::global::cursor->y = y;
-    df::global::cursor->z = z;
+    using df::global::cursor;
+    if (World::isAdventureMode())
+    {
+        if (!game)
+            return false;
+        auto &look = game->main_interface.adventure.look;
+        look.cursor = df::coord(x, y, z);
+        return true;
+    }
+    if (!cursor)
+        return false;
+
+    cursor->x = x; cursor->y = y; cursor->z = z;
     return true;
 }
 
-bool Gui::getDesignationCoords (int32_t &x, int32_t &y, int32_t &z)
+bool Gui::getDesignationCoords(int32_t &x, int32_t &y, int32_t &z)
 {
     x = selection_rect->start_x;
     y = selection_rect->start_y;
@@ -2960,7 +2993,7 @@ bool Gui::getDesignationCoords (int32_t &x, int32_t &y, int32_t &z)
     return (x >= 0) ? false : true;
 }
 
-bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t z)
+bool Gui::setDesignationCoords(const int32_t x, const int32_t y, const int32_t z)
 {
     selection_rect->start_x = x;
     selection_rect->start_y = y;

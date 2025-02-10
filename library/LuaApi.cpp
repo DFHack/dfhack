@@ -99,6 +99,7 @@ distribution.
 #include "df/report_zoom_type.h"
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
+#include "df/squad_use_flags.h"
 #include "df/squad.h"
 #include "df/unit.h"
 #include "df/unit_misc_trait.h"
@@ -2341,6 +2342,7 @@ static const LuaWrapper::FunctionReg dfhack_military_module[] = {
     WRAPM(Military, makeSquad),
     WRAPM(Military, updateRoomAssignments),
     WRAPM(Military, getSquadName),
+    WRAPM(Military, removeFromSquad),
     { NULL, NULL }
 };
 
@@ -2442,7 +2444,7 @@ static int items_moveToBuilding(lua_State *state)
 static int items_moveToInventory(lua_State *state) {
     auto item = Lua::CheckDFObject<df::item>(state, 1);
     auto unit = Lua::CheckDFObject<df::unit>(state, 2);
-    auto use_mode = (df::unit_inventory_item::T_mode)luaL_optint(state, 3, 0);
+    auto use_mode = (df::inv_item_role_type)luaL_optint(state, 3, 0);
     int body_part = luaL_optint(state, 4, -1);
     lua_pushboolean(state, Items::moveToInventory(item, unit, use_mode, body_part));
     return 1;
@@ -2815,7 +2817,7 @@ int buildings_setSize(lua_State *state)
         lua_pushinteger(state, size.x);
         lua_pushinteger(state, size.y);
         lua_pushinteger(state, area);
-        lua_pushinteger(state, Buildings::countExtentTiles(&bld->room, area));
+        lua_pushinteger(state, Buildings::countExtentTiles(bld, area));
         return 5;
     }
     else

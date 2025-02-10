@@ -10,7 +10,6 @@
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/world.h"
 #include "df/world_data.h"
-#include "df/world_raws.h"
 #include "df/world_region.h"
 #include "df/world_region_details.h"
 #include "df/world_region_type.h"

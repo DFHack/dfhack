@@ -238,7 +238,7 @@ static bool moveToInventory(df::item *item, df::unit *unit, df::body_part_raw * 
         return false;
     }
 
-    if (!Items::moveToInventory(item, unit, df::unit_inventory_item::Worn, bpIndex))
+    if (!Items::moveToInventory(item, unit, df::inv_item_role_type::Worn, bpIndex))
     {
         if (verbose) { WARN(log).print("\nEquipping failed - failed to retrieve item from its current location/container/inventory.  Please move it to the ground and try again.\n"); }
         return false;

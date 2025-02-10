@@ -568,7 +568,7 @@ struct VeinGenerator
 bool VeinGenerator::init_biomes()
 {
     auto &mats = df::inorganic_raw::get_vector();
-    materials.resize(world->raws.inorganics.size());
+    materials.resize(world->raws.inorganics.all.size());
 
     for (size_t i = 0; i < mats.size(); i++)
     {

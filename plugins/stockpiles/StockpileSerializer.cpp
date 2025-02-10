@@ -566,7 +566,7 @@ static void unserialize_list_material(color_ostream& out, const char* subcat, bo
         vector<char>& pile_list) {
     // we initialize all disallowed values to 1
     // why? because that's how the memory is in DF before we muck with it.
-    size_t num_elems = world->raws.inorganics.size();
+    size_t num_elems = world->raws.inorganics.all.size();
     pile_list.resize(num_elems, 0);
     for (size_t i = 0; i < pile_list.size(); ++i) {
         MaterialInfo mi(0, i);
@@ -814,9 +814,9 @@ void StockpileSerializer::read(color_ostream &out, DeserializeMode mode, const v
 
 void StockpileSerializer::write_containers(color_ostream& out) {
     DEBUG(log, out).print("writing container settings\n");
-    mBuffer.set_max_bins(mPile->max_bins);
-    mBuffer.set_max_barrels(mPile->max_barrels);
-    mBuffer.set_max_wheelbarrows(mPile->max_wheelbarrows);
+    mBuffer.set_max_bins(mPile->storage.max_bins);
+    mBuffer.set_max_barrels(mPile->storage.max_barrels);
+    mBuffer.set_max_wheelbarrows(mPile->storage.max_wheelbarrows);
 }
 
 template<typename T_elem, typename T_elem_ret>
@@ -869,21 +869,21 @@ void StockpileSerializer::read_containers(color_ostream& out, DeserializeMode mo
     read_elem<int16_t, int32_t>(out, "max_bins", mode,
             std::bind(&StockpileSettings::has_max_bins, mBuffer),
             std::bind(&StockpileSettings::max_bins, mBuffer),
-            mPile->max_bins);
+            mPile->storage.max_bins);
     read_elem<int16_t, int32_t>(out, "max_barrels", mode,
             std::bind(&StockpileSettings::has_max_barrels, mBuffer),
             std::bind(&StockpileSettings::max_barrels, mBuffer),
-            mPile->max_barrels);
+            mPile->storage.max_barrels);
     read_elem<int16_t, int32_t>(out, "max_wheelbarrows", mode,
             std::bind(&StockpileSettings::has_max_wheelbarrows, mBuffer),
             std::bind(&StockpileSettings::max_wheelbarrows, mBuffer),
-            mPile->max_wheelbarrows);
+            mPile->storage.max_wheelbarrows);
 }
 
 void StockpileSettingsSerializer::write_general(color_ostream& out) {
     DEBUG(log, out).print("writing general settings\n");
-    mBuffer.set_allow_inorganic(mSettings->allow_inorganic);
-    mBuffer.set_allow_organic(mSettings->allow_organic);
+    mBuffer.set_allow_inorganic(mSettings->misc.allow_inorganic);
+    mBuffer.set_allow_organic(mSettings->misc.allow_organic);
 }
 
 void StockpileSerializer::write_general(color_ostream& out) {
@@ -895,11 +895,11 @@ void StockpileSettingsSerializer::read_general(color_ostream& out, DeserializeMo
     read_elem<bool, bool>(out, "allow_inorganic", mode,
             std::bind(&StockpileSettings::has_allow_inorganic, mBuffer),
             std::bind(&StockpileSettings::allow_inorganic, mBuffer),
-            mSettings->allow_inorganic);
+            mSettings->misc.allow_inorganic);
     read_elem<bool, bool>(out, "allow_organic", mode,
             std::bind(&StockpileSettings::has_allow_organic, mBuffer),
             std::bind(&StockpileSettings::allow_organic, mBuffer),
-            mSettings->allow_organic);
+            mSettings->misc.allow_organic);
 }
 
 void StockpileSerializer::read_general(color_ostream& out, DeserializeMode mode) {

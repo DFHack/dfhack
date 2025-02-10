@@ -2,7 +2,9 @@
 #include "LuaTools.h"
 #include "PluginLua.h"
 #include "PluginManager.h"
+#include "VTableInterpose.h"
 
+#include "modules/EventManager.h"
 #include "modules/Gui.h"
 #include "modules/Units.h"
 #include "modules/World.h"
@@ -11,6 +13,8 @@
 #include "df/d_init.h"
 #include "df/plotinfost.h"
 #include "df/unit.h"
+#include "df/activity_entry.h"
+#include "df/viewscreen_dwarfmodest.h"
 #include "df/world.h"
 
 #include <random>
@@ -30,45 +34,34 @@ REQUIRE_GLOBAL(world);
 namespace DFHack {
     DBG_DECLARE(spectate, control, DebugCategory::LINFO);
     DBG_DECLARE(spectate, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(spectate, event, DebugCategory::LINFO);
 }
 
 static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
-static bool was_in_settings = false;         // whether we were in the vanilla settings screen last update
 
-static const size_t announcement_flag_arr_size = sizeof(decltype(df::announcements::flags)) / sizeof(df::announcement_flags);
-static std::unique_ptr<uint32_t *> saved_announcement_settings;
+static const size_t MAX_HISTORY = 200;
 
-static void save_announcement_settings(color_ostream &out) {
-    if (!saved_announcement_settings)
-        saved_announcement_settings = std::make_unique<uint32_t *>(new uint32_t[announcement_flag_arr_size]);
-    DEBUG(control,out).print("saving announcement settings\n");
-    for (size_t i = 0; i < announcement_flag_arr_size; ++i)
-        (*saved_announcement_settings)[i] = d_init->announcements.flags[i].whole;
-}
+static const float CITIZEN_COMBAT_PREFERRED_WEIGHT = 25.0f;
+static const float OTHER_COMBAT_PREFERRED_WEIGHT = 10.0f;
+static const float JOB_WEIGHT = 5.0f;
+static const float OTHER_WEIGHT = 1.0f;
 
-static void restore_announcement_settings(color_ostream &out) {
-    if (!saved_announcement_settings)
-        return;
-    DEBUG(control,out).print("restoring saved announcement settings\n");
-    for (size_t i = 0; i < announcement_flag_arr_size; ++i)
-        d_init->announcements.flags[i].whole = (*saved_announcement_settings)[i];
-}
+static const int32_t RECENT_UNITS_SCAN_CYCLE = 51;
+static const float RECENT_UNIT_MULTIPLIER = 2.0f;      // weight multiplier for recent units
+static const int32_t RECENT_UNIT_MS = 15 * 60 * 1000;  // 15 minutes
 
-static void scrub_announcements(color_ostream &out) {
-    if (Gui::matchFocusString("dwarfmode/Settings")) {
-        DEBUG(control,out).print("not modifying announcement settings; vanilla settings screen is active\n");
-        return;
-    }
+// jobs that get "other" weight instad of "job" weight
+static const std::unordered_set<int32_t> boring_jobs = {
+    df::job_type::Eat,
+    df::job_type::Drink,
+    df::job_type::Sleep,
+};
 
-    DEBUG(control,out).print("removing PAUSE from announcement settings\n");
-    for (auto& flag : d_init->announcements.flags) {
-        flag.bits.DO_MEGA = false;
-        flag.bits.PAUSE = false;
-        flag.bits.RECENTER = false;
-    }
-}
 
-struct Configuration {
+/////////////////////////////////////////////////////
+// Configuration
+
+static struct Configuration {
     bool auto_disengage;
     bool auto_unpause;
     bool cinematic_action;
@@ -94,6 +87,196 @@ struct Configuration {
     }
 } config;
 
+/////////////////////////////////////////////////////
+// AnnouncementSettings
+
+static class AnnouncementSettings {
+    bool was_in_settings = false; // whether we were in the vanilla settings screen last update
+
+    const size_t announcement_flag_arr_size = sizeof(decltype(df::announcements::flags)) / sizeof(df::announcement_flags);
+    std::unique_ptr<uint32_t *> saved;
+
+    void save_settings(color_ostream &out) {
+        if (!saved)
+            saved = std::make_unique<uint32_t *>(new uint32_t[announcement_flag_arr_size]);
+        DEBUG(control,out).print("saving announcement settings\n");
+        for (size_t i = 0; i < announcement_flag_arr_size; ++i)
+            (*saved)[i] = d_init->announcements.flags[i].whole;
+    }
+
+public:
+    void reset(color_ostream &out, bool skip_restore) {
+        was_in_settings = false;
+
+        if (saved) {
+            if (!skip_restore)
+                restore_settings(out);
+            delete[] *saved;
+            saved.reset();
+        }
+    }
+
+    void on_update(color_ostream &out) {
+        if (Gui::matchFocusString("dwarfmode/Settings")) {
+            if (!was_in_settings) {
+                DEBUG(cycle,out).print("settings screen active; restoring announcement settings\n");
+                restore_settings(out);
+                was_in_settings = true;
+            }
+        } else if (was_in_settings) {
+            was_in_settings = false;
+            if (config.auto_unpause) {
+                DEBUG(cycle,out).print("settings screen now inactive; disabling announcement pausing\n");
+                save_and_scrub_settings(out);
+            }
+        }
+    }
+
+    void restore_settings(color_ostream &out) {
+        if (!saved || was_in_settings)
+            return;
+        DEBUG(control,out).print("restoring saved announcement settings\n");
+        for (size_t i = 0; i < announcement_flag_arr_size; ++i)
+            d_init->announcements.flags[i].whole = (*saved)[i];
+    }
+
+    // remove pausing, popups, and recentering from all announcements
+    // saves first so the original settings can be restored
+    void save_and_scrub_settings(color_ostream &out) {
+        if (Gui::matchFocusString("dwarfmode/Settings")) {
+            DEBUG(control,out).print("not modifying announcement settings; vanilla settings screen is active\n");
+            return;
+        }
+
+        save_settings(out);
+
+        DEBUG(control,out).print("scrubbing announcement settings\n");
+        for (auto& flag : d_init->announcements.flags) {
+            flag.bits.DO_MEGA = false;
+            flag.bits.PAUSE = false;
+            flag.bits.RECENTER = false;
+        }
+    }
+} announcement_settings;
+
+/////////////////////////////////////////////////////
+// UnitHistory
+
+static void follow_a_dwarf(color_ostream &out);
+
+static class UnitHistory {
+    std::deque<int32_t> history;
+    size_t offset = 0;
+
+public:
+    void reset() {
+        history.clear();
+        offset = 0;
+    }
+
+    void add(color_ostream &out, df::unit *unit) {
+        int32_t id = unit->id;
+        DEBUG(cycle,out).print("now following unit %d: %s\n", id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
+        Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+        plotinfo->follow_unit = id;
+        if (offset > 0) {
+            DEBUG(cycle,out).print("trimming history forward of offset %zd\n", offset);
+            history.resize(history.size() - offset);
+            offset = 0;
+        }
+        history.push_back(id);
+        if (history.size() > MAX_HISTORY) {
+            DEBUG(cycle,out).print("history full, truncating\n");
+            history.pop_front();
+        }
+        DEBUG(cycle,out).print("history now has %zd entries\n", history.size());
+    }
+
+    void scan_back(color_ostream &out) {
+        if (history.empty() || offset >= history.size()-1)
+            return;
+        int unit_id = history[history.size() - (1 + ++offset)];
+        DEBUG(cycle,out).print("scanning back to unit %d at offset %zd\n", unit_id, offset);
+        if (auto unit = df::unit::find(unit_id))
+            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+        plotinfo->follow_unit = unit_id;
+    }
+
+    void scan_forward(color_ostream &out) {
+        if (history.empty() || offset == 0) {
+            DEBUG(cycle,out).print("already at most recent unit; following new unit\n");
+            follow_a_dwarf(out);
+            return;
+        }
+
+        int unit_id = history[history.size() - (1 + --offset)];
+        DEBUG(cycle,out).print("scanning forward to unit %d at offset %zd\n", unit_id, offset);
+        if (auto unit = df::unit::find(unit_id))
+            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+        plotinfo->follow_unit = unit_id;
+    }
+} unit_history;
+
+struct forward_back_interceptor : df::viewscreen_dwarfmodest {
+    typedef df::viewscreen_dwarfmodest interpose_base;
+
+    DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input)) {
+        bool is_at_default_view = Gui::matchFocusString("dwarfmode/Default");
+        if (is_at_default_view && input->count(df::interface_key::CUSTOM_LEFT))
+            unit_history.scan_back(Core::getInstance().getConsole());
+        else if (is_at_default_view && input->count(df::interface_key::CUSTOM_RIGHT))
+            unit_history.scan_forward(Core::getInstance().getConsole());
+        else {
+            INTERPOSE_NEXT(feed)(input);
+        }
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(forward_back_interceptor, feed);
+
+/////////////////////////////////////////////////////
+// RecentUnits
+
+static class RecentUnits {
+    std::unordered_map<int32_t, uint32_t> units; // unit id -> time seen
+
+public:
+    void reset() {
+        units.clear();
+    }
+
+    void add(int32_t unit_id) {
+        units[unit_id] = Core::getInstance().getUnpausedMs();
+    }
+
+    bool contains(int32_t unit_id) {
+        return units.contains(unit_id);
+    }
+
+    void trim() {
+        uint32_t unpaused_ms = Core::getInstance().getUnpausedMs();
+        if (unpaused_ms < RECENT_UNIT_MS)
+            return;
+        uint32_t cutoff = unpaused_ms - RECENT_UNIT_MS;
+        for (auto it = units.begin(); it != units.end();) {
+            if (it->second < cutoff)
+                it = units.erase(it);
+            else
+                ++it;
+        }
+    }
+} recent_units;
+
+static void on_new_active_unit(color_ostream& out, void* data) {
+    int32_t unit_id = reinterpret_cast<std::intptr_t>(data);
+    DEBUG(event,out).print("unit %d has arrived on map\n", unit_id);
+    recent_units.add(unit_id);
+}
+
+static EventManager::EventHandler new_unit_handler(plugin_self, on_new_active_unit, RECENT_UNITS_SCAN_CYCLE);
+
+/////////////////////////////////////////////////////
+// plugin API
+
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static void follow_a_dwarf(color_ostream &out);
 
@@ -108,12 +291,14 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
     return CR_OK;
 }
 
-static void cleanup(color_ostream &out) {
-    if (saved_announcement_settings) {
-        restore_announcement_settings(out);
-        delete[] *saved_announcement_settings;
-        saved_announcement_settings.reset();
-    }
+static void on_disable(color_ostream &out, bool skip_restore_settings = false) {
+    EventManager::unregisterAll(plugin_self);
+    INTERPOSE_HOOK(forward_back_interceptor, feed).apply(false);
+    announcement_settings.reset(out, skip_restore_settings);
+}
+
+static bool is_squads_open() {
+    return Gui::matchFocusString("dwarfmode/Squads", Gui::getDFViewscreen());
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
@@ -127,16 +312,25 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         DEBUG(control,out).print("%s from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         if (enable) {
-            INFO(control,out).print("Spectate mode enabled!\n");
             config.reset();
             if (!Lua::CallLuaModuleFunction(out, "plugins.spectate", "refresh_cpp_config")) {
                 WARN(control,out).print("Failed to refresh config\n");
             }
+            if (config.auto_disengage && is_squads_open()) {
+                out.printerr("Cannot enable %s while auto-disengage is enabled and the squads screen is open.\n", plugin_name);
+                Lua::CallLuaModuleFunction(out, "plugins.spectate", "show_squads_warning");
+                is_enabled = false;
+                return CR_FAILURE;
+            }
+            INFO(control,out).print("Spectate mode enabled!\n");
+            INTERPOSE_HOOK(forward_back_interceptor, feed).apply();
+            EventManager::registerListener(EventManager::EventType::UNIT_NEW_ACTIVE, new_unit_handler);
             follow_a_dwarf(out);
         } else {
             INFO(control,out).print("Spectate mode disabled!\n");
             plotinfo->follow_unit = -1;
-            cleanup(out);
+            on_disable(out);
+            // don't reset the unit history since we may want to re-enable
         }
     } else {
         DEBUG(control,out).print("%s from the API, but already %s; no action\n",
@@ -148,7 +342,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     DEBUG(control,out).print("shutting down %s\n", plugin_name);
-    cleanup(out);
+    on_disable(out);
     return CR_OK;
 }
 
@@ -162,7 +356,9 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             DEBUG(control,out).print("world unloaded; disabling %s\n",
                                     plugin_name);
             is_enabled = false;
-            cleanup(out);
+            on_disable(out, true);
+            unit_history.reset();
+            recent_units.reset();
         }
         break;
     default:
@@ -172,30 +368,20 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    if (Gui::matchFocusString("dwarfmode/Settings")) {
-        if (!was_in_settings) {
-            DEBUG(cycle,out).print("settings screen active; restoring announcement settings\n");
-            restore_announcement_settings(out);
-            was_in_settings = true;
-        }
-    } else if (was_in_settings) {
-        was_in_settings = false;
-        if (config.auto_unpause) {
-            DEBUG(cycle,out).print("settings screen now inactive; disabling announcement pausing\n");
-            save_announcement_settings(out);
-            scrub_announcements(out);
-        }
-    }
+    announcement_settings.on_update(out);
 
-    if (config.auto_disengage && plotinfo->follow_unit < 0) {
+    if (config.auto_disengage && (plotinfo->follow_unit < 0 || is_squads_open())) {
         DEBUG(cycle,out).print("auto-disengage triggered\n");
         is_enabled = false;
-        cleanup(out);
+        plotinfo->follow_unit = -1;
+        on_disable(out);
         return CR_OK;
     }
 
-    if ((!config.auto_disengage && plotinfo->follow_unit < 0) || Core::getInstance().getUnpausedMs() >= next_cycle_unpaused_ms)
+    if ((!config.auto_disengage && plotinfo->follow_unit < 0) || Core::getInstance().getUnpausedMs() >= next_cycle_unpaused_ms) {
+        recent_units.trim();
         follow_a_dwarf(out);
+    }
     return CR_OK;
 }
 
@@ -213,28 +399,24 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 
 /////////////////////////////////////////////////////
 // cycle logic
-//
 
 static bool is_in_combat(df::unit *unit) {
-    return false;
-}
-
-static bool is_fleeing(df::unit *unit) {
+    if (Units::isCrazed(unit) || unit->mood == df::mood_type::Berserk)
+        return true;
+    for (auto activity_id : unit->activities) {
+        auto activity = df::activity_entry::find(activity_id);
+        if (activity && activity->type == df::activity_entry_type::Conflict)
+            return true;
+    }
     return false;
 }
 
 static void get_dwarf_buckets(color_ostream &out,
-    vector<df::unit*> &active_combat_units,
-    vector<df::unit*> &passive_combat_units,
+    vector<df::unit*> &citizen_combat_units,
+    vector<df::unit*> &other_combat_units,
     vector<df::unit*> &job_units,
     vector<df::unit*> &other_units)
 {
-    static const std::unordered_set<int32_t> boring_jobs = {
-        df::job_type::Eat,
-        df::job_type::Drink,
-        df::job_type::Sleep,
-    };
-
     for (auto unit : world->units.active) {
         if (Units::isDead(unit) || !Units::isActive(unit) || unit->flags1.bits.caged || unit->flags1.bits.chained || Units::isHidden(unit))
             continue;
@@ -248,10 +430,11 @@ static void get_dwarf_buckets(color_ostream &out,
             continue;
 
         if (is_in_combat(unit)) {
-            if (is_fleeing(unit))
-                passive_combat_units.push_back(unit);
+            INFO(cycle).print("unit %d is in combat: %s\n", unit->id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
+            if (Units::isCitizen(unit, true) || Units::isResident(unit, true))
+                citizen_combat_units.push_back(unit);
             else
-                active_combat_units.push_back(unit);
+                other_combat_units.push_back(unit);
         } else if (unit->job.current_job && !boring_jobs.contains(unit->job.current_job->job_type)) {
             job_units.push_back(unit);
         } else {
@@ -262,22 +445,41 @@ static void get_dwarf_buckets(color_ostream &out,
 
 static std::default_random_engine rng;
 
-static uint32_t get_next_cycle_unpaused_ms(bool has_active_combat) {
+static uint32_t get_next_cycle_unpaused_ms(color_ostream &out, bool has_active_combat) {
     int32_t delay_ms = config.follow_ms;
-    if (has_active_combat) {
+    if (config.cinematic_action && has_active_combat) {
         std::normal_distribution<float> distribution(config.follow_ms / 2, config.follow_ms / 6);
-        int32_t delay_ms = distribution(rng);
+        delay_ms = distribution(rng);
         delay_ms = std::min(config.follow_ms, std::max(1, delay_ms));
     }
+    DEBUG(cycle,out).print("next cycle in %d ms\n", delay_ms);
     return Core::getInstance().getUnpausedMs() + delay_ms;
 }
 
-static void add_bucket(const vector<df::unit*> &bucket, vector<df::unit*> &units, vector<float> &intervals, vector<float> &weights, float weight) {
+static void add_bucket_to_vectors(const vector<df::unit*> &bucket, vector<df::unit*> &units, vector<float> &intervals, vector<float> &weights, float weight) {
     if (bucket.empty())
         return;
     intervals.push_back(units.size() + bucket.size());
     weights.push_back(weight);
     units.insert(units.end(), bucket.begin(), bucket.end());
+}
+
+static void add_bucket(const vector<df::unit*> &bucket, vector<df::unit*> &units, vector<float> &intervals, vector<float> &weights, float weight) {
+    if (bucket.empty())
+        return;
+    if (config.prefer_new_arrivals) {
+        vector<df::unit*> new_bucket, old_bucket;
+        for (auto unit : bucket) {
+            if (recent_units.contains(unit->id))
+                new_bucket.push_back(unit);
+            else
+                old_bucket.push_back(unit);
+        }
+        add_bucket_to_vectors(new_bucket, units, intervals, weights, weight * RECENT_UNIT_MULTIPLIER);
+        add_bucket_to_vectors(old_bucket, units, intervals, weights, weight);
+    } else {
+        add_bucket_to_vectors(bucket, units, intervals, weights, weight);
+    }
 }
 
 #define DUMP_BUCKET(name) \
@@ -294,29 +496,24 @@ static void add_bucket(const vector<df::unit*> &bucket, vector<df::unit*> &units
         DEBUG(cycle,out).print("  %d\n", (int)f); \
     }
 
-static const float ACTIVE_COMBAT_PREFERRED_WEIGHT = 25.0f;
-static const float PASSIVE_COMBAT_PREFERRED_WEIGHT = 8.0f;
-static const float JOB_WEIGHT = 3.0f;
-static const float OTHER_WEIGHT = 1.0f;
-
 static void follow_a_dwarf(color_ostream &out) {
     DEBUG(cycle,out).print("choosing a unit to follow\n");
 
-    vector<df::unit*> active_combat_units;
-    vector<df::unit*> passive_combat_units;
+    vector<df::unit*> citizen_combat_units;
+    vector<df::unit*> other_combat_units;
     vector<df::unit*> job_units;
     vector<df::unit*> other_units;
-    get_dwarf_buckets(out, active_combat_units, passive_combat_units, job_units, other_units);
+    get_dwarf_buckets(out, citizen_combat_units, other_combat_units, job_units, other_units);
 
-    next_cycle_unpaused_ms = get_next_cycle_unpaused_ms(!active_combat_units.empty());
+    next_cycle_unpaused_ms = get_next_cycle_unpaused_ms(out, !citizen_combat_units.empty());
 
     // coalesce the buckets and add weights
     vector<df::unit*> units;
     vector<float> intervals;
     vector<float> weights;
     intervals.push_back(0);
-    add_bucket(active_combat_units, units, intervals, weights, config.prefer_conflict ? ACTIVE_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
-    add_bucket(passive_combat_units, units, intervals, weights, config.prefer_conflict ? PASSIVE_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
+    add_bucket(citizen_combat_units, units, intervals, weights, config.prefer_conflict ? CITIZEN_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
+    add_bucket(other_combat_units, units, intervals, weights, config.prefer_conflict ? OTHER_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
     add_bucket(job_units, units, intervals, weights, JOB_WEIGHT);
     add_bucket(other_units, units, intervals, weights, OTHER_WEIGHT);
 
@@ -330,8 +527,8 @@ static void follow_a_dwarf(color_ostream &out) {
     df::unit *unit = units[unit_idx];
 
     if (debug_cycle.isEnabled(DebugCategory::LDEBUG)) {
-        DUMP_BUCKET(active_combat_units);
-        DUMP_BUCKET(passive_combat_units);
+        DUMP_BUCKET(citizen_combat_units);
+        DUMP_BUCKET(other_combat_units);
         DUMP_BUCKET(job_units);
         DUMP_BUCKET(other_units);
         DUMP_FLOAT_VECTOR(intervals);
@@ -339,13 +536,11 @@ static void follow_a_dwarf(color_ostream &out) {
         DEBUG(cycle,out).print("selected unit idx %d\n", unit_idx);
     }
 
-    DEBUG(cycle,out).print("now following unit %d: %s\n", unit->id, Units::getReadableName(unit).c_str());
-    plotinfo->follow_unit = unit->id;
+    unit_history.add(out, unit);
 }
 
 /////////////////////////////////////////////////////
 // Lua API
-//
 
 static void spectate_setSetting(color_ostream &out, string name, int val) {
     DEBUG(control,out).print("entering spectate_setSetting %s = %d\n", name.c_str(), val);
@@ -354,10 +549,9 @@ static void spectate_setSetting(color_ostream &out, string name, int val) {
         config.auto_disengage = val;
     } else if (name == "auto-unpause") {
         if (val && !config.auto_unpause) {
-            save_announcement_settings(out);
-            scrub_announcements(out);
+            announcement_settings.save_and_scrub_settings(out);
         } else if (!val && config.auto_unpause) {
-            restore_announcement_settings(out);
+            announcement_settings.restore_settings(out);
         }
         config.auto_unpause = val;
     } else if (name == "cinematic-action") {

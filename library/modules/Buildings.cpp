@@ -48,18 +48,21 @@ distribution.
 #include "df/building_coffinst.h"
 #include "df/building_def.h"
 #include "df/building_design.h"
+#include "df/building_extents_type.h"
 #include "df/building_floodgatest.h"
 #include "df/building_furnacest.h"
 #include "df/building_grate_floorst.h"
 #include "df/building_grate_wallst.h"
 #include "df/building_rollersst.h"
 #include "df/building_screw_pumpst.h"
+#include "df/building_squad_infost.h"
 #include "df/building_stockpilest.h"
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_weaponst.h"
 #include "df/building_wellst.h"
 #include "df/building_workshopst.h"
+#include "df/buildingitemst.h"
 #include "df/buildings_other_id.h"
 #include "df/d_init.h"
 #include "df/dfhack_room_quality_level.h"
@@ -77,6 +80,7 @@ distribution.
 #include "df/plotinfost.h"
 #include "df/punishment.h"
 #include "df/squad.h"
+#include "df/squad_barracks_infost.h"
 #include "df/unit.h"
 #include "df/unit_relationship_type.h"
 #include "df/world.h"
@@ -112,15 +116,15 @@ struct CoordHash {
 
 static unordered_map<df::coord, int32_t, CoordHash> locationToBuilding;
 
-static df::building_extents_type *getExtentTile(df::building_extents &extent, df::coord2d tile)
+static df::building_extents_type *getExtentTile(const df::building::T_room &room, df::coord2d tile)
 {
-    if (!extent.extents)
+    if (!room.extents)
         return NULL;
-    int dx = tile.x - extent.x;
-    int dy = tile.y - extent.y;
-    if (dx < 0 || dy < 0 || dx >= extent.width || dy >= extent.height)
+    int dx = tile.x - room.x;
+    int dy = tile.y - room.y;
+    if (dx < 0 || dy < 0 || dx >= room.width || dy >= room.height)
         return NULL;
-    return &extent.extents[dx + dy*extent.width];
+    return &room.extents[dx + dy*room.width];
 }
 
 /*
@@ -162,14 +166,14 @@ void buildings_onUpdate(color_ostream &out)
         for (size_t i = 0; i < job->items.size(); i++)
         {
             df::job_item_ref *iref = job->items[i];
-            if (iref->role != df::job_item_ref::Reagent)
+            if (iref->role != df::job_role_type::Reagent)
                 continue;
             df::job_item *item = vector_get(job->job_items.elements, iref->job_item_idx);
             if (!item)
                 continue;
             // Convert Reagent to Hauled, while decrementing quantity
             item->quantity = std::max(0, item->quantity-1);
-            iref->role = df::job_item_ref::Hauled;
+            iref->role = df::job_role_type::Hauled;
             iref->job_item_idx = -1;
         }
     }
@@ -219,7 +223,7 @@ static void add_building_to_all_zones(df::building* bld)
 
 static void add_zone_to_all_buildings(df::building* zone_as_building)
 {
-    if (zone_as_building->getType() != building_type::Civzone)
+    if (zone_as_building->getType() != df::building_type::Civzone)
         return;
 
     auto zone = strict_virtual_cast<df::building_civzonest>(zone_as_building);
@@ -259,7 +263,7 @@ static void remove_building_from_zone(df::building* bld, df::building_civzonest*
 
 static void remove_zone_from_all_buildings(df::building* zone_as_building)
 {
-    if (zone_as_building->getType() != building_type::Civzone)
+    if (zone_as_building->getType() != df::building_type::Civzone)
         return;
 
     auto zone = strict_virtual_cast<df::building_civzonest>(zone_as_building);
@@ -478,19 +482,20 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
     // Type specific init
     switch (type)
     {
-    case building_type::Well:
+    using namespace df::enums::building_type;
+    case Well:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_wellst, bld))
             obj->bucket_z = bld->z;
         break;
     }
-    case building_type::Workshop:
+    case Workshop:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_workshopst, bld))
             obj->profile.max_general_orders = 5;
         break;
     }
-    case building_type::Furnace:
+    case Furnace:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_furnacest, bld))
         {
@@ -507,7 +512,7 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
         break;
     }
 */
-    case building_type::Trap:
+    case Trap:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_trapst, bld))
         {
@@ -516,46 +521,46 @@ df::building *Buildings::allocInstance(df::coord pos, df::building_type type, in
         }
         break;
     }
-    case building_type::Floodgate:
+    case Floodgate:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_floodgatest, bld))
             obj->gate_flags.bits.closed = true;
         break;
     }
-    case building_type::GrateWall:
+    case GrateWall:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_grate_wallst, bld))
             obj->gate_flags.bits.closed = true;
         break;
     }
-    case building_type::GrateFloor:
+    case GrateFloor:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_grate_floorst, bld))
             obj->gate_flags.bits.closed = true;
         break;
     }
-    case building_type::BarsVertical:
+    case BarsVertical:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_bars_verticalst, bld))
             obj->gate_flags.bits.closed = true;
         break;
     }
-    case building_type::BarsFloor:
+    case BarsFloor:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_bars_floorst, bld))
             obj->gate_flags.bits.closed = true;
         break;
     }
-    case building_type::Bridge:
+    case Bridge:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_bridgest, bld))
-            obj->gate_flags.bits.closed = false;
+            obj->gate_flags.bits.raised = false;
         break;
     }
-    case building_type::Weapon:
+    case Weapon:
     {
         if (VIRTUAL_CAST_VAR(obj, df::building_weaponst, bld))
-            obj->gate_flags.bits.closed = false;
+            obj->gate_flags.bits.retracted = false;
         break;
     }
     default:
@@ -711,26 +716,29 @@ bool Buildings::getCorrectSize(df::coord2d &size, df::coord2d &center,
     }
 }
 
-static void init_extents(df::building_extents *ext, const df::coord &pos,
+static void init_extents(df::building::T_room &room, const df::coord &pos,
                          const df::coord2d &size)
 {
-    ext->extents = new df::building_extents_type[size.x*size.y];
-    ext->x = pos.x;
-    ext->y = pos.y;
-    ext->width = size.x;
-    ext->height = size.y;
+    room.extents = new df::building_extents_type[size.x*size.y];
+    room.x = pos.x;
+    room.y = pos.y;
+    room.width = size.x;
+    room.height = size.y;
 
-    memset(ext->extents, 1, size.x*size.y);
+    memset(room.extents, 1, size.x*size.y);
 }
 
 bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
-                               df::building_extents *ext,
+                               df::building *bld,
                                bool create_ext,
                                bool allow_occupied,
                                bool allow_wall,
                                bool allow_flow)
 {
+    CHECK_NULL_POINTER(bld);
+
     bool found_any = false;
+    auto & room = bld->room;
 
     for (int dx = 0; dx < size.x; dx++)
     {
@@ -740,9 +748,9 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             df::building_extents_type *etile = NULL;
 
             // Exclude using extents
-            if (ext && ext->extents)
+            if (room.extents)
             {
-                etile = getExtentTile(*ext, tile);
+                etile = getExtentTile(room, tile);
                 if (!etile || !*etile)
                     continue;
             }
@@ -776,13 +784,13 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
                 found_any = true;
             else
             {
-                if (!ext || !create_ext)
+                if (!create_ext)
                     return false;
 
-                if (!ext->extents)
+                if (!room.extents)
                 {
-                    init_extents(ext, pos, size);
-                    etile = getExtentTile(*ext, tile);
+                    init_extents(room, pos, size);
+                    etile = getExtentTile(room, tile);
                 }
 
                 if (!etile)
@@ -813,10 +821,10 @@ static bool checkBuildingTiles(df::building *bld, bool can_change,
     if (force_extents && !bld->room.extents)
     {
         // populate the room structure if it's not set already
-        init_extents(&bld->room, psize.first, psize.second);
+        init_extents(bld->room, psize.first, psize.second);
     }
 
-    return Buildings::checkFreeTiles(psize.first, psize.second, &bld->room,
+    return Buildings::checkFreeTiles(psize.first, psize.second, bld,
                                      can_change && bld->isExtentShaped(),
                                      !bld->isSettingOccupancy(),
                                      bld->getType() ==
@@ -824,14 +832,18 @@ static bool checkBuildingTiles(df::building *bld, bool can_change,
                                      !bld->isActual());
 }
 
-int Buildings::countExtentTiles(df::building_extents *ext, int defval)
+int Buildings::countExtentTiles(df::building *bld, int defval)
 {
-    if (!ext || !ext->extents)
+    CHECK_NULL_POINTER(bld);
+
+    auto & room = bld->room;
+
+    if (!room.extents)
         return defval;
 
     int cnt = 0;
-    for (int i = 0; i < ext->width * ext->height; i++)
-        if (ext->extents[i])
+    for (int i = 0; i < room.width * room.height; i++)
+        if (room.extents[i])
             cnt++;
     return cnt;
 }
@@ -881,7 +893,7 @@ static int computeMaterialAmount(df::building *bld)
     int cnt = size.x * size.y;
 
     if (bld->room.extents && bld->isExtentShaped())
-        cnt = Buildings::countExtentTiles(&bld->room, cnt);
+        cnt = Buildings::countExtentTiles(bld, cnt);
 
     return cnt/4 + 1;
 }
@@ -911,10 +923,9 @@ bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
 
     auto type = bld->getType();
 
-    using namespace df::enums::building_type;
-
     switch (type)
     {
+    using namespace df::enums::building_type;
     case WaterWheel:
         {
             auto obj = (df::building_water_wheelst*)bld;
@@ -953,7 +964,7 @@ bool Buildings::setSize(df::building *bld, df::coord2d size, int direction)
 
     bool ok = checkBuildingTiles(bld, true);
 
-    if (type != Construction)
+    if (type != df::building_type::Construction)
         bld->setMaterialAmount(computeMaterialAmount(bld));
 
     return ok;
@@ -1158,7 +1169,7 @@ bool Buildings::constructWithItems(df::building *bld, std::vector<df::item*> ite
 
     for (size_t i = 0; i < items.size(); i++)
     {
-        Job::attachJobItem(job, items[i], df::job_item_ref::Hauled);
+        Job::attachJobItem(job, items[i], df::job_role_type::Hauled);
 
         if (items[i]->getType() == item_type::BOULDER)
             rough = true;
@@ -1224,15 +1235,9 @@ bool Buildings::constructWithFilters(df::building *bld, std::vector<df::job_item
 
 static void delete_civzone_squad_links(df::building_civzonest* zone)
 {
-    for (df::building_civzonest::T_squad_room_info* room_info : zone->squad_room_info)
+    for (auto room_info : zone->squad_room_info)
     {
-        int32_t squad_id = room_info->squad_id;
-
-        df::squad* squad = df::squad::find(squad_id);
-
-        //if this is null, something has gone just *terribly* wrong
-        if (squad)
-        {
+        if (auto squad = df::squad::find(room_info->squad_id)) {
             for (int i=(int)squad->rooms.size() - 1; i >= 0; i--)
             {
                 if (squad->rooms[i]->building_id == zone->id)
@@ -1406,7 +1411,7 @@ bool Buildings::deconstruct(df::building *bld)
 
     for (int i = ui_look_list->size()-1; i >= 0; --i) {
         auto item = (*ui_look_list)[i];
-        if (item->type == df::lookinfost::Building &&
+        if (item->type == df::look_info_type::Building &&
             item->data.building.bld_id == id)
         {
             vector_erase_at(*ui_look_list, i);

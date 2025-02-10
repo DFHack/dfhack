@@ -105,7 +105,7 @@ namespace DFHack
         DFHACK_EXPORT bool listNewlyCreated(std::vector<df::job*> *pvec, int *id_var);
 
         DFHACK_EXPORT bool attachJobItem(df::job *job, df::item *item,
-                                         df::job_item_ref::T_role role,
+                                         df::job_role_type role,
                                          int filter_idx = -1, int insert_idx = -1);
 
         DFHACK_EXPORT bool isSuitableItem(const df::job_item *item, df::item_type itype, int isubtype);

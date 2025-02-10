@@ -14,9 +14,7 @@
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/world.h"
 #include "df/world_data.h"
-#include "df/world_raws.h"
 #include "df/world_region_type.h"
-#include "df/world_raws.h"
 
 #include "embark-assistant.h"
 #include "finder_ui.h"

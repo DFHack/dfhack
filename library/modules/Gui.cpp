@@ -84,7 +84,6 @@ distribution.
 #include "df/route_stockpile_link.h"
 #include "df/soundst.h"
 #include "df/stop_depart_condition.h"
-#include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_choose_start_sitest.h"
@@ -1880,7 +1879,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
     new_report->text = message;
     new_report->color = color;
     new_report->bright = bright;
-    new_report->flags.whole = adv_unconscious ? df::report::T_flags::mask_unconscious : 0x0;
+    new_report->flags.whole = adv_unconscious ? df::announcement_flag::mask_unconscious : 0x0;
     new_report->pos = pos;
     new_report->id = world->status.next_report_id++;
     new_report->year = *df::global::cur_year;
@@ -2200,7 +2199,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     new_report->text = message;
     new_report->color = info.color;
     new_report->bright = info.bright;
-    new_report->flags.whole = adv_unconscious ? df::report::T_flags::mask_unconscious : 0x0;
+    new_report->flags.whole = adv_unconscious ? df::announcement_flag::mask_unconscious : 0x0;
     new_report->zoom_type = info.zoom_type;
     new_report->pos = info.pos;
     new_report->zoom_type2 = info.zoom_type2;

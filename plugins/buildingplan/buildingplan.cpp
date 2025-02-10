@@ -166,12 +166,12 @@ static void load_organic_material_cache(df::organic_mat_category cat) {
 }
 
 static void load_material_cache() {
-    df::world_raws &raws = world->raws;
+    auto &raws = world->raws;
     for (int i = 1; i < DFHack::MaterialInfo::NUM_BUILTIN; ++i)
         if (raws.mat_table.builtin[i])
             cache_matched(i, -1);
 
-    for (size_t i = 0; i < raws.inorganics.size(); i++)
+    for (size_t i = 0; i < raws.inorganics.all.size(); i++)
         cache_matched(0, i);
 
     load_organic_material_cache(df::organic_mat_category::Wood);

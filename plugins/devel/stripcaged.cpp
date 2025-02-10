@@ -21,7 +21,6 @@ using namespace std;
 
 #include <df/plotinfost.h>
 #include "df/world.h"
-#include "df/world_raws.h"
 #include "df/building_def.h"
 #include "df/unit_inventory_item.h"
 #include <df/creature_raw.h>

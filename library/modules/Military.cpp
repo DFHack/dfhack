@@ -14,6 +14,7 @@
 #include "df/histfig_entity_link_squadst.h"
 #include "df/historical_figure.h"
 #include "df/historical_entity.h"
+#include "df/history_event_remove_hf_entity_linkst.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
 #include "df/plotinfost.h"
@@ -334,6 +335,8 @@ static void remove_soldier_entity_link(df::historical_figure* hf, df::squad* squ
     former_squad->link_strength = 100;
 
     hf->entity_links.push_back(former_squad);
+
+    // Unassigning a normal soldier does not seem to generate an event record.
 }
 
 static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squad)
@@ -343,6 +346,7 @@ static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
         return;
 
     int32_t assignment_id = -1;
+    int32_t pos_id = -1;
     for (auto& np : nps)
     {
         if (np.entity->id != squad->entity_id || np.assignment->squad_id != squad->id)
@@ -352,6 +356,7 @@ static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
         np.assignment->histfig2 = -1;
 
         assignment_id = np.assignment->id;
+        pos_id = np.position->id;
         break;
     }
 
@@ -387,8 +392,21 @@ static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
     former_pos->start_year = start_year;
     former_pos->end_year = *df::global::cur_year;
     former_pos->link_strength = 100;
-
+    
     hf->entity_links.push_back(former_pos);
+
+    int32_t event_id = *df::global::hist_event_next_id;
+    auto former_pos_event = df::allocate<df::history_event_remove_hf_entity_linkst>();
+    former_pos_event->year = *df::global::cur_year;
+    former_pos_event->seconds = *df::global::cur_year_tick;
+    former_pos_event->id = event_id;
+    former_pos_event->civ = squad->entity_id;
+    former_pos_event->histfig = hf->id;
+    former_pos_event->position_id = pos_id;
+    former_pos_event->link_type = df::histfig_entity_link_type::POSITION;
+    
+    df::global::world->history.events.push_back(former_pos_event);
+    *df::global::hist_event_next_id = event_id + 1;
 }
 
 bool Military::removeFromSquad(int32_t unit_id)

@@ -425,7 +425,7 @@ function AssignAnimal:init()
         widgets.HotkeyLabel{
             frame={l=0, b=2+(can_assign_pets and 0 or 1)},
             label='Assign all/none',
-            key='CUSTOM_CTRL_A',
+            key='CUSTOM_CTRL_N',
             on_activate=self:callback('toggle_visible'),
             visible=self.get_multi_select,
             auto_width=true,

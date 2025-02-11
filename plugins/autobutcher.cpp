@@ -666,9 +666,10 @@ static bool isProtectedUnit(df::unit *unit) {
         || Units::isHunter(unit) // ignore hunting dogs etc
         || Units::isMarkedForWarTraining(unit) // ignore units marked for any kind of training
         || Units::isMarkedForHuntTraining(unit)
-        // ignore creatures in built cages which are defined as rooms to leave zoos alone
+        || unit->flags1.bits.chained // ignore chained animals
+        // ignore creatures in built cages which are members of zones to leave zoos alone
         // (TODO: better solution would be to allow some kind of slaughter cages which you can place near the butcher)
-        || (isContainedInItem(unit) && isInBuiltCageRoom(unit))  // !!! see comments in isBuiltCageRoom()
+        || (isContainedInItem(unit) && isInBuiltCageRoom(unit))
         || (unit->pregnancy_timer != 0) // do not butcher pregnant animals (which includes brooding female egglayers)
         || Units::isAvailableForAdoption(unit)
         || unit->name.has_name

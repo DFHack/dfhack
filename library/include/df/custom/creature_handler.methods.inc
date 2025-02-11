@@ -1,1 +1,1 @@
-friend struct world_raws;
+friend struct world;

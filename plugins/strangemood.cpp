@@ -644,8 +644,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 for (size_t i = 0; i < soul->preferences.size(); i++)
                 {
                     df::unit_preference *pref = soul->preferences[i];
-                    if (pref->active == 1 &&
-                        pref->type == df::unit_preference::T_type::LikeMaterial &&
+                    if (pref->flags.bits.visible &&
+                        pref->type == df::unitpref_type::LikeMaterial &&
                         pref->mattype == builtin_mats::INORGANIC)
                     {
                         item->mat_type = pref->mattype;
@@ -722,8 +722,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     for (size_t i = 0; i < soul->preferences.size(); i++)
                     {
                         df::unit_preference *pref = soul->preferences[i];
-                        if (pref->active == 1 &&
-                            pref->type == df::unit_preference::T_type::LikeMaterial)
+                        if (pref->flags.bits.visible &&
+                            pref->type == df::unitpref_type::LikeMaterial)
                         {
                             MaterialInfo mat(pref->mattype, pref->matindex);
                             if (mat.material->flags.is_set(material_flags::SILK))
@@ -805,8 +805,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     for (size_t i = 0; i < soul->preferences.size(); i++)
                     {
                         df::unit_preference *pref = soul->preferences[i];
-                        if (pref->active == 1 &&
-                            pref->type == df::unit_preference::T_type::LikeMaterial &&
+                        if (pref->flags.bits.visible &&
+                            pref->type == df::unitpref_type::LikeMaterial &&
                             pref->mattype == 0 && getCreatedMetalBars(pref->matindex) > 0)
                             mats.push_back(pref->matindex);
                     }
@@ -835,8 +835,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 for (size_t i = 0; i < soul->preferences.size(); i++)
                 {
                     df::unit_preference *pref = soul->preferences[i];
-                    if (pref->active == 1 &&
-                        pref->type == df::unit_preference::T_type::LikeMaterial &&
+                    if (pref->flags.bits.visible &&
+                        pref->type == df::unitpref_type::LikeMaterial &&
                         ((pref->mattype == builtin_mats::GLASS_GREEN) ||
                          (pref->mattype == builtin_mats::GLASS_CLEAR && have_glass[1]) ||
                          (pref->mattype == builtin_mats::GLASS_CRYSTAL && have_glass[2])))
@@ -867,8 +867,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 for (size_t i = 0; i < soul->preferences.size(); i++)
                 {
                     df::unit_preference *pref = soul->preferences[i];
-                    if (pref->active == 1 &&
-                        pref->type == df::unit_preference::T_type::LikeMaterial)
+                    if (pref->flags.bits.visible &&
+                        pref->type == df::unitpref_type::LikeMaterial)
                     {
                         MaterialInfo mat(pref->mattype, pref->matindex);
                         if (mat.material->flags.is_set(material_flags::BONE))

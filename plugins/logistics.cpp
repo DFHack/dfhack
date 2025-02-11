@@ -10,6 +10,7 @@
 #include "modules/World.h"
 
 #include "df/building.h"
+#include "df/buildingitemst.h"
 #include "df/building_stockpilest.h"
 #include "df/building_tradedepotst.h"
 #include "df/caravan_state.h"

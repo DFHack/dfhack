@@ -100,9 +100,11 @@ namespace DFHack
         bool getIgnorePauseState();
 
         // noop if game is paused and getIgnorePauseState() returns false
-        void incCounter(uint32_t &perf_counter, uint32_t baseline_ms);
+        void incCounter(uint32_t &counter, uint32_t baseline_ms);
 
-        void registerTick(uint32_t baseline_ms);
+        // returns number of unpaused ms since last tick
+        uint32_t registerTick(uint32_t baseline_ms);
+
         uint32_t getUnpausedFps();
 
     private:
@@ -219,6 +221,7 @@ namespace DFHack
         static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
         PerfCounters perf_counters;
+        uint32_t getUnpausedMs() { return unpaused_ms; }
 
         lua_State* getLuaState(bool bypass_assertion = false) {
             assert(bypass_assertion || isSuspended());
@@ -333,6 +336,8 @@ namespace DFHack
         std::thread::id df_simulation_thread;
 
         lua_State* State;
+
+        uint32_t unpaused_ms; // reset to 0 on map load
 
         friend class CoreService;
         friend class ServerConnection;

@@ -22,8 +22,8 @@ Usage
 
 When run without options, ``changelayer`` will:
 
-- only affect the geology layer at the current cursor position
-- only affect the biome that covers the current cursor position
+- only affect the geology layer at the current keyboard cursor position
+- only affect the biome that covers the current keyboard cursor position
 - not allow changing stone to soil and vice versa
 
 You can use the `probe` command on various tiles around your map to find valid
@@ -34,8 +34,9 @@ Examples
 
 ``changelayer GRANITE``
    Convert the layer at the cursor position into granite.
-``changelayer SILTY_CLAY force``
-   Convert the layer at the cursor position into clay, even if it's stone.
+``changelayer SAND_RED force``
+   Convert the layer at the cursor position into red sand, even if it's
+   currently stone.
 ``changelayer MARBLE all_biomes all_layers``
    Convert all layers of all biomes which are not soil into marble.
 

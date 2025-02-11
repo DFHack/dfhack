@@ -46,6 +46,8 @@ distribution.
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_list_link.h"
+#include "df/job_postingst.h"
+#include "df/job_restrictionst.h"
 #include "df/plotinfost.h"
 #include "df/specific_ref.h"
 #include "df/unit.h"
@@ -323,11 +325,11 @@ void DFHack::Job::setJobCooldown(df::building *workshop, df::unit *worker, int c
     if (cooldown <= 0)
         return;
 
-    int idx = linear_index(workshop->job_claim_suppress, &df::building::T_job_claim_suppress::unit, worker);
+    int idx = linear_index(workshop->job_claim_suppress, &df::job_restrictionst::unit, worker);
 
     if (idx < 0)
     {
-        auto obj = new df::building::T_job_claim_suppress;
+        auto obj = new df::job_restrictionst;
         obj->unit = worker;
         obj->timer = cooldown;
         workshop->job_claim_suppress.push_back(obj);
@@ -575,7 +577,7 @@ bool DFHack::Job::listNewlyCreated(std::vector<df::job*> *pvec, int *id_var)
 }
 
 bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
-                                df::job_item_ref::T_role role,
+                                df::job_role_type role,
                                 int filter_idx, int insert_idx)
 {
     CHECK_NULL_POINTER(job);
@@ -585,7 +587,7 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
      * Functionality 100% reverse-engineered from DF code.
      */
 
-    if (role != df::job_item_ref::TargetContainer)
+    if (role != df::job_role_type::TargetContainer)
     {
         if (item->flags.bits.in_job)
             return false;

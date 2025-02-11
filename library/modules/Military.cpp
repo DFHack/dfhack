@@ -395,7 +395,7 @@ static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
 
     hf->entity_links.push_back(former_pos);
 
-    int32_t event_id = *df::global::hist_event_next_id;
+    int32_t event_id = (*df::global::hist_event_next_id)++;
     auto former_pos_event = df::allocate<df::history_event_remove_hf_entity_linkst>();
     former_pos_event->year = *df::global::cur_year;
     former_pos_event->seconds = *df::global::cur_year_tick;
@@ -406,7 +406,6 @@ static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
     former_pos_event->link_type = df::histfig_entity_link_type::POSITION;
 
     df::global::world->history.events.push_back(former_pos_event);
-    *df::global::hist_event_next_id = event_id + 1;
 }
 
 bool Military::removeFromSquad(int32_t unit_id)

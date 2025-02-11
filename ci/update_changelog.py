@@ -24,9 +24,9 @@ def chunk_changelog(lines):
             current_section = future_section
         elif future_found and re.match(r"^# \d", line):  # Next version starts
             current_section = after
-        
+
         current_section.append(line)
-    
+
     return before, future_section, after
 
 def clean_old_future_section(future_section, new_version):

@@ -392,7 +392,7 @@ static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
     former_pos->start_year = start_year;
     former_pos->end_year = *df::global::cur_year;
     former_pos->link_strength = 100;
-    
+
     hf->entity_links.push_back(former_pos);
 
     int32_t event_id = *df::global::hist_event_next_id;
@@ -404,7 +404,7 @@ static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
     former_pos_event->histfig = hf->id;
     former_pos_event->position_id = pos_id;
     former_pos_event->link_type = df::histfig_entity_link_type::POSITION;
-    
+
     df::global::world->history.events.push_back(former_pos_event);
     *df::global::hist_event_next_id = event_id + 1;
 }

@@ -220,7 +220,7 @@ function BurrowAssignmentOverlay:init()
                 widgets.HotkeyLabel{
                     frame={l=1, t=0, r=1},
                     label='Select all/none',
-                    key='CUSTOM_CTRL_A',
+                    key='CUSTOM_CTRL_N',
                     on_activate=toggle_all,
                 },
             },

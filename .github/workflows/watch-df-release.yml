@@ -117,7 +117,8 @@ jobs:
     - name: Compare versions
       uses: nick-fields/retry@v3
       with:
-        timeout_minutes: 2
+        timeout_minutes: 5
+        retry_wait_seconds: 60
         command: |
           version=$(wget "${{ matrix.url }}" -qO- | tr '"' '\n' | fgrep 'tar.bz2' | head -n1 | sed -r 's/${{ matrix.prefix }}_([0-9]{2})_([0-9]{2})_linux.tar.bz2/\1.\2/')
           echo "latest ${{ matrix.channel }} version: $version"

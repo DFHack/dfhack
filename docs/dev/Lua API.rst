@@ -1991,8 +1991,9 @@ Military module
   Removes a unit from its squad. Unsets the unit's
   military information (i.e., ``unit.military.squad_id`` and
   ``unit.military.squad_pos``), the squad's position information (i.e.,
-  ``squad.positions[squad_pos].occupant``), and modifies the unit's entity links
-  to indicate former squad membership or command.
+  ``squad.positions[squad_pos].occupant``), modifies the unit's entity links
+  to indicate former squad membership or command, and creates a corresponding
+  world history event.
 
 Items module
 ------------

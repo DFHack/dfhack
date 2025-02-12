@@ -735,10 +735,7 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
                                bool allow_wall,
                                bool allow_flow)
 {
-    CHECK_NULL_POINTER(bld);
-
     bool found_any = false;
-    auto & room = bld->room;
 
     for (int dx = 0; dx < size.x; dx++)
     {
@@ -748,9 +745,9 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
             df::building_extents_type *etile = NULL;
 
             // Exclude using extents
-            if (room.extents)
+            if (bld && bld->room.extents)
             {
-                etile = getExtentTile(room, tile);
+                etile = getExtentTile(bld->room, tile);
                 if (!etile || !*etile)
                     continue;
             }
@@ -784,13 +781,13 @@ bool Buildings::checkFreeTiles(df::coord pos, df::coord2d size,
                 found_any = true;
             else
             {
-                if (!create_ext)
+                if (!bld || !create_ext)
                     return false;
 
-                if (!room.extents)
+                if (!bld->room.extents)
                 {
-                    init_extents(room, pos, size);
-                    etile = getExtentTile(room, tile);
+                    init_extents(bld->room, pos, size);
+                    etile = getExtentTile(bld->room, tile);
                 }
 
                 if (!etile)

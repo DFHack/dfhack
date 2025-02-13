@@ -74,11 +74,13 @@ Template for new versions:
 
 ## API
 - ``Military::removeFromSquad``: removes unit from any squad assignments
+- ``Buildings::checkFreeTiles``: now replaces the extents parameter for a building pointer
 
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
 - ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
+- ``dfhack.buildings.checkFreeTiles``: now replaces the extents parameter for a building pointer
 
 ## Removed
 

@@ -8,6 +8,9 @@ set -e
 
 minor=$(echo "$DF_VERSION" | cut -d. -f1)
 patch=$(echo "$DF_VERSION" | cut -d. -f2)
+if [ "$DF_VERSION" = "51.03" -o "$DF_VERSION" = "51.04" ]; then
+    patch=02
+fi
 df_url="https://www.bay12games.com/dwarves/df_${minor}_${patch}"
 if test "$OS_TARGET" = "windows"; then
     WGET="C:/msys64/usr/bin/wget.exe"

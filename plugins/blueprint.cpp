@@ -679,7 +679,7 @@ static const char * if_pretty(const tile_context &ctx, const char *c) {
 }
 
 static bool is_rectangular(const df::building *bld) {
-    const df::building_extents &room = bld->room;
+    const df::building::T_room &room = bld->room;
     if (!room.extents)
         return true;
     for (int32_t y = 0; y < room.height; ++y) {

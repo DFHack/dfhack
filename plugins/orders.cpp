@@ -765,8 +765,8 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
                 if (it2.isMember("bearing"))
                 {
                     std::string bearing(it2["bearing"].asString());
-                    auto found = std::find_if(world->raws.inorganics.begin(), world->raws.inorganics.end(), [bearing](df::inorganic_raw *raw) -> bool { return raw->id == bearing; });
-                    if (found == world->raws.inorganics.end())
+                    auto found = std::find_if(world->raws.inorganics.all.begin(), world->raws.inorganics.all.end(), [bearing](df::inorganic_raw *raw) -> bool { return raw->id == bearing; });
+                    if (found == world->raws.inorganics.all.end())
                     {
                         delete condition;
 
@@ -774,7 +774,7 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
 
                         continue;
                     }
-                    condition->metal_ore = found - world->raws.inorganics.begin();
+                    condition->metal_ore = found - world->raws.inorganics.all.begin();
                 }
 
                 if (it2.isMember("reaction_class"))
@@ -1008,8 +1008,8 @@ static bool orders_compare(df::manager_order *a, df::manager_order *b)
         return a->workshop_id >= 0;
     }
 
-    if (a->frequency == df::manager_order::T_frequency::OneTime
-            || b->frequency == df::manager_order::T_frequency::OneTime)
+    if (a->frequency == df::workquota_frequency_type::OneTime
+            || b->frequency == df::workquota_frequency_type::OneTime)
         return a->frequency < b->frequency;
     return a->frequency > b->frequency;
 }

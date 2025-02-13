@@ -31,7 +31,7 @@ public:
     };
 
     static void food_mat_by_idx(DFHack::color_ostream& out, df::enums::organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type food_idx, FoodMat& food_mat);
-    static std::string food_token_by_idx(DFHack::color_ostream& out, df::enums::organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type idx);
+    static std::string food_token_by_idx(DFHack::color_ostream& out, const FoodMat& food_mat);
 
     static size_t food_max_size(df::enums::organic_mat_category::organic_mat_category mat_category);
     static void food_build_map();

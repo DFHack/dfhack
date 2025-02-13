@@ -44,7 +44,6 @@ namespace df {
     struct building;
     struct building_cagest;
     struct building_civzonest;
-    struct building_extents;
     struct building_stockpilest;
     struct item;
     struct job_item;
@@ -112,7 +111,7 @@ DFHACK_EXPORT bool getCorrectSize(df::coord2d &size, df::coord2d &center,
  * Checks if the tiles are free to be built upon.
  */
 DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
-                                  df::building_extents *ext = NULL,
+                                  df::building *bld = nullptr,
                                   bool create_ext = false,
                                   bool allow_occupied = false,
                                   bool allow_wall = false,
@@ -121,7 +120,7 @@ DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
 /**
  * Returns the number of tiles included by the extent, or defval.
  */
-DFHACK_EXPORT int countExtentTiles(df::building_extents *ext, int defval = -1);
+DFHACK_EXPORT int countExtentTiles(df::building *bld, int defval = -1);
 
 /**
  * Checks if the building contains the specified tile. If the building has

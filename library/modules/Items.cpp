@@ -44,6 +44,7 @@ distribution.
 #include "df/building.h"
 #include "df/building_actual.h"
 #include "df/building_tradedepotst.h"
+#include "df/buildingitemst.h"
 #include "df/builtin_mats.h"
 #include "df/caravan_state.h"
 #include "df/creature_raw.h"
@@ -765,13 +766,13 @@ static bool removeItemOnGround(df::item *item)
 }
 
 static void resetUnitInvFlags(df::unit *unit, df::unit_inventory_item *inv_item) {
-    if (inv_item->mode == df::unit_inventory_item::Worn ||
-        inv_item->mode == df::unit_inventory_item::WrappedAround)
+    if (inv_item->mode == df::inv_item_role_type::Worn ||
+        inv_item->mode == df::inv_item_role_type::WrappedAround)
     {
         unit->flags2.bits.calculated_inventory = false;
         unit->flags2.bits.calculated_insulation = false;
     }
-    else if (inv_item->mode == df::unit_inventory_item::StuckIn)
+    else if (inv_item->mode == df::inv_item_role_type::StuckIn)
         unit->flags3.bits.stuck_weapon_computed = false;
 }
 
@@ -815,7 +816,7 @@ static bool detachItem(df::item *item)
     }
 
     if (auto ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
-        return linked_list_remove(&world->proj_list, ref->projectile_id)
+        return linked_list_remove(&world->projectiles.all, ref->projectile_id)
             && removeRef(item->general_refs, general_ref_type::PROJECTILE, ref->getID());
 
     if (item->flags.bits.on_ground) {
@@ -960,7 +961,7 @@ bool DFHack::Items::moveToBuilding(df::item *item, df::building_actual *building
     ref->building_id = building->id;
     item->general_refs.push_back(ref);
 
-    auto con = new df::building_actual::T_contained_items;
+    auto con = new df::buildingitemst;
     con->item = item;
     con->use_mode = use_mode;
     building->contained_items.push_back(con);
@@ -969,7 +970,7 @@ bool DFHack::Items::moveToBuilding(df::item *item, df::building_actual *building
 }
 
 bool DFHack::Items::moveToInventory(df::item *item, df::unit *unit,
-    df::unit_inventory_item::T_mode mode, int body_part)
+    df::inv_item_role_type mode, int body_part)
 {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(unit);
@@ -1063,7 +1064,7 @@ df::proj_itemst *Items::makeProjectile(df::item *item)
     ref->projectile_id = proj->id;
     item->general_refs.push_back(ref);
 
-    linked_list_append(&world->proj_list, proj->link);
+    linked_list_append(&world->projectiles.all, proj->link);
     return proj;
 }
 
@@ -1799,8 +1800,8 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
 
 bool Items::checkMandates(df::item *item) {
     CHECK_NULL_POINTER(item);
-    for (auto mandate : world->mandates) {
-        if ((mandate->mode == df::mandate::Export) &&
+    for (auto mandate : world->mandates.all) {
+        if ((mandate->mode == df::mandate_type::Export) &&
             (item->getType() == mandate->item_type) &&
             (mandate->item_subtype == -1 || item->getSubtype() == mandate->item_subtype) &&
             (mandate->mat_type == -1 || item->getMaterial() == mandate->mat_type) &&
@@ -1881,7 +1882,7 @@ bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
     job->pos = df::coord(depot->centerx, depot->centery, depot->z);
 
     // job <-> item link
-    if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled)) {
+    if (!Job::attachJobItem(job, item, df::job_role_type::Hauled)) {
         delete job;
         delete href;
         return false;

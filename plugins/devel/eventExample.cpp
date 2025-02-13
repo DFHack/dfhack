@@ -13,6 +13,7 @@
 #include "df/job.h"
 #include "df/unit.h"
 #include "df/unit_wound.h"
+#include "df/unit_wound_layerst.h"
 #include "df/world.h"
 
 #include <vector>

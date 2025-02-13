@@ -8,6 +8,7 @@
 #include "modules/Maps.h"
 #include "modules/World.h"
 
+#include "df/block_column_print_infost.h"
 #include "df/construction.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
@@ -31,9 +32,9 @@ REQUIRE_GLOBAL(world);
 
 namespace DFHack {
     // for configuration-related logging
-    DBG_DECLARE(infiniteSky, control, DebugCategory::LINFO);
+    DBG_DECLARE(infinitesky, control, DebugCategory::LINFO);
     // for logging during creation of z-levels
-    DBG_DECLARE(infiniteSky, cycle, DebugCategory::LINFO);
+    DBG_DECLARE(infinitesky, cycle, DebugCategory::LINFO);
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
@@ -98,7 +99,9 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     }
 
     // Call plugin_enable to set value to ensure the event handler is properly registered
-    plugin_enable(out, config.get_bool(CONFIG_IS_ENABLED));
+    if (config.get_bool(CONFIG_IS_ENABLED)) {
+        plugin_enable(out, true);
+    }
     DEBUG(control, out)
         .print("loading persisted enabled state: %s\n",
                is_enabled ? "true" : "false");
@@ -188,8 +191,7 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
                            __LINE__, bpos.x, bpos.y);
                 continue;
             }
-            df::map_block_column::T_unmined_glyphs *glyphs =
-                new df::map_block_column::T_unmined_glyphs;
+            df::block_column_print_infost *glyphs = new df::block_column_print_infost;
             glyphs->x[0] = 0;
             glyphs->x[1] = 1;
             glyphs->x[2] = 2;

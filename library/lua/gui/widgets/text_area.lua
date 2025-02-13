@@ -69,7 +69,15 @@ function TextArea:setText(text)
         self:getCursor()
     )
 
-    return self.text_area:setText(text)
+    self.text_area:setText(text)
+
+    if self.one_line_mode then
+        self.render_start_x = 1
+        local cursor = self:getCursor()
+        if cursor then
+            self:setCursor(math.min(self:getCursor(), #text + 1))
+        end
+    end
 end
 
 function TextArea:getCursor()
@@ -82,6 +90,10 @@ end
 
 function TextArea:clearHistory()
     return self.text_area.history:clear()
+end
+
+function TextArea:hasFocus()
+    return self.focus
 end
 
 function TextArea:onCursorChange(cursor, old_cursor)
@@ -197,7 +209,7 @@ function TextArea:onInput(keys)
         self:setFocus(true)
     end
 
-    if not self.focus then
+    if not self:hasFocus() then
         return false
     end
 

@@ -27,7 +27,7 @@ local function get_default_state()
         ['include-wildlife']=false,
         ['prefer-conflict']=true,
         ['prefer-new-arrivals']=true,
-        ['tooltip-follow-blink-milliseconds']=2000,
+        ['tooltip-follow-blink-milliseconds']=3000,
         ['tooltip-follow-job']=true,
         ['tooltip-follow-job-shortenings'] = {
             ["Store item in stockpile"] = "Store item",
@@ -35,39 +35,36 @@ local function get_default_state()
         ['tooltip-follow-name']=false,
         ['tooltip-follow-stress']=true,
         ['tooltip-follow-stress-levels']={
-            [0] =
-            true, -- Miserable
-            true,
-            false,
-            false,
-            false,
-            true,
-            true, -- Ecstatic
+            ["0"] = true, -- Miserable
+            ["1"] = true,
+            ["2"] = false,
+            ["3"] = false,
+            ["4"] = false,
+            ["5"] = true,
+            ["6"] = true, -- Ecstatic
         },
         ['tooltip-hover-job']=true,
         ['tooltip-hover-name']=true,
         ['tooltip-hover-stress']=true,
         ['tooltip-hover-stress-levels']={
-            [0] =
-            true, -- Miserable
-            true,
-            false,
-            false,
-            false,
-            true,
-            true, -- Ecstatic
+            ["0"] = true, -- Miserable
+            ["1"] = true,
+            ["2"] = false,
+            ["3"] = false,
+            ["4"] = false,
+            ["5"] = true,
+            ["6"] = true, -- Ecstatic
         },
         ['tooltip-stress-levels']={
             -- keep in mind, the text will look differently with game's font
             -- colors are same as in ASCII mode, but for then middle (3), which is GREY instead of WHITE
-            [0] =
-            {text = "=C", pen = COLOR_RED,        name = "Miserable"},
-            {text = ":C", pen = COLOR_LIGHTRED,   name = "Unhappy"},
-            {text = ":(", pen = COLOR_YELLOW,     name = "Displeased"},
-            {text = ":]", pen = COLOR_GREY,       name = "Content"},
-            {text = ":)", pen = COLOR_GREEN,      name = "Pleased"},
-            {text = ":D", pen = COLOR_LIGHTGREEN, name = "Happy"},
-            {text = "=D", pen = COLOR_LIGHTCYAN,  name = "Ecstatic"},
+            ["0"] = {text = "=C", pen = COLOR_RED,        name = "Miserable"},
+            ["1"] = {text = ":C", pen = COLOR_LIGHTRED,   name = "Unhappy"},
+            ["2"] = {text = ":(", pen = COLOR_YELLOW,     name = "Displeased"},
+            ["3"] = {text = ":]", pen = COLOR_GREY,       name = "Content"},
+            ["4"] = {text = ":)", pen = COLOR_GREEN,      name = "Pleased"},
+            ["5"] = {text = ":D", pen = COLOR_LIGHTGREEN, name = "Happy"},
+            ["6"] = {text = "=D", pen = COLOR_LIGHTCYAN,  name = "Ecstatic"},
         }
     }
 end
@@ -116,13 +113,39 @@ end
 -----------------------------
 -- commandline interface
 
+local function pairsByKeys(t, f)
+    local a = {}
+    for n in pairs(t) do table.insert(a, n) end
+    table.sort(a, f)
+    local i = 0      -- iterator variable
+    local iter = function ()   -- iterator function
+        i = i + 1
+        if a[i] == nil then return nil
+        else return a[i], t[a[i]]
+        end
+    end
+    return iter
+end
+
+-- no recursion protection, but it shouldn't be needed for a config...
+local function print_table(t, indent)
+    indent = indent or ''
+    for key, value in pairsByKeys(t) do
+        if type(value) == 'table' then
+            print(indent .. key .. ':')
+            print_table(value, indent .. '  ')
+        else
+            print(indent .. key .. ': ' .. tostring(value))
+        end
+    end
+end
+
 local function print_status()
     print('spectate is:', isEnabled() and 'enabled' or 'disabled')
     print()
     print('settings:')
-    for key, value in pairs(config) do
-        print('  ' .. key .. ': ' .. tostring(value))
-    end
+
+    print_table(config, '  ')
 end
 
 local function do_toggle()
@@ -133,23 +156,54 @@ local function do_toggle()
     end
 end
 
-local function set_setting(key, value)
+local function set_setting(args)
+    local key = table.remove(args, 1)
     if config[key] == nil then
         qerror('unknown setting: ' .. key)
     end
-    if key == 'follow-seconds' then
-        value = argparse.positiveInt(value, 'follow-seconds')
-    else
-        value = argparse.boolean(value, key)
+    local n = #args
+    if n == 0 then
+        qerror('missing value')
     end
-    config[key] = value
-    save_state()
-    if not key:startswith(lua_only_settings_prefix) then
-        if type(value) == 'boolean' then
-            value = value and 1 or 0
+
+    if n == 1 then
+        local value = args[1]
+        if key == 'follow-seconds' then
+            value = argparse.positiveInt(value, 'follow-seconds')
+        elseif key == 'tooltip-follow-blink-milliseconds' then
+            value = argparse.nonnegativeInt(value, 'tooltip-follow-blink-milliseconds')
+        else
+            value = argparse.boolean(value, key)
         end
-        spectate_setSetting(key, value)
+
+        config[key] = value
+
+        if not key:startswith(lua_only_settings_prefix) then
+            if type(value) == 'boolean' then
+                value = value and 1 or 0
+            end
+            spectate_setSetting(key, value)
+        end
+    else
+        local t = config[key]
+        for i = 1, n - 2 do
+            t = t[args[i]]
+        end
+        local k = args[n-1]
+        local v = args[n]
+        if key ~= 'tooltip-follow-job-shortenings' then
+            -- user should be able to add new shortenings, but not other things
+            if t[k] == nil then
+                table.remove(args)
+                qerror('unknown setting: ' .. key .. '/' .. table.concat(args, '/'))
+            elseif key:endswith('-stress-levels') then
+                v = argparse.boolean(v, key .. '/' .. k)
+            end
+        end
+        t[k] = v
     end
+
+    save_state()
 end
 
 local function set_overlay(value)
@@ -164,7 +218,7 @@ function parse_commandline(args)
     elseif command == 'toggle' then
         do_toggle()
     elseif command == 'set' then
-        set_setting(args[1], args[2])
+        set_setting(args)
     elseif command == 'overlay' then
         set_overlay(args[1])
     else
@@ -180,6 +234,7 @@ end
 local function GetUnitStress(unit, stress_levels)
     local stressCat = dfhack.units.getStressCategory(unit)
     if stressCat > 6 then stressCat = 6 end
+    stressCat = tostring(stressCat)
     if not stress_levels[stressCat] then return end
 
     local level_cfg = config['tooltip-stress-levels'][stressCat]

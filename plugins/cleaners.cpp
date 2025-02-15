@@ -1,5 +1,6 @@
 // Cleans spatter and/or grass from map tiles.
 
+#include "DataDefs.h"
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"

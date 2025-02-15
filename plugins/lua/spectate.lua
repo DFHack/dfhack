@@ -27,6 +27,7 @@ local function get_default_state()
         ['include-wildlife']=false,
         ['prefer-conflict']=true,
         ['prefer-new-arrivals']=true,
+        ['tooltip-follow']=true,
         ['tooltip-follow-blink-milliseconds']=3000,
         ['tooltip-follow-job']=true,
         ['tooltip-follow-job-shortenings'] = {
@@ -43,6 +44,7 @@ local function get_default_state()
             ["5"] = true,
             ["6"] = true, -- Ecstatic
         },
+        ['tooltip-hover']=true,
         ['tooltip-hover-job']=true,
         ['tooltip-hover-name']=true,
         ['tooltip-hover-stress']=true,
@@ -380,7 +382,7 @@ local function GetString(tokens)
 end
 
 function TooltipOverlay:render_unit_banners(dc)
-    if not AnyFollowOptionOn() then return end
+    if not (config['tooltip-follow'] and AnyFollowOptionOn()) then return end
 
     local blink_duration = config['tooltip-follow-blink-milliseconds']
     if blink_duration > 0 and not gui.blink_visible(blink_duration) then
@@ -525,7 +527,7 @@ local function AnyHoverOptionOn()
 end
 
 function MouseTooltip:render(dc)
-    if not AnyHoverOptionOn() then return end
+    if not (config['tooltip-hover'] and AnyHoverOptionOn()) then return end
 
     local x, y = dfhack.screen.getMousePos()
     if not x then return end

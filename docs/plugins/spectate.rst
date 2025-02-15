@@ -104,20 +104,20 @@ Settings
     arrived on the map.
 
 ``tooltip-follow`` (default: enabled)
-	If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     tooltip.
 
 ``tooltip-follow-blink-milliseconds`` (default: 3000)
-	If the ``spectate.tooltip`` overlay is enabled, set tooltip's blink duration
-	in milliseconds. Set to 0 to always show.
+    If the ``spectate.tooltip`` overlay is enabled, set tooltip's blink duration
+    in milliseconds. Set to 0 to always show.
 
 ``tooltip-follow-job`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     job of the dwarf in the tooltip.
 
 ``tooltip-follow-job-shortenings``
-	If the ``spectate.tooltip`` overlay is enabled, this dictionary is used to
-	shorten	some job names, f.e. "Store item in stockpile" becomes "Store item".
+    If the ``spectate.tooltip`` overlay is enabled, this dictionary is used to
+    shorten some job names, f.e. "Store item in stockpile" becomes "Store item".
 
 ``tooltip-follow-name`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
@@ -128,12 +128,12 @@ Settings
     happiness level (stress) of the dwarf in the tooltip.
 
 ``tooltip-follow-stress-levels`` (default: Displeased, Content, Pleased are disabled)
-	If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     specific happiness level (stress) of the dwarf in the tooltip. F.e.
-	``tooltip-follow-stress-levels 2 true`` would show Displeased emoticon.
+    ``tooltip-follow-stress-levels 2 true`` would show Displeased emoticon.
 
 ``tooltip-hover`` (default: enabled)
-	If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     hover panel.
 
 ``tooltip-hover-job`` (default: enabled)
@@ -149,14 +149,14 @@ Settings
     happiness level (stress) of the dwarf in the hover panel.
 
 ``tooltip-hover-stress-levels`` (default: Displeased, Content, Pleased are disabled)
-	If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     specific happiness level (stress) of the dwarf in the hover panel. F.e.
-	``tooltip-hover-stress-levels 2 true`` would show Displeased emoticon.
+    ``tooltip-hover-stress-levels 2 true`` would show Displeased emoticon.
 
 ``tooltip-stress-levels``
-	Controls how happiness levels (stress) are displayed (emoticon and color).
-	F.e. ``tooltip-stress-levels 6 text XD`` will change the emoticon for
-	Ecstatic dwarves to ``XD``.
+    Controls how happiness levels (stress) are displayed (emoticon and color).
+    F.e. ``tooltip-stress-levels 6 text XD`` will change the emoticon for
+    Ecstatic dwarves to ``XD``.
 
 Overlays
 --------

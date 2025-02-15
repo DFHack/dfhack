@@ -75,6 +75,8 @@ Template for new versions:
 
 ## API
 - ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
+- ``Military::removeFromSquad``: removes unit from any squad assignments
+- ``Buildings::checkFreeTiles``: now replaces the extents parameter for a building pointer
 
 ## Lua
 - ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.

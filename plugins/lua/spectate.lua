@@ -198,7 +198,7 @@ local function set_setting(args)
             if t[k] == nil then
                 table.remove(args)
                 qerror('unknown setting: ' .. key .. '/' .. table.concat(args, '/'))
-            elseif key:endswith('-stress-levels') then
+            elseif key:endswith('-stress-levels') and key ~= 'tooltip-stress-levels' then
                 v = argparse.boolean(v, key .. '/' .. k)
             end
         end

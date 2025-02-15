@@ -14,7 +14,6 @@
 #include "df/art_image_property.h"
 #include "df/art_image_property_intransitive_verbst.h"
 #include "df/art_image_property_transitive_verbst.h"
-#include "df/art_image_ref.h"
 #include "df/descriptor_shape.h"
 #include "df/instrument_piece.h"
 #include "df/instrument_register.h"
@@ -240,19 +239,19 @@ void CopyItem(RemoteFortressReader::Item * NetItem, df::item * DfItem)
         GET_ART_IMAGE_CHUNK GetArtImageChunk = reinterpret_cast<GET_ART_IMAGE_CHUNK>(Core::getInstance().vinfo->getAddress("get_art_image_chunk"));
         if (GetArtImageChunk)
         {
-            chunk = GetArtImageChunk(&(world->art_image_chunks), statue->image.id);
+            chunk = GetArtImageChunk(&(world->art_image_chunks.all), statue->image.id);
         }
         else
         {
-            for (size_t i = 0; i < world->art_image_chunks.size(); i++)
+            for (size_t i = 0; i < world->art_image_chunks.all.size(); i++)
             {
-                if (world->art_image_chunks[i]->id == statue->image.id)
-                    chunk = world->art_image_chunks[i];
+                if (world->art_image_chunks.all[i]->id == statue->image.id)
+                    chunk = world->art_image_chunks.all[i];
             }
         }
-        if (chunk && chunk->images[statue->image.subid])
+        if (chunk && chunk->images[statue->image.subid].art_image)
         {
-            CopyImage(chunk->images[statue->image.subid], NetItem->mutable_image());
+            CopyImage(chunk->images[statue->image.subid].art_image, NetItem->mutable_image());
         }
 
 
@@ -663,11 +662,11 @@ DFHack::command_result GetItemList(DFHack::color_ostream &stream, const DFHack::
                     {
                         send_instrument->add_tuning_parm(*(instrument->tuning_parm[j]));
                     }
-                    for (size_t j = 0; j < instrument->registers.size(); j++)
+                    for (size_t j = 0; j < instrument->timbre.registers.size(); j++)
                     {
                         auto reg = send_instrument->add_registers();
-                        reg->set_pitch_range_min(instrument->registers[j]->pitch_range_min);
-                        reg->set_pitch_range_max(instrument->registers[j]->pitch_range_max);
+                        reg->set_pitch_range_min(instrument->timbre.registers[j]->pitch_range_min);
+                        reg->set_pitch_range_max(instrument->timbre.registers[j]->pitch_range_max);
                     }
                     send_instrument->set_description(DF2UTF(instrument->description));
                 }

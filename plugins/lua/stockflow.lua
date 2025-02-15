@@ -283,7 +283,7 @@ function collect_reactions()
     reaction_entry(result, job_types.CatchLiveFish)
 
     -- Cutting, encrusting, and metal extraction.
-    local rock_types = df.global.world.raws.inorganics
+    local rock_types = df.global.world.raws.inorganics.all
     for rock_id = #rock_types-1, 0, -1 do
         local material = rock_types[rock_id].material
         local rock_name = material.state_adj.Solid

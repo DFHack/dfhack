@@ -55,28 +55,40 @@ Template for new versions:
 
 ## New Features
 - `clean`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
-- `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit unit
+- `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit
 - `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
+- `spectate`: when spectate mode is enabled, left/right arrow will cycle through following next/prevous units
 
 ## Fixes
+- `createitem`: output items will now end up at look cursor if active
 - `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 - `changevein`: fix a crash that could occur when attempting to change a vein into itself
 
 ## Misc Improvements
 - `spectate`: player-set configuration is now stored globally instead of per-fort
+- `autobutcher`: treat animals on restraints as unavailable for slaughter
+- `stockpiles`: add property filters for brewable, millable, and processable (e.g. at a Farmer's workshop) organic materials
 
 ## Documentation
-- `stonesense-art-guide`: new guide for making sprite art for Stonesense
+- `stonesense-art-guide`: guide for making sprite art for Stonesense
 
 ## API
 - ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 
 ## Lua
-- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
+- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
+- ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
+- ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` functions
+- ``dfhack.buildings.checkFreeTiles``: now replaces the extents parameter for a building pointer
 
 ## Removed
+
+# 51.05-r1
+
+## Misc Improvements
+- Compatibility with DF 51.05
 
 # 51.04-r1.1
 

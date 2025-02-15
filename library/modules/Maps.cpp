@@ -47,6 +47,8 @@ distribution.
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
 #include "df/feature_init.h"
+#include "df/feature_map_shellst.h"
+#include "df/feature_mapst.h"
 #include "df/flow_info.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
@@ -515,7 +517,7 @@ df::feature_init *Maps::getLocalInitFeature(df::coord2d rgn_pos, int32_t index)
 
     df::coord2d sub = rgn_pos & 15;
 
-    vector <df::feature_init *> &features = fptr->feature_init[sub.x][sub.y];
+    vector<df::feature_init *> &features = fptr->feature_init[sub.x][sub.y];
 
     return vector_get(features, index);
 }
@@ -988,13 +990,13 @@ static int16_t basic_wet_dry_effect(int16_t region_y, int16_t rain)
     auto dimy = world->world_data->world_height;
     auto pole = world->world_data->flip_latitude;
 
-    if (dimy > 65 && pole != df::world_data::T_flip_latitude::None)
+    if (dimy > 65 && pole != df::pole_type::None)
     {   // Medium and Large worlds with at least one pole
         auto latitude = region_y;
 
-        if (pole == df::world_data::T_flip_latitude::South)
+        if (pole == df::pole_type::South)
             latitude = dimy - region_y - 1;
-        else if (pole == df::world_data::T_flip_latitude::Both)
+        else if (pole == df::pole_type::Both)
         {
             if (region_y < dimy / 2)
                 latitude = region_y * 2;
@@ -1034,7 +1036,7 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
     bool tropical;
 
     // Determine tropicality
-    if (pole == df::world_data::T_flip_latitude::None)
+    if (pole == df::pole_type::None)
     {
         potential_tropical = region->temperature > 74;
         tropical = region->temperature > 84;
@@ -1043,9 +1045,9 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
     {
         auto latitude = region_ref_y; // DF just uses region_y, but embark assistant needs region_ref_y
 
-        if (pole == df::world_data::T_flip_latitude::South)
+        if (pole == df::pole_type::South)
             latitude = dimy - region_ref_y - 1;
-        else if (pole == df::world_data::T_flip_latitude::Both)
+        else if (pole == df::pole_type::Both)
         {
             if (region_ref_y < dimy / 2)
                 latitude = region_ref_y * 2;

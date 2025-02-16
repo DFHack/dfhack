@@ -58,6 +58,7 @@ Template for new versions:
 - `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
 - `spectate`: when spectate mode is enabled, left/right arrow will cycle through following next/prevous units
+- disable-vanilla-dimensions: new binpatch to disable the vanilla dimensions tooltip
 
 ## Fixes
 - `createitem`: output items will now end up at look cursor if active

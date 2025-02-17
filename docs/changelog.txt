@@ -60,6 +60,7 @@ Template for new versions:
 - `spectate`: when spectate mode is enabled, left/right arrow will cycle through following next/prevous units
 
 ## Fixes
+- Windows console: fix possible hang if the console returns a too-small window width (for any reason)
 - `createitem`: output items will now end up at look cursor if active
 - `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 - `changevein`: fix a crash that could occur when attempting to change a vein into itself

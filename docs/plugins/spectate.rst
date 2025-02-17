@@ -134,7 +134,7 @@ Settings
 
 ``tooltip-hover`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
-    hover panel.
+    hover popup panel when your mouse cursor is over a unit.
 
 ``tooltip-hover-job`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the

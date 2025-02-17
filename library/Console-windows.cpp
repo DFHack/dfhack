@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#define NOMINMAX
 #include <windows.h>
 #include <conio.h>
 #include <stdarg.h>
@@ -232,16 +233,13 @@ namespace DFHack
             size_t len = raw_buffer.size();
             int cooked_cursor = raw_cursor;
 
-            while ((plen + cooked_cursor) >= cols)
-            {
-                buf++;
-                len--;
-                cooked_cursor--;
-            }
-            while (plen + len > cols)
-            {
-                len--;
-            }
+            int adj = std::min(plen + cooked_cursor - cols, len);
+            buf += adj;
+            len -= adj;
+            cooked_cursor -= adj;
+
+            int adj2 = std::min(plen + len - cols, len);
+            len -= adj2;
 
             CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
             GetConsoleScreenBufferInfo(console_out, &inf);

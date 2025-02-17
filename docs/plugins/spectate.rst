@@ -105,7 +105,7 @@ Settings
 
 ``tooltip-follow`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
-    tooltip.
+    tooltips that follow onscreen dwarves around the map.
 
 ``tooltip-follow-blink-milliseconds`` (default: 3000)
     If the ``spectate.tooltip`` overlay is enabled, set tooltip's blink duration

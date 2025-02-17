@@ -6,8 +6,8 @@ cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0074 NEW)
 
 # set up versioning.
-set(DF_VERSION "51.04")
-set(DFHACK_RELEASE "r1.1")
+set(DF_VERSION "51.05")
+set(DFHACK_RELEASE "r1")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -451,6 +451,7 @@ if(INSTALL_DATA_FILES)
     install(FILES LICENSE.rst DESTINATION ${DFHACK_USERDOC_DESTINATION})
     install(FILES docs/changelog-placeholder.txt DESTINATION ${DFHACK_USERDOC_DESTINATION} RENAME changelog.txt)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/depends/luacov/src/luacov/ DESTINATION ${DFHACK_DATA_DESTINATION}/lua/luacov)
+    install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/patches/ DESTINATION ${DFHACK_DATA_DESTINATION}/patches)
 endif()
 
 if(INSTALL_SCRIPTS)

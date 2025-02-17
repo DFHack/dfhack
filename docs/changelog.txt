@@ -58,8 +58,10 @@ Template for new versions:
 - `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
 - `spectate`: when spectate mode is enabled, left/right arrow will cycle through following next/prevous units
+- ``disable-vanilla-dimensions``: new binpatch to disable the vanilla dimensions tooltip
 
 ## Fixes
+- Windows console: fix possible hang if the console returns a too-small window width (for any reason)
 - `createitem`: output items will now end up at look cursor if active
 - `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 - `changevein`: fix a crash that could occur when attempting to change a vein into itself
@@ -74,15 +76,22 @@ Template for new versions:
 
 ## API
 - ``Military::removeFromSquad``: removes unit from any squad assignments
+- ``Buildings::checkFreeTiles``: now replaces the extents parameter for a building pointer
 
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
 - ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
 - ``widgets.Slider``: new mouse-controlled single-headed slider widget
+- ``dfhack.buildings.checkFreeTiles``: now replaces the extents parameter for a building pointer
+
 
 ## Removed
 
+# 51.05-r1
+
+## Misc Improvements
+- Compatibility with DF 51.05
 # 51.04-r1.1
 
 ## Fixes

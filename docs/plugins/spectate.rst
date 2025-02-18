@@ -63,6 +63,11 @@ Examples
     Show informative tooltips that follow each unit on the map. Note that this
     can be enabled independently of `spectate` itself.
 
+``spectate set tooltip-follow-job-shortenings "Store item in stockpile" "Store"``
+    Abbreviate the names of "Store item in stockpile" jobs to just "Store" when the
+    job is displayed in the `spectate` tooltips. See the
+    ``tooltip-follow-job-shortenings`` setting below for details.
+
 Settings
 --------
 
@@ -103,9 +108,23 @@ Settings
     Toggle whether to prefer following (non-siege) units that have newly
     arrived on the map.
 
+``tooltip-follow`` (default: enabled)
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    tooltips that follow onscreen dwarves around the map.
+
+``tooltip-follow-blink-milliseconds`` (default: 3000)
+    If the ``spectate.tooltip`` overlay is enabled, set the tooltip's blink
+    duration in milliseconds. Set to 0 to always show.
+
 ``tooltip-follow-job`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     job of the dwarf in the tooltip.
+
+``tooltip-follow-job-shortenings`` (default: "Store item in stockpile" -> "Store item")
+    If the ``spectate.tooltip`` overlay is enabled, this dictionary is used to
+    shorten some job names, f.e. "Store item in stockpile" becomes "Store item".
+    You can pass two parameters to ``spectate set tooltip-follow-job-shortenings`` to
+    add or change elements in the dictionary. See the Examples section for an example.
 
 ``tooltip-follow-name`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
@@ -114,6 +133,16 @@ Settings
 ``tooltip-follow-stress`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     happiness level (stress) of the dwarf in the tooltip.
+
+``tooltip-follow-stress-levels`` (default: Displeased, Content, Pleased are disabled)
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    specific happiness level (stress) of the dwarf in the tooltip. F.e.
+    ``tooltip-follow-stress-levels 2 true`` would show the Displeased emoticon.
+    See ``tooltip-stress-levels`` below for details.
+
+``tooltip-hover`` (default: enabled)
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    hover popup panel when your mouse cursor is over a unit.
 
 ``tooltip-hover-job`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
@@ -126,6 +155,57 @@ Settings
 ``tooltip-hover-stress`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     happiness level (stress) of the dwarf in the hover panel.
+
+``tooltip-hover-stress-levels`` (default: Displeased, Content, Pleased are disabled)
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    specific happiness level (stress) of the dwarf in the hover panel. F.e.
+    ``tooltip-hover-stress-levels 2 true`` would show the Displeased emoticon.
+    See ``tooltip-stress-levels`` below for details.
+
+``tooltip-stress-levels``
+    Controls how happiness levels (stress) are displayed (emoticon and color).
+    F.e. ``tooltip-stress-levels 6 text XD`` will change the emoticon for
+    Ecstatic dwarves to ``XD``.
+    Default values are:
+
+.. list-table::
+   :widths: 25 25 25 25
+   :header-rows: 1
+
+   * - Level
+     - name
+     - text
+     - pen
+   * - 0
+     - Miserable
+     - =C
+     - COLOR_RED
+   * - 1
+     - Unhappy
+     - :C
+     - COLOR_LIGHTRED
+   * - 2
+     - Displeased
+     - :(
+     - COLOR_YELLOW
+   * - 3
+     - Content
+     - :]
+     - COLOR_GREY
+   * - 4
+     - Pleased
+     - :)
+     - COLOR_GREEN
+   * - 5
+     - Happy
+     - :D
+     - COLOR_LIGHTGREEN
+   * - 6
+     - Ecstatic
+     - =D
+     - COLOR_LIGHTCYAN
+
+Keep in mind that the text may look different when rendered in the game's font.
 
 Overlays
 --------

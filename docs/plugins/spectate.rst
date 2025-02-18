@@ -63,8 +63,10 @@ Examples
     Show informative tooltips that follow each unit on the map. Note that this
     can be enabled independently of `spectate` itself.
 
-``spectate set tooltip-follow-job-shortenings "Store item in stockpile" "Store item"``
-    Set a (see ``tooltip-follow-job-shortenings`` for details).
+``spectate set tooltip-follow-job-shortenings "Store item in stockpile" "Store"``
+    Abbreviate the names of "Store item in stockpile" jobs to just "Store" when the
+    job is displayed in the `spectate` tooltips. See the
+    ``tooltip-follow-job-shortenings`` setting below for details.
 
 Settings
 --------
@@ -118,10 +120,11 @@ Settings
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     job of the dwarf in the tooltip.
 
-``tooltip-follow-job-shortenings``
+``tooltip-follow-job-shortenings`` (default: "Store item in stockpile" -> "Store item")
     If the ``spectate.tooltip`` overlay is enabled, this dictionary is used to
     shorten some job names, f.e. "Store item in stockpile" becomes "Store item".
-    See examples for an example.
+    You can pass two parameters to ``spectate set tooltip-follow-job-shortenings`` to
+    add or change elements in the dictionary. See the Examples section for an example.
 
 ``tooltip-follow-name`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
@@ -135,7 +138,7 @@ Settings
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     specific happiness level (stress) of the dwarf in the tooltip. F.e.
     ``tooltip-follow-stress-levels 2 true`` would show the Displeased emoticon.
-    See ``tooltip-stress-levels`` for details.
+    See ``tooltip-stress-levels`` below for details.
 
 ``tooltip-hover`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
@@ -157,7 +160,7 @@ Settings
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     specific happiness level (stress) of the dwarf in the hover panel. F.e.
     ``tooltip-hover-stress-levels 2 true`` would show the Displeased emoticon.
-    See ``tooltip-stress-levels`` for details.
+    See ``tooltip-stress-levels`` below for details.
 
 ``tooltip-stress-levels``
     Controls how happiness levels (stress) are displayed (emoticon and color).
@@ -202,7 +205,7 @@ Settings
      - =D
      - COLOR_LIGHTCYAN
 
-Keep in mind that the text will look different with the game's font.
+Keep in mind that the text may look different when rendered in the game's font.
 
 Overlays
 --------

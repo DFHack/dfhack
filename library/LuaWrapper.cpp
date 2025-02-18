@@ -49,7 +49,7 @@ using namespace DFHack::LuaWrapper;
 /**
  * Report an error while accessing a field (index = field name).
  */
-void LuaWrapper::field_error(lua_State *state, int index, const char *err, const char *mode)
+[[noreturn]] void LuaWrapper::field_error(lua_State *state, int index, const char *err, const char *mode)
 {
     if (lua_islightuserdata(state, UPVAL_METATABLE))
         lua_pushstring(state, "(global)");

@@ -233,13 +233,16 @@ namespace DFHack
             size_t len = raw_buffer.size();
             int cooked_cursor = raw_cursor;
 
-            int adj = std::min(plen + cooked_cursor - cols, len);
-            buf += adj;
-            len -= adj;
-            cooked_cursor -= adj;
+            if (plen + cooked_cursor > cols)
+            {
+                int adj = std::min(plen + cooked_cursor - cols, len);
+                buf += adj;
+                len -= adj;
+                cooked_cursor -= adj;
+            }
 
-            int adj2 = std::min(plen + len - cols, len);
-            len -= adj2;
+            if (len + plen > cols)
+                len = cols - plen;
 
             CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
             GetConsoleScreenBufferInfo(console_out, &inf);

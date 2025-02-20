@@ -57,7 +57,7 @@ Template for new versions:
 - `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit
 - `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
-- `spectate`: when spectate mode is enabled, left/right arrow will cycle through following next/prevous units
+- `spectate`: new overlay panel that allows you to cycle through following next/prevous units (regardless of whether spectate mode is enabled)
 - ``disable-vanilla-dimensions``: new binpatch to disable the vanilla dimensions tooltip
 
 ## Fixes

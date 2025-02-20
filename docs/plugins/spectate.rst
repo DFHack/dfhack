@@ -178,31 +178,31 @@ Settings
      - pen
    * - 0
      - Miserable
-     - =C
+     - ``=C``
      - COLOR_RED
    * - 1
      - Unhappy
-     - :C
+     - ``:C``
      - COLOR_LIGHTRED
    * - 2
      - Displeased
-     - :(
+     - ``:(``
      - COLOR_YELLOW
    * - 3
      - Content
-     - :]
+     - ``:]``
      - COLOR_GREY
    * - 4
      - Pleased
-     - :)
+     - ``:)``
      - COLOR_GREEN
    * - 5
      - Happy
-     - :D
+     - ``:D``
      - COLOR_LIGHTGREEN
    * - 6
      - Ecstatic
-     - =D
+     - ``=D``
      - COLOR_LIGHTCYAN
 
 Keep in mind that the text may look different when rendered in the game's font.
@@ -217,3 +217,13 @@ and/or a popup panel with information when your mouse cursor hovers over a unit.
 
 This overlay is managed via the `overlay` framework. It can be controlled via
 the ``spectate overlay`` command or the ``Overlays`` tab in `gui/control-panel`.
+
+``spectate.followpanel``
+
+This overlay adds widgets to the vanilla follow panel -- the one that appears
+in the lower left corner of the screen when you are following a unit. When you
+are following a unit, regardless of whether the `spectate` plugin is enabled,
+you can use the keyboard cursor left/right keys to switch which unit you are
+following. There is also an indicator for whether spectate mode is enabled
+(that is, whether the `spectate` plugin is enabled), and there is a button for
+launching the `gui/spectate` configuration UI.

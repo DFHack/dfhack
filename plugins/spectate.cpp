@@ -37,6 +37,7 @@ namespace DFHack {
     DBG_DECLARE(spectate, event, DebugCategory::LINFO);
 }
 
+static std::default_random_engine rng;
 static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
 
 static const size_t MAX_HISTORY = 200;
@@ -174,28 +175,27 @@ public:
         offset = 0;
     }
 
-    void add(color_ostream &out, df::unit *unit) {
+    void add_and_follow(color_ostream &out, df::unit *unit) {
+        // if we're currently following a unit, add it to the history if it's not already there
+        if (plotinfo->follow_unit > -1 && plotinfo->follow_unit != get_cur_unit_id()) {
+            DEBUG(cycle,out).print("currently following unit %d that is not in history; adding\n", plotinfo->follow_unit);
+            update_history(out, plotinfo->follow_unit);
+        }
+
         int32_t id = unit->id;
+        update_history(out, id);
         DEBUG(cycle,out).print("now following unit %d: %s\n", id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
         Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
         plotinfo->follow_unit = id;
-        if (offset > 0) {
-            DEBUG(cycle,out).print("trimming history forward of offset %zd\n", offset);
-            history.resize(history.size() - offset);
-            offset = 0;
-        }
-        history.push_back(id);
-        if (history.size() > MAX_HISTORY) {
-            DEBUG(cycle,out).print("history full, truncating\n");
-            history.pop_front();
-        }
-        DEBUG(cycle,out).print("history now has %zd entries\n", history.size());
     }
 
     void scan_back(color_ostream &out) {
-        if (history.empty() || offset >= history.size()-1)
+        if (history.empty() || offset >= history.size()-1) {
+            DEBUG(cycle,out).print("already at beginning of history\n");
             return;
-        int unit_id = history[history.size() - (1 + ++offset)];
+        }
+        ++offset;
+        int unit_id = get_cur_unit_id();
         DEBUG(cycle,out).print("scanning back to unit %d at offset %zd\n", unit_id, offset);
         if (auto unit = df::unit::find(unit_id))
             Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
@@ -209,29 +209,39 @@ public:
             return;
         }
 
-        int unit_id = history[history.size() - (1 + --offset)];
+        --offset;
+        int unit_id = get_cur_unit_id();
         DEBUG(cycle,out).print("scanning forward to unit %d at offset %zd\n", unit_id, offset);
         if (auto unit = df::unit::find(unit_id))
             Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
         plotinfo->follow_unit = unit_id;
     }
-} unit_history;
 
-struct forward_back_interceptor : df::viewscreen_dwarfmodest {
-    typedef df::viewscreen_dwarfmodest interpose_base;
-
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (std::set<df::interface_key> *input)) {
-        bool is_at_default_view = Gui::matchFocusString("dwarfmode/Default");
-        if (is_at_default_view && input->count(df::interface_key::CUSTOM_LEFT))
-            unit_history.scan_back(Core::getInstance().getConsole());
-        else if (is_at_default_view && input->count(df::interface_key::CUSTOM_RIGHT))
-            unit_history.scan_forward(Core::getInstance().getConsole());
-        else {
-            INTERPOSE_NEXT(feed)(input);
-        }
+    int32_t get_cur_unit_id() {
+        if (offset >= history.size())
+            return -1;
+        return history[history.size() - (1 + offset)];
     }
-};
-IMPLEMENT_VMETHOD_INTERPOSE(forward_back_interceptor, feed);
+
+private:
+    void update_history(color_ostream &out, int32_t unit_id) {
+        if (offset > 0) {
+            DEBUG(cycle,out).print("trimming history forward of offset %zd\n", offset);
+            history.resize(history.size() - offset);
+            offset = 0;
+        }
+        if (history.size() && history.back() == unit_id) {
+            DEBUG(cycle,out).print("unit %d is already current unit; not adding to history\n", unit_id);
+        } else {
+            history.push_back(unit_id);
+            if (history.size() > MAX_HISTORY) {
+                DEBUG(cycle,out).print("history full, truncating\n");
+                history.pop_front();
+            }
+        }
+        DEBUG(cycle,out).print("history now has %zd entries\n", history.size());
+    }
+} unit_history;
 
 /////////////////////////////////////////////////////
 // RecentUnits
@@ -293,12 +303,22 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 static void on_disable(color_ostream &out, bool skip_restore_settings = false) {
     EventManager::unregisterAll(plugin_self);
-    INTERPOSE_HOOK(forward_back_interceptor, feed).apply(false);
     announcement_settings.reset(out, skip_restore_settings);
 }
 
 static bool is_squads_open() {
     return Gui::matchFocusString("dwarfmode/Squads", Gui::getDFViewscreen());
+}
+
+static void set_next_cycle_unpaused_ms(color_ostream &out, bool has_active_combat = false) {
+    int32_t delay_ms = config.follow_ms;
+    if (config.cinematic_action && has_active_combat) {
+        std::normal_distribution<float> distribution(config.follow_ms / 2, config.follow_ms / 6);
+        delay_ms = distribution(rng);
+        delay_ms = std::min(config.follow_ms, std::max(1, delay_ms));
+    }
+    DEBUG(cycle,out).print("next cycle in %d ms\n", delay_ms);
+    next_cycle_unpaused_ms = Core::getInstance().getUnpausedMs() + delay_ms;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
@@ -323,9 +343,11 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                 return CR_FAILURE;
             }
             INFO(control,out).print("Spectate mode enabled!\n");
-            INTERPOSE_HOOK(forward_back_interceptor, feed).apply();
             EventManager::registerListener(EventManager::EventType::UNIT_NEW_ACTIVE, new_unit_handler);
-            follow_a_dwarf(out);
+            if (plotinfo->follow_unit > -1)
+                set_next_cycle_unpaused_ms(out);
+            else
+                follow_a_dwarf(out);
         } else {
             INFO(control,out).print("Spectate mode disabled!\n");
             plotinfo->follow_unit = -1;
@@ -443,19 +465,6 @@ static void get_dwarf_buckets(color_ostream &out,
     }
 }
 
-static std::default_random_engine rng;
-
-static uint32_t get_next_cycle_unpaused_ms(color_ostream &out, bool has_active_combat) {
-    int32_t delay_ms = config.follow_ms;
-    if (config.cinematic_action && has_active_combat) {
-        std::normal_distribution<float> distribution(config.follow_ms / 2, config.follow_ms / 6);
-        delay_ms = distribution(rng);
-        delay_ms = std::min(config.follow_ms, std::max(1, delay_ms));
-    }
-    DEBUG(cycle,out).print("next cycle in %d ms\n", delay_ms);
-    return Core::getInstance().getUnpausedMs() + delay_ms;
-}
-
 static void add_bucket_to_vectors(const vector<df::unit*> &bucket, vector<df::unit*> &units, vector<float> &intervals, vector<float> &weights, float weight) {
     if (bucket.empty())
         return;
@@ -505,7 +514,7 @@ static void follow_a_dwarf(color_ostream &out) {
     vector<df::unit*> other_units;
     get_dwarf_buckets(out, citizen_combat_units, other_combat_units, job_units, other_units);
 
-    next_cycle_unpaused_ms = get_next_cycle_unpaused_ms(out, !citizen_combat_units.empty());
+    set_next_cycle_unpaused_ms(out, !citizen_combat_units.empty());
 
     // coalesce the buckets and add weights
     vector<df::unit*> units;
@@ -536,7 +545,7 @@ static void follow_a_dwarf(color_ostream &out) {
         DEBUG(cycle,out).print("selected unit idx %d\n", unit_idx);
     }
 
-    unit_history.add(out, unit);
+    unit_history.add_and_follow(out, unit);
 }
 
 /////////////////////////////////////////////////////
@@ -579,7 +588,21 @@ static void spectate_setSetting(color_ostream &out, string name, int val) {
     }
 }
 
+static void spectate_followPrev(color_ostream &out) {
+    DEBUG(control,out).print("entering spectate_followPrev\n");
+    unit_history.scan_back(out);
+    set_next_cycle_unpaused_ms(out);
+};
+
+static void spectate_followNext(color_ostream &out) {
+    DEBUG(control,out).print("entering spectate_followNext\n");
+    unit_history.scan_forward(out);
+    set_next_cycle_unpaused_ms(out);
+};
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(spectate_setSetting),
+    DFHACK_LUA_FUNCTION(spectate_followPrev),
+    DFHACK_LUA_FUNCTION(spectate_followNext),
     DFHACK_LUA_END
 };

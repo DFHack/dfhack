@@ -59,6 +59,7 @@ Template for new versions:
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
 - `spectate`: new overlay panel that allows you to cycle through following next/prevous units (regardless of whether spectate mode is enabled)
 - ``disable-vanilla-dimensions``: new binpatch to disable the vanilla dimensions tooltip
+- `gui/sitemap`: is now the official "go to" tool. new global hotkey for fort and adventure mode: Ctrl-G
 
 ## Fixes
 - Windows console: fix possible hang if the console returns a too-small window width (for any reason)

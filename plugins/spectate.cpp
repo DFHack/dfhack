@@ -175,56 +175,7 @@ public:
         offset = 0;
     }
 
-    void add_and_follow(color_ostream &out, df::unit *unit) {
-        // if we're currently following a unit, add it to the history if it's not already there
-        if (plotinfo->follow_unit > -1 && plotinfo->follow_unit != get_cur_unit_id()) {
-            DEBUG(cycle,out).print("currently following unit %d that is not in history; adding\n", plotinfo->follow_unit);
-            update_history(out, plotinfo->follow_unit);
-        }
-
-        int32_t id = unit->id;
-        update_history(out, id);
-        DEBUG(cycle,out).print("now following unit %d: %s\n", id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
-        Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
-        plotinfo->follow_unit = id;
-    }
-
-    void scan_back(color_ostream &out) {
-        if (history.empty() || offset >= history.size()-1) {
-            DEBUG(cycle,out).print("already at beginning of history\n");
-            return;
-        }
-        ++offset;
-        int unit_id = get_cur_unit_id();
-        DEBUG(cycle,out).print("scanning back to unit %d at offset %zd\n", unit_id, offset);
-        if (auto unit = df::unit::find(unit_id))
-            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
-        plotinfo->follow_unit = unit_id;
-    }
-
-    void scan_forward(color_ostream &out) {
-        if (history.empty() || offset == 0) {
-            DEBUG(cycle,out).print("already at most recent unit; following new unit\n");
-            follow_a_dwarf(out);
-            return;
-        }
-
-        --offset;
-        int unit_id = get_cur_unit_id();
-        DEBUG(cycle,out).print("scanning forward to unit %d at offset %zd\n", unit_id, offset);
-        if (auto unit = df::unit::find(unit_id))
-            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
-        plotinfo->follow_unit = unit_id;
-    }
-
-    int32_t get_cur_unit_id() {
-        if (offset >= history.size())
-            return -1;
-        return history[history.size() - (1 + offset)];
-    }
-
-private:
-    void update_history(color_ostream &out, int32_t unit_id) {
+    void add_to_history(color_ostream &out, int32_t unit_id) {
         if (offset > 0) {
             DEBUG(cycle,out).print("trimming history forward of offset %zd\n", offset);
             history.resize(history.size() - offset);
@@ -240,6 +191,57 @@ private:
             }
         }
         DEBUG(cycle,out).print("history now has %zd entries\n", history.size());
+    }
+
+    void add_and_follow(color_ostream &out, df::unit *unit) {
+        // if we're currently following a unit, add it to the history if it's not already there
+        if (plotinfo->follow_unit > -1 && plotinfo->follow_unit != get_cur_unit_id()) {
+            DEBUG(cycle,out).print("currently following unit %d that is not in history; adding\n", plotinfo->follow_unit);
+            add_to_history(out, plotinfo->follow_unit);
+        }
+
+        int32_t id = unit->id;
+        add_to_history(out, id);
+        DEBUG(cycle,out).print("now following unit %d: %s\n", id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
+        Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+        plotinfo->follow_item = -1;
+        plotinfo->follow_unit = id;
+    }
+
+    void scan_back(color_ostream &out) {
+        if (history.empty() || offset >= history.size()-1) {
+            DEBUG(cycle,out).print("already at beginning of history\n");
+            return;
+        }
+        ++offset;
+        int unit_id = get_cur_unit_id();
+        DEBUG(cycle,out).print("scanning back to unit %d at offset %zd\n", unit_id, offset);
+        if (auto unit = df::unit::find(unit_id))
+            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+        plotinfo->follow_item = -1;
+        plotinfo->follow_unit = unit_id;
+    }
+
+    void scan_forward(color_ostream &out) {
+        if (history.empty() || offset == 0) {
+            DEBUG(cycle,out).print("already at most recent unit; following new unit\n");
+            follow_a_dwarf(out);
+            return;
+        }
+
+        --offset;
+        int unit_id = get_cur_unit_id();
+        DEBUG(cycle,out).print("scanning forward to unit %d at offset %zd\n", unit_id, offset);
+        if (auto unit = df::unit::find(unit_id))
+            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+        plotinfo->follow_item = -1;
+        plotinfo->follow_unit = unit_id;
+    }
+
+    int32_t get_cur_unit_id() {
+        if (offset >= history.size())
+            return -1;
+        return history[history.size() - (1 + offset)];
     }
 } unit_history;
 
@@ -392,7 +394,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     announcement_settings.on_update(out);
 
-    if (config.auto_disengage && (plotinfo->follow_unit < 0 || is_squads_open())) {
+    if (config.auto_disengage && (plotinfo->follow_unit < 0 || plotinfo->follow_item > -1 || is_squads_open())) {
         DEBUG(cycle,out).print("auto-disengage triggered\n");
         is_enabled = false;
         plotinfo->follow_unit = -1;
@@ -600,9 +602,19 @@ static void spectate_followNext(color_ostream &out) {
     set_next_cycle_unpaused_ms(out);
 };
 
+static void spectate_addToHistory(color_ostream &out, int32_t unit_id) {
+    DEBUG(control,out).print("entering spectate_addToHistory; unit_id=%d\n", unit_id);
+    if (!df::unit::find(unit_id)) {
+        WARN(control,out).print("unit with id %d not found; not adding to history\n", unit_id);
+        return;
+    }
+    unit_history.add_to_history(out, unit_id);
+}
+
 DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(spectate_setSetting),
     DFHACK_LUA_FUNCTION(spectate_followPrev),
     DFHACK_LUA_FUNCTION(spectate_followNext),
+    DFHACK_LUA_FUNCTION(spectate_addToHistory),
     DFHACK_LUA_END
 };

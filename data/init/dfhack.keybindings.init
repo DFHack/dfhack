@@ -41,6 +41,7 @@ keybinding add Ctrl-A@choose_start_site gui/embark-anywhere
 # in the game root directory
 keybinding add Ctrl-T@dwarfmode/ViewSheets/UNIT|dwarfmode/ViewSheets/ITEM|dungeonmode/ViewSheets/UNIT|dungeonmode/ViewSheets/ITEM markdown
 
+keybinding add Ctrl-G@dwarfmode/Default|dungeonmode/Default gui/sitemap
 
 ######################
 # dwarfmode bindings #

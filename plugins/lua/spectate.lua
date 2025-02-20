@@ -563,7 +563,7 @@ FollowPanelOverlay.ATTRS{
     default_pos={x=6,y=-5},
     viewscreens='dwarfmode/Default',
     default_enabled=true,
-    frame={w=39, h=1},
+    frame={w=29, h=1},
     visible=follow_panel_is_visible,
 }
 
@@ -582,13 +582,14 @@ function FollowPanelOverlay:init()
         widgets.Label{
             frame={l=10, t=0, w=25},
             text={
-                ' spectate mode: ',
-                {text=function() return isEnabled() and 'enabled ' or 'disabled ' end},
+                ' spectate:',
+                {text=function() return isEnabled() and ' on ' or 'off ' end,
+                 pen=function() return isEnabled() and COLOR_GREEN or COLOR_LIGHTRED end},
             },
             on_click=function() dfhack.run_command(isEnabled() and 'disable' or 'enable', 'spectate') end,
         },
         widgets.ConfigureButton{
-            frame={l=36, t=0},
+            frame={l=26, t=0},
             on_click=function() dfhack.run_script('gui/spectate') end,
         }
     }

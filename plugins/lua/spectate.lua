@@ -2,11 +2,10 @@ local _ENV = mkmodule('plugins.spectate')
 
 local argparse = require('argparse')
 local dlg = require('gui.dialogs')
+local gui = require('gui')
 local json = require('json')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
-
-local gui = require('gui')
 local widgets = require('gui.widgets')
 
 -- settings starting with 'tooltip-' are not passed to the C++ plugin
@@ -306,7 +305,7 @@ local function GetHoverText(pos)
 end
 
 -----------------------------
--- overlays
+-- TooltipOverlay
 
 TooltipOverlay = defclass(TooltipOverlay, overlay.OverlayWidget)
 TooltipOverlay.ATTRS{
@@ -545,7 +544,67 @@ function MouseTooltip:render(dc)
     MouseTooltip.super.render(self, dc)
 end
 
+-----------------------------
+-- FollowPanelOverlay
+
+local plotinfo = df.global.plotinfo
+local mi = df.global.game.main_interface
+
+local function follow_panel_is_visible()
+    return plotinfo.follow_unit > -1 and
+        mi.current_hover == -1 and
+        not mi.hover_instructions_on and
+        not mi.current_hover_alert
+end
+
+FollowPanelOverlay = defclass(FollowPanelOverlay, overlay.OverlayWidget)
+FollowPanelOverlay.ATTRS{
+    desc='Adds spectate widgets to the vanilla follow panel.',
+    default_pos={x=6,y=-5},
+    viewscreens='dwarfmode/Default',
+    default_enabled=true,
+    frame={w=39, h=1},
+    visible=follow_panel_is_visible,
+}
+
+function FollowPanelOverlay:init()
+    self:addviews{
+        widgets.Label{
+            frame={l=0, t=0, w=3},
+            text=(' %s '):format(string.char(27)),
+            on_click=spectate_followPrev,
+        },
+        widgets.Label{
+            frame={l=5, t=0, w=3},
+            text=(' %s '):format(string.char(26)),
+            on_click=spectate_followNext,
+        },
+        widgets.Label{
+            frame={l=10, t=0, w=25},
+            text={
+                ' spectate mode: ',
+                {text=function() return isEnabled() and 'enabled ' or 'disabled ' end},
+            },
+            on_click=function() dfhack.run_command(isEnabled() and 'disable' or 'enable', 'spectate') end,
+        },
+        widgets.ConfigureButton{
+            frame={l=36, t=0},
+            on_click=function() dfhack.run_script('gui/spectate') end,
+        }
+    }
+end
+
+function FollowPanelOverlay:onInput(keys)
+    if keys.KEYBOARD_CURSOR_LEFT then
+        spectate_followPrev()
+    elseif keys.KEYBOARD_CURSOR_RIGHT then
+        spectate_followNext()
+    end
+    return FollowPanelOverlay.super.onInput(self, keys)
+end
+
 OVERLAY_WIDGETS = {
+    followpanel=FollowPanelOverlay,
     tooltip=TooltipOverlay,
 }
 

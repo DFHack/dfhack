@@ -44,7 +44,6 @@ namespace df {
     struct building;
     struct building_cagest;
     struct building_civzonest;
-    struct building_extents;
     struct building_stockpilest;
     struct item;
     struct job_item;
@@ -59,44 +58,11 @@ class color_ostream;
 namespace Buildings
 {
 /**
- * Structure for holding a read DF building object
- * \ingroup grp_buildings
- */
-struct t_building
-{
-    uint32_t x1;
-    uint32_t y1;
-    uint32_t x2;
-    uint32_t y2;
-    uint32_t z;
-    t_matglossPair material;
-    df::building_type type;
-    union
-    {
-        int16_t subtype;
-        df::civzone_type civzone_type;
-        df::furnace_type furnace_type;
-        df::workshop_type workshop_type;
-        df::construction_type construction_type;
-        df::shop_type shop_type;
-        df::siegeengine_type siegeengine_type;
-        df::trap_type trap_type;
-    };
-    int32_t custom_type;
-    df::building * origin;
-};
-
-/**
  * The Buildings module - allows reading DF buildings
  * \ingroup grp_modules
  * \ingroup grp_buildings
  */
 DFHACK_EXPORT uint32_t getNumBuildings ();
-
-/**
- * read building by index
- */
-DFHACK_EXPORT bool Read (const uint32_t index, t_building & building);
 
 /**
  * read mapping from custom_type value to building RAW name
@@ -145,7 +111,7 @@ DFHACK_EXPORT bool getCorrectSize(df::coord2d &size, df::coord2d &center,
  * Checks if the tiles are free to be built upon.
  */
 DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
-                                  df::building_extents *ext = NULL,
+                                  df::building *bld = nullptr,
                                   bool create_ext = false,
                                   bool allow_occupied = false,
                                   bool allow_wall = false,
@@ -154,7 +120,7 @@ DFHACK_EXPORT bool checkFreeTiles(df::coord pos, df::coord2d size,
 /**
  * Returns the number of tiles included by the extent, or defval.
  */
-DFHACK_EXPORT int countExtentTiles(df::building_extents *ext, int defval = -1);
+DFHACK_EXPORT int countExtentTiles(df::building *bld, int defval = -1);
 
 /**
  * Checks if the building contains the specified tile. If the building has

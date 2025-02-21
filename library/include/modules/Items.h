@@ -157,7 +157,7 @@ DFHACK_EXPORT bool moveToContainer(df::item *item, df::item *container);
 DFHACK_EXPORT bool moveToBuilding(df::item *item, df::building_actual *building,
     df::building_item_role_type use_mode = df::building_item_role_type::TEMP, bool force_in_building = false);
 DFHACK_EXPORT bool moveToInventory(df::item *item, df::unit *unit,
-    df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Hauled, int body_part = -1);
+    df::inv_item_role_type mode = df::inv_item_role_type::Hauled, int body_part = -1);
 
 /// Remove item from jobs and inventories, hide and forbid.
 /// Unless no_uncat, item is marked for garbage collection.

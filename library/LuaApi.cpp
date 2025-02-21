@@ -88,6 +88,7 @@ distribution.
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_material_category.h"
+#include "df/language_word_table.h"
 #include "df/material.h"
 #include "df/map_block.h"
 #include "df/nemesis_record.h"
@@ -98,6 +99,7 @@ distribution.
 #include "df/report_zoom_type.h"
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
+#include "df/squad_use_flags.h"
 #include "df/squad.h"
 #include "df/unit.h"
 #include "df/unit_misc_trait.h"
@@ -352,6 +354,11 @@ static int dfhack_persistent_delete_world_data(lua_State *L) {
     return delete_site_data(L, get_world_data);
 }
 
+static int dfhack_persistent_get_unsaved_seconds(lua_State *L) {
+    lua_pushinteger(L, Persistence::getUnsavedSeconds());
+    return 1;
+}
+
 static const luaL_Reg dfhack_persistent_funcs[] = {
     { "getSiteDataString", dfhack_persistent_get_site_data_string },
     { "saveSiteDataString", dfhack_persistent_save_site_data_string },
@@ -359,6 +366,7 @@ static const luaL_Reg dfhack_persistent_funcs[] = {
     { "getWorldDataString", dfhack_persistent_get_world_data_string },
     { "saveWorldDataString", dfhack_persistent_save_world_data_string },
     { "deleteWorldData", dfhack_persistent_delete_world_data },
+    { "getUnsavedSeconds", dfhack_persistent_get_unsaved_seconds },
     { NULL, NULL }
 };
 
@@ -1373,7 +1381,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
     WRAP(isSiteLoaded),
-    WRAPM(Translation, TranslateName),
+    WRAPN(Translation, Translation::translateName), // left for backward compatibility
     WRAP(df2utf),
     WRAP(utf2df),
     WRAP(df2console),
@@ -1400,6 +1408,14 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
 
 static const luaL_Reg dfhack_funcs[] = {
     { "getCommandHistory", getCommandHistory },
+    { NULL, NULL }
+};
+
+/***** Translation module *****/
+
+static const LuaWrapper::FunctionReg dfhack_translation_module[] = {
+    WRAPM(Translation, translateName),
+    WRAPM(Translation, generateName),
     { NULL, NULL }
 };
 
@@ -2079,6 +2095,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, getExperience),
     WRAPM(Units, isValidLabor),
     WRAPM(Units, setLaborValidity),
+    WRAPM(Units, setAutomaticProfessions),
     WRAPM(Units, computeMovementSpeed),
     WRAPM(Units, computeSlowdownFactor),
     WRAPM(Units, getProfession),
@@ -2325,6 +2342,7 @@ static const LuaWrapper::FunctionReg dfhack_military_module[] = {
     WRAPM(Military, makeSquad),
     WRAPM(Military, updateRoomAssignments),
     WRAPM(Military, getSquadName),
+    WRAPM(Military, removeFromSquad),
     { NULL, NULL }
 };
 
@@ -2426,7 +2444,7 @@ static int items_moveToBuilding(lua_State *state)
 static int items_moveToInventory(lua_State *state) {
     auto item = Lua::CheckDFObject<df::item>(state, 1);
     auto unit = Lua::CheckDFObject<df::unit>(state, 2);
-    auto use_mode = (df::unit_inventory_item::T_mode)luaL_optint(state, 3, 0);
+    auto use_mode = (df::inv_item_role_type)luaL_optint(state, 3, 0);
     int body_part = luaL_optint(state, 4, -1);
     lua_pushboolean(state, Items::moveToInventory(item, unit, use_mode, body_part));
     return 1;
@@ -2799,7 +2817,7 @@ int buildings_setSize(lua_State *state)
         lua_pushinteger(state, size.x);
         lua_pushinteger(state, size.y);
         lua_pushinteger(state, area);
-        lua_pushinteger(state, Buildings::countExtentTiles(&bld->room, area));
+        lua_pushinteger(state, Buildings::countExtentTiles(bld, area));
         return 5;
     }
     else
@@ -4246,6 +4264,7 @@ void OpenDFHackApi(lua_State *state)
 
     LuaWrapper::SetFunctionWrappers(state, dfhack_module);
     luaL_setfuncs(state, dfhack_funcs, 0);
+    OpenModule(state, "translation", dfhack_translation_module);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "textures", dfhack_textures_funcs);

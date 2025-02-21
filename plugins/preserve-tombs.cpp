@@ -6,7 +6,6 @@
 #include "modules/Persistence.h"
 #include "modules/EventManager.h"
 #include "modules/World.h"
-#include "modules/Translation.h"
 
 #include "df/world.h"
 #include "df/unit.h"

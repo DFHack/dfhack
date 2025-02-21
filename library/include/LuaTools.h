@@ -513,9 +513,9 @@ namespace DFHack {namespace Lua {
         }
     }
     /**
-     * High-level wrappers for CallLuaModuleFunction that automatically suspends the
-     * core and pushes either an argument vector (i.e. single type variable number) or
-     * an argument tuple (i.e. fixed number of arguments of various types)
+     * High-level wrappers for CallLuaModuleFunction that pushes either an argument
+     * vector (i.e. single type variable number) or an argument tuple (i.e. fixed
+     * number of arguments of various types)
      */
     template<typename... aT>
     bool CallLuaModuleFunction(

@@ -32,6 +32,7 @@
 #include "df/activity_event_worshipst.h"
 #include "df/building_nest_boxst.h"
 #include "df/building_trapst.h"
+#include "df/buildingitemst.h"
 #include "df/init.h"
 #include "df/item_eggst.h"
 #include "df/unit.h"
@@ -216,7 +217,9 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
         migrate_old_config(out);
     }
 
-    plugin_enable(out, config.get_bool(CONFIG_IS_ENABLED));
+    if (config.get_bool(CONFIG_IS_ENABLED)) {
+        plugin_enable(out, true);
+    }
     DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
 
@@ -407,7 +410,9 @@ static void adjust_activities(color_ostream &out, int32_t timeskip) {
     for (auto act : world->activities.all) {
         for (auto ev : act->events) {
             switch (ev->getType()) {
-                using namespace df::enums::activity_event_type;
+            using namespace df::enums::activity_event_type;
+            case NONE:
+                break;
 
             case TrainingSession:
                 // no counters

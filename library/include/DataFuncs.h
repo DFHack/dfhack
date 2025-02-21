@@ -48,9 +48,28 @@ namespace df {
     template<typename RT>
     concept isPrimitive = identity_traits<RT>::is_primitive || std::is_enum_v<RT> || std::is_void_v<RT>;
 
-    template<typename T>
-    T get_from_lua_state(lua_State* L, int idx) {
-        T val;
+    // handle call-by-reference function arguments by converting pointers to a reference
+    // will throw if lua code tries to pass a null pointer
+    template<typename T> requires std::is_reference_v<T>
+    T get_from_lua_state(lua_State* L, int idx)
+    {
+        using DFHack::LuaWrapper::field_error;
+        using Ptr = std::add_pointer_t<std::remove_reference_t<T>>;
+        Ptr ptr{};
+        df::identity_traits<Ptr>::get()->lua_write(L, UPVAL_METHOD_NAME, &ptr, idx);
+        if (ptr == nullptr)
+        {
+            field_error(L, UPVAL_METHOD_NAME, "cannot convert null pointer to reference", "call");
+        }
+        return *ptr;
+    }
+
+    // handle call-by-value function arguments. only semi-regular types are allowed
+    // (semi-regular covers copyable and default-constructible)
+    template<std::semiregular T>
+    T get_from_lua_state(lua_State* L, int idx)
+    {
+        T val{};
         df::identity_traits<T>::get()->lua_write(L, UPVAL_METHOD_NAME, &val, idx);
         return val;
     }

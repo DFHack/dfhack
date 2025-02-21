@@ -1,8 +1,8 @@
 // cursecheck plugin
 //
-// check single tile or whole map/world for cursed creatures by checking if a valid curse date (!=-1) is set
-// if a cursor is active only the selected tile will be observed
-// without cursor the whole map will be checked
+// check unit or whole map/world for cursed creatures by checking if a valid curse date (!=-1) is set
+// if a unit is selected only the selected unit will be observed
+// otherwise the whole map will be checked
 // by default cursed creatures will be only counted
 //
 // the tool was intended to help finding vampires but it will also list necromancers, werebeasts and zombies
@@ -21,7 +21,6 @@
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
-#include "modules/Translation.h"
 #include "modules/Units.h"
 
 #include "df/incident.h"
@@ -30,7 +29,6 @@
 #include "df/unit_soul.h"
 #include "df/unit_syndrome.h"
 #include "df/world.h"
-#include "df/world_raws.h"
 
 using std::vector;
 using std::string;
@@ -39,7 +37,6 @@ using namespace df::enums;
 
 DFHACK_PLUGIN("cursecheck");
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(cursor);
 
 enum curses {
     None = 0,
@@ -182,7 +179,7 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
 
             if (giveDetails)
             {
-                out << (Units::getReadableName(unit));
+                out << DF2CONSOLE(Units::getReadableName(unit));
 
                 auto death = df::incident::find(unit->counters.death_id);
                 out.print(", born in %d, cursed in %d to be a %s. (%s%s)\n",

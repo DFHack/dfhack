@@ -54,7 +54,78 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit
+- `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
+- `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
+- `spectate`: new overlay panel that allows you to cycle through following next/prevous units (regardless of whether spectate mode is enabled)
+- ``disable-vanilla-dimensions``: new binpatch to disable the vanilla dimensions tooltip
+- `gui/sitemap`: is now the official "go to" tool. new global hotkey for fort and adventure mode: Ctrl-G
+
+## Fixes
+- Windows console: fix possible hang if the console returns a too-small window width (for any reason)
+- `createitem`: output items will now end up at look cursor if active
+- `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
+- `changevein`: fix a crash that could occur when attempting to change a vein into itself
+
+## Misc Improvements
+- `spectate`: player-set configuration is now stored globally instead of per-fort
+- `autobutcher`: treat animals on restraints as unavailable for slaughter
+- `stockpiles`: add property filters for brewable, millable, and processable (e.g. at a Farmer's workshop) organic materials
+
+## Documentation
+- `stonesense-art-guide`: guide for making sprite art for Stonesense
+
+## API
+- ``Military::removeFromSquad``: removes unit from any squad assignments
+- ``Buildings::checkFreeTiles``: now replaces the extents parameter for a building pointer
+
+## Lua
+- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
+- ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
+- ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
+- ``dfhack.buildings.checkFreeTiles``: now replaces the extents parameter for a building pointer
+
+## Removed
+
+# 51.05-r1
+
+## Misc Improvements
+- Compatibility with DF 51.05
+# 51.04-r1.1
+
+## Fixes
+- `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
+- `gui/launcher`: flatten text when pasting multi-line text from the clipboard
+- Ctrl-a hotkeys have been changed to something else (Ctrl-n) for tools that also have an editable text field, where Ctrl-a is interpreted as select all text
+
+## API
+- ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
+
+# 51.04-r1
+
+## Misc Improvements
+- Compatibility with Steam release of DF 51.04
+
+# 51.03-r1.1
+
+## Misc Improvements
+- Compatibility with Itch release of DF 51.03
+
+# 51.03-r1
+
+## Fixes
+- `gui/gm-editor`: fix Enter key not being recognized for opening the selected object
+
+# 51.02-r1
+
+## Misc Improvements
+- DFHack edit field widgets, such as the commandline editor in `gui/launcher`, now support text selection and other advanced text editing features from `gui/journal`
+
+# 50.15-r2
+
+## New Features
 - `stockpiles`: add simple import/export dialogs to stockpile overlay panel
+- `orders`: add transparent overlays to the manager orders screen that allow right clicks to cancel edit of quantities or condition details instead of exiting to the main screen
 
 ## Fixes
 - ``Units::getPosition``, ``Items::getPosition``: return invalid coord for inactive units, items held by units off map
@@ -64,9 +135,13 @@ Template for new versions:
 - `preserve-rooms`: handle case where unit records are culled by DF immediately after a unit leaves the map
 - `preserve-tombs`: properly re-enable after loading a game that had the tool enabled
 - `zone`: assign animal to cage/restraint dialog now allows you to unassign a pet from the cage or restraint if the pet is already somehow assigned (e.g.  war dog was in cage and was subsequently assigned to a dwarf)
+- `stockpiles`: don't set ``use_links_only`` flag to a random value when the flag is not set to anything in the settings that are being imported
+- `strangemood`: ensure generated names for artifacts match what the game itself would generate
 
 ## Misc Improvements
 - `strangemood`: add ability to choose Stone Cutting and Stone Carving as the mood skill
+- `suspendmanager`: add more specific messages for submerged job sites and those managed by `buildingplan`
+- `dig-now`: handle digging in pool and river tiles
 
 ## Documentation
 - Added example code for creating plugin RPC endpoints that can be used to extend the DFHack API
@@ -74,15 +149,20 @@ Template for new versions:
 ## API
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: add versions accepting pos arguments
 - ``Units::getVisibleName``: when acting on a unit without an impersonated identity, returns the unit's name structure instead of the associated histfig's name structure
+- ``Translation::generateName``: generates in-game names, mirroring DF's internal logic
+- ``Persistence::getUnsavedSeconds``: returns the number of seconds since last save or load
 
 ## Lua
 - ``dfhack.units.isUnitInBox``, ``dfhack.units.getUnitsInBox``: add versions accepting pos arguments
 - ``widgets.FilteredList``: search keys for list items can now be functions that return a string
+- ``dfhack.translation.generateName``: Lua API for ``Translation::generateName``
+- ``dfhack.persistent.getUnsavedSeconds``: Lua API for ``Persistence::getUnsavedSeconds``
 
 ## Removed
+- ``dfhack.TranslateName`` has been renamed to ``dfhack.translation.translateName``
 
 ## Internals
-- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access
+- Plugin command callbacks are now called with the core suspended by default so DF memory is always safe to access without extra steps
 - Errors when unloading a plugin's DLL are now checked and reported
 
 # 50.15-r1.2

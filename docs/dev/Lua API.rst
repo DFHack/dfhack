@@ -771,6 +771,10 @@ arbitrary Lua tables.
   Same semantics as for the ``Site`` functions, but will associated the data
   with the global world context.
 
+* ``dfhack.persistent.getUnsavedSeconds()``
+
+  Returns the number of seconds since last save or load of a save.
+
 The data is kept in memory, so no I/O occurs when getting or saving keys. It is
 all written to a json file in the game save directory when the game is saved.
 
@@ -949,10 +953,6 @@ can be omitted.
 
   Checks if a site (e.g., a player fort) is loaded.
 
-* ``dfhack.TranslateName(name[,in_english[,only_last_name]])``
-
-  Convert a ``df.language_name`` (or only the last name part) to string.
-
 * ``dfhack.df2utf(string)``
 
   Convert a string from DF's CP437 encoding to UTF-8.
@@ -965,8 +965,8 @@ can be omitted.
 .. warning::
 
   When printing CP437-encoded text to the console (for example, names returned
-  from ``dfhack.TranslateName()``), use ``print(dfhack.df2console(text))`` to
-  ensure proper display on all platforms.
+  from ``dfhack.units.getReadableName()``), use
+  ``print(dfhack.df2console(text))`` to ensure proper display on all platforms.
 
 * ``dfhack.utf2df(string)``
 
@@ -1033,6 +1033,17 @@ can be omitted.
   Similar to ``run_command()``, but instead of printing to the console,
   returns an ``output, command_result`` pair. ``output`` is a single string -
   see ``dfhack.internal.runCommand()`` to obtain colors as well.
+
+Translation module
+------------------
+
+* ``dfhack.translation.translateName(name[,in_english[,only_last_name]])``
+
+  Convert a ``df.language_name`` (or only the last name part) to string.
+
+* ``dfhack.translation.generateName(name,language,type,major_selector,minor_selector)``
+
+  Dynamically generate a name using the same logic the game itself uses.
 
 Gui module
 ----------
@@ -1806,6 +1817,10 @@ Units module
   in the in-game labor management screens (including DFHack's `labor
   manipulator screen <manipulator>`).
 
+* ``dfhack.units.setAutomaticProfessions(unit)``
+
+  Set appropriate labors on a unit based on current work detail settings.
+
 * ``dfhack.units.computeMovementSpeed(unit)``
 
   Computes number of frames * 100 it takes the unit to move in its current
@@ -1970,6 +1985,15 @@ Military module
 * ``dfhack.military.getSquadName(squad_id)``
 
   Returns the name of a squad as a string.
+
+* ``dfhack.military.removeFromSquad(unit_id)``
+
+  Removes a unit from its squad. Unsets the unit's
+  military information (i.e., ``unit.military.squad_id`` and
+  ``unit.military.squad_pos``), the squad's position information (i.e.,
+  ``squad.positions[squad_pos].occupant``), modifies the unit's entity links
+  to indicate former squad membership or command, and creates a corresponding
+  world history event.
 
 Items module
 ------------
@@ -2453,14 +2477,15 @@ General
   using width and height for flexible dimensions.
   Returns *is_flexible, width, height, center_x, center_y*.
 
-* ``dfhack.buildings.checkFreeTiles(pos,size[,extents[,change_extents[,allow_occupied[,allow_wall[,allow_flow]]]]])``
+* ``dfhack.buildings.checkFreeTiles(pos,size[,bld[,change_extents[,allow_occupied[,allow_wall[,allow_flow]]]]])``
 
-  Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
-  can be used for placing a building. If ``change_extents`` is true, bad tiles
-  are removed from extents. If ``allow_occupied``, the occupancy test is skipped.
-  Set ``allow_wall`` to true if the building is unhindered by walls (such as an
-  activity zone). Set ``allow_flow`` to true if the building can be built even
-  if there is deep water or any magma on the tile (such as abstract buildings).
+  Checks if the rectangle defined by ``pos`` and ``size``, and possibly the
+  extents associated with bld, can be used for placing a building. If
+  ``change_extents`` is true, bad tiles are removed from extents. If
+  ``allow_occupied``, the occupancy test is skipped. Set ``allow_wall`` to true
+  if the building is unhindered by walls (such as an activity zone). Set
+  ``allow_flow`` to true if the building can be built even if there is deep
+  water or any magma on the tile (such as abstract buildings).
 
 * ``dfhack.buildings.countExtentTiles(extents,defval)``
 
@@ -3155,15 +3180,14 @@ unless otherwise noted.
 
 * ``dfhack.filesystem.listdir_recursive(path [, depth = 10[, include_prefix = true]])``
 
-  Lists all files/directories in a directory and its subdirectories. All directories
-  are listed before their contents. Returns a table with subtables of the format::
+  Lists all files/directories in a directory and its subdirectories. All
+  directories are listed before their contents. Returns a table with subtables
+  of the format: ``{path: 'path to file', isdir: true|false}``
 
-    {path: 'path to file', isdir: true|false}
-
-  Note that ``listdir()`` returns only the base name of each directory entry, while
-  ``listdir_recursive()`` returns the initial path and all components following it
-  for each entry. Set ``include_prefix`` to false if you don't want the ``path``
-  string prepended to the returned filenames.
+  Note that ``listdir()`` returns only the base name of each directory entry,
+  while ``listdir_recursive()`` returns the initial path and all components
+  following it for each entry. Set ``include_prefix`` to false if you don't
+  want the ``path`` string prepended to the returned filenames.
 
 Console API
 -----------

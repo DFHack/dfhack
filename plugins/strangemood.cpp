@@ -9,8 +9,9 @@
 #include "modules/Units.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
-#include "modules/Translation.h"
 #include "modules/Random.h"
+#include "modules/World.h"
+#include "modules/Translation.h"
 
 #include "df/builtin_mats.h"
 #include "df/caste_raw.h"
@@ -24,6 +25,7 @@
 #include "df/item.h"
 #include "df/job.h"
 #include "df/job_item.h"
+#include "df/language_name_category.h"
 #include "df/language_word.h"
 #include "df/map_block.h"
 #include "df/material.h"
@@ -144,148 +146,13 @@ int getCreatedMetalBars (int32_t idx)
     return 0;
 }
 
-void selectWord (const df::language_word_table &table, int32_t &word, df::part_of_speech &part, int mode)
-{
-    if (table.parts[mode].size())
-    {
-        int offset = rng.df_trandom(table.parts[mode].size());
-        word = table.words[mode][offset];
-        part = table.parts[mode][offset];
-    }
-    else
-    {
-        word = rng.df_trandom(world->raws.language.words.size());
-        part = (df::part_of_speech)(rng.df_trandom(9));
-        Core::getInstance().getConsole().printerr("Impoverished Word Selector");
-    }
-}
-
-void generateName(df::language_name &output, int language, const df::language_word_table &table1, const df::language_word_table &table2)
-{
-    for (int i = 0; i < 100; i++)
-    {
-        output = df::language_name();
-        if (language == -1)
-            language = rng.df_trandom(world->raws.language.translations.size());
-        output.type = language_name_type::Artifact;
-        output.language = language;
-        output.has_name = 1;
-        if (output.language == -1)
-            output.language = rng.df_trandom(world->raws.language.translations.size());
-        int r, r2, r3;
-        r = rng.df_trandom(3);
-        if (r == 0 || r == 1)
-        {
-            if (rng.df_trandom(2))
-            {
-                selectWord(table2, output.words[0], output.parts_of_speech[0], 0);
-                selectWord(table1, output.words[1], output.parts_of_speech[1], 1);
-            }
-            else
-            {
-                selectWord(table1, output.words[0], output.parts_of_speech[0], 0);
-                selectWord(table2, output.words[1], output.parts_of_speech[1], 1);
-            }
-        }
-        if (r == 1 || r == 2)
-        {
-            r2 = rng.df_trandom(2);
-            if (r2)
-                selectWord(table1, output.words[5], output.parts_of_speech[5], 2);
-            else
-                selectWord(table2, output.words[5], output.parts_of_speech[5], 2);
-            r3 = rng.df_trandom(3);
-            if (rng.df_trandom(50))
-                r3 = rng.df_trandom(2);
-            switch (r3)
-            {
-            case 0:
-            case 2:
-                if (r3 == 2)
-                    r2 = rng.df_trandom(2);
-                if (r2)
-                    selectWord(table2, output.words[6], output.parts_of_speech[6], 5);
-                else
-                    selectWord(table1, output.words[6], output.parts_of_speech[6], 5);
-                if (r3 == 0)
-                    break;
-                r2 = -r2;
-            case 1:
-                if (r2)
-                    selectWord(table1, output.words[2], output.parts_of_speech[2], 3);
-                else
-                    selectWord(table2, output.words[2], output.parts_of_speech[2], 3);
-                if (!(rng.df_trandom(100)))
-                    selectWord(table1, output.words[3], output.parts_of_speech[3], 3);
-                break;
-            }
-        }
-        if (rng.df_trandom(100))
-        {
-            if (rng.df_trandom(2))
-                selectWord(table1, output.words[4], output.parts_of_speech[4], 4);
-            else
-                selectWord(table2, output.words[4], output.parts_of_speech[4], 4);
-        }
-        if (output.words[2] != -1 && output.words[3] != -1 &&
-            world->raws.language.words[output.words[3]]->adj_dist < world->raws.language.words[output.words[2]]->adj_dist)
-        {
-            std::swap(output.words[2], output.words[3]);
-            std::swap(output.parts_of_speech[2], output.parts_of_speech[3]);
-        }
-        bool next = false;
-        if ((output.parts_of_speech[5] == df::part_of_speech::NounPlural) && (output.parts_of_speech[6] == df::part_of_speech::NounPlural))
-            next = true;
-        if (output.words[0] != -1)
-        {
-            if (output.words[6] == -1) next = true;
-            if (output.words[4] == -1) next = true;
-            if (output.words[2] == -1) next = true;
-            if (output.words[3] == -1) next = true;
-            if (output.words[5] == -1) next = true;
-        }
-        if (output.words[1] != -1)
-        {
-            if (output.words[6] == -1) next = true;
-            if (output.words[4] == -1) next = true;
-            if (output.words[2] == -1) next = true;
-            if (output.words[3] == -1) next = true;
-            if (output.words[5] == -1) next = true;
-        }
-        if (output.words[4] != -1)
-        {
-            if (output.words[6] == -1) next = true;
-            if (output.words[2] == -1) next = true;
-            if (output.words[3] == -1) next = true;
-            if (output.words[5] == -1) next = true;
-        }
-        if (output.words[2] != -1)
-        {
-            if (output.words[6] == -1) next = true;
-            if (output.words[3] == -1) next = true;
-            if (output.words[5] == -1) next = true;
-        }
-        if (output.words[3] != -1)
-        {
-            if (output.words[6] == -1) next = true;
-            if (output.words[5] == -1) next = true;
-        }
-        if (output.words[5] != -1)
-        {
-            if (output.words[6] == -1) next = true;
-        }
-        if (!next)
-            return;
-    }
-}
-
 command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 {
-    if (!Translation::IsValid())
-    {
-        out.printerr("Translation data unavailable!\n");
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
+        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
+
     bool force = false;
     df::unit *unit = NULL;
     df::mood_type type = mood_type::None;
@@ -549,7 +416,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     if (unit->job.current_job)
     {
         // TODO: cancel job
-        out.printerr("Chosen unit '%s' has active job, cannot start mood!\n", Translation::TranslateName(&unit->name).c_str());
+        out.printerr("Chosen unit '%s' has active job, cannot start mood!\n",
+            DF2CONSOLE(Units::getReadableName(unit)).c_str());
         return CR_FAILURE;
     }
 
@@ -583,7 +451,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     // Display announcement and start setting up the mood job
     int color = 0;
     bool bright = false;
-    string msg = Translation::TranslateName(&unit->name, false) + ", " + Units::getProfessionName(unit);
+    string msg = Units::getReadableName(unit);
 
     switch (type)
     {
@@ -776,8 +644,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 for (size_t i = 0; i < soul->preferences.size(); i++)
                 {
                     df::unit_preference *pref = soul->preferences[i];
-                    if (pref->active == 1 &&
-                        pref->type == df::unit_preference::T_type::LikeMaterial &&
+                    if (pref->flags.bits.visible &&
+                        pref->type == df::unitpref_type::LikeMaterial &&
                         pref->mattype == builtin_mats::INORGANIC)
                     {
                         item->mat_type = pref->mattype;
@@ -854,8 +722,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     for (size_t i = 0; i < soul->preferences.size(); i++)
                     {
                         df::unit_preference *pref = soul->preferences[i];
-                        if (pref->active == 1 &&
-                            pref->type == df::unit_preference::T_type::LikeMaterial)
+                        if (pref->flags.bits.visible &&
+                            pref->type == df::unitpref_type::LikeMaterial)
                         {
                             MaterialInfo mat(pref->mattype, pref->matindex);
                             if (mat.material->flags.is_set(material_flags::SILK))
@@ -937,8 +805,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     for (size_t i = 0; i < soul->preferences.size(); i++)
                     {
                         df::unit_preference *pref = soul->preferences[i];
-                        if (pref->active == 1 &&
-                            pref->type == df::unit_preference::T_type::LikeMaterial &&
+                        if (pref->flags.bits.visible &&
+                            pref->type == df::unitpref_type::LikeMaterial &&
                             pref->mattype == 0 && getCreatedMetalBars(pref->matindex) > 0)
                             mats.push_back(pref->matindex);
                     }
@@ -967,8 +835,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 for (size_t i = 0; i < soul->preferences.size(); i++)
                 {
                     df::unit_preference *pref = soul->preferences[i];
-                    if (pref->active == 1 &&
-                        pref->type == df::unit_preference::T_type::LikeMaterial &&
+                    if (pref->flags.bits.visible &&
+                        pref->type == df::unitpref_type::LikeMaterial &&
                         ((pref->mattype == builtin_mats::GLASS_GREEN) ||
                          (pref->mattype == builtin_mats::GLASS_CLEAR && have_glass[1]) ||
                          (pref->mattype == builtin_mats::GLASS_CRYSTAL && have_glass[2])))
@@ -999,8 +867,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 for (size_t i = 0; i < soul->preferences.size(); i++)
                 {
                     df::unit_preference *pref = soul->preferences[i];
-                    if (pref->active == 1 &&
-                        pref->type == df::unit_preference::T_type::LikeMaterial)
+                    if (pref->flags.bits.visible &&
+                        pref->type == df::unitpref_type::LikeMaterial)
                     {
                         MaterialInfo mat(pref->mattype, pref->matindex);
                         if (mat.material->flags.is_set(material_flags::BONE))
@@ -1231,10 +1099,10 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 
     // Generate the artifact's name
     if (type == mood_type::Fell || type == mood_type::Macabre)
-        generateName(unit->status.artifact_name, unit->name.language, world->raws.language.word_table[0][2], world->raws.language.word_table[1][2]);
+        Translation::generateName(&unit->status.artifact_name, unit->name.language, language_name_type::Artifact, &world->raws.language.word_table[0][language_name_category::ArtifactEvil], &world->raws.language.word_table[1][language_name_category::ArtifactEvil]);
     else
     {
-        generateName(unit->status.artifact_name, unit->name.language, world->raws.language.word_table[0][1], world->raws.language.word_table[1][1]);
+        Translation::generateName(&unit->status.artifact_name, unit->name.language, language_name_type::Artifact, &world->raws.language.word_table[0][language_name_category::Artifact], &world->raws.language.word_table[1][language_name_category::Artifact]);
         if (!rng.df_trandom(100))
             unit->status.artifact_name = unit->name;
     }

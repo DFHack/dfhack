@@ -61,16 +61,20 @@ distribution.
 #include "df/historical_kills.h"
 #include "df/history_event_hist_figure_diedst.h"
 #include "df/identity.h"
+#include "df/interaction_profilest.h"
 #include "df/item.h"
 #include "df/job.h"
 #include "df/nemesis_record.h"
+#include "df/personality_goalst.h"
 #include "df/plotinfost.h"
+#include "df/reputation_profilest.h"
 #include "df/syndrome.h"
 #include "df/tile_occupancy.h"
 #include "df/training_assignment.h"
 #include "df/unit.h"
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
+#include "df/unit_active_animationst.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_misc_trait.h"
 #include "df/unit_path_goal.h"
@@ -79,6 +83,7 @@ distribution.
 #include "df/unit_soul.h"
 #include "df/unit_syndrome.h"
 #include "df/unit_wound.h"
+#include "df/unit_wound_layerst.h"
 #include "df/world.h"
 #include "df/world_site.h"
 
@@ -329,7 +334,7 @@ bool Units::isNaked(df::unit *unit, bool no_items) {
 
     for (auto inv_item : unit->inventory)
     {   // TODO: Check for proper coverage (bad thought)
-        if (inv_item->mode == df::unit_inventory_item::Worn)
+        if (inv_item->mode == df::inv_item_role_type::Worn)
             return false;
     }
     return true;
@@ -1154,7 +1159,7 @@ string Units::getReadableName(df::historical_figure *hf) {
             prof_name = "Ghostly " + prof_name;
     }
 
-    string name = Translation::TranslateName(getVisibleName(hf));
+    string name = Translation::translateName(getVisibleName(hf));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1177,7 +1182,7 @@ string Units::getReadableName(df::unit *unit) {
     if (isTame(unit))
         prof_name += " (" + getTameTag(unit) + ")";
 
-    string name = Translation::TranslateName(getVisibleName(unit));
+    string name = Translation::translateName(getVisibleName(unit));
     return name.empty() ? prof_name : name + ", " + prof_name;
 }
 
@@ -1254,7 +1259,7 @@ int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id) {
     // This is 100% reverse-engineered from DF code
     int rating = getNominalSkill(unit, skill_id, true);
     // Apply special states
-    if (unit->counters.soldier_mood == df::unit::T_counters::None) {
+    if (unit->counters.soldier_mood == df::soldier_mood_type::None) {
         if (unit->counters.nausea > 0)
             rating >>= 1;
         if (unit->counters.winded > 0)
@@ -1267,7 +1272,7 @@ int Units::getEffectiveSkill(df::unit *unit, df::job_skill skill_id) {
             rating >>= 1;
     }
 
-    if (unit->counters.soldier_mood != df::unit::T_counters::MartialTrance) {
+    if (unit->counters.soldier_mood != df::soldier_mood_type::MartialTrance) {
         if (!unit->flags3.bits.ghostly && !unit->flags3.bits.scuttle &&
             !unit->flags2.bits.vision_good && !unit->flags2.bits.vision_damaged &&
             !hasExtravision(unit))
@@ -1615,7 +1620,7 @@ float Units::computeSlowdownFactor(df::unit *unit) {
         if (!unit->flags1.bits.marauder &&
             casteFlagSet(unit->race, unit->caste, caste_raw_flags::MEANDERER) &&
             !(unit->following && isCitizen(unit)) &&
-            linear_index(unit->inventory, &df::unit_inventory_item::mode, df::unit_inventory_item::Hauled) < 0)
+            linear_index(unit->inventory, &df::unit_inventory_item::mode, df::inv_item_role_type::Hauled) < 0)
         {
             coeff *= 4.0f;
         }
@@ -1699,7 +1704,7 @@ static string get_land_title(Units::NoblePosition *np)
         if (site_link->flags.bits.land_for_holding && site_link->position_profile_id == np->assignment->id)
         {
             auto site = df::world_site::find(site_link->target);
-            return site ? " of " + Translation::TranslateName(&site->name, true) : "";
+            return site ? " of " + Translation::translateName(&site->name, true) : "";
         }
     return "";
 }

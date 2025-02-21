@@ -41,7 +41,6 @@ distribution.
 #include "modules/Gui.h"
 #include "modules/Job.h"
 #include "modules/Screen.h"
-#include "modules/Translation.h"
 #include "modules/Units.h"
 
 #include "df/building.h"
@@ -521,7 +520,7 @@ static void interrupt_hook (lua_State *L, lua_Debug *ar)
 
 bool DFHack::Lua::Interrupt (bool force)
 {
-    lua_State *L = DFHack::Core::getInstance().getLuaState();
+    lua_State *L = DFHack::Core::getInstance().getLuaState(true);
     if (L->hook != interrupt_hook && !force)
         return false;
     if (force)

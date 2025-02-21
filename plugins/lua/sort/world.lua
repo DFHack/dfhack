@@ -16,19 +16,19 @@ WorldOverlay.ATTRS{
 }
 
 local function get_world_artifact_search_key(artifact, rumor)
-    local search_key = ('%s %s'):format(dfhack.TranslateName(artifact.name, true),
+    local search_key = ('%s %s'):format(dfhack.translation.translateName(artifact.name, true),
         dfhack.items.getDescription(artifact.item, 0))
     if rumor then
         local hf = df.historical_figure.find(rumor.hfid)
         if hf then
             search_key = ('%s %s %s'):format(search_key,
-                dfhack.TranslateName(hf.name),
-                dfhack.TranslateName(hf.name, true))
+                dfhack.translation.translateName(hf.name),
+                dfhack.translation.translateName(hf.name, true))
         end
         local ws = df.world_site.find(rumor.stid)
         if ws then
             search_key = ('%s %s'):format(search_key,
-                dfhack.TranslateName(ws.name, true))
+                dfhack.translation.translateName(ws.name, true))
         end
     else
         local hf = df.historical_figure.find(artifact.holder_hf)

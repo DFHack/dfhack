@@ -3,6 +3,8 @@ local widgets = require('gui.widgets')
 
 config.target = 'core'
 
+local CP437_NEW_LINE = '◙'
+
 local function simulate_input_keys(...)
     local keys = {...}
     for _,key in ipairs(keys) do
@@ -66,8 +68,8 @@ local function arrange_textarea(options)
 
     if options.w then
         local border_width = 2
-        local scrollbar_width = 3
-        local cursor_buffor = 1
+        local scrollbar_width = options.one_line_mode and 0 or 3
+        local cursor_buffor = options.one_line_mode and 0 or 1
         window_width = options.w + border_width + scrollbar_width + cursor_buffor
     end
 
@@ -90,6 +92,7 @@ local function arrange_textarea(options)
                     init_text=options.text or '',
                     init_cursor=options.cursor or 1,
                     frame={l=0,r=0,t=0,b=0},
+                    one_line_mode=options.one_line_mode,
                     on_cursor_change=options.on_cursor_change,
                     on_text_change=options.on_text_change,
                 }
@@ -123,7 +126,7 @@ local function read_rendered_text(text_area)
             if pen == nil or pen.ch == nil or pen.ch == 0 or pen.fg == 0 then
                 break
             else
-                text = text .. string.char(pen.ch)
+                text = text .. (pen.ch == 10 and CP437_NEW_LINE or string.char(pen.ch))
             end
         end
 
@@ -1715,32 +1718,27 @@ function test.arrows_reset_selection()
 
     local text = table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh porttitor mi, vitae rutrum eros metus nec libero.',
+        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
+        'porttitor mi, vitae rutrum eros metus nec libero._',
     }, '\n')
 
     simulate_input_text(text)
 
     simulate_input_keys('CUSTOM_CTRL_A')
 
-    expect.eq(read_rendered_text(text_area), table.concat({
-        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero._',
-    }, '\n'));
+    expect.eq(read_rendered_text(text_area), text .. '_');
 
-    expect.eq(read_selected_text(text_area), table.concat({
-        '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
-        '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero.',
-    }, '\n'));
+    expect.eq(read_selected_text(text_area), text);
 
     simulate_input_keys('KEYBOARD_CURSOR_LEFT')
     expect.eq(read_selected_text(text_area), '')
+    expect.eq(read_rendered_text(text_area), '_' .. text:sub(2))
 
     simulate_input_keys('CUSTOM_CTRL_A')
 
     simulate_input_keys('KEYBOARD_CURSOR_RIGHT')
     expect.eq(read_selected_text(text_area), '')
+    expect.eq(read_rendered_text(text_area), text:sub(1, #text) .. '_')
 
     simulate_input_keys('CUSTOM_CTRL_A')
 
@@ -3312,6 +3310,105 @@ function test.clear_undo_redo_history()
     simulate_input_keys('CUSTOM_CTRL_Z')
 
     expect.eq(read_rendered_text(text_area), text .. 'A longer text_')
+
+    screen:dismiss()
+end
+
+function test.render_new_lines_in_one_line_mode()
+    local text_area, screen, window, widget = arrange_textarea({
+        w=80,
+        one_line_mode=true
+    })
+
+    local text_table = {
+        'Lorem ipsum dolor sit amet, ',
+        'consectetur adipiscing elit.',
+    }
+
+    widget:setText(table.concat(text_table, '\n'))
+
+    widget:setCursor(1)
+
+    expect.eq(read_rendered_text(text_area), '_' .. table.concat(text_table, CP437_NEW_LINE):sub(2))
+
+    widget:setText('')
+    simulate_input_text(' test')
+    simulate_input_text('\n')
+    simulate_input_text(' test')
+
+    expect.eq(
+        read_rendered_text(text_area),
+        ' test' .. CP437_NEW_LINE .. ' test' .. '_'
+    )
+
+    screen:dismiss()
+end
+
+function test.should_ignore_submit_in_one_line_mode()
+    local text_area, screen, window, widget = arrange_textarea({
+        w=80,
+        one_line_mode=true
+    })
+
+    local text = 'Lorem ipsum dolor sit amet'
+
+    widget:setText(text)
+
+    widget:setCursor(1)
+
+    simulate_input_keys('SELECT')
+
+    expect.eq(read_rendered_text(text_area), '_' .. text:sub(2))
+
+    screen:dismiss()
+end
+
+function test.should_scroll_horizontally_in_one_line_mode()
+    local text_area, screen, window, widget = arrange_textarea({
+        w=80,
+        one_line_mode=true
+    })
+
+    local text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque dignissim volutpat orci, sed'
+
+    widget:setText(text)
+
+    widget:setCursor(1)
+
+    expect.eq(read_rendered_text(text_area), '_' .. text:sub(2, 80))
+
+    widget:setCursor(81)
+
+    expect.eq(read_rendered_text(text_area), text:sub(2, 80) .. '_')
+
+    widget:setCursor(90)
+
+    expect.eq(read_rendered_text(text_area), text:sub(11, 89) .. '_')
+
+    widget:setCursor(2)
+
+    expect.eq(read_rendered_text(text_area), '_' .. text:sub(3, 81))
+
+    screen:dismiss()
+end
+
+function test.should_reset_horizontal_in_one_line_mode()
+    local text_area, screen, window, widget = arrange_textarea({
+        w=40,
+        one_line_mode=true
+    })
+
+    local text = 'Lorem ipsum dolor sit amet, consectetur adipiscing elit. Pellentesque dignissim volutpat orci, sed'
+
+    widget:setText(text)
+
+    widget:setCursor(#text + 1)
+
+    expect.eq(read_rendered_text(text_area), text:sub(-39) .. '_')
+
+    widget:setText('Lorem ipsum')
+
+    expect.eq(read_rendered_text(text_area), 'Lorem ipsum_')
 
     screen:dismiss()
 end

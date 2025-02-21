@@ -41,6 +41,7 @@ keybinding add Ctrl-A@choose_start_site gui/embark-anywhere
 # in the game root directory
 keybinding add Ctrl-T@dwarfmode/ViewSheets/UNIT|dwarfmode/ViewSheets/ITEM|dungeonmode/ViewSheets/UNIT|dungeonmode/ViewSheets/ITEM markdown
 
+keybinding add Ctrl-G@dwarfmode/Default|dungeonmode/Default gui/sitemap
 
 ######################
 # dwarfmode bindings #
@@ -48,6 +49,9 @@ keybinding add Ctrl-T@dwarfmode/ViewSheets/UNIT|dwarfmode/ViewSheets/ITEM|dungeo
 
 # quicksave
 keybinding add Ctrl-Alt-S@dwarfmode quicksave
+
+# toggle spectate
+keybinding add Ctrl-Shift-S@dwarfmode/Default "spectate toggle"
 
 # designate the whole vein for digging
 keybinding add Ctrl-V@dwarfmode digv

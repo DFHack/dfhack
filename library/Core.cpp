@@ -145,20 +145,20 @@ bool PerfCounters::getIgnorePauseState() {
     return ignore_pause_state;
 }
 
-void PerfCounters::registerTick(uint32_t baseline_ms) {
+uint32_t PerfCounters::registerTick(uint32_t baseline_ms) {
     if (!World::isFortressMode() || World::ReadPauseState()) {
         last_tick_baseline_ms = 0;
-        return;
+        return 0;
     }
 
     // only update when the tick counter has advanced
     if (!world || last_frame_counter == world->frame_counter)
-        return;
+        return 0;
     last_frame_counter = world->frame_counter;
 
     if (last_tick_baseline_ms == 0) {
         last_tick_baseline_ms = baseline_ms;
-        return;
+        return 0;
     }
 
     uint32_t elapsed_ms = baseline_ms - last_tick_baseline_ms;
@@ -173,6 +173,8 @@ void PerfCounters::registerTick(uint32_t baseline_ms) {
 
     recent_ticks.history[recent_ticks.head_idx] = elapsed_ms;
     recent_ticks.sum_ms += elapsed_ms;
+
+    return elapsed_ms;
 }
 
 uint32_t PerfCounters::getUnpausedFps() {
@@ -632,6 +634,7 @@ void help_helper(color_ostream &con, const std::string &entry_name) {
         con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
         return;
     }
+
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
@@ -649,7 +652,13 @@ void help_helper(color_ostream &con, const std::string &entry_name) {
 }
 
 void tags_helper(color_ostream &con, const std::string &tag) {
-    CoreSuspender suspend;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
+
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
@@ -686,7 +695,13 @@ void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
             filter.push_back(str);
     }
 
-    CoreSuspender suspend;
+    ConditionalCoreSuspender suspend{};
+
+    if (!suspend) {
+        con.printerr("Failed Lua call to helpdb.help (could not acquire core lock).\n");
+        return;
+    }
+
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
@@ -706,7 +721,7 @@ void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
     }
 }
 
-command_result Core::runCommand(color_ostream &con, const std::string &first_, std::vector<std::string> &parts)
+command_result Core::runCommand(color_ostream &con, const std::string &first_, std::vector<std::string> &parts, bool no_autocomplete)
 {
     std::string first = first_;
     CommandDepthCounter counter;
@@ -786,30 +801,35 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                         all = true;
                 }
             }
+            auto ret = CR_OK;
             if (all)
             {
-                if (load)
-                    plug_mgr->loadAll();
-                else if (unload)
-                    plug_mgr->unloadAll();
-                else
-                    plug_mgr->reloadAll();
-                return CR_OK;
+                if (load && !plug_mgr->loadAll())
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unloadAll())
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reloadAll())
+                    ret = CR_FAILURE;
             }
             for (auto p = parts.begin(); p != parts.end(); p++)
             {
                 if (!p->size() || (*p)[0] == '-')
                     continue;
-                if (load)
-                    plug_mgr->load(*p);
-                else if (unload)
-                    plug_mgr->unload(*p);
-                else
-                    plug_mgr->reload(*p);
+                if (load && !plug_mgr->load(*p))
+                    ret = CR_FAILURE;
+                else if (unload && !plug_mgr->unload(*p))
+                    ret = CR_FAILURE;
+                else if (!plug_mgr->reload(*p))
+                    ret = CR_FAILURE;
             }
+            if (ret != CR_OK)
+                con.printerr("%s failed\n", first.c_str());
+            return ret;
         }
-        else
+        else {
             con.printerr("%s: no arguments\n", first.c_str());
+            return CR_FAILURE;
+        }
     }
     else if( first == "enable" || first == "disable" )
     {
@@ -1273,7 +1293,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             }
             if ( lua )
                 res = runLuaScript(con, first, parts);
-            else if ( try_autocomplete(con, first, completed) )
+            else if (!no_autocomplete && try_autocomplete(con, first, completed))
                 res = CR_NOT_IMPLEMENTED;
             else
                 con.printerr("%s is not a recognized command.\n", first.c_str());
@@ -1687,6 +1707,7 @@ bool Core::InitMainThread() {
     }
 
     perf_counters.reset();
+    unpaused_ms = 0;
 
     return true;
 }
@@ -2123,7 +2144,7 @@ int Core::Update()
         }
 
         uint32_t start_ms = p->getTickCount();
-        perf_counters.registerTick(start_ms);
+        unpaused_ms += perf_counters.registerTick(start_ms);
         doUpdate(out);
         perf_counters.incCounter(perf_counters.total_update_ms, start_ms);
     }
@@ -2319,6 +2340,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
     case SC_WORLD_LOADED:
     {
         perf_counters.reset();
+        unpaused_ms = 0;
         Persistence::Internal::load(out);
         plug_mgr->doLoadWorldData(out);
         loadModScriptPaths(out);

@@ -42,7 +42,6 @@ DFHACK_PLUGIN("zone");
 #include "modules/Buildings.h"
 #include "modules/Gui.h"
 #include "modules/Units.h"
-#include "modules/Translation.h"
 
 using std::function;
 using std::make_pair;
@@ -56,7 +55,6 @@ using std::vector;
 
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
-REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(ui_building_item_cursor);
@@ -845,14 +843,15 @@ static void chainInfo(color_ostream & out, df::building* building, bool list_ref
 static df::building* getAssignableBuildingAtCursor(color_ostream& out)
 {
     // set building at cursor position to be new target building
-    if (cursor->x == -30000)
+    auto pos = Gui::getCursorPos();
+    if (!pos.isValid())
     {
         out.printerr("No cursor; place cursor over activity zone, pen,"
                 " pasture, pit, pond, chain, or cage.\n");
         return NULL;
     }
 
-    auto building_at_tile = Buildings::findAtTile(Gui::getCursorPos());
+    auto building_at_tile = Buildings::findAtTile(pos);
 
     // cagezone wants a pen/pit as starting point
     if (isCage(building_at_tile))
@@ -862,7 +861,7 @@ static df::building* getAssignableBuildingAtCursor(color_ostream& out)
     }
     else
     {
-        auto zone_at_tile = Buildings::findPenPitAt(Gui::getCursorPos());
+        auto zone_at_tile = Buildings::findPenPitAt(pos);
         if(!zone_at_tile)
         {
             out << "No pen/pasture, pit, or cage under cursor!" << endl;
@@ -1070,7 +1069,8 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
         }
         else if(p0 == "zinfo")
         {
-            if (cursor->x == -30000) {
+            auto pos = Gui::getCursorPos();
+            if (!pos.isValid()) {
                 out.color(COLOR_RED);
                 out << "No cursor; place cursor over activity zone, chain, or cage." << endl;
                 out.reset_color();
@@ -1082,10 +1082,10 @@ static command_result df_zone(color_ostream &out, vector <string> & parameters) 
             // (doesn't use the findXyzAtCursor() methods because zones might
             // overlap and contain a cage or chain)
             vector<df::building_civzonest*> zones;
-            Buildings::findCivzonesAt(&zones, Gui::getCursorPos());
+            Buildings::findCivzonesAt(&zones, pos);
             for (auto zone = zones.begin(); zone != zones.end(); ++zone)
                 zoneInfo(out, *zone, verbose);
-            df::building* building = Buildings::findAtTile(Gui::getCursorPos());
+            df::building* building = Buildings::findAtTile(pos);
             chainInfo(out, building, verbose);
             cageInfo(out, building, verbose);
             return CR_OK;
@@ -1898,8 +1898,7 @@ public:
 
             if (!search_string_l.empty())
             {
-                string desc = Translation::TranslateName(
-                    Units::getVisibleName(curr_unit), false);
+                string desc = Units::getReadableName(curr_unit);
 
                 desc += Units::getProfessionName(curr_unit);
                 desc = toLower_cp437(desc);

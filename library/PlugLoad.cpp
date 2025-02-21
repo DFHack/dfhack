@@ -1,5 +1,4 @@
 #include "Core.h"
-#include "DFHack.h"
 #include "Debug.h"
 #include "Export.h"
 #include "PluginManager.h"

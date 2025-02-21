@@ -15,6 +15,7 @@ Units are protected from being automatically butchered if they are:
 * Untamed
 * Named or nicknamed
 * Caged, if and only if the cage is in a zone (to protect zoos)
+* On a restraint
 * Trained for war or hunting
 * Females who are pregnant or brooding a clutch of fertile eggs
 

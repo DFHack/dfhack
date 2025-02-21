@@ -220,6 +220,7 @@ bool Process::setPermissions(const t_memrange & range,const t_memrange &trgrange
 bool Process::flushCache(const void* target, size_t count)
 {
     __builtin___clear_cache((char*)target, (char*)target + count - 1);
+    return false; /* assume always succeeds, as the builtin has no return type */
 }
 
 

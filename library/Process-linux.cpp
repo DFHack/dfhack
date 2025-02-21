@@ -32,6 +32,7 @@ distribution.
 
 #include <dirent.h>
 #include <errno.h>
+#include <sys/cachectl.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -205,7 +206,7 @@ int Process::getPID()
     return getpid();
 }
 
-bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
+bool Process::setPermissions(const t_memrange & range,const t_memrange &trgrange)
 {
     int result;
     int protect=0;
@@ -216,6 +217,12 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
 
     return result==0;
 }
+
+bool Process::flushCache(const void* target, size_t count)
+{
+    return cacheflush(target, count, BCACHE);
+}
+
 
 // returns -1 on error
 void* Process::memAlloc(const int length)

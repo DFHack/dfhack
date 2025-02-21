@@ -2987,7 +2987,7 @@ bool MemoryPatcher::verifyAccess(void *target, size_t count, bool write)
 
         save.push_back(perms);
         perms.write = perms.read = true;
-        if (!p->setPermisions(perms, perms))
+        if (!p->setPermissions(perms, perms))
             return false;
     }
 
@@ -3000,13 +3000,15 @@ bool MemoryPatcher::write(void *target, const void *src, size_t size)
         return false;
 
     memmove(target, src, size);
+
+    p->flushCache(target, size);
     return true;
 }
 
 void MemoryPatcher::close()
 {
     for (size_t i  = 0; i < save.size(); i++)
-        p->setPermisions(save[i], save[i]);
+        p->setPermissions(save[i], save[i]);
 
     save.clear();
     ranges.clear();

@@ -100,6 +100,9 @@ Template for new versions:
 
 ## API
 - ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
+- ``Units::getPosition``, ``Items::getPosition``: return invalid coord for inactive units and items held by off-map units
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
+- ``Units::isActive``: return false for off-map units
 
 # 51.04-r1
 
@@ -128,9 +131,6 @@ Template for new versions:
 - `orders`: add transparent overlays to the manager orders screen that allow right clicks to cancel edit of quantities or condition details instead of exiting to the main screen
 
 ## Fixes
-- ``Units::getPosition``, ``Items::getPosition``: return invalid coord for inactive units, items held by units off map
-- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
-- ``Units::isActive``: return false for units off map
 - `preserve-rooms`: don't erroneously release reservations for units that have returned from their missions but have not yet entered the fort map
 - `preserve-rooms`: handle case where unit records are culled by DF immediately after a unit leaves the map
 - `preserve-tombs`: properly re-enable after loading a game that had the tool enabled

@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `clean`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
 - `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit
 - `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
@@ -76,13 +77,15 @@ Template for new versions:
 - `stonesense-art-guide`: guide for making sprite art for Stonesense
 
 ## API
+- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``Military::removeFromSquad``: removes unit from any squad assignments
 - ``Buildings::checkFreeTiles``: now replaces the extents parameter for a building pointer
 
 ## Lua
+- ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
-- ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
+- ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` functions
 - ``dfhack.buildings.checkFreeTiles``: now replaces the extents parameter for a building pointer
 
 ## Removed
@@ -91,6 +94,7 @@ Template for new versions:
 
 ## Misc Improvements
 - Compatibility with DF 51.05
+
 # 51.04-r1.1
 
 ## Fixes

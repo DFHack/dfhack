@@ -78,6 +78,7 @@ Template for new versions:
 ## API
 - ``Military::removeFromSquad``: removes unit from any squad assignments
 - ``Buildings::checkFreeTiles``: now replaces the extents parameter for a building pointer
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
 
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings

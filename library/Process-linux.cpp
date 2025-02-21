@@ -32,7 +32,6 @@ distribution.
 
 #include <dirent.h>
 #include <errno.h>
-#include <sys/cachectl.h>
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
@@ -220,7 +219,7 @@ bool Process::setPermissions(const t_memrange & range,const t_memrange &trgrange
 
 bool Process::flushCache(const void* target, size_t count)
 {
-    return cacheflush(target, count, BCACHE);
+    __builtin___clear_cache((char*)target, (char*)target + count - 1);
 }
 
 

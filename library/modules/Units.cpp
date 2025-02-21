@@ -128,7 +128,11 @@ constexpr uint32_t exclude_flags2 = (
 
 bool Units::isActive(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
-    return !unit->flags1.bits.inactive;
+    if (unit->flags1.bits.inactive)
+        return false;
+    else if (unit->flags1.bits.move_state || unit->flags1.bits.can_swap)
+        return true; // These are always unset when leaving the map
+    return linear_index(world->units.active, &df::unit::id, unit->id) >= 0;
 }
 
 bool Units::isVisible(df::unit *unit) {
@@ -665,7 +669,8 @@ bool Units::isGreatDanger(df::unit *unit) {
 
 bool Units::isUnitInBox(df::unit *u, const cuboid &box) {
     CHECK_NULL_POINTER(u);
-    return box.containsPos(getPosition(u));
+    auto pos = getPosition(u);
+    return pos.isValid() ? box.containsPos(pos) : false;
 }
 
 bool Units::getUnitsInBox(vector<df::unit *> &units, const cuboid &box, std::function<bool(df::unit *)> filter) {
@@ -750,6 +755,8 @@ bool Units::getCitizens(vector<df::unit *> &citizens, bool exclude_residents, bo
 
 df::coord Units::getPosition(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
+    if (!isActive(unit))
+        return df::coord();
     if (unit->flags1.bits.caged) {
         if (auto cage = getContainer(unit))
             return Items::getPosition(cage);

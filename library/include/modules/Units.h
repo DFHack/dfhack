@@ -207,7 +207,7 @@ inline auto citizensRange(std::vector<df::unit *> &vec, bool exclude_residents =
 DFHACK_EXPORT void forCitizens(std::function<void(df::unit *)> fn, bool exclude_residents = false, bool include_insane = false);
 DFHACK_EXPORT bool getCitizens(std::vector<df::unit *> &citizens, bool exclude_residents = false, bool include_insane = false);
 
-// Returns the true position of the unit (non-trivial in case of caged).
+// Get the true position of the unit (non-trivial in case of caged or inactive). Returns invalid coord if dead or off map.
 DFHACK_EXPORT df::coord getPosition(df::unit *unit);
 
 // Moves unit and any riders to the target coordinates. Sets tile occupancy flags.

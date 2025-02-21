@@ -100,6 +100,9 @@ Template for new versions:
 
 ## API
 - ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
+- ``Units::getPosition``, ``Items::getPosition``: return invalid coord for inactive units and items held by off-map units
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
+- ``Units::isActive``: return false for off-map units
 
 # 51.04-r1
 

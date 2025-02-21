@@ -84,7 +84,8 @@ local function load_state()
            function() config_file:write() end
 end
 
-local config, save_state = load_state()
+-- global variables to make the UI script simpler
+_ENV.config, _ENV.save_state = load_state()
 
 function refresh_cpp_config()
     for name,value in pairs(config) do
@@ -158,11 +159,15 @@ local function do_toggle()
 end
 
 local function set_setting(args)
+    local n = #args
+    if n == 0 then
+        qerror('missing key')
+    end
     local key = table.remove(args, 1)
     if config[key] == nil then
         qerror('unknown setting: ' .. key)
     end
-    local n = #args
+    n = #args
     if n == 0 then
         qerror('missing value')
     end
@@ -221,6 +226,7 @@ function parse_commandline(args)
     elseif command == 'set' then
         set_setting(args)
     elseif command == 'overlay' then
+        if #args == 0 then qerror('missing option') end
         set_overlay(args[1])
     else
         return false

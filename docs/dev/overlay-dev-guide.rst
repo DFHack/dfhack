@@ -228,6 +228,23 @@ If you need to improve performance, here are some potential options:
 3. Move hotspots into C++ code, either in a new core library function or in a
    dedicated plugin
 
+Overlay framework API
+---------------------
+
+The overlay plugin Lua interface provides a few functions for interacting with
+the framework. You can get a reference to the API via::
+
+    local overlay = require('plugins.overlay')
+
+* ``overlay.rescan()``
+
+    Rescans all module-loadable Lua scripts for registered overlays and loads
+    updated widget definitions.
+
+* ``overlay.isOverlayEnabled(name)``
+
+    Returns whether the overlay with the given name is enabled.
+
 Development workflows
 ---------------------
 

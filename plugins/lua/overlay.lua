@@ -24,6 +24,7 @@ local overlay_config = {} -- map of widget name to persisted state
 local active_hotspot_widgets = {} -- map of widget names to the db entry
 local active_viewscreen_widgets = {} -- map of vs_name to map of w.names -> db
 
+-- for use by gui/overlay
 function get_state()
     return {index=widget_index, config=overlay_config, db=widget_db}
 end
@@ -71,6 +72,11 @@ local function save_config()
         dfhack.printerr(('failed to save overlay config file: "%s"')
                 :format(path))
     end
+end
+
+function isOverlayEnabled(name)
+    if not overlay_config[name] then return false end
+    return overlay_config[name].enabled
 end
 
 -- ----------- --

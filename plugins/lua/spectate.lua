@@ -16,7 +16,6 @@ local max_banner_y_offset = 4
 
 local function get_default_state()
     return {
-        ['auto-disengage']=true,
         ['auto-unpause']=false,
         ['cinematic-action']=true,
         ['follow-seconds']=10,
@@ -89,7 +88,7 @@ local config, save_state = load_state()
 -- called by gui/spectate
 function get_config_elem(name, key)
     local elem = config[name]
-    if not elem then return end
+    if elem == nil then return end
     if type(elem) == 'table' then
         return elem[key]
     end
@@ -109,14 +108,10 @@ end
 
 function show_squads_warning()
     local message = {
-        'Cannot start spectate mode while auto-disengage is enabled and',
-        'the squads panel is open. The auto-disengage feature automatically',
-        'stops spectate mode when you open the squads panel.',
+        'Cannot start spectate mode while the squads panel is open. Spectate',
+        'automatically disengages when you open the squads panel.',
         '',
-        'Please either close the squads panel or disable auto-disengage by',
-        'running the following command:',
-        '',
-        'spectate set auto-disengage false',
+        'Please close the squads panel before enabling spectate mode.',
     }
     dlg.showMessage("Spectate", table.concat(message, '\n'))
 end

@@ -608,8 +608,10 @@ end
 function FollowPanelOverlay:onInput(keys)
     if keys.KEYBOARD_CURSOR_LEFT then
         spectate_followPrev()
+        return true
     elseif keys.KEYBOARD_CURSOR_RIGHT then
         spectate_followNext()
+        return true
     end
     return FollowPanelOverlay.super.onInput(self, keys)
 end

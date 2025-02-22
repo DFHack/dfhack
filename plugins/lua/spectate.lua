@@ -96,7 +96,6 @@ function get_config_elem(name, key)
     return elem
 end
 
-
 function refresh_cpp_config()
     for name,value in pairs(config) do
         if not name:startswith(lua_only_settings_prefix) then

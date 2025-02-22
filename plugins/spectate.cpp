@@ -452,7 +452,7 @@ static void get_dwarf_buckets(color_ostream &out,
             continue;
 
         if (is_in_combat(unit)) {
-            INFO(cycle).print("unit %d is in combat: %s\n", unit->id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
+            TRACE(cycle,out).print("unit %d is in combat: %s\n", unit->id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
             if (Units::isCitizen(unit, true) || Units::isResident(unit, true))
                 citizen_combat_units.push_back(unit);
             else

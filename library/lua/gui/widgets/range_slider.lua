@@ -29,6 +29,7 @@ RangeSlider.ATTRS{
     get_right_idx_fn=DEFAULT_NIL,
     on_left_change=DEFAULT_NIL,
     on_right_change=DEFAULT_NIL,
+    is_single=DEFAULT_NIL
 }
 
 function RangeSlider:preinit(init_table)
@@ -43,7 +44,8 @@ function RangeSlider:init()
 end
 
 local function rangeslider_get_width_per_idx(self)
-    return math.max(5, (self.frame_body.width-7) // (self.num_stops-1))
+    local min_value = (self.is_single) and 3 or 5  -- Single slider = 3, else 5
+    return math.max(min_value, (self.frame_body.width-7) // (self.num_stops-1))
 end
 
 function RangeSlider:onInput(keys)
@@ -142,16 +144,27 @@ function RangeSlider:onRenderBody(dc, rect)
     end
     dc:char(nil, SLIDER_TRACK)
     dc:char(nil, SLIDER_RIGHT_END)
-    -- draw tabs
-    dc:seek(width_per_idx*(left_idx-1))
-    dc:char(nil, SLIDER_TAB_LEFT)
-    dc:char(nil, SLIDER_TAB_CENTER)
-    dc:char(nil, SLIDER_TAB_RIGHT)
-    dc:seek(width_per_idx*(right_idx-1)+4)
-    dc:char(nil, SLIDER_TAB_LEFT)
-    dc:char(nil, SLIDER_TAB_CENTER)
-    dc:char(nil, SLIDER_TAB_RIGHT)
-    -- manage dragging
+
+    -- Draw tab(s)
+    if self.is_single then
+        -- Single slider: Draw one centered tab
+        dc:seek(width_per_idx * (left_idx-1) + 2)  -- Center the tab
+        dc:char(nil, SLIDER_TAB_LEFT)
+        dc:char(nil, SLIDER_TAB_CENTER)
+        dc:char(nil, SLIDER_TAB_RIGHT)
+    else
+        -- Dual slider: Draw left and right tabs separately
+        dc:seek(width_per_idx * (left_idx-1))
+        dc:char(nil, SLIDER_TAB_LEFT)
+        dc:char(nil, SLIDER_TAB_CENTER)
+        dc:char(nil, SLIDER_TAB_RIGHT)
+        dc:seek(width_per_idx*(right_idx-1)+4)
+        dc:char(nil, SLIDER_TAB_LEFT)
+        dc:char(nil, SLIDER_TAB_CENTER)
+        dc:char(nil, SLIDER_TAB_RIGHT)
+    end
+
+    -- Manage dragging
     if self.is_dragging_target then
         rangeslider_do_drag(self, width_per_idx)
     end

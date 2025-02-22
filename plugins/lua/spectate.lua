@@ -86,6 +86,17 @@ end
 
 local config, save_state = load_state()
 
+-- called by gui/spectate
+function get_config_elem(name, key)
+    local elem = config[name]
+    if not elem then return end
+    if type(elem) == 'table' then
+        return elem[key]
+    end
+    return elem
+end
+
+
 function refresh_cpp_config()
     for name,value in pairs(config) do
         if not name:startswith(lua_only_settings_prefix) then
@@ -158,11 +169,15 @@ local function do_toggle()
 end
 
 local function set_setting(args)
+    local n = #args
+    if n == 0 then
+        qerror('missing key')
+    end
     local key = table.remove(args, 1)
     if config[key] == nil then
         qerror('unknown setting: ' .. key)
     end
-    local n = #args
+    n = #args
     if n == 0 then
         qerror('missing value')
     end
@@ -221,6 +236,7 @@ function parse_commandline(args)
     elseif command == 'set' then
         set_setting(args)
     elseif command == 'overlay' then
+        if #args == 0 then qerror('missing option') end
         set_overlay(args[1])
     else
         return false

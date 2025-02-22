@@ -246,7 +246,7 @@ local function GetUnitStress(unit, stress_levels)
     local stressCat = dfhack.units.getStressCategory(unit)
     if stressCat > 6 then stressCat = 6 end
     stressCat = tostring(stressCat)
-    if not stress_levels[stressCat] then return end
+    if not stress_levels then return end
 
     local level_cfg = config['tooltip-stress-levels'][stressCat]
     return {text=level_cfg.text, pen=level_cfg.pen}

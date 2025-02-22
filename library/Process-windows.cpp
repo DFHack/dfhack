@@ -416,7 +416,7 @@ bool Process::setPermissions(const t_memrange & range,const t_memrange &trgrange
 
 bool Process::flushCache(const void* target, size_t count)
 {
-    return 0 == FlushInstructionCache(d->my_handle, (LPCVOID)target, count);
+    return 0 != FlushInstructionCache(d->my_handle, (LPCVOID)target, count);
 }
 
 void* Process::memAlloc(const int length)

@@ -13,7 +13,7 @@ to following a different dwarf. It can also switch to following animals,
 hostiles, or visiting units. You can switch to the next target (or a previous
 target) immediately with the left/right arrow keys.
 
-By default, `spectate` will disengage and turn itself off when you move the
+`spectate` will automatically disengage and turn itself off when you move the
 map, just like the vanilla follow mechanic. It will also disengage immediately
 if you open the squads menu for military action.
 
@@ -36,7 +36,7 @@ Usage
     enable spectate
     spectate [status]
     spectate toggle
-    spectate set <setting> <value>
+    spectate set <setting> <value> [<subvalue>]
     spectate overlay enable|disable
 
 Examples
@@ -70,12 +70,6 @@ Examples
 
 Settings
 --------
-
-``auto-disengage`` (default: enabled)
-    Toggle automatically disabling the plugin when the player moves the map or
-    opens the squad panel. If this is disabled, you will need to manually
-    disable the plugin to turn off follow mode. You can still interact normally
-    with the DF UI.
 
 ``auto-unpause`` (default: disabled)
     Toggle auto-dismissal of announcements that pause the game, like sieges,

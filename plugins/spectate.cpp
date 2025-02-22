@@ -63,7 +63,6 @@ static const std::unordered_set<int32_t> boring_jobs = {
 // Configuration
 
 static struct Configuration {
-    bool auto_disengage;
     bool auto_unpause;
     bool cinematic_action;
     bool include_animals;
@@ -75,7 +74,6 @@ static struct Configuration {
     int32_t follow_ms;
 
     void reset() {
-        auto_disengage = true;
         auto_unpause = false;
         cinematic_action = true;
         include_animals = false;
@@ -338,8 +336,8 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             if (!Lua::CallLuaModuleFunction(out, "plugins.spectate", "refresh_cpp_config")) {
                 WARN(control,out).print("Failed to refresh config\n");
             }
-            if (config.auto_disengage && is_squads_open()) {
-                out.printerr("Cannot enable %s while auto-disengage is enabled and the squads screen is open.\n", plugin_name);
+            if (is_squads_open()) {
+                out.printerr("Cannot enable %s while the squads screen is open.\n", plugin_name);
                 Lua::CallLuaModuleFunction(out, "plugins.spectate", "show_squads_warning");
                 is_enabled = false;
                 return CR_FAILURE;
@@ -394,7 +392,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     announcement_settings.on_update(out);
 
-    if (config.auto_disengage && (plotinfo->follow_unit < 0 || plotinfo->follow_item > -1 || is_squads_open())) {
+    if (plotinfo->follow_unit < 0 || plotinfo->follow_item > -1 || is_squads_open()) {
         DEBUG(cycle,out).print("auto-disengage triggered\n");
         is_enabled = false;
         plotinfo->follow_unit = -1;
@@ -402,7 +400,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
         return CR_OK;
     }
 
-    if ((!config.auto_disengage && plotinfo->follow_unit < 0) || Core::getInstance().getUnpausedMs() >= next_cycle_unpaused_ms) {
+    if (Core::getInstance().getUnpausedMs() >= next_cycle_unpaused_ms) {
         recent_units.trim();
         follow_a_dwarf(out);
     }
@@ -556,9 +554,7 @@ static void follow_a_dwarf(color_ostream &out) {
 static void spectate_setSetting(color_ostream &out, string name, int val) {
     DEBUG(control,out).print("entering spectate_setSetting %s = %d\n", name.c_str(), val);
 
-    if (name == "auto-disengage") {
-        config.auto_disengage = val;
-    } else if (name == "auto-unpause") {
+    if (name == "auto-unpause") {
         if (val && !config.auto_unpause) {
             announcement_settings.save_and_scrub_settings(out);
         } else if (!val && config.auto_unpause) {

@@ -86,16 +86,6 @@ end
 
 local config, save_state = load_state()
 
--- called by gui/spectate
-function get_config_elem(name, key)
-    local elem = config[name]
-    if not elem then return end
-    if type(elem) == 'table' then
-        return elem[key]
-    end
-    return elem
-end
-
 function refresh_cpp_config()
     for name,value in pairs(config) do
         if not name:startswith(lua_only_settings_prefix) then
@@ -623,5 +613,8 @@ OVERLAY_WIDGETS = {
     followpanel=FollowPanelOverlay,
     tooltip=TooltipOverlay,
 }
+
+-- make public
+_ENV.config, _ENV.save_state = config, save_state
 
 return _ENV

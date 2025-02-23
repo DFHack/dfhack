@@ -167,61 +167,64 @@ local function set_setting(args)
     if n == 0 then
         qerror('missing key')
     end
-    local key = table.remove(args, 1)
-    if config[key] == nil then
-        qerror('unknown setting: ' .. key)
-    end
-    n = #args
-    if n == 0
-       or (n == 1 and type(config[key]) == 'table')
-    then
-        qerror('missing value')
-    end
 
-    if n == 1 then
-        local value = args[1]
-        if key == 'follow-seconds' then
-            value = argparse.positiveInt(value, 'follow-seconds')
-        elseif key == 'tooltip-follow-blink-milliseconds' then
-            value = argparse.nonnegativeInt(value, 'tooltip-follow-blink-milliseconds')
+    local cfg = config
+    local v
+    for i = 1, n do
+        v = cfg[args[i]]
+        if v == nil then
+            -- probably an unknown option, but we may allow adding new keys
+            break
+        elseif type(v) == 'table' then
+            if i == n then
+                -- arrived at the very last argument, but have a table
+                qerror('missing value for ' .. table.concat(args, '/', 1, i))
+            end
+            cfg = v
         else
-            value = argparse.boolean(value, key)
-        end
-
-        config[key] = value
-
-        if not key:startswith(lua_only_settings_prefix) then
-            if type(value) == 'boolean' then
-                value = value and 1 or 0
-            end
-            spectate_setSetting(key, value)
-        end
-    else
-        local errorUnknownSettingIfNil = function(t)
-            if t == nil then
-                table.remove(args)
-                qerror('unknown setting: ' .. key .. '/' .. table.concat(args, '/'))
+            -- arrived at something that's not a table
+            if i == n-1 then
+                -- if there is exactly 1 argument left, we're good
+                break
+            elseif i == n then
+                qerror('missing value for ' .. table.concat(args, '/', 1, i))
+            else -- i < n-1 then
+                qerror('too many arguments for ' .. table.concat(args, '/', 1, i))
             end
         end
-
-        local t = config[key]
-        for i = 1, n - 2 do
-            errorUnknownSettingIfNil(t)
-            t = t[args[i]]
-        end
-        local k = args[n-1]
-        local v = args[n]
-        if key ~= 'tooltip-follow-job-shortenings' then
+    end
+    if v == nil then
+        if n == 3 and args[1] == 'tooltip-follow-job-shortenings' then
             -- user should be able to add new shortenings, but not other things
-            errorUnknownSettingIfNil(t[k])
-            if key:endswith('-stress-levels') and key ~= 'tooltip-stress-levels' then
-                v = argparse.boolean(v, key .. '/' .. k)
-            end
+        else
+            qerror('unknown option: ' .. table.concat(args, '/', 1, i))
         end
-        if type(t[k]) == 'table' then
-            qerror('missing value')
+    end
+
+    local path = table.concat(args, '/', 1, n-1)
+    local key = args[n-1]
+    local value = args[n]
+    local entry_type = type(cfg[key])
+    if entry_type == 'table' then
+        -- here just in case, is already checked in the loop above
+        qerror('missing value for ' .. path)
+    elseif entry_type == 'boolean' then
+        value = argparse.boolean(value, path)
+    elseif entry_type == 'number' then
+        if path == 'follow-seconds' then
+            value = argparse.positiveInt(value, path)
+        else
+            value = argparse.nonnegativeInt(value, path)
         end
-        t[k] = v
+    end
+
+    cfg[key] = value
+
+    if n == 2 and not key:startswith(lua_only_settings_prefix) then
+        if type(value) == 'boolean' then
+            value = value and 1 or 0
+        end
+        spectate_setSetting(key, value)
     end
 
     save_state()

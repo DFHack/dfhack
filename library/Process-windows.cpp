@@ -399,7 +399,7 @@ int Process::getPID()
 }
 
 
-bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
+bool Process::setPermissions(const t_memrange & range,const t_memrange &trgrange)
 {
     DWORD newprotect=0;
     if(trgrange.read && !trgrange.write && !trgrange.execute)newprotect=PAGE_READONLY;
@@ -412,6 +412,11 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
     result=VirtualProtect((LPVOID)range.start,(char *)range.end-(char *)range.start,newprotect,&oldprotect);
 
     return result;
+}
+
+bool Process::flushCache(const void* target, size_t count)
+{
+    return 0 != FlushInstructionCache(d->my_handle, (LPCVOID)target, count);
 }
 
 void* Process::memAlloc(const int length)

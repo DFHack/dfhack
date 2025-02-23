@@ -172,7 +172,9 @@ local function set_setting(args)
         qerror('unknown setting: ' .. key)
     end
     n = #args
-    if n == 0 then
+    if n == 0
+       or (n == 1 and type(config[key]) == 'table')
+    then
         qerror('missing value')
     end
 
@@ -195,20 +197,29 @@ local function set_setting(args)
             spectate_setSetting(key, value)
         end
     else
+        local errorUnknownSettingIfNil = function(t)
+            if t == nil then
+                table.remove(args)
+                qerror('unknown setting: ' .. key .. '/' .. table.concat(args, '/'))
+            end
+        end
+
         local t = config[key]
         for i = 1, n - 2 do
+            errorUnknownSettingIfNil(t)
             t = t[args[i]]
         end
         local k = args[n-1]
         local v = args[n]
         if key ~= 'tooltip-follow-job-shortenings' then
             -- user should be able to add new shortenings, but not other things
-            if t[k] == nil then
-                table.remove(args)
-                qerror('unknown setting: ' .. key .. '/' .. table.concat(args, '/'))
-            elseif key:endswith('-stress-levels') and key ~= 'tooltip-stress-levels' then
+            errorUnknownSettingIfNil(t[k])
+            if key:endswith('-stress-levels') and key ~= 'tooltip-stress-levels' then
                 v = argparse.boolean(v, key .. '/' .. k)
             end
+        end
+        if type(t[k]) == 'table' then
+            qerror('missing value')
         end
         t[k] = v
     end

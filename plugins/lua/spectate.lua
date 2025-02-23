@@ -601,7 +601,7 @@ function FollowPanelOverlay:init()
             on_click=spectate_followNext,
         },
         widgets.Label{
-            frame={l=10, t=0, w=25},
+            frame={l=10, t=0, w=14},
             text={
                 ' spectate:',
                 {text=function() return isEnabled() and ' on ' or 'off ' end,

@@ -504,7 +504,6 @@ function TooltipOverlay:render_unit_banners(dc)
 
             ix = ix + len
         end
-        writer:pen(pen) -- just in case a different dc isn't resetting it
 
         -- mark coordinates as used
         for j = 0, #str - 1 do

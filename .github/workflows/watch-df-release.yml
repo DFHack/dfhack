@@ -15,13 +15,17 @@ jobs:
       fail-fast: false
       matrix:
         # df_steam_branch: which DF Steam branch to watch
-        # platform: leave blank to default to all
+        # platform: for symbols generation; leave blank to default to all
         # structures_ref: leave blank to default to master
         # dfhack_ref: leave blank if no structures update is desired
         # steam_branch: leave blank if no DFHack steam push is desired
         include:
           - df_steam_branch: public
           - df_steam_branch: beta
+          - df_steam_branch: experimental
+            structures_ref: experimental
+            dfhack_ref: experimental
+            steam_branch: experimental
     steps:
     - name: Fetch state
       uses: actions/cache/restore@v4

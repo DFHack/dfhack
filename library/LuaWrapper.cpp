@@ -59,6 +59,7 @@ using namespace DFHack::LuaWrapper;
     const char *fname = index ? lua_tostring(state, index) : "*";
     luaL_error(state, "Cannot %s field %s.%s: %s.",
                mode, (cname ? cname : "?"), (fname ? fname : "?"), err);
+    std::abort(); // should never be reached but makes gcc happy
 }
 
 /* */

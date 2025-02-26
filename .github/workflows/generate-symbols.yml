@@ -36,6 +36,7 @@ on:
         default: default
         options:
         - default
+        - experimental
         - testing
         - adventure_test
         - beta

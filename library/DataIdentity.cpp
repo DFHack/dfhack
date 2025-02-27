@@ -38,6 +38,7 @@ namespace df {
 
     const bool_identity identity_traits<bool>::identity;
     const stl_string_identity identity_traits<std::string>::identity;
+    const path_identity identity_traits<std::filesystem::path>::identity;
     const ptr_string_identity identity_traits<char*>::identity;
     const ptr_string_identity identity_traits<const char*>::identity;
     const pointer_identity identity_traits<void*>::identity;

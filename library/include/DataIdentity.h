@@ -34,6 +34,7 @@ distribution.
 #include <variant>
 #include <vector>
 #include <variant>
+#include <filesystem>
 
 #include "DataDefs.h"
 
@@ -297,6 +298,24 @@ namespace df
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
     };
+
+    class DFHACK_EXPORT path_identity : public DFHack::constructed_identity {
+    public:
+        path_identity()
+            : constructed_identity(sizeof(std::filesystem::path), &allocator_fn<std::filesystem::path>)
+        {
+        };
+
+        const std::string getFullName() const { return "path"; }
+
+        virtual DFHack::identity_type type() const { return DFHack::IDTYPE_PRIMITIVE; }
+
+        virtual bool isPrimitive() const { return true; }
+
+        virtual void lua_read(lua_State* state, int fname_idx, void* ptr) const;
+        virtual void lua_write(lua_State* state, int fname_idx, void* ptr, int val_index) const;
+    };
+
 
     class DFHACK_EXPORT stl_ptr_vector_identity : public ptr_container_identity {
     public:
@@ -616,6 +635,11 @@ namespace df
         static const stl_string_identity *get() { return &identity; }
     };
 
+    template<> struct DFHACK_EXPORT identity_traits<std::filesystem::path> {
+        static const bool is_primitive = true;
+        static const path_identity identity;
+        static const path_identity* get() { return &identity; }
+    };
     template<> struct DFHACK_EXPORT identity_traits<char*> {
         static const bool is_primitive = true;
         static const ptr_string_identity identity;

@@ -142,7 +142,7 @@ namespace LuaWrapper {
     /**
     * Report an error while accessing a field (index = field name).
     */
-    void field_error(lua_State *state, int index, const char *err, const char *mode);
+    [[noreturn]] void field_error(lua_State *state, int index, const char *err, const char *mode);
 
     /*
      * If is_method is true, these use UPVAL_TYPETABLE to save a hash lookup.

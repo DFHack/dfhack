@@ -482,10 +482,10 @@ function TooltipOverlay:render_unit_banners(dc)
         for _, tok in ipairs(info) do
             local s
             if type(tok) == "string" then
-                writer = writer:pen(pen)
+                writer:pen(pen)
                 s = tok
             else
-                writer = writer:pen(tok.pen)
+                writer:pen(tok.pen)
                 s = tok.text
             end
 
@@ -496,10 +496,10 @@ function TooltipOverlay:render_unit_banners(dc)
                 -- we want to replace it with an `_`, so we need another `- 1`
                 s = s:sub(1, usedAt - len - ix - 1 - 1) .. '_'
 
-                writer = writer:string(s)
+                writer:string(s)
                 break -- nothing more will fit
             else
-                writer = writer:string(s)
+                writer:string(s)
             end
 
             ix = ix + len

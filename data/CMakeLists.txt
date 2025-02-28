@@ -24,6 +24,10 @@ install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/blueprints/
         FILES_MATCHING PATTERN "*"
                        PATTERN blueprints/test EXCLUDE)
 
+install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/patches/
+    DESTINATION ${DFHACK_DATA_DESTINATION}/patches
+)
+
 if(BUILD_TESTS)
     install(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR}/blueprints/test/
             DESTINATION "${DFHACK_DATA_DESTINATION}/data/blueprints/test")

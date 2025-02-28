@@ -428,6 +428,8 @@ function TooltipOverlay:render_unit_banners(dc)
     local oneTileOffset = GetScreenCoordinates({x = topleft.x + 1, y = topleft.y + 1, z = topleft.z + 0})
     local pen = COLOR_WHITE
 
+    local _, screenHeight = dfhack.screen:getWindowSize()
+
     local used_tiles = {}
     -- reverse order yields better offsets for overlapping texts
     for i = #units, 1, -1 do
@@ -446,6 +448,10 @@ function TooltipOverlay:render_unit_banners(dc)
         local scrPos = GetScreenCoordinates(pos)
         local y = scrPos.y - 1 -- subtract 1 to move the text over the heads
         local x = scrPos.x + oneTileOffset.x - 1 -- subtract 1 to move the text inside the map tile
+
+        -- do not write anything in the top rows, where DF's interface is.
+        -- todo: use precise rectangles
+        if y < 4 then goto continue end
 
         -- to resolve overlaps, we'll mark every coordinate we write anything in,
         -- and then check if the new tooltip will overwrite any used coordinate.
@@ -477,15 +483,19 @@ function TooltipOverlay:render_unit_banners(dc)
         -- we can't place any useful information, and will ignore it instead.
         if 0 <= usedAt and usedAt <= 2 then goto continue end
 
-        local writer = dc:seek(x, y + dy)
+        -- do not write anything over DF's interface
+        -- todo: use precise rectangles
+        if y + dy > screenHeight - 4 then goto continue end
+
+        dc:seek(x, y + dy)
         local ix = 0
         for _, tok in ipairs(info) do
             local s
             if type(tok) == "string" then
-                writer:pen(pen)
+                dc:pen(pen)
                 s = tok
             else
-                writer:pen(tok.pen)
+                dc:pen(tok.pen)
                 s = tok.text
             end
 
@@ -496,10 +506,10 @@ function TooltipOverlay:render_unit_banners(dc)
                 -- we want to replace it with an `_`, so we need another `- 1`
                 s = s:sub(1, usedAt - len - ix - 1 - 1) .. '_'
 
-                writer:string(s)
+                dc:string(s)
                 break -- nothing more will fit
             else
-                writer:string(s)
+                dc:string(s)
             end
 
             ix = ix + len

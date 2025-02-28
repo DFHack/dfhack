@@ -171,6 +171,9 @@ local function do_enable(args, quiet, skip_save)
             vs_name = normalize_viewscreen_name(vs_name)
             ensure_key(active_viewscreen_widgets, vs_name)[name] = db_entry
         end
+        if db_entry.widget.overlay_onenable then
+            db_entry.widget.overlay_onenable()
+        end
         if not quiet then
             print(('enabled widget %s'):format(name))
         end
@@ -201,6 +204,9 @@ local function do_disable(args, quiet)
             if is_empty(active_viewscreen_widgets[vs_name]) then
                 active_viewscreen_widgets[vs_name] = nil
             end
+        end
+        if db_entry.widget.overlay_ondisable then
+            db_entry.widget.overlay_ondisable()
         end
         if not quiet then
             print(('disabled widget %s'):format(name))
@@ -532,16 +538,16 @@ function feed_viewscreen_widgets(vs_name, vs, keys)
     return true
 end
 
-local function _render_viewscreen_widgets(vs_name, vs, full_dc, scaled_dc)
+local function _render_viewscreen_widgets(vs_name, vs)
     local vs_widgets = active_viewscreen_widgets[vs_name]
     if not vs_widgets then return end
     local full, scaled = get_interface_rects()
-    full_dc = full_dc or gui.Painter.new(full)
-    scaled_dc = scaled_dc or gui.Painter.new(scaled)
     for _,db_entry in pairs(vs_widgets) do
         local w = db_entry.widget
         if (not vs or matches_focus_strings(db_entry, vs_name, vs)) and utils.getval(w.visible) then
-            detect_frame_change(w, function() w:render(w.fullscreen and full_dc or scaled_dc) end)
+            detect_frame_change(w, function()
+                w:render(w.fullscreen and gui.Painter.new(full) or gui.Painter.new(scaled))
+            end)
         end
     end
     return full_dc, scaled_dc
@@ -550,8 +556,8 @@ end
 local force_refresh
 
 function render_viewscreen_widgets(vs_name, vs)
-    local full_dc, scaled_dc = _render_viewscreen_widgets(vs_name, vs, nil, nil)
-    _render_viewscreen_widgets('all', nil, full_dc, scaled_dc)
+    _render_viewscreen_widgets(vs_name, vs)
+    _render_viewscreen_widgets('all', nil)
     if force_refresh then
         force_refresh = nil
         df.global.gps.force_full_display_count = 1

@@ -86,6 +86,11 @@ beyond your everyday `widgets.Widget <widget>`:
         end
 
     This allows for dynamic updates to UI overlays directly from the CLI.
+- If an ``overlay_onenable()`` function is defined, it is called when the
+    overlay is enabled (including when the persisted state is reloaded at DF
+    startup).
+- If an ``overlay_ondisable()`` function is defined, it is called when the
+    overlay is disabled.
 
 If the widget can take up a variable amount of space on the screen, and you want
 the widget to adjust its position according to the size of its contents, you can

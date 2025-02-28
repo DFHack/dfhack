@@ -91,6 +91,7 @@ Template for new versions:
 - ``overlay``: widgets can now declare ``overlay_onenable`` and ``overlay_ondisable`` functions to hook enable/disable
 
 ## Removed
+- `orders`: MakeCheese job removed from library/basic orders set. Please use `autocheese` instead!
 
 # 51.06-r1
 

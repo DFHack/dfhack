@@ -79,6 +79,8 @@ Template for new versions:
 - ``Military::removeFromSquad``: removes unit from any squad assignments
 - ``Buildings::checkFreeTiles``: now replaces the extents parameter for a building pointer
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
+- ``Items::getItemBaseValue``: DF 51.06 reduced the base value of prepared meals
+- ``Items::getValue``: magical powers now correctly contribute to item value
 
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings

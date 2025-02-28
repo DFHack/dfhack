@@ -171,6 +171,9 @@ local function do_enable(args, quiet, skip_save)
             vs_name = normalize_viewscreen_name(vs_name)
             ensure_key(active_viewscreen_widgets, vs_name)[name] = db_entry
         end
+        if db_entry.widget.overlay_onenable then
+            db_entry.widget.overlay_onenable()
+        end
         if not quiet then
             print(('enabled widget %s'):format(name))
         end
@@ -201,6 +204,9 @@ local function do_disable(args, quiet)
             if is_empty(active_viewscreen_widgets[vs_name]) then
                 active_viewscreen_widgets[vs_name] = nil
             end
+        end
+        if db_entry.widget.overlay_ondisable then
+            db_entry.widget.overlay_ondisable()
         end
         if not quiet then
             print(('disabled widget %s'):format(name))

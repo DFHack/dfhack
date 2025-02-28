@@ -87,6 +87,7 @@ Template for new versions:
 - ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
 - ``dfhack.buildings.checkFreeTiles``: now replaces the extents parameter for a building pointer
 - ``overlay.isOverlayEnabled``: new API for querying whether a given overlay is enabled
+- ``overlay``: widgets can now declare ``overlay_onenable`` and ``overlay_ondisable`` functions to hook enable/disable
 
 ## Removed
 

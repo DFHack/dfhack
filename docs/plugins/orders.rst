@@ -146,9 +146,9 @@ You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.
 
 These orders do not contain milking, shearing, or cheesemaking jobs since the
-game does not provide sufficient order conditions. Please enable `automilk`,
-`autoshear`, and `autocheese` on the DFHack `gui/control-panel` for these types
-of jobs.
+game does not provide sufficient order conditions. Please enable ``automilk``,
+``autoshear``, and `autocheese` on the DFHack `gui/control-panel` for these
+types of jobs.
 
 Note that the jugs are specifically made out of wood. This is so, as long as
 you don't may any other "Tools" out of wood, you can have a stockpile just for

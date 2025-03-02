@@ -35,9 +35,8 @@ Usage
 
     enable spectate
     spectate [status]
-    spectate toggle
-    spectate set <setting> <value> [<subvalue>]
     spectate toggle <setting>
+    spectate set <setting> <value> [<subvalue>]
     spectate overlay enable|disable
 
 Examples
@@ -116,7 +115,7 @@ Settings
 
 ``tooltip-follow-hold-to-show`` (default: none)
     If the ``spectate.tooltip`` overlay is enabled, specifies a modifier key
-    (one of none, ctrl, alt, or shift) that has to be hold to show the tooltips
+    (one of none, ctrl, alt, or shift) that has to be held to show the tooltips
     that follow onscreen dwarves around the map. This supersedes the
     ``tooltip-follow-blink-milliseconds`` option.
 

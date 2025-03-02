@@ -35,7 +35,7 @@ Usage
 
     enable spectate
     spectate [status]
-    spectate toggle <setting>
+    spectate toggle [<setting>]
     spectate set <setting> <value> [<subvalue>]
     spectate overlay enable|disable
 

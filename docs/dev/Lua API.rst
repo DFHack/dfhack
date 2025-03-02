@@ -3428,6 +3428,11 @@ and are only documented here for completeness:
   Sets the system clipboard text from a CP437 string. Character 0x10 is
   interpreted as a newline instead of the usual CP437 glyph.
 
+* ``dfhack.internal.getModifiers()``
+
+  Returns the state of the keyboard modifier keys in a table of string ->
+  boolean. The keys are ``ctrl``, ``shift``, and ``alt``.
+
 * ``dfhack.internal.getSuppressDuplicateKeyboardEvents()``
 * ``dfhack.internal.setSuppressDuplicateKeyboardEvents(suppress)``
 

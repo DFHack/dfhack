@@ -210,7 +210,11 @@ local function set_setting(args)
         -- here just in case, is already checked in the loop above
         qerror('missing value for ' .. path)
     elseif entry_type == 'boolean' then
-        value = argparse.boolean(value, path)
+        if value == 'toggle' then
+            value = not cfg[key]
+        else
+            value = argparse.boolean(value, path)
+        end
     elseif entry_type == 'number' then
         if path == 'follow-seconds' then
             value = argparse.positiveInt(value, path)
@@ -241,7 +245,12 @@ function parse_commandline(args)
     if not command or command == 'status' then
         print_status()
     elseif command == 'toggle' then
-        do_toggle()
+        if #args == 0 then
+            do_toggle()
+        else
+            args[#args+1] = 'toggle'
+            set_setting(args)
+        end
     elseif command == 'set' then
         set_setting(args)
     elseif command == 'overlay' then

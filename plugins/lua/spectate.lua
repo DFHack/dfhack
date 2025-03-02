@@ -27,6 +27,7 @@ local function get_default_state()
         ['prefer-new-arrivals']=true,
         ['tooltip-follow']=true,
         ['tooltip-follow-blink-milliseconds']=3000,
+        ['tooltip-follow-hold-to-show']='none', -- one of none, ctrl, alt, or shift
         ['tooltip-follow-job']=true,
         ['tooltip-follow-job-shortenings'] = {
             ["Store item in stockpile"] = "Store item",
@@ -407,13 +408,20 @@ end
 function TooltipOverlay:render_unit_banners(dc)
     if not (config['tooltip-follow'] and AnyFollowOptionOn()) then return end
 
-    local blink_duration = config['tooltip-follow-blink-milliseconds']
-    if blink_duration > 0 and not gui.blink_visible(blink_duration) then
-        return
-    end
+    local hold_to_show = config['tooltip-follow-hold-to-show']
+    if hold_to_show and hold_to_show ~= 'none' then
+        if not dfhack.internal.getModifiers()[hold_to_show] then
+            return
+        end
+    else
+        local blink_duration = config['tooltip-follow-blink-milliseconds']
+        if blink_duration > 0 and not gui.blink_visible(blink_duration) then
+            return
+        end
 
-    if not dfhack.screen.inGraphicsMode() and not gui.blink_visible(500) then
-        return
+        if not dfhack.screen.inGraphicsMode() and not gui.blink_visible(500) then
+            return
+        end
     end
 
     local vp = df.global.world.viewport

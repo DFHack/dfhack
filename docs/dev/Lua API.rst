@@ -1395,9 +1395,9 @@ Job module
   Attach a real item to this job. If the item is intended to satisfy a job_item
   filter, the index of that filter should be passed in ``filter_idx``; otherwise,
   pass ``-1``. Similarly, if you don't care where the item is inserted, pass
-  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_item_ref.T_role``.
+  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_role_type``.
   If the item needs to be brought to the job site, then the value should be
-  ``df.job_item_ref.T_role.Hauled``.
+  ``df.job_role_type.Hauled``.
 
 * ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
 
@@ -2108,7 +2108,7 @@ Items module
 * ``dfhack.items.moveToInventory(item,unit[,use_mode[,body_part]])``
 
   Move the item to the unit inventory. Returns *false* if impossible.
-  ``use_mode`` defaults to ``df.unit_inventory_item.T_mode.Hauled``.
+  ``use_mode`` defaults to ``df.inv_item_role_type.Hauled``.
   ``body_part`` defaults to ``-1``.
 
 * ``dfhack.items.remove(item[,no_uncat])``

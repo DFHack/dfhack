@@ -70,6 +70,13 @@ If Stonesense gives an error saying that it can't load
 detail sprites used. Either open :file:`creatures/init.txt` and remove the
 line containing that folder, or :dffd:`use these smaller sprites <6096>`.
 
+Sometimes if you have opened Stonesense and then resize the DF window, DF will appear to be
+unresponsive. This bug is graphical only and if you hit :kbd:`Ctrl`:kbd:`Alt`:kbd:`S` and wait
+a minute or so (since you can't see when the game finishes saving) the game should quicksave.
+
+If you have Stonesense open in a fort and want to load a new fort, you MUST close Stonesense before
+loading the new fort or the game will crash.
+
 Stonesense requires working graphics acceleration, and we recommend
 at least a dual core CPU to avoid slowing down your game of DF.
 

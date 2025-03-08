@@ -157,6 +157,7 @@ static void reset_ephemeral_state() {
 
 static void do_disable() {
     EventManager::unregisterAll(plugin_self);
+    is_enabled = false;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {

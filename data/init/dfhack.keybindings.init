@@ -41,6 +41,12 @@ keybinding add Ctrl-A@choose_start_site gui/embark-anywhere
 # in the game root directory
 keybinding add Ctrl-T@dwarfmode/ViewSheets/UNIT|dwarfmode/ViewSheets/ITEM|dungeonmode/ViewSheets/UNIT|dungeonmode/ViewSheets/ITEM markdown
 
+# gui/sitemap
+keybinding add Ctrl-G@dwarfmode/Default|dungeonmode/Default gui/sitemap
+
+# toggle keyboard cursor
+keybinding add Alt-K@dwarfmode|dungeonmode/Default|dungeonmode/Look toggle-kbd-cursor
+
 
 ######################
 # dwarfmode bindings #
@@ -70,9 +76,6 @@ keybinding add Ctrl-Shift-T@dwarfmode gui/teleport
 
 # apply blueprints to the map
 keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
-
-# toggle keyboard cursor
-keybinding add Alt-K@dwarfmode toggle-kbd-cursor
 
 # Stocks plugin
 #keybinding add Ctrl-Shift-Z@dwarfmode/Default "stocks show"

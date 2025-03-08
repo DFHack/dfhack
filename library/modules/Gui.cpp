@@ -2831,33 +2831,31 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center, boo
 
     unfollow();
 
+    if (!Maps::isValidTilePos(x, y, z))
+        return false;
+
     auto dims = getDwarfmodeViewDims();
     int32_t w = dims.map_x2 - dims.map_x1 + 1;
     int32_t h = dims.map_y2 - dims.map_y1 + 1;
     int32_t new_win_x, new_win_y, new_win_z;
     getViewCoords(new_win_x, new_win_y, new_win_z);
 
-    if (Maps::isValidTilePos(x, y, z))
-    {
-        if (center)
-        {
-            new_win_x = x - w / 2;
-            new_win_y = y - h / 2;
-        }
-        else // just bring it on screen
-        {
-            if (new_win_x > (x - 5)) // equivalent to: "while (new_win_x > x - 5) new_win_x -= 10;"
-                new_win_x -= (new_win_x - (x - 5) - 1) / 10 * 10 + 10;
-            if (new_win_y > (y - 5))
-                new_win_y -= (new_win_y - (y - 5) - 1) / 10 * 10 + 10;
-            if (new_win_x < (x + 5 - w))
-                new_win_x += ((x + 5 - w) - new_win_x - 1) / 10 * 10 + 10;
-            if (new_win_y < (y + 5 - h))
-                new_win_y += ((y + 5 - h) - new_win_y - 1) / 10 * 10 + 10;
-        }
-
-        new_win_z = z;
+    if (center) {
+        new_win_x = x - w / 2;
+        new_win_y = y - h / 2;
+    } else {
+        // just bring it on screen
+        if (new_win_x > (x - 5)) // equivalent to: "while (new_win_x > x - 5) new_win_x -= 10;"
+            new_win_x -= (new_win_x - (x - 5) - 1) / 10 * 10 + 10;
+        if (new_win_y > (y - 5))
+            new_win_y -= (new_win_y - (y - 5) - 1) / 10 * 10 + 10;
+        if (new_win_x < (x + 5 - w))
+            new_win_x += ((x + 5 - w) - new_win_x - 1) / 10 * 10 + 10;
+        if (new_win_y < (y + 5 - h))
+            new_win_y += ((y + 5 - h) - new_win_y - 1) / 10 * 10 + 10;
     }
+
+    new_win_z = z;
 
     *window_x = new_win_x;
     *window_y = new_win_y;

@@ -665,6 +665,8 @@ bool Units::isGreatDanger(df::unit *unit) {
 
 bool Units::isUnitInBox(df::unit *u, const cuboid &box) {
     CHECK_NULL_POINTER(u);
+    if (!isActive(u))
+        return false;
     return box.containsPos(getPosition(u));
 }
 
@@ -674,7 +676,7 @@ bool Units::getUnitsInBox(vector<df::unit *> &units, const cuboid &box, std::fun
 
     units.clear();
     for (auto unit : world->units.active)
-        if (filter(unit) && isUnitInBox(unit, box))
+        if (isUnitInBox(unit, box) && filter(unit))
             units.push_back(unit);
     return true;
 }

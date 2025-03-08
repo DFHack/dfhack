@@ -205,7 +205,7 @@ int Process::getPID()
     return getpid();
 }
 
-bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
+bool Process::setPermissions(const t_memrange & range,const t_memrange &trgrange)
 {
     int result;
     int protect=0;
@@ -216,6 +216,13 @@ bool Process::setPermisions(const t_memrange & range,const t_memrange &trgrange)
 
     return result==0;
 }
+
+bool Process::flushCache(const void* target, size_t count)
+{
+    __builtin___clear_cache((char*)target, (char*)target + count - 1);
+    return true; /* assume always succeeds, as the builtin has no return type */
+}
+
 
 // returns -1 on error
 void* Process::memAlloc(const int length)

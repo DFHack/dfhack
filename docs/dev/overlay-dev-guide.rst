@@ -86,6 +86,11 @@ beyond your everyday `widgets.Widget <widget>`:
         end
 
     This allows for dynamic updates to UI overlays directly from the CLI.
+- If an ``overlay_onenable()`` function is defined, it is called when the
+    overlay is enabled (including when the persisted state is reloaded at DF
+    startup).
+- If an ``overlay_ondisable()`` function is defined, it is called when the
+    overlay is disabled.
 
 If the widget can take up a variable amount of space on the screen, and you want
 the widget to adjust its position according to the size of its contents, you can
@@ -227,6 +232,23 @@ If you need to improve performance, here are some potential options:
 
 3. Move hotspots into C++ code, either in a new core library function or in a
    dedicated plugin
+
+Overlay framework API
+---------------------
+
+The overlay plugin Lua interface provides a few functions for interacting with
+the framework. You can get a reference to the API via::
+
+    local overlay = require('plugins.overlay')
+
+* ``overlay.rescan()``
+
+    Rescans all module-loadable Lua scripts for registered overlays and loads
+    updated widget definitions.
+
+* ``overlay.isOverlayEnabled(name)``
+
+    Returns whether the overlay with the given name is enabled.
 
 Development workflows
 ---------------------

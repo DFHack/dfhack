@@ -64,6 +64,7 @@ distribution.
 #include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/item_bookst.h"
+#include "df/item_magicalst.h"
 #include "df/item_plant_growthst.h"
 #include "df/item_toolst.h"
 #include "df/item_type.h"
@@ -1238,7 +1239,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype,
                 value = craw->misc.petvalue;
             return value;
         case FOOD:
-            return 10;
+            return 1;
         case CORPSE:
         case CORPSEPIECE:
         case REMAINS:
@@ -1645,7 +1646,10 @@ int Items::getValue(df::item *item, df::caravan_state *caravan) {
         case 3: value = value / 4; break; // (XX) tattered
     }
 
-    // Ignore value bonuses from magic, since that never actually happens
+    // Magical powers have 500 value each
+    auto magic = item->getMagic();
+    if (magic != NULL)
+        value += magic->power.size() * 500;
 
     // Artifacts have 10x value
     if (item->flags.bits.artifact_mood)

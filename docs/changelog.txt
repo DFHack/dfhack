@@ -57,12 +57,15 @@ Template for new versions:
 - `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit
 - `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
-- `spectate`: when spectate mode is enabled, left/right arrow will cycle through following next/prevous units
+- `spectate`: new overlay panel that allows you to cycle through following next/previous units (regardless of whether spectate mode is enabled)
+- `gui/sitemap`: is now the official "go to" tool. new global hotkey for fort and adventure mode: Ctrl-G
 
 ## Fixes
-- `createitem`: output items will now end up at look cursor if active
+- Windows console: fix possible hang if the console returns a too-small window width (for any reason)
+- `createitem`: produced items will now end up at the look cursor position (if it is active)
 - `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 - `changevein`: fix a crash that could occur when attempting to change a vein into itself
+- `overlay`: reset draw context between rendering widgets so context changes can't propagate from widget to widget
 
 ## Misc Improvements
 - `spectate`: player-set configuration is now stored globally instead of per-fort
@@ -74,20 +77,32 @@ Template for new versions:
 
 ## API
 - ``Military::removeFromSquad``: removes unit from any squad assignments
-- ``Buildings::checkFreeTiles``: now replaces the extents parameter for a building pointer
+- ``Buildings::checkFreeTiles``: now takes a building instead of a pointer to the building extents
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
+- ``Items::getItemBaseValue``: adjust to the reduced value of prepared meals (changed in DF 51.06)
+- ``Items::getValue``: magical powers now correctly contribute to item value
 
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
 - ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
-- ``dfhack.buildings.checkFreeTiles``: now replaces the extents parameter for a building pointer
+- ``dfhack.buildings.checkFreeTiles``: now takes a building pointer instead of an extents parameter
+- ``overlay.isOverlayEnabled``: new API for querying whether a given overlay is enabled
+- ``overlay``: widgets can now declare ``overlay_onenable`` and ``overlay_ondisable`` functions to hook enable/disable
 
 ## Removed
+- `orders`: MakeCheese job removed from library/basic orders set. Please use `autocheese` instead!
+
+# 51.06-r1
+
+## Misc Improvements
+- Compatibility with DF 51.06
 
 # 51.05-r1
 
 ## Misc Improvements
 - Compatibility with DF 51.05
+
 # 51.04-r1.1
 
 ## Fixes

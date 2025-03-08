@@ -123,7 +123,7 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
     for (const auto& routine : routines)
     {
-        df::squad_routine_schedulest* schedule = new df::squad_routine_schedulest[12];
+        df::squad_routine_schedulest* schedule = new df::squad_routine_schedulest();
         auto &asched = schedule->month;
 
         for(int kk=0; kk < 12; kk++)

@@ -188,6 +188,24 @@ void df::stl_string_identity::lua_write(lua_State *state, int fname_idx, void *p
     *(std::string*)ptr = std::string(bytes, size);
 }
 
+void df::path_identity::lua_read(lua_State* state, int fname_idx, void* ptr) const
+{
+    auto ppath = (std::filesystem::path*)ptr;
+    auto str = ppath->u8string();
+    lua_pushlstring(state, (char*)str.data(), str.size());
+}
+
+void df::path_identity::lua_write(lua_State* state, int fname_idx, void* ptr, int val_index) const
+{
+    size_t size;
+    const char* bytes = lua_tolstring(state, val_index, &size);
+    if (!bytes)
+        field_error(state, fname_idx, "path expected", "write");
+
+    std::u8string str((char8_t*)bytes, size);
+    *(std::filesystem::path*)ptr = std::filesystem::path(str);
+}
+
 void df::pointer_identity::lua_read(lua_State *state, int fname_idx, void *ptr, const type_identity *target)
 {
     push_object_internal(state, target, *(void**)ptr);

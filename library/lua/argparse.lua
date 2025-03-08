@@ -244,6 +244,9 @@ local toBool={["true"]=true,["yes"]=true,["y"]=true,["on"]=true,["1"]=true,["ena
 ---@param arg_name? string
 ---@return boolean
 function boolean(arg, arg_name)
+    if arg == nil then
+        arg_error(arg_name, 'missing value; expected "true", "yes", "false", or "no"')
+    end
     local arg_lower = string.lower(arg)
     if toBool[arg_lower] == nil then
         arg_error(arg_name,

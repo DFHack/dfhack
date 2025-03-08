@@ -167,7 +167,9 @@ branch back into ``develop`` and remove the release branch to clean up.
 
 18. Create a `project <https://github.com/orgs/dfhack/projects>`_ on GitHub in the DFHack org for the next release
 
-    - Copy the previous project (3 dot menu, "Make a copy"), set DFHack as the owner
+    - Open the `project template <https://github.com/orgs/DFHack/projects/52>`_
+    - Click "Use this template"
+    - Name the project according to the version, e.g. "51.07-r2" and click "Use template"
     - In the new project, select settings and set the visibility to Public
     - Move any remaining To Do or In Progress items from last release project to next release project
     - Close project for last release

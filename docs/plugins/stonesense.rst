@@ -15,7 +15,7 @@ Usage
     Open the visualiser in a new window.
 
 The viewer window has read-only access to the game, and can follow the game view
-or be moved independently. Configuration for stonesense can be set in the
+or be moved independently. Configuration for Stonesense can be set in the
 ``dfhack-config/stonesense/init.txt`` file in your DF game directory.
 
 .. figure:: ../images/stonesense-roadtruss.jpg
@@ -53,14 +53,14 @@ views, fog, and rotation. Here's the important section:
    :end-before: VALID ACTIONS:
 
 
-Streaming stonesense on Windows
+Streaming Stonesense on Windows
 -------------------------------
-If you wish to stream stonesense thru a broadcasting software such as `OBS <https://obsproject.com/>`_
-then you may find that opening stonesense causes your main DF window to flicker
-between DF and stonesense. While it is unknown exactly what causes this, a fix
-does exist. Simply make sure that both DF and stonesense are using ``Window Capture``
+If you wish to stream Stonesense thru a broadcasting software such as `OBS <https://obsproject.com/>`_
+then you may find that opening Stonesense causes your main DF window to flicker
+between DF and Stonesense. While it is unknown exactly what causes this, a fix
+does exist. Simply make sure that both DF and Stonesense are using ``Window Capture``
 and NOT ``Game Capture``. This will stop the flickering from happening and enable
-you to stream stonesense for all to enjoy. This has been tested in OBS on Windows 10 but
+you to stream Stonesense for all to enjoy. This has been tested in OBS on Windows 10 but
 should work on Windows 11 and in `Streamlabs <https://streamlabs.com/>`_. Linux, having no
 ``Game Capture`` option should be unaffected by this issue.
 

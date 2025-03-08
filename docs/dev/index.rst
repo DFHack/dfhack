@@ -24,4 +24,3 @@ These are pages relevant to people developing for DFHack.
    /docs/dev/Binpatches
    /docs/dev/Remote
    /docs/NEWS-dev
-

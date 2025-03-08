@@ -15,18 +15,20 @@ frequent public testing and feedback without compromising the stability of our
 "stable" releases.
 
 1. Run the `Update submodules <https://github.com/DFHack/dfhack/actions/workflows/update-submodules.yml>`_ GitHub action on the ``develop`` branch to ensure that all submodules are up to date.
-1. Update version strings in :source:`CMakeLists.txt` as appropriate. Set ``DFHACK_RELEASE`` to the *next* stable release version with an "rc#" suffix. For example, if the last stable release was "r1" then set the string to "r2rc1". If we do a second beta release before the final stable "r2" then the string would be "r2rc2".
+
+2. Update version strings in :source:`CMakeLists.txt` as appropriate. Set ``DFHACK_RELEASE`` to the *next* stable release version with an "rc#" suffix. For example, if the last stable release was "r1" then set the string to "r2rc1". If we do a second beta release before the final stable "r2" then the string would be "r2rc2".
 
     - Ensure the ``DFHACK_PRERELEASE`` flag is set to ``TRUE``.
     - Commit and push to ``develop``
     - Set ``RELEASE`` in your environment for the commands below (e.g. ``RELEASE=51.07-r2rc1`` for bash)
 
-1. Tag ``develop`` (no need to tag the submodules) and push: ``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin``
+3. Tag ``develop`` (no need to tag the submodules) and push: ``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin``
 
     - This will automatically trigger `Deploy to Steam <https://github.com/DFHack/dfhack/actions/workflows/steam-deploy.yml>`_ and `Deploy to GitHub <https://github.com/DFHack/dfhack/actions/workflows/github-release.yml>`_ build workflows.
 
-1. Write release notes highlights and any requests for feedback in the `draft GitHub release <https://github.com/DFHack/dfhack/releases>`_ and publish the draft.
-1. Associate release notes with the build on Steam
+4. Write release notes highlights and any requests for feedback in the `draft GitHub release <https://github.com/DFHack/dfhack/releases>`_ and publish the draft.
+
+5. Associate release notes with the build on Steam
 
     - Go to the `announcement creation page <https://steamcommunity.com/games/2346660/partnerevents/create>`_
     - Select "A game update"
@@ -41,8 +43,9 @@ frequent public testing and feedback without compromising the stability of our
     - Switch to the "Publish" tab and publish!
     - `Promote <https://partner.steamgames.com/apps/builds/2346660>`_ the build to the "beta" branch (and the "testing" branch if it's newer than what is on the "testing" branch)
 
-1. Monitor for beta channel subscriber feedback on the Steam `community page <https://steamcommunity.com/app/2346660/eventcomments/>`_
-1. *Maybe* also post to Reddit and other announcement channels if we feel like we need to recruit more beta testers into the pool, but we should avoid posting so often that it is annoying for those who don't use Steam or just want announcements for stable releases.
+6. Monitor for beta channel subscriber feedback on the Steam `community page <https://steamcommunity.com/app/2346660/eventcomments/>`_
+
+7. *Maybe* also post to Reddit and other announcement channels if we feel like we need to recruit more beta testers into the pool, but we should avoid posting so often that it is annoying for those who don't use Steam or just want announcements for stable releases.
 
 Stable release
 --------------
@@ -67,58 +70,60 @@ branch back into ``develop`` and remove the release branch to clean up.
 
     - Don't feel pressure to merge anything risky just before a stable release. That's what beta releases are for.
 
-1. In your local clone of the ``DFHack/develop`` branch, make sure your checkout and all submodules (listed in :source:`.gitmodules`) are up to date with their latest public commits and have no uncommitted/unpushed local changes.
-1. Ensure that CI has not failed unexpectedly on the latest online changes:
+2. In your local clone of the ``DFHack/develop`` branch, make sure your checkout and all submodules (listed in :source:`.gitmodules`) are up to date with their latest public commits and have no uncommitted/unpushed local changes.
+
+3. Ensure that CI has not failed unexpectedly on the latest online changes:
 
     - https://github.com/DFHack/dfhack/commits/develop
     - https://github.com/DFHack/scripts/commits/master
     - https://github.com/DFHack/df-structures/commits/master
 
-1. Update version strings in :source:`CMakeLists.txt` as appropriate
+4. Update version strings in :source:`CMakeLists.txt` as appropriate
 
     - Ensure the ``DFHACK_PRERELEASE`` flag is set to ``FALSE``.
     - Set ``RELEASE`` in your environment for the commands below (e.g. ``RELEASE=51.07-r1``)
 
-1. Replace "Future" with the version number and clean up changelog entries; add new "Future" section (with headers pre-populated from the template at the top of the file):
+5. Replace "Future" with the version number and clean up changelog entries; add new "Future" section (with headers pre-populated from the template at the top of the file):
 
     - ``docs/changelog.txt``
     - ``scripts/changelog.txt``
     - ``library/xml/changelog.txt``
     - ``plugins/stonesense/docs/changelog.txt``
 
-1. Do a top-level build to ensure the docs build cleanly
-1. Commit/push changes to submodules and tag (``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin master``)
+6. Do a top-level build to ensure the docs build cleanly
+
+7. Commit/push changes to submodules and tag (``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin master``)
 
     - ``scripts``
     - ``library/xml``
     - ``plugins/stonesense``
 
-1. Commit and push changes to ``develop``
+8. Commit and push changes to ``develop``
 
     - Ensure that any updates you pushed to submodules are tracked in the commit to ``DFHack/develop``
 
-1. Tag ``dfhack``: ``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin develop``
+9. Tag ``dfhack``: ``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin develop``
 
     - This will automatically trigger a `Deploy to Steam <https://github.com/DFHack/dfhack/actions/workflows/steam-deploy.yml>`_ GitHub action to the "staging" Steam branch and a `Deploy to GitHub <https://github.com/DFHack/dfhack/actions/workflows/github-release.yml>`_ GitHub action to create a draft `release <https://github.com/DFHack/dfhack/releases>`_ from a template and attach the built artifacts.
 
-1. Switch to the Steam ``staging`` release channel in the Steam client (password: ``stagingstagingstaging``) and download/test the update.
+10. Switch to the Steam ``staging`` release channel in the Steam client (password: ``stagingstagingstaging``) and download/test the update.
 
     - Ensure DFHack starts DF when run from the Steam client
     - Ensure the DFHack version string is accurate on the title page (should just be the release number, e.g. ``DFHack 51.07-r1``, with no git hash or warnings)
     - Run `devel/check-release`
     - If something goes wrong with this step, fix it, delete the tag (both from `GitHub <https://github.com/DFHack/dfhack/tags>`_ and locally (``git tag -d $RELEASE``)), re-tag, re-push, and re-test. Note that you do *not* need to remove the GitHub draft release -- the existing one will just get updated with the new tag and binaries. You *can* remove the draft release, though, if you want the release notes to get regenerated.
 
-1. Prep release on GitHub
+11. Prep release on GitHub
 
     - Go to the draft `release <https://github.com/DFHack/dfhack/releases>`_ on GitHub
     - Add announcements, highlights (with demo videos), etc. to the description
 
-1. Push develop to master (``git push origin develop:master``)
+12. Push develop to master (``git push origin develop:master``)
 
     - This will start the documentation build process and update the published "stable" docs
     - Note that if this is a -r1 release, you won't be able to complete this step until a classic build is available on the Bay 12 website so the DFHack Test workflow can pass, which is a prerequisite for being able to push to ``master``.
 
-1. Post release notes on Steam
+13. Post release notes on Steam
 
     - Go to the `announcement creation page <https://steamcommunity.com/games/2346660/partnerevents/create>`_
     - Select "A game update"
@@ -135,15 +140,16 @@ branch back into ``develop`` and remove the release branch to clean up.
     - Go to the Artwork tab, select "Previously uploaded images", and search for and double-click on STABLEannouncement6.png. Click "Upload" (even though it has already been uploaded).
     - Switch to the "Publish" tab and publish!
 
-1. Go to the `Steam builds page <https://partner.steamgames.com/apps/builds/2346660>`_ and promote the build to the "default" branch
+14. Go to the `Steam builds page <https://partner.steamgames.com/apps/builds/2346660>`_ and promote the build to the "default" branch
 
     - For the build that you just pushed to "staging", click the "-- Select an app branch --" drop-down and select "default"
     - Click on "Preview Change"
     - Commit the change (you may need to verify with 2FA)
     - If the release is newer than what's on the ``beta`` and/or ``testing`` branches, set it live on those branches as well
 
-1. Publish the prepped GitHub release
-1. Send out release announcements
+15. Publish the prepped GitHub release
+
+16. Send out release announcements
 
     - Announce new version in r/dwarffortress. Example: https://www.reddit.com/r/dwarffortress/comments/1i3l5xl/dfhack_5015r2_released_highlights_stonesense/
         - Create the post in the Reddit web interface; the mobile app is extremely painful to use for posting
@@ -157,15 +163,16 @@ branch back into ``develop`` and remove the release branch to clean up.
     - Announce in `#mod-releases <https://discord.com/channels/329272032778780672/1066180550114680853>`_ on Kitfox Discord
         - Change the name of the release thread on Kitfox Discord to match the release version (if you are not Myk, ping Myk for this)
 
-1. Monitor all announcement channels for feedback and respond to questions/complaints
-1. Create a `project <https://github.com/orgs/dfhack/projects>`_ on GitHub in the DFHack org for the next release
+17. Monitor all announcement channels for feedback and respond to questions/complaints
+
+18. Create a `project <https://github.com/orgs/dfhack/projects>`_ on GitHub in the DFHack org for the next release
 
     - Copy the previous project (3 dot menu, "Make a copy"), set DFHack as the owner
     - In the new project, select settings and set the visibility to Public
     - Move any remaining To Do or In Progress items from last release project to next release project
     - Close project for last release
 
-1. If this is a -r2 release or later, go to https://readthedocs.org/projects/dfhack/versions/ and "Edit" previous DFHack releases for the same DF version and mark them "Hidden" (keep the "Active" flag set) so they no longer appear on the docs version selector.
+19. If this is a -r2 release or later, go to https://readthedocs.org/projects/dfhack/versions/ and "Edit" previous DFHack releases for the same DF version and mark them "Hidden" (keep the "Active" flag set) so they no longer appear on the docs version selector.
 
 .. _converting-markdown-to-bbcode:
 
@@ -175,18 +182,26 @@ Converting Markdown to BBcode
 Hopefully we can `automate <https://github.com/DFHack/dfhack/issues/3268>`_ this in the future, but for now, here is the procedure:
 
 1. Get the markdown that you want to convert into some field on GitHub (can be a temporary text field that you then preview without saving)
-1. View the rendered release notes in your browser (these instructions are for Chrome, but other browsers probably have similar capabilities)
-1. Right click on the rendered text and inspect the DOM
-1. Copy the HTML element that contains the release notes
-1. Click on the "Import HTML" button on the Steam announcement form; paste in the HTML and click "Overwrite"
-1. Copy the generated BBCode out from the description field and into a text editor
-1. Fix it up:
+
+2. View the rendered release notes in your browser (these instructions are for Chrome, but other browsers probably have similar capabilities)
+
+3. Right click on the rendered text and inspect the DOM
+
+4. Copy the HTML element that contains the release notes
+
+5. Click on the "Import HTML" button on the Steam announcement form; paste in the HTML and click "Overwrite"
+
+6. Copy the generated BBCode out from the description field and into a text editor
+
+7. Fix it up:
 
     - Remove the "How do I download DFHack?" section -- people on Steam don't need it
     - Some ``<h3>`` elements aren't converted properly and need to be rewritten with square brackets
     - Any monospaced text gets HTML tags instead of BBCode ``[code]`` tags, but you can't use them either since they force newlines. ``[tt]`` isn't supported. Any ``<code>`` tags just need to be removed entirely.
     - Any ``<details>`` and ``<summary>`` tags need to be removed
 
-1. Copy it all back into the description field for the announcement
-1. Click on "Preview event" to double check that it renders sanely
-1. You're done.
+8. Copy it all back into the description field for the announcement
+
+9. Click on "Preview event" to double check that it renders sanely
+
+10. You're done.

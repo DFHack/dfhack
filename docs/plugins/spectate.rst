@@ -35,7 +35,7 @@ Usage
 
     enable spectate
     spectate [status]
-    spectate toggle
+    spectate toggle [<setting>]
     spectate set <setting> <value> [<subvalue>]
     spectate overlay enable|disable
 
@@ -67,6 +67,9 @@ Examples
     Abbreviate the names of "Store item in stockpile" jobs to just "Store" when the
     job is displayed in the `spectate` tooltips. See the
     ``tooltip-follow-job-shortenings`` setting below for details.
+
+``spectate toggle tooltip-follow``
+    Toggle the follow tooltips on or off.
 
 Settings
 --------
@@ -109,6 +112,12 @@ Settings
 ``tooltip-follow-blink-milliseconds`` (default: 3000)
     If the ``spectate.tooltip`` overlay is enabled, set the tooltip's blink
     duration in milliseconds. Set to 0 to always show.
+
+``tooltip-follow-hold-to-show`` (default: none)
+    If the ``spectate.tooltip`` overlay is enabled, specifies a modifier key
+    (one of none, ctrl, alt, or shift) that has to be held to show the tooltips
+    that follow onscreen dwarves around the map. This supersedes the
+    ``tooltip-follow-blink-milliseconds`` option.
 
 ``tooltip-follow-job`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the

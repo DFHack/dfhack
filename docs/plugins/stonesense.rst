@@ -33,10 +33,9 @@ Mouse controls are hard-coded and cannot be changed.
 :Scrollwheel:   Move up and down
 :Ctrl-Scroll:   Increase/decrease Z depth shown
 
-Follow mode makes the Stonesense view follow the location of the DF
-window. The offset can be adjusted by holding :kbd:`Ctrl` while using the
-keyboard window movement keys. When you turn on cursor follow mode, the
-Stonesense debug cursor will follow the DF cursor when the latter exists.
+Follow mode makes the Stonesense view follow the location and zoom level of the DF
+window. The offset can be adjusted by holding :kbd:`Alt` while using the
+keyboard window movement keys.
 
 You can take screenshots with :kbd:`F5`, larger screenshots with
 :kbd:`Ctrl`:kbd:`F5`, and screenshot the whole map at full resolution with

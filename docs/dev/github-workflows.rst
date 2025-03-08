@@ -3,7 +3,7 @@ GitHub workflows
 
 We run our continuous integration (CI) validation and our release automation
 via GitHub workflows. This allows us to merge PRs with confidence that they
-won't catestrophically break DFHack functionality. GitHub workflows also allow
+won't catastrophically break DFHack functionality. GitHub workflows also allow
 us to quickly produce stable release builds with fewer manual steps. Reducing
 manual steps for releases is important since it is easy for a person to forget
 a small but impactful step and therefore produce a bad release that causes

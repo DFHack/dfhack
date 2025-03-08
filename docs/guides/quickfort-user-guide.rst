@@ -1919,7 +1919,7 @@ Links
   DF maps.
 - DFHack's `buildingplan plugin <buildingplan>` sets material and quality
   constraints for quickfort-placed buildings.
-- `Python Quickfort <http://joelpt.net/quickfort>`__ is the previous,
+- `Python Quickfort <https://github.com/joelpt/quickfort>`__ is the previous,
   Python-based implementation that DFHack's quickfort script was inspired by.
 
 .. _quickfort_guide_appendix:

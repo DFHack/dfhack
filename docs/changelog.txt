@@ -66,6 +66,7 @@ Template for new versions:
 - `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 - `changevein`: fix a crash that could occur when attempting to change a vein into itself
 - `overlay`: reset draw context between rendering widgets so context changes can't propagate from widget to widget
+- `suspendmanager`: in ASCII mode, building planning mode overlay now only displays when viewing the default map, reducing issues with showing through the UI
 
 ## Misc Improvements
 - `spectate`: player-set configuration is now stored globally instead of per-fort

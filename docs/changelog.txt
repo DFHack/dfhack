@@ -71,6 +71,7 @@ Template for new versions:
 - `spectate`: player-set configuration is now stored globally instead of per-fort
 - `autobutcher`: treat animals on restraints as unavailable for slaughter
 - `stockpiles`: add property filters for brewable, millable, and processable (e.g. at a Farmer's workshop) organic materials
+- `quickfort`: redesigned ``library/aquifer_tap.cav`` to improve the water fill rate
 
 ## Documentation
 - `stonesense-art-guide`: guide for making sprite art for Stonesense

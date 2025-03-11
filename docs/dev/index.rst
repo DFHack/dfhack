@@ -18,6 +18,8 @@ These are pages relevant to people developing for DFHack.
    /docs/dev/overlay-dev-guide
    /docs/dev/Structures-intro
    /docs/dev/data-identity
+   /docs/dev/github-workflows
+   /docs/dev/release-process
    /docs/dev/Memory-research
    /docs/dev/Binpatches
    /docs/dev/Remote

@@ -54,25 +54,49 @@ POSSIBILITY OF SUCH DAMAGE.
 
 #include <memory>
 
+#if defined(_WIN32)
+#include <windows.h>
+
+bool enableAnsiColors() {
+    HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    if (hOut == INVALID_HANDLE_VALUE || hOut == NULL) {
+        return false;
+    }
+    DWORD dwMode = 0;
+    if (GetConsoleMode(hOut, &dwMode)) {
+        if (!(dwMode & ENABLE_VIRTUAL_TERMINAL_PROCESSING)) {
+            dwMode |= ENABLE_VIRTUAL_TERMINAL_PROCESSING;
+            SetConsoleMode(hOut, dwMode);
+        }
+        return true;
+    }
+    return false;
+}
+
+const char* exeName = "Dwarf Fortress.exe";
+#else
+    // Assume Posix
+    bool enableAnsiColors() { return true; }
+    const char* exeName = "./dfhack";
+#endif
+
 using namespace DFHack;
 using namespace dfproto;
 
 int main (int argc, char *argv[])
 {
-    Console out;
+    auto conPtr = Console::makeConsole();
+    Console& out = *conPtr;
+    out.use_ansi_colors(enableAnsiColors());
 
     if (argc <= 1)
     {
         fprintf(stderr, "Usage: dfhack-run <command> [args...]\n\n");
         fprintf(stderr, "Note: this command does not start DFHack; it is intended to connect\n"
                         "to a running DFHack instance. If you were trying to start DFHack, run\n"
-#ifdef _WIN32
-                        "   Dwarf Fortress.exe\n"
-#else
-                        "   ./dfhack\n"
-#endif
+                        "   %s\n"
                         "or see the documentation in hack/docs/index.html for more help.\n"
-        );
+        , exeName);
 #ifdef _WIN32
         fprintf(stderr, "\nPress Enter to quit.\n");
         fgetc(stdin);
@@ -102,7 +126,6 @@ int main (int argc, char *argv[])
 
         if (!run_call.bind(&client, "RunLua"))
         {
-            out.shutdown();
             fprintf(stderr, "No RunLua protocol function found.");
             return 3;
         }
@@ -134,7 +157,6 @@ int main (int argc, char *argv[])
     }
 
     out.flush();
-    out.shutdown();
 
     if (rv != CR_OK)
         return 1;

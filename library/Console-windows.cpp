@@ -51,7 +51,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <istream>
 #include <string>
 
-#include "Console.h"
+#include "WindowsConsole.h"
 #include "Hooks.h"
 #include <cstdio>
 #include <cstdlib>
@@ -410,14 +410,14 @@ namespace DFHack
 }
 
 
-Console::Console()
+WindowsConsole::WindowsConsole() : Console(this)
 {
     d = 0;
     wlock = 0;
     inited = false;
 }
 
-Console::~Console()
+WindowsConsole::~WindowsConsole()
 {
 }
 /*
@@ -443,7 +443,7 @@ void ForceForegroundWindow(HWND window)
     }
 }
 */
-bool Console::init(bool)
+bool WindowsConsole::init(bool)
 {
     d = new Private();
     int                        hConHandle;
@@ -510,7 +510,7 @@ bool Console::init(bool)
     return true;
 }
 // FIXME: looks awfully empty, doesn't it?
-bool Console::shutdown(void)
+bool WindowsConsole::shutdown(void)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     FreeConsole();
@@ -518,7 +518,7 @@ bool Console::shutdown(void)
     return true;
 }
 
-void Console::begin_batch()
+void WindowsConsole::begin_batch()
 {
     //color_ostream::begin_batch();
 
@@ -528,7 +528,7 @@ void Console::begin_batch()
         d->begin_batch();
 }
 
-void Console::end_batch()
+void WindowsConsole::end_batch()
 {
     if (inited)
         d->end_batch();
@@ -536,21 +536,21 @@ void Console::end_batch()
     wlock->unlock();
 }
 
-void Console::flush_proxy()
+void WindowsConsole::flush_proxy()
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
         d->flush();
 }
 
-void Console::add_text(color_value color, const std::string &text)
+void WindowsConsole::add_text(color_value color, const std::string &text)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
         d->print_text(color, text);
 }
 
-int Console::get_columns(void)
+int WindowsConsole::get_columns(void)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = -1;
@@ -559,7 +559,7 @@ int Console::get_columns(void)
     return ret;
 }
 
-int Console::get_rows(void)
+int WindowsConsole::get_rows(void)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = -1;
@@ -568,28 +568,28 @@ int Console::get_rows(void)
     return ret;
 }
 
-void Console::clear()
+void WindowsConsole::clear()
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->clear();
 }
 
-void Console::gotoxy(int x, int y)
+void WindowsConsole::gotoxy(int x, int y)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->gotoxy(x,y);
 }
 
-void Console::cursor(bool enable)
+void WindowsConsole::cursor(bool enable)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->cursor(enable);
 }
 
-int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
+int WindowsConsole::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
     wlock->lock();
     int ret = Console::SHUTDOWN;
@@ -599,18 +599,13 @@ int Console::lineedit(const std::string & prompt, std::string & output, CommandH
     return ret;
 }
 
-void Console::msleep (unsigned int msec)
-{
-    Sleep(msec);
-}
-
-bool Console::hide()
+bool WindowsConsole::hide()
 {
     ShowWindow( GetConsoleWindow(), SW_HIDE );
     return true;
 }
 
-bool Console::show()
+bool WindowsConsole::show()
 {
     ShowWindow( GetConsoleWindow(), SW_RESTORE );
     return true;

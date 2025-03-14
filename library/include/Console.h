@@ -23,16 +23,16 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "ColorText.h"
-#include <atomic>
 #include <deque>
 #include <fstream>
 #include <assert.h>
 #include <iostream>
-#include <mutex>
 #include <string>
 #include <vector>
+#include <memory>
 
 namespace  DFHack
 {
@@ -120,57 +120,88 @@ namespace  DFHack
         std::deque <std::string> history;
     };
 
-    class Private;
+    enum class ConsoleType {
+        Base,
+        Posix,
+        Windows,
+        SDL
+    };
+
     class DFHACK_EXPORT Console : public color_ostream
     {
-    protected:
-        virtual void begin_batch();
-        virtual void add_text(color_value color, const std::string &text);
-        virtual void end_batch();
+    private:
+        bool use_ansi_colors_{false};
 
-        virtual void flush_proxy();
+    protected:
+        ConsoleType con_type{type_tag};
+
+        virtual void begin_batch() {};
+        virtual void add_text(color_value color, const std::string &text);
+        virtual void end_batch() {};
+        virtual void flush_proxy() { std::cout << std::flush; }
 
     public:
-        ///ctor, NOT thread-safe
-        Console();
-        ///dtor, NOT thread-safe
-        ~Console();
-        /// initialize the console. NOT thread-safe
-        bool init( bool dont_redirect );
-        /// shutdown the console. NOT thread-safe
-        bool shutdown( void );
+        static const char * getANSIColor(const int c);
 
-        /// Clear the console, along with its scrollback
-        void clear();
-        /// Position cursor at x,y. 1,1 = top left corner
-        void gotoxy(int x, int y);
-        /// Enable or disable the caret/cursor
-        void cursor(bool enable = true);
-        /// Waits given number of milliseconds before continuing.
-        void msleep(unsigned int msec);
-        /// get the current number of columns
-        int  get_columns(void);
-        /// get the current number of rows
-        int  get_rows(void);
-        /// beep. maybe?
-        //void beep (void);
         //! \defgroup lineedit_return_values Possible errors from lineedit
         //! \{
         static constexpr int FAILURE = -1;
         static constexpr int SHUTDOWN = -2;
         static constexpr int RETRY = -3;
         //! \}
+        static constexpr ConsoleType type_tag = ConsoleType::Base;
+
+        ///ctor, NOT thread-safe
+        Console() = default;
+        template <typename Derived>
+        Console(Derived*) : con_type(Derived::type_tag) {}
+        ///dtor, NOT thread-safe
+        virtual ~Console() = default;
+
+        /// initialize the console. NOT thread-safe
+        virtual bool init( bool dont_redirect ) { return true; };
+        /// shutdown the console. NOT thread-safe
+        virtual bool shutdown( void ) { return true; };
+
+        /// Clear the console, along with its scrollback
+        virtual void clear() {};
+        /// Position cursor at x,y. 1,1 = top left corner
+        virtual void gotoxy(int x, int y) {};
+        /// Enable or disable the caret/cursor
+        virtual void cursor(bool enable = true) {};
+        /// get the current number of columns
+        virtual int  get_columns(void) { return -1; };
+        /// get the current number of rows
+        virtual int  get_rows(void) { return -1; };
+        /// beep. maybe?
+        //void beep (void);
         /// A simple line edit (raw mode)
-        int lineedit(const std::string& prompt, std::string& output, CommandHistory & history );
-        bool isInited (void) { return inited; };
+        virtual int lineedit(const std::string& prompt, std::string& output, CommandHistory & history ) { return SHUTDOWN; };
+        virtual bool isInited (void) { return true; };
 
+        virtual bool hide() { return false; };
+        virtual bool show() { return false; };
+
+        virtual void cleanup() {};
+
+        /// Platform independent. Waits given number of milliseconds before continuing.
+        void msleep(unsigned int msec);
         bool is_console() { return true; }
+        ConsoleType get_type() const { return con_type; }
+        void use_ansi_colors(bool choice) { use_ansi_colors_ = choice; };
 
-        bool hide();
-        bool show();
-    private:
-        Private * d;
-        std::recursive_mutex * wlock;
-        std::atomic<bool> inited;
+        template <typename T>
+        T& as() {
+            return static_cast<T&>(*this);
+        }
+
+        template <typename T>
+        T* try_as() {
+            return (get_type() == T::type_tag) ? static_cast<T*>(this) : nullptr;
+        }
+
+        static std::unique_ptr<Console> makeConsole();
+        template <typename T>
+        static std::unique_ptr<Console> makeConsole();
     };
 }

@@ -29,6 +29,7 @@ local function get_default_state()
         ['tooltip-follow-blink-milliseconds']=3000,
         ['tooltip-follow-hold-to-show']='none', -- one of none, ctrl, alt, or shift
         ['tooltip-follow-job']=true,
+        ['tooltip-follow-activity']=true,
         ['tooltip-follow-job-shortenings'] = {
             ["Store item in stockpile"] = "Store item",
         },
@@ -45,6 +46,7 @@ local function get_default_state()
         },
         ['tooltip-hover']=true,
         ['tooltip-hover-job']=true,
+        ['tooltip-hover-activity']=true,
         ['tooltip-hover-name']=true,
         ['tooltip-hover-stress']=true,
         ['tooltip-hover-stress-levels']={
@@ -285,33 +287,59 @@ local function GetUnitJob(unit)
     return job and dfhack.job.getName(job)
 end
 
+-- there is no equivalent of `dfhack.job.GetName` yet
+-- this function is by no means a replacement, it's
+-- here to show something at least
+local activityNames = {
+    [df.activity_entry_type.TrainingSession] = "Training Session",
+    [df.activity_entry_type.IndividualSkillDrill] = "Individual Skill Drill",
+    [df.activity_entry_type.FillServiceOrder] = "Fill Service Order",
+    [df.activity_entry_type.StoreObject] = "Store Object",
+    -- other types are single words
+}
+local function activity_GetName(activity)
+    local t = activity.type
+    local n = df.activity_entry_type[t]
+    n = activityNames[n] or n
+    return {text = n, pen = COLOR_LIGHTGREEN}
+end
+
+local function GetUnitActivity(unit)
+    local activity = dfhack.units.getMainSocialActivity(unit)
+    return activity and activity_GetName(activity)
+end
+
 local function GetRelevantSettings(key)
     return config['tooltip-' .. key .. '-name'],
            config['tooltip-' .. key .. '-job'],
+           config['tooltip-' .. key .. '-activity'],
            config['tooltip-' .. key .. '-stress'],
            config['tooltip-' .. key .. '-stress-levels'],
            config['tooltip-' .. key .. '-job-shortenings']
 end
 
 local function GetUnitInfoText(unit, settings_group_name)
-    local show_name, show_job, show_stress, stress_levels, job_shortenings = GetRelevantSettings(settings_group_name)
+    local show_name, show_job, show_activity, show_stress, stress_levels, job_shortenings = GetRelevantSettings(settings_group_name)
 
     local stress = show_stress and GetUnitStress(unit, stress_levels) or nil
     local name = show_name and GetUnitName(unit) or nil
     local job = show_job and GetUnitJob(unit) or nil
     if job_shortenings then job = job_shortenings[job] or job end
+    local activity = show_activity and GetUnitActivity(unit) or nil
+
+    local job_or_activity = job or activity
 
     local txt = {}
     if stress then
         txt[#txt+1] = stress
-        if name or job then txt[#txt+1] = ' ' end
+        if name or job_or_activity then txt[#txt+1] = ' ' end
     end
     if name then
         txt[#txt+1] = name
     end
-    if job then
+    if job_or_activity then
         if name then txt[#txt+1] = ": " end
-        txt[#txt+1] = job
+        txt[#txt+1] = job_or_activity
     end
 
     return txt
@@ -364,12 +392,6 @@ function TooltipOverlay:render(dc)
     TooltipOverlay.super.render(self, dc)
 end
 
-local function AnyFollowOptionOn()
-    return config['tooltip-follow-job']
-        or config['tooltip-follow-name']
-        or config['tooltip-follow-stress']
-end
-
 -- map coordinates -> interface layer coordinates
 local function GetScreenCoordinates(map_coord)
     -- -> map viewport offset
@@ -415,7 +437,7 @@ local function GetString(tokens)
 end
 
 function TooltipOverlay:render_unit_banners(dc)
-    if not (config['tooltip-follow'] and AnyFollowOptionOn()) then return end
+    if not config['tooltip-follow'] then return end
 
     local hold_to_show = config['tooltip-follow-hold-to-show']
     if hold_to_show and hold_to_show ~= 'none' then
@@ -570,14 +592,8 @@ function MouseTooltip:init()
     }
 end
 
-local function AnyHoverOptionOn()
-    return config['tooltip-hover-job']
-        or config['tooltip-hover-name']
-        or config['tooltip-hover-stress']
-end
-
 function MouseTooltip:render(dc)
-    if not (config['tooltip-hover'] and AnyHoverOptionOn()) then return end
+    if not config['tooltip-hover'] then return end
 
     local x, y = dfhack.screen.getMousePos()
     if not x then return end

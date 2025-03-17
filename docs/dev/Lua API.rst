@@ -3168,12 +3168,6 @@ unless otherwise noted.
   specified by ``path``, or -1 if ``path`` does not exist.
   This depends on the system clock and should only be used locally.
 
-* ``dfhack.filesystem.atime(path)``
-* ``dfhack.filesystem.ctime(path)``
-
-  Return values vary across operating systems - return the ``st_atime`` and
-  ``st_ctime`` fields of a C++ stat struct, respectively.
-
 * ``dfhack.filesystem.listdir(path)``
 
   Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.

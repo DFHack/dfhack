@@ -29,6 +29,7 @@ distribution.
 #include <set>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include "Error.h"
 #include "Internal.h"
@@ -52,7 +53,6 @@ using std::map;
 using std::vector;
 using std::endl;
 using std::cerr;
-
 
 namespace DFHack
 {
@@ -382,7 +382,7 @@ uint32_t Process::getTickCount()
     return GetTickCount();
 }
 
-string Process::getPath()
+std::filesystem::path Process::getPath()
 {
     HMODULE hmod;
     DWORD junk;

@@ -175,13 +175,13 @@ namespace DFHack
 
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
         command_result runCommand(color_ostream &out, const std::string &command);
-        bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
+        bool loadScriptFile(color_ostream &out, std::filesystem::path fname, bool silent = false);
 
         bool addScriptPath(std::string path, bool search_before = false);
         bool setModScriptPaths(const std::vector<std::string> &mod_script_paths);
         bool removeScriptPath(std::string path);
-        std::string findScript(std::string name);
-        void getScriptPaths(std::vector<std::string> *dest);
+        std::filesystem::path findScript(std::string name);
+        void getScriptPaths(std::vector<std::filesystem::path> *dest);
 
         bool getSuppressDuplicateKeyboardEvents();
         void setSuppressDuplicateKeyboardEvents(bool suppress);
@@ -201,7 +201,7 @@ namespace DFHack
         std::map<std::string, std::vector<std::string>> ListAliases();
         std::string GetAliasCommand(const std::string &name, bool ignore_params = false);
 
-        std::string getHackPath();
+        std::filesystem::path getHackPath();
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }

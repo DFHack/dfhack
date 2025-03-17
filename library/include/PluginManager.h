@@ -64,7 +64,7 @@ namespace DFHack
     // DFLibrary* that can be used to resolve global names
     extern DFLibrary* GLOBAL_NAMES;
     // Open a plugin library
-    DFHACK_EXPORT DFLibrary * OpenPlugin (const char * filename);
+    DFHACK_EXPORT DFLibrary * OpenPlugin (std::filesystem::path filename);
     // find a symbol inside plugin
     DFHACK_EXPORT void * LookupPlugin (DFLibrary * plugin ,const char * function);
     // Close a plugin library. returns true on success, false on failure
@@ -143,7 +143,7 @@ namespace DFHack
         struct RefAutoinc;
         friend class PluginManager;
         friend class RPCService;
-        Plugin(DFHack::Core* core, const std::string& filepath,
+        Plugin(DFHack::Core* core, const std::filesystem::path& filepath,
             const std::string &plug_name, PluginManager * pm);
         ~Plugin();
         command_result on_update(color_ostream &out);
@@ -202,7 +202,7 @@ namespace DFHack
         RefLock * access;
         std::vector <PluginCommand> commands;
         std::vector <RPCService*> services;
-        std::string path;
+        std::filesystem::path path;
         std::string name;
         DFLibrary * plugin_lib;
         PluginManager * parent;

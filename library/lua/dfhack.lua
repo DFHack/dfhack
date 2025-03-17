@@ -997,6 +997,7 @@ local valid_script_flags = {
 local warned_scripts = {}
 
 function dfhack.run_script(name,...)
+    dfhack.printerr ( "run_script, name="..name )
     if not warned_scripts[name] then
         local helpdb = require('helpdb')
         if helpdb.has_tag(name, 'unavailable') then

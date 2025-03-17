@@ -217,5 +217,5 @@ int Filesystem::listdir_recursive (std::filesystem::path dir, std::map<std::file
 
 std::filesystem::path Filesystem::canonicalize(std::filesystem::path p)
 {
-    return std::filesystem::canonical(p);
+    return std::filesystem::weakly_canonical(p);
 }

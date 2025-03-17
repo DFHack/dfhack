@@ -543,7 +543,7 @@ std::filesystem::path Core::findScript(std::string name)
     getScriptPaths(&paths);
     for (auto it = paths.begin(); it != paths.end(); ++it)
     {
-        std::filesystem::path path = *it / name;
+        std::filesystem::path path = std::filesystem::weakly_canonical(*it / name);
         if (Filesystem::isfile(path))
             return path;
     }
@@ -595,7 +595,7 @@ static void loadModScriptPaths(color_ostream &out) {
     for (auto& path : mod_script_paths_str)
     {
         DEBUG(script, out).print("  %s\n", path.c_str());
-        mod_script_paths.push_back(std::filesystem::canonical(std::filesystem::path{ path }));
+        mod_script_paths.push_back(std::filesystem::weakly_canonical(std::filesystem::path{ path }));
     }
     Core::getInstance().setModScriptPaths(mod_script_paths);
 }
@@ -1132,7 +1132,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     {
         if(parts.size() == 1)
         {
-            loadScriptFile(con, std::filesystem::canonical(std::filesystem::path{parts[0]}), false);
+            loadScriptFile(con, std::filesystem::weakly_canonical(std::filesystem::path{parts[0]}), false);
         }
         else
         {

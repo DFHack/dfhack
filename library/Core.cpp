@@ -1341,8 +1341,8 @@ bool Core::loadScriptFile(color_ostream &out, std::filesystem::path fname, bool 
         INFO(script,out) << "Running script: " << fname << std::endl;
         std::cerr << "Running script: " << fname << std::endl;
     }
-    std::ifstream script(fname);
-    if ( !script.good() )
+    std::ifstream script{ fname.c_str() };
+    if ( !script )
     {
         if(!silent)
             out.printerr("Error loading script: %s\n", fname.string().c_str());
@@ -2203,9 +2203,9 @@ size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::st
         getFilesWithPrefixAndSuffix(folder, prefix[a], ".init", scriptFiles);
     }
     std::sort(scriptFiles.begin(), scriptFiles.end(),
-              [&](const std::filesystem::path &a, const std::filesystem::path &b) {
-            return a < b;
-    });
+        [](const std::filesystem::path& a, const std::filesystem::path& b) {
+            return a.stem() < b.stem();
+        });
     size_t result = 0;
     for ( size_t a = 0; a < scriptFiles.size(); a++ ) {
         result++;

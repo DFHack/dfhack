@@ -295,7 +295,7 @@ local function load_test_config(config_file)
     end
 
     if not config.test_dir then
-        config.test_dir = dfhack.getHackPath() .. 'scripts/test'
+        config.test_dir = dfhack.getHackPath() .. '/scripts/test'
     end
 
     if not config.save_dir then

@@ -1290,7 +1290,7 @@ static void addCommandToHistory(string id, string src_file,
                                 string command) {
     CommandHistory *history = ensureCommandHistory(id, src_file);
     history->add(command);
-    history->save(src_file.c_str());
+    history->save(std::filesystem::path{ src_file });
 }
 
 /************************

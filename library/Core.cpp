@@ -357,6 +357,8 @@ static command_result runLuaScript(color_ostream &out, std::string name, std::ve
 
     bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_run_script, &data);
 
+    std::cerr << "runLuaScript " << name << " res=" << ok << std::endl;
+
     return ok ? CR_OK : CR_FAILURE;
 }
 

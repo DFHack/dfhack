@@ -426,7 +426,7 @@ static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
 
     DFHack::CommandHistory hist;
     if (hfile)
-        hist.load(hfile);
+        hist.load(std::filesystem::path{ hfile });
 
     std::string ret;
     int rv = pstream->lineedit(prompt, ret, hist);
@@ -446,7 +446,7 @@ static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
     else
     {
         if (hfile)
-            hist.save(hfile);
+            hist.save(std::filesystem::path{ hfile });
         lua_pushlstring(S, ret.data(), ret.size());
         return 1;
     }

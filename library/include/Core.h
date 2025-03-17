@@ -177,9 +177,9 @@ namespace DFHack
         command_result runCommand(color_ostream &out, const std::string &command);
         bool loadScriptFile(color_ostream &out, std::filesystem::path fname, bool silent = false);
 
-        bool addScriptPath(std::string path, bool search_before = false);
-        bool setModScriptPaths(const std::vector<std::string> &mod_script_paths);
-        bool removeScriptPath(std::string path);
+        bool addScriptPath(std::filesystem::path path, bool search_before = false);
+        bool setModScriptPaths(const std::vector<std::filesystem::path> & mod_script_paths);
+        bool removeScriptPath(std::filesystem::path path);
         std::filesystem::path findScript(std::string name);
         void getScriptPaths(std::vector<std::filesystem::path> *dest);
 
@@ -273,7 +273,7 @@ namespace DFHack
         std::vector<std::unique_ptr<Module>> allModules;
         DFHack::PluginManager * plug_mgr;
 
-        std::vector<std::string> script_paths[3];
+        std::vector<std::filesystem::path> script_paths[3];
         std::mutex script_path_mutex;
 
         // hotkey-related stuff

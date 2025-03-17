@@ -289,6 +289,7 @@ local MODES = {
 
 local function load_test_config(config_file)
     local config = {}
+    print ("loading test config from " .. config_file)
     if dfhack.filesystem.isfile(config_file) then
         config = json.decode_file(config_file)
     end

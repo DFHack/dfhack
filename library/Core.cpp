@@ -480,10 +480,10 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     return false;
 }
 
-bool Core::addScriptPath(std::string path, bool search_before)
+bool Core::addScriptPath(std::filesystem::path path, bool search_before)
 {
     std::lock_guard<std::mutex> lock(script_path_mutex);
-    std::vector<std::string> &vec = script_paths[search_before ? 0 : 1];
+    auto &vec = script_paths[search_before ? 0 : 1];
     if (std::find(vec.begin(), vec.end(), path) != vec.end())
         return false;
     if (!Filesystem::isdir(path))
@@ -492,19 +492,19 @@ bool Core::addScriptPath(std::string path, bool search_before)
     return true;
 }
 
-bool Core::setModScriptPaths(const std::vector<std::string> &mod_script_paths) {
+bool Core::setModScriptPaths(const std::vector<std::filesystem::path> &mod_script_paths) {
     std::lock_guard<std::mutex> lock(script_path_mutex);
     script_paths[2] = mod_script_paths;
     return true;
 }
 
-bool Core::removeScriptPath(std::string path)
+bool Core::removeScriptPath(std::filesystem::path path)
 {
     std::lock_guard<std::mutex> lock(script_path_mutex);
     bool found = false;
     for (int i = 0; i < 2; i++)
     {
-        std::vector<std::string> &vec = script_paths[i];
+        auto &vec = script_paths[i];
         while (1)
         {
             auto it = std::find(vec.begin(), vec.end(), path);
@@ -547,7 +547,7 @@ std::filesystem::path Core::findScript(std::string name)
         if (Filesystem::isfile(path))
             return path;
     }
-    return "";
+    return {};
 }
 
 bool loadScriptPaths(color_ostream &out, bool silent = false)
@@ -585,14 +585,18 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
 }
 
 static void loadModScriptPaths(color_ostream &out) {
-    std::vector<std::string> mod_script_paths;
+    std::vector<std::string> mod_script_paths_str;
+    std::vector<std::filesystem::path> mod_script_paths;
     Lua::CallLuaModuleFunction(out, "script-manager", "get_mod_script_paths", {}, 1,
             [&](lua_State *L) {
-                Lua::GetVector(L, mod_script_paths);
+                Lua::GetVector(L, mod_script_paths_str);
             });
     DEBUG(script,out).print("final mod script paths:\n");
-    for (auto & path : mod_script_paths)
-        DEBUG(script,out).print("  %s\n", path.c_str());
+    for (auto& path : mod_script_paths_str)
+    {
+        DEBUG(script, out).print("  %s\n", path.c_str());
+        mod_script_paths.push_back(std::filesystem::canonical(std::filesystem::path{ path }));
+    }
     Core::getInstance().setModScriptPaths(mod_script_paths);
 }
 

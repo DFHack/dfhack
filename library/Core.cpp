@@ -544,6 +544,7 @@ std::filesystem::path Core::findScript(std::string name)
     for (auto it = paths.begin(); it != paths.end(); ++it)
     {
         std::filesystem::path path = *it / name;
+        std::cerr << "findScript " << name << " | " << path << " | " << Filesystem::isfile(path) << std::endl;
         if (Filesystem::isfile(path))
             return path;
     }

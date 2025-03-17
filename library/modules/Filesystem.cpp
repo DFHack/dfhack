@@ -169,11 +169,12 @@ std::time_t Filesystem::mtime (std::filesystem::path path)
     try
     {
         auto ftime = std::filesystem::last_write_time(path);
-        return ftime.time_since_epoch().count();
+        auto t = ftime.time_since_epoch().count();
+        return t;
     }
     catch (std::filesystem::filesystem_error&)
     {
-        return 0;
+        return -1;
     }
 }
 

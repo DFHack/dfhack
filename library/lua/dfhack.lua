@@ -1074,6 +1074,7 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
         end
     end
 
+    print ( "run_script_with_env, name="..name..", file="..file )
     local env = scripts[file].env
     if env == nil then
         env = {}

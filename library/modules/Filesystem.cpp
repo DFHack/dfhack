@@ -67,7 +67,7 @@ void Filesystem::init ()
     }
 }
 
-bool Filesystem::chdir (std::filesystem::path path)
+bool Filesystem::chdir (std::filesystem::path path) noexcept
 {
     Filesystem::init();
     try
@@ -97,7 +97,7 @@ std::filesystem::path Filesystem::get_initial_cwd ()
     return initial_cwd;
 }
 
-bool Filesystem::mkdir (std::filesystem::path path)
+bool Filesystem::mkdir (std::filesystem::path path) noexcept
 {
     try
     {
@@ -110,7 +110,7 @@ bool Filesystem::mkdir (std::filesystem::path path)
     }
 }
 
-bool Filesystem::mkdir_recursive (std::filesystem::path path)
+bool Filesystem::mkdir_recursive (std::filesystem::path path) noexcept
 {
     try
     {
@@ -123,7 +123,7 @@ bool Filesystem::mkdir_recursive (std::filesystem::path path)
     }
 }
 
-bool Filesystem::rmdir (std::filesystem::path path)
+bool Filesystem::rmdir (std::filesystem::path path) noexcept
 {
     try
     {
@@ -136,7 +136,7 @@ bool Filesystem::rmdir (std::filesystem::path path)
     }
 }
 
-bool Filesystem::stat (std::filesystem::path path, std::filesystem::file_status &info)
+bool Filesystem::stat (std::filesystem::path path, std::filesystem::file_status &info) noexcept
 {
     try
     {
@@ -149,22 +149,22 @@ bool Filesystem::stat (std::filesystem::path path, std::filesystem::file_status 
     }
 }
 
-bool Filesystem::exists (std::filesystem::path path)
+bool Filesystem::exists (std::filesystem::path path) noexcept
 {
     return std::filesystem::exists(path);
 }
 
-bool Filesystem::isfile(std::filesystem::path path)
+bool Filesystem::isfile(std::filesystem::path path) noexcept
 {
     return std::filesystem::exists(path) && std::filesystem::is_regular_file(path);
 }
 
-bool Filesystem::isdir (std::filesystem::path path)
+bool Filesystem::isdir (std::filesystem::path path) noexcept
 {
     return std::filesystem::exists(path) && std::filesystem::is_directory(path);
 }
 
-std::time_t Filesystem::mtime (std::filesystem::path path)
+std::time_t Filesystem::mtime (std::filesystem::path path) noexcept
 {
     try
     {
@@ -178,7 +178,7 @@ std::time_t Filesystem::mtime (std::filesystem::path path)
     }
 }
 
-int Filesystem::listdir (std::filesystem::path dir, std::vector<std::filesystem::path > &files)
+int Filesystem::listdir (std::filesystem::path dir, std::vector<std::filesystem::path > &files) noexcept
 {
     try {
         for (auto const& dirent : std::filesystem::directory_iterator(dir))
@@ -194,7 +194,7 @@ int Filesystem::listdir (std::filesystem::path dir, std::vector<std::filesystem:
 }
 
 int Filesystem::listdir_recursive (std::filesystem::path dir, std::map<std::filesystem::path, bool> &files,
-    int depth /* = 10 */, bool include_prefix /* = true */)
+    int depth /* = 10 */, bool include_prefix /* = true */) noexcept
 {
     try {
         for (auto i = std::filesystem::recursive_directory_iterator(dir);
@@ -215,7 +215,14 @@ int Filesystem::listdir_recursive (std::filesystem::path dir, std::map<std::file
     }
 }
 
-std::filesystem::path Filesystem::canonicalize(std::filesystem::path p)
+std::filesystem::path Filesystem::canonicalize(std::filesystem::path p) noexcept
 {
-    return std::filesystem::weakly_canonical(p);
+    try
+    {
+        return std::filesystem::weakly_canonical(p);
+    }
+    catch (std::filesystem::filesystem_error&)
+    {
+        return p;
+    }
 }

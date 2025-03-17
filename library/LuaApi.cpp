@@ -3962,7 +3962,6 @@ static int internal_findScript(lua_State *L)
 {
     const char *name = luaL_checkstring(L, 1);
     std::filesystem::path path = Core::getInstance().findScript(name);
-    std::cerr << "findScript " << name << " -> " << path << std::endl;
     if (!path.empty())
         lua_pushstring(L, path.string().c_str());
     else

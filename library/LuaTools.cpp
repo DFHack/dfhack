@@ -1240,13 +1240,13 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
         if (histfile != histname)
         {
             if (!histname.empty())
-                hist.save(histname.c_str());
+                hist.save(std::filesystem::path{ histname });
 
             hist.clear();
             histname = histfile;
 
             if (!histname.empty())
-                hist.load(histname.c_str());
+                hist.load(std::filesystem::path{ histname });
         }
 
         if (prompt.empty())
@@ -1269,7 +1269,7 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
     }
 
     if (!histname.empty())
-        hist.save(histname.c_str());
+        hist.save(std::filesystem::path{ histname });
 
     {
         CoreSuspender suspend;

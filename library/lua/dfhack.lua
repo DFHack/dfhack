@@ -1042,7 +1042,9 @@ end
 
 function dfhack.run_script_with_env(envVars, name, flags, ...)
     if type(flags) ~= 'table' then flags = {} end
+    dfhack.printerr ( "run_script_with_env, name="..name..", file=<pending>" )
     local file = dfhack.findScript(name)
+    dfhack.printerr ( "run_script_with_env, name="..name..", file="..file )
     if not file then
         error('Could not find script ' .. name)
     end
@@ -1074,7 +1076,6 @@ function dfhack.run_script_with_env(envVars, name, flags, ...)
         end
     end
 
-    print ( "run_script_with_env, name="..name..", file="..file )
     local env = scripts[file].env
     if env == nil then
         env = {}

@@ -997,7 +997,6 @@ local valid_script_flags = {
 local warned_scripts = {}
 
 function dfhack.run_script(name,...)
-    dfhack.printerr ( "run_script, name="..name )
     if not warned_scripts[name] then
         local helpdb = require('helpdb')
         if helpdb.has_tag(name, 'unavailable') then
@@ -1043,9 +1042,7 @@ end
 
 function dfhack.run_script_with_env(envVars, name, flags, ...)
     if type(flags) ~= 'table' then flags = {} end
-    dfhack.printerr ( "run_script_with_env, name="..name..", file=<pending>" )
     local file = dfhack.findScript(name)
-    dfhack.printerr ( "run_script_with_env, name="..name..", file="..file )
     if not file then
         error('Could not find script ' .. name)
     end

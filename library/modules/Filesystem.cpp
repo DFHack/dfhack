@@ -49,6 +49,7 @@ SOFTWARE.
 #include <string>
 #include <filesystem>
 #include <chrono>
+#include <iostream>
 
 #include "modules/Filesystem.h"
 
@@ -201,8 +202,9 @@ int Filesystem::listdir_recursive (std::filesystem::path dir, std::map<std::file
         {
             if (i->is_directory() && i.depth() >= depth)
                 i.disable_recursion_pending();
-            auto dirent = include_prefix ? *i : std::filesystem::relative(dir, *i);
-            files.emplace(dirent, i->is_directory());
+            auto p = i->path();
+            auto pp = include_prefix ? p : std::filesystem::relative(p, dir);
+            files.emplace(pp, std::filesystem::is_directory(p));
         }
         return 0;
     }

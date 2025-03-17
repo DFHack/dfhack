@@ -74,5 +74,6 @@ namespace DFHack {
         // paths returned in files
         DFHACK_EXPORT int listdir_recursive (std::filesystem::path dir, std::map<std::filesystem::path, bool> &files,
             int depth = 10, bool include_prefix = true);
+        DFHACK_EXPORT std::filesystem::path canonicalize(std::filesystem::path p);
     }
 }

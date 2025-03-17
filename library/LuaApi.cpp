@@ -3155,6 +3155,7 @@ static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
     WRAPM(Filesystem, isfile),
     WRAPM(Filesystem, isdir),
     WRAPM(Filesystem, mtime),
+    WRAPM(Filesystem, canonicalize),
     {NULL, NULL}
 };
 

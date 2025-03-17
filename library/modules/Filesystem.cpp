@@ -211,3 +211,9 @@ int Filesystem::listdir_recursive (std::filesystem::path dir, std::map<std::file
         return 1;
     }
 }
+
+std::filesystem::path Filesystem::canonicalize(std::filesystem::path p)
+{
+    return std::filesystem::canonical(p);
+}
+

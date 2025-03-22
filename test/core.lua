@@ -1,7 +1,6 @@
 config.target = 'core'
 
 local function clean_path(p)
-    -- todo: replace with dfhack.filesystem call?
     return dfhack.filesystem.canonicalize(p)
 end
 

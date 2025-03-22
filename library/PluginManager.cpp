@@ -48,7 +48,8 @@ using namespace DFHack;
 #include <string>
 #include <vector>
 #include <map>
-using namespace std;
+
+using std::string;
 
 #include <assert.h>
 
@@ -60,14 +61,14 @@ using namespace std;
     static const string plugin_suffix = ".plug.dll";
 #endif
 
-static string getPluginPath()
+static std::filesystem::path getPluginPath()
 {
-    return Core::getInstance().getHackPath() + "plugins/";
+    return Core::getInstance().getHackPath() / "plugins";
 }
 
-static string getPluginPath (std::string name)
+static std::filesystem::path getPluginPath (std::string name)
 {
-    return getPluginPath() + name + plugin_suffix;
+    return getPluginPath() / (name + plugin_suffix);
 }
 
 struct Plugin::RefLock
@@ -175,7 +176,7 @@ struct Plugin::LuaEvent : public Lua::Event::Owner {
     }
 };
 
-Plugin::Plugin(Core * core, const std::string & path,
+Plugin::Plugin(Core * core, const std::filesystem::path& path,
     const std::string &name, PluginManager * pm)
     :path(path),
      name(name),
@@ -246,7 +247,7 @@ bool Plugin::load(color_ostream &con)
     CoreSuspender suspend;
     // open the library, etc
     fprintf(stderr, "loading plugin %s\n", name.c_str());
-    DFLibrary * plug = OpenPlugin(path.c_str());
+    DFLibrary * plug = OpenPlugin(path);
     if(!plug)
     {
         RefAutolock lock(access);
@@ -311,8 +312,8 @@ bool Plugin::load(color_ostream &con)
         {
             std::string msg = stl_sprintf("Warning: Plugin %s compiled for DFHack %s, running DFHack %s\n",
                 *plug_name, plug_git_desc, dfhack_git_desc);
-            con << msg << flush;
-            cerr << msg << flush;
+            con << msg << std::flush;
+            std::cerr << msg << std::flush;
         }
     }
     else
@@ -895,7 +896,7 @@ bool PluginManager::addPlugin(string name)
         Core::printerr("Plugin already exists: %s\n", name.c_str());
         return false;
     }
-    string path = getPluginPath(name);
+    std::filesystem::path path = getPluginPath(name);
     if (!Filesystem::isfile(path))
     {
         Core::printerr("Plugin does not exist: %s\n", name.c_str());
@@ -906,16 +907,17 @@ bool PluginManager::addPlugin(string name)
     return true;
 }
 
-vector<string> PluginManager::listPlugins()
+std::vector<string> PluginManager::listPlugins()
 {
-    vector<string> results;
-    vector<string> files;
+    std::vector<string> results;
+    std::vector<std::filesystem::path> files;
     Filesystem::listdir(getPluginPath(), files);
     for (auto file = files.begin(); file != files.end(); ++file)
     {
-        if (hasEnding(*file, plugin_suffix))
+        string fname = file->filename().string();
+        if (hasEnding(file->filename().string(), plugin_suffix))
         {
-            string shortname = file->substr(0, file->find(plugin_suffix));
+            string shortname = fname.substr(0, fname.find(plugin_suffix));
             results.push_back(shortname);
         }
     }
@@ -924,7 +926,7 @@ vector<string> PluginManager::listPlugins()
 
 void PluginManager::refresh()
 {
-    lock_guard<std::recursive_mutex> lock{*plugin_mutex};
+    std::lock_guard<std::recursive_mutex> lock{*plugin_mutex};
     auto files = listPlugins();
     for (auto f = files.begin(); f != files.end(); ++f)
     {
@@ -935,7 +937,7 @@ void PluginManager::refresh()
 
 bool PluginManager::load (const string &name)
 {
-    lock_guard<std::recursive_mutex> lock{*plugin_mutex};
+    std::lock_guard<std::recursive_mutex> lock{*plugin_mutex};
     if (!(*this)[name] && !addPlugin(name))
         return false;
     Plugin *p = (*this)[name];
@@ -949,7 +951,7 @@ bool PluginManager::load (const string &name)
 
 bool PluginManager::loadAll()
 {
-    lock_guard<std::recursive_mutex> lock{*plugin_mutex};
+    std::lock_guard<std::recursive_mutex> lock{*plugin_mutex};
     auto files = listPlugins();
     bool ok = true;
     // load all plugins in hack/plugins
@@ -963,7 +965,7 @@ bool PluginManager::loadAll()
 
 bool PluginManager::unload (const string &name)
 {
-    lock_guard<std::recursive_mutex> lock{*plugin_mutex};
+    std::lock_guard<std::recursive_mutex> lock{*plugin_mutex};
     if (!(*this)[name])
     {
         Core::printerr("Plugin does not exist: %s\n", name.c_str());
@@ -974,7 +976,7 @@ bool PluginManager::unload (const string &name)
 
 bool PluginManager::unloadAll()
 {
-    lock_guard<std::recursive_mutex> lock{*plugin_mutex};
+    std::lock_guard<std::recursive_mutex> lock{*plugin_mutex};
     bool ok = true;
     // only try to unload plugins that are in all_plugins
     for (auto it = begin(); it != end(); ++it)
@@ -989,7 +991,7 @@ bool PluginManager::reload (const string &name)
 {
     // equivalent to "unload(name); load(name);" if plugin is recognized,
     // "load(name);" otherwise
-    lock_guard<std::recursive_mutex> lock{*plugin_mutex};
+    std::lock_guard<std::recursive_mutex> lock{*plugin_mutex};
     if (!(*this)[name])
         return load(name);
     if (!unload(name))
@@ -999,7 +1001,7 @@ bool PluginManager::reload (const string &name)
 
 bool PluginManager::reloadAll()
 {
-    lock_guard<std::recursive_mutex> lock{*plugin_mutex};
+    std::lock_guard<std::recursive_mutex> lock{*plugin_mutex};
     bool ok = true;
     if (!unloadAll())
         ok = false;
@@ -1010,8 +1012,8 @@ bool PluginManager::reloadAll()
 
 Plugin *PluginManager::getPluginByCommand(const std::string &command)
 {
-    lock_guard<std::mutex> lock{*cmdlist_mutex};
-    map <string, Plugin *>::iterator iter = command_map.find(command);
+    std::lock_guard<std::mutex> lock{*cmdlist_mutex};
+    std::map <string, Plugin *>::iterator iter = command_map.find(command);
     if (iter != command_map.end())
         return iter->second;
     else
@@ -1059,8 +1061,8 @@ void PluginManager::OnStateChange(color_ostream &out, state_change_event event)
 
 void PluginManager::registerCommands( Plugin * p )
 {
-    lock_guard<std::mutex> lock{*cmdlist_mutex};
-    vector <PluginCommand> & cmds = p->commands;
+    std::lock_guard<std::mutex> lock{*cmdlist_mutex};
+    std::vector <PluginCommand> & cmds = p->commands;
     for (size_t i = 0; i < cmds.size();i++)
     {
         std::string name = cmds[i].name;
@@ -1076,8 +1078,8 @@ void PluginManager::registerCommands( Plugin * p )
 
 void PluginManager::unregisterCommands( Plugin * p )
 {
-    lock_guard<std::mutex> lock{*cmdlist_mutex};
-    vector <PluginCommand> & cmds = p->commands;
+    std::lock_guard<std::mutex> lock{*cmdlist_mutex};
+    std::vector <PluginCommand> & cmds = p->commands;
     for(size_t i = 0; i < cmds.size();i++)
     {
         command_map.erase(cmds[i].name);
@@ -1126,7 +1128,7 @@ void PluginManager::doLoadSiteData(color_ostream &out)
 
 Plugin *PluginManager::operator[] (std::string name)
 {
-    lock_guard<std::recursive_mutex> lock{*plugin_mutex};
+    std::lock_guard<std::recursive_mutex> lock{*plugin_mutex};
     if (all_plugins.find(name) == all_plugins.end())
     {
         if (Filesystem::isfile(getPluginPath(name)))

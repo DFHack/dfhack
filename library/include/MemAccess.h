@@ -33,6 +33,7 @@ distribution.
 #include <cstring>
 #include <map>
 #include <memory>
+#include <filesystem>
 
 #include "VersionInfo.h"
 
@@ -262,7 +263,7 @@ namespace DFHack
             /// get the DF Process ID
             int getPID();
             /// get the DF Process FilePath
-            std::string getPath();
+            std::filesystem::path getPath();
             /// Adjust between in-memory and in-file image offset
             int adjustOffset(int offset, bool to_file = false);
 

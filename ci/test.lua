@@ -289,12 +289,13 @@ local MODES = {
 
 local function load_test_config(config_file)
     local config = {}
+    print ("loading test config from " .. config_file)
     if dfhack.filesystem.isfile(config_file) then
         config = json.decode_file(config_file)
     end
 
     if not config.test_dir then
-        config.test_dir = dfhack.getHackPath() .. 'scripts/test'
+        config.test_dir = dfhack.getHackPath() .. '/scripts/test'
     end
 
     if not config.save_dir then

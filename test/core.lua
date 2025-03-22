@@ -2,7 +2,7 @@ config.target = 'core'
 
 local function clean_path(p)
     -- todo: replace with dfhack.filesystem call?
-    return p:gsub('\\', '/'):gsub('//', '/'):gsub('/$', '')
+    return dfhack.filesystem.canonicalize(p)
 end
 
 local fs = dfhack.filesystem

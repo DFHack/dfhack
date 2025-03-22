@@ -615,6 +615,25 @@ namespace df
         static const bool is_method = true;
     };
 
+    template<typename RT, typename ...AT>
+    struct return_type<RT(*)(AT...) noexcept> {
+        using type = RT;
+        static const bool is_method = false;
+    };
+
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT(CT::*)(AT...) noexcept> {
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
+    };
+
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT(CT::*)(AT...) const noexcept> {
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
+    };
 
 }
 

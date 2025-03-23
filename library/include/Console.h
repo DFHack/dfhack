@@ -33,6 +33,7 @@ distribution.
 #include <mutex>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace  DFHack
 {
@@ -43,7 +44,7 @@ namespace  DFHack
         {
             this->capacity = capacity;
         }
-        bool load (const char * filename)
+        bool load (std::filesystem::path filename)
         {
             std::string reader;
             std::ifstream infile(filename);
@@ -58,7 +59,7 @@ namespace  DFHack
             }
             return true;
         }
-        bool save (const char * filename)
+        bool save (std::filesystem::path filename)
         {
             if (!history.size())
                 return true;

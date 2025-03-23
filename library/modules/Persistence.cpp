@@ -183,12 +183,12 @@ static std::string filterSaveFileName(std::string s) {
     return s;
 }
 
-static std::string getSavePath(const std::string &world) {
-    return "save/" + world;
+static std::filesystem::path getSavePath(const std::string &world) {
+    return std::filesystem::path{} / "save" / world;
 }
 
-static std::string getSaveFilePath(const std::string &world, const std::string &name) {
-    return getSavePath(world) + "/dfhack-" + filterSaveFileName(name) + ".dat";
+static std::filesystem::path getSaveFilePath(const std::string &world, const std::string &name) {
+    return getSavePath(world) / ("dfhack-" + filterSaveFileName(name) + ".dat");
 }
 
 struct LastLoadSaveTickCountUpdater {
@@ -266,7 +266,7 @@ static void add_entry(int entity_id, std::shared_ptr<Persistence::DataEntry> ent
     add_entry(store[entity_id], entry);
 }
 
-static bool load_file(const std::string & path, int entity_id) {
+static bool load_file(const std::filesystem::path & path, int entity_id) {
     Json::Value json;
     try {
         std::ifstream file(path);
@@ -298,8 +298,8 @@ void Persistence::Internal::load(color_ostream& out) {
     clear(out);
 
     std::string world_name = World::ReadWorldFolder();
-    std::string save_path = getSavePath(world_name);
-    std::vector<std::string> files;
+    std::filesystem::path save_path = getSavePath(world_name);
+    std::vector<std::filesystem::path> files;
     if (0 != Filesystem::listdir(save_path, files)) {
         DEBUG(persistence,out).print("not loading state; save directory doesn't exist: '%s'\n", save_path.c_str());
         return;
@@ -308,11 +308,11 @@ void Persistence::Internal::load(color_ostream& out) {
     bool found = false;
     for (auto & fname : files) {
         int entity_id = Persistence::WORLD_ENTITY_ID;
-        if (fname != "dfhack-world.dat" && !get_entity_id(fname, entity_id))
+        if (fname != "dfhack-world.dat" && !get_entity_id(fname.string(), entity_id))
             continue;
 
         found = true;
-        std::string path = save_path + "/" + fname;
+        std::filesystem::path path = save_path / fname;
         if (!load_file(path, entity_id))
             out.printerr("Cannot load data from: '%s'\n", path.c_str());
     }
@@ -321,7 +321,7 @@ void Persistence::Internal::load(color_ostream& out) {
         return;
 
     // new file formats not found; attempt to load legacy file
-    const std::string legacy_fname = getSaveFilePath(world_name, "legacy-data");
+    const std::filesystem::path legacy_fname = getSaveFilePath(world_name, "legacy-data");
     if (Filesystem::exists(legacy_fname)) {
         int synthesized_entity_id = Persistence::WORLD_ENTITY_ID;
         if (World::IsSiteLoaded())

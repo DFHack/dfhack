@@ -83,7 +83,13 @@ distribution.
 #include <forward_list>
 #include <type_traits>
 #include <cstdarg>
+#include <filesystem>
 #include <SDL_events.h>
+
+#ifdef _WIN32
+#define NOMINMAX
+#include <Windows.h>
+#endif
 
 #ifdef LINUX_BUILD
 #include <dlfcn.h>
@@ -98,15 +104,15 @@ using std::string;
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
-size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::string>& prefix, const std::string& folder);
+size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::string>& prefix, const std::filesystem::path& folder);
 
 namespace DFHack {
 
 DBG_DECLARE(core,keybinding,DebugCategory::LINFO);
 DBG_DECLARE(core,script,DebugCategory::LINFO);
 
-static const std::string CONFIG_PATH = "dfhack-config/";
-static const std::string CONFIG_DEFAULTS_PATH = "hack/data/dfhack-config-defaults/";
+static const std::filesystem::path CONFIG_PATH{ std::filesystem::path{} / "dfhack-config" };
+static const std::filesystem::path CONFIG_DEFAULTS_PATH{ std::filesystem::path{} / "hack" / "data" / "dfhack-config-defaults" };
 
 class MainThread {
 public:
@@ -474,10 +480,10 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     return false;
 }
 
-bool Core::addScriptPath(std::string path, bool search_before)
+bool Core::addScriptPath(std::filesystem::path path, bool search_before)
 {
     std::lock_guard<std::mutex> lock(script_path_mutex);
-    std::vector<std::string> &vec = script_paths[search_before ? 0 : 1];
+    auto &vec = script_paths[search_before ? 0 : 1];
     if (std::find(vec.begin(), vec.end(), path) != vec.end())
         return false;
     if (!Filesystem::isdir(path))
@@ -486,19 +492,19 @@ bool Core::addScriptPath(std::string path, bool search_before)
     return true;
 }
 
-bool Core::setModScriptPaths(const std::vector<std::string> &mod_script_paths) {
+bool Core::setModScriptPaths(const std::vector<std::filesystem::path> &mod_script_paths) {
     std::lock_guard<std::mutex> lock(script_path_mutex);
     script_paths[2] = mod_script_paths;
     return true;
 }
 
-bool Core::removeScriptPath(std::string path)
+bool Core::removeScriptPath(std::filesystem::path path)
 {
     std::lock_guard<std::mutex> lock(script_path_mutex);
     bool found = false;
     for (int i = 0; i < 2; i++)
     {
-        std::vector<std::string> &vec = script_paths[i];
+        auto &vec = script_paths[i];
         while (1)
         {
             auto it = std::find(vec.begin(), vec.end(), path);
@@ -511,44 +517,43 @@ bool Core::removeScriptPath(std::string path)
     return found;
 }
 
-void Core::getScriptPaths(std::vector<std::string> *dest)
+void Core::getScriptPaths(std::vector<std::filesystem::path> *dest)
 {
     std::lock_guard<std::mutex> lock(script_path_mutex);
     dest->clear();
-    std::string df_path = this->p->getPath() + "/";
+    std::filesystem::path df_path = this->p->getPath();
     for (auto & path : script_paths[0])
         dest->emplace_back(path);
-    dest->push_back(df_path + CONFIG_PATH + "scripts");
+    dest->push_back(df_path / CONFIG_PATH / "scripts");
     if (df::global::world && isWorldLoaded()) {
         std::string save = World::ReadWorldFolder();
         if (save.size())
-            dest->emplace_back(df_path + "save/" + save + "/scripts");
+            dest->emplace_back(df_path / "save" / save / "scripts");
     }
-    dest->emplace_back(df_path + "hack/scripts");
+    dest->emplace_back(df_path / "hack" / "scripts");
     for (auto & path : script_paths[2])
         dest->emplace_back(path);
     for (auto & path : script_paths[1])
         dest->emplace_back(path);
 }
 
-std::string Core::findScript(std::string name)
+std::filesystem::path Core::findScript(std::string name)
 {
-    std::vector<std::string> paths;
+    std::vector<std::filesystem::path> paths;
     getScriptPaths(&paths);
     for (auto it = paths.begin(); it != paths.end(); ++it)
     {
-        std::string path = *it + "/" + name;
+        std::filesystem::path path = std::filesystem::weakly_canonical(*it / name);
         if (Filesystem::isfile(path))
             return path;
     }
-    return "";
+    return {};
 }
 
 bool loadScriptPaths(color_ostream &out, bool silent = false)
 {
-    using namespace std;
-    std::string filename(CONFIG_PATH + "script-paths.txt");
-    ifstream file(filename);
+    std::filesystem::path filename{ CONFIG_PATH / "script-paths.txt" };
+    std::ifstream file(filename);
     if (!file)
     {
         if (!silent)
@@ -560,12 +565,12 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
     while (getline(file, raw))
     {
         ++line;
-        istringstream ss(raw);
+        std::istringstream ss(raw);
         char ch;
-        ss >> skipws;
+        ss >> std::skipws;
         if (!(ss >> ch) || ch == '#')
             continue;
-        ss >> ws; // discard whitespace
+        ss >> std::ws; // discard whitespace
         std::string path;
         getline(ss, path);
         if (ch == '+' || ch == '-')
@@ -580,14 +585,18 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
 }
 
 static void loadModScriptPaths(color_ostream &out) {
-    std::vector<std::string> mod_script_paths;
+    std::vector<std::string> mod_script_paths_str;
+    std::vector<std::filesystem::path> mod_script_paths;
     Lua::CallLuaModuleFunction(out, "script-manager", "get_mod_script_paths", {}, 1,
             [&](lua_State *L) {
-                Lua::GetVector(L, mod_script_paths);
+                Lua::GetVector(L, mod_script_paths_str);
             });
     DEBUG(script,out).print("final mod script paths:\n");
-    for (auto & path : mod_script_paths)
-        DEBUG(script,out).print("  %s\n", path.c_str());
+    for (auto& path : mod_script_paths_str)
+    {
+        DEBUG(script, out).print("  %s\n", path.c_str());
+        mod_script_paths.push_back(std::filesystem::weakly_canonical(std::filesystem::path{ path }));
+    }
     Core::getInstance().setModScriptPaths(mod_script_paths);
 }
 
@@ -857,8 +866,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
 
                 if(!plug)
                 {
-                    std::string lua = findScript(part + ".lua");
-                    if (lua.size())
+                    std::filesystem::path lua = findScript(part + ".lua");
+                    if (!lua.empty())
                     {
                         res = enableLuaScript(con, part, enable);
                     }
@@ -961,7 +970,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         }
         con << parts[0];
         bool builtin = is_builtin(con, parts[0]);
-        std::string lua_path = findScript(parts[0] + ".lua");
+        std::filesystem::path lua_path = findScript(parts[0] + ".lua");
         Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
         if (builtin)
         {
@@ -976,7 +985,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         {
             con << " is a command implemented by the plugin " << plug->getName() << std::endl;
         }
-        else if (lua_path.size())
+        else if (!lua_path.empty())
         {
             con << " is a Lua script: " << lua_path << std::endl;
         }
@@ -1123,7 +1132,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     {
         if(parts.size() == 1)
         {
-            loadScriptFile(con, parts[0], false);
+            loadScriptFile(con, std::filesystem::weakly_canonical(std::filesystem::path{parts[0]}), false);
         }
         else
         {
@@ -1286,8 +1295,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         else if (res == CR_NOT_IMPLEMENTED)
         {
             std::string completed;
-            std::string filename = findScript(first + ".lua");
-            bool lua = filename != "";
+            std::filesystem::path filename = findScript(first + ".lua");
+            bool lua = !filename.empty();
             if ( !lua ) {
                 filename = findScript(first + ".rb");
             }
@@ -1330,17 +1339,17 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     return CR_OK;
 }
 
-bool Core::loadScriptFile(color_ostream &out, std::string fname, bool silent)
+bool Core::loadScriptFile(color_ostream &out, std::filesystem::path fname, bool silent)
 {
     if(!silent) {
         INFO(script,out) << "Running script: " << fname << std::endl;
         std::cerr << "Running script: " << fname << std::endl;
     }
-    std::ifstream script(fname.c_str());
-    if ( !script.good() )
+    std::ifstream script{ fname.c_str() };
+    if ( !script )
     {
         if(!silent)
-            out.printerr("Error loading script: %s\n", fname.c_str());
+            out.printerr("Error loading script: %s\n", fname.string().c_str());
         return false;
     }
     std::string command;
@@ -1379,11 +1388,11 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     }
 
     // load baseline defaults
-    core->loadScriptFile(out, CONFIG_PATH + "init/default.dfhack.init", false);
+    core->loadScriptFile(out, CONFIG_PATH / "init" / "default.dfhack.init", false);
 
     // load user overrides
     std::vector<std::string> prefixes(1, "dfhack");
-    loadScriptFiles(core, out, prefixes, CONFIG_PATH + "init");
+    loadScriptFiles(core, out, prefixes, CONFIG_PATH / "init");
 
     // show the terminal if requested
     auto L = DFHack::Core::getInstance().getLuaState();
@@ -1407,7 +1416,7 @@ void fInitthread(void * iodata)
 // A thread function... for the interactive console.
 void fIOthread(void * iodata)
 {
-    static const std::string HISTORY_FILE = CONFIG_PATH + "dfhack.history";
+    static const std::filesystem::path HISTORY_FILE = CONFIG_PATH / "dfhack.history";
 
     IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
@@ -1455,7 +1464,7 @@ void fIOthread(void * iodata)
         {
             // a proper, non-empty command was entered
             main_history.add(command);
-            main_history.save(HISTORY_FILE.c_str());
+            main_history.save(HISTORY_FILE);
         }
 
         auto rv = core->runCommand(con, command);
@@ -1534,13 +1543,9 @@ void Core::fatal (std::string output, const char * title)
     }
 }
 
-std::string Core::getHackPath()
+std::filesystem::path Core::getHackPath()
 {
-#ifdef LINUX_BUILD
-    return p->getPath() + "/hack/";
-#else
-    return p->getPath() + "\\hack\\";
-#endif
+    return p->getPath() / "hack";
 }
 
 df::viewscreen * Core::getTopViewscreen() {
@@ -1781,8 +1786,8 @@ bool Core::InitSimulationThread()
         con.printerr("Failed to create config directory: '%s'\n", CONFIG_PATH.c_str());
 
     // copy over default config files if necessary
-    std::map<std::string, bool> config_files;
-    std::map<std::string, bool> default_config_files;
+    std::map<std::filesystem::path, bool> config_files;
+    std::map<std::filesystem::path, bool> default_config_files;
     if (Filesystem::listdir_recursive(CONFIG_PATH, config_files, 10, false) != 0)
         con.printerr("Failed to list directory: '%s'\n", CONFIG_PATH.c_str());
     else if (Filesystem::listdir_recursive(CONFIG_DEFAULTS_PATH, default_config_files, 10, false) != 0)
@@ -1794,7 +1799,7 @@ bool Core::InitSimulationThread()
             // skip over files
             if (!entry.second)
                 continue;
-            std::string dirname = CONFIG_PATH + entry.first;
+            std::filesystem::path dirname = CONFIG_PATH / entry.first;
             if (!Filesystem::mkdir_recursive(dirname))
                 con.printerr("Failed to create config directory: '%s'\n", dirname.c_str());
         }
@@ -1804,12 +1809,12 @@ bool Core::InitSimulationThread()
             // skip over directories
             if (entry.second)
                 continue;
-            std::string filename = entry.first;
+            std::filesystem::path filename = entry.first;
             if (!config_files.count(filename)) {
-                std::string src_file = CONFIG_DEFAULTS_PATH + filename;
+                std::filesystem::path src_file = CONFIG_DEFAULTS_PATH / filename;
                 if (!Filesystem::isfile(src_file))
                     continue;
-                std::string dest_file = CONFIG_PATH + filename;
+                std::filesystem::path dest_file = CONFIG_PATH / filename;
                 std::ifstream src(src_file, std::ios::binary);
                 std::ofstream dest(dest_file, std::ios::binary);
                 if (!src.good() || !dest.good()) {
@@ -2185,42 +2190,30 @@ void Core::onUpdate(color_ostream &out)
     perf_counters.incCounter(perf_counters.update_lua_ms, step_start_ms);
 }
 
-void getFilesWithPrefixAndSuffix(const std::string& folder, const std::string& prefix, const std::string& suffix, std::vector<std::string>& result) {
-    std::vector<std::string> files;
+void getFilesWithPrefixAndSuffix(const std::filesystem::path& folder, const std::string& prefix, const std::string& suffix, std::vector<std::filesystem::path>& result) {
+    std::vector<std::filesystem::path> files;
     DFHack::Filesystem::listdir(folder, files);
-    for ( size_t a = 0; a < files.size(); a++ ) {
-        if ( prefix.length() > files[a].length() )
-            continue;
-        if ( suffix.length() > files[a].length() )
-            continue;
-        if ( files[a].compare(0, prefix.length(), prefix) != 0 )
-            continue;
-        if ( files[a].compare(files[a].length()-suffix.length(), suffix.length(), suffix) != 0 )
-            continue;
-        result.push_back(files[a]);
+    for ( auto f : files) {
+        if (f.stem().string().starts_with(prefix) && f.extension() == suffix)
+            result.push_back(f);
     }
     return;
 }
 
-size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::string>& prefix, const std::string& folder) {
+size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::string>& prefix, const std::filesystem::path& folder) {
     static const std::string suffix = ".init";
-    std::vector<std::string> scriptFiles;
+    std::vector<std::filesystem::path> scriptFiles;
     for ( size_t a = 0; a < prefix.size(); a++ ) {
         getFilesWithPrefixAndSuffix(folder, prefix[a], ".init", scriptFiles);
     }
     std::sort(scriptFiles.begin(), scriptFiles.end(),
-              [&](const std::string &a, const std::string &b) {
-        std::string a_base = a.substr(0, a.size() - suffix.size());
-        std::string b_base = b.substr(0, b.size() - suffix.size());
-        return a_base < b_base;
-    });
+        [](const std::filesystem::path& a, const std::filesystem::path& b) {
+            return a.stem() < b.stem();
+        });
     size_t result = 0;
     for ( size_t a = 0; a < scriptFiles.size(); a++ ) {
         result++;
-        std::string path = "";
-        if (folder != ".")
-            path = folder + "/";
-        core->loadScriptFile(out, path + scriptFiles[a], false);
+        core->loadScriptFile(out, folder / scriptFiles[a], false);
     }
     return result;
 }
@@ -2272,16 +2265,16 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
     if (!df::global::world)
         return;
 
-    std::string rawFolder = !isWorldLoaded() ? "" : "save/" + World::ReadWorldFolder() + "/init";
+    std::filesystem::path rawFolder = !isWorldLoaded() ? std::filesystem::path{} : std::filesystem::path{} / "save" / World::ReadWorldFolder() / "init";
 
     auto i = table.find(event);
     if ( i != table.end() ) {
         const std::vector<std::string>& set = i->second;
 
         // load baseline defaults
-        this->loadScriptFile(out, CONFIG_PATH + "init/default." + set[0] + ".init", false);
+        this->loadScriptFile(out, CONFIG_PATH / "init" / ("default." + set[0] + ".init"), false);
 
-        loadScriptFiles(this, out, set, CONFIG_PATH + "init");
+        loadScriptFiles(this, out, set, CONFIG_PATH / "init");
         loadScriptFiles(this, out, set, rawFolder);
     }
 
@@ -2295,7 +2288,7 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
             }
             else if (it->save_specific && isWorldLoaded())
             {
-                loadScriptFile(out, rawFolder + it->path, false);
+                loadScriptFile(out, rawFolder / it->path, false);
             }
         }
     }
@@ -2366,7 +2359,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
                 strftime(timebuf, sizeof(timebuf), "[%Y-%m-%dT%H:%M:%S%z] ", timeinfo);
                 evtlog << timebuf;
                 evtlog << "DFHack " << Version::git_description() << " on " << ostype << "; ";
-                evtlog << "cwd md5: " << md5w.getHashFromString(getHackPath()).substr(0, 10) << "; ";
+                evtlog << "cwd md5: " << md5w.getHashFromString(getHackPath().string().c_str()).substr(0, 10) << "; ";
                 evtlog << "save: " << world->cur_savegame.save_dir << "; ";
                 evtlog << sc_event_name(event) << "; ";
                 if (gametype)

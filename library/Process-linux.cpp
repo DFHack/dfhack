@@ -195,7 +195,7 @@ uint32_t Process::getTickCount()
     return (tp.tv_sec * 1000) + (tp.tv_usec / 1000);
 }
 
-string Process::getPath()
+std::filesystem::path Process::getPath()
 {
     return Filesystem::get_initial_cwd();
 }

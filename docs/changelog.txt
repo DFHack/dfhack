@@ -62,6 +62,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Filesystem`` module: rewritten to use C++ standard library components, for better portability
 
 ## Lua
 

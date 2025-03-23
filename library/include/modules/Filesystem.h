@@ -55,25 +55,34 @@ SOFTWARE.
 
 namespace DFHack {
     namespace Filesystem {
-        DFHACK_EXPORT void init ();
-        DFHACK_EXPORT bool chdir (std::filesystem::path path) noexcept;
-        DFHACK_EXPORT std::filesystem::path getcwd ();
-        DFHACK_EXPORT bool restore_cwd ();
-        DFHACK_EXPORT std::filesystem::path get_initial_cwd ();
-        DFHACK_EXPORT bool mkdir (std::filesystem::path path) noexcept;
+        DFHACK_EXPORT void init();
+        DFHACK_EXPORT bool chdir(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT std::filesystem::path getcwd();
+        DFHACK_EXPORT bool restore_cwd();
+        DFHACK_EXPORT std::filesystem::path get_initial_cwd();
+        DFHACK_EXPORT bool mkdir(std::filesystem::path path) noexcept;
         // returns true on success or if directory already exists
-        DFHACK_EXPORT bool mkdir_recursive (std::filesystem::path path) noexcept;
-        DFHACK_EXPORT bool rmdir (std::filesystem::path path) noexcept;
-        DFHACK_EXPORT bool stat (std::filesystem::path path, std::filesystem::file_status &info) noexcept;
-        DFHACK_EXPORT bool exists (std::filesystem::path path) noexcept;
-        DFHACK_EXPORT bool isfile (std::filesystem::path path) noexcept;
-        DFHACK_EXPORT bool isdir (std::filesystem::path path) noexcept;
-        DFHACK_EXPORT std::time_t mtime (std::filesystem::path path) noexcept;
-        DFHACK_EXPORT int listdir (std::filesystem::path dir, std::vector<std::filesystem::path> &files) noexcept;
+        DFHACK_EXPORT bool mkdir_recursive(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT bool rmdir(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT bool stat(std::filesystem::path path, std::filesystem::file_status& info) noexcept;
+        DFHACK_EXPORT bool exists(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT bool isfile(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT bool isdir(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT std::time_t mtime(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT int listdir(std::filesystem::path dir, std::vector<std::filesystem::path>& files) noexcept;
         // set include_prefix to false to prevent dir from being prepended to
         // paths returned in files
-        DFHACK_EXPORT int listdir_recursive (std::filesystem::path dir, std::map<std::filesystem::path, bool> &files,
+        DFHACK_EXPORT int listdir_recursive(std::filesystem::path dir, std::map<std::filesystem::path, bool>& files,
             int depth = 10, bool include_prefix = true) noexcept;
         DFHACK_EXPORT std::filesystem::path canonicalize(std::filesystem::path p) noexcept;
+        inline std::string as_string(std::filesystem::path path) noexcept
+        {
+            auto pStr = path.string();
+            if constexpr (std::filesystem::path::preferred_separator != '/')
+            {
+                std::ranges::replace(pStr, std::filesystem::path::preferred_separator, '/');
+            }
+            return pStr;
+        }
     }
 }

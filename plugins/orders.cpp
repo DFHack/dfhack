@@ -153,7 +153,7 @@ static void list_library(color_ostream &out) {
         if (name.extension() != ".json")
             continue; // skip non-.json files
         auto sname = name.stem();
-        out << "library/" << sname << std::endl;
+        out << Filesystem::as_string("library" / sname) << std::endl;
     }
 }
 
@@ -172,7 +172,7 @@ static command_result orders_list_command(color_ostream & out)
         if (name.extension() != ".json")
             continue; // skip non-.json files
         auto sname = name.stem();
-        out << sname << std::endl;
+        out << sname.string() << std::endl;
     }
 
     list_library(out);

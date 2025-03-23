@@ -3207,7 +3207,12 @@ static int filesystem_listdir_recursive(lua_State *L)
         lua_pushinteger(L, i++);
         lua_newtable(L);
         lua_pushstring(L, "path");
-        lua_pushstring(L, (it->first).string().c_str());
+        auto p = (it->first).string();
+        if constexpr (std::filesystem::path::preferred_separator != '/')
+        {
+            std::ranges::replace(p, std::filesystem::path::preferred_separator, '/');
+        }
+        lua_pushstring(L, p.c_str());
         lua_settable(L, -3);
         lua_pushstring(L, "isdir");
         lua_pushboolean(L, it->second);

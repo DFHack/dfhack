@@ -63,6 +63,7 @@ Template for new versions:
 
 ## API
 - ``Filesystem`` module: rewritten to use C++ standard library components, for better portability
+- ''Military`` module: added `addToSquad` function
 
 ## Lua
 

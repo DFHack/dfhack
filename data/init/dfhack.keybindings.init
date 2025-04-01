@@ -47,6 +47,9 @@ keybinding add Ctrl-G@dwarfmode/Default|dungeonmode/Default gui/sitemap
 # toggle keyboard cursor
 keybinding add Alt-K@dwarfmode|dungeonmode/Default|dungeonmode/Look toggle-kbd-cursor
 
+# gui/journal
+keybinding add Ctrl-J@dwarfmode|dungeonmode gui/journal
+
 
 ######################
 # dwarfmode bindings #
@@ -150,9 +153,6 @@ keybinding add Ctrl-Shift-Q@dwarfmode gui/quickfort
 # gui/design
 keybinding add Ctrl-D@dwarfmode/Default gui/design
 keybinding add Ctrl-M@dwarfmode/Default gui/mass-remove
-
-# gui/journal
-keybinding add Ctrl-J@dwarfmode gui/journal
 
 
 ########################

@@ -33,24 +33,16 @@ distribution.
 #include "df/general_ref.h"
 #include "df/specific_ref.h"
 
-#ifndef LINUX_BUILD
-    #include <Windows.h>
-    #include "wdirent.h"
-#else
-    #include <sys/time.h>
-    #include <ctime>
-    #include <dirent.h>
-    #include <errno.h>
-#endif
-
 #include <ctype.h>
 #include <stdarg.h>
 
+#include <string>
 #include <sstream>
 #include <map>
+#include <filesystem>
 
 
-int DFHack::getdir(std::string dir, std::vector<std::string> &files)
+int DFHack::getdir(std::filesystem::path dir, std::vector<std::filesystem::path> &files)
 {
     return DFHack::Filesystem::listdir(dir, files);
 }

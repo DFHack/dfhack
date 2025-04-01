@@ -426,7 +426,7 @@ static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
 
     DFHack::CommandHistory hist;
     if (hfile)
-        hist.load(hfile);
+        hist.load(std::filesystem::path{ hfile });
 
     std::string ret;
     int rv = pstream->lineedit(prompt, ret, hist);
@@ -446,7 +446,7 @@ static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
     else
     {
         if (hfile)
-            hist.save(hfile);
+            hist.save(std::filesystem::path{ hfile });
         lua_pushlstring(S, ret.data(), ret.size());
         return 1;
     }
@@ -1240,13 +1240,13 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
         if (histfile != histname)
         {
             if (!histname.empty())
-                hist.save(histname.c_str());
+                hist.save(std::filesystem::path{ histname });
 
             hist.clear();
             histname = histfile;
 
             if (!histname.empty())
-                hist.load(histname.c_str());
+                hist.load(std::filesystem::path{ histname });
         }
 
         if (prompt.empty())
@@ -1269,7 +1269,7 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
     }
 
     if (!histname.empty())
-        hist.save(histname.c_str());
+        hist.save(std::filesystem::path{ histname });
 
     {
         CoreSuspender suspend;

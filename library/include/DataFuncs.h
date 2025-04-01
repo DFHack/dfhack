@@ -133,6 +133,41 @@ namespace df {
         };
     };
 
+    template<isPrimitive RT, typename ...AT>
+    struct function_wrapper<RT(*)(DFHack::color_ostream&, AT...) noexcept> {
+        static const int num_args = sizeof...(AT);
+        static void execute(lua_State* L, int base, RT(fun)(DFHack::color_ostream& out, AT...)) {
+            cur_lua_ostream_argument out(L);
+            call_and_push<RT, AT...>(L, base, fun, out);
+        }
+    };
+
+    template<isPrimitive RT, typename ...AT>
+    struct function_wrapper<RT(*)(AT...) noexcept> {
+        static const int num_args = sizeof...(AT);
+        static void execute(lua_State* L, int base, RT(fun)(AT...)) {
+            call_and_push<RT, AT...>(L, base, fun);
+        }
+    };
+
+    template<isPrimitive RT, class CT, typename ...AT>
+    struct function_wrapper<RT(CT::*)(AT...) noexcept> {
+        static const int num_args = sizeof...(AT) + 1;
+        static void execute(lua_State* L, int base, RT(CT::* mem_fun)(AT...)) {
+            CT* self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
+            call_and_push<RT, AT...>(L, base, mem_fun, self);
+        };
+    };
+
+    template<isPrimitive RT, class CT, typename ...AT>
+    struct function_wrapper<RT(CT::*)(AT...) const noexcept> {
+        static const int num_args = sizeof...(AT) + 1;
+        static void execute(lua_State* L, int base, RT(CT::* mem_fun)(AT...) const) {
+            CT* self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
+            call_and_push<RT, AT...>(L, base, mem_fun, self);
+        };
+    };
+
     template<typename T>
     class function_identity : public function_identity_base {
         T ptr;

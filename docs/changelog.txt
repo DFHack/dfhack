@@ -57,6 +57,7 @@ Template for new versions:
 - `gui/journal`: Ctrl-j hotkey to launch `gui/journal` now works in adventure mode!
 
 ## Fixes
+- Fix processing error in the overlay that displays unit preferences in the baron selection list
 
 ## Misc Improvements
 

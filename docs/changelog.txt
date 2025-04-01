@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- Fix processing error in the overlay that displays unit preferences in the baron selection list
 
 ## Misc Improvements
 

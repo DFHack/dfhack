@@ -272,6 +272,40 @@ static command_result export_sites(color_ostream &out)
 
 /********************************************************************** */
 
+template<typename T, std::invocable<std::ostream&, const T&> Callable>
+void print_vector(
+    std::ostream &out,
+    const std::vector<T> &elements,
+    Callable&& print_element,
+    const char* prefix = "[",
+    const char* separator = ", ",
+    const char* suffix = "]"
+){
+    out << prefix;
+    if (elements.size()) {
+        print_element(out, elements[0]);
+        for (size_t i = 1; i < elements.size(); ++i) {
+            out << separator;
+            print_element(out, elements[i]);
+        }
+    }
+    out << suffix;
+}
+
+template<typename T>
+void print_vector(
+    std::ostream &out,
+    const std::vector<T> &elements,
+    const char* prefix = "[",
+    const char* separator = ", ",
+    const char* suffix = "]"
+){
+    auto print_element = [](std::ostream &out, const T& e) { out << e; };
+    print_vector(out, elements, print_element, prefix, separator, suffix);
+}
+
+
+
 template<>
 struct std::hash<df::coord2d>
 {
@@ -313,22 +347,22 @@ coord advance(coord pos, direction dir) {
     return pos + as_offset(dir);
 }
 
-auto print_path(std::vector<coord> path, int scale = rdim) {
+auto print_path(std::ostream &out, const std::vector<coord> &path) {
+    auto scale = rdim;
     assert(path.size());
-    // create the path in clockwise direction, so that it becomes counterclockwise with the y-flip
-    std::ranges::reverse(path);
-    std::ostringstream out;
-    out << scale * path[0].x << " " << -scale * path[0].y;
-    for (size_t i = 1; i < path.size(); ++i) {
-        out << "," << scale * path[i].x << " " << -scale * path[i].y;
-    }
-    return out.str();
+    auto print_point = [scale](std::ostream &out, const coord &pos){
+        out << scale * pos.x << " " << -scale * pos.y;};
+    print_vector<coord>(out, path, print_point, "(", ",", ")");
 }
+
+auto region_order = [](df::coord2d p1, df::coord2d p2) {
+    return p1.y < p2.y || (p1.y == p2.y && p1.x < p2.x);
+};
 
 std::pair<bool,bool> ahead(const std::vector<coord> &component, coord pos, direction dir) {
     auto test = [&](int16_t x, int16_t y){
         coord offset{x,y};
-        return std::find(component.begin(), component.end(), pos + offset) != component.end();
+        return std::ranges::binary_search(component, pos + offset, region_order);
     };
 
     switch (dir) {
@@ -361,7 +395,17 @@ static command_result export_region_tiles(color_ostream &out)
     if (!out_file) {
         return CR_FAILURE;
     }
-    out_file << "world_x; world_y; num_tiles; num_components; biome_type; boundary_wkt" << std::endl;
+
+    vector<std::string> headings = {
+        "world_x", "world_y", "num_tiles", "num_components", "biome_type",
+        "region_id", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df",
+        "evilness", "savagery", "volcanism", "drainage", "temperature", "vegetation", "rainfall", "snowfall", "salinity",
+        "surroundings", "elevation", "reanimating", "has_bogeymen"
+    };
+    print_vector(out_file, headings,"",";",";boundary_wkt\n" );
+
+
+
 
     /*
     try {
@@ -426,9 +470,7 @@ static command_result export_region_tiles(color_ostream &out)
 
     out.print("processing %ld world tile regions\n", world_tile_region.size());
 
-    auto region_order = [](df::coord2d p1, df::coord2d p2) {
-        return p1.y < p2.y || (p1.y == p2.y && p1.x < p2.x);
-    };
+
     static std::array<coord,4> directions{
         as_offset(direction::North),
         as_offset(direction::West),
@@ -461,7 +503,10 @@ static command_result export_region_tiles(color_ostream &out)
 
                 for (auto const offset : directions) {
                     // FIXME: use something O(log n) instead of the O(n) find
-                    auto n_it = std::find(region.begin(), region.end(), pos + offset);
+                    auto lower = std::ranges::lower_bound(region, pos + offset, region_order);
+                    auto n_it = (*lower == pos + offset) ? lower : region.end();
+
+                    // auto n_it = std::find(region.begin(), region.end(), pos + offset);
                     auto n_idx = std::distance(region.begin(), n_it);
                     if (n_it != region.end() && component_assignment[n_idx] == 0) {
                         component_assignment[n_idx] = current_component;
@@ -487,7 +532,7 @@ static command_result export_region_tiles(color_ostream &out)
             std::vector<coord> path;
             path.push_back(start);
 
-            auto current_direction = direction::South;
+            auto current_direction = direction::East;
             auto current_position = advance(start,current_direction);
 
             while (current_position != start)
@@ -496,14 +541,14 @@ static command_result export_region_tiles(color_ostream &out)
                 if (left && right) {
                     // in front of a wall: turn right
                     path.push_back(current_position);
-                    current_direction = turn_right(current_direction);
+                    current_direction = turn_left(current_direction);
                 }
                 else if (!left && !right) {
                     // no walls ahead: turn left
                     path.push_back(current_position);
-                    current_direction = turn_left(current_direction);
+                    current_direction = turn_right(current_direction);
                 }
-                assert(! (!left && right)); // shape has a hole or is not connected
+                assert(! (left && !right)); // shape has a hole or is not connected
                 current_position = advance(current_position, current_direction);
             }
             // close the path
@@ -511,18 +556,48 @@ static command_result export_region_tiles(color_ostream &out)
             paths.push_back(std::move(path));
             path.clear();
         }
-
-        out_file << biome_tile.x << ";" << biome_tile.y << ";" << region.size() << ";" << components.size() << ";";
-        out_file << ENUM_KEY_STR(biome_type,Maps::getBiomeType(biome_tile.x, biome_tile.y)) << ";";
         assert(paths.size() > 0);
+
+        auto& region_map_entry = world->world_data->region_map[biome_tile.x][biome_tile.y];
+        auto world_region = df::world_region::find(region_map_entry.region_id);
+        auto landmass = df::world_landmass::find(region_map_entry.landmass_id);
+
+        auto print_csv = [&out_file](auto ...args){ ([&]{ out_file << args << ";" ; }() ,...); };
+        print_csv(
+            // "world_x", "world_y", "num_tiles", "num_components", "biome_type",
+            biome_tile.x,
+            biome_tile.y,
+            region.size(),
+            components.size(),
+            ENUM_KEY_STR(biome_type,Maps::getBiomeType(biome_tile.x, biome_tile.y)),
+            // "region_id", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df"
+            region_map_entry.region_id,
+            world_region ? DF2UTF(Translation::translateName(&world_region->name, true)) : "NONE",
+            world_region ? DF2UTF(Translation::translateName(&world_region->name, false)) : "NONE",
+            region_map_entry.landmass_id,
+            landmass ? DF2UTF(Translation::translateName(&landmass->name, true)) : "NONE",
+            landmass ? DF2UTF(Translation::translateName(&landmass->name, false)) : "NONE",
+            // "evilness", "savagery", "volcanism", "drainage", "temperature", "vegetation", "rainfall", "snowfall", "salinity"
+            region_map_entry.evilness,
+            region_map_entry.savagery,
+            region_map_entry.volcanism,
+            region_map_entry.drainage,
+            region_map_entry.temperature,
+            region_map_entry.vegetation,
+            region_map_entry.rainfall,
+            region_map_entry.snowfall,
+            region_map_entry.salinity,
+            // "surroundings", "elevation", "reanimating", "has_bogeymen"
+            describe_surroundings(region_map_entry.savagery, region_map_entry.evilness),
+            region_map_entry.elevation,
+            world_region->reanimating,
+            world_region->has_bogeymen
+        );
+        // output geometry
         if (paths.size() == 1) {
-            out_file << "POLYGON((" << print_path(paths[0]) << "))" << std::endl;
+            print_vector(out_file, paths, print_path , "POLYGON(", ",", ")\n" );
         } else {
-            out_file << "MULTIPOLYGON(" << "((" << print_path(paths[0]) << "))";
-            for (size_t i = 1; i < paths.size(); ++i) {
-                out_file << ",((" << print_path(paths[i]) << "))";
-            }
-            out_file << ")" << std::endl;
+            print_vector(out_file, paths, print_path , "MULTIPOLYGON((", "),(", "))\n" );
         }
     }
 

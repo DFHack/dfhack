@@ -54,21 +54,29 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- `gui/journal`: Ctrl-j hotkey to launch `gui/journal` now works in adventure mode!
 
 ## Fixes
-- Fix processing error in the overlay that displays unit preferences in the baron selection list
 
 ## Misc Improvements
 
 ## Documentation
 
 ## API
-- ``Filesystem`` module: rewritten to use C++ standard library components, for better portability
 
 ## Lua
 
 ## Removed
+
+# 51.09-r1
+
+## New Features
+- `gui/journal`: Ctrl-j hotkey to launch `gui/journal` now works in adventure mode!
+
+## Fixes
+- Fix processing error in the overlay that displays unit preferences in the baron selection list
+
+## API
+- ``Filesystem`` module: rewritten to use C++ standard library components, for better portability
 
 # 51.08-r1
 

@@ -395,6 +395,42 @@ inline bool static_add_to_map(CT *pmap, typename CT::key_type key, typename CT::
 /*
  * MISC
  */
+template<
+    std::ranges::input_range Range,
+    std::invocable<std::ostream&, std::ranges::range_reference_t<Range>> Callable>
+void print_range(
+    std::ostream &out,
+    const Range &elements,
+    Callable&& print_element,
+    const std::string &prefix = "[",
+    const std::string &separator = ", ",
+    const std::string &suffix = "]"
+){
+    out << prefix;
+    auto it = std::ranges::begin(elements);
+    auto end = std::ranges::end(elements);
+
+    if (it != end) {
+        print_element(out, *it);
+        for (++it; it != end; ++it) {
+            out << separator;
+            print_element(out, *it);
+        }
+    }
+    out << suffix;
+}
+
+template<std::ranges::input_range Range>
+void print_range(
+    std::ostream &out,
+    const Range& elements,
+    const std::string &prefix = "[",
+    const std::string &separator = ", ",
+    const std::string &suffix = "]"
+){
+    auto print_element = [](std::ostream &out, auto& e) { out << e; };
+    print_range(out, elements, print_element, prefix, separator, suffix);
+}
 
 DFHACK_EXPORT bool split_string(std::vector<std::string> *out,
                                 const std::string &str, const std::string &separator,

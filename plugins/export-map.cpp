@@ -39,8 +39,22 @@ DFHACK_PLUGIN("export-map");
 REQUIRE_GLOBAL(world);
 
 namespace DFHack {
-    DBG_DECLARE(exportmap, log);
+    DBG_DECLARE(exportmap, log, DebugCategory::LINFO);
+    DBG_DECLARE(exportmap, warning, DebugCategory::LWARNING);
 }
+
+template<>
+struct std::hash<df::coord2d>
+{
+    std::size_t operator()(const df::coord2d& pos) const noexcept
+    {
+        // hashing is easy, if values are smaller than the hash
+        return ((std::size_t)pos.x << 16) | (std::size_t)pos.y;
+    }
+};
+
+// were only dealing with 2D coordinates in this file
+using coord = df::coord2d;
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 
@@ -84,7 +98,7 @@ df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t dir) {
     }
     world_x = std::min(std::max((int16_t)0,world_x),(int16_t)(world->world_data->world_width - 1));
     world_y = std::min(std::max((int16_t)0,world_y),(int16_t)(world->world_data->world_height - 1));
-    return df::coord2d(world_x, world_y);
+    return { world_x, world_y };
 }
 
 auto create_field(OGRLayer *layer, std::string name, OGRFieldType type, int width = 0, OGRFieldSubType subtype = OFSTNone) {
@@ -272,51 +286,11 @@ static command_result export_sites(color_ostream &out)
 
 /********************************************************************** */
 
-template<typename T, std::invocable<std::ostream&, const T&> Callable>
-void print_vector(
-    std::ostream &out,
-    const std::vector<T> &elements,
-    Callable&& print_element,
-    const char* prefix = "[",
-    const char* separator = ", ",
-    const char* suffix = "]"
-){
-    out << prefix;
-    if (elements.size()) {
-        print_element(out, elements[0]);
-        for (size_t i = 1; i < elements.size(); ++i) {
-            out << separator;
-            print_element(out, elements[i]);
-        }
-    }
-    out << suffix;
-}
-
-template<typename T>
-void print_vector(
-    std::ostream &out,
-    const std::vector<T> &elements,
-    const char* prefix = "[",
-    const char* separator = ", ",
-    const char* suffix = "]"
-){
-    auto print_element = [](std::ostream &out, const T& e) { out << e; };
-    print_vector(out, elements, print_element, prefix, separator, suffix);
-}
 
 
-
-template<>
-struct std::hash<df::coord2d>
-{
-    std::size_t operator()(const df::coord2d& pos) const noexcept
-    {
-        // hashing is easy, if values are smaller than the hash
-        return ((std::size_t)pos.x << 16) | (std::size_t)pos.y;
-    }
+bool region_order(coord p1, coord p2) {
+    return p1.y < p2.y || (p1.y == p2.y && p1.x < p2.x);
 };
-
-using coord = df::coord2d;
 
 enum class direction : int { North = 0, West = 1, South = 2, East = 3 };
 
@@ -328,7 +302,7 @@ direction turn_right(direction dir) {
     return (direction)(((int)dir+3) % 4);
 }
 
-df::coord2d as_offset(direction dir) {
+coord as_offset(direction dir) {
     switch (dir) {
         case direction::North:
             return { 0, -1 };
@@ -352,12 +326,10 @@ auto print_path(std::ostream &out, const std::vector<coord> &path) {
     assert(path.size());
     auto print_point = [scale](std::ostream &out, const coord &pos){
         out << scale * pos.x << " " << -scale * pos.y;};
-    print_vector<coord>(out, path, print_point, "(", ",", ")");
+    print_range(out, path, print_point, "(", ",", ")");
 }
 
-auto region_order = [](df::coord2d p1, df::coord2d p2) {
-    return p1.y < p2.y || (p1.y == p2.y && p1.x < p2.x);
-};
+
 
 std::pair<bool,bool> ahead(const std::vector<coord> &component, coord pos, direction dir) {
     auto test = [&](int16_t x, int16_t y){
@@ -396,74 +368,31 @@ static command_result export_region_tiles(color_ostream &out)
         return CR_FAILURE;
     }
 
+    // If you change anything in this vector, don't forget to change the
+    // corresponding comments and arguments in the call to print_csv below
     vector<std::string> headings = {
         "world_x", "world_y", "num_tiles", "num_components", "biome_type",
         "region_id", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df",
-        "evilness", "savagery", "volcanism", "drainage", "temperature", "vegetation", "rainfall", "snowfall", "salinity",
+        "evilness", "savagery", "volcanism", "drainage", "temperature", "vegetation", "rainfall", "salinity",
         "surroundings", "elevation", "reanimating", "has_bogeymen"
     };
-    print_vector(out_file, headings,"",";",";boundary_wkt\n" );
+    print_range(out_file, headings,"",";",";boundary_wkt\n" );
 
+    /* Preprocessing: cluster region tiles by the world tile used for the biome information */
 
-
-
-    /*
-    try {
-        create_field(layer, "region_id", OFTInteger);
-        create_field(layer, "region_name_en", OFTString, 100);
-        create_field(layer, "region_name_df", OFTString, 100);
-        create_field(layer, "landmass_id", OFTInteger);
-        create_field(layer, "landmass_name_en", OFTString, 100);
-        create_field(layer, "landmass_name_df", OFTString, 100);
-
-        create_field(layer, "biome_type", OFTString, 32);
-        create_field(layer, "surroundings", OFTString, 16);
-        create_field(layer, "elevation", OFTInteger);
-
-        create_field(layer, "evilness", OFTInteger);
-        create_field(layer, "savagery", OFTInteger);
-        create_field(layer, "volcanism", OFTInteger);
-        create_field(layer, "drainage", OFTInteger);
-        create_field(layer, "temperature", OFTInteger);
-        create_field(layer, "vegetation", OFTInteger);
-        create_field(layer, "rainfall", OFTInteger);
-        create_field(layer, "snowfall", OFTInteger);
-        create_field(layer, "salinity", OFTInteger);
-
-        create_field(layer, "reanimating", OFTInteger, 0, OFSTBoolean);
-        create_field(layer, "has_bogeymen", OFTInteger, 0, OFSTBoolean);
-
-    } catch (const DFHack::command_result& r) {
-        out.printerr("could not create fields for output layer");
-        return r;
-    }
-    */
-
-
+    // map world tile coord -> vector of region tiles referencing of world title
+    std::unordered_map<coord,std::vector<coord>> world_tile_region;
 
     // iterating over the region details allows the user to do partial map exports
     // by manually scrolling on the embark site selection
-
-    std::unordered_map<df::coord2d,std::vector<df::coord2d>> world_tile_region;
-
     for (auto const region_details : world->world_data->midmap_data.region_details) {
         auto world_x = region_details->pos.x;
         auto world_y = region_details->pos.y;
         for (int region_x = 0; region_x < 16; ++region_x) {
-            for (int region_y = 0; region_y < 16; ++region_y) {
-
-                // auto feature = OGRFeature::CreateFeature( layer->GetLayerDefn() );
-                // setGeometry(
-                //     feature,
-                //     (double)(world_x * wdim + region_x * rdim),
-                //     (double)(world_y * wdim + region_y * rdim),
-                //     rdim
-                // );
-
-                // get the world tile coordinates used for the biome information of the local region tile
+            for (int region_y = 0; region_y < 16; ++region_y)
+            {
                 auto biome_tile = get_world_index(world_x, world_y, region_details->biome[region_x][region_y]);
                 world_tile_region[biome_tile].emplace_back(16 * world_x + region_x, 16 * world_y + region_y);
-
             }
         }
     }
@@ -481,18 +410,26 @@ static command_result export_region_tiles(color_ostream &out)
     for (auto& [biome_tile, region] : world_tile_region)
     {
         assert(region.size() > 0);
-        // compute the connected components of the world tile region
-        std::ranges::sort(region, region_order);
 
+         // sorting the region provides O(log n) membership test.
+         std::ranges::sort(region, region_order);
+
+        /* Phase I : compute the connected components of the world tile region */
+
+        // component_assignment[i] is the component id of region[i]
         std::vector<unsigned int> component_assignment;
         component_assignment.resize(region.size(),0);
-        std::deque<size_t> agenda;
 
-        auto current_component = 0;
+        // (indices of) blocks in the current component that have been discovered but not yet explored
+        std::deque<size_t> agenda;
+        unsigned int current_component = 0;
+
         for (size_t i = 0; i < region.size(); ++i) {
             if (component_assignment[i]) {
+                // skip region tiles that have already been assigned a component
                 continue;
             } else {
+                // start a new component for tiles that haven't been assigned yet
                 ++current_component;
                 component_assignment[i] = current_component;
                 agenda.push_back(i);
@@ -501,37 +438,47 @@ static command_result export_region_tiles(color_ostream &out)
                 auto pos_idx = agenda.front(); agenda.pop_front();
                 auto pos = region[pos_idx];
 
-                for (auto const offset : directions) {
-                    // FIXME: use something O(log n) instead of the O(n) find
-                    auto lower = std::ranges::lower_bound(region, pos + offset, region_order);
-                    auto n_it = (*lower == pos + offset) ? lower : region.end();
-
-                    // auto n_it = std::find(region.begin(), region.end(), pos + offset);
-                    auto n_idx = std::distance(region.begin(), n_it);
-                    if (n_it != region.end() && component_assignment[n_idx] == 0) {
-                        component_assignment[n_idx] = current_component;
-                        agenda.push_back(n_idx);
+                for (const auto& offset : directions) {
+                    auto lb = std::ranges::lower_bound(region, pos + offset, region_order);
+                    if (lb != region.end() && *lb == pos + offset) {
+                        auto n_idx = std::distance(region.begin(), lb);
+                        if (component_assignment[n_idx] == 0) {
+                            component_assignment[n_idx] = current_component;
+                            agenda.push_back(n_idx);
+                        }
                     }
                 }
             }
         }
 
-        // assert that all parts of the region are accounted for
+        // check that all parts of the region are accounted for
         assert(std::ranges::all_of(component_assignment, [](int comp){ return comp > 0;}));
 
+        // distribute region tiles according to their component assignment (preserves region order)
         std::vector<std::vector<coord>> components;
         components.resize(current_component);
         for (size_t i = 0; i < region.size(); ++i) {
             components.at(component_assignment.at(i) - 1).push_back(region.at(i));
         }
 
+        /* Phase II : create paths by clockwise traversal along the outside of every component */
+        /**
+         * Note: DF uses "picture coordinates" (positive y values go "south")
+         * while in GIS software positve y values go "north". Thus, [print_path]
+         * negates the y-coordinates, turning the clockwise traversals into
+         * counterclockwise traversals as specified by WKT.
+         * https://en.wikipedia.org/wiki/Well-known_text_representation_of_geometry
+         */
+
         std::vector<std::vector<coord>> paths;
         for (auto const &component : components) {
 
+            // start at the NW corner of the west-most tile of the northmost row...
             auto start = component.at(0);
             std::vector<coord> path;
             path.push_back(start);
 
+            // ... ensuring that a step to the east is a valid clockwise step along the boundary.
             auto current_direction = direction::East;
             auto current_position = advance(start,current_direction);
 
@@ -548,7 +495,14 @@ static command_result export_region_tiles(color_ostream &out)
                     path.push_back(current_position);
                     current_direction = turn_right(current_direction);
                 }
-                assert(! (left && !right)); // shape has a hole or is not connected
+                else if (left && !right) {
+                    // diagonal step: turn right (following the outline of the inclusion)
+                    // this does not seem to happen with the maps currently generated by DF
+                    DEBUG(warning,out).print("Region has self-intersecting outline");
+                    path.push_back(current_position);
+                    current_direction = turn_right(current_direction);
+                }
+                // case !left && right requires no turn; advance the position in all cases
                 current_position = advance(current_position, current_direction);
             }
             // close the path
@@ -557,6 +511,8 @@ static command_result export_region_tiles(color_ostream &out)
             path.clear();
         }
         assert(paths.size() > 0);
+
+        /* Phase III: output the CSV line */
 
         auto& region_map_entry = world->world_data->region_map[biome_tile.x][biome_tile.y];
         auto world_region = df::world_region::find(region_map_entry.region_id);
@@ -577,7 +533,7 @@ static command_result export_region_tiles(color_ostream &out)
             region_map_entry.landmass_id,
             landmass ? DF2UTF(Translation::translateName(&landmass->name, true)) : "NONE",
             landmass ? DF2UTF(Translation::translateName(&landmass->name, false)) : "NONE",
-            // "evilness", "savagery", "volcanism", "drainage", "temperature", "vegetation", "rainfall", "snowfall", "salinity"
+            // "evilness", "savagery", "volcanism", "drainage", "temperature", "vegetation", "rainfall", "salinity"
             region_map_entry.evilness,
             region_map_entry.savagery,
             region_map_entry.volcanism,
@@ -585,7 +541,6 @@ static command_result export_region_tiles(color_ostream &out)
             region_map_entry.temperature,
             region_map_entry.vegetation,
             region_map_entry.rainfall,
-            region_map_entry.snowfall,
             region_map_entry.salinity,
             // "surroundings", "elevation", "reanimating", "has_bogeymen"
             describe_surroundings(region_map_entry.savagery, region_map_entry.evilness),
@@ -593,55 +548,17 @@ static command_result export_region_tiles(color_ostream &out)
             world_region->reanimating,
             world_region->has_bogeymen
         );
-        // output geometry
+
+        // output geometry as WKT
         if (paths.size() == 1) {
-            print_vector(out_file, paths, print_path , "POLYGON(", ",", ")\n" );
+            print_range(out_file, paths, print_path , "POLYGON(", ",", ")\n" );
         } else {
-            print_vector(out_file, paths, print_path , "MULTIPOLYGON((", "),(", "))\n" );
+            print_range(out_file, paths, print_path , "MULTIPOLYGON((", "),(", "))\n" );
         }
     }
 
-
-                // feature->SetField( "biome_type", ENUM_KEY_STR(biome_type,Maps::getBiomeType(biome_x,biome_y)).c_str() );
-
-                // gets supplementary information from the world tile
-                // auto& region_map_entry = world->world_data->region_map[biome_x][biome_y];
-                // #define SET_FIELD(name) feature->SetField( #name, region_map_entry.name)
-                // SET_FIELD(region_id);
-                // SET_FIELD(landmass_id);
-                // SET_FIELD(evilness);
-                // SET_FIELD(savagery);
-                // SET_FIELD(volcanism);
-                // SET_FIELD(drainage);
-                // SET_FIELD(temperature);
-                // SET_FIELD(vegetation);
-                // SET_FIELD(rainfall);
-                // SET_FIELD(snowfall);
-                // SET_FIELD(salinity);
-                // #undef SET_FIELD
-
-                // feature->SetField( "surroundings", describe_surroundings(region_map_entry.savagery, region_map_entry.evilness));
-
-                // auto region = df::world_region::find(region_map_entry.region_id);
-                // if (region) {
-                //     auto region_name_en = DF2UTF(Translation::translateName(&region->name, true));
-                //     feature->SetField( "region_name_en", region_name_en.c_str());
-                //     auto region_name_df = DF2UTF(Translation::translateName(&region->name, false));
-                //     feature->SetField( "region_name_df", region_name_df.c_str());
-                //     feature->SetField("reanimating", region->reanimating);
-                //     feature->SetField("has_bogeymen", region->has_bogeymen);
-                // }
-                // auto landmass = df::world_landmass::find(region_map_entry.landmass_id);
-                // if (landmass) {
-                //     auto landmass_name_en = DF2UTF(Translation::translateName(&landmass->name, true));
-                //     feature->SetField( "landmass_name_en", landmass_name_en.c_str());
-                //     auto landmass_name_df = DF2UTF(Translation::translateName(&landmass->name, false));
-                //     feature->SetField( "landmass_name_df", landmass_name_df.c_str());
-                // }
-
-
     const auto finish{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{finish - start};
-    out.print("done in %f ms !\n", elapsed_seconds.count());
+    out.print("done in %f s !\n", elapsed_seconds.count());
     return CR_OK;
 }

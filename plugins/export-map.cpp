@@ -56,32 +56,20 @@ struct std::hash<df::coord2d>
 // were only dealing with 2D coordinates in this file
 using coord = df::coord2d;
 
-static command_result do_command(color_ostream &out, vector<string> &parameters);
+// static int wdim = 768; // dimension of a world tile
+static int rdim = 48;  // dimension of a region tile
 
-DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(log,out).print("initializing %s\n", plugin_name);
-
-    commands.push_back(PluginCommand(
-        plugin_name,
-        "Export the world map.",
-        do_command));
-
-    return CR_OK;
-}
-
-auto setGeometry(OGRFeature *feature, double x, double y, double dimx, double dimy = 0) {
-    if (dimy == 0) { dimy = dimx; }
-    auto poly = new OGRPolygon();
-    auto boundary = new OGRLinearRing();
-    y = -y; // in GIS negative y-coordinates mean further south
-    boundary->addPoint(x,y);
-    boundary->addPoint(x,y-dimy);
-    boundary->addPoint(x+dimx,y-dimy);
-    boundary->addPoint(x+dimx,y);
-    boundary->closeRings();
-    //the "Directly" variants assume ownership of the objects created above
-    poly->addRingDirectly(boundary);
-    feature->SetGeometryDirectly( poly );
+/**
+ * Takes a vector of coordinates interpreted as global region tile coordinates
+ * (i.e. 16 region tiles per world tile) and emits a WKT path in GIS-compatible
+ * local tile coordinates (negative y-coordinates, 48 stepts per region tile)
+ */
+auto print_path(std::ostream &out, const std::vector<coord> &path) {
+    auto scale = rdim;
+    assert(path.size());
+    auto print_point = [scale](std::ostream &out, const coord &pos){
+        out << scale * pos.x << " " << -scale * pos.y;};
+    print_range(out, path, print_point, "(", ",", ")");
 }
 
 df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t dir) {
@@ -101,23 +89,6 @@ df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t dir) {
     return { world_x, world_y };
 }
 
-auto create_field(OGRLayer *layer, std::string name, OGRFieldType type, int width = 0, OGRFieldSubType subtype = OFSTNone) {
-    OGRFieldDefn field( name.c_str() , type );
-    if (subtype != OFSTNone) {
-        field.SetSubType(subtype);
-    }
-    if (width != 0) {
-        field.SetWidth(width);
-    }
-    // this should create a copy internally
-    if( layer->CreateField( &field ) != OGRERR_NONE ){
-        throw CR_FAILURE;
-    }
-}
-
-// PROJ.4 description of EPSG:3857 (https://epsg.io/3857)
-static const char* EPSG_3857 = "+proj=merc +a=6378137 +b=6378137 +lat_ts=0 +lon_0=0 +x_0=0 +y_0=0 +k=1 +units=m +nadgrids=@null +wktext +no_defs +type=crs";
-
 const char* describe_surroundings(int savagery, int evilness) {
     constexpr std::array<const char*,9>surroundings{
         "Serene",   "Mirthful",     "Joyous Wilds",
@@ -129,8 +100,18 @@ const char* describe_surroundings(int savagery, int evilness) {
     return surroundings[3 * evilness_index + savagery_index];
 }
 
-// static int wdim = 768; // dimension of a world tile
-static int rdim = 48;  // dimension of a region tile
+
+static command_result do_command(color_ostream &out, vector<string> &parameters);
+DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
+    DEBUG(log,out).print("initializing %s\n", plugin_name);
+
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Export the world map.",
+        do_command));
+
+    return CR_OK;
+}
 
 static command_result export_region_tiles(color_ostream &out);
 static command_result export_sites(color_ostream &out);
@@ -154,133 +135,75 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     }
 }
 
+/********************************************************************** */
+
 static command_result export_sites(color_ostream &out)
 {
     out.print("exporting sites... ");
     out.flush();
     const auto start{std::chrono::steady_clock::now()};
 
-    // set up coordinate system
-    OGRSpatialReference CRS;
-    if (CRS.importFromProj4(EPSG_3857) != OGRERR_NONE) {
-        out.printerr("could not set up coordinate system");
+    // ensure that we have an output file
+    std::string filename("sites.csv");
+    std::ofstream out_file(filename, std::ios::out | std::ios::trunc);
+    if (!out_file) {
         return CR_FAILURE;
     }
 
-    // set up output driver
-    GDALAllRegister();
-    const char *driver_name = "SQLite";
-    const char *extension = "sqlite";
-    auto driver = GetGDALDriverManager()->GetDriverByName(driver_name);
-    if (!driver) {
-        out.printerr("could not find sqlite driver");
-        return CR_FAILURE;
-    }
+    // If you change anything in this vector, don't forget to change the
+    // corresponding comments and arguments in the call to print_csv below
+    vector<std::string> headings = {
+        "site_id", "civ_id", "created_year", "cur_owner_id", "type",
+        "site_name_df", "site_name_en", "civ_name_df", "civ_name_en", "site_government_df", "site_government_en", "owner_race"
+    };
+    print_range(out_file, headings,"",";",";boundary_wkt\n" );
 
-    // create a dataset and associate it to a file
-    std::string sites("sites.");
-    sites.append(extension);
-    const char* options[] = { "SPATIALITE=YES", nullptr };
-    auto dataset = driver->Create( sites.c_str(), 0, 0, 0, GDT_Unknown, options);
-    if (!dataset) {
-        out.printerr("could not create dataset");
-        return CR_FAILURE;
-    }
-
-    // create a layer for the biome data
-    // const char* format[] = { "FORMAT=WKT", nullptr };
-    auto layer = dataset->CreateLayer( "world_sites", &CRS, wkbPolygon, nullptr );
-    if (!layer) {
-        out.printerr("could not create layer");
-        return CR_FAILURE;
-    }
-
-    try {
-        create_field(layer, "site_id", OFTInteger);
-        create_field(layer, "civ_id", OFTInteger);
-        create_field(layer, "created_year", OFTInteger);
-        create_field(layer, "cur_owner_id", OFTInteger);
-
-        create_field(layer, "type", OFTString, 15);
-
-        create_field(layer, "site_name_df", OFTString, 100);
-        create_field(layer, "site_name_en", OFTString, 100);
-
-        create_field(layer, "civ_name_df", OFTString, 100);
-        create_field(layer, "civ_name_en", OFTString, 100);
-
-        create_field(layer, "site_government_df", OFTString, 100);
-        create_field(layer, "site_government_en", OFTString, 100);
-
-        create_field(layer, "owner_race", OFTString, 15);
-
-        // create_field(layer, "local_ruler", OFTString, 100);
-
-    }
-    catch (const DFHack::command_result& r) {
-        out.printerr("could not create fields for output layer");
-        return r;
-    }
-
-    if (dataset->StartTransaction() != OGRERR_NONE) {
-        out.printerr("could not start a transaction\n");
-    }
+    #define TRANSLATE_DF_EN(guard, name_object)\
+        guard ? DF2UTF(Translation::translateName(&name_object, false)) : "NONE",\
+        guard ? DF2UTF(Translation::translateName(&name_object, true)) : "NONE"
 
     for (auto const site : world->world_data->sites)
     {
-
-        auto feature = OGRFeature::CreateFeature( layer->GetLayerDefn() );
-
-        setGeometry(
-            feature,
-            site->global_min_x * rdim,
-            site->global_min_y * rdim,
-            (site->global_max_x - site->global_min_x + 1) * rdim,
-            (site->global_max_y - site->global_min_y + 1) * rdim
-        );
-        feature->SetField( "site_id", site->id );
-        feature->SetField( "type", ENUM_KEY_STR(world_site_type, site->type).c_str() );
-        #define SET_FIELD(name) feature->SetField( #name, site->name)
-        SET_FIELD(civ_id);
-        SET_FIELD(created_year);
-        SET_FIELD(cur_owner_id);
-        #undef SET_FIELD
-
-        #define TRANSLATE_NAME(field_name, name_object)\
-            feature->SetField((#field_name"_df"), DF2UTF(Translation::translateName(&name_object, false)).c_str());\
-            feature->SetField((#field_name"_en"), DF2UTF(Translation::translateName(&name_object, true)).c_str());
-
-        TRANSLATE_NAME(site_name, site->name)
-
         auto civ = df::historical_entity::find(site->civ_id);
-        if (civ) { TRANSLATE_NAME(civ_name,civ->name) }
-
         auto owner = df::historical_entity::find(site->cur_owner_id);
-        if (owner) {
-            TRANSLATE_NAME(site_government,owner->name)
-            auto race = df::creature_raw::find(owner->race);
-            if (!race){
-                race = df::creature_raw::find(civ->race);
-            }
-            if (race) {
-                feature->SetField( "owner_race", race->name[2].c_str() );
+
+        df::creature_raw *race = nullptr;
+        if (owner){
+            race = df::creature_raw::find(owner->race);
+            DEBUG(warning, out).print("owner (%d) of site (%d) has undefined race (%d)", owner->id, site->id, owner->race);
+            if (!race)            {
+                df::creature_raw::find(civ->race);
             }
         }
 
-
-        // this updates the feature with the id it receives in the layer
-        if( layer->CreateFeature( feature ) != OGRERR_NONE )
-            return CR_FAILURE;
-        // but we don't care and destroy the feature
-        OGRFeature::DestroyFeature( feature );
+        auto print_csv = [&out_file](auto ...args){ ([&]{ out_file << args << ";" ; }() ,...); };
+        print_csv(
+            //  "site_id", "civ_id", "created_year", "cur_owner_id", "type",
+            site->id,
+            site->civ_id,
+            site->created_year,
+            site->cur_owner_id,
+            ENUM_KEY_STR(world_site_type, site->type),
+            // "site_name_df", "site_name_en", "civ_name_df", "civ_name_en", "site_government_df", "site_government_en", "owner_race"
+            TRANSLATE_DF_EN(true, site->name),
+            TRANSLATE_DF_EN(civ, civ->name),
+            TRANSLATE_DF_EN(owner, owner->name),
+            race ? race->name[2] : "NONE"
+        );
+        const vector<coord> path{
+            coord(site->global_min_x, site->global_min_y),
+            coord(site->global_max_x+1, site->global_min_y),
+            coord(site->global_max_x+1, site->global_max_y+1),
+            coord(site->global_min_x, site->global_max_y+1),
+            coord(site->global_min_x, site->global_min_y)
+        };
+        print_range(out_file, std::vector<vector<coord>>{path}, print_path , "POLYGON(", ",", ")\n" );
     }
 
-    dataset->CommitTransaction();
 
-    GDALClose( dataset );
     const auto finish{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{finish - start};
-    out.print("done in %f ms !\n", elapsed_seconds.count());
+    out.print("done in %.2fs !\n", elapsed_seconds.count());
     return CR_OK;
 }
 
@@ -321,13 +244,7 @@ coord advance(coord pos, direction dir) {
     return pos + as_offset(dir);
 }
 
-auto print_path(std::ostream &out, const std::vector<coord> &path) {
-    auto scale = rdim;
-    assert(path.size());
-    auto print_point = [scale](std::ostream &out, const coord &pos){
-        out << scale * pos.x << " " << -scale * pos.y;};
-    print_range(out, path, print_point, "(", ",", ")");
-}
+
 
 
 

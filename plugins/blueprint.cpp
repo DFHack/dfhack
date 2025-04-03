@@ -1106,42 +1106,46 @@ static const char * get_tile_place(const df::coord &pos,
 
 static const char * get_zone_keys(const df::building_civzonest *zone) {
     static const uint32_t DEFAULT_GATHER_FLAGS =
-            df::building_civzonest::T_zone_settings::T_gather::T_flags::mask_pick_trees |
-            df::building_civzonest::T_zone_settings::T_gather::T_flags::mask_pick_shrubs |
-            df::building_civzonest::T_zone_settings::T_gather::T_flags::mask_gather_fallen;
-    static const df::hospital_supplies DEFAULT_HOSPITAL;
+            df::civzone_gather_flag::mask_pick_trees |
+            df::civzone_gather_flag::mask_pick_shrubs |
+            df::civzone_gather_flag::mask_gather_fallen;
+    //static const df::hospital_supplies DEFAULT_HOSPITAL;
 
     ostringstream keys;
-    const df::building_civzonest::T_zone_settings &flags = zone->zone_settings;
+    const df::civzone_type type = zone->type;
 
     // inverted logic for Active since it's on by default
-    if (!flags.bits.active) keys << 'a';
+    if (!zone->spec_sub_flag.bits.active) keys << 'a';
 
     // in UI order
-    if (flags.bits.water_source) keys << 'w';
-    if (flags.bits.fishing) keys << 'f';
-    if (flags.bits.gather) {
+    if (type == df::civzone_type::WaterSource) keys << 'w';
+    if (type == df::civzone_type::FishingArea) keys << 'f';
+    if (type == df::civzone_type::PlantGathering) {
         keys << 'g';
         if (zone->zone_settings.gather.flags.whole != DEFAULT_GATHER_FLAGS) {
-            keys << 'G';
+            keys << '{';
             // logic is inverted since they're all on by default
-            if (!zone->zone_settings.gather.flags.bits.pick_trees) keys << 't';
-            if (!zone->zone_settings.gather.flags.bits.pick_shrubs) keys << 's';
-            if (!zone->zone_settings.gather.flags.bits.gather_fallen) keys << 'f';
-            keys << '^';
+            if (!zone->zone_settings.gather.flags.bits.pick_trees) keys << "pick_trees=false ";
+            if (!zone->zone_settings.gather.flags.bits.pick_shrubs) keys << "pick_shrubs=false ";
+            if (!zone->zone_settings.gather.flags.bits.gather_fallen) keys << "gather_fallen=false ";
+            keys << '}';
         }
     }
-    if (flags.bits.garbage_dump) keys << 'd';
-    if (flags.bits.pen_pasture) keys << 'n';
-    if (flags.bits.pit_pond) {
+    if (type == df::civzone_type::Dump) keys << 'd';
+    if (type == df::civzone_type::Pen) keys << 'n';
+    if (type == df::civzone_type::Pond) {
         keys << 'p';
-        if (zone->pit_flags.bits.is_pond)
-            keys << "Pf^";
+        //FIXME (Squid): IDK what to do here exactly
+        if (!zone->zone_settings.pond.flag.bits.keep_filled)
+            keys << "{pond=false}";
     }
-    if (flags.bits.sand) keys << 's';
-    if (flags.bits.clay) keys << 'c';
-    if (flags.bits.meeting_area) keys << 'm';
-    if (flags.bits.animal_training) keys << 't';
+    if (type == df::civzone_type::SandCollection) keys << 's';
+    if (type == df::civzone_type::ClayCollection) keys << 'c';
+    if (type == df::civzone_type::MeetingHall) {
+        keys << 'm';
+        //FIXME (Squid): Needs to save the type of meeting hall (idk how to distinguish them at this level)
+    }
+    if (type == df::civzone_type::AnimalTraining) keys << 't';
 
     string keys_str = keys.str();
 

@@ -5945,6 +5945,8 @@ common text token lists that you can then pass as ``text`` to a ``Label``:
     Example 2: The DFHack logo - a graphical button in graphics mode and a text
     button in ASCII mode. The ASCII colors use the default for hovering::
 
+        local logo_textures=dfhack.textures.loadTileset(
+            'hack/data/art/logo.png', 8, 12, true),
         widgets.Label{
             text=widgets.makeButtonLabelText{
                 chars={
@@ -5952,10 +5954,12 @@ common text token lists that you can then pass as ``text`` to a ``Label``:
                     {179, 'H', 'a', 179},
                     {179, 'c', 'k', 179},
                 },
-                tileset=dfhack.textures.loadTileset(
-                    'hack/data/art/logo.png', 8, 12, true),
-                tileset_hover=dfhack.textures.loadTileset(
-                    'hack/data/art/logo_hovered.png', 8, 12, true),
+                tileset=logo_textures,
+                tileset_offset=1,
+                tileset_stride=8,
+                tileset_hover=logo_textures,
+                tileset_hover_offset=5,
+                tileset_hover_stride=8,
             },
             on_click=function()
                 dfhack.run_command{'hotkeys', 'menu', self.name}

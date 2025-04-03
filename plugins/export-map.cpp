@@ -13,12 +13,11 @@
 #include "df/map_block.h"
 #include "df/world_data.h"
 #include "df/world_site.h"
+#include "df/site_map_infost.h"
 #include "df/region_map_entry.h"
 #include "df/world_region.h"
 #include "df/world_landmass.h"
 #include "df/world_region_details.h"
-
-#include "gdal/ogrsf_frmts.h"
 
 #include <string>
 #include <vector>
@@ -137,6 +136,87 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 
 /********************************************************************** */
 
+const char* classify_site(df::world_site *site) {
+    using wst = df::enums::world_site_type::world_site_type;
+    switch (site->type) {
+        case wst::PlayerFortress:
+        case wst::MountainHalls:
+            if (site->min_depth == 0 && (0 < site->max_depth)){
+                return "fortress";
+            }
+            if (site->min_depth > 0) {
+                return "mountain halls";
+            }
+            return "hillocks";
+
+        case wst::DarkFortress: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "fortress" : "pits";
+        }
+
+        case wst::Cave:
+            return "cave";
+
+        case wst::ForestRetreat:
+            return "forest retreat";
+
+        case wst::Town: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "town" : "hamlet";
+        }
+
+        case wst::ImportantLocation:
+            return "important location";
+
+        case wst::LairShrine:
+            if (site->subtype_info) {
+                switch (site->subtype_info->lair_type) {
+                    case df::enums::lair_type::LABYRINTH:
+                        return "labyrinth";
+                    case df::enums::lair_type::SHRINE:
+                        return "shrine";
+                    default:
+                        break;
+                }
+            }
+            return "lair";
+
+        case wst::Fortress:
+            if (site->subtype_info) {
+                switch (site->subtype_info->fortress_type) {
+                    case df::enums::fortress_type::TOWER:
+                        return "tower";
+                    case df::enums::fortress_type::MONASTERY:
+                        return "monastery";
+                    case df::enums::fortress_type::FORT:
+                        return "fort";
+                    default:
+                        return "castle";
+                }
+            }
+            return "fortress";
+
+        case wst::Camp:
+            return "camp";
+
+        case wst::Monument:
+            if (site->subtype_info) {
+                switch (site->subtype_info->monument_type) {
+                    case df::enums::monument_type::TOMB:
+                        return "tomb";
+                    case df::enums::monument_type::VAULT:
+                        return "vault";
+                    default:
+                        break;
+                }
+            }
+            return "monument";
+
+        default:
+            return "site";
+    }
+}
+
 static command_result export_sites(color_ostream &out)
 {
     out.print("exporting sites... ");
@@ -183,7 +263,8 @@ static command_result export_sites(color_ostream &out)
             site->civ_id,
             site->created_year,
             site->cur_owner_id,
-            ENUM_KEY_STR(world_site_type, site->type),
+            //ENUM_KEY_STR(world_site_type, site->type),
+            classify_site(site),
             // "site_name_df", "site_name_en", "civ_name_df", "civ_name_en", "site_government_df", "site_government_en", "owner_race"
             TRANSLATE_DF_EN(true, site->name),
             TRANSLATE_DF_EN(civ, civ->name),

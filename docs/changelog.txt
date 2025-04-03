@@ -67,6 +67,11 @@ Template for new versions:
 
 ## Removed
 
+# 51.10-r1
+
+## Misc Improvements
+- Compatibility with DF 51.10
+
 # 51.09-r1
 
 ## New Features

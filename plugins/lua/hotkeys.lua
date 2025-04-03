@@ -6,7 +6,6 @@ local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
 local logo_textures = dfhack.textures.loadTileset('hack/data/art/logo.png', 8, 12, true)
-local logo_hovered_textures = dfhack.textures.loadTileset('hack/data/art/logo_hovered.png', 8, 12, true)
 
 local function get_command(cmdline)
     local first_word = cmdline:trim():split(' +')[1]
@@ -41,7 +40,11 @@ function HotspotMenuWidget:init()
                     {VERT_BAR, 'c', 'k', VERT_BAR},
                 },
                 tileset=logo_textures,
-                tileset_hover=logo_hovered_textures,
+                tileset_offset=1,
+                tileset_stride=8,
+                tileset_hover=logo_textures,
+                tileset_hover_offset=5,
+                tileset_hover_stride=8,
             },
             on_click=function() dfhack.run_command{'hotkeys', 'menu', self.name} end,
         },

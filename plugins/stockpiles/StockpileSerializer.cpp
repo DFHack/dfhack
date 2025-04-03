@@ -449,7 +449,9 @@ static bool serialize_list_organic_mat(color_ostream& out, FuncWriteExport add_v
             all = false;
             continue;
         }
-        string token = OrganicMatLookup::food_token_by_idx(out, cat, i);
+        OrganicMatLookup::FoodMat food_mat;
+        OrganicMatLookup::food_mat_by_idx(out, cat, i, food_mat);
+        string token = OrganicMatLookup::food_token_by_idx(out, food_mat);
         if (token.empty()) {
             DEBUG(log, out).print("food mat invalid :(\n");
             continue;
@@ -460,6 +462,24 @@ static bool serialize_list_organic_mat(color_ostream& out, FuncWriteExport add_v
     return all;
 }
 
+static string get_filter_string(color_ostream& out, const OrganicMatLookup::FoodMat& food_mat) {
+    auto str = OrganicMatLookup::food_token_by_idx(out, food_mat);
+    if (auto plant = food_mat.material.plant) {
+        if (plant->flags.is_set(df::plant_raw_flags::DRINK))
+            str += "/brewable";
+        if (plant->flags.is_set(df::plant_raw_flags::MILL))
+            str += "/millable";
+        if (auto mat = food_mat.material.material) {
+            if (mat->flags.is_set(df::material_flags::STRUCTURAL_PLANT_MAT) &&
+                (plant->flags.is_set(df::plant_raw_flags::THREAD) ||
+                 plant->flags.is_set(df::plant_raw_flags::EXTRACT_VIAL) ||
+                 plant->flags.is_set(df::plant_raw_flags::EXTRACT_BARREL)))
+                str += "/processable";
+        }
+    }
+    return str;
+}
+
 static void unserialize_list_organic_mat(color_ostream& out, const char* subcat, bool all, char val, const vector<string>& filters,
         FuncReadImport read_value, size_t list_size, vector<char>& pile_list,
         organic_mat_category::organic_mat_category cat) {
@@ -467,8 +487,9 @@ static void unserialize_list_organic_mat(color_ostream& out, const char* subcat,
     pile_list.resize(num_elems, '\0');
     if (all) {
         for (size_t idx = 0; idx < num_elems; ++idx) {
-            string token = OrganicMatLookup::food_token_by_idx(out, cat, idx);
-            set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
+            OrganicMatLookup::FoodMat food_mat;
+            OrganicMatLookup::food_mat_by_idx(out, cat, idx, food_mat);
+            set_filter_elem(out, subcat, filters, val, get_filter_string(out, food_mat), idx, pile_list.at(idx));
         }
         return;
     }
@@ -480,7 +501,9 @@ static void unserialize_list_organic_mat(color_ostream& out, const char* subcat,
             WARN(log, out).print("organic mat index too large! idx[%d] max_size[%zd]\n", idx, num_elems);
             continue;
         }
-        set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
+        OrganicMatLookup::FoodMat food_mat;
+        OrganicMatLookup::food_mat_by_idx(out, cat, idx, food_mat);
+        set_filter_elem(out, subcat, filters, val, get_filter_string(out, food_mat), idx, pile_list.at(idx));
     }
 }
 
@@ -566,7 +589,7 @@ static void unserialize_list_material(color_ostream& out, const char* subcat, bo
         vector<char>& pile_list) {
     // we initialize all disallowed values to 1
     // why? because that's how the memory is in DF before we muck with it.
-    size_t num_elems = world->raws.inorganics.size();
+    size_t num_elems = world->raws.inorganics.all.size();
     pile_list.resize(num_elems, 0);
     for (size_t i = 0; i < pile_list.size(); ++i) {
         MaterialInfo mi(0, i);
@@ -814,9 +837,9 @@ void StockpileSerializer::read(color_ostream &out, DeserializeMode mode, const v
 
 void StockpileSerializer::write_containers(color_ostream& out) {
     DEBUG(log, out).print("writing container settings\n");
-    mBuffer.set_max_bins(mPile->max_bins);
-    mBuffer.set_max_barrels(mPile->max_barrels);
-    mBuffer.set_max_wheelbarrows(mPile->max_wheelbarrows);
+    mBuffer.set_max_bins(mPile->storage.max_bins);
+    mBuffer.set_max_barrels(mPile->storage.max_barrels);
+    mBuffer.set_max_wheelbarrows(mPile->storage.max_wheelbarrows);
 }
 
 template<typename T_elem, typename T_elem_ret>
@@ -869,21 +892,21 @@ void StockpileSerializer::read_containers(color_ostream& out, DeserializeMode mo
     read_elem<int16_t, int32_t>(out, "max_bins", mode,
             std::bind(&StockpileSettings::has_max_bins, mBuffer),
             std::bind(&StockpileSettings::max_bins, mBuffer),
-            mPile->max_bins);
+            mPile->storage.max_bins);
     read_elem<int16_t, int32_t>(out, "max_barrels", mode,
             std::bind(&StockpileSettings::has_max_barrels, mBuffer),
             std::bind(&StockpileSettings::max_barrels, mBuffer),
-            mPile->max_barrels);
+            mPile->storage.max_barrels);
     read_elem<int16_t, int32_t>(out, "max_wheelbarrows", mode,
             std::bind(&StockpileSettings::has_max_wheelbarrows, mBuffer),
             std::bind(&StockpileSettings::max_wheelbarrows, mBuffer),
-            mPile->max_wheelbarrows);
+            mPile->storage.max_wheelbarrows);
 }
 
 void StockpileSettingsSerializer::write_general(color_ostream& out) {
     DEBUG(log, out).print("writing general settings\n");
-    mBuffer.set_allow_inorganic(mSettings->allow_inorganic);
-    mBuffer.set_allow_organic(mSettings->allow_organic);
+    mBuffer.set_allow_inorganic(mSettings->misc.allow_inorganic);
+    mBuffer.set_allow_organic(mSettings->misc.allow_organic);
 }
 
 void StockpileSerializer::write_general(color_ostream& out) {
@@ -895,11 +918,11 @@ void StockpileSettingsSerializer::read_general(color_ostream& out, DeserializeMo
     read_elem<bool, bool>(out, "allow_inorganic", mode,
             std::bind(&StockpileSettings::has_allow_inorganic, mBuffer),
             std::bind(&StockpileSettings::allow_inorganic, mBuffer),
-            mSettings->allow_inorganic);
+            mSettings->misc.allow_inorganic);
     read_elem<bool, bool>(out, "allow_organic", mode,
             std::bind(&StockpileSettings::has_allow_organic, mBuffer),
             std::bind(&StockpileSettings::allow_organic, mBuffer),
-            mSettings->allow_organic);
+            mSettings->misc.allow_organic);
 }
 
 void StockpileSerializer::read_general(color_ostream& out, DeserializeMode mode) {

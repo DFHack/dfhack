@@ -33,6 +33,7 @@ distribution.
 #include <cstring>
 #include <map>
 #include <memory>
+#include <filesystem>
 
 #include "VersionInfo.h"
 
@@ -262,7 +263,7 @@ namespace DFHack
             /// get the DF Process ID
             int getPID();
             /// get the DF Process FilePath
-            std::string getPath();
+            std::filesystem::path getPath();
             /// Adjust between in-memory and in-file image offset
             int adjustOffset(int offset, bool to_file = false);
 
@@ -270,10 +271,13 @@ namespace DFHack
             uint32_t getTickCount();
 
             /// modify permisions of memory range
-            bool setPermisions(const t_memrange & range,const t_memrange &trgrange);
+            bool setPermissions(const t_memrange & range,const t_memrange &trgrange);
 
             /// write a possibly read-only memory area
             bool patchMemory(void *target, const void* src, size_t count);
+
+            /// flush cache
+            bool flushCache(const void* target, size_t count);
 
             /// allocate new memory pages for code or stuff
             /// returns -1 on error (0 is a valid address)

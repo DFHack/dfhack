@@ -237,13 +237,16 @@ function coords(arg, arg_name, skip_validation)
     return pos
 end
 
-local toBool={["true"]=true,["yes"]=true,["y"]=true,["on"]=true,["1"]=true,
-              ["false"]=false,["no"]=false,["n"]=false,["off"]=false,["0"]=false}
+local toBool={["true"]=true,["yes"]=true,["y"]=true,["on"]=true,["1"]=true,["enable"]=true,["enabled"]=true,
+              ["false"]=false,["no"]=false,["n"]=false,["off"]=false,["0"]=false,["disable"]=false,["disabled"]=false}
 ---@nodiscard
 ---@param arg string
 ---@param arg_name? string
 ---@return boolean
 function boolean(arg, arg_name)
+    if arg == nil then
+        arg_error(arg_name, 'missing value; expected "true", "yes", "false", or "no"')
+    end
     local arg_lower = string.lower(arg)
     if toBool[arg_lower] == nil then
         arg_error(arg_name,

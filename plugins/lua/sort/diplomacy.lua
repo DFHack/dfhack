@@ -64,7 +64,7 @@ local function get_preferences(unit)
     if not unit then return {} end
     local preferences = {}
     for _, pref in ipairs(unit.status.current_soul.preferences) do
-        if pref.type == df.unit_preference.T_type.LikeItem and pref.active then
+        if pref.type == df.unitpref_type.LikeItem and pref.flags.visible then
             table.insert(preferences, make_item_description(pref.item_type, pref.item_subtype))
         end
     end

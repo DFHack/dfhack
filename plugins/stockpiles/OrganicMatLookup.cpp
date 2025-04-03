@@ -23,7 +23,7 @@ DBG_EXTERN(stockpiles, log);
 
 void OrganicMatLookup::food_mat_by_idx(color_ostream& out, organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type food_idx, FoodMat& food_mat) {
     DEBUG(log, out).print("food_lookup: food_idx(%zd)\n", food_idx);
-    df::world_raws& raws = world->raws;
+    auto& raws = world->raws;
     df::special_mat_table table = raws.mat_table;
     int32_t main_idx = table.organic_indexes[mat_category][food_idx];
     int16_t type = table.organic_types[mat_category][food_idx];
@@ -39,9 +39,7 @@ void OrganicMatLookup::food_mat_by_idx(color_ostream& out, organic_mat_category:
         DEBUG(log, out).print("type(%d) index(%d) token(%s)\n", type, main_idx, food_mat.material.getToken().c_str());
     }
 }
-std::string OrganicMatLookup::food_token_by_idx(color_ostream& out, organic_mat_category::organic_mat_category mat_category, std::vector<int16_t>::size_type idx) {
-    FoodMat food_mat;
-    food_mat_by_idx(out, mat_category, idx, food_mat);
+std::string OrganicMatLookup::food_token_by_idx(color_ostream& out, const FoodMat& food_mat) {
     if (food_mat.material.isValid()) {
         return food_mat.material.getToken();
     }
@@ -58,22 +56,22 @@ size_t OrganicMatLookup::food_max_size(organic_mat_category::organic_mat_categor
 void OrganicMatLookup::food_build_map() {
     if (index_built)
         return;
-    df::world_raws& raws = world->raws;
+    auto& raws = world->raws;
     df::special_mat_table table = raws.mat_table;
     using df::enums::organic_mat_category::organic_mat_category;
     using traits = df::enum_traits<organic_mat_category>;
-    for (int32_t mat_category = traits::first_item_value; mat_category <= traits::last_item_value; ++mat_category) {
+    for (int32_t mat_category = 0; mat_category <= traits::last_item_value; ++mat_category) {
         for (size_t i = 0; i < table.organic_indexes[mat_category].size(); ++i) {
             int16_t type = table.organic_types[mat_category].at(i);
             int32_t index = table.organic_indexes[mat_category].at(i);
-            food_index[mat_category].insert(std::make_pair(std::make_pair(type, index), i)); // wtf.. only in c++
+            food_index[mat_category].insert(std::make_pair(std::make_pair(type, index), i));
         }
     }
     index_built = true;
 }
 
 int16_t OrganicMatLookup::food_idx_by_token(color_ostream& out, organic_mat_category::organic_mat_category mat_category, const std::string& token) {
-    df::world_raws& raws = world->raws;
+    auto& raws = world->raws;
     df::special_mat_table table = raws.mat_table;
     DEBUG(log, out).print("food_idx_by_token:\n");
     if (mat_category == organic_mat_category::Fish ||

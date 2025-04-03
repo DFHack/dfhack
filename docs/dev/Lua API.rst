@@ -1395,9 +1395,9 @@ Job module
   Attach a real item to this job. If the item is intended to satisfy a job_item
   filter, the index of that filter should be passed in ``filter_idx``; otherwise,
   pass ``-1``. Similarly, if you don't care where the item is inserted, pass
-  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_item_ref.T_role``.
+  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_role_type``.
   If the item needs to be brought to the job site, then the value should be
-  ``df.job_item_ref.T_role.Hauled``.
+  ``df.job_role_type.Hauled``.
 
 * ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
 
@@ -1986,6 +1986,15 @@ Military module
 
   Returns the name of a squad as a string.
 
+* ``dfhack.military.removeFromSquad(unit_id)``
+
+  Removes a unit from its squad. Unsets the unit's
+  military information (i.e., ``unit.military.squad_id`` and
+  ``unit.military.squad_pos``), the squad's position information (i.e.,
+  ``squad.positions[squad_pos].occupant``), modifies the unit's entity links
+  to indicate former squad membership or command, and creates a corresponding
+  world history event.
+
 Items module
 ------------
 
@@ -2099,7 +2108,7 @@ Items module
 * ``dfhack.items.moveToInventory(item,unit[,use_mode[,body_part]])``
 
   Move the item to the unit inventory. Returns *false* if impossible.
-  ``use_mode`` defaults to ``df.unit_inventory_item.T_mode.Hauled``.
+  ``use_mode`` defaults to ``df.inv_item_role_type.Hauled``.
   ``body_part`` defaults to ``-1``.
 
 * ``dfhack.items.remove(item[,no_uncat])``
@@ -2468,14 +2477,15 @@ General
   using width and height for flexible dimensions.
   Returns *is_flexible, width, height, center_x, center_y*.
 
-* ``dfhack.buildings.checkFreeTiles(pos,size[,extents[,change_extents[,allow_occupied[,allow_wall[,allow_flow]]]]])``
+* ``dfhack.buildings.checkFreeTiles(pos,size[,bld[,change_extents[,allow_occupied[,allow_wall[,allow_flow]]]]])``
 
-  Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
-  can be used for placing a building. If ``change_extents`` is true, bad tiles
-  are removed from extents. If ``allow_occupied``, the occupancy test is skipped.
-  Set ``allow_wall`` to true if the building is unhindered by walls (such as an
-  activity zone). Set ``allow_flow`` to true if the building can be built even
-  if there is deep water or any magma on the tile (such as abstract buildings).
+  Checks if the rectangle defined by ``pos`` and ``size``, and possibly the
+  extents associated with bld, can be used for placing a building. If
+  ``change_extents`` is true, bad tiles are removed from extents. If
+  ``allow_occupied``, the occupancy test is skipped. Set ``allow_wall`` to true
+  if the building is unhindered by walls (such as an activity zone). Set
+  ``allow_flow`` to true if the building can be built even if there is deep
+  water or any magma on the tile (such as abstract buildings).
 
 * ``dfhack.buildings.countExtentTiles(extents,defval)``
 
@@ -3158,12 +3168,6 @@ unless otherwise noted.
   specified by ``path``, or -1 if ``path`` does not exist.
   This depends on the system clock and should only be used locally.
 
-* ``dfhack.filesystem.atime(path)``
-* ``dfhack.filesystem.ctime(path)``
-
-  Return values vary across operating systems - return the ``st_atime`` and
-  ``st_ctime`` fields of a C++ stat struct, respectively.
-
 * ``dfhack.filesystem.listdir(path)``
 
   Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.
@@ -3417,6 +3421,11 @@ and are only documented here for completeness:
 
   Sets the system clipboard text from a CP437 string. Character 0x10 is
   interpreted as a newline instead of the usual CP437 glyph.
+
+* ``dfhack.internal.getModifiers()``
+
+  Returns the state of the keyboard modifier keys in a table of string ->
+  boolean. The keys are ``ctrl``, ``shift``, and ``alt``.
 
 * ``dfhack.internal.getSuppressDuplicateKeyboardEvents()``
 * ``dfhack.internal.setSuppressDuplicateKeyboardEvents(suppress)``

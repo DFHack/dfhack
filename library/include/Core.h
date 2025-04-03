@@ -100,9 +100,11 @@ namespace DFHack
         bool getIgnorePauseState();
 
         // noop if game is paused and getIgnorePauseState() returns false
-        void incCounter(uint32_t &perf_counter, uint32_t baseline_ms);
+        void incCounter(uint32_t &counter, uint32_t baseline_ms);
 
-        void registerTick(uint32_t baseline_ms);
+        // returns number of unpaused ms since last tick
+        uint32_t registerTick(uint32_t baseline_ms);
+
         uint32_t getUnpausedFps();
 
     private:
@@ -173,13 +175,13 @@ namespace DFHack
 
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
         command_result runCommand(color_ostream &out, const std::string &command);
-        bool loadScriptFile(color_ostream &out, std::string fname, bool silent = false);
+        bool loadScriptFile(color_ostream &out, std::filesystem::path fname, bool silent = false);
 
-        bool addScriptPath(std::string path, bool search_before = false);
-        bool setModScriptPaths(const std::vector<std::string> &mod_script_paths);
-        bool removeScriptPath(std::string path);
-        std::string findScript(std::string name);
-        void getScriptPaths(std::vector<std::string> *dest);
+        bool addScriptPath(std::filesystem::path path, bool search_before = false);
+        bool setModScriptPaths(const std::vector<std::filesystem::path> & mod_script_paths);
+        bool removeScriptPath(std::filesystem::path path);
+        std::filesystem::path findScript(std::string name);
+        void getScriptPaths(std::vector<std::filesystem::path> *dest);
 
         bool getSuppressDuplicateKeyboardEvents();
         void setSuppressDuplicateKeyboardEvents(bool suppress);
@@ -199,7 +201,7 @@ namespace DFHack
         std::map<std::string, std::vector<std::string>> ListAliases();
         std::string GetAliasCommand(const std::string &name, bool ignore_params = false);
 
-        std::string getHackPath();
+        std::filesystem::path getHackPath();
 
         bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
         bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
@@ -219,6 +221,7 @@ namespace DFHack
         static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
         PerfCounters perf_counters;
+        uint32_t getUnpausedMs() { return unpaused_ms; }
 
         lua_State* getLuaState(bool bypass_assertion = false) {
             assert(bypass_assertion || isSuspended());
@@ -270,7 +273,7 @@ namespace DFHack
         std::vector<std::unique_ptr<Module>> allModules;
         DFHack::PluginManager * plug_mgr;
 
-        std::vector<std::string> script_paths[3];
+        std::vector<std::filesystem::path> script_paths[3];
         std::mutex script_path_mutex;
 
         // hotkey-related stuff
@@ -333,6 +336,8 @@ namespace DFHack
         std::thread::id df_simulation_thread;
 
         lua_State* State;
+
+        uint32_t unpaused_ms; // reset to 0 on map load
 
         friend class CoreService;
         friend class ServerConnection;

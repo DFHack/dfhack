@@ -8,6 +8,7 @@
 #include "modules/Maps.h"
 #include "modules/World.h"
 
+#include "df/block_column_print_infost.h"
 #include "df/construction.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
@@ -190,8 +191,7 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
                            __LINE__, bpos.x, bpos.y);
                 continue;
             }
-            df::map_block_column::T_unmined_glyphs *glyphs =
-                new df::map_block_column::T_unmined_glyphs;
+            df::block_column_print_infost *glyphs = new df::block_column_print_infost;
             glyphs->x[0] = 0;
             glyphs->x[1] = 1;
             glyphs->x[2] = 2;

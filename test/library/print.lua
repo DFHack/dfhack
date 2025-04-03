@@ -47,7 +47,7 @@ end
 local function new_int_vector()
     -- create a vector of integers by cloning one from world. we do it this way
     -- because we can't allocate typed vectors from lua directly.
-    local vector = df.global.world.busy_buildings:new()
+    local vector = df.global.world.building_uses.buildings:new()
     vector:resize(0)
     return vector
 end

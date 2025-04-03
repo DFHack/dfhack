@@ -113,6 +113,7 @@ You can save some time by setting up your settings in gui/control-panel before y
 - autobutcher
 - autobutcher target 10 10 14 2 BIRD_GOOSE
 - autochop
+- autocheese
 - autofarm
 - autofarm threshold 150 grass_tail_pig
 - autofish
@@ -134,6 +135,7 @@ You can save some time by setting up your settings in gui/control-panel before y
 """Gameplay"" subtab:"
 - combine
 - dwarfvet
+- immortal-cravings
 - timestream
 - work-now
 "Note that if you've already started your fort and have missed the ""new fort"" trigger, you can enable these tools on the ""Enabled"" tabs instead. You can run the one-time commands (like ban-cooking all) manually from gui/launcher."
@@ -283,11 +285,11 @@ Surface Walkthrough:
 Sieges and Prisoner Processing:
 Here are some tips and procedures for handling seiges -- including how to clean up afterwards!
 ""
-"- Your ""Inside+"" burrow will automatically grow with your fort and should include only safe areas of your fort. In particular, it should not include the ""atrium"" area (where the ""siege bait"" pasture is) or the trapped hallways."
+"- Your ""Inside+"" burrow will automatically grow with your fort and should include only safe areas. In particular, it does not include the ""atrium"" area (where the ""siege bait"" pasture is) or the trapped hallways."
 ""
 "- When a siege begins, set your civilian alert (attach the alert to your ""Inside+"" burrow if it isn't already) to ensure all your civilians stay out of danger. Immediately pull the lever to close the outer main gate. It is also wise to close the trade depot and inner main gate as well. That way, if enemies get past the traps, they'll have to go through the soldiers in your barracks (assuming you have a military)."
 ""
-"- During a siege, you can use the levers to control how attackers path through the trapped corridors. If there are more enemies than cage traps, time your lever pulling so that the inner gates snap closed before your last cage trap is sprung. Then the remaining attackers will have to backtrack and go through the other trap-filled hallway. You can also choose *not* to use the trap hallways and meet the siege with your military. It's up to you!"
+"- During a siege, you can use the levers to control how attackers path through the trapped corridors. If there are more enemies than cage traps, time your lever pulling so that the inner gates snap closed before your last cage trap is sprung. Then the remaining attackers will have to backtrack and go through the other trap-filled hallway. You can also choose *not* to use the trap hallways and instead meet the siege head-on with your military. It's up to you!"
 ""
 "- If your cage traps fill up, ensure your hallways are free of uncaged attackers, then close the trap hallway outer gates and open the inner gates. Clear the civilian alert and allow your dwarves to reset all the traps -- make some extra cages in preparation for this! Then re-enable the civilian alert and open the trap hallway outer gates."
 ""

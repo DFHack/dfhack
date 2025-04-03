@@ -99,6 +99,7 @@ distribution.
 #include "df/report_zoom_type.h"
 #include "df/specific_ref.h"
 #include "df/specific_ref_type.h"
+#include "df/squad_use_flags.h"
 #include "df/squad.h"
 #include "df/unit.h"
 #include "df/unit_misc_trait.h"
@@ -114,6 +115,7 @@ distribution.
 #include <numeric>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace DFHack {
     DBG_DECLARE(core, luaapi, DebugCategory::LINFO);
@@ -1288,7 +1290,7 @@ static void addCommandToHistory(string id, string src_file,
                                 string command) {
     CommandHistory *history = ensureCommandHistory(id, src_file);
     history->add(command);
-    history->save(src_file.c_str());
+    history->save(std::filesystem::path{ src_file });
 }
 
 /************************
@@ -1350,8 +1352,8 @@ static string getArchitectureName()
 static string getDFVersion() { return Core::getInstance().vinfo->getVersion(); }
 static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
 
-static string getDFPath() { return Core::getInstance().p->getPath(); }
-static string getHackPath() { return Core::getInstance().getHackPath(); }
+static std::filesystem::path getDFPath() { return Core::getInstance().p->getPath(); }
+static std::filesystem::path getHackPath() { return Core::getInstance().getHackPath(); }
 
 static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
 static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
@@ -2341,6 +2343,7 @@ static const LuaWrapper::FunctionReg dfhack_military_module[] = {
     WRAPM(Military, makeSquad),
     WRAPM(Military, updateRoomAssignments),
     WRAPM(Military, getSquadName),
+    WRAPM(Military, removeFromSquad),
     { NULL, NULL }
 };
 
@@ -2442,7 +2445,7 @@ static int items_moveToBuilding(lua_State *state)
 static int items_moveToInventory(lua_State *state) {
     auto item = Lua::CheckDFObject<df::item>(state, 1);
     auto unit = Lua::CheckDFObject<df::unit>(state, 2);
-    auto use_mode = (df::unit_inventory_item::T_mode)luaL_optint(state, 3, 0);
+    auto use_mode = (df::inv_item_role_type)luaL_optint(state, 3, 0);
     int body_part = luaL_optint(state, 4, -1);
     lua_pushboolean(state, Items::moveToInventory(item, unit, use_mode, body_part));
     return 1;
@@ -2815,7 +2818,7 @@ int buildings_setSize(lua_State *state)
         lua_pushinteger(state, size.x);
         lua_pushinteger(state, size.y);
         lua_pushinteger(state, area);
-        lua_pushinteger(state, Buildings::countExtentTiles(&bld->room, area));
+        lua_pushinteger(state, Buildings::countExtentTiles(bld, area));
         return 5;
     }
     else
@@ -3151,9 +3154,8 @@ static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
     WRAPM(Filesystem, exists),
     WRAPM(Filesystem, isfile),
     WRAPM(Filesystem, isdir),
-    WRAPM(Filesystem, atime),
-    WRAPM(Filesystem, ctime),
     WRAPM(Filesystem, mtime),
+    WRAPM(Filesystem, canonicalize),
     {NULL, NULL}
 };
 
@@ -3161,7 +3163,7 @@ static int filesystem_listdir(lua_State *L)
 {
     luaL_checktype(L,1,LUA_TSTRING);
     string dir=lua_tostring(L,1);
-    vector<string> files;
+    vector<std::filesystem::path> files;
     int err = DFHack::Filesystem::listdir(dir, files);
     if (err)
     {
@@ -3174,7 +3176,7 @@ static int filesystem_listdir(lua_State *L)
     for(size_t i=0;i<files.size();i++)
     {
         lua_pushinteger(L,i+1);
-        lua_pushstring(L,files[i].c_str());
+        lua_pushstring(L,files[i].string().c_str());
         lua_settable(L,-3);
     }
     return 1;
@@ -3190,7 +3192,7 @@ static int filesystem_listdir_recursive(lua_State *L)
     bool include_prefix = true;
     if (lua_gettop(L) >= 3 && !lua_isnil(L, 3))
         include_prefix = lua_toboolean(L, 3);
-    std::map<string, bool> files;
+    std::map<std::filesystem::path, bool> files;
     int err = DFHack::Filesystem::listdir_recursive(dir, files, depth, include_prefix);
     if (err != 0 && err != -1) {
         lua_pushnil(L);
@@ -3205,7 +3207,7 @@ static int filesystem_listdir_recursive(lua_State *L)
         lua_pushinteger(L, i++);
         lua_newtable(L);
         lua_pushstring(L, "path");
-        lua_pushstring(L, (it->first).c_str());
+        lua_pushstring(L, Filesystem::as_string(it->first).c_str());
         lua_settable(L, -3);
         lua_pushstring(L, "isdir");
         lua_pushboolean(L, it->second);
@@ -3945,12 +3947,12 @@ static int internal_getScriptPaths(lua_State *L)
 {
     int i = 1;
     lua_newtable(L);
-    vector<string> paths;
+    vector<std::filesystem::path> paths;
     Core::getInstance().getScriptPaths(&paths);
     for (auto it = paths.begin(); it != paths.end(); ++it)
     {
         lua_pushinteger(L, i++);
-        lua_pushstring(L, it->c_str());
+        lua_pushstring(L, it->string().c_str());
         lua_settable(L, -3);
     }
     return 1;
@@ -3959,9 +3961,9 @@ static int internal_getScriptPaths(lua_State *L)
 static int internal_findScript(lua_State *L)
 {
     const char *name = luaL_checkstring(L, 1);
-    string path = Core::getInstance().findScript(name);
-    if (path.size())
-        lua_pushstring(L, path.c_str());
+    std::filesystem::path path = Core::getInstance().findScript(name);
+    if (!path.empty())
+        lua_pushstring(L, path.string().c_str());
     else
         lua_pushnil(L);
     return 1;

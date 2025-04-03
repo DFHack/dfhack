@@ -98,7 +98,7 @@ function infectWithSyndrome(target,syndrome,resetPolicy)
   unitSyndrome.ticks = 0
   unitSyndrome.wound_id = -1
   for k,v in ipairs(syndrome.ce) do
-   local symptom = df.unit_syndrome.T_symptoms:new()
+   local symptom = df.active_creature_interaction_effectst:new()
    symptom.quantity = 0
    symptom.delay = 0
    symptom.ticks = 0

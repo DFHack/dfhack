@@ -1265,3 +1265,89 @@ int Maps::removeAreaAquifer(df::coord pos1, df::coord pos2, std::function<bool(d
 
     return totalAffectedCount;
 }
+
+#include "df/world_site.h"
+#include "df/world_site_type.h"
+#include "df/site_map_infost.h"
+
+// reverse engineered from DF 50.13 (FUN_140d82ca0, likely sitest::get_site_type_name)
+const char* Maps::getSiteTypeName(df::world_site *site) {
+    using wst = df::enums::world_site_type::world_site_type;
+    switch (site->type) {
+        case wst::PlayerFortress:
+        case wst::MountainHalls:
+            if (site->min_depth == 0 && (0 < site->max_depth)){
+                return "fortress";
+            }
+            if (site->min_depth > 0) {
+                return "mountain halls";
+            }
+            return "hillocks";
+
+        case wst::DarkFortress: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "fortress" : "pits";
+        }
+
+        case wst::Cave:
+            return "cave";
+
+        case wst::ForestRetreat:
+            return "forest retreat";
+
+        case wst::Town: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "town" : "hamlet";
+        }
+
+        case wst::ImportantLocation:
+            return "important location";
+
+        case wst::LairShrine:
+            if (site->subtype_info) {
+                switch (site->subtype_info->lair_type) {
+                    case df::enums::lair_type::LABYRINTH:
+                        return "labyrinth";
+                    case df::enums::lair_type::SHRINE:
+                        return "shrine";
+                    default:
+                        break;
+                }
+            }
+            return "lair";
+
+        case wst::Fortress:
+            if (site->subtype_info) {
+                switch (site->subtype_info->fortress_type) {
+                    case df::enums::fortress_type::TOWER:
+                        return "tower";
+                    case df::enums::fortress_type::MONASTERY:
+                        return "monastery";
+                    case df::enums::fortress_type::FORT:
+                        return "fort";
+                    default:
+                        return "castle";
+                }
+            }
+            return "fortress";
+
+        case wst::Camp:
+            return "camp";
+
+        case wst::Monument:
+            if (site->subtype_info) {
+                switch (site->subtype_info->monument_type) {
+                    case df::enums::monument_type::TOMB:
+                        return "tomb";
+                    case df::enums::monument_type::VAULT:
+                        return "vault";
+                    default:
+                        break;
+                }
+            }
+            return "monument";
+
+        default:
+            return "site";
+    }
+}

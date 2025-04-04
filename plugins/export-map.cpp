@@ -1,32 +1,31 @@
 #include "Debug.h"
 #include "Error.h"
-#include "PluginManager.h"
 #include "MiscUtils.h"
+#include "PluginManager.h"
 
 #include "modules/Maps.h"
 #include "modules/Translation.h"
 
-#include "df/entity_raw.h"
 #include "df/creature_raw.h"
+#include "df/entity_raw.h"
 #include "df/historical_entity.h"
-#include "df/world.h"
 #include "df/map_block.h"
-#include "df/world_data.h"
-#include "df/world_site.h"
-#include "df/site_map_infost.h"
 #include "df/region_map_entry.h"
-#include "df/world_region.h"
+#include "df/site_map_infost.h"
+#include "df/world_data.h"
 #include "df/world_landmass.h"
 #include "df/world_region_details.h"
+#include "df/world_region.h"
+#include "df/world.h"
 
-#include <string>
-#include <vector>
-#include <chrono>
-#include <unordered_map>
 #include <algorithm>
-#include <functional>
+#include <array>
+#include <chrono>
 #include <deque>
-
+#include <functional>
+#include <string>
+#include <unordered_map>
+#include <vector>
 
 using std::string;
 using std::vector;
@@ -83,8 +82,8 @@ df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t dir) {
         case 8:             ; world_y--; break;
         case 9: world_x++   ; world_y--; break;
     }
-    world_x = std::min(std::max((int16_t)0,world_x),(int16_t)(world->world_data->world_width - 1));
-    world_y = std::min(std::max((int16_t)0,world_y),(int16_t)(world->world_data->world_height - 1));
+    world_x = std::clamp(world_x,(int16_t)0,(int16_t)(world->world_data->world_width - 1));
+    world_y = std::clamp(world_y,(int16_t)0,(int16_t)(world->world_data->world_height - 1));
     return { world_x, world_y };
 }
 
@@ -136,87 +135,6 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 
 /********************************************************************** */
 
-const char* classify_site(df::world_site *site) {
-    using wst = df::enums::world_site_type::world_site_type;
-    switch (site->type) {
-        case wst::PlayerFortress:
-        case wst::MountainHalls:
-            if (site->min_depth == 0 && (0 < site->max_depth)){
-                return "fortress";
-            }
-            if (site->min_depth > 0) {
-                return "mountain halls";
-            }
-            return "hillocks";
-
-        case wst::DarkFortress: {
-            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
-            return has_market ? "fortress" : "pits";
-        }
-
-        case wst::Cave:
-            return "cave";
-
-        case wst::ForestRetreat:
-            return "forest retreat";
-
-        case wst::Town: {
-            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
-            return has_market ? "town" : "hamlet";
-        }
-
-        case wst::ImportantLocation:
-            return "important location";
-
-        case wst::LairShrine:
-            if (site->subtype_info) {
-                switch (site->subtype_info->lair_type) {
-                    case df::enums::lair_type::LABYRINTH:
-                        return "labyrinth";
-                    case df::enums::lair_type::SHRINE:
-                        return "shrine";
-                    default:
-                        break;
-                }
-            }
-            return "lair";
-
-        case wst::Fortress:
-            if (site->subtype_info) {
-                switch (site->subtype_info->fortress_type) {
-                    case df::enums::fortress_type::TOWER:
-                        return "tower";
-                    case df::enums::fortress_type::MONASTERY:
-                        return "monastery";
-                    case df::enums::fortress_type::FORT:
-                        return "fort";
-                    default:
-                        return "castle";
-                }
-            }
-            return "fortress";
-
-        case wst::Camp:
-            return "camp";
-
-        case wst::Monument:
-            if (site->subtype_info) {
-                switch (site->subtype_info->monument_type) {
-                    case df::enums::monument_type::TOMB:
-                        return "tomb";
-                    case df::enums::monument_type::VAULT:
-                        return "vault";
-                    default:
-                        break;
-                }
-            }
-            return "monument";
-
-        default:
-            return "site";
-    }
-}
-
 static command_result export_sites(color_ostream &out)
 {
     out.print("exporting sites... ");
@@ -263,8 +181,7 @@ static command_result export_sites(color_ostream &out)
             site->civ_id,
             site->created_year,
             site->cur_owner_id,
-            //ENUM_KEY_STR(world_site_type, site->type),
-            classify_site(site),
+            DFHack::Maps::getSiteTypeName(site),
             // "site_name_df", "site_name_en", "civ_name_df", "civ_name_en", "site_government_df", "site_government_en", "owner_race"
             TRANSLATE_DF_EN(true, site->name),
             TRANSLATE_DF_EN(civ, civ->name),
@@ -324,10 +241,6 @@ coord as_offset(direction dir) {
 coord advance(coord pos, direction dir) {
     return pos + as_offset(dir);
 }
-
-
-
-
 
 std::pair<bool,bool> ahead(const std::vector<coord> &component, coord pos, direction dir) {
     auto test = [&](int16_t x, int16_t y){

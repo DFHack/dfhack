@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 - `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
 - `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
+- `dig-now`: properly generate ice boulders when digging through ice walls
 
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)

@@ -2344,6 +2344,7 @@ static const LuaWrapper::FunctionReg dfhack_military_module[] = {
     WRAPM(Military, updateRoomAssignments),
     WRAPM(Military, getSquadName),
     WRAPM(Military, removeFromSquad),
+    WRAPM(Military, addToSquad),
     { NULL, NULL }
 };
 

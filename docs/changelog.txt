@@ -56,17 +56,38 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
+- `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
+- `dig-now`: properly generate ice boulders when digging through ice walls
 
 ## Misc Improvements
+- `spectate`: show dwarves' activities (like prayer)
 
 ## Documentation
 
 ## API
-- ``Filesystem`` module: rewritten to use C++ standard library components, for better portability
+- ``Military`` module: added ``addToSquad`` function
 
 ## Lua
+- ``dfhack.military.addToSquad``: expose Military API function
 
 ## Removed
+
+# 51.10-r1
+
+## Misc Improvements
+- Compatibility with DF 51.10
+
+# 51.09-r1
+
+## New Features
+- `gui/journal`: Ctrl-j hotkey to launch `gui/journal` now works in adventure mode!
+
+## Fixes
+- Fix processing error in the overlay that displays unit preferences in the baron selection list
+
+## API
+- ``Filesystem`` module: rewritten to use C++ standard library components, for better portability
 
 # 51.08-r1
 

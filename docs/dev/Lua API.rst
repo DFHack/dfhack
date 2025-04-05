@@ -1995,6 +1995,23 @@ Military module
   to indicate former squad membership or command, and creates a corresponding
   world history event.
 
+  * ``dfhack.military.addToSquad(unit_id, squad_id, squad_pos)``
+
+  Adds a unit to a squad. Sets the unit's
+  military information (i.e., ``unit.military.squad_id`` and
+  ``unit.military.squad_pos``), the squad's position information (i.e.,
+  ``squad.positions[squad_pos].occupant``), adds a unit's entity links to
+  indicate squad membership. Does not currently add world history events.
+  If ``squad_pos`` is -1, the unit will be added to the first open slot in
+  the squad.
+
+  This API cannot be used to set or change the leader of a squad and will fail
+  if ``squad_pos`` is specified as 0 or if ``squad_pos`` is specified as -1 and
+  the squad leader position is currently vacant. It will also fail if
+  the requested squad position is already occupied, the squad does not exist,
+  the unit does not exist, or the requested unit is already a member of another
+  squad.
+
 Items module
 ------------
 
@@ -5945,6 +5962,8 @@ common text token lists that you can then pass as ``text`` to a ``Label``:
     Example 2: The DFHack logo - a graphical button in graphics mode and a text
     button in ASCII mode. The ASCII colors use the default for hovering::
 
+        local logo_textures=dfhack.textures.loadTileset(
+            'hack/data/art/logo.png', 8, 12, true),
         widgets.Label{
             text=widgets.makeButtonLabelText{
                 chars={
@@ -5952,10 +5971,12 @@ common text token lists that you can then pass as ``text`` to a ``Label``:
                     {179, 'H', 'a', 179},
                     {179, 'c', 'k', 179},
                 },
-                tileset=dfhack.textures.loadTileset(
-                    'hack/data/art/logo.png', 8, 12, true),
-                tileset_hover=dfhack.textures.loadTileset(
-                    'hack/data/art/logo_hovered.png', 8, 12, true),
+                tileset=logo_textures,
+                tileset_offset=1,
+                tileset_stride=8,
+                tileset_hover=logo_textures,
+                tileset_hover_offset=5,
+                tileset_hover_stride=8,
             },
             on_click=function()
                 dfhack.run_command{'hotkeys', 'menu', self.name}

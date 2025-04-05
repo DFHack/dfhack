@@ -123,6 +123,10 @@ Settings
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     job of the dwarf in the tooltip.
 
+``tooltip-follow-activity`` (default: enabled)
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    activity of the dwarf in the tooltip.
+
 ``tooltip-follow-job-shortenings`` (default: "Store item in stockpile" -> "Store item")
     If the ``spectate.tooltip`` overlay is enabled, this dictionary is used to
     shorten some job names, f.e. "Store item in stockpile" becomes "Store item".
@@ -150,6 +154,10 @@ Settings
 ``tooltip-hover-job`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     job of the dwarf in the hover panel.
+
+``tooltip-hover-activity`` (default: enabled)
+    If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
+    activity of the dwarf in the hover panel.
 
 ``tooltip-hover-name`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the

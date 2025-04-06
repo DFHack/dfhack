@@ -328,8 +328,8 @@ bool linked_list_remove(L *list, F matches) {
     auto matches_wrapper = [&](L::iterator::value_type item) {
         return item && matches(item);
     };
-    auto it = std::find_if(list->begin(), list->end(), matches_wrapper);
-    if (it == list->end())
+    typename L::const_iterator it = std::find_if(list->cbegin(), list->cend(), matches_wrapper);
+    if (it == list->cend())
         return false;
     auto item = *it;
     list->erase(it);

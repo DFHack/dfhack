@@ -345,11 +345,15 @@ local function GetUnitInfoText(unit, settings_group_name)
     return txt
 end
 
+local function unit_filter(unit)
+    return not dfhack.units.isHidden(unit)
+end
+
 local function GetHoverText(pos)
     if not pos then return end
 
     local txt = {}
-    local units = dfhack.units.getUnitsInBox(pos, pos) or {} -- todo: maybe (optionally) use filter parameter here?
+    local units = dfhack.units.getUnitsInBox(pos, pos, unit_filter) or {}
 
     for _,unit in ipairs(units) do
         local info = GetUnitInfoText(unit, 'hover')

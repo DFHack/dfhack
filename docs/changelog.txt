@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `spectate`: don't show a hover tooltip for hidden units (e.g. invisible snatchers)
 - `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
 - `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
 - `dig-now`: properly generate ice boulders when digging through ice walls

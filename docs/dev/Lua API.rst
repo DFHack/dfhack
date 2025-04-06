@@ -6516,6 +6516,130 @@ Example usage::
   local first_border_texpos = textures.tp_border_thin(1)
 
 
+gui.dflayout
+============
+
+This module provides position information for DF UI elements that are not always
+straightforward to calculate.
+
+It currently only describes the fortress mode toolbars at the bottom of the
+screen.
+
+Unless otherwise noted, the dimensions used by this module are in UI tiles and
+offsets are from the boundaries of the (caller provided) interface area.
+
+General Constants
+-----------------
+
+The module provides these convenience constants:
+
+* ``MINIMUM_INTERFACE_SIZE``
+
+  The dimensions (``width`` and ``height``) of the minimum-size DF window:
+  114x46 UI tiles. Other fields may also be present, but they are not used by
+  this module.
+
+* ``TOOLBAR_HEIGHT``
+
+  The height of the primary toolbars at the bottom of the DF window (3 rows).
+
+* ``SECONDARY_TOOLBAR_HEIGHT``
+
+  The height of the secondary toolbars that are sometimes placed above the
+  primary toolbars (also 3 rows).
+
+Fortress Mode Toolbars
+----------------------
+
+Fortress mode DF draws three primary toolbars and (depending on whether a "tool"
+is active) possibly one of several secondary toolbars at the bottom of the
+interface area.
+
+The toolbar descriptions are available through these module fields:
+
+* ``fort.toolbars.left``
+* ``fort.toolbars.center``
+* ``fort.toolbars.right``
+
+The descriptions of the secondary toolbars are available through the fields of
+``fort.secondary_toolbars``:
+
+* ``dig``, ``chop``, ``gather``, ``smooth``, ``erase``, ``stockpile``,
+  ``stockpile_paint``, ``burrow_paint``, ``traffic``, and ``mass_designation``
+
+The DF build menu (which is displayed in mostly the same place and activated in
+the same way as the other secondary toolbars) is not currently supported. It has
+significant differences from the other secondary toolbars.
+
+Each toolbar description table has these fields:
+
+* ``width`` the width of the toolbar
+* ``buttons`` a table indexed by "button names" that provides info about
+  individual buttons:
+
+  * ``offset`` the left-offset from left edge of the toolbar
+  * ``width`` the width of the button
+
+  Please consult the module source for each toolbar's button names.
+
+* ``frame(interface_size)`` a function that calculates the placement of the
+  toolbar when drawn in an interface of the specified size
+
+  The ``interface_size`` should be a table with ``width`` and ``height`` fields.
+  Common size sources include the ``parent_rect`` parameter passed to a
+  non-fullscreen overlay widget's layout methods (``updateLayout``, etc.), and
+  the interface area returned from ``gui.get_interface_rect()``).
+
+  The return value is a table with the following fields:
+
+  * ``l``, ``r``, ``t``, ``b``: the column/row offsets to the toolbar from the
+    edges of the interface area
+  * ``w``, ``h``: the size of the toolbar (``w`` is the same as ``toolbar.width``)
+
+  ``l + w + r`` and ``t + h + b`` will equal the provided interface's width and
+  height, respectively.
+
+  This table "shape" is similar to a `Widget <Widget class_>`_'s ``frame`` and
+  should be useful in positioning a DFHack widget relative to the toolbar.
+
+Fort toolbar examples:
+
+  * The ends of a toolbar can be located by combining the offset and size data
+    from a toolbar's frame data::
+
+      local layout = require('gui.dflayout')
+      ...
+      local erase_frame = layout.fort.secondary_toolbars.erase.frame(interface_size)
+      local erase_right_l_offset = erase_frame.l + erase_frame.w
+      local erase_left_r_offset = erase_frame.r + erase_frame.w
+
+      -- interface_size.width |--------------------------|
+      --        erase_frame.l |----------          ------| erase_frame.r
+      --                      |          [erase tb]      |
+      --        erase_frame.w |          ----------      |
+      -- erase_right_l_offset |--------------------      |
+      --                      |          ----------------| erase_left_r_offset
+
+  * A specific toolbar button can be located by combining the toolbar's frame
+    data with the ``offset`` of the button::
+
+      local layout = require('gui.dflayout')
+      ...
+      local dig = layout.fort.secondary_toolbars.dig
+      local dig_frame = dig.frame(interface_size)
+      local dig_adv = dig.buttons.advanced_toggle
+      local dig_adv_l_offset = dig_frame.l + dig_adv.offset
+      local dig_adv_r_offset = dig_frame.r + dig_frame.w - (dig_adv.offset + dig_adv.width)
+      --                    OR interface_size.width - (dig_adv_l_offset + dig_adv.width)
+
+      -- interface_size.width |--------------------------|
+      --          dig_frame.l |----------             ---| dig_frame.r
+      --          dig_frame.w |          -------------   |
+      --       dig_adv.offset |          ------          |
+      --        dig_adv.width |                --        |
+      --                      |          [ dig [] tb ]   |
+      --     dig_adv_l_offset |----------------  --------| dig_adv_r_offset
+
 .. _lua-plugins:
 
 =======

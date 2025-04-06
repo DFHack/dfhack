@@ -70,6 +70,7 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function
+- ``gui.dflayout``: provide DF fort mode toolbar position information
 
 ## Removed
 

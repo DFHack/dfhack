@@ -53,7 +53,7 @@ namespace {
             for (auto ac : ent->army_controllers)
             {
                 if (ac_set.count(ac) == 0) {
-                    WARN(log).print("acValidationError: Bad controller %08lx found in entity id %d\n", ac, ent->id);
+                    WARN(log).print("acValidationError: Bad controller %p found in entity id %d\n", ac, ent->id);
                     ok = false;
                 }
             }
@@ -63,12 +63,12 @@ namespace {
         {
             auto ac = ar->controller;
             if (ac && ac_set.count(ac) == 0) {
-                WARN(log).print("acValidationError: Bad controller %08lx found in army id %d\n", ac, ar->id);
+                WARN(log).print("acValidationError: Bad controller %p found in army id %d\n", ac, ar->id);
                 ok = false;
             }
             else if (ac && ac->id != ar->controller_id)
             {
-                WARN(log).print("acValidationError: controller %08lx id mismatch (%d != %d) in army %d\n", ac, ar->controller_id, ac->id, ar->id);
+                WARN(log).print("acValidationError: controller %p id mismatch (%d != %d) in army %d\n", ac, ar->controller_id, ac->id, ar->id);
                 ok = false;
             }
             else if (!ac && ar->controller_id != -1)
@@ -82,12 +82,12 @@ namespace {
         {
             auto ac = un->enemy.army_controller;
             if (ac && ac_set.count(ac) == 0) {
-                WARN(log).print("acValidationError: Bad controller %08lx found in unit id %d\n", ac, un->id);
+                WARN(log).print("acValidationError: Bad controller %p found in unit id %d\n", ac, un->id);
                 ok = false;
             }
             else if (ac && ac->id != un->enemy.army_controller_id)
             {
-                WARN(log).print("acValidationError: controller %08lx id mismatch (%d != %d) in unit %d\n", ac, un->enemy.army_controller_id, ac->id, un->id);
+                WARN(log).print("acValidationError: controller %p id mismatch (%d != %d) in unit %d\n", ac, un->enemy.army_controller_id, ac->id, un->id);
                 ok = false;
             }
             else if (!ac && un->enemy.army_controller_id != -1)
@@ -100,7 +100,7 @@ namespace {
         last_army_controller_next_id = *df::global::army_controller_next_id;
         last_ac_vec_size = df::global::world->army_controllers.all.size();
 
-        INFO(log).print("acValidation: controller count = %d, next id = %d, season tick count = %d\n",
+        INFO(log).print("acValidation: controller count = %ld, next id = %d, season tick count = %d\n",
             last_ac_vec_size, last_army_controller_next_id, *df::global::cur_year_tick);
 
         return ok;

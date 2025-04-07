@@ -67,6 +67,7 @@ distribution.
 #include "df/nemesis_record.h"
 #include "df/personality_goalst.h"
 #include "df/plotinfost.h"
+#include "df/proj_unitst.h"
 #include "df/reputation_profilest.h"
 #include "df/syndrome.h"
 #include "df/tile_occupancy.h"
@@ -772,6 +773,18 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         old_occ->bits.unit_grounded = false;
     else
         old_occ->bits.unit = false;
+
+    // Clear unit projectile info
+    if (unit->flags1.bits.projectile) {
+        unit->flags1.bits.projectile = false;
+        linked_list_remove(&world->projectiles.all, [&](df::projectile *proj) {
+            if (proj->getType() != df::enums::projectile_type::Unit)
+                return false;
+            if (auto unit_proj = virtual_cast<df::proj_unitst>(proj))
+                return unit_proj->unit == unit;
+            return false;
+        });
+    }
 
     // If there's already somebody standing at the destination, then force the unit to lay down
     if (new_occ->bits.unit)

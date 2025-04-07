@@ -43,6 +43,7 @@ static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
 static const size_t MAX_HISTORY = 200;
 
 static const float CITIZEN_COMBAT_PREFERRED_WEIGHT = 25.0f;
+static const float NICKNAMED_CITIZEN_PREFERRED_WEIGHT = 15.0f;
 static const float OTHER_COMBAT_PREFERRED_WEIGHT = 10.0f;
 static const float JOB_WEIGHT = 5.0f;
 static const float OTHER_WEIGHT = 1.0f;
@@ -71,6 +72,7 @@ static struct Configuration {
     bool include_wildlife;
     bool prefer_conflict;
     bool prefer_new_arrivals;
+    bool prefer_nicknamed;
     int32_t follow_ms;
 
     void reset() {
@@ -82,6 +84,7 @@ static struct Configuration {
         include_wildlife = false;
         prefer_conflict = true;
         prefer_new_arrivals = true;
+        prefer_nicknamed = true;
         follow_ms = 10000;
     }
 } config;
@@ -510,6 +513,7 @@ static void follow_a_dwarf(color_ostream &out) {
 
     vector<df::unit*> citizen_combat_units;
     vector<df::unit*> other_combat_units;
+    vector<df::unit*> nicknamed_units;
     vector<df::unit*> job_units;
     vector<df::unit*> other_units;
     get_dwarf_buckets(out, citizen_combat_units, other_combat_units, job_units, other_units);
@@ -523,6 +527,7 @@ static void follow_a_dwarf(color_ostream &out) {
     intervals.push_back(0);
     add_bucket(citizen_combat_units, units, intervals, weights, config.prefer_conflict ? CITIZEN_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
     add_bucket(other_combat_units, units, intervals, weights, config.prefer_conflict ? OTHER_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
+    add_bucket(nicknamed_units, units, intervals, weights, config.prefer_nicknamed ? NICKNAMED_CITIZEN_PREFERRED_WEIGHT : JOB_WEIGHT);
     add_bucket(job_units, units, intervals, weights, JOB_WEIGHT);
     add_bucket(other_units, units, intervals, weights, OTHER_WEIGHT);
 
@@ -538,6 +543,7 @@ static void follow_a_dwarf(color_ostream &out) {
     if (debug_cycle.isEnabled(DebugCategory::LDEBUG)) {
         DUMP_BUCKET(citizen_combat_units);
         DUMP_BUCKET(other_combat_units);
+        DUMP_BUCKET(nicknamed_units);
         DUMP_BUCKET(job_units);
         DUMP_BUCKET(other_units);
         DUMP_FLOAT_VECTOR(intervals);
@@ -575,6 +581,8 @@ static void spectate_setSetting(color_ostream &out, string name, int val) {
         config.prefer_conflict = val;
     } else if (name == "prefer-new-arrivals") {
         config.prefer_new_arrivals = val;
+    } else if (name == "prefer-nicknamed") {
+        config.prefer_nicknamed = val;
     } else if (name == "follow-seconds") {
         if (val <= 0) {
             WARN(control,out).print("follow-seconds must be a positive integer\n");

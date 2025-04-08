@@ -126,7 +126,7 @@ function fort.toolbars.center.frame(interface_size)
     -- center toolbar is "centered" in interface area, but never closer to the
     -- left toolbar than fort_left_center_toolbar_gap_minimum
 
-    local interface_offset_centered = math.ceil((interface_size.width - fort.toolbars.center.width + 1) / 2)
+    local interface_offset_centered = (interface_size.width - fort.toolbars.center.width) // 2 + 1
     local interface_offset_min = fort.toolbars.left.width + fort_left_center_toolbar_gap_minimum
     local interface_offset = math.max(interface_offset_min, interface_offset_centered)
 

@@ -16,6 +16,7 @@ DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 REQUIRE_GLOBAL(army_controller_next_id);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(pause_state);
+REQUIRE_GLOBAL(cur_year_tick);
 
 namespace DFHack {
     DBG_DECLARE(army_controller_sanity, log, DebugCategory::LWARNING);
@@ -35,20 +36,20 @@ namespace {
         static size_t last_ac_vec_size = 0;
         static int last_army_controller_next_id = 0;
 
-        if (last_army_controller_next_id == *df::global::army_controller_next_id &&
-            last_ac_vec_size == df::global::world->army_controllers.all.size())
+        if (last_army_controller_next_id == *army_controller_next_id &&
+            last_ac_vec_size == world->army_controllers.all.size())
             return true;
 
         std::unordered_set<df::army_controller*> ac_set{};
 
-        for (auto ac : df::global::world->army_controllers.all)
+        for (auto ac : world->army_controllers.all)
         {
             ac_set.insert(ac);
         }
 
         bool ok = true;
 
-        for (auto ent : df::global::world->entities.all)
+        for (auto ent : world->entities.all)
         {
             for (auto ac : ent->army_controllers)
             {
@@ -59,7 +60,7 @@ namespace {
             }
         }
 
-        for (auto ar : df::global::world->armies.all)
+        for (auto ar : world->armies.all)
         {
             auto ac = ar->controller;
             if (ac && ac_set.count(ac) == 0) {
@@ -78,7 +79,7 @@ namespace {
             }
         }
 
-        for (auto un : df::global::world->units.all)
+        for (auto un : world->units.all)
         {
             auto ac = un->enemy.army_controller;
             if (ac && ac_set.count(ac) == 0) {
@@ -97,11 +98,11 @@ namespace {
             }
         }
 
-        last_army_controller_next_id = *df::global::army_controller_next_id;
-        last_ac_vec_size = df::global::world->army_controllers.all.size();
+        last_army_controller_next_id = *army_controller_next_id;
+        last_ac_vec_size = world->army_controllers.all.size();
 
         INFO(log).print("acValidation: controller count = %ld, next id = %d, season tick count = %d\n",
-            last_ac_vec_size, last_army_controller_next_id, *df::global::cur_year_tick);
+            last_ac_vec_size, last_army_controller_next_id, *cur_year_tick);
 
         return ok;
     }
@@ -120,14 +121,11 @@ DFhackCExport DFHack::command_result plugin_enable(DFHack::color_ostream& out, b
 
 DFhackCExport DFHack::command_result plugin_onupdate(DFHack::color_ostream& out)
 {
-    if (is_enabled)
-    {
-        bool ok = checkArmyControllerSanity();
-        if (!ok) {
-            ERR(log).print("Army controller sanity check failed! Game pause forced.\n");
-            *df::global::pause_state = true;
-            is_enabled = false;
-        }
+    bool ok = checkArmyControllerSanity();
+    if (!ok) {
+        ERR(log).print("Army controller sanity check failed! Game pause forced.\n");
+        *pause_state = true;
+        is_enabled = false;
     }
     return DFHack::CR_OK;
 }

@@ -530,7 +530,7 @@ static void follow_a_dwarf(color_ostream &out) {
     intervals.push_back(0);
     add_bucket(citizen_combat_units, units, intervals, weights, config.prefer_conflict ? CITIZEN_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
     add_bucket(other_combat_units, units, intervals, weights, config.prefer_conflict ? OTHER_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
-    add_bucket(nicknamed_units, units, intervals, weights, config.prefer_nicknamed ? NICKNAMED_CITIZEN_PREFERRED_WEIGHT : JOB_WEIGHT);
+    add_bucket(nicknamed_units, units, intervals, weights, config.prefer_nicknamed ? NICKNAMED_CITIZEN_PREFERRED_WEIGHT : OTHER_WEIGHT);
     add_bucket(job_units, units, intervals, weights, JOB_WEIGHT);
     add_bucket(other_units, units, intervals, weights, OTHER_WEIGHT);
 

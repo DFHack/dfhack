@@ -439,6 +439,7 @@ static bool is_in_combat(df::unit *unit) {
 static void get_dwarf_buckets(color_ostream &out,
     vector<df::unit*> &citizen_combat_units,
     vector<df::unit*> &other_combat_units,
+    vector<df::unit*> &nicknamed_units,
     vector<df::unit*> &job_units,
     vector<df::unit*> &other_units)
 {
@@ -455,11 +456,13 @@ static void get_dwarf_buckets(color_ostream &out,
             continue;
 
         if (is_in_combat(unit)) {
-            TRACE(cycle,out).print("unit %d is in combat: %s\n", unit->id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
+            TRACE(cycle, out).print("unit %d is in combat: %s\n", unit->id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
             if (Units::isCitizen(unit, true) || Units::isResident(unit, true))
                 citizen_combat_units.push_back(unit);
             else
                 other_combat_units.push_back(unit);
+        } else if (!unit->name.nickname.empty()) {
+            nicknamed_units.push_back(unit);
         } else if (unit->job.current_job && !boring_jobs.contains(unit->job.current_job->job_type)) {
             job_units.push_back(unit);
         } else {
@@ -516,7 +519,7 @@ static void follow_a_dwarf(color_ostream &out) {
     vector<df::unit*> nicknamed_units;
     vector<df::unit*> job_units;
     vector<df::unit*> other_units;
-    get_dwarf_buckets(out, citizen_combat_units, other_combat_units, job_units, other_units);
+    get_dwarf_buckets(out, citizen_combat_units, other_combat_units, nicknamed_units, job_units, other_units);
 
     set_next_cycle_unpaused_ms(out, !citizen_combat_units.empty());
 

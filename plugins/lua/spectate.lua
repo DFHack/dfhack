@@ -465,7 +465,7 @@ function TooltipOverlay:render_unit_banners(dc)
     local height = vp.max_y
     local bottomright = {x = topleft.x + width, y = topleft.y + height, z = topleft.z}
 
-    local units = dfhack.units.getUnitsInBox(topleft, bottomright)
+    local units = dfhack.units.getUnitsInBox(topleft, bottomright, unit_filter)
     if not units or #units == 0 then return end
 
     local oneTileOffset = GetScreenCoordinates({x = topleft.x + 1, y = topleft.y + 1, z = topleft.z + 0})

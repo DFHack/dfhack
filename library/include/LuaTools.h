@@ -32,6 +32,7 @@ distribution.
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
+#include <concepts>
 
 #include "Core.h"
 #include "ColorText.h"
@@ -60,7 +61,7 @@ namespace DFHack {
     };
 }
 
-namespace DFHack {namespace Lua {
+namespace DFHack::Lua {
     /**
      * Create or initialize a lua interpreter with access to DFHack tools.
      */
@@ -140,10 +141,15 @@ namespace DFHack {namespace Lua {
     DFHACK_EXPORT void CheckDFAssign(lua_State *state, type_identity *type,
                                      void *target, int val_index, bool exact_type = false);
 
+    template<typename T> concept df_object = requires(T x)
+    {
+        { df::identity_traits<T>::get() } -> std::convertible_to<df::type_identity*>;
+    };
+
     /**
      * Push the pointer onto the stack as a wrapped DF object of a specific type.
      */
-    template<class T>
+    template<df_object T>
     void PushDFObject(lua_State *state, T *ptr) {
         PushDFObject(state, df::identity_traits<T>::get(), ptr);
     }
@@ -151,7 +157,7 @@ namespace DFHack {namespace Lua {
     /**
      * Check that the value is a wrapped DF object of the correct type, and if so return the pointer.
      */
-    template<class T>
+    template<df_object T>
     T *GetDFObject(lua_State *state, int val_index, bool exact_type = false) {
         return (T*)GetDFObject(state, df::identity_traits<T>::get(), val_index, exact_type);
     }
@@ -159,7 +165,7 @@ namespace DFHack {namespace Lua {
     /**
      * Check that the value is a wrapped DF object of the correct type, and if so return the pointer. Otherwise throw an argument type error.
      */
-    template<class T>
+    template<df_object T>
     T *CheckDFObject(lua_State *state, int val_index, bool exact_type = false) {
         return (T*)CheckDFObject(state, df::identity_traits<T>::get(), val_index, exact_type);
     }
@@ -167,7 +173,7 @@ namespace DFHack {namespace Lua {
     /**
      * Assign the value at val_index to the target using df.assign().
      */
-    template<class T>
+    template<df_object  T>
     bool AssignDFObject(color_ostream &out, lua_State *state, T *target,
                         int val_index, bool exact_type = false, bool perr = true) {
         return AssignDFObject(out, state, df::identity_traits<T>::get(),
@@ -178,7 +184,7 @@ namespace DFHack {namespace Lua {
      * Assign the value at val_index to the target using df.assign().
      * Throws in case of an error.
      */
-    template<class T>
+    template<df_object  T>
     void CheckDFAssign(lua_State *state, T *target, int val_index, bool exact_type = false) {
         CheckDFAssign(state, df::identity_traits<T>::get(), target, val_index, exact_type);
     }
@@ -298,42 +304,33 @@ namespace DFHack {namespace Lua {
     /**
      * Push utility functions
      */
-#if 0
-#define NUMBER_PUSH(type) inline void Push(lua_State *state, type value) { lua_pushnumber(state, value); }
-    NUMBER_PUSH(char)
-    NUMBER_PUSH(int8_t) NUMBER_PUSH(uint8_t)
-    NUMBER_PUSH(int16_t) NUMBER_PUSH(uint16_t)
-    NUMBER_PUSH(int32_t) NUMBER_PUSH(uint32_t)
-    NUMBER_PUSH(int64_t) NUMBER_PUSH(uint64_t)
-    NUMBER_PUSH(float) NUMBER_PUSH(double)
-#undef NUMBER_PUSH
-#else
-    template<class T>
-    inline typename std::enable_if<std::is_integral<T>::value || std::is_enum<T>::value>::type
-    Push(lua_State *state, T value) {
+    template<typename T> concept lua_integral = (std::is_integral_v<T> || std::is_enum_v<T>);
+
+    inline void Push(lua_State *state, lua_integral auto value) {
         lua_pushinteger(state, value);
     }
-    template<class T>
-    inline typename std::enable_if<std::is_floating_point<T>::value>::type
-    Push(lua_State *state, T value) {
+    inline void Push(lua_State* state, std::floating_point auto value) {
         lua_pushnumber(state, lua_Number(value));
     }
-#endif
     inline void Push(lua_State *state, bool value) {
         lua_pushboolean(state, value);
     }
-    inline void Push(lua_State *state, const char *str) {
-        lua_pushstring(state, str);
+
+    template<typename T> concept lua_string = (std::convertible_to<T, std::string_view>);
+
+    inline void Push(lua_State *state, lua_string auto str) {
+        std::string_view sv{ str };
+        lua_pushlstring(state, sv.data(), sv.size());
     }
-    inline void Push(lua_State *state, const std::string &str) {
-        lua_pushlstring(state, str.data(), str.size());
-    }
+
     DFHACK_EXPORT void Push(lua_State *state, const df::coord &obj);
     DFHACK_EXPORT void Push(lua_State *state, const df::coord2d &obj);
     void Push(lua_State *state, const Units::NoblePosition &pos);
     DFHACK_EXPORT void Push(lua_State *state, const MaterialInfo &info);
     DFHACK_EXPORT void Push(lua_State *state, const Screen::Pen &info);
-    template<class T> inline void Push(lua_State *state, T *ptr) {
+
+    template<df_object T> inline void Push(lua_State *state, T *ptr)
+    {
         PushDFObject(state, ptr);
     }
 
@@ -472,10 +469,6 @@ namespace DFHack {namespace Lua {
      * All accesses must be done under CoreSuspender.
      */
     namespace Core {
-//        DFHACK_EXPORT extern lua_State *State;
-
-        // Not exported; for use by the Core class
-        lua_State* Init(color_ostream &out);
         DFHACK_EXPORT void Reset(color_ostream &out, const char *where);
 
         // Events signalled by the core
@@ -559,7 +552,7 @@ namespace DFHack {namespace Lua {
         Notification(function_identity_base *handler = NULL)
             : state(NULL), key(NULL), handler(handler), count(0) {}
 
-        int get_listener_count() { return count; }
+        int get_listener_count() const { return count; }
         lua_State *get_state() { return state; }
         function_identity_base *get_handler() { return handler; }
 
@@ -572,7 +565,7 @@ namespace DFHack {namespace Lua {
         void bind(lua_State *state, const char *name);
         void bind(lua_State *state, void *key);
     };
-}}
+}
 
 #define DEFINE_LUA_EVENT_0(name, handler) \
     static DFHack::Lua::Notification name##_event(df::wrap_function(handler, true)); \

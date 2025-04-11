@@ -106,9 +106,8 @@ struct blueprint_options {
     bool construct = false;
     bool build = false;
     bool place = false;
-    // bool zone = false;
-    // bool query = false;
-    // bool rooms = false;
+    bool zone = false;
+
 
     static struct_identity _identity;
 };
@@ -132,9 +131,7 @@ static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "construct",              offsetof(blueprint_options, construct),             &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "build",                  offsetof(blueprint_options, build),                 &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::PRIMITIVE, "place",                  offsetof(blueprint_options, place),                 &df::identity_traits<bool>::identity,    0, 0 },
-    // { struct_field_info::PRIMITIVE, "zone",                   offsetof(blueprint_options, zone),                  &df::identity_traits<bool>::identity,    0, 0 },
-    // { struct_field_info::PRIMITIVE, "query",                  offsetof(blueprint_options, query),                 &df::identity_traits<bool>::identity,    0, 0 },
-    // { struct_field_info::PRIMITIVE, "rooms",                  offsetof(blueprint_options, rooms),                 &df::identity_traits<bool>::identity,    0, 0 },
+    { struct_field_info::PRIMITIVE, "zone",                   offsetof(blueprint_options, zone),                  &df::identity_traits<bool>::identity,    0, 0 },
     { struct_field_info::END }
 };
 struct_identity blueprint_options::_identity(sizeof(blueprint_options), &df::allocator_fn<blueprint_options>, NULL, "blueprint_options", NULL, blueprint_options_fields);
@@ -1107,78 +1104,48 @@ static const char * get_tile_place(const df::coord &pos,
     return add_expansion_syntax(ctx, get_place_keys(ctx));
 }
 
-/* TODO: understand how this changes for v50
-static bool hospital_maximums_eq(const df::hospital_supplies &a,
-                                 const df::hospital_supplies &b) {
-    return a.max_thread == b.max_thread &&
-            a.max_cloth == b.max_cloth &&
-            a.max_splints == b.max_splints &&
-            a.max_crutches == b.max_crutches &&
-            a.max_plaster == b.max_plaster &&
-            a.max_buckets == b.max_buckets &&
-            a.max_soap == b.max_soap;
-}
-
 static const char * get_zone_keys(const df::building_civzonest *zone) {
     static const uint32_t DEFAULT_GATHER_FLAGS =
-            df::building_civzonest::T_gather_flags::mask_pick_trees |
-            df::building_civzonest::T_gather_flags::mask_pick_shrubs |
-            df::building_civzonest::T_gather_flags::mask_gather_fallen;
-    static const df::hospital_supplies DEFAULT_HOSPITAL;
+            df::civzone_gather_flag::mask_pick_trees |
+            df::civzone_gather_flag::mask_pick_shrubs |
+            df::civzone_gather_flag::mask_gather_fallen;
+    //static const df::hospital_supplies DEFAULT_HOSPITAL;
 
     ostringstream keys;
-    const df::building_civzonest::T_zone_flags &flags = zone->zone_flags;
+    const df::civzone_type type = zone->type;
 
     // inverted logic for Active since it's on by default
-    if (!flags.bits.active) keys << 'a';
+    if (!zone->spec_sub_flag.bits.active) keys << 'a';
 
     // in UI order
-    if (flags.bits.water_source) keys << 'w';
-    if (flags.bits.fishing) keys << 'f';
-    if (flags.bits.gather) {
+    if (type == df::civzone_type::WaterSource) keys << 'w';
+    if (type == df::civzone_type::FishingArea) keys << 'f';
+    if (type == df::civzone_type::PlantGathering) {
         keys << 'g';
-        if (zone->gather_flags.whole != DEFAULT_GATHER_FLAGS) {
-            keys << 'G';
+        if (zone->zone_settings.gather.flags.whole != DEFAULT_GATHER_FLAGS) {
+            keys << '{';
             // logic is inverted since they're all on by default
-            if (!zone->gather_flags.bits.pick_trees) keys << 't';
-            if (!zone->gather_flags.bits.pick_shrubs) keys << 's';
-            if (!zone->gather_flags.bits.gather_fallen) keys << 'f';
-            keys << '^';
+            if (!zone->zone_settings.gather.flags.bits.pick_trees) keys << "pick_trees=false ";
+            if (!zone->zone_settings.gather.flags.bits.pick_shrubs) keys << "pick_shrubs=false ";
+            if (!zone->zone_settings.gather.flags.bits.gather_fallen) keys << "gather_fallen=false ";
+            keys << '}';
         }
     }
-    if (flags.bits.garbage_dump) keys << 'd';
-    if (flags.bits.pen_pasture) keys << 'n';
-    if (flags.bits.pit_pond) {
+    if (type == df::civzone_type::Dump) keys << 'd';
+    if (type == df::civzone_type::Pen) keys << 'n';
+    if (type == df::civzone_type::Pond) {
         keys << 'p';
-        if (zone->pit_flags.bits.is_pond)
-            keys << "Pf^";
+        //FIXME (Squid): IDK what to do here exactly
+        if (!zone->zone_settings.pond.flag.bits.keep_filled)
+            keys << "{pond=false}";
     }
-    if (flags.bits.sand) keys << 's';
-    if (flags.bits.clay) keys << 'c';
-    if (flags.bits.meeting_area) keys << 'm';
-    if (flags.bits.hospital) {
-        keys << 'h';
-        const df::hospital_supplies &hospital = zone->hospital;
-        if (!hospital_maximums_eq(hospital, DEFAULT_HOSPITAL)) {
-            keys << "H{hospital";
-            if (hospital.max_thread != DEFAULT_HOSPITAL.max_thread)
-                keys << " thread=" << hospital.max_thread;
-            if (hospital.max_cloth != DEFAULT_HOSPITAL.max_cloth)
-                keys << " cloth=" << hospital.max_cloth;
-            if (hospital.max_splints != DEFAULT_HOSPITAL.max_splints)
-                keys << " splints=" << hospital.max_splints;
-            if (hospital.max_crutches != DEFAULT_HOSPITAL.max_crutches)
-                keys << " crutches=" << hospital.max_crutches;
-            if (hospital.max_plaster != DEFAULT_HOSPITAL.max_plaster)
-                keys << " plaster=" << hospital.max_plaster;
-            if (hospital.max_buckets != DEFAULT_HOSPITAL.max_buckets)
-                keys << " buckets=" << hospital.max_buckets;
-            if (hospital.max_soap != DEFAULT_HOSPITAL.max_soap)
-                keys << " soap=" << hospital.max_soap;
-            keys << "}^";
-        }
+    if (type == df::civzone_type::SandCollection) keys << 's';
+    if (type == df::civzone_type::ClayCollection) keys << 'c';
+    if (type == df::civzone_type::MeetingHall) {
+        keys << 'm';
+        //FIXME (Squid): Needs to save the type of meeting hall (idk how to distinguish them at this level)
     }
-    if (flags.bits.animal_training) keys << 't';
+    if (type == df::civzone_type::AnimalTraining) keys << 't';
 
     string keys_str = keys.str();
 
@@ -1215,84 +1182,7 @@ static const char * get_tile_zone(const df::coord &pos,
     return add_expansion_syntax(zone, get_zone_keys(zone));
 }
 
-// surrounds the given string in quotes and replaces internal double quotes (")
-// with double double quotes ("") (as per the csv spec)
-static string csv_quote(const string &str) {
-    ostringstream outstr;
-    outstr << "\"";
 
-    size_t start = 0;
-    auto end = str.find('"');
-    while (end != string::npos) {
-        outstr << str.substr(start, end - start);
-        outstr << "\"\"";
-        start = end + 1;
-        end = str.find('"', start);
-    }
-    outstr << str.substr(start, end) << "\"";
-
-    return outstr.str();
-}
-
-static const char * get_tile_query(const df::coord &pos,
-                                   const tile_context &ctx) {
-    string bld_name, zone_name;
-    auto & seen = ctx.processor->seen;
-
-    if (ctx.b && !seen.count(ctx.b)) {
-        bld_name = ctx.b->name;
-        seen.emplace(ctx.b);
-    }
-
-    vector<df::building_civzonest*> civzones;
-    if (Buildings::findCivzonesAt(&civzones, pos)) {
-        auto civzone = civzones.back();
-        if (!seen.count(civzone)) {
-            zone_name = civzone->name;
-            seen.emplace(civzone);
-        }
-    }
-
-    if (!bld_name.size() && !zone_name.size())
-        return NULL;
-
-    ostringstream str;
-    if (bld_name.size())
-        str << "{givename name=" + csv_quote(bld_name) + "}";
-    if (zone_name.size())
-        str << "{namezone name=" + csv_quote(zone_name) + "}";
-
-    return cache(csv_quote(str.str()));
-}
-
-static const char * get_tile_rooms(const df::coord &, const tile_context &ctx) {
-    if (!ctx.b || !ctx.b->is_room)
-        return NULL;
-
-    // get the maximum distance from the center of the building
-    df::building_extents &room = ctx.b->room;
-    int32_t x1 = room.x;
-    int32_t x2 = room.x + room.width - 1;
-    int32_t y1 = room.y;
-    int32_t y2 = room.y + room.height - 1;
-
-    int32_t dimx = std::max(ctx.b->centerx - x1, x2 - ctx.b->centerx);
-    int32_t dimy = std::max(ctx.b->centery - y1, y2 - ctx.b->centery);
-    int32_t max_dim = std::max(dimx, dimy);
-
-    switch (max_dim) {
-        case 0: return "r---&";
-        case 1: return "r--&";
-        case 2: return "r-&";
-        case 3: return "r&";
-        case 4: return "r+&";
-    }
-
-    ostringstream str;
-    str << "r{+ " << (max_dim - 3) << "}&";
-    return cache(str);
-}
-*/
 
 static bool create_output_dir(color_ostream &out,
                               const blueprint_options &opts) {
@@ -1503,13 +1393,7 @@ static bool do_transform(color_ostream &out,
                   get_tile_build, ensure_building);
     add_processor(processors, opts, "place", "place", opts.place,
                   get_tile_place, ensure_building);
-/* TODO: understand how this changes for v50
     add_processor(processors, opts, "zone", "zone", opts.zone, get_tile_zone);
-    add_processor(processors, opts, "query", "query", opts.query,
-                  get_tile_query, ensure_building);
-    add_processor(processors, opts, "query", "rooms", opts.rooms,
-                  get_tile_rooms, ensure_building);
-*/
     if (processors.empty()) {
         out.printerr("no phases requested! nothing to do!\n");
         return false;

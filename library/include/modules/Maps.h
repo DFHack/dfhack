@@ -42,6 +42,7 @@ distribution.
 #include "df/flow_type.h"
 #include "df/tile_dig_designation.h"
 #include "df/tiletype.h"
+#include "df/world_site.h"
 
 namespace df {
     struct block_square_event;
@@ -399,6 +400,14 @@ DFHACK_EXPORT bool removeTileAquifer(int32_t x, int32_t y, int32_t z);
 inline bool removeTileAquifer(df::coord pos) { return removeTileAquifer(pos.x, pos.y, pos.z); }
 DFHACK_EXPORT int removeAreaAquifer(df::coord pos1, df::coord pos2,
     std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block) { return true; });
+
+
+/**
+ * A single function does not merit a "Sites" module, hence we collect site functions here in the meantime.
+ */
+
+// Get the classification string (e.g. "town", "hillocs", "tower", etc.) for a site
+DFHACK_EXPORT const char* getSiteTypeName(df::world_site *site);
 }
 }
 #endif

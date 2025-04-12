@@ -61,6 +61,7 @@ Template for new versions:
 - `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
 - `dig-now`: properly generate ice boulders when digging through ice walls
 - `gui/teleport`: now properly handles teleporting units that are currently falling or being flung
+- `Core.cpp`: now properly handles "load", "unload", and "reload" plugin commands given to Core::runCommand()
 
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)

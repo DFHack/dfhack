@@ -800,6 +800,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         bool all = false;
         bool load = (first == "load");
         bool unload = (first == "unload");
+        bool reload = (first == "reload");
         if (parts.size())
         {
             for (auto p = parts.begin(); p != parts.end(); p++)
@@ -828,7 +829,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                     ret = CR_FAILURE;
                 else if (unload && !plug_mgr->unload(*p))
                     ret = CR_FAILURE;
-                else if (!plug_mgr->reload(*p))
+                else if (reload && !plug_mgr->reload(*p))
                     ret = CR_FAILURE;
             }
             if (ret != CR_OK)

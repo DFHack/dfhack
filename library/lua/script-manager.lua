@@ -88,7 +88,7 @@ local INSTALLED_MODS_PATH = 'data/installed_mods/'
 -- changes to the files)
 local MOD_PATH_ROOTS = {WORKSHOP_MODS_PATH, MODS_PATH, INSTALLED_MODS_PATH}
 
-local function get_mod_id_and_version(path)
+function get_mod_id_and_version(path)
     local idfile = path .. '/info.txt'
     local ok, lines = pcall(io.lines, idfile)
     if not ok then return end
@@ -109,7 +109,7 @@ local function get_mod_id_and_version(path)
     return id, version
 end
 
-local function add_mod_paths(mod_paths, id, base_path, subdir)
+function add_mod_paths(mod_paths, id, base_path, subdir)
     local sep = base_path:endswith('/') and '' or '/'
     local path = ('%s%s%s'):format(base_path, sep, subdir)
     if dfhack.filesystem.isdir(path) then

@@ -92,7 +92,7 @@ function get_mod_id_and_version(path)
     local idfile = path .. '/info.txt'
     local ok, lines = pcall(io.lines, idfile)
     if not ok then return end
-    local id, version
+    local id, version, name, steam_id
     for line in lines do
         if not id then
             _,_,id = line:find('^%[ID:([^%]]+)%]')
@@ -103,10 +103,17 @@ function get_mod_id_and_version(path)
             -- as the numeric version
             _,_,version = line:find('^%[NUMERIC_VERSION:(%d+)')
         end
+        if not name then
+            _,_,name = line:find('^%[NAME:([^%]]+)%]')
+        end
+        if not steam_id then
+            _,_,steam_id = line:find('^%[STEAM_FILE_ID:(%d+)')
+        end
+
         -- note that we do *not* want to break out of this loop early since
         -- lines has to hit EOF to close the file
     end
-    return id, version
+    return id, version, name, steam_id
 end
 
 function add_mod_paths(mod_paths, id, base_path, subdir)

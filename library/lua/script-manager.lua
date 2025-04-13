@@ -104,7 +104,7 @@ local function get_mod_info(path)
             _,_,numerical_version = line:find('^%[NUMERIC_VERSION:(%d+)')
         end
         if not display_version then
-            _,_,display_version = line:find('^%[DISPLAYED_VERSION:%s*(.*?)%s*%]')
+            if line:find('^%[DISPLAYED_VERSION:') then display_version = line:sub(20,-2) end
         end
         if not name then
             _,_,name = line:find('^%[NAME:([^%]]+)%]')
@@ -178,6 +178,7 @@ function get_mod_paths(installed_subdir, active_subdir)
         for _,f in ipairs(files) do
             if not f.isdir then goto continue end
             local info = get_mod_info(f.path)
+            if info == nil then goto continue end
             local id, version = info.id,info.numerical_version
             if not id or not version then goto continue end
             local mod = ensure_key(mods, id)

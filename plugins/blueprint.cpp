@@ -1109,43 +1109,57 @@ static const char * get_zone_keys(const df::building_civzonest *zone) {
             df::civzone_gather_flag::mask_pick_trees |
             df::civzone_gather_flag::mask_pick_shrubs |
             df::civzone_gather_flag::mask_gather_fallen;
-    //static const df::hospital_supplies DEFAULT_HOSPITAL;
 
     ostringstream keys;
     const df::civzone_type type = zone->type;
 
-    // inverted logic for Active since it's on by default
-    if (!zone->spec_sub_flag.bits.active) keys << 'a';
-
-    // in UI order
-    if (type == df::civzone_type::WaterSource) keys << 'w';
-    if (type == df::civzone_type::FishingArea) keys << 'f';
-    if (type == df::civzone_type::PlantGathering) {
-        keys << 'g';
-        if (zone->zone_settings.gather.flags.whole != DEFAULT_GATHER_FLAGS) {
-            keys << '{';
-            // logic is inverted since they're all on by default
-            if (!zone->zone_settings.gather.flags.bits.pick_trees) keys << "pick_trees=false ";
-            if (!zone->zone_settings.gather.flags.bits.pick_shrubs) keys << "pick_shrubs=false ";
-            if (!zone->zone_settings.gather.flags.bits.gather_fallen) keys << "gather_fallen=false ";
-            keys << '}';
-        }
-    }
-    if (type == df::civzone_type::Dump) keys << 'd';
+    // in DFHack docs order
+    if (type == df::civzone_type::MeetingHall) keys << 'm';
+    if (type == df::civzone_type::Bedroom) keys << 'b';
+    if (type == df::civzone_type::DiningHall) keys << 'h';
     if (type == df::civzone_type::Pen) keys << 'n';
-    if (type == df::civzone_type::Pond) {
-        keys << 'p';
-        //FIXME (Squid): IDK what to do here exactly
-        if (!zone->zone_settings.pond.flag.bits.keep_filled)
-            keys << "{pond=false}";
-    }
+    if (type == df::civzone_type::Pond) keys << 'p';
+    if (type == df::civzone_type::WaterSource) keys << 'w';
+    if (type == df::civzone_type::Dungeon) keys << 'j';
+    if (type == df::civzone_type::FishingArea) keys << 'f';
     if (type == df::civzone_type::SandCollection) keys << 's';
-    if (type == df::civzone_type::ClayCollection) keys << 'c';
-    if (type == df::civzone_type::MeetingHall) {
-        keys << 'm';
-        //FIXME (Squid): Needs to save the type of meeting hall (idk how to distinguish them at this level)
-    }
+    if (type == df::civzone_type::Office) keys << 'o';
+    if (type == df::civzone_type::Dormitory) keys << 'D';
+    if (type == df::civzone_type::Barracks) keys << 'B';
+    if (type == df::civzone_type::ArcheryRange) keys << 'a';
+    if (type == df::civzone_type::Dump) keys << 'd';
     if (type == df::civzone_type::AnimalTraining) keys << 't';
+    if (type == df::civzone_type::Tomb) keys << 'T';
+    if (type == df::civzone_type::PlantGathering) keys << 'g';
+    if (type == df::civzone_type::ClayCollection) keys << 'c';
+
+    keys << '{';
+    if (!zone->name.empty()) {
+        keys << "name=" << zone->name << ' ';
+    }
+    if (!zone->spec_sub_flag.bits.active) {
+        keys << "active=false ";
+    }
+    if (zone->assigned_unit) {
+        keys << "assigned_unit=" << zone->assigned_unit << ' ';
+    }
+    if (!zone->zone_settings.pond.flag.bits.keep_filled) {
+        keys << "pond=false ";
+    }
+    //zone->zone_settings.archery // need this to get the `shoot_from` direction
+    //FIXEME (Squid): Need to know how to get the location data here
+    if (zone->zone_settings.tomb.flags.bits.no_pets) {
+        keys << "pets=false ";
+    }
+    if (zone->zone_settings.tomb.flags.bits.no_citizens) {
+        keys << "citizens=false ";
+    }
+    if (zone->zone_settings.gather.flags.whole != DEFAULT_GATHER_FLAGS) {
+        // logic is inverted since they're all on by default
+        if (!zone->zone_settings.gather.flags.bits.pick_trees) keys << "pick_trees=false ";
+        if (!zone->zone_settings.gather.flags.bits.pick_shrubs) keys << "pick_shrubs=false ";
+        if (!zone->zone_settings.gather.flags.bits.gather_fallen) keys << "gather_fallen=false ";
+    }
 
     string keys_str = keys.str();
 
@@ -1154,8 +1168,11 @@ static const char * get_zone_keys(const df::building_civzonest *zone) {
         return NULL;
 
     // remove final '^' character if there is one
-    if (keys_str.back() == '^')
+    if (keys_str.back() == '{') {
         keys_str.pop_back();
+    } else {
+        keys << '}';
+    }
 
     return cache(keys_str);
 }

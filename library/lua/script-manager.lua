@@ -88,7 +88,7 @@ local INSTALLED_MODS_PATH = 'data/installed_mods/'
 -- changes to the files)
 local MOD_PATH_ROOTS = {WORKSHOP_MODS_PATH, MODS_PATH, INSTALLED_MODS_PATH}
 
-function get_mod_info(path)
+local function get_mod_info(path)
     local idfile = path .. '/info.txt'
     local ok, lines = pcall(io.lines, idfile)
     if not ok then return end
@@ -104,7 +104,7 @@ function get_mod_info(path)
             _,_,numerical_version = line:find('^%[NUMERIC_VERSION:(%d+)')
         end
         if not display_version then
-            _,_,display_version = line:find('^%[DISPLAYED_VERSION:(%d+%.%d+)')
+            _,_,display_version = line:find('^%[DISPLAYED_VERSION:%s*(.*?)%s*%]')
         end
         if not name then
             _,_,name = line:find('^%[NAME:([^%]]+)%]')
@@ -116,7 +116,29 @@ function get_mod_info(path)
         -- note that we do *not* want to break out of this loop early since
         -- lines has to hit EOF to close the file
     end
-    return id, numerical_version, name, steam_id, display_version
+    return {
+        id=id,
+        numerical_version=numerical_version,
+        name=name,
+        steam_id=steam_id,
+        display_version=display_version,
+    }
+end
+
+function getAllModsInfo(include_vanilla, mods, mod_paths)
+    for _,path in ipairs(df.global.world.object_loader.object_load_order_src_dir) do
+        path = tostring(path.value)
+        if not include_vanilla then
+            -- skip vanilla "mods"
+            if not path:startswith(INSTALLED_MODS_PATH) then goto continue end
+        end
+        local info = get_mod_info(path)
+        if info == nil then goto continue end
+        if not info.id or not info.numerical_version then goto continue end
+        mods[info.id]= {handled=true, name=info.name, version=info.display_version, steam_id=info.steam_id}
+        add_mod_paths(mod_paths, info.id, path, '.')
+        ::continue::
+    end
 end
 
 function add_mod_paths(mod_paths, id, base_path, subdir)
@@ -138,7 +160,7 @@ function get_mod_paths(installed_subdir, active_subdir)
             path = tostring(path.value)
             -- skip vanilla "mods"
             if not path:startswith(INSTALLED_MODS_PATH) then goto continue end
-            local id = get_mod_info(path)
+            local id = get_mod_info(path).id
             if not id then goto continue end
             mods[id] = {handled=true}
             if active_subdir then
@@ -155,7 +177,8 @@ function get_mod_paths(installed_subdir, active_subdir)
         if not files then goto skip_path_root end
         for _,f in ipairs(files) do
             if not f.isdir then goto continue end
-            local id, version = get_mod_info(f.path)
+            local info = get_mod_info(f.path)
+            local id, version = info.id,info.numerical_version
             if not id or not version then goto continue end
             local mod = ensure_key(mods, id)
             if mod.handled then goto continue end

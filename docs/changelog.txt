@@ -71,10 +71,12 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``Military`` module: added ``addToSquad`` function
 - ``Units::teleport``: projectile information is now cleared for teleported units
 
 ## Lua
+- ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``dfhack.military.addToSquad``: expose Military API function
 
 ## Removed
@@ -127,7 +129,6 @@ Template for new versions:
 - `stonesense-art-guide`: guide for making sprite art for Stonesense
 
 ## API
-- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``Military::removeFromSquad``: removes unit from any squad assignments
 - ``Buildings::checkFreeTiles``: now takes a building instead of a pointer to the building extents
 - ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
@@ -135,7 +136,6 @@ Template for new versions:
 - ``Items::getValue``: magical powers now correctly contribute to item value
 
 ## Lua
-- ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
 - ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` functions

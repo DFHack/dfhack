@@ -902,8 +902,19 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
 /*
 * Plants
 */
-constexpr uint8_t unblocked_tree = ~(df::plant_tree_tile::mask_blocked);
-constexpr uint8_t unblocked_root = ~(df::plant_root_tile::mask_blocked);
+constexpr uint16_t unblocked_tree = (
+    df::plant_tree_tile::mask_trunk |
+    df::plant_tree_tile::mask_branch_w |
+    df::plant_tree_tile::mask_branch_n |
+    df::plant_tree_tile::mask_branch_e |
+    df::plant_tree_tile::mask_branch_s |
+    df::plant_tree_tile::mask_branches |
+    df::plant_tree_tile::mask_leaves
+);
+constexpr uint8_t unblocked_root = (
+    df::plant_root_tile::mask_regular |
+    df::plant_root_tile::mask_anon_1
+);
 
 df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
 {

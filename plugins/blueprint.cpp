@@ -1146,10 +1146,18 @@ static const char * get_zone_keys(const df::building_civzonest *zone) {
     if (!zone->zone_settings.pond.flag.bits.keep_filled) {
         keys << "pond=false ";
     }
-    //zone->zone_settings.archery // need this to get the `shoot_from` direction
+    auto archery_settings = zone->zone_settings.archery; // need this to get the `shoot_from` direction
+    if (archery_settings.dir_y == 0) {
+        if (archery_settings.dir_x == 1) keys << "shoot_from=west ";
+        if (archery_settings.dir_x == -1) keys << "shoot_from=east ";
+    }
+    if (archery_settings.dir_x == 0) {
+        if (archery_settings.dir_y == 1) keys << "shoot_from=north ";
+        if (archery_settings.dir_y == -1) keys << "shoot_from=south ";
+    }
     //FIXEME (Squid): Need to know how to get the location data here
-    if (zone->zone_settings.tomb.flags.bits.no_pets) {
-        keys << "pets=false ";
+    if (!zone->zone_settings.tomb.flags.bits.no_pets) {
+        keys << "pets=true ";
     }
     if (zone->zone_settings.tomb.flags.bits.no_citizens) {
         keys << "citizens=false ";

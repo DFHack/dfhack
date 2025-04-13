@@ -88,20 +88,23 @@ local INSTALLED_MODS_PATH = 'data/installed_mods/'
 -- changes to the files)
 local MOD_PATH_ROOTS = {WORKSHOP_MODS_PATH, MODS_PATH, INSTALLED_MODS_PATH}
 
-function get_mod_id_and_version(path)
+function get_mod_info(path)
     local idfile = path .. '/info.txt'
     local ok, lines = pcall(io.lines, idfile)
     if not ok then return end
-    local id, version, name, steam_id
+    local id, numerical_version, name, steam_id, display_version
     for line in lines do
         if not id then
             _,_,id = line:find('^%[ID:([^%]]+)%]')
         end
-        if not version then
+        if not numerical_version then
             -- note this doesn't include the closing brace since some people put
             -- non-number characters in here, and DF only reads the leading digits
             -- as the numeric version
-            _,_,version = line:find('^%[NUMERIC_VERSION:(%d+)')
+            _,_,numerical_version = line:find('^%[NUMERIC_VERSION:(%d+)')
+        end
+        if not display_version then
+            _,_,display_version = line:find('^%[DISPLAYED_VERSION:(%d+%.%d+)')
         end
         if not name then
             _,_,name = line:find('^%[NAME:([^%]]+)%]')
@@ -113,7 +116,7 @@ function get_mod_id_and_version(path)
         -- note that we do *not* want to break out of this loop early since
         -- lines has to hit EOF to close the file
     end
-    return id, version, name, steam_id
+    return id, numerical_version, name, steam_id, display_version
 end
 
 function add_mod_paths(mod_paths, id, base_path, subdir)
@@ -135,7 +138,7 @@ function get_mod_paths(installed_subdir, active_subdir)
             path = tostring(path.value)
             -- skip vanilla "mods"
             if not path:startswith(INSTALLED_MODS_PATH) then goto continue end
-            local id = get_mod_id_and_version(path)
+            local id = get_mod_info(path)
             if not id then goto continue end
             mods[id] = {handled=true}
             if active_subdir then
@@ -152,7 +155,7 @@ function get_mod_paths(installed_subdir, active_subdir)
         if not files then goto skip_path_root end
         for _,f in ipairs(files) do
             if not f.isdir then goto continue end
-            local id, version = get_mod_id_and_version(f.path)
+            local id, version = get_mod_info(f.path)
             if not id or not version then goto continue end
             local mod = ensure_key(mods, id)
             if mod.handled then goto continue end

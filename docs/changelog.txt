@@ -55,6 +55,54 @@ Template for new versions:
 
 ## New Features
 - `clean`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
+
+## Fixes
+- `spectate`: don't show a hover tooltip for hidden units (e.g. invisible snatchers)
+- `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
+- `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
+- `dig-now`: properly generate ice boulders when digging through ice walls
+- `gui/teleport`: now properly handles teleporting units that are currently falling or being flung
+- `unload`: fix recent regression where `unload` would immediately `reload` the target
+- ``Buildings`` module: do not crash if a ``map_block`` unexpectedly contains an item that is not on the master item vector
+
+## Misc Improvements
+- `spectate`: show dwarves' activities (like prayer)
+
+## Documentation
+
+## API
+- ``Military`` module: added ``addToSquad`` function
+- ``Units::teleport``: projectile information is now cleared for teleported units
+
+## Lua
+- ``dfhack.military.addToSquad``: expose Military API function
+
+## Removed
+
+# 51.10-r1
+
+## Misc Improvements
+- Compatibility with DF 51.10
+
+# 51.09-r1
+
+## New Features
+- `gui/journal`: Ctrl-j hotkey to launch `gui/journal` now works in adventure mode!
+
+## Fixes
+- Fix processing error in the overlay that displays unit preferences in the baron selection list
+
+## API
+- ``Filesystem`` module: rewritten to use C++ standard library components, for better portability
+
+# 51.08-r1
+
+## Misc Improvements
+- Compatibility update for DF 51.08
+
+# 51.07-r1
+
+## New Features
 - `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit
 - `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
 - `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
@@ -67,11 +115,13 @@ Template for new versions:
 - `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
 - `changevein`: fix a crash that could occur when attempting to change a vein into itself
 - `overlay`: reset draw context between rendering widgets so context changes can't propagate from widget to widget
+- `suspendmanager`: in ASCII mode, building planning mode overlay now only displays when viewing the default map, reducing issues with showing through the UI
 
 ## Misc Improvements
 - `spectate`: player-set configuration is now stored globally instead of per-fort
 - `autobutcher`: treat animals on restraints as unavailable for slaughter
 - `stockpiles`: add property filters for brewable, millable, and processable (e.g. at a Farmer's workshop) organic materials
+- `quickfort`: redesigned ``library/aquifer_tap.cav`` to improve the water fill rate
 
 ## Documentation
 - `stonesense-art-guide`: guide for making sprite art for Stonesense

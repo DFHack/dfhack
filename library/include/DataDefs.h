@@ -494,22 +494,18 @@ namespace df
     using DFHack::DfLinkedList;
     using DFHack::DfOtherVectors;
 
-    template<class T>
-    typename std::enable_if<
-        std::is_copy_assignable<T>::value,
-        void*
-    >::type allocator_try_assign(void *out, const void *in) {
-        *(T*)out = *(const T*)in;
-        return out;
-    }
+    template<typename T> concept copy_assignable = std::assignable_from<T&, T&> && std::assignable_from<T&, const T&>;
 
-    template<class T>
-    typename std::enable_if<
-        !std::is_copy_assignable<T>::value,
-        void*
-    >::type allocator_try_assign(void *out, const void *in) {
-        // assignment is not possible; do nothing
-        return NULL;
+    template<typename T>
+    void* allocator_try_assign(void *out, const void *in) {
+        if constexpr (copy_assignable<T>) {
+            *(T*)out = *(const T*)in;
+            return out;
+        }
+        else {
+            // assignment is not possible; do nothing
+            return nullptr;
+        }
     }
 
 #pragma GCC diagnostic push
@@ -615,6 +611,25 @@ namespace df
         static const bool is_method = true;
     };
 
+    template<typename RT, typename ...AT>
+    struct return_type<RT(*)(AT...) noexcept> {
+        using type = RT;
+        static const bool is_method = false;
+    };
+
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT(CT::*)(AT...) noexcept> {
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
+    };
+
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT(CT::*)(AT...) const noexcept> {
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
+    };
 
 }
 
@@ -632,97 +647,86 @@ namespace DFHack {
     /**
      * Return the next item in the enum, wrapping to the first one at the end if 'wrap' is true (otherwise an invalid item).
      */
-    template<class T>
-    inline typename std::enable_if<
-        !df::enum_traits<T>::is_complex,
-        typename df::enum_traits<T>::enum_type
-    >::type next_enum_item(T v, bool wrap = true)
+    template <typename T> concept complex_enum = (df::enum_traits<T>::is_complex);
+
+    template<typename T>
+    inline auto next_enum_item(T v, bool wrap = true) -> typename df::enum_traits<T>::enum_type
     {
-        typedef df::enum_traits<T> traits;
-        typedef typename traits::base_type base_type;
-        base_type iv = base_type(v);
-        if (iv < traits::last_item_value)
+        using traits = df::enum_traits<T>;
+
+        if constexpr (complex_enum<T>)
         {
-            return T(iv + 1);
-        }
-        else
-        {
-            if (wrap)
-                return traits::first_item;
+            const auto& complex = traits::complex;
+            const auto it = complex.value_index_map.find(v);
+            if (it != complex.value_index_map.end())
+            {
+                if (!wrap && it->second + 1 == complex.size())
+                {
+                    return T(traits::last_item_value + 1);
+                }
+                size_t next_index = (it->second + 1) % complex.size();
+                return T(complex.index_value_map[next_index]);
+            }
             else
                 return T(traits::last_item_value + 1);
         }
-    }
-
-    template<class T>
-    inline typename std::enable_if<
-        df::enum_traits<T>::is_complex,
-        typename df::enum_traits<T>::enum_type
-    >::type next_enum_item(T v, bool wrap = true)
-    {
-        typedef df::enum_traits<T> traits;
-        const auto &complex = traits::complex;
-        const auto it = complex.value_index_map.find(v);
-        if (it != complex.value_index_map.end())
-        {
-            if (!wrap && it->second + 1 == complex.size())
-            {
-                return T(traits::last_item_value + 1);
-            }
-            size_t next_index = (it->second + 1) % complex.size();
-            return T(complex.index_value_map[next_index]);
-        }
         else
-            return T(traits::last_item_value + 1);
+        {
+            using base_type = typename traits::base_type;
+            base_type iv = base_type(v);
+            if (iv < traits::last_item_value)
+            {
+                return T(iv + 1);
+            }
+            else
+            {
+                if (wrap)
+                    return traits::first_item;
+                else
+                    return T(traits::last_item_value + 1);
+            }
+        }
     }
 
     /**
      * Check if the value is valid for its enum type.
      */
-    template<class T>
-    inline typename std::enable_if<
-        !df::enum_traits<T>::is_complex,
-        bool
-    >::type is_valid_enum_item(T v)
+    template<typename T>
+    inline bool is_valid_enum_item(T v)
     {
-        return df::enum_traits<T>::is_valid(v);
+        if constexpr (complex_enum<T>)
+        {
+            const auto& complex = df::enum_traits<T>::complex;
+            return complex.value_index_map.find(v) != complex.value_index_map.end();
+        }
+        else
+        {
+            return df::enum_traits<T>::is_valid(v);
+        }
     }
 
-    template<class T>
-    inline typename std::enable_if<
-        df::enum_traits<T>::is_complex,
-        bool
-    >::type is_valid_enum_item(T v)
-    {
-        const auto &complex = df::enum_traits<T>::complex;
-        return complex.value_index_map.find(v) != complex.value_index_map.end();
-    }
 
     /**
      * Return the enum item key string pointer, or NULL if none.
      */
     template<class T>
-    inline typename std::enable_if<
-        !df::enum_traits<T>::is_complex,
-        const char *
-    >::type enum_item_raw_key(T val) {
-        typedef df::enum_traits<T> traits;
-        return traits::is_valid(val) ? traits::key_table[(short)val - traits::first_item_value] : NULL;
+    const char* enum_item_raw_key(T val) {
+        using traits = df::enum_traits<T>;
+        if constexpr (complex_enum<T>)
+        {
+            const auto& value_index_map = traits::complex.value_index_map;
+            auto it = value_index_map.find(val);
+            if (it != value_index_map.end())
+                return traits::key_table[it->second];
+            else
+                return nullptr;
+        }
+        else
+        {
+            return traits::is_valid(val) ? traits::key_table[(short)val - traits::first_item_value] : nullptr;
+        }
     }
 
-    template<class T>
-    inline typename std::enable_if<
-        df::enum_traits<T>::is_complex,
-        const char *
-    >::type enum_item_raw_key(T val) {
-        typedef df::enum_traits<T> traits;
-        const auto &value_index_map = traits::complex.value_index_map;
-        auto it = value_index_map.find(val);
-        if (it != value_index_map.end())
-            return traits::key_table[it->second];
-        else
-            return NULL;
-    }
 
     /**
      * Return the enum item key string pointer, or "?" if none.
@@ -754,7 +758,7 @@ namespace DFHack {
      */
     template<class T>
     inline bool find_enum_item(T *var, const std::string &name) {
-        typedef df::enum_traits<T> traits;
+        using traits = df::enum_traits<T>;
         int size = traits::last_item_value-traits::first_item_value+1;
         int idx = findEnumItem(name, size, traits::key_table);
         if (idx < 0) return false;

@@ -1654,7 +1654,7 @@ StockpileIterator& StockpileIterator::operator++() {
 
         // If the current item isn't properly stored, move on to the next.
         item = df::item::find(block->items[current]);
-        if (!item->flags.bits.on_ground) {
+        if (!item || !item->flags.bits.on_ground) {
             continue;
         }
 

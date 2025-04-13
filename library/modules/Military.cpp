@@ -408,6 +408,61 @@ static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squ
     df::global::world->history.events.push_back(former_pos_event);
 }
 
+static void add_soldier_entity_link(df::historical_figure* hf, df::squad* squad, int32_t squad_pos)
+{
+    auto squad_link = df::allocate<df::histfig_entity_link_squadst>();
+    squad_link->squad_id = squad->id;
+    squad_link->squad_position = squad_pos;
+    squad_link->entity_id = squad->entity_id;
+    squad_link->start_year = *df::global::cur_year;
+    squad_link->link_strength = 100;
+
+    hf->entity_links.push_back(squad_link);
+}
+
+bool Military::addToSquad(int32_t unit_id, int32_t squad_id, int32_t squad_pos)
+{
+    df::unit* unit = df::unit::find(unit_id);
+    if (unit == nullptr || unit->military.squad_id != -1) return false;
+
+    df::historical_figure* hf = df::historical_figure::find(unit->hist_figure_id);
+    if (hf == nullptr)
+        return false;
+
+    df::squad* squad = df::squad::find(squad_id);
+    if (squad == nullptr) return false;
+
+    if (squad_pos == -1)
+    {
+        for (int p = 0; p < 10; p++)
+        {
+            auto pp = vector_get(squad->positions, p);
+            if (pp == nullptr || pp->occupant == -1)
+            {
+                squad_pos = p;
+                break;
+            }
+        }
+    }
+    if (squad_pos == -1) return false;
+
+    // this function cannot (currently) change the squad commander
+    if (squad_pos == 0) return false;
+
+    df::squad_position* pos = vector_get(squad->positions, squad_pos);
+    if (pos == nullptr)
+        pos = squad->positions[squad_pos] = df::allocate<df::squad_position>();
+
+    pos->occupant = hf->id;
+    // does anything else need to be set here?
+
+    unit->military.squad_id = squad->id;
+    unit->military.squad_position = squad_pos;
+
+    add_soldier_entity_link(hf, squad, squad_pos);
+    return true;
+}
+
 bool Military::removeFromSquad(int32_t unit_id)
 {
     df::unit *unit = df::unit::find(unit_id);

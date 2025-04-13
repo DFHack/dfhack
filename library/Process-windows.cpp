@@ -29,14 +29,17 @@ distribution.
 #include <set>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 #include "Error.h"
 #include "Internal.h"
+
 #include "MemAccess.h"
 #include "Memory.h"
 #include "MiscUtils.h"
 #include "VersionInfo.h"
 #include "VersionInfoFactory.h"
+#include "modules/Filesystem.h"
 
 #define _WIN32_WINNT 0x0600
 #define WINVER 0x0600
@@ -52,7 +55,6 @@ using std::map;
 using std::vector;
 using std::endl;
 using std::cerr;
-
 
 namespace DFHack
 {
@@ -382,15 +384,9 @@ uint32_t Process::getTickCount()
     return GetTickCount();
 }
 
-string Process::getPath()
+std::filesystem::path Process::getPath()
 {
-    HMODULE hmod;
-    DWORD junk;
-    char String[255];
-    EnumProcessModules(d->my_handle, &hmod, 1 * sizeof(HMODULE), &junk); //get the module from the handle
-    GetModuleFileNameEx(d->my_handle,hmod,String,sizeof(String)); //get the filename from the module
-    string out(String);
-    return(out.substr(0,out.find_last_of("\\")));
+    return Filesystem::get_initial_cwd();
 }
 
 int Process::getPID()

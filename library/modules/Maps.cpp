@@ -692,7 +692,7 @@ df::coord2d Maps::getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos)
     if (!block || !world->world_data)
         return df::coord2d();
 
-    auto des = index_tile(block->designation,pos);
+    auto &des = index_tile(block->designation,pos);
     unsigned idx = des.bits.biome;
     if (idx < 9)
     {
@@ -902,6 +902,9 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
 /*
 * Plants
 */
+constexpr uint8_t unblocked_tree = ~(df::plant_tree_tile::mask_blocked);
+constexpr uint8_t unblocked_root = ~(df::plant_root_tile::mask_blocked);
+
 df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
 {
     if (x < 0 || x >= world->map.x_count || y < 0 || y >= world->map.y_count || !world->map.column_index)
@@ -930,10 +933,10 @@ df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
         {
             if (z_dis < -(t.roots_depth))
                 continue;
-            else if ((t.roots[-1 - z_dis][x_index + y_index * t.dim_x].whole & 0x7F) != 0) // Any non-blocked
+            else if ((t.roots[-1 - z_dis][x_index + y_index * t.dim_x].whole & unblocked_root) != 0)
                 return plant;
         }
-        else if ((t.body[z_dis][x_index + y_index * t.dim_x].whole & 0x7F) != 0) // Any non-blocked
+        else if ((t.body[z_dis][x_index + y_index * t.dim_x].whole & unblocked_tree) != 0)
             return plant;
     }
 
@@ -965,7 +968,7 @@ bool Maps::isPlantInBox(df::plant *plant, const cuboid &bounds)
     // Iterate tree body
     for (int z_idx = 0; z_idx < t.body_height; z_idx++)
         for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
-            if ((t.body[z_idx][xy_idx].whole & 0x7F) != 0 && // Any non-blocked
+            if ((t.body[z_idx][xy_idx].whole & unblocked_tree) != 0 &&
                 bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z + z_idx))
             {
                 return true;
@@ -973,7 +976,7 @@ bool Maps::isPlantInBox(df::plant *plant, const cuboid &bounds)
     // Iterate tree roots
     for (int z_idx = 0; z_idx < t.roots_depth; z_idx++)
         for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
-            if ((t.roots[z_idx][xy_idx].whole & 0x7F) != 0 && // Any non-blocked
+            if ((t.roots[z_idx][xy_idx].whole & unblocked_root) != 0 &&
                 bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z - z_idx - 1))
             {
                 return true;

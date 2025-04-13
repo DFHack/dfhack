@@ -1073,7 +1073,8 @@ Screens
 
 * ``dfhack.gui.getCurFocus([skip_dismissed])``
 
-  Returns the focus string of the current viewscreen.
+  Returns a list of focus strings for the current viewscreen. Equivalent to
+  ``dfhack.gui.getFocusStrings(dfhack.gui.getCurViewscreen(skip_dismissed))``.
 
 * ``dfhack.gui.getViewscreenByType(type[, depth])``
 

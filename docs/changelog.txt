@@ -56,7 +56,12 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `spectate`: don't show a hover tooltip for hidden units (e.g. invisible snatchers)
 - `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
+- `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
+- `dig-now`: properly generate ice boulders when digging through ice walls
+- `gui/teleport`: now properly handles teleporting units that are currently falling or being flung
+- `unload`: fix recent regression where `unload` would immediately `reload` the target
 
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)
@@ -65,6 +70,7 @@ Template for new versions:
 
 ## API
 - ``Military`` module: added ``addToSquad`` function
+- ``Units::teleport``: projectile information is now cleared for teleported units
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function

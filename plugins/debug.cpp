@@ -48,30 +48,30 @@ DBG_DECLARE(debug,example,DebugCategory::LINFO);
 
 namespace serialization {
 
-template<typename T>
-struct nvp : public std::pair<const char*, T*> {
-    using parent_t = std::pair<const char*, T*>;
-    nvp(const char* name, T& value) :
-        parent_t{name, &value}
-    {}
-};
+    template<typename T>
+    struct nvp : public std::pair<const char*, T*> {
+        using parent_t = std::pair<const char*, T*>;
+        nvp(const char* name, T& value) :
+            parent_t{name, &value}
+        {}
+    };
 
-template<typename T>
-nvp<T> make_nvp(const char* name, T& value) {
-    return {name, value};
-}
+    template<typename T>
+    nvp<T> make_nvp(const char* name, T& value) {
+        return {name, value};
+    }
 
 }
 
 #define NVP(variable) serialization::make_nvp(#variable, variable)
 
 namespace Json {
-template<typename ET>
-typename std::enable_if<std::is_enum<ET>::value, ET>::type
-get(Json::Value& ar, const std::string &key, const ET& default_)
-{
-    return static_cast<ET>(as<UInt64>(ar.get(key, static_cast<uint64_t>(default_))));
-}
+    template<typename ET>
+        requires (std::is_enum_v<ET>)
+    ET get(Value& ar, const std::string &key, const ET& default_)
+    {
+        return static_cast<ET>(as<UInt64>(ar.get(key, static_cast<uint64_t>(default_))));
+    }
 }
 
 namespace DFHack { namespace debugPlugin {

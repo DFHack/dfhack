@@ -6,6 +6,7 @@ local gui = require('gui')
 local helpdb = require('helpdb')
 local json = require('json')
 local mock = require('test_util.mock')
+local overlay = require('plugins.overlay')
 local script = require('gui.script')
 local utils = require('utils')
 
@@ -427,6 +428,7 @@ end
 
 local function finish_tests(done_command)
     dfhack.internal.IN_TEST = false
+    overlay.rescan()
     if done_command and #done_command > 0 then
         dfhack.run_command(done_command)
     end

@@ -800,6 +800,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         bool all = false;
         bool load = (first == "load");
         bool unload = (first == "unload");
+        bool reload = (first == "reload");
         if (parts.size())
         {
             for (auto p = parts.begin(); p != parts.end(); p++)
@@ -817,19 +818,22 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                     ret = CR_FAILURE;
                 else if (unload && !plug_mgr->unloadAll())
                     ret = CR_FAILURE;
-                else if (!plug_mgr->reloadAll())
+                else if (reload && !plug_mgr->reloadAll())
                     ret = CR_FAILURE;
             }
-            for (auto p = parts.begin(); p != parts.end(); p++)
+            else
             {
-                if (!p->size() || (*p)[0] == '-')
-                    continue;
-                if (load && !plug_mgr->load(*p))
-                    ret = CR_FAILURE;
-                else if (unload && !plug_mgr->unload(*p))
-                    ret = CR_FAILURE;
-                else if (!plug_mgr->reload(*p))
-                    ret = CR_FAILURE;
+                for (auto p = parts.begin(); p != parts.end(); p++)
+                {
+                    if (!p->size() || (*p)[0] == '-')
+                        continue;
+                    if (load && !plug_mgr->load(*p))
+                        ret = CR_FAILURE;
+                    else if (unload && !plug_mgr->unload(*p))
+                        ret = CR_FAILURE;
+                    else if (reload && !plug_mgr->reload(*p))
+                        ret = CR_FAILURE;
+                }
             }
             if (ret != CR_OK)
                 con.printerr("%s failed\n", first.c_str());

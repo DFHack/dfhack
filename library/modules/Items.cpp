@@ -49,6 +49,7 @@ distribution.
 #include "df/caravan_state.h"
 #include "df/creature_raw.h"
 #include "df/dfhack_material_category.h"
+#include "df/d_init.h"
 #include "df/entity_buy_prices.h"
 #include "df/entity_buy_requests.h"
 #include "df/entity_raw.h"
@@ -678,14 +679,54 @@ string Items::getDescription(df::item *item, int type, bool decorate) {
     item->getItemDescription(&tmp, type);
 
     if (decorate) {
-        addQuality(tmp, item->getQuality());
+        // Special indicators get added in a specific order
+        // Innermost is at the top, and outermost is at the bottom
 
-        if (item->isImproved()) {
+        // First, figure out the quality levels we're going to display
+        int craftquality = item->getQuality();
+        int craftquality_only_imps = item->getImprovementQuality();
+        bool has_displayed_item_improvements = item->isImproved();
+        if (!has_displayed_item_improvements && (craftquality < craftquality_only_imps))
+            craftquality = craftquality_only_imps;
+
+        // First, actual item quality
+        addQuality(tmp, craftquality);
+
+        // Next, magic enchants
+        if (item->getMagic() != NULL)
+            tmp = '\x11' + tmp + '\x10'; // <| |>
+
+        // Next, improvements
+        if (has_displayed_item_improvements) {
             tmp = '\xAE' + tmp + '\xAF'; // («) + tmp + (»)
-            addQuality(tmp, item->getImprovementQuality());
+            if (df::global::d_init->display.flags.is_set(d_init_flags1::SHOW_IMP_QUALITY))
+                addQuality(tmp, craftquality_only_imps);
         }
-        if (item->flags.bits.foreign)
-            tmp = "(" + tmp + ")";
+
+        // Dwarf mode only, forbid/foreign
+        if (*df::global::gamemode == game_mode::DWARF) {
+            if (item->flags.bits.forbid)
+                tmp = '{' + tmp + '}';
+            if (item->flags.bits.foreign)
+                tmp = '(' + tmp + ')';
+        }
+
+        // Wear
+        switch (item->getWear())
+        {
+            case 1: tmp = 'x' + tmp + 'x'; break;
+            case 2: tmp = 'X' + tmp + 'X'; break;
+            case 3: tmp = "XX" + tmp + "XX"; break;
+        }
+
+        // Fire
+        if (item->flags.bits.on_fire)
+            tmp = '\x13' + tmp + '\x13'; // !! !!
+
+        // Finally, Adventure civzone
+        if ((*df::global::gamemode == game_mode::ADVENTURE) &&
+            Items::getGeneralRef(item, general_ref_type::BUILDING_CIVZONE_ASSIGNED) != NULL)
+            tmp = '$' + tmp + '$';
     }
     return tmp;
 }
@@ -720,13 +761,6 @@ static string get_base_desc(df::item *item) {
 string Items::getReadableDescription(df::item *item) {
     CHECK_NULL_POINTER(item);
     auto desc = get_base_desc(item);
-
-    switch (item->getWear())
-    {
-        case 1: desc = "x" + desc + "x"; break; // Worn
-        case 2: desc = "X" + desc + "X"; break; // Threadbare
-        case 3: desc = "XX" + desc + "XX"; break; // Tattered
-    }
 
     if (auto gref = Items::getGeneralRef(item, general_ref_type::CONTAINS_UNIT)) {
         if (auto unit = gref->getUnit())

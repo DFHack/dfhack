@@ -62,6 +62,7 @@ Template for new versions:
 - `dig-now`: properly generate ice boulders when digging through ice walls
 - `gui/teleport`: now properly handles teleporting units that are currently falling or being flung
 - `unload`: fix recent regression where `unload` would immediately `reload` the target
+- ``Buildings`` module: do not crash if a ``map_block`` unexpectedly contains an item that is not on the master item vector
 
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)

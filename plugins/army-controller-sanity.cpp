@@ -57,6 +57,10 @@ namespace {
                     WARN(log).print("acValidationError: Bad controller %p found in entity id %d\n", ac, ent->id);
                     ok = false;
                 }
+                if (ac_set.count(ac) != 0 && ac->entity_id != ent->id)
+                {
+                    WARN(log).print("acValidationError: Army controller %d has entity id %d but is linked from entity with id %d\n", ac->id, ac->entity_id, ent->id);
+                }
             }
         }
 

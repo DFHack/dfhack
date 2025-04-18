@@ -104,7 +104,7 @@ local function get_mod_info(path)
             _,_,numerical_version = line:find('^%[NUMERIC_VERSION:(%d+)')
         end
         if not display_version then
-            if line:find('^%[DISPLAYED_VERSION:') then display_version = line:sub(20,-2) end
+            _,_,display_version = line:find('^%[DISPLAYED_VERSION:%s*([^]]*)%s*%]')
         end
         if not name then
             _,_,name = line:find('^%[NAME:([^%]]+)%]')
@@ -133,9 +133,9 @@ function getAllModsInfo(include_vanilla, mods, mod_paths)
             if not path:startswith(INSTALLED_MODS_PATH) then goto continue end
         end
         local info = get_mod_info(path)
-        if info == nil then goto continue end
+        if not info then goto continue end
         if not info.id or not info.numerical_version then goto continue end
-        mods[info.id]= {handled=true, name=info.name, version=info.display_version, steam_id=info.steam_id}
+        mods[info.id]= {name=info.name, version=info.display_version, steam_id=info.steam_id}
         add_mod_paths(mod_paths, info.id, path, '.')
         ::continue::
     end
@@ -178,7 +178,7 @@ function get_mod_paths(installed_subdir, active_subdir)
         for _,f in ipairs(files) do
             if not f.isdir then goto continue end
             local info = get_mod_info(f.path)
-            if info == nil then goto continue end
+            if not info then goto continue end
             local id, version = info.id,info.numerical_version
             if not id or not version then goto continue end
             local mod = ensure_key(mods, id)

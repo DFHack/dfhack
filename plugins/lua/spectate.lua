@@ -25,6 +25,7 @@ local function get_default_state()
         ['include-wildlife']=false,
         ['prefer-conflict']=true,
         ['prefer-new-arrivals']=true,
+        ['prefer-nicknamed']=true,
         ['tooltip-follow']=true,
         ['tooltip-follow-blink-milliseconds']=3000,
         ['tooltip-follow-hold-to-show']='none', -- one of none, ctrl, alt, or shift

@@ -63,6 +63,7 @@ Template for new versions:
 - `gui/teleport`: now properly handles teleporting units that are currently falling or being flung
 - `unload`: fix recent regression where `unload` would immediately `reload` the target
 - ``Buildings`` module: do not crash if a ``map_block`` unexpectedly contains an item that is not on the master item vector
+- `suspendmanager`: fix walls being treated as potential suitable access if another wall is built underneath
 
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)

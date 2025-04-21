@@ -198,8 +198,9 @@ static void update_tomb_assignments(color_ostream &out) {
     // check tomb civzones for assigned units
     for (auto* tomb : world->buildings.other.ZONE_TOMB) {
         if (!tomb || !tomb->flags.bits.exists) continue;
-        if (!tomb->assigned_unit) continue;
-        if (Units::isDead(tomb->assigned_unit)) continue; // we only care about living units
+        if (tomb->assigned_unit_id == -1) continue;
+        auto unit = Buildings::getOwner(tomb);
+        if (Units::isDead(unit)) continue; // we only care about living units
 
         auto it = tomb_assignments.find(tomb->assigned_unit_id);
 

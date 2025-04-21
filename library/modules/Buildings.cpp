@@ -318,6 +318,11 @@ std::string Buildings::getName(df::building* building)
     return tmp;
 }
 
+df::unit* Buildings::getOwner(df::building_civzonest* bld)
+{
+    return Units::get_cached_unit_by_global_id(bld->assigned_unit_id, bld->owner_unit_cached_index);
+}
+
 bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);

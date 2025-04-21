@@ -56,6 +56,20 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 51.11-r1
+
+## Fixes
 - `spectate`: don't show a hover tooltip for hidden units (e.g. invisible snatchers)
 - `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
 - `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
@@ -69,8 +83,6 @@ Template for new versions:
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)
 
-## Documentation
-
 ## API
 - ``Military`` module: added ``addToSquad`` function
 - ``Units`` module: added ``get_cached_unit_by_global_id`` to emulate how DF handles unit vector index caching (used in civzones and in general references)
@@ -80,8 +92,6 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function
-
-## Removed
 
 # 51.10-r1
 

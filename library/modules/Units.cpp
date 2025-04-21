@@ -2198,7 +2198,7 @@ df::unit* Units::get_cached_unit_by_global_id(int32_t id, int32_t& index)
     if (len == 0 || id == -1)
         return nullptr;
 
-    if (index > -1 && index < len)
+    if (index > -1 && (size_t)index < len)
     {
         auto unit = vector[index];
         if (id == unit->id)

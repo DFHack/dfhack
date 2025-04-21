@@ -92,6 +92,7 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function
+- ``dfhack.buildings.getOwner``: make new Buildings API available to Lua
 
 # 51.10-r1
 

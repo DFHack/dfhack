@@ -2465,6 +2465,10 @@ General
 
   Searches for a specific_ref with the given type.
 
+* ``dfhack.buildings.getOwner(civzone)``
+
+  Returns the owner of the zone or *nil* if there isn't one.
+
 * ``dfhack.buildings.setOwner(civzone,unit)``
 
   Replaces the owner of the civzone. If unit is *nil*, removes ownership.

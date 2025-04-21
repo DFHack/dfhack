@@ -2736,6 +2736,7 @@ static bool buildings_containsTile(df::building *bld, int x, int y) {
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, getGeneralRef),
     WRAPM(Buildings, getSpecificRef),
+    WRAPM(Buildings, getOwner),
     WRAPM(Buildings, setOwner),
     WRAPM(Buildings, allocInstance),
     WRAPM(Buildings, checkFreeTiles),

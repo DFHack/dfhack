@@ -350,5 +350,7 @@ DFHACK_EXPORT void multiplyActionTimers(color_ostream &out, df::unit *unit, floa
 DFHACK_EXPORT void multiplyGroupActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypeGroup);
 DFHACK_EXPORT void setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType);
 DFHACK_EXPORT void setGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup);
+
+DFHACK_EXPORT df::unit* get_cached_unit_by_global_id(int32_t id, int32_t& index);
 }
 }

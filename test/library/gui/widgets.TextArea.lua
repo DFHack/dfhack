@@ -1726,7 +1726,7 @@ function test.arrows_reset_selection()
 
     simulate_input_keys('CUSTOM_CTRL_A')
 
-    expect.eq(read_rendered_text(text_area), text .. '_');
+    expect.eq(read_rendered_text(text_area), text);
 
     expect.eq(read_selected_text(text_area), text);
 
@@ -1768,7 +1768,7 @@ function test.click_reset_selection()
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
         '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero._',
+        'porttitor mi, vitae rutrum eros metus nec libero.',
     }, '\n'));
 
     expect.eq(read_selected_text(text_area), table.concat({
@@ -1803,7 +1803,7 @@ function test.line_navigation_reset_selection()
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
         '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero._',
+        'porttitor mi, vitae rutrum eros metus nec libero.',
     }, '\n'));
 
     expect.eq(read_selected_text(text_area), table.concat({
@@ -1836,7 +1836,7 @@ function test.jump_begin_or_end_reset_selection()
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
         '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero._',
+        'porttitor mi, vitae rutrum eros metus nec libero.',
     }, '\n'));
 
     expect.eq(read_selected_text(text_area), table.concat({
@@ -3057,7 +3057,7 @@ function test.fast_rewind_reset_selection()
     expect.eq(read_rendered_text(text_area), table.concat({
         '60: Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
         '112: Sed consectetur, urna sit amet aliquet egestas, ante nibh ',
-        'porttitor mi, vitae rutrum eros metus nec libero._',
+        'porttitor mi, vitae rutrum eros metus nec libero.',
     }, '\n'));
 
     expect.eq(read_selected_text(text_area), table.concat({

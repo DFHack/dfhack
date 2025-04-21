@@ -240,12 +240,10 @@ function TextAreaContent:onRenderBody(dc)
         dc:newline()
     end
 
-    local show_focus = not self.enable_cursor_blink
-        or (
-            not self:hasSelection()
-            and self.parent_view:hasFocus()
-            and gui.blink_visible(530)
-        )
+    local show_focus = not self:hasSelection() and (
+        not self.enable_cursor_blink
+        or (self.parent_view:hasFocus() and gui.blink_visible(530))
+    )
 
     if show_focus then
         local x, y = self.wrapped_text:indexToCoords(self.cursor)

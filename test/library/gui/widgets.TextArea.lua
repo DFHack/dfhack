@@ -1655,6 +1655,18 @@ function test.select_all()
     screen:dismiss()
 end
 
+function test.ignore_select_all_for_empty_text()
+    local text_area, screen, window = arrange_textarea({w=65})
+
+    expect.eq(read_rendered_text(text_area), '_');
+
+    simulate_input_keys('CUSTOM_CTRL_A')
+
+    expect.eq(read_rendered_text(text_area), '_');
+
+    screen:dismiss()
+end
+
 function test.text_key_replace_selection()
     local text_area, screen, window = arrange_textarea({w=65})
 

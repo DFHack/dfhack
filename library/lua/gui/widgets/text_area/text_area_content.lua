@@ -98,7 +98,12 @@ function TextAreaContent:setCursor(cursor_offset)
 end
 
 function TextAreaContent:setSelection(from_offset, to_offset)
+    if #self.text == 0 then
+        return
+    end
+
     -- text selection is always start on self.cursor and end on self.sel_end
+
     self:setCursor(from_offset)
     self.sel_end = to_offset
 

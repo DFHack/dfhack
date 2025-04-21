@@ -2201,7 +2201,7 @@ df::unit* Units::get_cached_unit_by_global_id(int32_t id, int32_t& index)
     if (index > -1 && index < len)
     {
         auto unit = vector[index];
-        if (index == unit->id)
+        if (id == unit->id)
             return unit;
         index = -1;
     }

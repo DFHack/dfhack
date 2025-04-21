@@ -2188,3 +2188,24 @@ void Units::setGroupActionTimers(color_ostream &out, df::unit *unit,
         }
     }
 }
+
+// this is a (loose) reimplementation of df's `unit_handlerst::get_cached_unit_by_global_id`
+df::unit* Units::get_cached_unit_by_global_id(int32_t id, int32_t& index)
+{
+    auto& vector = df::unit::get_vector();
+    auto len = vector.size();
+
+    if (len == 0 || id == -1)
+        return nullptr;
+
+    if (index > -1 && index < len)
+    {
+        auto unit = vector[index];
+        if (index == unit->id)
+            return unit;
+        index = -1;
+    }
+    index = binsearch_index(vector, &df::unit::id, id);
+    return index != -1 ? vector[index] : nullptr;
+}
+

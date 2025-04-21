@@ -98,7 +98,12 @@ function TextAreaContent:setCursor(cursor_offset)
 end
 
 function TextAreaContent:setSelection(from_offset, to_offset)
+    if #self.text == 0 then
+        return
+    end
+
     -- text selection is always start on self.cursor and end on self.sel_end
+
     self:setCursor(from_offset)
     self.sel_end = to_offset
 
@@ -240,12 +245,10 @@ function TextAreaContent:onRenderBody(dc)
         dc:newline()
     end
 
-    local show_focus = not self.enable_cursor_blink
-        or (
-            not self:hasSelection()
-            and self.parent_view:hasFocus()
-            and gui.blink_visible(530)
-        )
+    local show_focus = not self:hasSelection() and (
+        not self.enable_cursor_blink
+        or (self.parent_view:hasFocus() and gui.blink_visible(530))
+    )
 
     if show_focus then
         local x, y = self.wrapped_text:indexToCoords(self.cursor)

@@ -73,7 +73,10 @@ Template for new versions:
 
 ## API
 - ``Military`` module: added ``addToSquad`` function
+- ``Units`` module: added ``get_cached_unit_by_global_id`` to emulate how DF handles unit vector index caching (used in civzones and in general references)
+- ``Buildings`` module: add ``getOwner`` (using the ``Units::get_cached_unit_by_global_id`` mechanic) to reflect changes in 51.11
 - ``Units::teleport``: projectile information is now cleared for teleported units
+- ``Buildings::setOwner``: updated for changes in 51.11
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function

@@ -198,8 +198,9 @@ static void update_tomb_assignments(color_ostream &out) {
     // check tomb civzones for assigned units
     for (auto* tomb : world->buildings.other.ZONE_TOMB) {
         if (!tomb || !tomb->flags.bits.exists) continue;
-        if (!tomb->assigned_unit) continue;
-        if (Units::isDead(tomb->assigned_unit)) continue; // we only care about living units
+        if (tomb->assigned_unit_id == -1) continue;
+        auto unit = Buildings::getOwner(tomb);
+        if (Units::isDead(unit)) continue; // we only care about living units
 
         auto it = tomb_assignments.find(tomb->assigned_unit_id);
 
@@ -248,7 +249,7 @@ static bool assign_to_tomb(df::unit * unit, int32_t building_id) {
     if (!bld) return false;
 
     auto tomb = virtual_cast<df::building_civzonest>(bld);
-    if (!tomb || tomb->assigned_unit) return false;
+    if (!tomb || tomb->assigned_unit_id != -1) return false;
 
     Buildings::setOwner(tomb, unit);
     return true;

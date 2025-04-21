@@ -2208,4 +2208,3 @@ df::unit* Units::get_cached_unit_by_global_id(int32_t id, int32_t& index)
     index = binsearch_index(vector, &df::unit::id, id);
     return index != -1 ? vector[index] : nullptr;
 }
-

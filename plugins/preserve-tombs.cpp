@@ -249,7 +249,7 @@ static bool assign_to_tomb(df::unit * unit, int32_t building_id) {
     if (!bld) return false;
 
     auto tomb = virtual_cast<df::building_civzonest>(bld);
-    if (!tomb || tomb->assigned_unit) return false;
+    if (!tomb || tomb->assigned_unit_id != -1) return false;
 
     Buildings::setOwner(tomb, unit);
     return true;

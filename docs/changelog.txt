@@ -56,23 +56,52 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
-- `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
-- `dig-now`: properly generate ice boulders when digging through ice walls
 
 ## Misc Improvements
-- `spectate`: show dwarves' activities (like prayer)
 
 ## Documentation
 
 ## API
+
+## Lua
+
+## Removed
+
+# 51.11-r1.1
+
+## Fixes
+- `preserve-rooms`: will no longer crash when a civzone is assigned to a unit that does not exist
+- `gui/design`: fix misaligned shape icons
+
+# 51.11-r1
+
+## Fixes
+- `spectate`: don't show a hover tooltip for hidden units (e.g. invisible snatchers)
+- `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
+- `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
+- `dig-now`: properly generate ice boulders when digging through ice walls
+- `gui/teleport`: now properly handles teleporting units that are currently falling or being flung
+- `unload`: fix recent regression where `unload` would immediately `reload` the target
+- ``Buildings`` module: do not crash if a ``map_block`` unexpectedly contains an item that is not on the master item vector
+- `suspendmanager`: fix walls being treated as potential suitable access if another wall is built underneath
+- text widgets no longer lose their cursor when the Ctrl-a (select all) hotkey is pressed when there is no text to select
+
+## Misc Improvements
+- `spectate`: show dwarves' activities (like prayer)
+
+## API
 - ``Military`` module: added ``addToSquad`` function
+- ``Units`` module: added ``get_cached_unit_by_global_id`` to emulate how DF handles unit vector index caching (used in civzones and in general references)
+- ``Buildings`` module: add ``getOwner`` (using the ``Units::get_cached_unit_by_global_id`` mechanic) to reflect changes in 51.11
+- ``Units::teleport``: projectile information is now cleared for teleported units
+- ``Buildings::setOwner``: updated for changes in 51.11
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function
 - ``gui.dflayout``: provide DF fort mode toolbar position information and automatic overlay positioning
 
 ## Removed
+- ``dfhack.buildings.getOwner``: make new Buildings API available to Lua
 
 # 51.10-r1
 

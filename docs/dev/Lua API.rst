@@ -1073,7 +1073,8 @@ Screens
 
 * ``dfhack.gui.getCurFocus([skip_dismissed])``
 
-  Returns the focus string of the current viewscreen.
+  Returns a list of focus strings for the current viewscreen. Equivalent to
+  ``dfhack.gui.getFocusStrings(dfhack.gui.getCurViewscreen(skip_dismissed))``.
 
 * ``dfhack.gui.getViewscreenByType(type[, depth])``
 
@@ -2463,6 +2464,10 @@ General
 * ``dfhack.buildings.getSpecificRef(building, type)``
 
   Searches for a specific_ref with the given type.
+
+* ``dfhack.buildings.getOwner(civzone)``
+
+  Returns the owner of the zone or *nil* if there isn't one.
 
 * ``dfhack.buildings.setOwner(civzone,unit)``
 

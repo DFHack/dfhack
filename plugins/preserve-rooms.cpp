@@ -315,13 +315,14 @@ static void assign_nobles(color_ostream &out) {
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
         if (!zone)
             continue;
+        auto owner = Buildings::getOwner(zone);
         bool assigned = false;
         for (auto it = group_codes.rbegin(); it != group_codes.rend(); it++) {
             auto code = *it;
             vector<df::unit *> units;
             Units::getUnitsByNobleRole(units, code);
             // if zone is already assigned to a proper unit (or their spouse), skip
-            if (linear_index(units, zone->assigned_unit) >= 0 ||
+            if (linear_index(units, owner) >= 0 ||
                 linear_index(get_spouse_ids(out, units), zone->assigned_unit_id) >= 0)
             {
                 assigned = true;
@@ -352,7 +353,7 @@ static void assign_nobles(color_ostream &out) {
             if (assigned)
                 break;
         }
-        if (!assigned && (zone->spec_sub_flag.bits.active || zone->assigned_unit)) {
+        if (!assigned && (zone->spec_sub_flag.bits.active || zone->assigned_unit_id != -1)) {
             DEBUG(cycle,out).print("noble zone now reserved for eventual office holder: %d\n", zone_id);
             zone->spec_sub_flag.bits.active = false;
             Buildings::setOwner(zone, NULL);
@@ -506,11 +507,16 @@ static void process_rooms(color_ostream &out,
             WARN(cycle, out).print("invalid building pointer %p in building vector\n", zone);
             continue;
         }
-        if (!zone->assigned_unit) {
+        if (zone->assigned_unit_id == -1) {
             handle_missing_assignments(out, active_unit_ids, &it, it_end, share_with_spouse, zone->id);
             continue;
         }
-        auto hf = df::historical_figure::find(zone->assigned_unit->hist_figure_id);
+        auto owner = Buildings::getOwner(zone);
+        if (!owner) {
+            WARN(cycle, out).print("building %d has owner id %d but no such unit exists\n", zone->id, zone->assigned_unit_id);
+            continue;
+        }
+        auto hf = df::historical_figure::find(owner->hist_figure_id);
         if (!hf)
             continue;
         int32_t spouse_hfid = share_with_spouse ? get_spouse_hfid(out, hf) : -1;
@@ -593,7 +599,7 @@ static void on_new_active_unit(color_ostream& out, void* data) {
         if (!zone)
             continue;
         zone->spec_sub_flag.bits.active = true;
-        if (zone->assigned_unit || spouse_has_sharable_room(out, hfid, zone->type))
+        if (zone->assigned_unit_id != -1 || spouse_has_sharable_room(out, hfid, zone->type))
             continue;
         DEBUG(event,out).print("reassigning zone %d\n", zone->id);
         Buildings::setOwner(zone, unit);

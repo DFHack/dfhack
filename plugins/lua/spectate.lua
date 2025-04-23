@@ -345,11 +345,15 @@ local function GetUnitInfoText(unit, settings_group_name)
     return txt
 end
 
+local function unit_filter(unit)
+    return not dfhack.units.isHidden(unit)
+end
+
 local function GetHoverText(pos)
     if not pos then return end
 
     local txt = {}
-    local units = dfhack.units.getUnitsInBox(pos, pos) or {} -- todo: maybe (optionally) use filter parameter here?
+    local units = dfhack.units.getUnitsInBox(pos, pos, unit_filter) or {}
 
     for _,unit in ipairs(units) do
         local info = GetUnitInfoText(unit, 'hover')
@@ -461,7 +465,7 @@ function TooltipOverlay:render_unit_banners(dc)
     local height = vp.max_y
     local bottomright = {x = topleft.x + width, y = topleft.y + height, z = topleft.z}
 
-    local units = dfhack.units.getUnitsInBox(topleft, bottomright)
+    local units = dfhack.units.getUnitsInBox(topleft, bottomright, unit_filter)
     if not units or #units == 0 then return end
 
     local oneTileOffset = GetScreenCoordinates({x = topleft.x + 1, y = topleft.y + 1, z = topleft.z + 0})

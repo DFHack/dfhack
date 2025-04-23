@@ -52,6 +52,9 @@ function reload(refresh_active_mod_scripts)
     local force_refresh_fn = refresh_active_mod_scripts and function(script_path, script_name)
         if script_path:find('scripts_modactive') then
             local full_path = script_path..'/'..script_name
+            if dfhack.getOSType() == 'windows' then
+                full_path = script_path..'\\'..script_name
+            end
             internal_script = dfhack.internal.scripts[full_path]
             if internal_script then
                 dfhack.internal.scripts[full_path] = nil

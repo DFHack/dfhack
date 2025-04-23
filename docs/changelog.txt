@@ -72,6 +72,7 @@ Template for new versions:
 ## Fixes
 - `preserve-rooms`: will no longer crash when a civzone is assigned to a unit that does not exist
 - `gui/design`: fix misaligned shape icons
+- `scripts/script-manager`: fix lua scripts in mods not being reloaded properly on Windows.
 
 # 51.11-r1
 

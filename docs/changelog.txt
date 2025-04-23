@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `preserve-tombs`: will no longer crash when a tomb is assigned to a unit that does not exist
 
 ## Misc Improvements
 

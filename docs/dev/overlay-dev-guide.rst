@@ -464,7 +464,7 @@ Widget example 4: positioning relative to DF UI
 -----------------------------------------------
 
 The player-controllable positioning provided by the overlay framework is
-relative to some corner of the interface area (technically, the positioning is
+relative to a corner of the interface area (technically, the positioning is
 edge-relative, but the anchors are always two adjacent edges, so it is
 equivalent to corner-relative positioning). This corner-relative positioning
 works well to adapt overlay positions for interface areas of varying sizes (due
@@ -484,114 +484,38 @@ Such an overlay could eschew player-customizable positioning, but giving up that
 flexibility should not be done lightly.
 
 Instead, with some clever manipulation, an overlay's corner-relative positioning
-can be "translated" to be relative to some other point. To simplify the
-following description, only the left component of positioning will be considered
-(example code after the description supports all four directions).
+can be "translated" to be relative to some other UI element.
 
-Method
-******
-
-A widget's frame has two values in each direction: an offset and a size. The
-overlay framework sets the offsets (based on the player-controllable position),
-but we can inflate the (effective) size to fine-tune the positioning of the
-overlay's content.
-
-Given
-
-* an overlay with no ``frame_inset`` and a fixed content width
-  (``OVERLAY_WIDTH``),
-* a default left-relative overlay offset (``DEFAULT_L_OFFSET``; this is
-  ``default_pos.x - 1`` for a left-relative (positive) ``default_pos.x``),
-* a player-customized left-relative overlay offset (``DEFAULT_L_OFFSET +
-  PLAYER_L_DELTA()``), and
-* an ideal overlay content left-offset
-  (``ideal_overlay_l_offset(interface_size)``; e.g., derived from some DF UI
-  element whose position varies based on the interface size),
-
-the following are true:
-
-#. The overlay content will be drawn at this left-offset::
-
-        frame.l + frame_inset.l
-
-   We introduce the inset here as a "variable" since the overlay isn't using it
-   and we will need it to correct the position of the overlay's content. If
-   top-level insets are required, they can be added via a Panel that wraps all
-   the content, or by adjusting the final formulas to incorporate extra insets.
-
-#. The overlay system provides the player-customized position through the
-   overlay's ``frame.l`` (adjusted from a one-based position to a zero-based
-   offset)::
-
-        frame.l == DEFAULT_L_OFFSET + PLAYER_L_DELTA()
-
-   Substituting this into the prior expression gives a new left-offset
-   expression for the overlay's content::
-
-        DEFAULT_L_OFFSET + PLAYER_L_DELTA() + frame_inset.l
-
-#. We want the player-customized left-offset to be::
-
-        ideal_overlay_l_offset(interface_size) + PLAYER_L_DELTA()
-
-#. When we equate the customized ideal left-offset expression with the actual
-   left-offset expression, we get::
-
-        DEFAULT_L_OFFSET + PLAYER_L_DELTA() + frame_inset.l == ideal_overlay_l_offset(interface_size) + PLAYER_L_DELTA()
-
-   From which, we can solve for ``frame_inset.l``::
-
-        frame_inset.l == ideal_overlay_l_offset(interface_size) - DEFAULT_L_OFFSET
-
-#. The overlay's frame's width should be the sum of its inset and its content
-   width::
-
-        frame.w == frame_inset.l + OVERLAY_WIDTH
-
-These last two equations are the core of this technique for adapting the
-corner-relative positions provided by the overlay framework into a UI-relative
-overlay content position.
-
-In code, extended to all four directions::
+The ``gui.dflayout`` module provides the ``getOverlayPlacementInfo`` helper
+function that provides helper values that can automatically adapt an overlay's
+corner-relative, player-customizable position to be relative to a UI element
+while still being player-customizable::
 
     local overlay = require('plugins.overlay')
     local Label = require('gui.widgets.labels.label')
-    local layout = require('gui.dflayout')
+    local dflayout = require('gui.dflayout')
 
-    local dig_toolbar = layout.fort.secondary_toolbars.dig
-    local dig_dig_button = dig_toolbar.buttons.dig
+    local WIDTH, HEIGHT = 20, 1 -- whatever static size the overlay needs
+    local PLACEMENT = dflayout.getOverlayPlacementInfo{
+        size = { w = WIDTH, h = HEIGHT },
+        ui_element = dflayout.elements.fort.secondary_toolbar_buttons.DIG.DIG_DIG,
+        h_placement = 'align left edges',
+        v_placement = 'above',
+    }
 
-    local WIDTH = 20
-    local HEIGHT = 1
-
-    local function ideal_overlay_offsets(interface_size)
-        local dig_frame = dig_toolbar.frame(interface_size)
-        -- aligned with the main mining button
-        local l = dig_frame.l + dig_dig_button.offset
-        -- one row higher
-        local t = dig_frame.t - HEIGHT
-        return {
-            l = l,
-            r = interface_size.width - (l + WIDTH),
-            t = t,
-            b = interface_size.height - (t + HEIGHT),
-        }
-    end
-
-    local MINIMUM_OFFSETS = ideal_overlay_offsets(layout.MINIMUM_INTERFACE_SIZE)
+    local dig_dig_button = dflayout.element_layouts.fort.secondary_toolbars.DIG.buttons.DIG_DIG
 
     UIRelativeOverlay = defclass(UIRelativeOverlay, overlay.OverlayWidget)
     UIRelativeOverlay.ATTRS{
         name = 'Can you dig it?',
         desc = 'A overlay that has UI-relative positioning.',
         default_enabled = true,
-        default_pos = { x = MINIMUM_OFFSETS.l + 1, y = -(MINIMUM_OFFSETS.b + 1) },
+        default_pos = PLACEMENT.default_pos,
         -- frame and frame_inset are managed in preUpdateLayout
         viewscreens = { 'dwarfmode/Designate/DIG_DIG' },
     }
 
     function UIRelativeOverlay:init()
-        self.frame = {}
         self:addviews{
             Label{
                 text_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
@@ -600,33 +524,17 @@ In code, extended to all four directions::
         }
     end
 
-    function UIRelativeOverlay:preUpdateLayout(parent_rect)
-        local o = ideal_overlay_offsets(parent_rect)
-        local d = {
-            l = math.max(0, o.l - MINIMUM_OFFSETS.l),
-            r = math.max(0, o.r - MINIMUM_OFFSETS.r),
-            t = math.max(0, o.t - MINIMUM_OFFSETS.t),
-            b = math.max(0, o.b - MINIMUM_OFFSETS.b),
-        }
-        self.frame.w = WIDTH + d.l + d.r
-        self.frame.h = HEIGHT + d.t + d.b
-        self.frame_inset = d
-    end
+    UIRelativeOverlay.preUpdateLayout = PLACEMENT.preUpdateLayout_fn
 
     OVERLAY_WIDGETS = { overlay = UIRelativeOverlay }
-
-``MINIMUM_OFFSETS`` is based on the minimum interface size so that the overlay
-will get zero-sized insets in a minimum size interface area. This lets the
-overlay be positioned anywhere inside a minimum size interface area. The
-``math.max(0, ...)`` is used to make sure an overlay can't be positioned in way that
-places it off-screen when a larger interface is made smaller and the
-``MINIMUM_OFFSETS`` are erroneously not actually the minimums.
 
 Consequences
 ************
 
-"Inflating" the overlay size and "floating" the overlay content like this has
-some drawbacks when the interface area is much larger than the minimum size.
+The generated ``preUpdateLayout_fn`` function works by "inflating" the overlay
+size (setting ``frame.w`` and ``frame.h``) and "floating" the overlay content
+(setting ``frame_inset``). This has some drawbacks when the interface area is
+much larger than the minimum size.
 
 * The overlay outlines drawn by `gui/overlay` reflect the inflated size, and
   thus can grow quite large.
@@ -641,6 +549,9 @@ some drawbacks when the interface area is much larger than the minimum size.
 
 * Because the overlay size is inflated, the available area for positioning the
   overlay content is effectively reduced. The available area is equivalent to
-  the minimum interface area. The positioning of this area is such that the
-  "ideal" position in the minimum interface area corresponds to the "ideal"
-  position in the larger interface area.
+  the area that is available around the targeted UI element in minimum-size
+  interface area.
+
+An alternate ``getLeftOnlyOverlayPlacementInfo`` function is available that only
+"inflates" and "floats" on the left side, which is compatible with the way
+several existing overlays overlays are positioned relative to DF toolbars.

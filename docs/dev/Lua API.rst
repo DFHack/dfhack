@@ -6519,126 +6519,214 @@ Example usage::
 gui.dflayout
 ============
 
-This module provides position information for DF UI elements that are not always
-straightforward to calculate.
+This module provides help with positioning overlay widgets relative to DF UI
+elements that may not always be straightforward to locate across multiple
+interface area sizes (and thus, window sizes).
 
-It currently only describes the fortress mode toolbars at the bottom of the
-screen.
+It currently supports the fortress mode toolbars at the bottom of the screen.
 
 Unless otherwise noted, the dimensions used by this module are in UI tiles and
-offsets are from the boundaries of the (caller provided) interface area.
+are always inside the DF interface area (which, depending on DF settings, may be
+narrower than the DF window).
 
 General Constants
 -----------------
 
-The module provides these convenience constants:
+This module provides these convenience constants:
 
 * ``MINIMUM_INTERFACE_SIZE``
 
   The dimensions (``width`` and ``height``) of the minimum-size DF window:
-  114x46 UI tiles. Other fields may also be present, but they are not used by
-  this module.
+  114x46 UI tiles.
 
 * ``TOOLBAR_HEIGHT``
 
-  The height of the primary toolbars at the bottom of the DF window (3 rows).
+  The height of the primary toolbars at the bottom of the DF window (3 UI rows).
 
 * ``SECONDARY_TOOLBAR_HEIGHT``
 
   The height of the secondary toolbars that are sometimes placed above the
-  primary toolbars (also 3 rows).
+  primary toolbars (also 3 UI rows).
 
 Fortress Mode Toolbars
 ----------------------
 
-Fortress mode DF draws three primary toolbars and (depending on whether a "tool"
-is active) possibly one of several secondary toolbars at the bottom of the
-interface area.
+Fortress mode DF draws three primary toolbars and (depending on the DF "mode")
+possibly one of several secondary toolbars at the bottom of the interface area.
 
-The toolbar descriptions are available through these module fields:
+Layout Information
+~~~~~~~~~~~~~~~~~~
 
-* ``fort.toolbars.left``
-* ``fort.toolbars.center``
-* ``fort.toolbars.right``
+The "raw" layout description for toolbars gives the width of the toolbar and the
+sizes and (relative) positions of its buttons.
 
-The descriptions of the secondary toolbars are available through the fields of
-``fort.secondary_toolbars``:
+The layouts of the primary toolbars are available through these module fields:
 
-* ``dig``, ``chop``, ``gather``, ``smooth``, ``erase``, ``stockpile``,
-  ``stockpile_paint``, ``burrow_paint``, ``traffic``, and ``mass_designation``
+* ``element_layouts.fort.toolbars.left``
+* ``element_layouts.fort.toolbars.center``
+* ``element_layouts.fort.toolbars.right``
+
+The layouts of the secondary toolbars are available through the fields of
+``element_layouts.fort.secondary_toolbars``:
+
+* ``DIG``
+* ``CHOP``
+* ``GATHER``
+* ``SMOOTH``
+* ``ERASE``
+* ``MAIN_STOCKPILE_MODE``
+* ``STOCKPILE_NEW``
+* ``Add new burrow``
+* ``TRAFFIC``
+* ``ITEM_BUILDING``
+
+Except for ``Add new burrow``, these field names are taken from the
+``df.main_hover_instruction`` enum names of the "button" that activates the
+secondary toolbar (except for ``Add new burrow`` and ``STOCKPILE_NEW``, these
+are buttons in the center toolbar).
 
 The DF build menu (which is displayed in mostly the same place and activated in
 the same way as the other secondary toolbars) is not currently supported. It has
 significant differences from the other secondary toolbars.
 
-Each toolbar description table has these fields:
+Each toolbar layout description table provides these fields:
 
-* ``width`` the width of the toolbar
-* ``buttons`` a table indexed by "button names" that provides info about
-  individual buttons:
+``width``
+  the width of the toolbar
 
-  * ``offset`` the left-offset from left edge of the toolbar
-  * ``width`` the width of the button
+``buttons``
+  a table indexed by "button names" that provides info about individual buttons:
+
+  * ``offset``: the left-offset from left edge of the toolbar
+  * ``width``: the width of the button
 
   Please consult the module source for each toolbar's button names.
 
-* ``frame(interface_size)`` a function that calculates the placement of the
-  toolbar when drawn in an interface of the specified size
+UI Elements
+~~~~~~~~~~~
 
-  The ``interface_size`` should be a table with ``width`` and ``height`` fields.
-  Common size sources include the ``parent_rect`` parameter passed to a
-  non-fullscreen overlay widget's layout methods (``updateLayout``, etc.), and
-  the interface area returned from ``gui.get_interface_rect()``).
+The ``element_layouts`` toolbar descriptions are combined with custom
+positioning code to form "dynamic UI elements" that can compute where individual
+UI elements will be positioned inside interface areas of various sizes.
 
-  The return value is a table with the following fields:
+The toolbar "UI elements" are available through these module fields:
 
-  * ``l``, ``r``, ``t``, ``b``: the column/row offsets to the toolbar from the
-    edges of the interface area
-  * ``w``, ``h``: the size of the toolbar (``w`` is the same as ``toolbar.width``)
+* ``elements.fort.toolbars.left``
+* ``elements.fort.toolbars.center``
+* ``elements.fort.toolbars.right``
+* ``elements.fort.toolbars_buttons.left[button_name]``
+* ``elements.fort.toolbars_buttons.center[button_name]``
+* ``elements.fort.toolbars_buttons.center_close[button_name]``
+* ``elements.fort.toolbars_buttons.right[button_name]``
+* ``elements.fort.secondary_toolbars.[secondary_name]``
+* ``elements.fort.secondary_toolbar_buttons.[secondary_name][button_name]``
 
-  ``l + w + r`` and ``t + h + b`` will equal the provided interface's width and
-  height, respectively.
+The ``secondary_name`` and ``button_names`` values are the same names as used
+for the layout descriptions.
 
-  This table "shape" is similar to a `Widget <Widget class_>`_'s ``frame`` and
-  should be useful in positioning a DFHack widget relative to the toolbar.
+These "UI element" values should generally be treated as opaque. They can be
+passed to the overlay positioning helper functions described below.
 
-Fort toolbar examples:
+Automatic Overlay Positioning
+-----------------------------
 
-  * The ends of a toolbar can be located by combining the offset and size data
-    from a toolbar's frame data::
+This module provides higher-level functions that use the provided "dynamic UI
+elements" to help automatically position an overlay widget with respect to the
+UI element:
 
-      local layout = require('gui.dflayout')
-      ...
-      local erase_frame = layout.fort.secondary_toolbars.erase.frame(interface_size)
-      local erase_right_l_offset = erase_frame.l + erase_frame.w
-      local erase_left_r_offset = erase_frame.r + erase_frame.w
+* ``getOverlayPlacementInfo(overlay_placement_spec)``
 
-      -- interface_size.width |--------------------------|
-      --        erase_frame.l |----------          ------| erase_frame.r
-      --                      |          [erase tb]      |
-      --        erase_frame.w |          ----------      |
-      -- erase_right_l_offset |--------------------      |
-      --                      |          ----------------| erase_left_r_offset
+  The ``overlay_placement_spec`` parameter should be a table with the following
+  fields:
 
-  * A specific toolbar button can be located by combining the toolbar's frame
-    data with the ``offset`` of the button::
+  ``size``
+    a table with ``width`` and ``height`` fields that specifies the static size
+    of the overlay widget
 
-      local layout = require('gui.dflayout')
-      ...
-      local dig = layout.fort.secondary_toolbars.dig
-      local dig_frame = dig.frame(interface_size)
-      local dig_adv = dig.buttons.advanced_toggle
-      local dig_adv_l_offset = dig_frame.l + dig_adv.offset
-      local dig_adv_r_offset = dig_frame.r + dig_frame.w - (dig_adv.offset + dig_adv.width)
-      --                    OR interface_size.width - (dig_adv_l_offset + dig_adv.width)
+  ``ui_element``
+    the overlay will be positioned relative to the specified UI element; UI
+    element values can be retrieved from this module's ``elements`` field.
 
-      -- interface_size.width |--------------------------|
-      --          dig_frame.l |----------             ---| dig_frame.r
-      --          dig_frame.w |          -------------   |
-      --       dig_adv.offset |          ------          |
-      --        dig_adv.width |                --        |
-      --                      |          [ dig [] tb ]   |
-      --     dig_adv_l_offset |----------------  --------| dig_adv_r_offset
+  ``h_placement``
+    a string that specifies the overlay's horizontal placement with respect to
+    the ``ui_element``
+
+      * ``'on left'``: the overlay's right edge will be just to the left of the
+        ``ui_element``'s left edge
+      * ``'align left edges'``: the overlay's left edge will be aligned to the
+        ``ui_element``'s left edge
+      * ``'align right edges'``: the overlay's right edge will be aligned to the
+        ``ui_element``'s right edge
+      * ``'on right'``: the overlay's left edge will be just to the right of the
+        ``ui_element``'s right edge
+
+  ``v_placement``
+    a string that specifies the overlay's vertical placement with respect to
+    the ``ui_element``
+
+      * ``'above'``: the overlay's bottom edge will be just above the reference
+        frame's top edge
+      * ``'align top edges'``: the overlay's top edge will be aligned to the
+        ``ui_element``'s top edge
+      * ``'align bottom edges'``: the overlay's bottom edge will be aligned to the
+        ``ui_element``'s bottom edge
+      * ``'below'``: the overlay's top edge will be just below the
+        ``ui_element``'s bottom edge
+
+  ``offset``
+    an optional table with ``x`` and ``y`` fields that gives an additional
+    position offset that is applied after the overlay is positioned relative to
+    the ``ui_element``.
+
+  ``default_pos``
+    an optional table with ``x`` and/or ``y`` fields that overrides the returned
+    ``default_pos``. This field should be omitted for new overlays, but may be
+    needed for compatibility with existing "UI element relative" overlay
+    positioning code.
+
+  A table with the following fields is returned:
+
+  * ``default_pos``: a table that should be used for the overlay's ``default_pos``
+  * ``frame``: a table that may be used to initialize the overlay's ``frame``
+  * ``preUpdateLayout_fn``: a function that used as (or called from) the
+    overlay's ``preUpdateLayout`` method
+
+  This function can be used like this::
+
+    local dflayout = require('gui.dflayout')
+    local PLACEMENT = dflayout.getOverlayPlacementInfo({
+        size = { w = 26, h = 11 }, -- whatever the overlay uses
+        -- position the overlay one column to the right of
+        -- the MAIN_STOCKPILE_MODE toolbar
+        -- (the one with the STOCKPILE_NEW button)
+        ui_element = dflayout.elements.fort.secondary_toolbars.MAIN_STOCKPILE_MODE,
+        h_placement = 'on right',
+        v_placement = 'align bottom edges',
+        offset = { x = 1 },
+    })
+    TheOverlay = defclass(TheOverlay, overlay.OverlayWidget)
+    TheOverlay.ATTRS{
+        default_pos=PLACEMENT.default_pos,
+        frame=PLACEMENT.frame,
+        -- ...
+    }
+    function TheOverlay:init()
+        -- ...
+    end
+    TheOverlay.preUpdateLayout = PLACEMENT.preUpdateLayout_fn
+
+  The ``preUpdateLayout_fn`` function will adjust the overlay widget's
+  ``frame.w``, ``frame.h``, and ``frame_inset`` fields to arrange for the
+  overlay to be positioned as requested. The overlay position remains
+  player-adjustable, but is made relative to the ``ui_element`` position instead
+  of being relative to the edges of the interface area.
+
+* ``getLeftOnlyOverlayPlacementInfo(overlay_placement_spec)``
+
+  This function works like ``getOverlayPlacementInfo``, but it only "pads" the
+  overlay on the left. This is useful for compatibility with existing "UI
+  element relative" overlay positioning code (e.g., to avoid needing a version
+  bump that would reset a player's custom positioning).
 
 .. _lua-plugins:
 

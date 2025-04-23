@@ -56,7 +56,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `preserve-rooms`: will no longer crash when a civzone is assigned to a unit that does not exist
 
 ## Misc Improvements
 
@@ -67,6 +66,12 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+# 51.11-r1.1
+
+## Fixes
+- `preserve-rooms`: will no longer crash when a civzone is assigned to a unit that does not exist
+- `gui/design`: fix misaligned shape icons
 
 # 51.11-r1
 

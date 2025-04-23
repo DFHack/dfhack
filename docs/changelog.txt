@@ -67,6 +67,12 @@ Template for new versions:
 
 ## Removed
 
+# 51.11-r1.1
+
+## Fixes
+- `preserve-rooms`: will no longer crash when a civzone is assigned to a unit that does not exist
+- `gui/design`: fix misaligned shape icons
+
 # 51.11-r1
 
 ## Fixes
@@ -92,6 +98,7 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function
+- ``dfhack.buildings.getOwner``: make new Buildings API available to Lua
 
 # 51.10-r1
 

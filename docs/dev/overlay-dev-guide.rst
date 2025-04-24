@@ -492,7 +492,7 @@ corner-relative, player-customizable position to be relative to a UI element
 while still being player-customizable::
 
     local overlay = require('plugins.overlay')
-    local Label = require('gui.widgets.labels.label')
+    local widgets = require('gui.widgets')
     local dflayout = require('gui.dflayout')
 
     local WIDTH, HEIGHT = 20, 1 -- whatever static size the overlay needs
@@ -517,7 +517,7 @@ while still being player-customizable::
 
     function UIRelativeOverlay:init()
         self:addviews{
-            Label{
+            widgets.Label{
                 text_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
                 text = string.char(25):rep(dig_dig_button.width) .. ' I can dig it!',
             },

@@ -200,7 +200,7 @@ static void update_tomb_assignments(color_ostream &out) {
         if (!tomb || !tomb->flags.bits.exists) continue;
         if (tomb->assigned_unit_id == -1) continue;
         auto unit = Buildings::getOwner(tomb);
-        if (Units::isDead(unit)) continue; // we only care about living units
+        if (!unit || Units::isDead(unit)) continue; // we only care about living units
 
         auto it = tomb_assignments.find(tomb->assigned_unit_id);
 

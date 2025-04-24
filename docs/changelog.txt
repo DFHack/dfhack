@@ -67,6 +67,11 @@ Template for new versions:
 
 ## Removed
 
+# 51.11-r1.2
+
+## Fixes
+- `preserve-tombs`: will no longer crash when a tomb is assigned to a unit that does not exist
+
 # 51.11-r1.1
 
 ## Fixes

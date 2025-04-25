@@ -57,12 +57,15 @@ Template for new versions:
 
 ## Fixes
 - `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
+- `getplants`: use updated formula for calculating whether plant growths are ripe
+- `getplants`: fix logic for determining whether plant growths have been picked
 
 ## Misc Improvements
 
 ## Documentation
 
 ## API
+- ``Random`` module: added SplitmixRNG class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness
 
 ## Lua
 

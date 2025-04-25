@@ -5,6 +5,7 @@
 #include "modules/Designations.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
+#include "modules/Random.h"
 
 #include "df/map_block.h"
 #include "df/map_block_column.h"
@@ -211,32 +212,31 @@ selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bo
 }
 
 //  Formula for determination of the variance in plant growth maturation time, determined via disassembly.
-//  The x and y parameters are in tiles relative to the embark.
-bool ripe(int32_t x, int32_t y, int32_t start, int32_t end) {
-    int32_t time = (((435522653 - (((y + 3) * x + 5) * ((y + 7) * y * 400181475 + 289700012))) & 0x3FFFFFFF) % 2000 + *cur_year_tick) % 403200;
+//  The coordinates are relative to the embark region.
+bool ripe(int32_t x, int32_t y, int32_t z, int32_t start, int32_t end) {
+    DFHack::Random::SplitmixRNG rng((world->map.region_x * 48 + x) + (world->map.region_y * 48 + y) * 10000 + (world->map.region_z + z) * 100000000);
+    int32_t time = (rng.df_trandom(2000) + *cur_year_tick) % 403200;
 
     return time >= start && (end == -1 || time <= end);
 }
 
-//  Looks in the picked growths vector to see if a matching growth has been marked as picked.
-bool picked(const df::plant* plant, int32_t growth_subtype) {
-    df::world_data* world_data = world->world_data;
-    df::world_site* site = df::world_site::find(plotinfo->site_id);
-    int32_t pos_x = site->global_min_x + plant->pos.x / 48;
-    int32_t pos_y = site->global_min_y + plant->pos.y / 48;
-    size_t id = pos_x + pos_y * 16 * world_data->world_width;
-    df::world_object_data* object_data = df::world_object_data::find(id);
-    if (!object_data) {
+//  Looks in the local creation zone's picked growths vector to see if a matching growth has been marked as picked.
+bool picked(const df::plant* plant, int32_t growth_subtype, int32_t growth_density) {
+    int32_t pos_x = plant->pos.x / 48 + world->map.region_x;
+    int32_t pos_y = plant->pos.y / 48 + world->map.region_y;
+    size_t cz_id = pos_x + pos_y * 16 * world->world_data->world_width;
+    auto cz = df::world_object_data::find(cz_id);
+    if (!cz) {
         return false;
     }
-    df::map_block_column* column = world->map.map_block_columns[(plant->pos.x / 16) * world->map.x_count_block + (plant->pos.y / 16)];
 
-    for (size_t i = 0; i < object_data->picked_growths.x.size(); i++) {
-        if (object_data->picked_growths.x[i] == plant->pos.x &&
-            object_data->picked_growths.y[i] == plant->pos.y &&
-            object_data->picked_growths.z[i] - column->z_base == plant->pos.z &&
-            object_data->picked_growths.subtype[i] == growth_subtype &&
-            object_data->picked_growths.year[i] == *cur_year) {
+    for (size_t i = 0; i < cz->picked_growths.x.size(); i++) {
+        if (cz->picked_growths.x[i] == (plant->pos.x % 48) &&
+            cz->picked_growths.y[i] == (plant->pos.y % 48) &&
+            cz->picked_growths.z[i] == (plant->pos.z + world->map.region_z) &&
+            cz->picked_growths.density[i] >= growth_density &&
+            cz->picked_growths.subtype[i] == growth_subtype &&
+            cz->picked_growths.year[i] == *cur_year) {
             return true;
         }
     }
@@ -310,8 +310,8 @@ bool designate(color_ostream& out, const df::plant* plant, bool farming) {
         }
 
         if ((!farming || seedSource) &&
-            ripe(plant->pos.x, plant->pos.y, plant_raw->growths[i]->timing_1, plant_raw->growths[i]->timing_2) &&
-            !picked(plant, i))
+            ripe(plant->pos.x, plant->pos.y, plant->pos.z, plant_raw->growths[i]->timing_1, plant_raw->growths[i]->timing_2) &&
+            !picked(plant, i, plant_raw->growths[i]->density))
             return Designations::markPlant(plant);
     }
 

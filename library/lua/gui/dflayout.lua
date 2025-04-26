@@ -385,6 +385,7 @@ local fort_secondary_tb_frames = {
 }
 
 ---@class DFLayout.DynamicUIElement
+---@field name string
 ---@field frame_fn DFLayout.FrameFn
 ---@field minimum_insets DFLayout.FullInsets
 
@@ -394,11 +395,13 @@ local fort_secondary_tb_frames = {
 -- the input interface size grows (i.e., the minimum insets are found when
 -- placing the frame in a minimum-size interface area). This is true for all the
 -- DF toolbars and their sub-components, but not for all UI elements in general.
+---@param name string
 ---@param frame_fn DFLayout.FrameFn
 ---@return DFLayout.DynamicUIElement
-local function nd_inset_ui_el(frame_fn)
+local function nd_inset_ui_el(name, frame_fn)
     local min_frame = frame_fn(MINIMUM_INTERFACE_SIZE)
     return {
+        name = name,
         frame_fn = frame_fn,
         minimum_insets = {
             l = min_frame.l,
@@ -410,14 +413,15 @@ local function nd_inset_ui_el(frame_fn)
 end
 
 -- Derive the DynamicUIElement for the named button given a toolbar's frame_fn, and its button button layout.
+---@param toolbar_name string
 ---@param toolbar_frame_fn DFLayout.FrameFn
 ---@param toolbar_layout DFLayout.Toolbar.Layout
 ---@param button_name string
 ---@return DFLayout.DynamicUIElement
-local function button_ui_el(toolbar_frame_fn, toolbar_layout, button_name)
+local function button_ui_el(toolbar_name, toolbar_frame_fn, toolbar_layout, button_name)
     local button = toolbar_layout.buttons[button_name]
         or dfhack.error('button not present in given toolbar layout: ' .. tostring(button_name))
-    return nd_inset_ui_el(function(interface_size)
+    return nd_inset_ui_el(toolbar_name .. '.' .. button_name, function(interface_size)
         local toolbar_frame = toolbar_frame_fn(interface_size)
         local l = toolbar_frame.l + button.offset
         local r = interface_size.width - (l + button.width)
@@ -433,6 +437,19 @@ local function button_ui_el(toolbar_frame_fn, toolbar_layout, button_name)
     end)
 end
 
+local function left_button_ui_el(button_name)
+    return button_ui_el('fort.toolbar_buttons.left', fort_left_tb_frame, fort_tb_layout.left, button_name)
+end
+local function center_button_ui_el(button_name)
+    return button_ui_el('fort.toolbar_buttons.center', fort_center_tb_frame, fort_tb_layout.center, button_name)
+end
+local function center_close_button_ui_el(button_name)
+    return button_ui_el('fort.toolbar_buttons.center', fort_center_tb_frame, fort_tb_layout.center, button_name)
+end
+local function right_button_ui_el(button_name)
+    return button_ui_el('fort.toolbar_buttons.right', fort_right_tb_frame, fort_tb_layout.right, button_name)
+end
+
 -- button_ui_el, specialized for the secondary toolbars.
 ---@param toolbar_name DFLayout.Fort.SecondaryToolbar.Names
 ---@param button_name string
@@ -442,118 +459,120 @@ local function secondary_button_ui_el(toolbar_name, button_name)
         or dfhack.error('secondary toolbar name not in fort_secondary_tb_frames: ' .. tostring(toolbar_name))
     local layout = fort_stb_layout[toolbar_name]
         or dfhack.error('secondary toolbar name not in fort_el_layout.secondary_toolbars: ' .. tostring(toolbar_name))
-    return button_ui_el(frame_fn, layout, button_name)
+    return button_ui_el(
+        ('fort.secondary_toolbar_buttons.%s.%s'):format(toolbar_name, button_name),
+        frame_fn, layout, button_name)
 end
 
 elements = {
     fort = {
         toolbars = {
             ---@type DFLayout.DynamicUIElement
-            left = nd_inset_ui_el(fort_left_tb_frame),
+            left = nd_inset_ui_el('fort.toolbars.left', fort_left_tb_frame),
             ---@type DFLayout.DynamicUIElement
-            center = nd_inset_ui_el(fort_center_tb_frame),
+            center = nd_inset_ui_el('fort.toolbars.center', fort_center_tb_frame),
             ---@type DFLayout.DynamicUIElement
-            right = nd_inset_ui_el(fort_right_tb_frame),
+            right = nd_inset_ui_el('fort.toolbars.left', fort_right_tb_frame),
         },
         toolbar_buttons = {
             left = {
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_CREATURES = button_ui_el(fort_left_tb_frame, fort_tb_layout.left, 'MAIN_OPEN_CREATURES'),
+                MAIN_OPEN_CREATURES = left_button_ui_el('MAIN_OPEN_CREATURES'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_TASKS = button_ui_el(fort_left_tb_frame, fort_tb_layout.left, 'MAIN_OPEN_TASKS'),
+                MAIN_OPEN_TASKS = left_button_ui_el('MAIN_OPEN_TASKS'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_PLACES = button_ui_el(fort_left_tb_frame, fort_tb_layout.left, 'MAIN_OPEN_PLACES'),
+                MAIN_OPEN_PLACES = left_button_ui_el('MAIN_OPEN_PLACES'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_LABOR = button_ui_el(fort_left_tb_frame, fort_tb_layout.left, 'MAIN_OPEN_LABOR'),
+                MAIN_OPEN_LABOR = left_button_ui_el('MAIN_OPEN_LABOR'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_WORK_ORDERS = button_ui_el(fort_left_tb_frame, fort_tb_layout.left, 'MAIN_OPEN_WORK_ORDERS'),
+                MAIN_OPEN_WORK_ORDERS = left_button_ui_el('MAIN_OPEN_WORK_ORDERS'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_NOBLES = button_ui_el(fort_left_tb_frame, fort_tb_layout.left, 'MAIN_OPEN_NOBLES'),
+                MAIN_OPEN_NOBLES = left_button_ui_el('MAIN_OPEN_NOBLES'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_OBJECTS = button_ui_el(fort_left_tb_frame, fort_tb_layout.left, 'MAIN_OPEN_OBJECTS'),
+                MAIN_OPEN_OBJECTS = left_button_ui_el('MAIN_OPEN_OBJECTS'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_JUSTICE = button_ui_el(fort_left_tb_frame, fort_tb_layout.left, 'MAIN_OPEN_JUSTICE'),
+                MAIN_OPEN_JUSTICE = left_button_ui_el('MAIN_OPEN_JUSTICE'),
             },
             center = {
                 ---@type DFLayout.DynamicUIElement
-                DIG = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'DIG'),
+                DIG = center_button_ui_el('DIG'),
                 ---@type DFLayout.DynamicUIElement
-                CHOP = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'CHOP'),
+                CHOP = center_button_ui_el('CHOP'),
                 ---@type DFLayout.DynamicUIElement
-                GATHER = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'GATHER'),
+                GATHER = center_button_ui_el('GATHER'),
                 ---@type DFLayout.DynamicUIElement
-                SMOOTH = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'SMOOTH'),
+                SMOOTH = center_button_ui_el('SMOOTH'),
                 ---@type DFLayout.DynamicUIElement
-                ERASE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'ERASE'),
+                ERASE = center_button_ui_el('ERASE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_BUILDING_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_BUILDING_MODE'),
+                MAIN_BUILDING_MODE = center_button_ui_el('MAIN_BUILDING_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_STOCKPILE_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_STOCKPILE_MODE'),
+                MAIN_STOCKPILE_MODE = center_button_ui_el('MAIN_STOCKPILE_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_ZONE_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_ZONE_MODE'),
+                MAIN_ZONE_MODE = center_button_ui_el('MAIN_ZONE_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_BURROW_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_BURROW_MODE'),
+                MAIN_BURROW_MODE = center_button_ui_el('MAIN_BURROW_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_HAULING_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_HAULING_MODE'),
+                MAIN_HAULING_MODE = center_button_ui_el('MAIN_HAULING_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                TRAFFIC = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'TRAFFIC'),
+                TRAFFIC = center_button_ui_el('TRAFFIC'),
                 ---@type DFLayout.DynamicUIElement
-                ITEM_BUILDING = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'ITEM_BUILDING'),
+                ITEM_BUILDING = center_button_ui_el('ITEM_BUILDING'),
             },
             center_close = {
                 ---@type DFLayout.DynamicUIElement
-                DIG_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'DIG'),
+                DIG_LOWER_MODE = center_close_button_ui_el('DIG'),
                 ---@type DFLayout.DynamicUIElement
-                CHOP_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'CHOP'),
+                CHOP_LOWER_MODE = center_close_button_ui_el('CHOP'),
                 ---@type DFLayout.DynamicUIElement
-                GATHER_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'GATHER'),
+                GATHER_LOWER_MODE = center_close_button_ui_el('GATHER'),
                 ---@type DFLayout.DynamicUIElement
-                SMOOTH_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'SMOOTH'),
+                SMOOTH_LOWER_MODE = center_close_button_ui_el('SMOOTH'),
                 ---@type DFLayout.DynamicUIElement
-                ERASE_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'ERASE'),
+                ERASE_LOWER_MODE = center_close_button_ui_el('ERASE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_BUILDING_MODE_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_BUILDING_MODE'),
+                MAIN_BUILDING_MODE_LOWER_MODE = center_close_button_ui_el('MAIN_BUILDING_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_STOCKPILE_MODE_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_STOCKPILE_MODE'),
+                MAIN_STOCKPILE_MODE_LOWER_MODE = center_close_button_ui_el('MAIN_STOCKPILE_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_ZONE_MODE_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_ZONE_MODE'),
+                MAIN_ZONE_MODE_LOWER_MODE = center_close_button_ui_el('MAIN_ZONE_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_BURROW_MODE_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_BURROW_MODE'),
+                MAIN_BURROW_MODE_LOWER_MODE = center_close_button_ui_el('MAIN_BURROW_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_HAULING_MODE_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'MAIN_HAULING_MODE'),
+                MAIN_HAULING_MODE_LOWER_MODE = center_close_button_ui_el('MAIN_HAULING_MODE'),
                 ---@type DFLayout.DynamicUIElement
-                TRAFFIC_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'TRAFFIC'),
+                TRAFFIC_LOWER_MODE = center_close_button_ui_el('TRAFFIC'),
                 ---@type DFLayout.DynamicUIElement
-                ITEM_BUILDING_LOWER_MODE = button_ui_el(fort_center_tb_frame, fort_tb_layout.center, 'ITEM_BUILDING'),
+                ITEM_BUILDING_LOWER_MODE = center_close_button_ui_el('ITEM_BUILDING'),
             },
             right = {
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_SQUADS = button_ui_el(fort_right_tb_frame, fort_tb_layout.right, 'MAIN_OPEN_SQUADS'),
+                MAIN_OPEN_SQUADS = right_button_ui_el('MAIN_OPEN_SQUADS'),
                 ---@type DFLayout.DynamicUIElement
-                MAIN_OPEN_WORLD = button_ui_el(fort_right_tb_frame, fort_tb_layout.right, 'MAIN_OPEN_WORLD'),
+                MAIN_OPEN_WORLD = right_button_ui_el('MAIN_OPEN_WORLD'),
             },
         },
         secondary_toolbars = {
             ---@type DFLayout.DynamicUIElement
-            DIG = nd_inset_ui_el(fort_secondary_tb_frames.DIG),
+            DIG = nd_inset_ui_el('fort.secondary_toolbars.DIG', fort_secondary_tb_frames.DIG),
             ---@type DFLayout.DynamicUIElement
-            CHOP = nd_inset_ui_el(fort_secondary_tb_frames.CHOP),
+            CHOP = nd_inset_ui_el('fort.secondary_toolbars.CHOP', fort_secondary_tb_frames.CHOP),
             ---@type DFLayout.DynamicUIElement
-            GATHER = nd_inset_ui_el(fort_secondary_tb_frames.GATHER),
+            GATHER = nd_inset_ui_el('fort.secondary_toolbars.GATHER', fort_secondary_tb_frames.GATHER),
             ---@type DFLayout.DynamicUIElement
-            SMOOTH = nd_inset_ui_el(fort_secondary_tb_frames.SMOOTH),
+            SMOOTH = nd_inset_ui_el('fort.secondary_toolbars.SMOOTH', fort_secondary_tb_frames.SMOOTH),
             ---@type DFLayout.DynamicUIElement
-            ERASE = nd_inset_ui_el(fort_secondary_tb_frames.ERASE),
+            ERASE = nd_inset_ui_el('fort.secondary_toolbars.ERASE', fort_secondary_tb_frames.ERASE),
             ---@type DFLayout.DynamicUIElement
-            MAIN_STOCKPILE_MODE = nd_inset_ui_el(fort_secondary_tb_frames.MAIN_STOCKPILE_MODE),
+            MAIN_STOCKPILE_MODE = nd_inset_ui_el('fort.secondary_toolbars.MAIN_STOCKPILE_MODE', fort_secondary_tb_frames.MAIN_STOCKPILE_MODE),
             ---@type DFLayout.DynamicUIElement
-            STOCKPILE_NEW = nd_inset_ui_el(fort_secondary_tb_frames.STOCKPILE_NEW),
+            STOCKPILE_NEW = nd_inset_ui_el('fort.secondary_toolbars.STOCKPILE_NEW', fort_secondary_tb_frames.STOCKPILE_NEW),
             ---@type DFLayout.DynamicUIElement
-            ['Add new burrow'] = nd_inset_ui_el(fort_secondary_tb_frames['Add new burrow']),
+            ['Add new burrow'] = nd_inset_ui_el('fort.secondary_toolbars.Add new burrow', fort_secondary_tb_frames['Add new burrow']),
             ---@type DFLayout.DynamicUIElement
-            TRAFFIC = nd_inset_ui_el(fort_secondary_tb_frames.TRAFFIC),
+            TRAFFIC = nd_inset_ui_el('fort.secondary_toolbars.TRAFFIC', fort_secondary_tb_frames.TRAFFIC),
             ---@type DFLayout.DynamicUIElement
-            ITEM_BUILDING = nd_inset_ui_el(fort_secondary_tb_frames.ITEM_BUILDING),
+            ITEM_BUILDING = nd_inset_ui_el('fort.secondary_toolbars.ITEM_BUILDING', fort_secondary_tb_frames.ITEM_BUILDING),
         },
         secondary_toolbar_buttons = {
             DIG = {
@@ -815,6 +834,7 @@ elements = {
 ---@field h integer
 
 ---@class DFLayout.Placement.Spec
+---@field name string used in error messages
 ---@field size DFLayout.Placement.Size the static size of overlay
 ---@field ui_element DFLayout.DynamicUIElement a UI element value from the `elements` tree
 ---@field h_placement DFLayout.Placement.HorizontalAlignment how to align the overlay's horizontal position against the `ui_element`
@@ -873,30 +893,36 @@ local function place_span(available_span, ref_offset_before, ref_span, placed_sp
     return before, placed_span, after
 end
 
-
 -- Runs `frame_fn(interface_size)` and checks the resulting frame for "sanity"
 -- (non-negative paddings, positive sizes, paddings and sizes span
 -- `interface_size`).
 --
 -- Returns the frame or throws an error.
 ---@param interface_size DFLayout.Rectangle.Size
----@param frame_fn DFLayout.FrameFn
+---@param ui_element DFLayout.DynamicUIElement
 ---@return DFLayout.FullyPlacedFrame
-local function checked_frame(interface_size, frame_fn)
-    local frame = frame_fn(interface_size)
+local function checked_frame(interface_size, ui_element)
+    local frame = ui_element.frame_fn(interface_size)
     if frame.l < 0 or frame.w <= 0 or frame.r < 0
         or frame.l + frame.w + frame.r ~= interface_size.width
     then
-        dfhack.error(
-            ('horizontal placement is invalid: l=%d w=%d r=%d W=%d')
-            :format(frame.l, frame.w, frame.r, interface_size.width))
+        dfhack.error(('%s: horizontal placement is invalid: l=%d w=%d r=%d W=%d')
+            :format(ui_element.name, frame.l, frame.w, frame.r, interface_size.width))
     end
     if frame.t < 0 or frame.h <= 0 or frame.b < 0
         or frame.t + frame.h + frame.b ~= interface_size.height
     then
-        dfhack.error(
-            ('vertical placement is invalid: t=%d h=%d rb%d H=%d')
-            :format(frame.t, frame.h, frame.b, interface_size.height))
+        dfhack.error(('%s: vertical placement is invalid: t=%d h=%d b=%d H=%d')
+            :format(ui_element.name, frame.t, frame.h, frame.b, interface_size.height))
+    end
+    for _, d in ipairs{'l', 'r', 't', 'b'} do
+        local gen = frame[d]
+        local min = ui_element.minimum_insets[d]
+        if gen < min then
+            dfhack.printerr(
+                ('error in %s.frame_fn result.%d: %d < %d (generated < minimum)')
+                :format(ui_element.name, d, gen, min))
+        end
     end
     return frame
 end
@@ -907,16 +933,16 @@ end
 ---@param spec DFLayout.Placement.Spec
 ---@return DFLayout.FullyPlacedFrame
 local function place_overlay_frame(interface_size, spec)
-    local ref_frame = checked_frame(interface_size, spec.ui_element.frame_fn)
+    local ref_frame = checked_frame(interface_size, spec.ui_element)
 
     local generic_h_placement = generic_placement_from_horizontal[spec.h_placement]
-        or dfhack.error('invalid h_placement: ' .. tostring(spec.h_placement))
+        or dfhack.error(('%s: invalid h_placement: %s'):format(spec.name, spec.h_placement))
     local l, w, r = place_span(interface_size.width,
         ref_frame.l, ref_frame.w,
         spec.size.w, generic_h_placement, spec.offset and spec.offset.x)
 
     local generic_v_placement = generic_placement_from_vertical[spec.v_placement]
-        or dfhack.error('invalid v_placement: ' .. tostring(spec.v_placement))
+        or dfhack.error(('%s: invalid v_placement: %s'):format(spec.name, spec.v_placement))
     local t, h, b = place_span(interface_size.height,
         ref_frame.t, ref_frame.h,
         spec.size.h, generic_v_placement, spec.offset and spec.offset.y)
@@ -933,27 +959,29 @@ local function place_overlay_frame(interface_size, spec)
 end
 
 -- Provide default `default_pos` values based on nominal values, and compute the
--- direction-specific delta to those nominal values.
+---@param spec_name string
 ---@param xy 'x' | 'y' the default_pos field name (used in error messages)
 ---@param pos? integer
 ---@param nominal_positive integer
 ---@param nominal_negative integer
----@param default_to_positive boolean controls which nominal value is used if `pos` is falsy
+---@param default_to_positive boolean controls which nominal value is used if `pos` is nil or 0
 ---@return integer pos `pos`, or one of its defaults (when 0 or falsy)
 ---@return integer padding_on_positive_side 0 or padding required to move from positive `value` to `nominal_positive`
 ---@return integer padding_on_negative_side 0 or padding required to move from negative `value` to `nominal_negative`
-local function pos_and_paddings(xy, pos, nominal_positive, nominal_negative, default_to_positive)
-    if not pos or pos == 0 then
+local function pos_and_paddings(spec_name, xy, pos, nominal_positive, nominal_negative, default_to_positive)
+    if pos == nil or pos == 0 then
         pos = default_to_positive and nominal_positive or nominal_negative
     end
     if 0 < pos then
         if nominal_positive < pos then
-            dfhack.error('specified placement requires 1 <= default_pos.'..xy..' <= '..nominal_positive)
+            dfhack.error(('%s: specified placement requires 1 <= default_pos.%s <= %d')
+                :format(spec_name, xy, nominal_positive))
         end
         return pos, nominal_positive - pos, 0
     end
     if pos < nominal_negative then
-        dfhack.error('specified placement requires -1 >= default_pos.'..xy..' >= '..nominal_negative)
+        dfhack.error(('%s: specified placement requires %d <= default_pos.%s <= -1')
+            :format(spec_name, nominal_negative, xy))
     end
     return pos, 0, pos - nominal_negative
 end
@@ -970,17 +998,20 @@ end
 ---@return DFLayout.OverlayPlacementInfo overlay_placement_info
 local function get_overlay_placement_info(overlay_placement_spec, insets_filter)
     overlay_placement_spec = utils.clone(overlay_placement_spec, true) --[[@as DFLayout.Placement.Spec]]
+    overlay_placement_spec.name = overlay_placement_spec.name or '[unnamed overlay placement]'
     local minimum_placement = place_overlay_frame(MINIMUM_INTERFACE_SIZE, overlay_placement_spec)
 
     -- decode spec.default_pos into pos values and padding values
     local override_default_pos = overlay_placement_spec.default_pos
-    local x_pos, l_pad, r_pad = pos_and_paddings('x',
+    local x_pos, l_pad, r_pad = pos_and_paddings(
+        overlay_placement_spec.name, 'x',
         override_default_pos and override_default_pos.x,
         (minimum_placement.l + 1),  -- one-based, left-relative
         -(minimum_placement.r + 1), -- one-based, right-relative
         true                        -- default to left-relative
     )
-    local y_pos, t_pad, b_pad = pos_and_paddings('y',
+    local y_pos, t_pad, b_pad = pos_and_paddings(
+        overlay_placement_spec.name, 'y',
         override_default_pos and override_default_pos.y,
         (minimum_placement.t + 1),  -- one-based, top-relative
         -(minimum_placement.b + 1), -- one-based, bottom-relative

@@ -816,9 +816,12 @@ static bool detachItem(df::item *item)
         }
     }
 
-    if (auto ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
-        return linked_list_remove(&world->projectiles.all, ref->projectile_id)
-            && removeRef(item->general_refs, general_ref_type::PROJECTILE, ref->getID());
+    if (auto ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE))) {
+        auto proj_id = ref->projectile_id;
+        bool isRefRemoved = removeRef(item->general_refs, general_ref_type::PROJECTILE, proj_id);
+        bool isLinkRemoved = linked_list_remove(&world->projectiles.all, proj_id);
+        return isRefRemoved && isLinkRemoved;
+    }
 
     if (item->flags.bits.on_ground) {
         if (!removeItemOnGround(item))

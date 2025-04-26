@@ -57,6 +57,7 @@ Template for new versions:
 
 ## Fixes
 - `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
+- `gui/teleport`: adapt to new behavior in DF 51.11 to avoid a crash when teleporting items into mid-air
 
 ## Misc Improvements
 - All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.

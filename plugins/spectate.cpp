@@ -461,7 +461,7 @@ static void get_dwarf_buckets(color_ostream &out,
                 citizen_combat_units.push_back(unit);
             else
                 other_combat_units.push_back(unit);
-        } else if (!unit->name.nickname.empty()) {
+        } else if (config.prefer_nicknamed && !unit->name.nickname.empty()) {
             nicknamed_units.push_back(unit);
         } else if (unit->job.current_job && !boring_jobs.contains(unit->job.current_job->job_type)) {
             job_units.push_back(unit);
@@ -530,9 +530,7 @@ static void follow_a_dwarf(color_ostream &out) {
     intervals.push_back(0);
     add_bucket(citizen_combat_units, units, intervals, weights, config.prefer_conflict ? CITIZEN_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
     add_bucket(other_combat_units, units, intervals, weights, config.prefer_conflict ? OTHER_COMBAT_PREFERRED_WEIGHT : JOB_WEIGHT);
-    if (config.prefer_nicknamed) {
-        add_bucket(nicknamed_units, units, intervals, weights, NICKNAMED_CITIZEN_PREFERRED_WEIGHT);
-    }
+    add_bucket(nicknamed_units, units, intervals, weights, NICKNAMED_CITIZEN_PREFERRED_WEIGHT);
     add_bucket(job_units, units, intervals, weights, JOB_WEIGHT);
     add_bucket(other_units, units, intervals, weights, OTHER_WEIGHT);
 

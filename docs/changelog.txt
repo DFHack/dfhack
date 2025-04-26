@@ -65,6 +65,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``script-manager``: new ``get_active_mods()`` function for getting information on active mods
 
 ## Removed
 

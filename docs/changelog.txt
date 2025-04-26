@@ -66,6 +66,7 @@ Template for new versions:
 
 ## Lua
 - ``script-manager``: new ``get_active_mods()`` function for getting information on active mods
+- ``script-manager``: new ``get_mod_info_metadata()`` function for getting information out of mod ``info.txt`` files
 
 ## Removed
 

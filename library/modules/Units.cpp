@@ -1190,8 +1190,17 @@ string Units::getReadableName(df::unit *unit) {
     if (isTame(unit))
         prof_name += " (" + getTameTag(unit) + ")";
 
-    string name = Translation::translateName(getVisibleName(unit));
-    return name.empty() ? prof_name : name + ", " + prof_name;
+    auto visible_name = getVisibleName(unit);
+    string native_name = Translation::translateName(visible_name);
+
+    if (native_name.empty())
+        return prof_name;
+
+    string english_name = Translation::translateName(visible_name, true, true);
+    if (english_name.empty())
+        return native_name + ", " + prof_name;
+
+    return native_name + " \"" + english_name + "\", " + prof_name;
 }
 
 double Units::getAge(df::unit *unit, bool true_age) {

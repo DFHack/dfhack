@@ -59,6 +59,7 @@ Template for new versions:
 - `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
 
 ## Misc Improvements
+- All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
 
 ## Documentation
 

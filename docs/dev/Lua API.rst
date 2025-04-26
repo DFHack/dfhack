@@ -1775,11 +1775,11 @@ Units module
 
 * ``dfhack.units.getReadableName(unit or historical_figure)``
 
-  Returns a string that includes the language name of the unit (if any), the
-  race of the unit (if different from fort), whether it is trained for war or
-  hunting, any syndrome-given descriptions (such as "necromancer"), the
-  training level (if tame), and profession or noble role. If a
-  ``historical_figure`` is passed instead of a unit, some information
+  Returns a string that includes the native and english language name of the
+  unit (if any), the race of the unit (if different from fort), whether it is
+  trained for war or hunting, any syndrome-given descriptions (such as
+  "necromancer"), the training level (if tame), and profession or noble role.
+  If a ``historical_figure`` is passed instead of a unit, some information
   (e.g., agitation status) is not available, and the profession may be
   different (e.g., "Monk") from what is displayed in fort mode.
 

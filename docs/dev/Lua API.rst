@@ -3338,12 +3338,14 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.findScript(name)``
 
-  Searches `script paths <script-paths>` for the script ``name`` and returns the
-  path of the first file found, or ``nil`` on failure.
+  Searches `script paths <script-paths>` for the script ``name`` (which
+  includes the ``.lua`` extension) and returns the absolute path of the first
+  file found, or ``nil`` on failure. Slashes in the path are canonicalized to
+  forward slashes.
 
   .. note::
-    This requires an extension to be specified (``.lua`` or ``.rb``) - use
-    ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
+    You can use the ``dfhack.findScript()`` wrapper if you want to specify the
+    script name without the ``.lua`` extension.
 
 * ``dfhack.internal.runCommand(command[, use_console])``
 

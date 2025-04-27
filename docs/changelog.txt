@@ -57,6 +57,8 @@ Template for new versions:
 
 ## Fixes
 - `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
+- `getplants`: use updated formula for calculating whether plant growths are ripe
+- `getplants`: fix logic for determining whether plant growths have been picked
 - `gui/teleport`: adapt to new behavior in DF 51.11 to avoid a crash when teleporting items into mid-air
 - `script-manager`: fix lua scripts in mods not being reloaded properly upon entering a saved world on Windows
 
@@ -66,6 +68,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness
 - ``Items::getDescription``: fixed display of quality levels, now displays ALL item designations (in correct order) and obeys vanilla SHOW_IMP_QUALITY setting
 
 ## Lua

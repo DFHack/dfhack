@@ -154,9 +154,10 @@ selectability selectablePlant(color_ostream& out, const df::plant_raw* plant, bo
                 bool seedSource = plant->growths[i]->item_type == df::item_type::SEEDS;
 
                 if (plant->growths[i]->item_type == df::item_type::PLANT_GROWTH) {
-                    for (size_t k = 0; growth_mat.material->reaction_product.material.mat_type.size(); k++) {
-                        if (growth_mat.material->reaction_product.material.mat_type[k] == plant->material_defs.type[plant_material_def::seed] &&
-                            growth_mat.material->reaction_product.material.mat_index[k] == plant->material_defs.idx[plant_material_def::seed]) {
+                    auto& mat = growth_mat.material->reaction_product.material;
+                    for (size_t k = 0; k < mat.mat_type.size(); k++) {
+                        if (mat.mat_type[k] == plant->material_defs.type[plant_material_def::seed] &&
+                            mat.mat_index[k] == plant->material_defs.idx[plant_material_def::seed]) {
                             seedSource = true;
                             break;
                         }

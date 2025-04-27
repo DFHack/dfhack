@@ -56,14 +56,19 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
+- `gui/teleport`: adapt to new behavior in DF 51.11 to avoid a crash when teleporting items into mid-air
 
 ## Misc Improvements
+- All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
 
 ## Documentation
 
 ## API
 
 ## Lua
+- ``script-manager``: new ``get_active_mods()`` function for getting information on active mods
+- ``script-manager``: new ``get_mod_info_metadata()`` function for getting information out of mod ``info.txt`` files
 
 ## Removed
 
@@ -77,6 +82,7 @@ Template for new versions:
 ## Fixes
 - `preserve-rooms`: will no longer crash when a civzone is assigned to a unit that does not exist
 - `gui/design`: fix misaligned shape icons
+- `script-manager`: fix lua scripts in mods not being reloaded properly upon entering a saved world on Windows.
 
 # 51.11-r1
 
@@ -100,6 +106,7 @@ Template for new versions:
 - ``Buildings`` module: add ``getOwner`` (using the ``Units::get_cached_unit_by_global_id`` mechanic) to reflect changes in 51.11
 - ``Units::teleport``: projectile information is now cleared for teleported units
 - ``Buildings::setOwner``: updated for changes in 51.11
+- ``Items::getDescription``: fixed display of quality levels, now displays ALL item designations (in correct order) and obeys SHOW_IMP_QUALITY
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function

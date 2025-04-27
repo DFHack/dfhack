@@ -1773,17 +1773,18 @@ Units module
   Get human-readable baby or child name (e.g., "dwarven baby" or
   "dwarven child").
 
-* ``dfhack.units.getReadableName(unit or historical_figure)``
+* ``dfhack.units.getReadableName(unit or historical_figure[, skip_english])``
 
-  Returns a string that includes the language name of the unit (if any), the
-  race of the unit (if different from fort), whether it is trained for war or
-  hunting, any syndrome-given descriptions (such as "necromancer"), the
-  training level (if tame), and profession or noble role. If a
-  ``historical_figure`` is passed instead of a unit, some information
-  (e.g., agitation status) is not available, and the profession may be
-  different (e.g., "Monk") from what is displayed in fort mode.
+  Returns a string that includes the native and english language name (if
+  ``skip_english`` is not ``true``) of the unit (if any), the race of the unit
+  (if different from fort), whether it is trained for war or hunting, any
+  syndrome-given descriptions (such as "necromancer"), the training level (if
+  tame), and profession or noble role. If a ``historical_figure`` is passed
+  instead of a unit, some information (e.g., agitation status) is not
+  available, and the profession may be different (e.g., "Monk") from what is
+  displayed in fort mode.
 
-* ``dfhack.units.getAge(unit[,true_age])``
+* ``dfhack.units.getAge(unit[, true_age])``
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
@@ -3338,12 +3339,14 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.findScript(name)``
 
-  Searches `script paths <script-paths>` for the script ``name`` and returns the
-  path of the first file found, or ``nil`` on failure.
+  Searches `script paths <script-paths>` for the script ``name`` (which
+  includes the ``.lua`` extension) and returns the absolute path of the first
+  file found, or ``nil`` on failure. Slashes in the path are canonicalized to
+  forward slashes.
 
   .. note::
-    This requires an extension to be specified (``.lua`` or ``.rb``) - use
-    ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
+    You can use the ``dfhack.findScript()`` wrapper if you want to specify the
+    script name without the ``.lua`` extension.
 
 * ``dfhack.internal.runCommand(command[, use_console])``
 
@@ -3782,6 +3785,29 @@ paths will be relative to the top level game directory and will end in a slash
 
   Which would open ``dfhack-config/mods/my_awesome_mod/settings.json``. After
   calling ``getModStatePath``, the returned directory is guaranteed to exist.
+
+* ``get_active_mods()``
+
+  Returns a list of all active mods in the current world. The list elements are
+  tables containing the following fields:
+
+    - id: mod id
+    - name: mod display name
+    - version: mod display version
+    - numeric_version: numeric mod version
+    - path: path to the mod directory
+    - vanilla: true if this is a vanilla mod
+
+* ``get_mod_info_metadata(mod_path, tags)``
+
+  Returns a table with the values of the given tags from the ``info.txt`` file
+  in the given mod directory. The ``mod_path`` argument must be a path to a mod
+  directory (retrieved, say, from ``get_active_mods()``). The ``tags`` argument
+  is a string or a list of strings representing the tags to retrieve. The
+  function will return a table with the tag names as keys and their values as
+  values. If a requested tag includes the string ``NUMERIC_``, it will return
+  the numeric value for that tag (e.g., ``NUMERIC_VERSION`` will return the
+  numeric version of the mod as a number instead of a string).
 
 utils
 =====

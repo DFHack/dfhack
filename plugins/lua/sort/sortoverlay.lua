@@ -4,10 +4,7 @@ local overlay = require('plugins.overlay')
 local utils = require('utils')
 
 function get_unit_search_key(unit)
-    return ('%s %s %s'):format(
-        dfhack.units.getReadableName(unit),
-        dfhack.units.getProfessionName(unit),
-        dfhack.translation.translateName(unit.name, true, true))  -- get English last name
+    return dfhack.units.getReadableName(unit)
 end
 
 local function copy_to_lua_table(vec)

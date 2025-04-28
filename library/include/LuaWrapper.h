@@ -70,51 +70,51 @@ namespace LuaWrapper {
     extern LuaToken DFHACK_PTR_IDTABLE_TOKEN;
 
 // Function registry names
-#define DFHACK_CHANGEERROR_NAME "DFHack::ChangeError"
-#define DFHACK_COMPARE_NAME "DFHack::ComparePtrs"
-#define DFHACK_TYPE_TOSTRING_NAME "DFHack::TypeToString"
-#define DFHACK_SIZEOF_NAME "DFHack::Sizeof"
-#define DFHACK_DISPLACE_NAME "DFHack::Displace"
-#define DFHACK_NEW_NAME "DFHack::New"
-#define DFHACK_ASSIGN_NAME "DFHack::Assign"
-#define DFHACK_IS_INSTANCE_NAME "DFHack::IsInstance"
-#define DFHACK_DELETE_NAME "DFHack::Delete"
-#define DFHACK_CAST_NAME "DFHack::Cast"
+    constexpr auto DFHACK_CHANGEERROR_NAME = "DFHack::ChangeError";
+    constexpr auto DFHACK_COMPARE_NAME = "DFHack::ComparePtrs";
+    constexpr auto DFHACK_TYPE_TOSTRING_NAME = "DFHack::TypeToString";
+    constexpr auto DFHACK_SIZEOF_NAME = "DFHack::Sizeof";
+    constexpr auto DFHACK_DISPLACE_NAME = "DFHack::Displace";
+    constexpr auto DFHACK_NEW_NAME = "DFHack::New";
+    constexpr auto DFHACK_ASSIGN_NAME = "DFHack::Assign";
+    constexpr auto DFHACK_IS_INSTANCE_NAME = "DFHack::IsInstance";
+    constexpr auto DFHACK_DELETE_NAME = "DFHack::Delete";
+    constexpr auto DFHACK_CAST_NAME = "DFHack::Cast";
 
     extern LuaToken DFHACK_EMPTY_TABLE_TOKEN;
 
 /*
  * Upvalue: contents of DFHACK_TYPETABLE_NAME
  */
-#define UPVAL_TYPETABLE lua_upvalueindex(1)
+    constexpr auto UPVAL_TYPETABLE = lua_upvalueindex(1);
 
 /*
  * Expected metatable of the current object.
  */
-#define UPVAL_METATABLE lua_upvalueindex(2)
+    constexpr auto UPVAL_METATABLE = lua_upvalueindex(2);
 
 /*
  * Table mapping field names to indices or data structure pointers.
  * Enum index table is linked into here via getmetatable($).__index.
  * Fields that are actually in UPVAL_METATABLE are marked with NULL light udata.
  */
-#define UPVAL_FIELDTABLE lua_upvalueindex(3)
-#define UPVAL_METHOD_NAME lua_upvalueindex(3)
+    constexpr auto UPVAL_FIELDTABLE = lua_upvalueindex(3);
+    constexpr auto UPVAL_METHOD_NAME = lua_upvalueindex(3);
 
 /*
  * Only for containers: light udata with container identity.
  */
-#define UPVAL_CONTAINER_ID lua_upvalueindex(4)
+    constexpr auto UPVAL_CONTAINER_ID = lua_upvalueindex(4);
 
 /*
  * Only for containers: light udata with item identity.
  */
-#define UPVAL_ITEM_ID lua_upvalueindex(5)
+    constexpr auto UPVAL_ITEM_ID = lua_upvalueindex(5);
 
 /*
  * Only for containers: if not nil, overrides the item count.
  */
-#define UPVAL_ITEM_COUNT lua_upvalueindex(6)
+    constexpr auto UPVAL_ITEM_COUNT = lua_upvalueindex(6);
 
     inline void lua_dup(lua_State *state) { lua_pushvalue(state, -1); }
     inline void lua_swap(lua_State *state) { lua_insert(state, -2); }

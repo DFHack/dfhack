@@ -231,7 +231,8 @@ namespace LuaWrapper {
     /**
      * Wrap functions and add them to the table on the top of the stack.
      */
-    typedef DFHack::FunctionReg FunctionReg;
+    using DFHack::FunctionReg;
+
     void SetFunctionWrappers(lua_State *state, const FunctionReg *reg);
 
     int method_wrapper_core(lua_State *state, function_identity_base *id);

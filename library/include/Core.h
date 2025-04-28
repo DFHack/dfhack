@@ -44,10 +44,6 @@ distribution.
 #include <vector>
 #include <stdint.h>
 
-#define DFH_MOD_SHIFT 1
-#define DFH_MOD_CTRL 2
-#define DFH_MOD_ALT 4
-
 struct WINDOW;
 struct lua_State;
 
@@ -58,6 +54,10 @@ namespace df
 
 namespace DFHack
 {
+    constexpr auto DFH_MOD_SHIFT = 1;
+    constexpr auto DFH_MOD_CTRL = 2;
+    constexpr auto DFH_MOD_ALT = 4;
+
     class Process;
     class Module;
     class Materials;

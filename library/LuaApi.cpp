@@ -2667,20 +2667,17 @@ static const LuaWrapper::FunctionReg dfhack_world_module[] = {
     { NULL, NULL }
 };
 
-#define WORLD_GAMEMODE_WRAPPER(func) \
-    static int world_gamemode_##func(lua_State *L) \
-    { \
-        int gametype = luaL_optint(L, 1, -1); \
-        lua_pushboolean(L, World::func((df::game_type)gametype)); \
-        return 1;\
-    }
-#define WORLD_GAMEMODE_FUNC(func) \
-    {#func, world_gamemode_##func}
+using gamemode_func = auto (df::game_type t) -> bool;
+template <gamemode_func gmf>
+static int world_gamemode(lua_State* L)
+{
+    int gametype = luaL_optint(L, 1, -1);
+    lua_pushboolean(L, gmf((df::game_type)gametype));
+    return 1;
+}
 
-WORLD_GAMEMODE_WRAPPER(isFortressMode);
-WORLD_GAMEMODE_WRAPPER(isAdventureMode);
-WORLD_GAMEMODE_WRAPPER(isArena);
-WORLD_GAMEMODE_WRAPPER(isLegends);
+#define WORLD_GAMEMODE_FUNC(func) \
+    {#func, world_gamemode<World::func>}
 
 static const luaL_Reg dfhack_world_funcs[] = {
     WORLD_GAMEMODE_FUNC(isFortressMode),

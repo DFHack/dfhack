@@ -9,21 +9,23 @@ local utils = require('utils')
 TOOLBAR_HEIGHT = 3
 SECONDARY_TOOLBAR_HEIGHT = 3
 
--- Basic rectangular size class. Should be structurally compatible with
--- gui.dimension (get_interface_rect) and gui.ViewRect (updateLayout's
--- parent_rect), but the LuaLSP disagrees.
----@class DFLayout.Rectangle.Size.class
+-- Basic rectangular size class. Should structurally accept gui.dimension (e.g.,
+-- get_interface_rect) and gui.ViewRect (e.g., updateLayout's parent_rect), but
+-- the LuaLSP disagrees.
+--
+---@class DFLayout.Interface.Size.class
 ---@field width integer
 ---@field height integer
 
 -- An alias that gathers a few types that we know are compatible with our
 -- width/height size requirements.
----@alias DFLayout.Rectangle.Size
---- | DFLayout.Rectangle.Size.class basic width/height size
+--
+---@alias DFLayout.Interface.Size
+--- | DFLayout.Interface.Size.class basic width/height size
 --- | gui.dimension                 e.g., gui.get_interface_rect()
 --- | gui.ViewRect                  e.g., parent_rect supplied to updateLayout subsidiary methods
 
----@type DFLayout.Rectangle.Size
+---@type DFLayout.Interface.Size
 MINIMUM_INTERFACE_SIZE = { width = 114, height = 46 }
 
 ---@generic T
@@ -37,27 +39,102 @@ local function concat_sequences(sequences)
     return collected
 end
 
----@class DFLayout.FullInsets
+---@alias DFLayout.Toolbar.Button { offset: integer, width: integer }
+---@alias DFLayout.Toolbar.Buttons table<string,DFLayout.Toolbar.Button> -- multiple entries
+
+---@class DFLayout.Toolbar.Layout
+---@field buttons DFLayout.Toolbar.Buttons
+---@field width integer
+
+---@class DFLayout.Inset.partial
+---@field l? integer Optional gap between the left edge of the frame and the parent.
+---@field t? integer Optional gap between the top edge of the frame and the parent.
+---@field r? integer Optional gap between the right edge of the frame and the parent.
+---@field b? integer Optional gap between the bottom edge of the frame and the parent.
+
+---@class DFLayout.Inset
 ---@field l integer Gap between the left edge of the frame and the parent.
 ---@field t integer Gap between the top edge of the frame and the parent.
 ---@field r integer Gap between the right edge of the frame and the parent.
 ---@field b integer Gap between the bottom edge of the frame and the parent.
 
 -- Like widgets.Widget.frame, but no optional fields.
----@class DFLayout.FullyPlacedFrame: DFLayout.FullInsets
+--
+---@class DFLayout.Frame: DFLayout.Inset
 ---@field w integer Width
 ---@field h integer Height
 
+---@alias DFLayout.FrameFn.FeatureTests table<string, fun(...): boolean>
+
+---@alias DFLayout.FrameFn.Features table<string, boolean | integer | string>
+
 -- Function that generates a "full placement" for a given interface size.
----@alias DFLayout.FrameFn fun(interface_size: DFLayout.Rectangle.Size): DFLayout.FullyPlacedFrame
+--
+-- If the FrameFn tests for a feature (by calling a `feature_tests` field), a
+-- true result should result in the relevant placement inset being larger
+-- (further to the edge of the interface area) than for a false result.
+--
+---@alias DFLayout.FrameFn fun(interface_size: DFLayout.Interface.Size, feature_tests: DFLayout.FrameFn.FeatureTests): frame: DFLayout.Frame, active_features: DFLayout.FrameFn.Features?
 
----@alias DFLayout.Toolbar.Button { offset: integer, width: integer }
----@alias DFLayout.Toolbar.Buttons table<string,DFLayout.Toolbar.Button> -- multiple entries
+---@alias DFLayout.DynamicUIElement.State boolean | integer | string | table<string, boolean | integer | string>
+
+-- A name-tagged bundle of a DFLayout.FrameFn and its supporting values.
+--
+-- The `collapsable_inset` field should describe the amount `frame_fn`-reported
+-- insets might shrink when computed for interfaces sizes other than
+-- MINIMUM_INTERFACE_SIZE. It should also include inset shrinkage due to
+-- positive "feature tests" done by `frame_fn`.
+--
+---@class DFLayout.DynamicUIElement
+---@field name string
+---@field frame_fn DFLayout.FrameFn function that describes where DF will draw the UI element in a given interface size
+---@field collapsable_inset? DFLayout.Inset.partial amount of UI element inset on MINIMUM_INTERFACE_SIZE that might disappear with different sizes or different states
+---@field state_fn? fun(): DFLayout.DynamicUIElement.State return non-size state values that affect the placement of the UI element
+
+---@alias DFLayout.Placement.HorizontalAlignment
+--- | 'on left'           overlay."right edge col" + 1 == reference_frame."left edge col"
+--- | 'align left edges'  overlay."left edge col" == reference_frame."left edge col"
+--- | 'align right edges' overlay."right edge col" == reference_frame."right edge col"
+--- | 'on right'          overlay."left edge col" == reference_frame."right edge col" + 1
+---@alias DFLayout.Placement.VerticalAlignment
+--- | 'above'              overlay."bottom edge row" + 1 == reference_frame."top edge row"
+--- | 'align top edges'    overlay."top edge row" == reference_frame."top edge row"
+--- | 'align bottom edges' overlay."bottom edge row" == reference_frame."bottom edge row"
+--- | 'below'              overlay."top edge row" == reference_frame."bottom edge row" + 1
+
+---@alias DFLayout.Placement.Offset { x?: integer, y?: integer }
+
+---@class DFLayout.Placement.DefaultPos
+---@field x? integer directly specify a default_pos.x value
+---@field y? integer directly specify a default_pos.y value
+---@field from_right? boolean automatic default_pos.x should be based on right edge
+---@field from_top? boolean automatic default_pos.y should be based on top edge
+
+---@class DFLayout.Placement.Size
+---@field w integer
+---@field h integer
+
+---@class DFLayout.Placement.Spec
+---@field name string used in error messages
+---@field size DFLayout.Placement.Size the static size of overlay
+---@field ui_element DFLayout.DynamicUIElement a UI element value from the `elements` tree
+---@field h_placement DFLayout.Placement.HorizontalAlignment how to align the overlay's horizontal position against the `ui_element`
+---@field v_placement DFLayout.Placement.VerticalAlignment how to align the overlay's vertical position against the `ui_element`
+---@field offset? DFLayout.Placement.Offset how far to move overlay after alignment with `ui_element`
+---@field default_pos? DFLayout.Placement.DefaultPos specify an overlay default_pos, or which edges it should be based on
+---@field feature_tests? DFLayout.FrameFn.FeatureTests for internal/testing use
+
+---@alias DFLayout.Placement.GenericAlignment 'place before' | 'align start' | 'align end' | 'place after'
+
+---@class DFLayout.OverlayPlacementInfo
+---@field default_pos { x: integer, y: integer } use for the overlay's default_pos
+---@field frame widgets.Widget.frame use for the overlay's initial frame
+---@field preUpdateLayout_fn fun(self_overlay_widget: widgets.Widget, parent_rect: gui.ViewRect) use as the overlay's preUpdateLayout method (the "self" param is overlay.OverlayWidget)
+---@field onRenderBody_fn fun(self_overlay_widget: widgets.Widget, painter: gui.Painter) use as the overlay's onRenderBody_fn method (the "self" param is overlay.OverlayWidget)
+
+--- DF UI element definitions ---
+
 ---@alias DFLayout.Toolbar.Widths table<string,integer> -- single entry, value is width
-
----@class DFLayout.Toolbar.Layout
----@field buttons DFLayout.Toolbar.Buttons
----@field width integer
 
 ---@param widths DFLayout.Toolbar.Widths[] single-name entries only!
 ---@return DFLayout.Toolbar.Layout
@@ -93,8 +170,6 @@ end
 local function buttons_to_toolbar_layout(buttons)
     return button_widths_to_toolbar_layout(buttons_to_widths(buttons))
 end
-
---- DF UI element definitions ---
 
 element_layouts = {
     fort = {
@@ -330,6 +405,7 @@ end
 
 -- Derive the frame_fn for a secondary toolbar that "wants to" align with the
 -- specified center toolbar button.
+--
 ---@param center_button_name DFLayout.Fort.SecondaryToolbar.CenterButton
 ---@param secondary_toolbar_layout DFLayout.Toolbar.Layout
 ---@return DFLayout.FrameFn
@@ -384,35 +460,18 @@ local fort_secondary_tb_frames = {
     ITEM_BUILDING = get_secondary_frame_fn('ITEM_BUILDING', fort_stb_layout.ITEM_BUILDING),
 }
 
----@class DFLayout.DynamicUIElement
----@field name string
----@field frame_fn DFLayout.FrameFn
----@field minimum_insets DFLayout.FullInsets
-
--- Create a DFLayout.DynamicUIElement from a DFLayout.FrameFn.
---
--- Note: The `frame_fn` must generate inset values that are non-decreasing as
--- the input interface size grows (i.e., the minimum insets are found when
--- placing the frame in a minimum-size interface area). This is true for all the
--- DF toolbars and their sub-components, but not for all UI elements in general.
 ---@param name string
 ---@param frame_fn DFLayout.FrameFn
 ---@return DFLayout.DynamicUIElement
-local function nd_inset_ui_el(name, frame_fn)
-    local min_frame = frame_fn(MINIMUM_INTERFACE_SIZE)
+local function ui_el(name, frame_fn)
     return {
         name = name,
         frame_fn = frame_fn,
-        minimum_insets = {
-            l = min_frame.l,
-            r = min_frame.r,
-            t = min_frame.t,
-            b = min_frame.b,
-        }
     }
 end
 
 -- Derive the DynamicUIElement for the named button given a toolbar's frame_fn, and its button button layout.
+--
 ---@param toolbar_name string
 ---@param toolbar_frame_fn DFLayout.FrameFn
 ---@param toolbar_layout DFLayout.Toolbar.Layout
@@ -421,7 +480,7 @@ end
 local function button_ui_el(toolbar_name, toolbar_frame_fn, toolbar_layout, button_name)
     local button = toolbar_layout.buttons[button_name]
         or dfhack.error('button not present in given toolbar layout: ' .. tostring(button_name))
-    return nd_inset_ui_el(toolbar_name .. '.' .. button_name, function(interface_size)
+    return ui_el(toolbar_name .. '.' .. button_name, function(interface_size)
         local toolbar_frame = toolbar_frame_fn(interface_size)
         local l = toolbar_frame.l + button.offset
         local r = interface_size.width - (l + button.width)
@@ -451,6 +510,7 @@ local function right_button_ui_el(button_name)
 end
 
 -- button_ui_el, specialized for the secondary toolbars.
+--
 ---@param toolbar_name DFLayout.Fort.SecondaryToolbar.Names
 ---@param button_name string
 ---@return DFLayout.DynamicUIElement
@@ -468,11 +528,11 @@ elements = {
     fort = {
         toolbars = {
             ---@type DFLayout.DynamicUIElement
-            left = nd_inset_ui_el('fort.toolbars.left', fort_left_tb_frame),
+            left = ui_el('fort.toolbars.left', fort_left_tb_frame),
             ---@type DFLayout.DynamicUIElement
-            center = nd_inset_ui_el('fort.toolbars.center', fort_center_tb_frame),
+            center = ui_el('fort.toolbars.center', fort_center_tb_frame),
             ---@type DFLayout.DynamicUIElement
-            right = nd_inset_ui_el('fort.toolbars.left', fort_right_tb_frame),
+            right = ui_el('fort.toolbars.left', fort_right_tb_frame),
         },
         toolbar_buttons = {
             left = {
@@ -554,25 +614,25 @@ elements = {
         },
         secondary_toolbars = {
             ---@type DFLayout.DynamicUIElement
-            DIG = nd_inset_ui_el('fort.secondary_toolbars.DIG', fort_secondary_tb_frames.DIG),
+            DIG = ui_el('fort.secondary_toolbars.DIG', fort_secondary_tb_frames.DIG),
             ---@type DFLayout.DynamicUIElement
-            CHOP = nd_inset_ui_el('fort.secondary_toolbars.CHOP', fort_secondary_tb_frames.CHOP),
+            CHOP = ui_el('fort.secondary_toolbars.CHOP', fort_secondary_tb_frames.CHOP),
             ---@type DFLayout.DynamicUIElement
-            GATHER = nd_inset_ui_el('fort.secondary_toolbars.GATHER', fort_secondary_tb_frames.GATHER),
+            GATHER = ui_el('fort.secondary_toolbars.GATHER', fort_secondary_tb_frames.GATHER),
             ---@type DFLayout.DynamicUIElement
-            SMOOTH = nd_inset_ui_el('fort.secondary_toolbars.SMOOTH', fort_secondary_tb_frames.SMOOTH),
+            SMOOTH = ui_el('fort.secondary_toolbars.SMOOTH', fort_secondary_tb_frames.SMOOTH),
             ---@type DFLayout.DynamicUIElement
-            ERASE = nd_inset_ui_el('fort.secondary_toolbars.ERASE', fort_secondary_tb_frames.ERASE),
+            ERASE = ui_el('fort.secondary_toolbars.ERASE', fort_secondary_tb_frames.ERASE),
             ---@type DFLayout.DynamicUIElement
-            MAIN_STOCKPILE_MODE = nd_inset_ui_el('fort.secondary_toolbars.MAIN_STOCKPILE_MODE', fort_secondary_tb_frames.MAIN_STOCKPILE_MODE),
+            MAIN_STOCKPILE_MODE = ui_el('fort.secondary_toolbars.MAIN_STOCKPILE_MODE', fort_secondary_tb_frames.MAIN_STOCKPILE_MODE),
             ---@type DFLayout.DynamicUIElement
-            STOCKPILE_NEW = nd_inset_ui_el('fort.secondary_toolbars.STOCKPILE_NEW', fort_secondary_tb_frames.STOCKPILE_NEW),
+            STOCKPILE_NEW = ui_el('fort.secondary_toolbars.STOCKPILE_NEW', fort_secondary_tb_frames.STOCKPILE_NEW),
             ---@type DFLayout.DynamicUIElement
-            ['Add new burrow'] = nd_inset_ui_el('fort.secondary_toolbars.Add new burrow', fort_secondary_tb_frames['Add new burrow']),
+            ['Add new burrow'] = ui_el('fort.secondary_toolbars.Add new burrow', fort_secondary_tb_frames['Add new burrow']),
             ---@type DFLayout.DynamicUIElement
-            TRAFFIC = nd_inset_ui_el('fort.secondary_toolbars.TRAFFIC', fort_secondary_tb_frames.TRAFFIC),
+            TRAFFIC = ui_el('fort.secondary_toolbars.TRAFFIC', fort_secondary_tb_frames.TRAFFIC),
             ---@type DFLayout.DynamicUIElement
-            ITEM_BUILDING = nd_inset_ui_el('fort.secondary_toolbars.ITEM_BUILDING', fort_secondary_tb_frames.ITEM_BUILDING),
+            ITEM_BUILDING = ui_el('fort.secondary_toolbars.ITEM_BUILDING', fort_secondary_tb_frames.ITEM_BUILDING),
         },
         secondary_toolbar_buttons = {
             DIG = {
@@ -813,62 +873,119 @@ elements = {
     },
 }
 
+---@param minimum_inset DFLayout.Inset
+---@param scrollbar_feature_name string
+---@return DFLayout.FrameFn
+local function get_info_frame_fn(minimum_inset, scrollbar_feature_name)
+    ---@type DFLayout.FrameFn
+    return function(interface_size, feature_tests)
+        local l = minimum_inset.l
+        local r = minimum_inset.r
+        local t = minimum_inset.t
+        local b = minimum_inset.b
+
+        -- main info window tabs need to wrap in narrow interface widths
+        if interface_size.width < 155 then
+            t = t + 2
+        end
+
+        -- info item rows are 3 UI rows each; if there are extra UI rows, they
+        -- go into the bottom inset (immediately below the last item row)
+        local extra_ui_rows = (interface_size.height - (t + b)) % 3
+        b = b + extra_ui_rows
+
+        local h = interface_size.height - (t + b)
+
+        -- if it is needed, the scroll bar (2 UI cols) is in the right inset area
+        local displayable_count = h // 3
+        local scrollbar = feature_tests[scrollbar_feature_name](displayable_count)
+        if scrollbar then
+            r = r + 2
+        end
+
+        return {
+            l = l,
+            w = interface_size.width - (l + r),
+            r = r,
+
+            t = t,
+            h = h,
+            b = b,
+        }, {
+            scrollbar = scrollbar,
+        }
+    end
+end
+
+-- A UI element that encompasses the area used to display orders in the Order DF
+-- info window tab. The area includes unused rows.
+--
+---@type DFLayout.DynamicUIElement
+local orders_ui_element = {
+    name = 'Orders list rows',
+    collapsable_inset = {
+        r = 2, -- possible lack of scrollbar on right
+        t = 2, -- possible un-wrapped info tab bar
+        -- bottom inset has variation of 2 (mod 3 from item rows), but is at its
+        -- minimum in MINIMUM_INTERFACE_SIZE, so it can not shrink any
+    },
+    frame_fn = get_info_frame_fn({
+        l = 6,  -- 4 UI cols notification area, 1 UI col border, 1 UI col empty
+        r = 35, -- 28 UI cols squad area, 1 UI col border, 6 UI cols new order button area, 0 or 2 UI cols scroll bar
+        t = 8,  -- 4 UI rows top-bar, 1 UI row border, 2 or 4 UI rows info tabs, 1 UI row empty
+        b = 9,  -- 3 UI rows bottom toolbar area, 1 UI row border, 1 UI row empty, 3 UI rows text blurb, 1 UI row empty, 0-2 UI rows expansion gap
+    }, 'orders_needs_scrollbar'),
+    state_fn = function()
+        return #df.global.world.manager_orders.all
+    end,
+}
+
+-- A UI element that encompasses the area used to display zones in the
+-- Places/Zones DF info window tab. The area includes unused rows.
+--
+---@type DFLayout.DynamicUIElement
+local zones_ui_element = {
+    name = 'Places/Zones list rows',
+    collapsable_inset = {
+        r = 2, -- possible lack of scrollbar on right
+        t = 2, -- possible un-wrapped info tab bar
+        -- bottom has variation of 2 (mod 3 from item rows), and is at its
+        -- maximum in MINIMUM_INTERFACE_SIZE, so it might shrink up to 2
+        b = 2, -- possible item row gap-filler (mod 3)
+    },
+    frame_fn = get_info_frame_fn({
+        l = 6,  -- 4 UI cols notification area, 1 UI col border, 1 UI col empty
+        r = 30, -- 28 UI cols squad area, 1 UI col border, 1 UI col empty
+        t = 10, -- 4 UI rows top-bar, 1 UI row border, 2 or 4 UI rows info tabs, 2 UI rows places tabs, 1 UI row empty
+        b = 5,  -- 3 UI rows bottom toolbar area, 1 UI row border, 1 UI row empty, 0-2 UI rows expansion gap
+    }, 'zones_needs_scrollbar'),
+    state_fn = function()
+        return #df.global.game.main_interface.info.buildings.list[df.buildings_mode_type.ZONES]
+    end,
+}
+
+experimental_elements = {
+    ---@type DFLayout.DynamicUIElement
+    orders = orders_ui_element,
+    ---@type DFLayout.DynamicUIElement
+    zones = zones_ui_element,
+}
+
 --- Automatic UI-relative Overlay Positioning ---
-
----@alias DFLayout.Placement.HorizontalAlignment
---- | 'on left'           overlay."right edge col" + 1 == reference_frame."left edge col"
---- | 'align left edges'  overlay."left edge col" == reference_frame."left edge col"
---- | 'align right edges' overlay."right edge col" == reference_frame."right edge col"
---- | 'on right'          overlay."left edge col" == reference_frame."right edge col" + 1
----@alias DFLayout.Placement.VerticalAlignment
---- | 'above'              overlay."bottom edge row" + 1 == reference_frame."top edge row"
---- | 'align top edges'    overlay."top edge row" == reference_frame."top edge row"
---- | 'align bottom edges' overlay."bottom edge row" == reference_frame."bottom edge row"
---- | 'below'              overlay."top edge row" == reference_frame."bottom edge row" + 1
-
----@alias DFLayout.Placement.Offset { x?: integer, y?: integer }
----@alias DFLayout.Placement.DefaultPos { x?: integer, y?: integer }
-
----@class DFLayout.Placement.Size
----@field w integer
----@field h integer
-
----@class DFLayout.Placement.Spec
----@field name string used in error messages
----@field size DFLayout.Placement.Size the static size of overlay
----@field ui_element DFLayout.DynamicUIElement a UI element value from the `elements` tree
----@field h_placement DFLayout.Placement.HorizontalAlignment how to align the overlay's horizontal position against the `ui_element`
----@field v_placement DFLayout.Placement.VerticalAlignment how to align the overlay's vertical position against the `ui_element`
----@field offset? DFLayout.Placement.Offset how far to move overlay after alignment with `ui_element`
----@field default_pos? DFLayout.Placement.DefaultPos supply "legacy" overlay default_pos for placement compatibility
-
----@alias DFLayout.Placement.GenericAlignment 'place before' | 'align start' | 'align end' | 'place after'
-
-local generic_placement_from_horizontal = {
-    ['on left'] = 'place before',
-    ['align left edges'] = 'align start',
-    ['align right edges'] = 'align end',
-    ['on right'] = 'place after',
-}
-local generic_placement_from_vertical = {
-    ['above'] = 'place before',
-    ['align top edges'] = 'align start',
-    ['align bottom edges'] = 'align end',
-    ['below'] = 'place after',
-}
 
 -- Place a specified span (width or height) with the specified alignment with
 -- respect to the given reference position and span.
+--
 ---@param available_span integer
 ---@param ref_offset_before integer
----@param ref_span integer
+---@param ref_offset_after integer
 ---@param placed_span integer
 ---@param placement DFLayout.Placement.GenericAlignment
 ---@param offset? integer
 ---@return integer before
 ---@return integer span
 ---@return integer after
-local function place_span(available_span, ref_offset_before, ref_span, placed_span, placement, offset)
+local function place_span(available_span, ref_offset_before, ref_offset_after, placed_span, placement, offset)
     if placed_span >= available_span then
         return 0, available_span, 0
     end
@@ -876,11 +993,11 @@ local function place_span(available_span, ref_offset_before, ref_span, placed_sp
     if placement == 'align start' then
         before = ref_offset_before
     elseif placement == 'align end' then
-        before = ref_offset_before + ref_span - placed_span
+        before = available_span - ref_offset_after - placed_span
     elseif placement == 'place before' then
         before = ref_offset_before - placed_span
     elseif placement == 'place after' then
-        before = ref_offset_before + ref_span
+        before = available_span - ref_offset_after
     else
         dfhack.error('invalid generic placement: ' .. tostring(placement))
     end
@@ -898,11 +1015,13 @@ end
 -- `interface_size`).
 --
 -- Returns the frame or throws an error.
----@param interface_size DFLayout.Rectangle.Size
+--
+---@param interface_size DFLayout.Interface.Size
 ---@param ui_element DFLayout.DynamicUIElement
----@return DFLayout.FullyPlacedFrame
-local function checked_frame(interface_size, ui_element)
-    local frame = ui_element.frame_fn(interface_size)
+---@param feature_tests DFLayout.FrameFn.FeatureTests
+---@return DFLayout.Frame
+local function checked_frame(interface_size, ui_element, feature_tests)
+    local frame = ui_element.frame_fn(interface_size, feature_tests)
     if frame.l < 0 or frame.w <= 0 or frame.r < 0
         or frame.l + frame.w + frame.r ~= interface_size.width
     then
@@ -915,36 +1034,56 @@ local function checked_frame(interface_size, ui_element)
         dfhack.error(('%s: vertical placement is invalid: t=%d h=%d b=%d H=%d')
             :format(ui_element.name, frame.t, frame.h, frame.b, interface_size.height))
     end
-    for _, d in ipairs{'l', 'r', 't', 'b'} do
-        local gen = frame[d]
-        local min = ui_element.minimum_insets[d]
-        if gen < min then
-            dfhack.printerr(
-                ('error in %s.frame_fn result.%d: %d < %d (generated < minimum)')
-                :format(ui_element.name, d, gen, min))
-        end
-    end
     return frame
 end
 
+local default_feature_tests = {
+    orders_needs_scrollbar = function(displayable_count)
+        return #df.global.world.manager_orders.all > displayable_count
+    end,
+    zones_needs_scrollbar = function(displayable_count)
+        return
+            #df.global.game.main_interface.info.buildings.list[df.buildings_mode_type.ZONES]
+            > displayable_count
+    end,
+}
+
+local generic_placement_from_horizontal = {
+    ['on left'] = 'place before',
+    ['align left edges'] = 'align start',
+    ['align right edges'] = 'align end',
+    ['on right'] = 'place after',
+}
+local generic_placement_from_vertical = {
+    ['above'] = 'place before',
+    ['align top edges'] = 'align start',
+    ['align bottom edges'] = 'align end',
+    ['below'] = 'place after',
+}
+
 -- Place the specified area with respect to the specified reference with the
 -- specified alignment and offset.
----@param interface_size DFLayout.Rectangle.Size
+--
+---@param interface_size DFLayout.Interface.Size
 ---@param spec DFLayout.Placement.Spec
----@return DFLayout.FullyPlacedFrame
-local function place_overlay_frame(interface_size, spec)
-    local ref_frame = checked_frame(interface_size, spec.ui_element)
+---@param feature_tests? DFLayout.FrameFn.FeatureTests
+---@return DFLayout.Frame
+local function place_overlay_frame(interface_size, spec, feature_tests)
+    local ref_inset = checked_frame(interface_size, spec.ui_element,
+        feature_tests             -- get_overlay_placement_info
+        or spec.feature_tests     -- tests
+        or default_feature_tests)
 
     local generic_h_placement = generic_placement_from_horizontal[spec.h_placement]
         or dfhack.error(('%s: invalid h_placement: %s'):format(spec.name, spec.h_placement))
     local l, w, r = place_span(interface_size.width,
-        ref_frame.l, ref_frame.w,
+        ref_inset.l, ref_inset.r,
         spec.size.w, generic_h_placement, spec.offset and spec.offset.x)
 
     local generic_v_placement = generic_placement_from_vertical[spec.v_placement]
         or dfhack.error(('%s: invalid v_placement: %s'):format(spec.name, spec.v_placement))
     local t, h, b = place_span(interface_size.height,
-        ref_frame.t, ref_frame.h,
+        ref_inset.t, ref_inset.b,
         spec.size.h, generic_v_placement, spec.offset and spec.offset.y)
 
     return {
@@ -958,17 +1097,23 @@ local function place_overlay_frame(interface_size, spec)
     }
 end
 
--- Provide default `default_pos` values based on nominal values, and compute the
+-- Calculate (or validate the requested) `default_pos` and required paddings
+-- based on nominal position and forced paddings.
+--
 ---@param spec_name string
 ---@param xy 'x' | 'y' the default_pos field name (used in error messages)
 ---@param pos? integer
 ---@param nominal_positive integer
 ---@param nominal_negative integer
+---@param positive_pad integer extra padding to force on positive side
+---@param negative_pad integer extra padding to force on negative side
 ---@param default_to_positive boolean controls which nominal value is used if `pos` is nil or 0
 ---@return integer pos `pos`, or one of its defaults (when 0 or falsy)
 ---@return integer padding_on_positive_side 0 or padding required to move from positive `value` to `nominal_positive`
 ---@return integer padding_on_negative_side 0 or padding required to move from negative `value` to `nominal_negative`
-local function pos_and_paddings(spec_name, xy, pos, nominal_positive, nominal_negative, default_to_positive)
+local function pos_and_paddings(spec_name, xy, pos, nominal_positive, nominal_negative, positive_pad, negative_pad, default_to_positive)
+    nominal_positive = nominal_positive - positive_pad
+    nominal_negative = nominal_negative + negative_pad
     if pos == nil or pos == 0 then
         pos = default_to_positive and nominal_positive or nominal_negative
     end
@@ -977,45 +1122,92 @@ local function pos_and_paddings(spec_name, xy, pos, nominal_positive, nominal_ne
             dfhack.error(('%s: specified placement requires 1 <= default_pos.%s <= %d')
                 :format(spec_name, xy, nominal_positive))
         end
-        return pos, nominal_positive - pos, 0
+        return pos, positive_pad + nominal_positive - pos, negative_pad
     end
     if pos < nominal_negative then
         dfhack.error(('%s: specified placement requires %d <= default_pos.%s <= -1')
             :format(spec_name, nominal_negative, xy))
     end
-    return pos, 0, pos - nominal_negative
+    return pos, positive_pad, negative_pad + pos - nominal_negative
 end
 
----@class DFLayout.OverlayPlacementInfo
----@field default_pos { x: integer, y: integer } use for the overlay's default_pos
----@field frame widgets.Widget.frame use for the overlay's initial frame
----@field preUpdateLayout_fn fun(self_overlay_widget: widgets.Widget, parent_rect: gui.ViewRect) use the overlay's preUpdateLayout method (the "self" param is overlay.OverlayWidget, but that isn't a declared type)
+local state_changed_cache = setmetatable({}, { __mode = 'k' })
 
----@alias DFLayout.Placement.InsetsFilter fun(insets: DFLayout.FullInsets): DFLayout.FullInsets
+---@param widget widgets.Widget
+---@param ui_element DFLayout.DynamicUIElement
+---@return boolean
+local function state_changed(widget, ui_element)
+    if widget == nil then return end
+    local previous = state_changed_cache[widget]
+    local current = ui_element.state_fn()
+    state_changed_cache[widget] = current
+    if type(previous) ~= 'table' or type(current) ~= 'table' then
+        return current ~= previous
+    end
+    for k, v in pairs(current) do
+        if v ~= previous[k] then return true end
+        previous[k] = nil
+    end
+    if next(previous) then return true end
+    return false
+end
+
+---@type DFLayout.FrameFn.FeatureTests
+local all_features = setmetatable({}, {
+    __index = function(table, field)
+        return function() return true end
+    end,
+})
+
+---@alias DFLayout.Placement.InsetFilter fun(inset: DFLayout.Inset): DFLayout.Inset
 
 ---@param overlay_placement_spec DFLayout.Placement.Spec
----@param insets_filter? DFLayout.Placement.InsetsFilter
+---@param inset_filter? DFLayout.Placement.InsetFilter
 ---@return DFLayout.OverlayPlacementInfo overlay_placement_info
-local function get_overlay_placement_info(overlay_placement_spec, insets_filter)
+local function get_overlay_placement_info(overlay_placement_spec, inset_filter)
     overlay_placement_spec = utils.clone(overlay_placement_spec, true) --[[@as DFLayout.Placement.Spec]]
     overlay_placement_spec.name = overlay_placement_spec.name or '[unnamed overlay placement]'
-    local minimum_placement = place_overlay_frame(MINIMUM_INTERFACE_SIZE, overlay_placement_spec)
 
-    -- decode spec.default_pos into pos values and padding values
-    local override_default_pos = overlay_placement_spec.default_pos
+    -- get the "default" placement (in a MINIMUM_INTERFACE_SIZE area)
+    local default_placement = place_overlay_frame(MINIMUM_INTERFACE_SIZE, overlay_placement_spec, all_features)
+
+    local default_from_left = true -- default to left-relative
+    local default_from_top = false -- default to bottom-relative
+
+    -- decode overlay_placement_spec.default_pos into pos values and padding values
+    local override_default_pos = overlay_placement_spec.default_pos or {}
+    if override_default_pos.from_right ~= nil then
+        if override_default_pos.x then
+            dfhack.printerr(('warning: %s: default_pos.from_right will be ignored since .x is also present')
+                :format(overlay_placement_spec.name))
+        end
+        default_from_left = not override_default_pos.from_right
+    end
+    if override_default_pos.from_top ~= nil then
+        if override_default_pos.y then
+            dfhack.printerr(('warning: %s: default_pos.from_top will be ignored since .y is also present')
+                :format(overlay_placement_spec.name))
+        end
+        default_from_top = not not override_default_pos.from_top
+    end
+    local padding = overlay_placement_spec.ui_element.collapsable_inset or {}
     local x_pos, l_pad, r_pad = pos_and_paddings(
         overlay_placement_spec.name, 'x',
-        override_default_pos and override_default_pos.x,
-        (minimum_placement.l + 1),  -- one-based, left-relative
-        -(minimum_placement.r + 1), -- one-based, right-relative
-        true                        -- default to left-relative
+        override_default_pos.x,
+        (default_placement.l + 1),  -- one-based, left-relative
+        -(default_placement.r + 1), -- one-based, right-relative
+        padding.l or 0,
+        padding.r or 0,
+        default_from_left
     )
     local y_pos, t_pad, b_pad = pos_and_paddings(
         overlay_placement_spec.name, 'y',
-        override_default_pos and override_default_pos.y,
-        (minimum_placement.t + 1),  -- one-based, top-relative
-        -(minimum_placement.b + 1), -- one-based, bottom-relative
-        false                       -- default to bottom-relative
+        override_default_pos.y,
+        (default_placement.t + 1),  -- one-based, top-relative
+        -(default_placement.b + 1), -- one-based, bottom-relative
+        padding.t or 0,
+        padding.b or 0,
+        default_from_top
     )
 
     return {
@@ -1024,42 +1216,48 @@ local function get_overlay_placement_info(overlay_placement_spec, insets_filter)
             y = y_pos,
         },
         frame = {
-            w = math.min(MINIMUM_INTERFACE_SIZE.width, overlay_placement_spec.size.w),
-            h = math.min(MINIMUM_INTERFACE_SIZE.height, overlay_placement_spec.size.h),
+            w = default_placement.w,
+            h = default_placement.h,
         },
-        ---@param self_overlay_widget widgets.Widget
+        ---@param self_overlay_widget widgets.Widget overlay.OverlayWidget
         ---@param parent_rect gui.ViewRect
         preUpdateLayout_fn = function(self_overlay_widget, parent_rect)
-            local el_frame = overlay_placement_spec.ui_element.frame_fn(parent_rect)
-            local minimum_el_insets = overlay_placement_spec.ui_element.minimum_insets
-            local insets = {
-                l = math.max(0, el_frame.l - minimum_el_insets.l) + l_pad,
-                r = math.max(0, el_frame.r - minimum_el_insets.r) + r_pad,
-                t = math.max(0, el_frame.t - minimum_el_insets.t) + t_pad,
-                b = math.max(0, el_frame.b - minimum_el_insets.b) + b_pad,
-            }
-            insets = insets_filter and insets_filter(insets) or insets
             local placement = place_overlay_frame(parent_rect, overlay_placement_spec)
+            local inset = {
+                l = placement.l - default_placement.l + l_pad,
+                r = placement.r - default_placement.r + r_pad,
+                t = placement.t - default_placement.t + t_pad,
+                b = placement.b - default_placement.b + b_pad,
+            }
+            inset = inset_filter and inset_filter(inset) or inset
 
-            self_overlay_widget.frame_inset = insets
-            self_overlay_widget.frame.w = insets.l + placement.w + insets.r
-            self_overlay_widget.frame.h = insets.t + placement.h + insets.b
+            self_overlay_widget.frame_inset = inset
+            self_overlay_widget.frame.w = inset.l + placement.w + inset.r
+            self_overlay_widget.frame.h = inset.t + placement.h + inset.b
+        end,
+        ---@param self_overlay_widget widgets.Widget overlay.OverlayWidget
+        ---@param painter gui.Painter
+        onRenderBody_fn = function(self_overlay_widget, painter)
+            if state_changed(self_overlay_widget, overlay_placement_spec.ui_element) then
+                self_overlay_widget.frame.w = nil -- the overlay system will notice the change and call updateLayout
+            end
         end,
     }
 end
 
 -- Return a table with values that can be used to automatically place an
 -- overlay widget relative to a reference position.
+--
 ---@param overlay_placement_spec DFLayout.Placement.Spec
 ---@return DFLayout.OverlayPlacementInfo overlay_placement_info
 function getOverlayPlacementInfo(overlay_placement_spec)
     return get_overlay_placement_info(overlay_placement_spec)
 end
 
----@type DFLayout.Placement.InsetsFilter
-local function only_left_inset(insets)
+---@type DFLayout.Placement.InsetFilter
+local function only_left_inset(inset)
     return {
-        l = insets.l,
+        l = inset.l,
         r = 0,
         t = 0,
         b = 0,
@@ -1068,6 +1266,7 @@ end
 -- Similar to `getOverlayPlacementInfo`, but only arranges for "padding" on the
 -- left. This is compatible with several existing, hand-rolled overlay
 -- positioning calculations.
+--
 ---@param overlay_placement_spec DFLayout.Placement.Spec
 ---@return DFLayout.OverlayPlacementInfo overlay_placement_info
 function getLeftOnlyOverlayPlacementInfo(overlay_placement_spec)

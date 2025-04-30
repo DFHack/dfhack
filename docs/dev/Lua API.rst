@@ -6658,56 +6658,111 @@ for the layout descriptions.
 These "UI element" values should generally be treated as opaque. They can be
 passed to the overlay positioning helper functions described below.
 
-Automatic Overlay Positioning
------------------------------
+Position based on UI Element
+----------------------------
 
-This module provides higher-level functions that use the provided "dynamic UI
-elements" to help automatically position an overlay widget with respect to the
-UI element:
+This module provides several functions to work with the provided UI element
+values:
 
-* ``getOverlayPlacementInfo(overlay_placement_spec)``
+* ``getUIElementFrame(ui_element, interface_size)``
 
-  The ``overlay_placement_spec`` parameter should be a table with the following
-  fields:
+  Computes the position of the UI element when drawn in a interface of the
+  specified size. The ``interface_size`` should have ``width`` and ``height``
+  fields (e.g., ``gui.get_interface_rect()``, or the ``parent_rect`` parameter
+  from the ``updateLayout`` family of methods).
+
+  Note: Some UI elements may need to query DF state beyond the provided
+  interface size.
+
+  A table with the following fields is returned:
+
+  * ``w``, ``h``: the width and height of the UI element
+  * ``l``, ``r``, ``t``, ``b``: zero-based, inset-style values that give the
+    offsets from the edges of the interface area to the UI element
+
+* ``getUIElementStateChecker(ui_element)``
+
+  Returns a function that can be used to check for changes in (non-size) DF
+  state that may affect the position of the UI element. For example, list UI
+  elements might need a scrollbar depending on how many items there are to
+  display.
+
+  ::
+
+    -- in a widget's init method
+    self.state_changed = layout.getUIElementStateChecker(el)
+
+    -- in the widget's render handler
+    if self.state_changed() then
+        local new_el_frame = layout.getUIElementFrame(el, gui.get_interface_rect())
+        -- adapt to the position described by new_el_frame
+    end
+
+* ``getRelativePlacement(placement_spec, interface_size)``
+
+  Computes a rectangular frame relative to the position of the given UI element.
+
+  Note: See ``getOverlayPlacementInfo`` for special support for DFHack overlays.
+
+  The ``placement_spec`` parameter should be a table with the following fields:
+
+  ``name``
+    an identifying string value that can be used in error messages
 
   ``size``
-    a table with ``width`` and ``height`` fields that specifies the static size
-    of the overlay widget
+    a table with ``width`` and ``height`` fields that specifies the size
+    of the rectangle that is being placed
 
   ``ui_element``
-    the overlay will be positioned relative to the specified UI element; UI
+    the placed rectangle will be positioned relative to this UI element; UI
     element values can be retrieved from this module's ``elements`` field.
 
   ``h_placement``
-    a string that specifies the overlay's horizontal placement with respect to
+    a string that specifies the rectangle's horizontal placement with respect to
     the ``ui_element``
 
-      * ``'on left'``: the overlay's right edge will be just to the left of the
+      * ``'on left'``: the rectangle's right edge will be just to the left of
+        the ``ui_element``'s left edge
+      * ``'align left edges'``: the rectangle's left edge will be aligned to the
         ``ui_element``'s left edge
-      * ``'align left edges'``: the overlay's left edge will be aligned to the
-        ``ui_element``'s left edge
-      * ``'align right edges'``: the overlay's right edge will be aligned to the
-        ``ui_element``'s right edge
-      * ``'on right'``: the overlay's left edge will be just to the right of the
-        ``ui_element``'s right edge
+      * ``'align right edges'``: the rectangle's right edge will be aligned to
+        the ``ui_element``'s right edge
+      * ``'on right'``: the rectangle's left edge will be just to the right of
+        the ``ui_element``'s right edge
 
   ``v_placement``
-    a string that specifies the overlay's vertical placement with respect to
+    a string that specifies the rectangle's vertical placement with respect to
     the ``ui_element``
 
-      * ``'above'``: the overlay's bottom edge will be just above the reference
-        frame's top edge
-      * ``'align top edges'``: the overlay's top edge will be aligned to the
+      * ``'above'``: the rectangle's bottom edge will be just above the
+        reference frame's top edge
+      * ``'align top edges'``: the rectangle's top edge will be aligned to the
         ``ui_element``'s top edge
-      * ``'align bottom edges'``: the overlay's bottom edge will be aligned to the
-        ``ui_element``'s bottom edge
-      * ``'below'``: the overlay's top edge will be just below the
+      * ``'align bottom edges'``: the rectangle's bottom edge will be aligned to
+        the ``ui_element``'s bottom edge
+      * ``'below'``: the rectangle's top edge will be just below the
         ``ui_element``'s bottom edge
 
   ``offset``
     an optional table with ``x`` and ``y`` fields that gives an additional
-    position offset that is applied after the overlay is positioned relative to
-    the ``ui_element``.
+    position offset that is applied after the rectangle is positioned relative
+    to the ``ui_element``.
+
+  The return value is the same kind of table as returned from
+  ``getUIElementFrame`` (i.e., a "fully placed" frame).
+
+Automatic Overlay Positioning
+-----------------------------
+
+This module provides higher-level functions that use the provided UI element
+values to help automatically position an overlay widget with respect to the
+referenced UI element:
+
+* ``getOverlayPlacementInfo(overlay_placement_spec)``
+
+  The ``overlay_placement_spec`` parameter is a table with the same fields that
+  ``getRelativePlacement`` takes for its placement specification, with the
+  addition of:
 
   ``default_pos``
     an optional table with ``x`` and/or ``y`` fields that overrides the returned
@@ -6715,17 +6770,36 @@ UI element:
     needed for compatibility with existing "UI element relative" overlay
     positioning code.
 
+    Alternatively, the interface area edges from which the overlay is positioned
+    by default can be specified by giving ``from_right`` and ``from_top``
+    boolean fields.
+
+  Note: the ``size`` field is the *static* size of the overlay. Overlays with
+  dynamic sizes are not supported.
+
   A table with the following fields is returned:
 
-  * ``default_pos``: a table that should be used for the overlay's ``default_pos``
-  * ``frame``: a table that may be used to initialize the overlay's ``frame``
-  * ``preUpdateLayout_fn``: a function that used as (or called from) the
-    overlay's ``preUpdateLayout`` method
+  ``default_pos``
+    a table that should be used for the overlay's ``default_pos``
+
+  ``frame``
+    a table that may be used to initialize the overlay's ``frame``
+
+  ``preUpdateLayout_fn``
+    a function that should be used as (or called from) the overlay's
+    ``preUpdateLayout`` method
+
+  ``onRenderBody_fn``
+    a function that should be used as (or called from) the overlay's
+    ``onRenderBody`` method; this checks for non-size state changes that
+    ``ui_element`` is sensitive to and arranges for the widget to have its
+    ``updateLayout`` method called when state changes are noticed.
 
   This function can be used like this::
 
     local dflayout = require('gui.dflayout')
     local PLACEMENT = dflayout.getOverlayPlacementInfo({
+        name = 'TheOverlay',
         size = { w = 26, h = 11 }, -- whatever the overlay uses
         -- position the overlay one column to the right of
         -- the MAIN_STOCKPILE_MODE toolbar
@@ -6745,6 +6819,7 @@ UI element:
         -- ...
     end
     TheOverlay.preUpdateLayout = PLACEMENT.preUpdateLayout_fn
+    TheOverlay.onRenderBody = PLACEMENT.onRenderBody_fn
 
   The ``preUpdateLayout_fn`` function will adjust the overlay widget's
   ``frame.w``, ``frame.h``, and ``frame_inset`` fields to arrange for the
@@ -6755,9 +6830,9 @@ UI element:
 * ``getLeftOnlyOverlayPlacementInfo(overlay_placement_spec)``
 
   This function works like ``getOverlayPlacementInfo``, but it only "pads" the
-  overlay on the left. This is useful for compatibility with existing "UI
-  element relative" overlay positioning code (e.g., to avoid needing a version
-  bump that would reset a player's custom positioning).
+  overlay on the left. This is useful for compatibility with existing UI element
+  relative overlay positioning code (e.g., to avoid needing a version bump that
+  would reset a player's custom positioning).
 
 .. _lua-plugins:
 

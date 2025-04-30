@@ -495,8 +495,9 @@ while still being player-customizable::
     local widgets = require('gui.widgets')
     local dflayout = require('gui.dflayout')
 
-    local WIDTH, HEIGHT = 20, 1 -- whatever static size the overlay needs
+    local WIDTH, HEIGHT = 25, 1 -- whatever static size the overlay needs
     local PLACEMENT = dflayout.getOverlayPlacementInfo{
+        name = 'dig indicator',
         size = { w = WIDTH, h = HEIGHT },
         ui_element = dflayout.elements.fort.secondary_toolbar_buttons.DIG.DIG_DIG,
         h_placement = 'align left edges',
@@ -507,7 +508,7 @@ while still being player-customizable::
 
     UIRelativeOverlay = defclass(UIRelativeOverlay, overlay.OverlayWidget)
     UIRelativeOverlay.ATTRS{
-        name = 'Can you dig it?',
+        name = 'dig indicator',
         desc = 'A overlay that has UI-relative positioning.',
         default_enabled = true,
         default_pos = PLACEMENT.default_pos,
@@ -519,12 +520,13 @@ while still being player-customizable::
         self:addviews{
             widgets.Label{
                 text_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
-                text = string.char(25):rep(dig_dig_button.width) .. ' I can dig it!',
+                text = string.char(25):rep(dig_dig_button.width) .. ' Digging starts here!',
             },
         }
     end
 
     UIRelativeOverlay.preUpdateLayout = PLACEMENT.preUpdateLayout_fn
+    UIRelativeOverlay.onRenderBody = PLACEMENT.onRenderBody_fn
 
     OVERLAY_WIDGETS = { overlay = UIRelativeOverlay }
 

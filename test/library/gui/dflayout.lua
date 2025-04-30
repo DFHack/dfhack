@@ -171,10 +171,10 @@ end
 
 function test.fort_left_toolbar_positions()
     local w = ftb_layouts.left.width
-    local left_frame = ftb_elements.left.frame_fn
     for_all_checked_interface_sizes(function(size)
         local size_str = ('%dx%d'):format(size.width, size.height)
-        expect_bottom_left_frame(left_frame(size), size, w, layout.TOOLBAR_HEIGHT, size_str)
+        local frame = layout.getUIElementFrame(ftb_elements.left, size)
+        expect_bottom_left_frame(frame, size, w, layout.TOOLBAR_HEIGHT, size_str)
     end)
 end
 
@@ -191,10 +191,10 @@ end
 
 function test.fort_right_toolbar_positions()
     local w = ftb_layouts.right.width
-    local right_frame = ftb_elements.right.frame_fn
     for_all_checked_interface_sizes(function(size)
         local size_str = ('%dx%d'):format(size.width, size.height)
-        expect_bottom_right_frame(right_frame(size), size, w, layout.TOOLBAR_HEIGHT, size_str)
+        local frame = layout.getUIElementFrame(ftb_elements.right, size)
+        expect_bottom_right_frame(frame, size, w, layout.TOOLBAR_HEIGHT, size_str)
     end)
 end
 
@@ -211,11 +211,11 @@ end
 
 function test.fort_center_toolbar_positions()
     local w = ftb_layouts.center.width
-    local center_frame = ftb_elements.center.frame_fn
     for_all_checked_interface_sizes(function(size)
         local size_str = ('%dx%d'):format(size.width, size.height)
         local expected_l = phased_offset(size.width, fort_center_phases)
-        expect_bottom_center_frame(center_frame(size), size, w, layout.TOOLBAR_HEIGHT, expected_l, size_str)
+        local frame = layout.getUIElementFrame(ftb_elements.center, size)
+        expect_bottom_center_frame(frame, size, w, layout.TOOLBAR_HEIGHT, expected_l, size_str)
     end)
 end
 
@@ -233,11 +233,11 @@ end
 for _, phases in ipairs(fort_center_secondary_phases) do
     local name = phases.name
     local w = layout.element_layouts.fort.secondary_toolbars[name].width
-    local frame = layout.elements.fort.secondary_toolbars[name].frame_fn
+    local el = layout.elements.fort.secondary_toolbars[name]
     test[('fort_secondary_%s_toolbar_positions'):format(name)] = function()
         for_all_checked_interface_sizes(function(size)
             expect_center_secondary_frame(
-                frame(size), size,
+                layout.getUIElementFrame(el, size), size,
                 w, layout.SECONDARY_TOOLBAR_HEIGHT,
                 phased_offset(size.width, phases),
                 ('%s: %dx%d'):format(name, size.width, size.height))
@@ -272,7 +272,7 @@ for _, toolbar in ipairs{
     local button_els = safe_index(layout.elements, table.unpack(buttons_path))
     test[('fort_%s_toolbar_button_positions'):format(toolbar_name)] = function()
         for_all_checked_interface_sizes(function(size)
-            local toolbar_frame = toolbar_el.frame_fn(size)
+            local toolbar_frame = layout.getUIElementFrame(toolbar_el, size)
             local function c(b, d)
                 return ('%s %s: %dx%d'):format(b, d, size.width, size.height)
             end
@@ -280,7 +280,7 @@ for _, toolbar in ipairs{
                 local button_el = button_els[button_name]
                 expect.true_(button_el, c(button_name, 'element should exist'))
                 if button_el then
-                    local frame = button_el.frame_fn(size)
+                    local frame = layout.getUIElementFrame(button_el, size)
                     local expected_l = toolbar_frame.l + button_spec.offset
                     local expected_r = toolbar_frame.w - (button_spec.offset + button_spec.width) + toolbar_frame.r
                     expect.eq(frame.w, button_spec.width, c(button_name, 'w'))
@@ -295,9 +295,8 @@ for _, toolbar in ipairs{
     end
 end
 
---- Test the overlay helper: overlay_placement_info_* ---
+--- Test relative placement: element_based_placement_* ---
 
--- 5x5 in the center of the interface area
 local function get_centered_ui_el(size)
     local function frame_fn(interface_size)
         local l = (interface_size.width - size.w) // 2
@@ -320,73 +319,166 @@ local function get_centered_ui_el(size)
 end
 
 -- test alignment specification
-function test.overlay_placement_info_alignments()
-    ---@type { h: DFLayout.Placement.HorizontalAlignment, x: integer }[]
+function test.element_based_placement_alignments()
+    ---@type { h: DFLayout.Placement.HorizontalAlignment, l: integer, r: integer }[]
     local has = {
-        { h = 'on left',           x = 52 },
-        { h = 'align left edges',  x = 55 },
-        { h = 'align right edges', x = 57 },
-        { h = 'on right',          x = 60 },
+        { h = 'on left',           l = 51, r = 60 },
+        { h = 'align left edges',  l = 54, r = 57 },
+        { h = 'align right edges', l = 56, r = 55 },
+        { h = 'on right',          l = 59, r = 52 },
     }
-    ---@type { v: DFLayout.Placement.VerticalAlignment, y: integer }[]
+    ---@type { v: DFLayout.Placement.VerticalAlignment, t: integer, b: integer }[]
     local vas = {
-        { v = 'above',              y = -26 },
-        { v = 'align top edges',    y = -23 },
-        { v = 'align bottom edges', y = -21 },
-        { v = 'below',              y = -18 },
+        { v = 'above',              t = 18, b = 25 },
+        { v = 'align top edges',    t = 21, b = 22 },
+        { v = 'align bottom edges', t = 23, b = 20 },
+        { v = 'below',              t = 26, b = 17 },
     }
     local el = get_centered_ui_el{ w = 5, h = 5 }
     for _, ha in ipairs(has) do
         for _, va in ipairs(vas) do
             ---@type DFLayout.Placement.Spec
             local spec = {
-                name = 'overlay placement spec for .{h,v}_placement testing',
+                name = 'placement spec for .{h,v}_placement testing',
                 size = { w = 3, h = 3 },
                 ui_element = el,
                 h_placement = ha.h,
                 v_placement = va.v,
             }
-            local placement = layout.getOverlayPlacementInfo(spec)
-            expect.table_eq(
-                placement.default_pos,
-                { x = ha.x, y = va.y },
-                ha.h .. ', ' .. va.v .. ' default_pos')
+            local placement = layout.getRelativePlacement(spec, MIN_INTERFACE)
+            expect.table_eq(placement, {
+                l = ha.l,
+                w = 3,
+                r = ha.r,
+
+                t = va.t,
+                h = 3,
+                b = va.b,
+            }, ha.h .. ', ' .. va.v .. ' placement')
         end
     end
 end
 
-local function sum(...)
-    local s = { x = 0, y = 0 }
-    for _, v in ipairs({...}) do
-        s.x = s.x + (v.x or 0)
-        s.y = s.y + (v.y or 0)
-    end
-    return s
-end
-
 -- test offset specification
-function test.overlay_placement_info_offset()
-    ---@type DFLayout.Placement.Spec
+function test.element_based_placement_offset()
+    ---@type DFLayout.OverlayPlacement.Spec
     local base_spec = {
-        name = 'overlay placement spec for .offset testing',
+        name = 'placement spec for .offset testing',
         size = { w = 3, h = 3 },
         ui_element = get_centered_ui_el{ w = 5, h = 5 },
         h_placement = 'on left',
         v_placement = 'above',
     }
-    local base_placement = layout.getOverlayPlacementInfo(base_spec)
+    local base_placement = layout.getRelativePlacement(base_spec, MIN_INTERFACE)
 
     for _, dx in ipairs{ -1, 0, 2 } do
         for _, dy in ipairs{ -3, 0, 4 } do
             local spec = copyall(base_spec)
             spec.offset = { x = dx, y = dy }
-            local placement = layout.getLeftOnlyOverlayPlacementInfo(spec)
-            expect.table_eq(
-                placement.default_pos,
-                sum(base_placement.default_pos, spec.offset),
-                'default_pos should incorporate offset')
+            local placement = layout.getRelativePlacement(spec, MIN_INTERFACE)
+            expect.table_eq(placement, {
+                l = base_placement.l + dx,
+                w = base_placement.w,
+                r = base_placement.r - dx,
+
+                t = base_placement.t + dy,
+                h = base_placement.h,
+                b = base_placement.b - dy,
+            }, ('(%d,%d) offset placement'):format(dx, dy))
         end
     end
+end
+
+-- test positioning that would nominal hang off the edge
+function test.element_based_placement_spanning_edge()
+    local function test_placements(gap, h_specs, v_specs)
+        local el = get_centered_ui_el{
+            w = MIN_INTERFACE.width - 2 * gap,
+            h = MIN_INTERFACE.height - 2 * gap,
+        }
+        for _, h_spec in ipairs(h_specs) do
+            for _, v_spec in ipairs(v_specs) do
+                ---@type DFLayout.OverlayPlacement.Spec
+                local spec = {
+                    name = 'overlay placement spec testing near edges',
+                    size = { w = 10, h = 10 },
+                    ui_element = el,
+                    h_placement = h_spec.placement,
+                    v_placement = v_spec.placement,
+                }
+                local placement = layout.getRelativePlacement(spec, MIN_INTERFACE)
+                expect.table_eq(placement, {
+                    l = h_spec.l,
+                    w = 10,
+                    r = h_spec.r,
+
+                    t = v_spec.t,
+                    h = 10,
+                    b = v_spec.b,
+                }, ('%d gap %s, %s placement'):format(gap, h_spec.placement, v_spec.placement))
+            end
+        end
+    end
+
+    -- if the gaps are not greater than 10, the 10x10 is placed in the corners
+
+    ---@type { h: DFLayout.Placement.HorizontalAlignment, l: integer, r: integer }[]
+    local corner_h_placement = {
+        { placement = 'on left',  l = 0,   r = 104 },
+        { placement = 'on right', l = 104, r = 0 },
+    }
+    ---@type { v: DFLayout.Placement.VerticalAlignment, t: integer, b: integer }[]
+    local corner_v_placement = {
+        { placement = 'above', t = 0,  b = 36 },
+        { placement = 'below', t = 36, b = 0 },
+    }
+    test_placements(0, corner_h_placement, corner_v_placement)
+    test_placements(5, corner_h_placement, corner_v_placement)
+    test_placements(10, corner_h_placement, corner_v_placement)
+
+    -- once there is extra room, the 10x10 can move away from the corners
+
+    test_placements(11, {
+        { placement = 'on left',  l = 1,   r = 103 },
+        { placement = 'on right', l = 103, r = 1 },
+    }, {
+        { placement = 'above', t = 1,  b = 35 },
+        { placement = 'below', t = 35, b = 1 },
+    })
+end
+
+-- oversized placement is limited to layout.MINIMUM_INTERFACE_SIZE
+function test.element_based_placement_oversized()
+    for _, size in ipairs{ MIN_INTERFACE, BIG_PARTIAL_INTERFACE, BIG_INTERFACE } do
+        local placement = layout.getRelativePlacement({
+            name = 'placement spec for oversized testing',
+            size = { w = size.width + 1, h = size.height + 1 },
+            ui_element = layout.elements.fort.toolbars.left,
+            h_placement = 'align right edges',
+            v_placement = 'align bottom edges',
+            offset = { x = 1 },
+        }, size)
+        expect.table_eq(placement, {
+            l = 0,
+            w = size.width,
+            r = 0,
+
+            t = 0,
+            h = size.height,
+            b = 0,
+        }, 'oversize area should be limited to interface size')
+    end
+end
+
+--- Test the overlay helper: overlay_placement_info_* ---
+
+local function sum(...)
+    local s = { x = 0, y = 0 }
+    for _, v in ipairs({ ... }) do
+        s.x = s.x + (v.x or 0)
+        s.y = s.y + (v.y or 0)
+    end
+    return s
 end
 
 local function size_to_ViewRect(size)
@@ -397,7 +489,7 @@ end
 function test.overlay_placement_info_default_pos()
     local el = get_centered_ui_el{ w = 5, h = 5 }
     local function spec(dp)
-        ---@type DFLayout.Placement.Spec
+        ---@type DFLayout.OverlayPlacement.Spec
         local new_spec = {
             name = 'overlay placement spec for .default_pos testing',
             size = { w = 3, h = 3 },
@@ -488,7 +580,7 @@ end
 function test.overlay_placement_info_default_pos_corner()
     local el = get_centered_ui_el{ w = 5, h = 5 }
     local function spec(dp)
-        ---@type DFLayout.Placement.Spec
+        ---@type DFLayout.OverlayPlacement.Spec
         local new_spec = {
             name = 'overlay placement spec for .default_pos testing',
             size = { w = 3, h = 3 },
@@ -515,64 +607,11 @@ function test.overlay_placement_info_default_pos_corner()
     end
 end
 
--- test positioning that would nominal hang off the edge
-function test.overlay_placement_info_spanning_edge()
-    local function test_placements(gap, h_specs, v_specs)
-        local el = get_centered_ui_el{
-            w = MIN_INTERFACE.width - 2 * gap,
-            h = MIN_INTERFACE.height - 2 * gap,
-        }
-        for _, h_spec in ipairs(h_specs) do
-            for _, v_spec in ipairs(v_specs) do
-                ---@type DFLayout.Placement.Spec
-                local spec = {
-                    name = 'overlay placement spec testing near edges',
-                    size = { w = 10, h = 10 },
-                    ui_element = el,
-                    h_placement = h_spec.placement,
-                    v_placement = v_spec.placement,
-                }
-                local placement = layout.getOverlayPlacementInfo(spec)
-                expect.table_eq(
-                    placement.default_pos,
-                    { x = h_spec.x, y = v_spec.y },
-                    ('%d gap %s, %s default_pos'):format(gap, h_spec.placement, v_spec.placement))
-            end
-        end
-    end
-
-    -- if the gaps are not greater than 10, the 10x10 is placed in the corners
-
-    ---@type { h: DFLayout.Placement.HorizontalAlignment, x: integer }[]
-    local corner_h_placement = {
-        { placement = 'on left',  x = 1 },
-        { placement = 'on right', x = 105 },
-    }
-    ---@type { v: DFLayout.Placement.VerticalAlignment, y: integer }[]
-    local corner_v_placement = {
-        { placement = 'above', y = -37 },
-        { placement = 'below', y = -1 },
-    }
-    test_placements(0, corner_h_placement, corner_v_placement)
-    test_placements(5, corner_h_placement, corner_v_placement)
-    test_placements(10, corner_h_placement, corner_v_placement)
-
-    -- once there is extra room, the 10x10 can move away from the corners
-
-    test_placements(11, {
-        { placement = 'on left',  x = 2 },
-        { placement = 'on right', x = 104 },
-    }, {
-        { placement = 'above', y = -36 },
-        { placement = 'below', y = -2 },
-    })
-end
-
 -- oversized placement is limited to layout.MINIMUM_INTERFACE_SIZE
 function test.overlay_placement_info_oversized()
     local placement = layout.getOverlayPlacementInfo{
         name = 'overlay placement spec for oversized testing',
-        size = { w= MIN_INTERFACE.width + 1, h = MIN_INTERFACE.height + 1 },
+        size = { w = MIN_INTERFACE.width + 1, h = MIN_INTERFACE.height + 1 },
         ui_element = layout.elements.fort.toolbars.left,
         h_placement = 'align right edges',
         v_placement = 'align bottom edges',
@@ -593,7 +632,7 @@ function test.overlay_placement_info_DIG_button()
     -- normally, this would be specified as 'on right' of DIG_OPEN_RIGHT without
     -- an offset; but since this is a test, we are exercising an different
     -- horizontal placement
-    ---@type DFLayout.Placement.Spec
+    ---@type DFLayout.OverlayPlacement.Spec
     local spec = {
         name = 'overlay placement spec for DIG.DIG_MODE_ALL testing',
         size = { w = 26, h = 11 },
@@ -666,7 +705,7 @@ end
 
 -- test a "real" positioning with an off-nominal default_pos across multiple interface sizes
 function test.overlay_placement_info_ERASE_toolbar()
-    ---@type DFLayout.Placement.Spec
+    ---@type DFLayout.OverlayPlacement.Spec
     local spec = {
         name = 'overlay placement spec for ERASE toolbar testing',
         size = { w = 26, h = 10 },
@@ -771,7 +810,8 @@ function test.overlay_experimental_placement_info_orders_list_element_positions(
         { w = 155, h = 49, c = 11, p = { l = 6, w = 112, r = 37, t = 8, h = 30, b = 11 } },
         { w = 155, h = 50, c = 12, p = { l = 6, w = 112, r = 37, t = 8, h = 33, b = 9 } },
     } do
-        local f = layout.experimental_elements.orders.frame_fn({width = t.w, height = t.h}, {
+        local size = { width = t.w, height = t.h }
+        local f = layout.getUIElementFrame(layout.experimental_elements.orders, size, {
             orders_needs_scrollbar = function(n)
                 expect.eq(n, t.p.h // 3, 'displayable row count')
                 return t.c > n
@@ -813,7 +853,8 @@ function test.overlay_experimental_placement_info_zones_list_element_positions()
         { w = 155, h = 50, c = 12, p = { l = 6, w = 117, r = 32, t = 10, h = 33, b = 7 } },
         { w = 155, h = 51, c = 13, p = { l = 6, w = 117, r = 32, t = 10, h = 36, b = 5 } },
     } do
-        local f = layout.experimental_elements.zones.frame_fn({width = t.w, height = t.h}, {
+        local size = { width = t.w, height = t.h }
+        local f = layout.getUIElementFrame(layout.experimental_elements.zones, size, {
             zones_needs_scrollbar = function(n)
                 expect.eq(n, t.p.h // 3, 'displayable row count')
                 return t.c > n
@@ -840,8 +881,13 @@ local function fully_place(interface_size, frame)
         b = interface_size.height - (t + frame.h)
     end
     return {
-        l = l, w = frame.w, r = r,
-        t = t, h = frame.h, b = b,
+        l = l,
+        w = frame.w,
+        r = r,
+
+        t = t,
+        h = frame.h,
+        b = b,
     }
 end
 
@@ -954,10 +1000,10 @@ function test.overlay_experimental_placement_info_orders_list()
 
         -- check default_pos
 
-        local check_UL = check_corner(anchor_corner .. ' UL', size, UL, {'l', 't'})
-        local check_UR = check_corner(anchor_corner .. ' UR', size, UR, {'r', 't'})
-        local check_LR = check_corner(anchor_corner .. ' LR', size, LR, {'r', 'b'})
-        local check_LL = check_corner(anchor_corner .. ' LL', size, LL, {'l', 'b'})
+        local check_UL = check_corner(anchor_corner .. ' UL', size, UL, { 'l', 't' })
+        local check_UR = check_corner(anchor_corner .. ' UR', size, UR, { 'r', 't' })
+        local check_LR = check_corner(anchor_corner .. ' LR', size, LR, { 'r', 'b' })
+        local check_LL = check_corner(anchor_corner .. ' LL', size, LL, { 'l', 'b' })
 
         for _, t in ipairs{
             -- no scrollbar, wrapped info tab bar
@@ -989,7 +1035,7 @@ function test.overlay_experimental_placement_info_orders_list()
             local interface_size = { width = t.w, height = t.h }
             local c = ('%dx%d w/%d orders'):format(t.w, t.h, t.c)
             item_count = t.c
-            local el_f = orders.frame_fn(interface_size, feature_tests)
+            local el_f = layout.getUIElementFrame(orders, interface_size, feature_tests)
             check_UL(interface_size, el_f, c)
             check_UR(interface_size, el_f, c)
             check_LR(interface_size, el_f, c)
@@ -1045,10 +1091,10 @@ function test.overlay_experimental_placement_info_zones_list()
 
         -- check default_pos
 
-        local check_UL = check_corner(anchor_corner .. ' UL', size, UL, {'l', 't'})
-        local check_UR = check_corner(anchor_corner .. ' UR', size, UR, {'r', 't'})
-        local check_LR = check_corner(anchor_corner .. ' LR', size, LR, {'r', 'b'})
-        local check_LL = check_corner(anchor_corner .. ' LL', size, LL, {'l', 'b'})
+        local check_UL = check_corner(anchor_corner .. ' UL', size, UL, { 'l', 't' })
+        local check_UR = check_corner(anchor_corner .. ' UR', size, UR, { 'r', 't' })
+        local check_LR = check_corner(anchor_corner .. ' LR', size, LR, { 'r', 'b' })
+        local check_LL = check_corner(anchor_corner .. ' LL', size, LL, { 'l', 'b' })
 
         for _, t in ipairs{
             -- no scrollbar, wrapped info tab bar
@@ -1084,7 +1130,7 @@ function test.overlay_experimental_placement_info_zones_list()
             local interface_size = { width = t.w, height = t.h }
             local c = ('%dx%d w/%d zones'):format(t.w, t.h, t.c)
             item_count = t.c
-            local el_f = zones.frame_fn(interface_size, feature_tests)
+            local el_f = layout.getUIElementFrame(zones, interface_size, feature_tests)
             check_UL(interface_size, el_f, c)
             check_UR(interface_size, el_f, c)
             check_LR(interface_size, el_f, c)

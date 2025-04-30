@@ -121,8 +121,10 @@ end
 ---@field h_placement DFLayout.Placement.HorizontalAlignment how to align the overlay's horizontal position against the `ui_element`
 ---@field v_placement DFLayout.Placement.VerticalAlignment how to align the overlay's vertical position against the `ui_element`
 ---@field offset? DFLayout.Placement.Offset how far to move overlay after alignment with `ui_element`
----@field default_pos? DFLayout.Placement.DefaultPos specify an overlay default_pos, or which edges it should be based on
 ---@field feature_tests? DFLayout.FrameFn.FeatureTests for internal/testing use
+
+---@class DFLayout.OverlayPlacement.Spec: DFLayout.Placement.Spec
+---@field default_pos? DFLayout.Placement.DefaultPos specify an overlay default_pos, or which edges it should be based on
 
 ---@alias DFLayout.Placement.GenericAlignment 'place before' | 'align start' | 'align end' | 'place after'
 
@@ -971,7 +973,48 @@ experimental_elements = {
     zones = zones_ui_element,
 }
 
---- Automatic UI-relative Overlay Positioning ---
+default_feature_tests = {
+    orders_needs_scrollbar = function(displayable_count)
+        return #df.global.world.manager_orders.all > displayable_count
+    end,
+    zones_needs_scrollbar = function(displayable_count)
+        return
+            #df.global.game.main_interface.info.buildings.list[df.buildings_mode_type.ZONES]
+            > displayable_count
+    end,
+}
+
+--- UI Element Position and Relative Placement ---
+
+-- Returns a "fully placed frame" for the `ui_element` in an interface area of
+-- `interface_size`.
+--
+-- Throws an error if the computed frame does not span the `interface_size`, or
+-- if it has negative inset values.
+--
+---@param ui_element DFLayout.DynamicUIElement
+---@param interface_size DFLayout.Interface.Size
+---@param feature_tests? DFLayout.FrameFn.FeatureTests for internal/test use
+---@return DFLayout.Frame
+function getUIElementFrame(ui_element, interface_size, feature_tests)
+    local frame = ui_element.frame_fn(interface_size,
+        feature_tests         -- getRelativePlacement
+        or default_feature_tests)
+
+    if frame.l < 0 or frame.w <= 0 or frame.r < 0
+        or frame.l + frame.w + frame.r ~= interface_size.width
+    then
+        dfhack.error(('%s: horizontal placement is invalid: l=%d w=%d r=%d W=%d')
+            :format(ui_element.name, frame.l, frame.w, frame.r, interface_size.width))
+    end
+    if frame.t < 0 or frame.h <= 0 or frame.b < 0
+        or frame.t + frame.h + frame.b ~= interface_size.height
+    then
+        dfhack.error(('%s: vertical placement is invalid: t=%d h=%d b=%d H=%d')
+            :format(ui_element.name, frame.t, frame.h, frame.b, interface_size.height))
+    end
+    return frame
+end
 
 -- Place a specified span (width or height) with the specified alignment with
 -- respect to the given reference position and span.
@@ -1010,44 +1053,6 @@ local function place_span(available_span, ref_offset_before, ref_offset_after, p
     return before, placed_span, after
 end
 
--- Runs `frame_fn(interface_size)` and checks the resulting frame for "sanity"
--- (non-negative paddings, positive sizes, paddings and sizes span
--- `interface_size`).
---
--- Returns the frame or throws an error.
---
----@param interface_size DFLayout.Interface.Size
----@param ui_element DFLayout.DynamicUIElement
----@param feature_tests DFLayout.FrameFn.FeatureTests
----@return DFLayout.Frame
-local function checked_frame(interface_size, ui_element, feature_tests)
-    local frame = ui_element.frame_fn(interface_size, feature_tests)
-    if frame.l < 0 or frame.w <= 0 or frame.r < 0
-        or frame.l + frame.w + frame.r ~= interface_size.width
-    then
-        dfhack.error(('%s: horizontal placement is invalid: l=%d w=%d r=%d W=%d')
-            :format(ui_element.name, frame.l, frame.w, frame.r, interface_size.width))
-    end
-    if frame.t < 0 or frame.h <= 0 or frame.b < 0
-        or frame.t + frame.h + frame.b ~= interface_size.height
-    then
-        dfhack.error(('%s: vertical placement is invalid: t=%d h=%d b=%d H=%d')
-            :format(ui_element.name, frame.t, frame.h, frame.b, interface_size.height))
-    end
-    return frame
-end
-
-local default_feature_tests = {
-    orders_needs_scrollbar = function(displayable_count)
-        return #df.global.world.manager_orders.all > displayable_count
-    end,
-    zones_needs_scrollbar = function(displayable_count)
-        return
-            #df.global.game.main_interface.info.buildings.list[df.buildings_mode_type.ZONES]
-            > displayable_count
-    end,
-}
-
 local generic_placement_from_horizontal = {
     ['on left'] = 'place before',
     ['align left edges'] = 'align start',
@@ -1064,14 +1069,14 @@ local generic_placement_from_vertical = {
 -- Place the specified area with respect to the specified reference with the
 -- specified alignment and offset.
 --
----@param interface_size DFLayout.Interface.Size
 ---@param spec DFLayout.Placement.Spec
----@param feature_tests? DFLayout.FrameFn.FeatureTests
+---@param interface_size DFLayout.Interface.Size
+---@param feature_tests? DFLayout.FrameFn.FeatureTests for internal/test use
 ---@return DFLayout.Frame
-local function place_overlay_frame(interface_size, spec, feature_tests)
-    local ref_inset = checked_frame(interface_size, spec.ui_element,
-        feature_tests             -- get_overlay_placement_info
-        or spec.feature_tests     -- tests
+function getRelativePlacement(spec, interface_size, feature_tests)
+    local ref_inset = getUIElementFrame(spec.ui_element, interface_size,
+        feature_tests         -- get_overlay_placement_info
+        or spec.feature_tests -- tests
         or default_feature_tests)
 
     local generic_h_placement = generic_placement_from_horizontal[spec.h_placement]
@@ -1096,6 +1101,8 @@ local function place_overlay_frame(interface_size, spec, feature_tests)
         b = b,
     }
 end
+
+--- Automatic UI-relative Overlay Positioning ---
 
 -- Calculate (or validate the requested) `default_pos` and required paddings
 -- based on nominal position and forced paddings.
@@ -1153,7 +1160,7 @@ local function state_changed(widget, ui_element)
 end
 
 ---@type DFLayout.FrameFn.FeatureTests
-local all_features = setmetatable({}, {
+all_features = setmetatable({}, {
     __index = function(table, field)
         return function() return true end
     end,
@@ -1161,15 +1168,15 @@ local all_features = setmetatable({}, {
 
 ---@alias DFLayout.Placement.InsetFilter fun(inset: DFLayout.Inset): DFLayout.Inset
 
----@param overlay_placement_spec DFLayout.Placement.Spec
+---@param overlay_placement_spec DFLayout.OverlayPlacement.Spec
 ---@param inset_filter? DFLayout.Placement.InsetFilter
 ---@return DFLayout.OverlayPlacementInfo overlay_placement_info
 local function get_overlay_placement_info(overlay_placement_spec, inset_filter)
-    overlay_placement_spec = utils.clone(overlay_placement_spec, true) --[[@as DFLayout.Placement.Spec]]
+    overlay_placement_spec = utils.clone(overlay_placement_spec, true) --[[@as DFLayout.OverlayPlacement.Spec]]
     overlay_placement_spec.name = overlay_placement_spec.name or '[unnamed overlay placement]'
 
     -- get the "default" placement (in a MINIMUM_INTERFACE_SIZE area)
-    local default_placement = place_overlay_frame(MINIMUM_INTERFACE_SIZE, overlay_placement_spec, all_features)
+    local default_placement = getRelativePlacement(overlay_placement_spec, MINIMUM_INTERFACE_SIZE, all_features)
 
     local default_from_left = true -- default to left-relative
     local default_from_top = false -- default to bottom-relative
@@ -1222,7 +1229,7 @@ local function get_overlay_placement_info(overlay_placement_spec, inset_filter)
         ---@param self_overlay_widget widgets.Widget overlay.OverlayWidget
         ---@param parent_rect gui.ViewRect
         preUpdateLayout_fn = function(self_overlay_widget, parent_rect)
-            local placement = place_overlay_frame(parent_rect, overlay_placement_spec)
+            local placement = getRelativePlacement(overlay_placement_spec, parent_rect)
             local inset = {
                 l = placement.l - default_placement.l + l_pad,
                 r = placement.r - default_placement.r + r_pad,
@@ -1248,7 +1255,7 @@ end
 -- Return a table with values that can be used to automatically place an
 -- overlay widget relative to a reference position.
 --
----@param overlay_placement_spec DFLayout.Placement.Spec
+---@param overlay_placement_spec DFLayout.OverlayPlacement.Spec
 ---@return DFLayout.OverlayPlacementInfo overlay_placement_info
 function getOverlayPlacementInfo(overlay_placement_spec)
     return get_overlay_placement_info(overlay_placement_spec)
@@ -1267,7 +1274,7 @@ end
 -- left. This is compatible with several existing, hand-rolled overlay
 -- positioning calculations.
 --
----@param overlay_placement_spec DFLayout.Placement.Spec
+---@param overlay_placement_spec DFLayout.OverlayPlacement.Spec
 ---@return DFLayout.OverlayPlacementInfo overlay_placement_info
 function getLeftOnlyOverlayPlacementInfo(overlay_placement_spec)
     return get_overlay_placement_info(overlay_placement_spec, only_left_inset)

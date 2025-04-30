@@ -1144,7 +1144,7 @@ local state_changed_cache = setmetatable({}, { __mode = 'k' })
 ---@param ui_element DFLayout.DynamicUIElement
 ---@return boolean
 local function state_changed(widget, ui_element)
-    if widget == nil then return end
+    if widget == nil or ui_element == nil or ui_element.state_fn == nil then return false end
     local previous = state_changed_cache[widget]
     local current = ui_element.state_fn()
     state_changed_cache[widget] = current
@@ -1157,6 +1157,30 @@ local function state_changed(widget, ui_element)
     end
     if next(previous) then return true end
     return false
+end
+
+-- The positions of some UI elements vary due to influences other than the
+-- interface size. This function returns a function (the "checker") that checks
+-- whether a UI element's position-influencing state (other than interface size)
+-- has changed since the last time the "checker" was called.
+--
+-- The returned function should be strongly held somewhere that won't be
+-- collected until the caller is no longer interested in the position of the UI
+-- element (e.g., a field of a DFHack widget that relies on the UI element's
+-- position).
+--
+-- When the checker function returns true, the position of the UI element might
+-- have changed. It should be recomputed (e.g., `getUIElementFrame`) and used to
+-- update whatever depends on the position of the UI element.
+--
+---@param ui_element DFLayout.DynamicUIElement
+---@return fun(): boolean
+function getUIElementStateChecker(ui_element)
+    if ui_element == nil or ui_element.state_fn == nil then
+        return function() return false end
+    end
+    local cache_key = {} -- unique value, strongly held by the closure, so be sure to strongly hold the returned closure
+    return curry(state_changed, cache_key, ui_element)
 end
 
 ---@type DFLayout.FrameFn.FeatureTests

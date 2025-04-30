@@ -2291,10 +2291,11 @@ static int units_assignTrainer(lua_State *L) {
 }
 
 static int units_getReadablename(lua_State *L) {
+    bool skip_english = lua_toboolean(L, 2); // defaults to false
     if (auto unit = Lua::GetDFObject<df::unit>(L, 1))
-        Lua::Push(L, Units::getReadableName(unit));
+        Lua::Push(L, Units::getReadableName(unit, skip_english));
     else if (auto hf = Lua::GetDFObject<df::historical_figure>(L, 1))
-        Lua::Push(L, Units::getReadableName(hf));
+        Lua::Push(L, Units::getReadableName(hf, skip_english));
     else
         luaL_argerror(L, 1, "Expected a unit or a historical figure");
     return 1;
@@ -3965,7 +3966,7 @@ static int internal_findScript(lua_State *L)
     const char *name = luaL_checkstring(L, 1);
     std::filesystem::path path = Core::getInstance().findScript(name);
     if (!path.empty())
-        lua_pushstring(L, path.string().c_str());
+        lua_pushstring(L, Filesystem::as_string(path).c_str());
     else
         lua_pushnil(L);
     return 1;

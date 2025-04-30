@@ -281,9 +281,9 @@ DFHACK_EXPORT std::string getRaceBabyName(df::unit *unit, bool plural = false);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id, bool plural = false);
 DFHACK_EXPORT std::string getRaceChildName(df::unit *unit, bool plural = false);
 // Full readable name including profession. HF profession might be different from unit profession.
-DFHACK_EXPORT std::string getReadableName(df::historical_figure *hf);
+DFHACK_EXPORT std::string getReadableName(df::historical_figure *hf, bool skip_english = false);
 // Full readable name including profession, curse name, and tame description.
-DFHACK_EXPORT std::string getReadableName(df::unit *unit);
+DFHACK_EXPORT std::string getReadableName(df::unit *unit, bool skip_english = false);
 
 // Unit's age (in non-integer years). Ignore false identities if true_age.
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);

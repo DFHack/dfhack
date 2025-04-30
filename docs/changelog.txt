@@ -56,16 +56,32 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
+- `getplants`: use updated formula for calculating whether plant growths are ripe
+- `getplants`: fix logic for determining whether plant growths have been picked
+- `gui/teleport`: adapt to new behavior in DF 51.11 to avoid a crash when teleporting items into mid-air
+- `script-manager`: fix lua scripts in mods not being reloaded properly upon entering a saved world on Windows
 
 ## Misc Improvements
+- All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
 
 ## Documentation
 
 ## API
+- ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness
+- ``Items::getDescription``: fixed display of quality levels, now displays ALL item designations (in correct order) and obeys vanilla SHOW_IMP_QUALITY setting
 
 ## Lua
+- ``script-manager``: new ``get_active_mods()`` function for getting information on active mods
+- ``script-manager``: new ``get_mod_info_metadata()`` function for getting information out of mod ``info.txt`` files
+- ``gui.dflayout``: provide DF fort mode toolbar position information and automatic overlay positioning
 
 ## Removed
+
+# 51.11-r1.2
+
+## Fixes
+- `preserve-tombs`: will no longer crash when a tomb is assigned to a unit that does not exist
 
 # 51.11-r1.1
 
@@ -98,7 +114,6 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function
-- ``gui.dflayout``: provide DF fort mode toolbar position information and automatic overlay positioning
 
 ## Removed
 - ``dfhack.buildings.getOwner``: make new Buildings API available to Lua

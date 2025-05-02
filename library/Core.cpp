@@ -269,10 +269,10 @@ struct IODATA
 // A thread function... for handling hotkeys. This is needed because
 // all the plugin commands are expected to be run from foreign threads.
 // Running them from one of the main DF threads will result in deadlock!
-void fHKthread(void * iodata)
+static void fHKthread(IODATA * iodata)
 {
-    Core * core = ((IODATA*) iodata)->core;
-    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+    Core * core = iodata->core;
+    PluginManager * plug_mgr = iodata->plug_mgr;
     if(plug_mgr == 0 || core == 0)
     {
         std::cerr << "Hotkey thread has croaked." << std::endl;
@@ -1874,7 +1874,7 @@ bool Core::InitSimulationThread()
 
     std::cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
-    d->hotkeythread = std::thread(fHKthread, (void *) temp);
+    d->hotkeythread = std::thread(fHKthread, temp);
     started = true;
     modstate = 0;
 

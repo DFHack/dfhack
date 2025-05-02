@@ -61,6 +61,7 @@ Template for new versions:
 - `getplants`: fix logic for determining whether plant growths have been picked
 - `gui/teleport`: adapt to new behavior in DF 51.11 to avoid a crash when teleporting items into mid-air
 - `script-manager`: fix lua scripts in mods not being reloaded properly upon entering a saved world on Windows
+- `preserve-rooms`: don't warn when a room is assigned to a non-existent unit.  this is now common behavior for DF when it keeps a room for an unloaded unit
 
 ## Misc Improvements
 - All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.

@@ -513,7 +513,7 @@ static void process_rooms(color_ostream &out,
         }
         auto owner = Buildings::getOwner(zone);
         if (!owner) {
-            WARN(cycle, out).print("building %d has owner id %d but no such unit exists\n", zone->id, zone->assigned_unit_id);
+            DEBUG(cycle, out).print("building %d has owner id %d but no such unit exists\n", zone->id, zone->assigned_unit_id);
             continue;
         }
         auto hf = df::historical_figure::find(owner->hist_figure_id);

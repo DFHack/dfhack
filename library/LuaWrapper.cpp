@@ -64,10 +64,10 @@ using namespace DFHack::LuaWrapper;
 
 /* */
 
-static int change_error(lua_State *state)
+[[noreturn]] static int change_error(lua_State *state)
 {
     luaL_error(state, "Attempt to change a read-only table.\n");
-    return 0;
+    std::abort(); // should never be reached but makes gcc happy
 }
 
 /**
@@ -1642,7 +1642,7 @@ static void RenderType(lua_State *state, const compound_identity *node)
     case IDTYPE_UNION: // TODO: change this to union-type? what relies on this?
         lua_pushboolean(state, true);
         lua_setfield(state, ftable, "_union");
-        // fall through
+        [[fallthrough]];
     case IDTYPE_STRUCT:
         lua_pushstring(state, "struct-type");
         lua_setfield(state, ftable, "_kind");

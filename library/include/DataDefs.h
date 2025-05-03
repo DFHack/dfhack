@@ -35,7 +35,7 @@ distribution.
 #include "BitArray.h"
 #include "Export.h"
 
-typedef struct lua_State lua_State;
+struct lua_State;
 
 /*
  * Definitions of DFHack namespace structs used by generated headers.
@@ -352,9 +352,9 @@ namespace DFHack
     };
 
 #ifdef _MSC_VER
-    typedef void *virtual_ptr;
+    using virtual_ptr = void*;
 #else
-    typedef virtual_class *virtual_ptr;
+    using virtual_ptr = virtual_class*;
 #endif
 
     class DFHACK_EXPORT VMethodInterposeLinkBase;

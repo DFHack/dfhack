@@ -1496,7 +1496,6 @@ Core::Core() :
     HotkeyCond{},
     alias_mutex{},
     started{false},
-    misc_data_mutex{},
     CoreSuspendMutex{},
     CoreWakeup{},
     ownerThread{},
@@ -1993,28 +1992,6 @@ void Core::printerr(const char *format, ...)
     va_start(args,format);
     proxy.vprinterr(format,args);
     va_end(args);
-}
-
-void Core::RegisterData( void *p, std::string key )
-{
-    std::lock_guard<std::mutex> lock(misc_data_mutex);
-    misc_data_map[key] = p;
-}
-
-void *Core::GetData( std::string key )
-{
-    std::lock_guard<std::mutex> lock(misc_data_mutex);
-    std::map<std::string,void*>::iterator it=misc_data_map.find(key);
-
-    if ( it != misc_data_map.end() )
-    {
-        void *p=it->second;
-        return p;
-    }
-    else
-    {
-        return 0;// or throw an error.
-    }
 }
 
 Core& Core::getInstance() {

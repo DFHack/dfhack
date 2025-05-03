@@ -54,6 +54,7 @@ namespace df {
     T get_from_lua_state(lua_State* L, int idx)
     {
         using DFHack::LuaWrapper::field_error;
+        using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
         using Ptr = std::add_pointer_t<std::remove_reference_t<T>>;
         Ptr ptr{};
         df::identity_traits<Ptr>::get()->lua_write(L, UPVAL_METHOD_NAME, &ptr, idx);
@@ -69,6 +70,7 @@ namespace df {
     template<std::semiregular T>
     T get_from_lua_state(lua_State* L, int idx)
     {
+        using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
         T val{};
         df::identity_traits<T>::get()->lua_write(L, UPVAL_METHOD_NAME, &val, idx);
         return val;
@@ -78,6 +80,7 @@ namespace df {
         requires std::is_invocable_r_v<RT, FT, ET..., AT...>
     void call_and_push_impl(lua_State* L, int base, std::index_sequence<I...>, FT fun, ET... extra)
     {
+        using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
         if constexpr (std::is_same_v<RT, void>) {
             std::invoke(fun, extra..., (get_from_lua_state<AT>(L, base+I))...);
             lua_pushnil(L);
@@ -119,6 +122,7 @@ namespace df {
     struct function_wrapper<RT(CT::*)(AT...)> {
         static const int num_args = sizeof...(AT)+1;
         static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...)) {
+            using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
             CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
             call_and_push<RT, AT...>(L, base, mem_fun, self);
         };
@@ -128,6 +132,7 @@ namespace df {
     struct function_wrapper<RT(CT::*)(AT...) const> {
         static const int num_args = sizeof...(AT)+1;
         static void execute(lua_State *L, int base, RT(CT::*mem_fun)(AT...) const) {
+            using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
             CT *self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
             call_and_push<RT, AT...>(L, base, mem_fun, self);
         };
@@ -154,6 +159,7 @@ namespace df {
     struct function_wrapper<RT(CT::*)(AT...) noexcept> {
         static const int num_args = sizeof...(AT) + 1;
         static void execute(lua_State* L, int base, RT(CT::* mem_fun)(AT...)) {
+            using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
             CT* self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
             call_and_push<RT, AT...>(L, base, mem_fun, self);
         };
@@ -163,6 +169,7 @@ namespace df {
     struct function_wrapper<RT(CT::*)(AT...) const noexcept> {
         static const int num_args = sizeof...(AT) + 1;
         static void execute(lua_State* L, int base, RT(CT::* mem_fun)(AT...) const) {
+            using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
             CT* self = (CT*)DFHack::LuaWrapper::get_object_addr(L, base++, UPVAL_METHOD_NAME, "invoke");
             call_and_push<RT, AT...>(L, base, mem_fun, self);
         };

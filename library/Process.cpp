@@ -24,9 +24,7 @@ distribution.
 
 #ifndef WIN32
 #ifndef _DARWIN
-#endif /* ! WIN32 */
 #include <cstdlib>
-#ifndef WIN32
 #endif /* ! _DARWIN */
 #endif /* ! WIN32 */
 #include <cstring>
@@ -43,19 +41,18 @@ distribution.
 #include <sys/mman.h>
 #include <sys/time.h>
 #include <unistd.h>
+
 #ifdef _DARWIN
 #include <string.h>
-
 #include <mach-o/dyld.h>
 #include <mach/mach.h>
 #include <mach/mach_vm.h>
 #include <mach/vm_region.h>
 #include <mach/vm_statistics.h>
 #include <dlfcn.h>
-
 #endif /* _DARWIN */
-
 #endif /* ! WIN32 */
+
 #include "Error.h"
 #include "Internal.h"
 #include "MemAccess.h"
@@ -64,17 +61,17 @@ distribution.
 #include "VersionInfo.h"
 #include "VersionInfoFactory.h"
 #include "modules/Filesystem.h"
+
 #ifndef WIN32
 #include "md5wrapper.h"
 #else /* WIN32 */
-
-#include <format>
-
 #define _WIN32_WINNT 0x0600
 #define WINVER 0x0600
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
+
+#include <format>
 #endif /* WIN32 */
 
 using namespace DFHack;

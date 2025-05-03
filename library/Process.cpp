@@ -126,8 +126,8 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
     if (_NSGetExecutablePath(path, &size) == 0) {
         exec_link_name = realpath(path, NULL);
         self_exe_name = std::string(exec_link_name);
-#endif /* _DARWIN */
     }
+#endif /* _DARWIN */
 #else /* WIN32 */
     HMODULE hmod = NULL;
     DWORD needed;

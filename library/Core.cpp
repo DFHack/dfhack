@@ -1391,9 +1391,8 @@ static void run_dfhack_init(color_ostream &out, Core *core)
 }
 
 // Load dfhack.init in a dedicated thread (non-interactive console mode)
-void fInitthread(void * iodata)
+static void fInitthread(IODATA * iod)
 {
-    IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     color_ostream_proxy out(core->getConsole());
 
@@ -1401,13 +1400,12 @@ void fInitthread(void * iodata)
 }
 
 // A thread function... for the interactive console.
-void fIOthread(void * iodata)
+static void fIOthread(IODATA * iod)
 {
     static const std::filesystem::path HISTORY_FILE = CONFIG_PATH / "dfhack.history";
 
-    IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
-    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+    PluginManager * plug_mgr = iod->plug_mgr;
 
     CommandHistory main_history;
     main_history.load(HISTORY_FILE.c_str());
@@ -1847,12 +1845,12 @@ bool Core::InitSimulationThread()
     {
         std::cerr << "Starting IO thread.\n";
         // create IO thread
-        d->iothread = std::thread{fIOthread, (void*)temp};
+        d->iothread = std::thread{fIOthread, temp};
     }
     else
     {
         std::cerr << "Starting dfhack.init thread.\n";
-        d->iothread = std::thread{fInitthread, (void*)temp};
+        d->iothread = std::thread{fInitthread, temp};
     }
 
     std::cerr << "Starting DF input capture thread.\n";

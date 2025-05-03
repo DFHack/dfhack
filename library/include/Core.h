@@ -168,11 +168,6 @@ namespace DFHack
         /// removes the hotkey command and gives it to the caller thread
         std::string getHotkeyCmd( bool &keep_going );
 
-        /// adds a named pointer (for later or between plugins)
-        void RegisterData(void *p,std::string key);
-        /// returns a named pointer.
-        void *GetData(std::string key);
-
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
         command_result runCommand(color_ostream &out, const std::string &command);
         bool loadScriptFile(color_ostream &out, std::filesystem::path fname, bool silent = false);
@@ -315,9 +310,6 @@ namespace DFHack
         std::atomic<bool> started;
         // Additional state change scripts
         std::vector<StateChangeScript> state_change_scripts;
-
-        std::mutex misc_data_mutex;
-        std::map<std::string,void*> misc_data_map;
 
         /*!
          * \defgroup core_suspend CoreSuspender state handling serialization to

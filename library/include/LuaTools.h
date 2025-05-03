@@ -286,9 +286,9 @@ namespace DFHack::Lua {
      * is done inside CoreSuspender, while waiting for input happens
      * without the suspend lock.
      */
-    DFHACK_EXPORT bool RunCoreQueryLoop(color_ostream &out, lua_State *state,
-                                        bool (*init)(color_ostream&, lua_State*, void*),
-                                        void *arg);
+    using init_fn = std::function<bool(color_ostream&, lua_State*)>;
+
+    DFHACK_EXPORT bool RunCoreQueryLoop(color_ostream &out, lua_State *state, init_fn init);
 
     /**
      * Attempt to interrupt the currently-executing lua function by raising a lua error

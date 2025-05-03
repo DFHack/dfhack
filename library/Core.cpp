@@ -323,62 +323,45 @@ static std::string dfhack_version_desc()
     return s.str();
 }
 
-namespace {
-    struct ScriptArgs {
-        const std::string *pcmd;
-        std::vector<std::string> *pargs;
-    };
-    struct ScriptEnableState {
-        const std::string *pcmd;
-        bool pstate;
-    };
-}
-
-static bool init_run_script(color_ostream &out, lua_State *state, void *info)
+static bool init_run_script(color_ostream &out, lua_State *state, const std::string& pcmd, std::vector<std::string>& pargs)
 {
-    auto args = (ScriptArgs*)info;
-    if (!lua_checkstack(state, args->pargs->size()+10))
+    if (!lua_checkstack(state, pargs.size()+10))
         return false;
     Lua::PushDFHack(state);
     lua_getfield(state, -1, "run_script");
     lua_remove(state, -2);
-    lua_pushstring(state, args->pcmd->c_str());
-    for (size_t i = 0; i < args->pargs->size(); i++)
-        lua_pushstring(state, (*args->pargs)[i].c_str());
+    lua_pushstring(state, pcmd.c_str());
+    for (auto& arg : pargs)
+        lua_pushstring(state, arg.c_str());
     return true;
 }
 
 static command_result runLuaScript(color_ostream &out, std::string name, std::vector<std::string> &args)
 {
-    ScriptArgs data;
-    data.pcmd = &name;
-    data.pargs = &args;
-
-    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_run_script, &data);
+    using namespace std::placeholders;
+    auto init_fn = std::bind(init_run_script, _1, _2, name, args);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_fn);
 
     return ok ? CR_OK : CR_FAILURE;
 }
 
-static bool init_enable_script(color_ostream &out, lua_State *state, void *info)
+static bool init_enable_script(color_ostream &out, lua_State *state, std::string& name, bool enable)
 {
-    auto args = (ScriptEnableState*)info;
     if (!lua_checkstack(state, 4))
         return false;
     Lua::PushDFHack(state);
     lua_getfield(state, -1, "enable_script");
     lua_remove(state, -2);
-    lua_pushstring(state, args->pcmd->c_str());
-    lua_pushboolean(state, args->pstate);
+    lua_pushstring(state, name.c_str());
+    lua_pushboolean(state, enable);
     return true;
 }
 
 static command_result enableLuaScript(color_ostream &out, std::string name, bool state)
 {
-    ScriptEnableState data;
-    data.pcmd = &name;
-    data.pstate = state;
-
-    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(), init_enable_script, &data);
+    using namespace std::placeholders;
+    auto init_fn = std::bind(init_enable_script, _1, _2, name, state);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(), init_fn);
 
     return ok ? CR_OK : CR_FAILURE;
 }

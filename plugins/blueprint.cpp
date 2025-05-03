@@ -21,6 +21,7 @@
 #include "modules/Buildings.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/Maps.h"
 #include "modules/World.h"
 
 #include "df/building_axle_horizontalst.h"
@@ -36,6 +37,7 @@
 #include "df/building_water_wheelst.h"
 #include "df/building_workshopst.h"
 #include "df/engraving.h"
+#include "df/entity_position.h"
 #include "df/tile_bitmask.h"
 #include "df/tile_designation.h"
 #include "df/tile_occupancy.h"
@@ -161,8 +163,7 @@ typedef vector<const char *> bp_row;     // index is x coordinate
 typedef map<int16_t, bp_row> bp_area;    // key is y coordinate
 typedef map<int16_t, bp_area> bp_volume; // key is z coordinate
 
-typedef const char * (get_tile_fn)(const df::coord &pos,
-                                   const tile_context &ctx);
+typedef const char * (get_tile_fn)(color_ostream &out, const df::coord &pos, const tile_context &ctx);
 typedef void (init_ctx_fn)(const df::coord &pos, tile_context &ctx);
 
 struct blueprint_processor {
@@ -334,7 +335,7 @@ static const char * get_tile_dig_job(df::tile_designation *td, df::job *job) {
     }
 }
 
-static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
+static const char * get_tile_dig(color_ostream &out, const df::coord &pos, const tile_context &) {
     df::tile_designation *td = Maps::getTileDesignation(pos);
     if (td && td->bits.dig != df::tile_dig_designation::No)
         return add_markers(pos, get_tile_dig_designation(pos, td->bits.dig));
@@ -373,8 +374,7 @@ static const char * get_tile_dig(const df::coord &pos, const tile_context &) {
     }
 }
 
-static const char * get_tile_smooth_minimal(const df::coord &pos,
-                                            const tile_context &) {
+static const char * get_tile_smooth_minimal(color_ostream &out, const df::coord &pos, const tile_context &) {
     if (dig_job_cache.contains(pos) && dig_job_cache[pos]->job_type == df::job_type::CarveFortification)
         return "s";
 
@@ -398,9 +398,8 @@ static const char * get_tile_smooth_minimal(const df::coord &pos,
     return NULL;
 }
 
-static const char * get_tile_smooth_with_engravings(const df::coord &pos,
-                                                    const tile_context &tc) {
-    const char * smooth_minimal = get_tile_smooth_minimal(pos, tc);
+static const char * get_tile_smooth_with_engravings(color_ostream &out, const df::coord &pos, const tile_context &tc) {
+    const char * smooth_minimal = get_tile_smooth_minimal(out, pos, tc);
     if (smooth_minimal)
         return smooth_minimal;
 
@@ -431,9 +430,8 @@ static const char * get_tile_smooth_with_engravings(const df::coord &pos,
     return NULL;
 }
 
-static const char * get_tile_smooth_all(const df::coord &pos,
-                                        const tile_context &tc) {
-    const char * smooth_minimal = get_tile_smooth_minimal(pos, tc);
+static const char * get_tile_smooth_all(color_ostream &out, const df::coord &pos, const tile_context &tc) {
+    const char * smooth_minimal = get_tile_smooth_minimal(out, pos, tc);
     if (smooth_minimal)
         return smooth_minimal;
 
@@ -481,8 +479,7 @@ static const char * get_track_str(const char *prefix, df::tiletype tt, df::tile_
     return cache(prefix + dir);
 }
 
-static const char * get_tile_carve_minimal(const df::coord &pos,
-                                           const tile_context &) {
+static const char * get_tile_carve_minimal(color_ostream &out, const df::coord &pos, const tile_context &) {
     df::tiletype *tt = Maps::getTileType(pos);
     if (!tt)
         return NULL;
@@ -533,8 +530,8 @@ static const char * get_tile_carve_minimal(const df::coord &pos,
     return NULL;
 }
 
-static const char * get_tile_carve(const df::coord &pos, const tile_context &tc) {
-    const char * tile_carve_minimal = get_tile_carve_minimal(pos, tc);
+static const char * get_tile_carve(color_ostream &out, const df::coord &pos, const tile_context &tc) {
+    const char * tile_carve_minimal = get_tile_carve_minimal(out, pos, tc);
     if (tile_carve_minimal)
         return tile_carve_minimal;
 
@@ -643,8 +640,7 @@ static const char * get_constructed_ramp_str(df::tiletype *tt) {
     return get_constructed_track_str(tt, "trackramp");
 }
 
-static const char * get_tile_construct(const df::coord &pos,
-                                   const tile_context &ctx) {
+static const char * get_tile_construct(color_ostream &out, const df::coord &pos, const tile_context &ctx) {
     if (ctx.b && ctx.b->getType() == building_type::Construction)
         return get_construction_str(ctx.b);
 
@@ -1042,8 +1038,7 @@ static const char * add_label(const tile_context &ctx, const char *keys) {
     return cache(s);
 }
 
-static const char * get_tile_build(const df::coord &pos,
-                                   const tile_context &ctx) {
+static const char * get_tile_build(color_ostream &out, const df::coord &pos, const tile_context &ctx) {
     if (!ctx.b || ctx.b->getType() == building_type::Stockpile) {
         return NULL;
     }
@@ -1088,8 +1083,7 @@ static const char * get_place_keys(const tile_context &ctx) {
     return cache(keys);
 }
 
-static const char * get_tile_place(const df::coord &pos,
-                                   const tile_context &ctx) {
+static const char * get_tile_place(color_ostream &out, const df::coord &pos, const tile_context &ctx) {
     if (!ctx.b || ctx.b->getType() != building_type::Stockpile)
         return NULL;
 
@@ -1104,110 +1098,158 @@ static const char * get_tile_place(const df::coord &pos,
     return add_expansion_syntax(ctx, get_place_keys(ctx));
 }
 
-static const char * get_zone_keys(const df::building_civzonest *zone) {
-    static const uint32_t DEFAULT_GATHER_FLAGS =
-            df::civzone_gather_flag::mask_pick_trees |
-            df::civzone_gather_flag::mask_pick_shrubs |
-            df::civzone_gather_flag::mask_gather_fallen;
-
-    ostringstream keys;
-    const df::civzone_type type = zone->type;
-
-    // in DFHack docs order
-    if (type == df::civzone_type::MeetingHall) keys << 'm';
-    if (type == df::civzone_type::Bedroom) keys << 'b';
-    if (type == df::civzone_type::DiningHall) keys << 'h';
-    if (type == df::civzone_type::Pen) keys << 'n';
-    if (type == df::civzone_type::Pond) keys << 'p';
-    if (type == df::civzone_type::WaterSource) keys << 'w';
-    if (type == df::civzone_type::Dungeon) keys << 'j';
-    if (type == df::civzone_type::FishingArea) keys << 'f';
-    if (type == df::civzone_type::SandCollection) keys << 's';
-    if (type == df::civzone_type::Office) keys << 'o';
-    if (type == df::civzone_type::Dormitory) keys << 'D';
-    if (type == df::civzone_type::Barracks) keys << 'B';
-    if (type == df::civzone_type::ArcheryRange) keys << 'a';
-    if (type == df::civzone_type::Dump) keys << 'd';
-    if (type == df::civzone_type::AnimalTraining) keys << 't';
-    if (type == df::civzone_type::Tomb) keys << 'T';
-    if (type == df::civzone_type::PlantGathering) keys << 'g';
-    if (type == df::civzone_type::ClayCollection) keys << 'c';
-
-    keys << '{';
-    if (!zone->name.empty()) {
-        keys << "name=" << zone->name << ' ';
-    }
-    if (!zone->spec_sub_flag.bits.active) {
-        keys << "active=false ";
-    }
-    if (zone->assigned_unit) {
-        keys << "assigned_unit=" << zone->assigned_unit << ' ';
-    }
-    if (!zone->zone_settings.pond.flag.bits.keep_filled) {
-        keys << "pond=false ";
-    }
-    auto archery_settings = zone->zone_settings.archery; // need this to get the `shoot_from` direction
-    if (archery_settings.dir_y == 0) {
-        if (archery_settings.dir_x == 1) keys << "shoot_from=west ";
-        if (archery_settings.dir_x == -1) keys << "shoot_from=east ";
-    }
-    if (archery_settings.dir_x == 0) {
-        if (archery_settings.dir_y == 1) keys << "shoot_from=north ";
-        if (archery_settings.dir_y == -1) keys << "shoot_from=south ";
-    }
-    //FIXEME (Squid): Need to know how to get the location data here
-    if (!zone->zone_settings.tomb.flags.bits.no_pets) {
-        keys << "pets=true ";
-    }
-    if (zone->zone_settings.tomb.flags.bits.no_citizens) {
-        keys << "citizens=false ";
-    }
-    if (zone->zone_settings.gather.flags.whole != DEFAULT_GATHER_FLAGS) {
-        // logic is inverted since they're all on by default
-        if (!zone->zone_settings.gather.flags.bits.pick_trees) keys << "pick_trees=false ";
-        if (!zone->zone_settings.gather.flags.bits.pick_shrubs) keys << "pick_shrubs=false ";
-        if (!zone->zone_settings.gather.flags.bits.gather_fallen) keys << "gather_fallen=false ";
-    }
-
-    string keys_str = keys.str();
-
-    // there is no way to represent an active, but empty zone in quickfort
-    if (keys_str.empty())
-        return NULL;
-
-    // remove final '^' character if there is one
-    if (keys_str.back() == '{') {
-        keys_str.pop_back();
-    } else {
-        keys << '}';
-    }
-
-    return cache(keys_str);
+static string get_reservation(color_ostream &out, df::building_civzonest *zone) {
+    string res;
+    Lua::CallLuaModuleFunction(out, "plugins.preserve-rooms", "preserve_rooms_getRoleAssignmentForZone",
+        std::make_tuple(zone), 1, [&](lua_State *L) {
+        if (lua_isstring(L, -1))
+            res = lua_tostring(L, -1);
+    });
+    return res;
 }
 
-static const char * get_tile_zone(const df::coord &pos,
-                                  const tile_context &ctx) {
+// TODO: handle locations
+static const char * get_zone_keys(color_ostream &out, df::building_civzonest *zone, bool add_properties) {
+    const char * symbol = NULL;
+    vector<string> properties;
+
+    if (!zone->name.empty())
+        properties.push_back("name=" + zone->name);
+    if (!zone->spec_sub_flag.bits.active)
+        properties.push_back("active=false");
+    if (auto reserved_for = get_reservation(out, zone); !reserved_for.empty()) {
+        properties.push_back("assigned_unit=" + reserved_for);
+    }
+
+    // in DFHack docs order
+    switch (zone->type) {
+    using namespace df::enums::civzone_type;
+    case MeetingHall: symbol = "m"; break;
+    case Bedroom: symbol = "b"; break;
+    case DiningHall: symbol = "h"; break;
+    case Pen: symbol = "n"; break;
+    case Pond:
+        symbol = "p";
+        {
+            if (zone->zone_settings.pond.flag.bits.keep_filled)
+                properties.push_back("pond=true");
+        }
+        break;
+    case WaterSource: symbol = "w"; break;
+    case Dungeon: symbol = "j"; break;
+    case FishingArea: symbol = "f"; break;
+    case SandCollection: symbol = "s"; break;
+    case Office: symbol = "o"; break;
+    case Dormitory: symbol = "D"; break;
+    case Barracks: symbol = "B"; break;
+    case ArcheryRange:
+        symbol = "a";
+        {
+            auto & archery = zone->zone_settings.archery;
+            if (archery.dir_x == 1 && archery.dir_y == 0)
+                properties.push_back("shoot_from=west");
+            else if (archery.dir_x == -1 && archery.dir_y == 0)
+                properties.push_back("shoot_from=east");
+            else if (archery.dir_x == 0 && archery.dir_y == 1)
+                properties.push_back("shoot_from=north");
+            else if (archery.dir_x == 0 && archery.dir_y == -1)
+                properties.push_back("shoot_from=south");
+            else
+                return NULL;  // invalid direction
+        }
+        break;
+    case Dump: symbol = "d"; break;
+    case AnimalTraining: symbol = "t"; break;
+    case Tomb:
+        symbol = "T";
+        {
+            auto & tomb = zone->zone_settings.tomb;
+            if (!tomb.flags.bits.no_pets)
+                properties.push_back("pets=true");
+            if (tomb.flags.bits.no_citizens)
+                properties.push_back("citizens=false");
+        }
+        break;
+    case PlantGathering:
+        symbol = "g";
+        {
+            auto & gather = zone->zone_settings.gather;
+            if (!gather.flags.bits.pick_trees)
+                properties.push_back("pick_trees=false");
+            if (!gather.flags.bits.pick_shrubs)
+                properties.push_back("pick_shrubs=false");
+            if (!gather.flags.bits.gather_fallen)
+                properties.push_back("gather_fallen=false");
+        }
+        break;
+    case ClayCollection: symbol = "c"; break;
+    default:
+        return NULL;
+    }
+
+    if (!add_properties || properties.empty())
+        return symbol;
+
+    ostringstream keys;
+    keys << symbol << '{' << join_strings(" ", properties) << '}';
+    return cache(keys.str());
+}
+
+static df::coord get_first_tile(df::building_civzonest *zone) {
+    df::coord first_pos;
+    cuboid zone_area(zone->x1, zone->y1, zone->z, zone->x2, zone->y2, zone->z);
+    zone_area.forCoord([&](const df::coord &pos) {
+        if (Buildings::containsTile(zone, pos)) {
+            first_pos = pos;
+            return false;
+        }
+        return true;
+    });
+
+    return first_pos;
+}
+
+static const char * get_tile_zone(color_ostream &out, const df::coord &pos, const tile_context &ctx) {
     vector<df::building_civzonest*> civzones;
     if (!Buildings::findCivzonesAt(&civzones, pos))
         return NULL;
 
-    // we only have one "zone" blueprint, so use the "topmost" zone (that is,
-    // the one that is highlighted when the cursor is over this tile).
-    // overlapping zones are outside the scope of this plugin, I think.
-    df::building_civzonest *zone = civzones.back();
+    // we can handle overlapping zones in a single blueprint, but only if one of
+    // the following is true:
+    // -- they exactly overlap (even if they aren't rectangular)
+    // -- no two non-rectangular zones overlap
 
-    if (!is_rectangular(zone))
-        return get_zone_keys(zone);
+    // for a first implementation, we will only handle overlapping zones if they
+    // are rectangular. if this is the upper left corner of a rectangular zone,
+    // we will output for that zone. otherwise, if this pos is interior to
+    // all zones, then it doesn't matter which we choose.
 
-    if (zone->x1 != static_cast<int32_t>(pos.x)
-            || zone->y1 != static_cast<int32_t>(pos.y)) {
-        return if_pretty(ctx, "`");
+    df::building_civzonest * primary_zone = civzones[0];
+    df::coord upper_left_corner;
+
+    if (civzones.size() == 1) {
+        upper_left_corner = get_first_tile(primary_zone);
+    } else if (civzones.size() > 1) {
+        for (auto zone : civzones) {
+            if (!is_rectangular(zone))
+                continue;
+            primary_zone = zone;
+            upper_left_corner = get_first_tile(zone);
+            if (pos == upper_left_corner)
+                break;
+        }
     }
 
-    return add_expansion_syntax(zone, get_zone_keys(zone));
+    bool is_first_tile = pos == upper_left_corner;
+
+    if (!is_rectangular(primary_zone))
+        return get_zone_keys(out, primary_zone, is_first_tile);
+
+    if (!is_first_tile)
+        return if_pretty(ctx, "`");
+
+    return add_expansion_syntax(primary_zone, get_zone_keys(out, primary_zone, true));
 }
-
-
 
 static bool create_output_dir(color_ostream &out,
                               const blueprint_options &opts) {
@@ -1439,7 +1481,7 @@ static bool do_transform(color_ostream &out,
                     ctx.processor = &processor;
                     if (processor.init_ctx)
                         processor.init_ctx(pos, ctx);
-                    const char *tile_str = processor.get_tile(pos, ctx);
+                    const char *tile_str = processor.get_tile(out, pos, ctx);
                     if (tile_str) {
                         // ensure our z-index is in the order we want to write
                         auto area = processor.mapdata.emplace(abs(z - start.z),

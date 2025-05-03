@@ -2022,8 +2022,8 @@ void Core::doUpdate(color_ostream &out)
     }
 
     // detect if the game was loaded or unloaded in the meantime
-    void *new_wdata = NULL;
-    void *new_mapdata = NULL;
+    df::world_data* new_wdata = nullptr;
+    df::map_block**** new_mapdata = nullptr;
     if (df::global::world && !is_load_save)
     {
         df::world_data *wdata = df::global::world->world_data;

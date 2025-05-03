@@ -50,6 +50,8 @@ struct lua_State;
 namespace df
 {
     struct viewscreen;
+    struct world_data;
+    struct map_block;
 }
 
 namespace DFHack
@@ -300,9 +302,9 @@ namespace DFHack
         bool SelectHotkey(int key, int modifiers);
 
         // for state change tracking
-        void *last_world_data_ptr;
+        df::world_data *last_world_data_ptr;
         // for state change tracking
-        void *last_local_map_ptr;
+        df::map_block**** last_local_map_ptr;
         friend struct Screen::Hide;
         df::viewscreen *top_viewscreen;
         bool last_pause_state;

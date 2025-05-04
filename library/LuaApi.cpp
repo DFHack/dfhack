@@ -2291,10 +2291,11 @@ static int units_assignTrainer(lua_State *L) {
 }
 
 static int units_getReadablename(lua_State *L) {
+    bool skip_english = lua_toboolean(L, 2); // defaults to false
     if (auto unit = Lua::GetDFObject<df::unit>(L, 1))
-        Lua::Push(L, Units::getReadableName(unit));
+        Lua::Push(L, Units::getReadableName(unit, skip_english));
     else if (auto hf = Lua::GetDFObject<df::historical_figure>(L, 1))
-        Lua::Push(L, Units::getReadableName(hf));
+        Lua::Push(L, Units::getReadableName(hf, skip_english));
     else
         luaL_argerror(L, 1, "Expected a unit or a historical figure");
     return 1;
@@ -2666,20 +2667,17 @@ static const LuaWrapper::FunctionReg dfhack_world_module[] = {
     { NULL, NULL }
 };
 
-#define WORLD_GAMEMODE_WRAPPER(func) \
-    static int world_gamemode_##func(lua_State *L) \
-    { \
-        int gametype = luaL_optint(L, 1, -1); \
-        lua_pushboolean(L, World::func((df::game_type)gametype)); \
-        return 1;\
-    }
-#define WORLD_GAMEMODE_FUNC(func) \
-    {#func, world_gamemode_##func}
+using gamemode_func = auto (df::game_type t) -> bool;
+template <gamemode_func gmf>
+static int world_gamemode(lua_State* L)
+{
+    int gametype = luaL_optint(L, 1, -1);
+    lua_pushboolean(L, gmf((df::game_type)gametype));
+    return 1;
+}
 
-WORLD_GAMEMODE_WRAPPER(isFortressMode);
-WORLD_GAMEMODE_WRAPPER(isAdventureMode);
-WORLD_GAMEMODE_WRAPPER(isArena);
-WORLD_GAMEMODE_WRAPPER(isLegends);
+#define WORLD_GAMEMODE_FUNC(func) \
+    {#func, world_gamemode<World::func>}
 
 static const luaL_Reg dfhack_world_funcs[] = {
     WORLD_GAMEMODE_FUNC(isFortressMode),
@@ -2736,6 +2734,7 @@ static bool buildings_containsTile(df::building *bld, int x, int y) {
 static const LuaWrapper::FunctionReg dfhack_buildings_module[] = {
     WRAPM(Buildings, getGeneralRef),
     WRAPM(Buildings, getSpecificRef),
+    WRAPM(Buildings, getOwner),
     WRAPM(Buildings, setOwner),
     WRAPM(Buildings, allocInstance),
     WRAPM(Buildings, checkFreeTiles),
@@ -3787,32 +3786,39 @@ static int internal_diffscan(lua_State *L)
     bool has_newv = !lua_isnil(L, 7);
     bool has_diffv = !lua_isnil(L, 8);
 
-#define LOOP(esz, etype) \
-    case esz: {          \
-        etype *pold = (etype*)old_data; \
-        etype *pnew = (etype*)new_data; \
-        etype oldv = (etype)luaL_optint(L, 6, 0); \
-        etype newv = (etype)luaL_optint(L, 7, 0); \
-        etype diffv = (etype)luaL_optint(L, 8, 0); \
-        for (int i = start_idx; i < end_idx; i++) { \
-            if (pold[i] == pnew[i]) continue; \
-            if (has_oldv && pold[i] != oldv) continue; \
-            if (has_newv && pnew[i] != newv) continue; \
-            if (has_diffv && etype(pnew[i]-pold[i]) != diffv) continue; \
-            lua_pushinteger(L, i); return 1; \
-        } \
-        break; \
-    }
-    switch (eltsize) {
-        LOOP(1, uint8_t);
-        LOOP(2, uint16_t);
-        LOOP(4, uint32_t);
-        default:
-            luaL_argerror(L, 5, "invalid element size");
-    }
-#undef LOOP
+    auto loop = [&]<typename etype>() -> std::optional<int>
+    {
+        etype* pold = (etype*)old_data;
+        etype* pnew = (etype*)new_data;
+        etype oldv = (etype)luaL_optint(L, 6, 0);
+        etype newv = (etype)luaL_optint(L, 7, 0);
+        etype diffv = (etype)luaL_optint(L, 8, 0);
+        for (int i = start_idx; i < end_idx; i++) {
+            if (pold[i] == pnew[i]) continue;
+            if (has_oldv && pold[i] != oldv) continue;
+            if (has_newv && pnew[i] != newv) continue;
+            if (has_diffv && etype(pnew[i] - pold[i]) != diffv) continue;
+            return i;
+        }
+        return std::nullopt;
+    };
 
-    lua_pushnil(L);
+    std::optional<int> res;
+    switch (eltsize) {
+    case 1:
+        res = loop.operator()<uint8_t>(); break;
+    case 2:
+        res = loop.operator()<uint16_t>(); break;
+    case 4:
+        res = loop.operator()<uint32_t>(); break;
+    default:
+        luaL_argerror(L, 5, "invalid element size");
+    }
+    if (res)
+        lua_pushinteger(L,*res);
+    else
+        lua_pushnil(L);
+
     return 1;
 }
 
@@ -3964,7 +3970,7 @@ static int internal_findScript(lua_State *L)
     const char *name = luaL_checkstring(L, 1);
     std::filesystem::path path = Core::getInstance().findScript(name);
     if (!path.empty())
-        lua_pushstring(L, path.string().c_str());
+        lua_pushstring(L, Filesystem::as_string(path).c_str());
     else
         lua_pushnil(L);
     return 1;

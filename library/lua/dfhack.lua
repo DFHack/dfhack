@@ -994,13 +994,13 @@ local valid_script_flags = {
     scripts = {required = false},
 }
 
-local warned_scripts = {}
+local checked_scripts = {}
 
 function dfhack.run_script(name,...)
-    if not warned_scripts[name] then
+    if not checked_scripts[name] then
+        checked_scripts[name] = true
         local helpdb = require('helpdb')
         if helpdb.has_tag(name, 'unavailable') then
-            warned_scripts[name] = true
             dfhack.printerr(('UNTESTED WARNING: the "%s" script has not been validated to work well with this version of DF.'):format(name))
             dfhack.printerr('It may not work as expected, or it may corrupt your game.')
             qerror('Please run the command again to ignore this warning and proceed.')

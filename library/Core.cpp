@@ -800,6 +800,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         bool all = false;
         bool load = (first == "load");
         bool unload = (first == "unload");
+        bool reload = (first == "reload");
         if (parts.size())
         {
             for (auto p = parts.begin(); p != parts.end(); p++)
@@ -817,19 +818,22 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                     ret = CR_FAILURE;
                 else if (unload && !plug_mgr->unloadAll())
                     ret = CR_FAILURE;
-                else if (!plug_mgr->reloadAll())
+                else if (reload && !plug_mgr->reloadAll())
                     ret = CR_FAILURE;
             }
-            for (auto p = parts.begin(); p != parts.end(); p++)
+            else
             {
-                if (!p->size() || (*p)[0] == '-')
-                    continue;
-                if (load && !plug_mgr->load(*p))
-                    ret = CR_FAILURE;
-                else if (unload && !plug_mgr->unload(*p))
-                    ret = CR_FAILURE;
-                else if (!plug_mgr->reload(*p))
-                    ret = CR_FAILURE;
+                for (auto p = parts.begin(); p != parts.end(); p++)
+                {
+                    if (!p->size() || (*p)[0] == '-')
+                        continue;
+                    if (load && !plug_mgr->load(*p))
+                        ret = CR_FAILURE;
+                    else if (unload && !plug_mgr->unload(*p))
+                        ret = CR_FAILURE;
+                    else if (reload && !plug_mgr->reload(*p))
+                        ret = CR_FAILURE;
+                }
             }
             if (ret != CR_OK)
                 con.printerr("%s failed\n", first.c_str());
@@ -1492,7 +1496,6 @@ Core::Core() :
     HotkeyCond{},
     alias_mutex{},
     started{false},
-    misc_data_mutex{},
     CoreSuspendMutex{},
     CoreWakeup{},
     ownerThread{},
@@ -1989,28 +1992,6 @@ void Core::printerr(const char *format, ...)
     va_start(args,format);
     proxy.vprinterr(format,args);
     va_end(args);
-}
-
-void Core::RegisterData( void *p, std::string key )
-{
-    std::lock_guard<std::mutex> lock(misc_data_mutex);
-    misc_data_map[key] = p;
-}
-
-void *Core::GetData( std::string key )
-{
-    std::lock_guard<std::mutex> lock(misc_data_mutex);
-    std::map<std::string,void*>::iterator it=misc_data_map.find(key);
-
-    if ( it != misc_data_map.end() )
-    {
-        void *p=it->second;
-        return p;
-    }
-    else
-    {
-        return 0;// or throw an error.
-    }
 }
 
 Core& Core::getInstance() {

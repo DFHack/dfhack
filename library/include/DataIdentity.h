@@ -319,7 +319,7 @@ namespace df
 
     class DFHACK_EXPORT stl_ptr_vector_identity : public ptr_container_identity {
     public:
-        typedef std::vector<void*> container;
+        using container = std::vector<void*>;
 
         /*
          * This class assumes that std::vector<T*> is equivalent
@@ -486,7 +486,7 @@ namespace df
          * in layout and behavior to BitArray<int> for any T.
          */
 
-        typedef BitArray<int> container;
+        using container = BitArray<int>;
 
         bit_array_identity(const enum_identity *ienum = NULL)
             : bit_container_identity(sizeof(container), &allocator_fn<container>, ienum)
@@ -516,7 +516,7 @@ namespace df
 
     class DFHACK_EXPORT stl_bit_vector_identity : public bit_container_identity {
     public:
-        typedef std::vector<bool> container;
+        using container = std::vector<bool>;
 
         stl_bit_vector_identity(const enum_identity *ienum = NULL)
             : bit_container_identity(sizeof(container), &df::allocator_fn<container>, ienum)
@@ -547,7 +547,7 @@ namespace df
     template<class T>
     class enum_list_attr_identity : public container_identity {
     public:
-        typedef enum_list_attr<T> container;
+        using container = enum_list_attr<T>;
 
         enum_list_attr_identity(const type_identity *item)
             : container_identity(sizeof(container), NULL, item, NULL)
@@ -615,7 +615,7 @@ namespace df
     template<typename T>
     struct DFHACK_EXPORT identity_traits<std::shared_ptr<T>> {
         static opaque_identity *get() {
-            typedef std::shared_ptr<T> type;
+            using type = std::shared_ptr<T>;
             static std::string name = std::string("shared_ptr<") + typeid(T).name() + ">";
             static opaque_identity identity(sizeof(type), allocator_noassign_fn<type>, name);
             return &identity;
@@ -772,7 +772,7 @@ namespace df
 
     template<class T>
     inline const container_identity *identity_traits<std::vector<T> >::get() {
-        typedef std::vector<T> container;
+        using container = std::vector<T>;
         static const stl_container_identity<container> identity("vector", identity_traits<T>::get());
         return &identity;
     }
@@ -800,28 +800,28 @@ namespace df
 #ifdef BUILD_DFHACK_LIB
     template<class T>
     inline const container_identity *identity_traits<std::deque<T> >::get() {
-        typedef std::deque<T> container;
+        using container = std::deque<T>;
         static const stl_container_identity<container> identity("deque", identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
     inline const container_identity *identity_traits<std::set<T> >::get() {
-        typedef std::set<T> container;
+        using container = std::set<T>;
         static const ro_stl_container_identity<container> identity("set", identity_traits<T>::get());
         return &identity;
     }
 
     template<class KT, class T>
     inline const container_identity *identity_traits<std::map<KT, T>>::get() {
-        typedef std::map<KT, T> container;
+        using container = std::map<KT, T>;
         static const ro_stl_assoc_container_identity<container> identity("map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
 
     template<class KT, class T>
     inline const container_identity *identity_traits<std::unordered_map<KT, T>>::get() {
-        typedef std::unordered_map<KT, T> container;
+        using container = std::unordered_map<KT, T>;
         static const ro_stl_assoc_container_identity<container> identity("unordered_map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
@@ -834,7 +834,7 @@ namespace df
 
     template<class T>
     inline const container_identity *identity_traits<DfArray<T> >::get() {
-        typedef DfArray<T> container;
+        using container = DfArray<T>;
         static const stl_container_identity<container> identity("DfArray", identity_traits<T>::get());
         return &identity;
     }

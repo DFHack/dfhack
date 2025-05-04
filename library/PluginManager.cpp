@@ -772,6 +772,7 @@ int Plugin::lua_cmd_wrapper(lua_State *state)
 
 int Plugin::lua_fun_wrapper(lua_State *state)
 {
+    using DFHack::LuaWrapper::UPVAL_CONTAINER_ID;
     auto cmd = (LuaFunction*)lua_touserdata(state, UPVAL_CONTAINER_ID);
 
     RefAutoinc lock(cmd->owner->access);

@@ -38,6 +38,7 @@ distribution.
 #include "modules/Buildings.h"
 #include "modules/Maps.h"
 #include "modules/Job.h"
+#include "modules/Units.h"
 
 #include "df/building_axle_horizontalst.h"
 #include "df/building_bars_floorst.h"
@@ -317,30 +318,39 @@ std::string Buildings::getName(df::building* building)
     return tmp;
 }
 
+df::unit* Buildings::getOwner(df::building_civzonest* bld)
+{
+    return Units::get_cached_unit_by_global_id(bld->assigned_unit_id, bld->owner_unit_cached_index);
+}
+
 bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
 {
     CHECK_NULL_POINTER(bld);
 
-    if (bld->assigned_unit == unit)
+    auto unit_id = unit ? unit->id : -1;
+
+    if (bld->assigned_unit_id == unit_id)
         return true;
 
-    if (bld->assigned_unit)
+    if (bld->assigned_unit_id != -1)
     {
-        auto &blist = bld->assigned_unit->owned_buildings;
-        vector_erase_at(blist, linear_index(blist, bld));
-
-        if (auto spouse = df::unit::find(bld->assigned_unit->relationship_ids[df::unit_relationship_type::Spouse]))
+        if (auto old_unit = df::unit::find(bld->assigned_unit_id))
         {
-            auto &blist = spouse->owned_buildings;
+            auto& blist = old_unit->owned_buildings;
             vector_erase_at(blist, linear_index(blist, bld));
+
+            if (auto spouse = df::unit::find(old_unit->relationship_ids[df::unit_relationship_type::Spouse]))
+            {
+                auto& blist = spouse->owned_buildings;
+                vector_erase_at(blist, linear_index(blist, bld));
+            }
         }
     }
 
-    bld->assigned_unit = unit;
+    bld->assigned_unit_id = unit_id;
 
     if (unit)
     {
-        bld->assigned_unit_id = unit->id;
         unit->owned_buildings.push_back(bld);
 
         if (auto spouse = df::unit::find(unit->relationship_ids[df::unit_relationship_type::Spouse]))
@@ -350,10 +360,8 @@ bool Buildings::setOwner(df::building_civzonest *bld, df::unit *unit)
                 blist.push_back(bld);
         }
     }
-    else
-    {
-        bld->assigned_unit_id = -1;
-    }
+
+    Units::get_cached_unit_by_global_id(unit_id, bld->owner_unit_cached_index);
 
     return true;
 }
@@ -1654,7 +1662,7 @@ StockpileIterator& StockpileIterator::operator++() {
 
         // If the current item isn't properly stored, move on to the next.
         item = df::item::find(block->items[current]);
-        if (!item->flags.bits.on_ground) {
+        if (!item || !item->flags.bits.on_ground) {
             continue;
         }
 

@@ -230,9 +230,11 @@ class cuboid {
     DFHACK_EXPORT bool containsPos(int16_t x, int16_t y, int16_t z) const;
     DFHACK_EXPORT bool containsPos(const df::coord &pos) const { return containsPos(pos.x, pos.y, pos.z); }
 
-    /// Iterate over every point in the cuboid from top-down, N-S, then W-E. Doesn't guarantee valid map tile!
+    /// Iterate over every point in the cuboid. Doesn't guarantee valid map tile!
     /// "fn" should return true to keep iterating. Won't iterate if cuboid invalid.
-    DFHACK_EXPORT void forCoord(std::function<bool(df::coord)> fn) const;
+    /// If row_major is false, iterates from top-down (z), N-S (y), then W-E (x).
+    /// If row_major is true, iterates from top-down (z), W-E (x), then N-S (y).
+    DFHACK_EXPORT void forCoord(std::function<bool(df::coord)> fn, bool row_major = false) const;
 
     /// Iterate over every non-NULL map block intersecting the tile cuboid from top-down, N-S, then W-E.
     /// Will also supply the intersection of this cuboid and block to your "fn" for use with cuboid::forCoord.
@@ -251,12 +253,13 @@ namespace Maps
 extern DFHACK_EXPORT bool IsValid();
 
 /// Iterate over points in a cuboid from z1:z2, y1:y2, then x1:x2.
+/// If row_major is true, iterates from z1:z2, x1:x2, then y1:y2.
 /// Doesn't guarantee valid map tile! Can be used to iterate over blocks, etc.
 /// "fn" should return true to keep iterating.
 DFHACK_EXPORT void forCoord(std::function<bool(df::coord)> fn,
-    int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16_t z2);
-inline void forCoord(std::function<bool(df::coord)> fn, const df::coord &p1, const df::coord &p2) {
-    forCoord(fn, p1.x, p1.y, p1.z, p2.x, p2.y, p2.z);
+    int16_t x1, int16_t y1, int16_t z1, int16_t x2, int16_t y2, int16_t z2, bool row_major = false);
+inline void forCoord(std::function<bool(df::coord)> fn, const df::coord &p1, const df::coord &p2, bool row_major = false) {
+    forCoord(fn, p1.x, p1.y, p1.z, p2.x, p2.y, p2.z, row_major);
 }
 
 /**

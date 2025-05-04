@@ -16,6 +16,7 @@
 #include "df/world_landmass.h"
 #include "df/world_region_details.h"
 #include "df/world_region.h"
+#include "df/world_river.h"
 #include "df/world.h"
 
 #include <algorithm>
@@ -23,6 +24,8 @@
 #include <chrono>
 #include <deque>
 #include <functional>
+#include <list>
+#include <optional>
 #include <string>
 #include <unordered_map>
 #include <vector>
@@ -54,7 +57,7 @@ struct std::hash<df::coord2d>
 // were only dealing with 2D coordinates in this file
 using coord = df::coord2d;
 
-// static int wdim = 768; // dimension of a world tile
+static int wdim = 768; // dimension of a world tile
 static int rdim = 48;  // dimension of a region tile
 
 /**
@@ -113,6 +116,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 static command_result export_region_tiles(color_ostream &out);
 static command_result export_sites(color_ostream &out);
+static command_result export_rivers(color_ostream &out);
 
 static command_result do_command(color_ostream &out, vector<string> &parameters)
 {
@@ -126,6 +130,9 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     if (parameters.size() && parameters[0] == "sites")
     {
         return export_sites(out);
+    }
+    else if (parameters.size() && parameters[0] == "rivers") {
+        return export_rivers(out);
     }
     else
     {
@@ -471,5 +478,157 @@ static command_result export_region_tiles(color_ostream &out)
     const auto finish{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{finish - start};
     out.print("done in %f s !\n", elapsed_seconds.count());
+    return CR_OK;
+}
+
+/********************************************************************** */
+
+// used for global coordinates at local tile granularity (129*768 = 99072 doesn't fit into df::coord2d)
+struct gcoord {
+    int x,y;
+};
+
+struct river_tile {
+    using polygon_t = std::list<gcoord>;
+    polygon_t polygon;
+    //std::optional<polygon_t::iterator> north, south, west, east;
+};
+
+struct gate {
+    int active,min,max;
+
+    static gate get(const df::world_region_details *const region_details, int region_x, int region_y, direction dir) {
+        auto& vertical = region_details->rivers_vertical;
+        auto& horizontal = region_details->rivers_horizontal;
+        switch (dir) {
+            case direction::North:
+                return { vertical.active[region_x][region_y], vertical.x_min[region_x][region_y], vertical.x_max[region_x][region_y] };
+            case direction::West:
+                return { horizontal.active[region_x][region_y], horizontal.y_min[region_x][region_y], horizontal.y_max[region_x][region_y] };
+            case direction::South:
+                return { vertical.active[region_x][region_y+1], vertical.x_min[region_x][region_y+1], vertical.x_max[region_x][region_y+1] };
+            case direction::East:
+                return { horizontal.active[region_x+1][region_y], horizontal.y_min[region_x+1][region_y], horizontal.y_max[region_x+1][region_y] };
+            default:
+                assert(false);
+                return {};
+        }
+    }
+
+    bool is_valid() const {
+        return active != 0 && min != -30000 && max != -30000;
+    }
+};
+
+
+bool is_land(const df::world_region_details *const region_details, int16_t region_x, int16_t region_y) {
+    CHECK_NULL_POINTER(region_details);
+    auto [world_x, world_y] = region_details->pos;
+    auto biome_tile = get_world_index(world_x, world_y, region_details->biome[region_x][region_y]);
+    auto region_map_entry = Maps::getRegionBiome(biome_tile);
+    CHECK_NULL_POINTER(region_map_entry);
+    return region_map_entry->elevation >= 100 && !region_map_entry->flags.is_set(df::enums::region_map_entry_flags::is_lake);
+}
+
+static command_result export_rivers(color_ostream &out)
+{
+    // ensure that we have an output file
+    std::string filename("rivers.csv");
+    std::ofstream out_file(filename, std::ios::out | std::ios::trunc);
+    if (!out_file) {
+        return CR_FAILURE;
+    }
+
+    // create lookup table for rivers based on world tile coordinates
+    std::unordered_map<coord,size_t> world_river;
+
+    // assign river end first, so that it can be overridden by proper path elements
+    for (size_t r_idx = 0; r_idx < df::global::world->world_data->rivers.size(); ++r_idx) {
+        auto river = df::global::world->world_data->rivers[r_idx];
+        world_river[river->end_pos] = r_idx;
+    }
+
+    for (size_t r_idx = 0; r_idx < df::global::world->world_data->rivers.size(); ++r_idx) {
+        auto river = df::global::world->world_data->rivers[r_idx];
+        for (size_t i = 0; i < river->path.size(); ++i) {
+            auto pos = river->path[i];
+            world_river[pos] = r_idx;
+        }
+    }
+
+    // river idx -> region tile coord -> tile
+    std::unordered_map<size_t,std::unordered_map<coord,river_tile>> tile_index;
+
+    for (auto const region_details : world->world_data->midmap_data.region_details) {
+        auto [world_x, world_y] = region_details->pos;
+        for (int region_x = 0; region_x < 16; ++region_x) {
+            for (int region_y = 0; region_y < 16; ++region_y)
+            {
+                gcoord base = { world_x * wdim + region_x * rdim, world_y * wdim + region_y * rdim };
+
+                auto north = gate::get(region_details, region_x, region_y, direction::North);
+                auto west = gate::get(region_details, region_x, region_y, direction::West);
+                auto south = gate::get(region_details, region_x, region_y, direction::South);
+                auto east = gate::get(region_details, region_x, region_y, direction::East);
+
+                // skip tiles without any gates
+                if (!(north.is_valid() || west.is_valid() || south.is_valid() || east.is_valid()))
+                    continue;
+
+                // skip any river tiles that are on oceans or lakes
+                if (!is_land(region_details, region_x, region_y))
+                    continue;
+
+                river_tile tile;
+
+                if (north.is_valid()) {
+                    tile.polygon.emplace_back(base.x + north.max, base.y);
+                    tile.polygon.emplace_back(base.x + north.min, base.y);
+                }
+                if (west.is_valid()) {
+                    tile.polygon.emplace_back(base.x, base.y + west.min);
+                    tile.polygon.emplace_back(base.x, base.y + west.max);
+                }
+                if (south.is_valid()) {
+                    tile.polygon.emplace_back(base.x + south.min, base.y + rdim);
+                    tile.polygon.emplace_back(base.x + south.max, base.y + rdim);
+                }
+                if (east.is_valid()) {
+                    tile.polygon.emplace_back(base.x + rdim, base.y + east.max);
+                    tile.polygon.emplace_back(base.x + rdim, base.y + east.min);
+                }
+
+                auto r_idx = world_river.at({world_x, world_y});
+                tile_index[r_idx][ coord(world_x * 16 + region_x, world_y * 16 + region_y) ] = std::move(tile);
+            }
+        }
+    }
+
+
+    // generate output
+    out_file << "name_df;name_en;geometry_wkt\n";
+
+    for (auto& [r_idx, river_index] : tile_index) {
+        auto river = world->world_data->rivers.at(r_idx);
+        out_file << DF2UTF(Translation::translateName(&river->name, false)) << ";";
+        out_file << DF2UTF(Translation::translateName(&river->name, true)) << ";";
+        out_file << "MULTIPOLYGON(";
+        bool first = true;
+        for (auto &[tile_pos, tile] : river_index) {
+                tile.polygon.emplace_back(*tile.polygon.begin());
+                auto print_position = [](std::ostream &out, gcoord pos) {
+                    out << pos.x << " " << -pos.y;
+                };
+                if (first) {
+                    first = false;
+                } else {
+                    out_file << ",";
+                }
+                print_range(out_file, tile.polygon, print_position, "((", ",", "))");
+        }
+        out_file << ")\n";
+    }
+
+
     return CR_OK;
 }

@@ -5,9 +5,6 @@
  * Written by cdombroski.
  */
 
-#include <sstream>
-#include <unordered_map>
-
 #include "Console.h"
 #include "DataDefs.h"
 #include "DataFuncs.h"
@@ -42,6 +39,10 @@
 #include "df/tile_designation.h"
 #include "df/tile_occupancy.h"
 #include "df/world.h"
+
+#include <queue>
+#include <sstream>
+#include <unordered_map>
 
 using std::endl;
 using std::map;
@@ -1109,7 +1110,7 @@ static string get_reservation(color_ostream &out, df::building_civzonest *zone) 
 }
 
 // TODO: handle locations
-static const char * get_zone_keys(color_ostream &out, df::building_civzonest *zone, bool add_properties) {
+static const char * get_zone_keys(color_ostream &out, df::building_civzonest *zone, bool add_label, bool add_properties) {
     const char * symbol = NULL;
     vector<string> properties;
 
@@ -1187,11 +1188,15 @@ static const char * get_zone_keys(color_ostream &out, df::building_civzonest *zo
         return NULL;
     }
 
-    if (!add_properties || properties.empty())
+    if (!add_label && (!add_properties || properties.empty()))
         return symbol;
 
     ostringstream keys;
-    keys << symbol << '{' << join_strings(" ", properties) << '}';
+    keys << symbol;
+    if (add_label)
+        keys << "/" << "zone_" << zone->id;
+    if (add_properties)
+        keys << '{' << join_strings(" ", properties) << '}';
     return cache(keys.str());
 }
 
@@ -1204,9 +1209,47 @@ static df::coord get_first_tile(df::building_civzonest *zone) {
             return false;
         }
         return true;
-    });
+    }, true);
 
     return first_pos;
+}
+
+static int32_t get_flood_size(const df::building::T_room &room, int32_t start_x, int32_t start_y) {
+    if (!room.extents)
+        return 0;
+    std::unordered_set<df::coord> visited;
+    std::queue<df::coord> to_visit;
+    to_visit.push(df::coord(start_x, start_y, 0));
+    while (!to_visit.empty()) {
+        df::coord pos = to_visit.front();
+        to_visit.pop();
+        if (visited.count(pos))
+            continue;
+        visited.insert(pos);
+        for (int32_t y = -1; y <= 1; ++y) {
+            for (int32_t x = -1; x <= 1; ++x) {
+                if (x == 0 && y == 0)
+                    continue;
+                int32_t nx = pos.x + x;
+                int32_t ny = pos.y + y;
+                if (nx < 0 || ny < 0 || nx >= room.width || ny >= room.height)
+                    continue;
+                if (room.extents[ny * room.width + nx])
+                    to_visit.push(df::coord(nx, ny, 0));
+            }
+        }
+    }
+    // flood size is the number of tiles we visited
+    return (int32_t)visited.size();
+}
+
+static bool is_disjoint(df::building *bld, const df::coord &first_tile) {
+    const df::building::T_room &room = bld->room;
+    if (!room.extents)
+        return false;
+
+    int32_t flood_size = get_flood_size(room, first_tile.x - bld->x1, first_tile.y - bld->y1);
+    return flood_size != Buildings::countExtentTiles(bld);
 }
 
 static const char * get_tile_zone(color_ostream &out, const df::coord &pos, const tile_context &ctx) {
@@ -1240,15 +1283,16 @@ static const char * get_tile_zone(color_ostream &out, const df::coord &pos, cons
         }
     }
 
+    bool disjoint = is_disjoint(primary_zone, upper_left_corner);
     bool is_first_tile = pos == upper_left_corner;
 
     if (!is_rectangular(primary_zone))
-        return get_zone_keys(out, primary_zone, is_first_tile);
+        return get_zone_keys(out, primary_zone, disjoint, is_first_tile);
 
     if (!is_first_tile)
         return if_pretty(ctx, "`");
 
-    return add_expansion_syntax(primary_zone, get_zone_keys(out, primary_zone, true));
+    return add_expansion_syntax(primary_zone, get_zone_keys(out, primary_zone, disjoint, true));
 }
 
 static bool create_output_dir(color_ostream &out,

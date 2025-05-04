@@ -134,9 +134,14 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     else if (parameters.size() && parameters[0] == "rivers") {
         return export_rivers(out);
     }
+    else if (parameters.size() && parameters[0] == "regions") {
+        return export_region_tiles(out);
+    }
     else
     {
-        return export_region_tiles(out);
+        auto ok_region = export_region_tiles(out);
+        auto ok_sites = ok_region == CR_OK ? export_sites(out) : ok_region;
+        return ok_sites == CR_OK ? export_rivers(out) : ok_sites;
     }
 }
 

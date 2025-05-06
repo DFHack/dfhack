@@ -71,6 +71,7 @@ Template for new versions:
 ## API
 - ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness
 - ``Items::getDescription``: fixed display of quality levels, now displays ALL item designations (in correct order) and obeys vanilla SHOW_IMP_QUALITY setting
+- ``cuboid::forCoord``, ``Maps::forCoord``: take additional parameter to control whether iteration goes in column major or row major order
 
 ## Lua
 - ``script-manager``: new ``get_active_mods()`` function for getting information on active mods
@@ -105,6 +106,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)
+- `spectate`: added prefer nicknamed units
 
 ## API
 - ``Military`` module: added ``addToSquad`` function

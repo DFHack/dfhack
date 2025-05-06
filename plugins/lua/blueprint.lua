@@ -9,17 +9,14 @@ local valid_phase_list = {
     'construct',
     'build',
     'place',
-    -- 'zone',
-    -- 'query',
-    -- 'rooms',
+    'zone',
 }
 valid_phases = utils.invert(valid_phase_list)
 
 local meta_phase_list = {
     'build',
     'place',
-    -- 'zone',
-    -- 'query',
+    'zone',
 }
 meta_phases = utils.invert(meta_phase_list)
 

@@ -686,15 +686,23 @@ static int preserve_rooms_assignToRole(lua_State *L) {
     return 0;
 }
 
-static string preserve_rooms_getRoleAssignment(color_ostream &out) {
-    auto zone = Gui::getSelectedCivZone(out, true);
+static string get_role_assignment(color_ostream &out, df::building_civzonest * zone) {
     if (!zone)
         return "";
-    TRACE(control,out).print("preserve_rooms_getRoleAssignment: zone_id=%d\n", zone->id);
+    TRACE(control,out).print("get_role_assignment: zone_id=%d\n", zone->id);
     auto it = noble_zones.find(zone->id);
     if (it == noble_zones.end() || it->second.empty())
         return "";
     return it->second[0];
+}
+
+
+static string preserve_rooms_getRoleAssignmentForZone(color_ostream &out, df::building_civzonest * zone) {
+    return get_role_assignment(out, zone);
+}
+
+static string preserve_rooms_getRoleAssignment(color_ostream &out) {
+    return get_role_assignment(out, Gui::getSelectedCivZone(out, true));
 }
 
 static bool preserve_rooms_isReserved(color_ostream &out) {
@@ -774,6 +782,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(preserve_rooms_getFeature),
     DFHACK_LUA_FUNCTION(preserve_rooms_resetFeatureState),
     DFHACK_LUA_FUNCTION(preserve_rooms_getRoleAssignment),
+    DFHACK_LUA_FUNCTION(preserve_rooms_getRoleAssignmentForZone),
     DFHACK_LUA_FUNCTION(preserve_rooms_isReserved),
     DFHACK_LUA_FUNCTION(preserve_rooms_getReservationName),
     DFHACK_LUA_FUNCTION(preserve_rooms_clearReservation),

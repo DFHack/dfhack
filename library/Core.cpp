@@ -269,10 +269,10 @@ struct IODATA
 // A thread function... for handling hotkeys. This is needed because
 // all the plugin commands are expected to be run from foreign threads.
 // Running them from one of the main DF threads will result in deadlock!
-void fHKthread(void * iodata)
+static void fHKthread(IODATA * iodata)
 {
-    Core * core = ((IODATA*) iodata)->core;
-    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+    Core * core = iodata->core;
+    PluginManager * plug_mgr = iodata->plug_mgr;
     if(plug_mgr == 0 || core == 0)
     {
         std::cerr << "Hotkey thread has croaked." << std::endl;
@@ -323,62 +323,45 @@ static std::string dfhack_version_desc()
     return s.str();
 }
 
-namespace {
-    struct ScriptArgs {
-        const std::string *pcmd;
-        std::vector<std::string> *pargs;
-    };
-    struct ScriptEnableState {
-        const std::string *pcmd;
-        bool pstate;
-    };
-}
-
-static bool init_run_script(color_ostream &out, lua_State *state, void *info)
+static bool init_run_script(color_ostream &out, lua_State *state, const std::string& pcmd, std::vector<std::string>& pargs)
 {
-    auto args = (ScriptArgs*)info;
-    if (!lua_checkstack(state, args->pargs->size()+10))
+    if (!lua_checkstack(state, pargs.size()+10))
         return false;
     Lua::PushDFHack(state);
     lua_getfield(state, -1, "run_script");
     lua_remove(state, -2);
-    lua_pushstring(state, args->pcmd->c_str());
-    for (size_t i = 0; i < args->pargs->size(); i++)
-        lua_pushstring(state, (*args->pargs)[i].c_str());
+    lua_pushstring(state, pcmd.c_str());
+    for (auto& arg : pargs)
+        lua_pushstring(state, arg.c_str());
     return true;
 }
 
 static command_result runLuaScript(color_ostream &out, std::string name, std::vector<std::string> &args)
 {
-    ScriptArgs data;
-    data.pcmd = &name;
-    data.pargs = &args;
-
-    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_run_script, &data);
+    using namespace std::placeholders;
+    auto init_fn = std::bind(init_run_script, _1, _2, name, args);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_fn);
 
     return ok ? CR_OK : CR_FAILURE;
 }
 
-static bool init_enable_script(color_ostream &out, lua_State *state, void *info)
+static bool init_enable_script(color_ostream &out, lua_State *state, std::string& name, bool enable)
 {
-    auto args = (ScriptEnableState*)info;
     if (!lua_checkstack(state, 4))
         return false;
     Lua::PushDFHack(state);
     lua_getfield(state, -1, "enable_script");
     lua_remove(state, -2);
-    lua_pushstring(state, args->pcmd->c_str());
-    lua_pushboolean(state, args->pstate);
+    lua_pushstring(state, name.c_str());
+    lua_pushboolean(state, enable);
     return true;
 }
 
 static command_result enableLuaScript(color_ostream &out, std::string name, bool state)
 {
-    ScriptEnableState data;
-    data.pcmd = &name;
-    data.pstate = state;
-
-    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(), init_enable_script, &data);
+    using namespace std::placeholders;
+    auto init_fn = std::bind(init_enable_script, _1, _2, name, state);
+    bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(), init_fn);
 
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -1408,9 +1391,8 @@ static void run_dfhack_init(color_ostream &out, Core *core)
 }
 
 // Load dfhack.init in a dedicated thread (non-interactive console mode)
-void fInitthread(void * iodata)
+static void fInitthread(IODATA * iod)
 {
-    IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
     color_ostream_proxy out(core->getConsole());
 
@@ -1418,13 +1400,12 @@ void fInitthread(void * iodata)
 }
 
 // A thread function... for the interactive console.
-void fIOthread(void * iodata)
+static void fIOthread(IODATA * iod)
 {
     static const std::filesystem::path HISTORY_FILE = CONFIG_PATH / "dfhack.history";
 
-    IODATA * iod = ((IODATA*) iodata);
     Core * core = iod->core;
-    PluginManager * plug_mgr = ((IODATA*) iodata)->plug_mgr;
+    PluginManager * plug_mgr = iod->plug_mgr;
 
     CommandHistory main_history;
     main_history.load(HISTORY_FILE.c_str());
@@ -1864,17 +1845,17 @@ bool Core::InitSimulationThread()
     {
         std::cerr << "Starting IO thread.\n";
         // create IO thread
-        d->iothread = std::thread{fIOthread, (void*)temp};
+        d->iothread = std::thread{fIOthread, temp};
     }
     else
     {
         std::cerr << "Starting dfhack.init thread.\n";
-        d->iothread = std::thread{fInitthread, (void*)temp};
+        d->iothread = std::thread{fInitthread, temp};
     }
 
     std::cerr << "Starting DF input capture thread.\n";
     // set up hotkey capture
-    d->hotkeythread = std::thread(fHKthread, (void *) temp);
+    d->hotkeythread = std::thread(fHKthread, temp);
     started = true;
     modstate = 0;
 
@@ -2041,8 +2022,8 @@ void Core::doUpdate(color_ostream &out)
     }
 
     // detect if the game was loaded or unloaded in the meantime
-    void *new_wdata = NULL;
-    void *new_mapdata = NULL;
+    df::world_data* new_wdata = nullptr;
+    df::map_block**** new_mapdata = nullptr;
     if (df::global::world && !is_load_save)
     {
         df::world_data *wdata = df::global::world->world_data;

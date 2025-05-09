@@ -3176,7 +3176,7 @@ static int filesystem_listdir(lua_State *L)
     for(size_t i=0;i<files.size();i++)
     {
         lua_pushinteger(L,i+1);
-        lua_pushstring(L,files[i].string().c_str());
+        lua_pushstring(L,Filesystem::as_string(files[i]).c_str());
         lua_settable(L,-3);
     }
     return 1;

@@ -68,6 +68,7 @@ Template for new versions:
 ## Misc Improvements
 - All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
 - `dig`: ASCII overlay now displays priority of digging designations
+- `spectate`: added prefer nicknamed units
 
 ## Documentation
 
@@ -109,7 +110,6 @@ Template for new versions:
 
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)
-- `spectate`: added prefer nicknamed units
 
 ## API
 - ``Military`` module: added ``addToSquad`` function

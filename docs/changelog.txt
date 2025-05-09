@@ -69,6 +69,8 @@ Template for new versions:
 - All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
 - `dig`: ASCII overlay now displays priority of digging designations
 - `spectate`: added prefer nicknamed units
+- `blueprint`: support for recording zones
+- `blueprint`: support for recording stockpile properties like names and stockpile links; does not yet support recording detailed contents configuration
 
 ## Documentation
 

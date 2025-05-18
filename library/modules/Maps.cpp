@@ -373,7 +373,7 @@ df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
         block_index[bx] == NULL ||
         block_index[bx][by] == NULL ||
         block_index[bx][by][z] == NULL) {
-        return NULL;
+        return NULL; 
     }
 
     return world->map.block_index[bx][by][z];

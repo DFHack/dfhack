@@ -71,6 +71,7 @@ Template for new versions:
 - `spectate`: added prefer nicknamed units
 - `blueprint`: support for recording zones
 - `blueprint`: support for recording stockpile properties like names and stockpile links; does not yet support recording detailed contents configuration
+- `strangemood`: support added for specifying unit id instead of selected unit or random one.
 
 ## Documentation
 

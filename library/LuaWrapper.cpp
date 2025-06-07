@@ -169,7 +169,7 @@ void LuaWrapper::push_object_ref(lua_State *state, void *ptr)
 {
     // stack: [metatable]
     void* stg = lua_newuserdata(state, sizeof(DFRefHeader));
-    auto ref = new (stg) DFRefHeader
+    new (stg) DFRefHeader
     {
         .ptr = ptr,
         .field_info = NULL,

@@ -22,6 +22,8 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include <filesystem>
+
 #include "Core.h"
 #include "DFHackVersion.h"
 #include "Debug.h"
@@ -197,6 +199,57 @@ struct LastLoadSaveTickCountUpdater {
     }
 };
 
+struct FileEntry
+{
+    size_t id;
+    bool in_current;
+    std::filesystem::path to_current_path() const
+    {
+        return getSaveFilePath("current", "pf-" + std::to_string(id));
+    }
+    std::filesystem::path to_world_path() const
+    {
+        return getSaveFilePath(World::ReadWorldFolder(), "pf-" + std::to_string(id));
+    }
+    std::filesystem::path to_path() const
+    {
+        if (in_current)
+        {
+            return to_current_path();
+        }
+        else
+        {
+            return to_world_path();
+        }
+    }
+    bool create_file()
+    {
+        std::ofstream f(to_path());
+        return f.is_open();
+    }
+    bool delete_file()
+    {
+        bool ret = false;
+        if (in_current)
+        {
+            ret |= std::filesystem::remove(to_current_path());
+        }
+        ret |= std::filesystem::remove(to_world_path());
+        return ret;
+    }
+    void move_to_current()
+    {
+        if (!in_current)
+        {
+            std::filesystem::copy_file(to_world_path(), to_current_path());
+            in_current = true;
+        }
+    }
+};
+
+static std::unordered_map<int, std::map<std::string, FileEntry>> file_storage;
+static size_t num_stored_files;
+
 void Persistence::Internal::save(color_ostream& out) {
     Core &core = Core::getInstance();
 
@@ -247,6 +300,36 @@ void Persistence::Internal::save(color_ostream& out) {
         Lua::CallLuaModuleFunction(wrapper, "script-manager", "print_timers");
     }
 
+    {
+        auto file = std::ofstream(getSaveFilePath("current", "extra-files"));
+
+        Json::Value outer(Json::arrayValue);
+
+        for (auto& entity_store : file_storage)
+        {
+            Json::Value middle(Json::objectValue);
+            middle["e"] = entity_store.first;
+
+            Json::Value middle_array(Json::arrayValue);
+
+            for (auto& key_value : entity_store.second)
+            {
+                Json::Value inner(Json::objectValue);
+
+                inner["k"] = key_value.first;
+                inner["i"] = key_value.second.id;
+
+                middle_array.append(inner);
+            }
+
+            middle["arr"] = middle_array;
+
+            outer.append(middle);
+        }
+
+        file << outer;
+    }
+
 }
 
 static bool get_entity_id(const std::string & fname, int & entity_id) {
@@ -291,6 +374,54 @@ static bool load_file(const std::filesystem::path & path, int entity_id) {
     return true;
 }
 
+static bool load_persist_files(const std::filesystem::path& path)
+{
+    Json::Value json;
+    try {
+        std::ifstream file(path);
+        file >> json;
+    }
+    catch (std::exception&) {
+        // empty file?
+        return false;
+    }
+
+    size_t max_idx = 0;
+
+    if (json.isArray())
+    {
+        for (auto& entity : json)
+        {
+            if (entity.isMember("e"))
+            {
+                auto pair = file_storage.try_emplace(entity["e"].asInt());
+                if (entity.isMember("arr"))
+                {
+                    auto arr = entity["arr"];
+                    if (arr.isArray())
+                    {
+                        for (auto& k_v : arr)
+                        {
+                            if (k_v.isMember("k") && k_v.isMember("v"))
+                            {
+                                const size_t this_idx = k_v["v"].asUInt64();
+                                max_idx = std::max(max_idx, this_idx);
+
+                                pair.first->second[k_v["k"].asString()] = FileEntry{this_idx, false};
+                                //file_storage[e][k] = v
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    num_stored_files = max_idx + 1;
+
+    return true;
+}
+
 void Persistence::Internal::load(color_ostream& out) {
     CoreSuspender suspend;
     LastLoadSaveTickCountUpdater tickCountUpdater;
@@ -307,14 +438,23 @@ void Persistence::Internal::load(color_ostream& out) {
 
     bool found = false;
     for (auto & fname : files) {
-        int entity_id = Persistence::WORLD_ENTITY_ID;
-        if (fname != "dfhack-world.dat" && !get_entity_id(fname.string(), entity_id))
-            continue;
+        if (fname == "dfhack-extra-files")
+        {
+            std::filesystem::path path = save_path / fname;
+            if (!load_persist_files(path))
+                out.printerr("Cannot load extra persistence files from: '%s'\n", path.c_str());
+        }
+        else
+        {
+            int entity_id = Persistence::WORLD_ENTITY_ID;
+            if (fname != "dfhack-world.dat" && !get_entity_id(fname.string(), entity_id))
+                continue;
 
-        found = true;
-        std::filesystem::path path = save_path / fname;
-        if (!load_file(path, entity_id))
-            out.printerr("Cannot load data from: '%s'\n", path.c_str());
+            found = true;
+            std::filesystem::path path = save_path / fname;
+            if (!load_file(path, entity_id))
+                out.printerr("Cannot load data from: '%s'\n", path.c_str());
+        }
     }
 
     if (found)
@@ -432,4 +572,155 @@ void Persistence::getAllByKey(std::vector<PersistentDataItem> &vec, int entity_i
 uint32_t Persistence::getUnsavedSeconds() {
     uint32_t durMS =  Core::getInstance().p->getTickCount() - lastLoadSaveTickCount;
     return durMS / 1000;
+}
+
+
+static FileEntry& create_or_get_file(int entity_id, const std::string& key, bool* added = nullptr)
+{
+    if (!file_storage.contains(entity_id) || !file_storage[entity_id].contains(key))
+    {
+        if (added)
+        {
+            *added = true;
+        }
+        return file_storage[entity_id][key] = FileEntry{ num_stored_files++, true };
+    }
+    else
+    {
+        if (added)
+        {
+            *added = false;
+        }
+        return file_storage[entity_id][key];
+    }
+}
+
+std::filesystem::path Persistence::addFile(int entity_id, const std::string& key)
+{
+    if (!is_good_entity_id(entity_id) || key.empty() || !Core::getInstance().isWorldLoaded())
+    {
+        return {};
+    }
+
+    CoreSuspender suspend;
+
+    return create_or_get_file(entity_id, key).to_path();
+}
+
+std::filesystem::path Persistence::getFile(int entity_id, const std::string& key, bool* added, bool just_for_reading)
+{
+    if (!is_good_entity_id(entity_id) || key.empty() || !Core::getInstance().isWorldLoaded())
+    {
+        return {};
+    }
+
+    CoreSuspender suspend;
+
+    if (added)
+    {
+        return create_or_get_file(entity_id, key, added).to_path();
+    }
+    else
+    {
+        if (file_storage.contains(entity_id) && file_storage[entity_id].contains(key))
+        {
+            auto& f = file_storage[entity_id][key];
+            if (!just_for_reading)
+            {
+                f.move_to_current();
+            }
+            return f.to_path();
+        }
+        else
+        {
+            return {};
+        }
+    }
+}
+
+void Persistence::getAllFiles(std::vector<std::pair<std::string, std::filesystem::path>>& vec, int entity_id, bool just_for_reading)
+{
+    vec.clear();
+
+    if (!is_good_entity_id(entity_id) || !Core::getInstance().isWorldLoaded())
+    {
+        return;
+    }
+
+    CoreSuspender suspend;
+
+    if (!file_storage.contains(entity_id))
+    {
+        return;
+    }
+
+    for (auto& entry : file_storage[entity_id])
+    {
+        if (!just_for_reading)
+        {
+            entry.second.move_to_current();
+        }
+        vec.emplace_back(entry.first, entry.second.to_path());
+    }
+}
+
+void Persistence::getAllFilesByKeyRange(std::vector<std::pair<std::string, std::filesystem::path>>& vec,
+                                        int entity_id, const std::string& min, const std::string& max,
+                                        bool just_for_reading)
+{
+    vec.clear();
+
+    if (!is_good_entity_id(entity_id) || !Core::getInstance().isWorldLoaded())
+    {
+        return;
+    }
+
+    CoreSuspender suspend;
+
+    if (!file_storage.contains(entity_id))
+    {
+        return;
+    }
+
+    auto it = file_storage[entity_id].lower_bound(min);
+    const auto end = file_storage[entity_id].lower_bound(max);
+    for (; it != end; ++it)
+    {
+        if (!just_for_reading)
+        {
+            it->second.move_to_current();
+        }
+        vec.emplace_back(it->first, it->second.to_path());
+    }
+}
+
+bool Persistence::deleteFile(int entity_id, const std::string& key)
+{
+    if (!is_good_entity_id(entity_id) || key.empty() || !Core::getInstance().isWorldLoaded())
+    {
+        return false;
+    }
+
+    CoreSuspender suspend;
+
+    auto outer = file_storage.find(entity_id);
+
+    if (outer != file_storage.end())
+    {
+        auto inner = outer->second.find(key);
+        if (inner != outer->second.end())
+        {
+            inner->second.delete_file();
+            outer->second.erase(inner);
+            return true;
+        }
+        else
+        {
+            return false;
+        }
+    }
+    else
+    {
+        return false;
+    }
 }

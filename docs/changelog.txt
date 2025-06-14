@@ -78,6 +78,9 @@ Template for new versions:
 - ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness
 - ``Items::getDescription``: fixed display of quality levels, now displays ALL item designations (in correct order) and obeys vanilla SHOW_IMP_QUALITY setting
 - ``cuboid::forCoord``, ``Maps::forCoord``: take additional parameter to control whether iteration goes in column major or row major order
+- ``SC_NEW_MAP_AVAILABLE`` introduced to allow callbacks when moving between map tiles in adventure mode
+- ``World::GetCurrentSiteIdsWithExtraRange`` added to check for valid sites with added range when in adventure mode
+- Persistent files with identification by an arbitrary index (e. g. entity or site ID) and a key.
 
 ## Lua
 - ``script-manager``: new ``get_active_mods()`` function for getting information on active mods

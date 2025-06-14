@@ -92,6 +92,7 @@ namespace DFHack
         DFHACK_EXPORT df::unit * getAdventurer();
 
         DFHACK_EXPORT int32_t GetCurrentSiteId();
+        DFHACK_EXPORT void GetCurrentSiteIdsWithExtraRange(std::vector<int32_t>& ids, const int32_t x_range = 0, const int32_t y_range = 0, const uint32_t max = UINT_MAX);
         DFHACK_EXPORT bool IsSiteLoaded();
 
         // Store DFHack tool data in the game save directory.

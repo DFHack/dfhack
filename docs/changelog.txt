@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `clean`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
 
 ## Fixes
 - `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
@@ -114,6 +115,7 @@ Template for new versions:
 - `spectate`: show dwarves' activities (like prayer)
 
 ## API
+- ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``Military`` module: added ``addToSquad`` function
 - ``Units`` module: added ``get_cached_unit_by_global_id`` to emulate how DF handles unit vector index caching (used in civzones and in general references)
 - ``Buildings`` module: add ``getOwner`` (using the ``Units::get_cached_unit_by_global_id`` mechanic) to reflect changes in 51.11
@@ -121,6 +123,7 @@ Template for new versions:
 - ``Buildings::setOwner``: updated for changes in 51.11
 
 ## Lua
+- ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``dfhack.military.addToSquad``: expose Military API function
 - ``dfhack.buildings.getOwner``: make new Buildings API available to Lua
 
@@ -181,7 +184,7 @@ Template for new versions:
 ## Lua
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
-- ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
+- ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` functions
 - ``dfhack.buildings.checkFreeTiles``: now takes a building pointer instead of an extents parameter
 - ``overlay.isOverlayEnabled``: new API for querying whether a given overlay is enabled
 - ``overlay``: widgets can now declare ``overlay_onenable`` and ``overlay_ondisable`` functions to hook enable/disable

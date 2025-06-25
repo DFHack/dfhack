@@ -595,6 +595,7 @@ static void sc_event_map_init() {
         insert(SC_VIEWSCREEN_CHANGED);
         insert(SC_PAUSED);
         insert(SC_UNPAUSED);
+        insert(SC_NEW_MAP_AVAILABLE);
         #undef insert
     }
 }
@@ -2044,8 +2045,11 @@ void Core::doUpdate(color_ostream &out)
             onStateChange(out, SC_MAP_UNLOADED);
         // and if the world is appearing, we report map change after that
         onStateChange(out, new_wdata ? SC_WORLD_LOADED : SC_WORLD_UNLOADED);
-        if(isMapLoaded())
+        if (isMapLoaded())
+        {
             onStateChange(out, SC_MAP_LOADED);
+            onStateChange(out, SC_NEW_MAP_AVAILABLE);
+        }
     }
     // otherwise just check for map change...
     else if (new_mapdata != last_local_map_ptr)
@@ -2056,6 +2060,10 @@ void Core::doUpdate(color_ostream &out)
         if (isMapLoaded() != had_map)
         {
             onStateChange(out, new_mapdata ? SC_MAP_LOADED : SC_MAP_UNLOADED);
+        }
+        if (isMapLoaded())
+        {
+            onStateChange(out, SC_NEW_MAP_AVAILABLE);
         }
     }
 

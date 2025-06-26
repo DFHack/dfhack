@@ -762,11 +762,6 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
         newFocusString += "/CreateSquad";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.squad_supplies.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/SquadSupplies";
-        focusStrings.push_back(newFocusString);
-    }
     if (game->main_interface.squads.open) {
         newFocusString = baseFocus;
         newFocusString += "/Squads";

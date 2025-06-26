@@ -141,9 +141,9 @@ namespace DFHack::Lua {
     DFHACK_EXPORT void CheckDFAssign(lua_State *state, type_identity *type,
                                      void *target, int val_index, bool exact_type = false);
 
-    template<typename T> concept df_object = requires(T x)
+    template<typename T> concept df_object = requires()
     {
-        { df::identity_traits<T>::get() } -> std::convertible_to<df::type_identity*>;
+        { df::identity_traits<T>::get() } -> std::convertible_to<const df::type_identity*>;
     };
 
     /**

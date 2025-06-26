@@ -1284,9 +1284,6 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             std::string completed;
             std::filesystem::path filename = findScript(first + ".lua");
             bool lua = !filename.empty();
-            if ( !lua ) {
-                filename = findScript(first + ".rb");
-            }
             if ( lua )
                 res = runLuaScript(con, first, parts);
             else if (!no_autocomplete && try_autocomplete(con, first, completed))

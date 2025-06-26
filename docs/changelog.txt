@@ -56,17 +56,35 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 51.12-r1
+
+## Fixes
 - `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
 - `getplants`: use updated formula for calculating whether plant growths are ripe
 - `getplants`: fix logic for determining whether plant growths have been picked
 - `gui/teleport`: adapt to new behavior in DF 51.11 to avoid a crash when teleporting items into mid-air
 - `script-manager`: fix lua scripts in mods not being reloaded properly upon entering a saved world on Windows
 - `preserve-rooms`: don't warn when a room is assigned to a non-existent unit.  this is now common behavior for DF when it keeps a room for an unloaded unit
+- fixed an overly restrictive type constraint that resulted in some object types being glossed as a boolean when passed as an argument from C++ to Lua
+- `plants`: will no longer generate a traceback when a filter is used
 
 ## Misc Improvements
 - All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
-
-## Documentation
+- `dig`: ASCII overlay now displays priority of digging designations
+- `spectate`: added prefer nicknamed units
+- `blueprint`: support for recording zones
+- `blueprint`: support for recording stockpile properties like names and stockpile links; does not yet support recording detailed contents configuration
 
 ## API
 - ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness
@@ -106,7 +124,6 @@ Template for new versions:
 
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)
-- `spectate`: added prefer nicknamed units
 
 ## API
 - ``Military`` module: added ``addToSquad`` function

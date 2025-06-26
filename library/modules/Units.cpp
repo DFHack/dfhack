@@ -2078,6 +2078,14 @@ static int32_t *getActionTimerPointer(df::unit_action *action) {
             return &action->data.dismount.timer;
         case unit_action_type::HoldItem:
             return &action->data.holditem.timer;
+        case unit_action_type::LoadRangedWeapon:
+            return &action->data.loadrangedweapon.movewait;
+        case unit_action_type::ShootRangedWeapon:
+            return &action->data.shootrangedweapon.movewait;
+        case unit_action_type::ThrowItem:
+            return &action->data.throwitem.movewait;
+        case unit_action_type::PostShootRecovery:
+            return &action->data.postshootrecovery.movewait;
         case unit_action_type::LeadAnimal:
         case unit_action_type::StopLeadAnimal:
         case unit_action_type::Jump:

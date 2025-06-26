@@ -56,6 +56,20 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 51.12-r1
+
+## Fixes
 - `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
 - `getplants`: use updated formula for calculating whether plant growths are ripe
 - `getplants`: fix logic for determining whether plant growths have been picked
@@ -71,8 +85,6 @@ Template for new versions:
 - `spectate`: added prefer nicknamed units
 - `blueprint`: support for recording zones
 - `blueprint`: support for recording stockpile properties like names and stockpile links; does not yet support recording detailed contents configuration
-
-## Documentation
 
 ## API
 - ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness

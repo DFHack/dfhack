@@ -363,7 +363,20 @@ df::map_block *Maps::getTileBlock (int32_t x, int32_t y, int32_t z)
 {
     if (!isValidTilePos(x,y,z))
         return NULL;
-    return world->map.block_index[x >> 4][y >> 4][z];
+
+    auto &block_index = world->map.block_index;
+
+    int32_t bx = x >> 4;
+    int32_t by = y >> 4;
+
+    if (block_index == NULL ||
+        block_index[bx] == NULL ||
+        block_index[bx][by] == NULL ||
+        block_index[bx][by][z] == NULL) {
+        return NULL;
+    }
+
+    return world->map.block_index[bx][by][z];
 }
 
 df::map_block *Maps::ensureTileBlock (int32_t x, int32_t y, int32_t z)

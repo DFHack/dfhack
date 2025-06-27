@@ -90,6 +90,7 @@ Template for new versions:
 - `preserve-rooms`: don't warn when a room is assigned to a non-existent unit.  this is now common behavior for DF when it keeps a room for an unloaded unit
 - fixed an overly restrictive type constraint that resulted in some object types being glossed as a boolean when passed as an argument from C++ to Lua
 - `plants`: will no longer generate a traceback when a filter is used
+- ``Maps::getTileBlock``: added a check in getTileBlock to ensure it does not access unallocated blocks.
 
 ## Misc Improvements
 - All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.

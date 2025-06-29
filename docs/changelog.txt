@@ -56,6 +56,32 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 51.13-r1
+
+## New Features
+
+- Compatibility with DF 51.13
+
+# 51.12-r1.1
+
+## New Features
+
+- Compatibility with Itch release of DF 51.12
+
+# 51.12-r1
+
+## Fixes
 - `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
 - `getplants`: use updated formula for calculating whether plant growths are ripe
 - `getplants`: fix logic for determining whether plant growths have been picked
@@ -64,6 +90,7 @@ Template for new versions:
 - `preserve-rooms`: don't warn when a room is assigned to a non-existent unit.  this is now common behavior for DF when it keeps a room for an unloaded unit
 - fixed an overly restrictive type constraint that resulted in some object types being glossed as a boolean when passed as an argument from C++ to Lua
 - `plants`: will no longer generate a traceback when a filter is used
+- `createitem`: multiple items should be properly created in stacks again
 
 ## Misc Improvements
 - All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
@@ -71,8 +98,6 @@ Template for new versions:
 - `spectate`: added prefer nicknamed units
 - `blueprint`: support for recording zones
 - `blueprint`: support for recording stockpile properties like names and stockpile links; does not yet support recording detailed contents configuration
-
-## Documentation
 
 ## API
 - ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness

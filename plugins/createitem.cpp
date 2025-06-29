@@ -50,7 +50,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return CR_OK;
 }
 
-bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_type, int32_t mat_index,
+bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_type, int32_t mat_index, int32_t count,
     bool move_to_cursor = false, bool second_item = false)
 {   // Special logic for making Gloves and Shoes in pairs
     bool is_gloves = (type == item_type::GLOVES);
@@ -66,7 +66,7 @@ bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_t
     bool on_floor = (container == NULL) && (building == NULL) && !move_to_cursor;
 
     vector<df::item *> out_items;
-    if (!Items::createItem(out_items, unit, type, subtype, mat_type, mat_index, !on_floor))
+    if (!Items::createItem(out_items, unit, type, subtype, mat_type, mat_index, !on_floor, count))
         return false;
 
     for (size_t i = 0; i < out_items.size(); i++) {
@@ -105,7 +105,7 @@ bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_t
         is_shoes = false;
     // If we asked for gloves/shoes and only got one (and we're making the first one), make another
     if ((is_gloves || is_shoes) && !second_item)
-        return makeItem(unit, type, subtype, mat_type, mat_index, move_to_cursor, true);
+        return makeItem(unit, type, subtype, mat_type, mat_index, count, move_to_cursor, true);
     return true;
 }
 
@@ -435,12 +435,10 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
         out.printerr("Previously selected building no longer exists - item will be placed on the floor.\n");
     }
 
-    for (int i = 0; i < count; i++) {
-        if (!makeItem(unit, item_type, item_subtype, mat_type, mat_index, move_to_cursor, false))
-        {
-            out.printerr("Failed to create item!\n");
-            return CR_FAILURE;
-        }
+    if (!makeItem(unit, item_type, item_subtype, mat_type, mat_index, count, move_to_cursor, false))
+    {
+        out.printerr("Failed to create item!\n");
+        return CR_FAILURE;
     }
     return CR_OK;
 }

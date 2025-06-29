@@ -164,6 +164,18 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             return CR_WRONG_USAGE;
         else if(parameters[i] == "--force")
             force = true;
+        else if(parameters[i] == "--id")
+        {
+            i++;
+            if (i == parameters.size())
+            {
+                out.printerr("No unit id specified!\n");
+                return CR_WRONG_USAGE;
+            }
+            unit = df::unit::find(std::stoi(parameters[i]));
+            if (!unit)
+                return CR_FAILURE;
+        }
         else if(parameters[i] == "--unit")
         {
             unit = DFHack::Gui::getSelectedUnit(out);

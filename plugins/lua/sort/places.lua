@@ -79,8 +79,9 @@ local function get_zone_search_key(zone)
     end
 
     -- allow zones w/ assignments to be searchable by their assigned unit
-    if zone.assigned_unit ~= nil then
-        table.insert(result, sortoverlay.get_unit_search_key(zone.assigned_unit))
+    local owner = dfhack.buildings.getOwner(zone)
+    if owner then
+        table.insert(result, sortoverlay.get_unit_search_key(owner))
     end
 
     -- allow zones to be searchable by type

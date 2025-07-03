@@ -157,6 +157,7 @@ static void reset_ephemeral_state() {
 
 static void do_disable() {
     EventManager::unregisterAll(plugin_self);
+    is_enabled = false;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
@@ -340,7 +341,6 @@ static void decrement_counter(T *obj, FT T::*field, int32_t timeskip) {
 
 static void adjust_unit_counters(df::unit * unit, int32_t timeskip) {
     auto * c1 = &unit->counters;
-    decrement_counter(c1, &df::unit::T_counters::think_counter, timeskip);
     decrement_counter(c1, &df::unit::T_counters::job_counter, timeskip);
     decrement_counter(c1, &df::unit::T_counters::swap_counter, timeskip);
     decrement_counter(c1, &df::unit::T_counters::winded, timeskip);

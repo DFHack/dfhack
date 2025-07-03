@@ -59,6 +59,12 @@ enum StockpileConfigValues {
     STOCKPILE_CONFIG_FORBID = 6,
 };
 
+enum StockpileConfigForbidValues {
+    STOCKPILE_CONFIG_FORBID_OFF = 0,
+    STOCKPILE_CONFIG_FORBID_FORBID = 1,
+    STOCKPILE_CONFIG_FORBID_CLAIM = 2,
+};
+
 static PersistentDataItem& ensure_stockpile_config(color_ostream& out, int stockpile_number) {
     TRACE(control, out).print("ensuring stockpile config stockpile_number=%d\n", stockpile_number);
     if (watched_stockpiles.count(stockpile_number)) {
@@ -76,7 +82,7 @@ static PersistentDataItem& ensure_stockpile_config(color_ostream& out, int stock
     c.set_bool(STOCKPILE_CONFIG_DUMP, false);
     c.set_bool(STOCKPILE_CONFIG_TRAIN, false);
     c.set_bool(STOCKPILE_CONFIG_MELT_MASTERWORKS, false);
-    c.set_int(STOCKPILE_CONFIG_FORBID, 0);
+    c.set_int(STOCKPILE_CONFIG_FORBID, STOCKPILE_CONFIG_FORBID_OFF);
     return c;
 }
 
@@ -132,7 +138,7 @@ static void validate_stockpile_configs(color_ostream& out,
                 !c.get_bool(STOCKPILE_CONFIG_TRADE) &&
                 !c.get_bool(STOCKPILE_CONFIG_DUMP) &&
                 !c.get_bool(STOCKPILE_CONFIG_TRAIN) &&
-                !(c.get_int(STOCKPILE_CONFIG_FORBID) > 0))) {
+                !(c.get_int(STOCKPILE_CONFIG_FORBID) > STOCKPILE_CONFIG_FORBID_OFF))) {
             to_remove.push_back(stockpile_number);
             continue;
         }
@@ -180,7 +186,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
         if (c.key() == CONFIG_KEY)
             continue;
         if (c.get_int(STOCKPILE_CONFIG_FORBID) == -1) // remove this once saves from 51.01 are no longer compatible
-            c.set_int(STOCKPILE_CONFIG_FORBID, 0);
+            c.set_int(STOCKPILE_CONFIG_FORBID, STOCKPILE_CONFIG_FORBID_OFF);
         watched_stockpiles.emplace(c.get_int(STOCKPILE_CONFIG_STOCKPILE_NUMBER), c);
     }
     migrate_old_keys(out);
@@ -560,8 +566,8 @@ static void do_cycle(color_ostream& out,
         bool trade = c.get_bool(STOCKPILE_CONFIG_TRADE);
         bool dump = c.get_bool(STOCKPILE_CONFIG_DUMP);
         bool train = c.get_bool(STOCKPILE_CONFIG_TRAIN);
-        bool forbid = 1 == c.get_int(STOCKPILE_CONFIG_FORBID);
-        bool claim = 2 == c.get_int(STOCKPILE_CONFIG_FORBID);
+        bool forbid = STOCKPILE_CONFIG_FORBID_FORBID == c.get_int(STOCKPILE_CONFIG_FORBID);
+        bool claim = STOCKPILE_CONFIG_FORBID_CLAIM == c.get_int(STOCKPILE_CONFIG_FORBID);
 
         MeltStockProcessor melt_stock_processor(stockpile_number, melt, melt_stats, melt_masterworks);
         TradeStockProcessor trade_stock_processor(stockpile_number, trade, trade_stats);
@@ -645,8 +651,8 @@ static int logistics_getStockpileData(lua_State *L) {
         bool trade = c.get_bool(STOCKPILE_CONFIG_TRADE);
         bool dump = c.get_bool(STOCKPILE_CONFIG_DUMP);
         bool train = c.get_bool(STOCKPILE_CONFIG_TRAIN);
-        bool forbid = 1 == c.get_int(STOCKPILE_CONFIG_FORBID);
-        bool claim = 2 == c.get_int(STOCKPILE_CONFIG_FORBID);
+        bool forbid = STOCKPILE_CONFIG_FORBID_FORBID == c.get_int(STOCKPILE_CONFIG_FORBID);
+        bool claim = STOCKPILE_CONFIG_FORBID_CLAIM == c.get_int(STOCKPILE_CONFIG_FORBID);
 
         unordered_map<string, string> sconfig;
         sconfig.emplace("melt", melt ? "true" : "false");
@@ -719,7 +725,7 @@ static unordered_map<string, int> get_stockpile_config(int32_t stockpile_number)
         stockpile_config.emplace("trade", false);
         stockpile_config.emplace("dump", false);
         stockpile_config.emplace("train", false);
-        stockpile_config.emplace("forbid", 0);
+        stockpile_config.emplace("forbid", STOCKPILE_CONFIG_FORBID_OFF);
     }
     return stockpile_config;
 }

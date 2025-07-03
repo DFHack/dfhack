@@ -197,10 +197,10 @@ bool cuboid::containsPos(int16_t x, int16_t y, int16_t z) const {
         x <= x_max && y <= y_max && z <= z_max;
 }
 
-void cuboid::forCoord(std::function<bool(df::coord)> fn) const
+void cuboid::forCoord(std::function<bool(df::coord)> fn, bool row_major) const
 {
     if (isValid()) // Only iterate if valid cuboid.
-        Maps::forCoord(fn, x_min, y_min, z_max, x_max, y_max, z_min);
+        Maps::forCoord(fn, x_min, y_min, z_max, x_max, y_max, z_min, row_major);
 }
 
 void cuboid::forBlock(std::function<bool(df::map_block *, cuboid)> fn, bool ensure_block) const
@@ -230,18 +230,27 @@ bool Maps::IsValid() {
 }
 
 void Maps::forCoord(std::function<bool(df::coord)> fn, int16_t x1, int16_t y1, int16_t z1,
-    int16_t x2, int16_t y2, int16_t z2)
+    int16_t x2, int16_t y2, int16_t z2, bool row_major)
 {
     int16_t dx = x1 > x2 ? -1 : 1;
     int16_t dy = y1 > y2 ? -1 : 1;
     int16_t dz = z1 > z2 ? -1 : 1;
 
-    // Process z, y, then x.
-    for (int16_t x = x1; x != x2 + dx; x += dx)
-        for (int16_t y = y1; y != y2 + dy; y += dy)
-            for (int16_t z = z1; z != z2 + dz; z += dz)
-                if (!fn(df::coord(x, y, z)))
-                    return; // Break iterator.
+    if (row_major) {
+        // Process z, y, then x.
+        for (int16_t z = z1; z != z2 + dz; z += dz)
+            for (int16_t y = y1; y != y2 + dy; y += dy)
+                for (int16_t x = x1; x != x2 + dx; x += dx)
+                    if (!fn(df::coord(x, y, z)))
+                        return; // Break iterator.
+    } else {
+        // Process z, x, then y.
+        for (int16_t z = z1; z != z2 + dz; z += dz)
+            for (int16_t x = x1; x != x2 + dx; x += dx)
+                for (int16_t y = y1; y != y2 + dy; y += dy)
+                    if (!fn(df::coord(x, y, z)))
+                        return; // Break iterator.
+    }
 }
 
 // getter for map size in blocks

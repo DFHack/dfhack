@@ -18,9 +18,10 @@ Usage
    Show details about the selected item. Does not change the item. You can use
    this command to discover RAW ids for existing items.
 ``changeitem [<options>]``
-   Change the item selected in the ``k`` list or inside a container/inventory.
+   Change the item that is selected in the UI.
 ``changeitem here [<options>]``
-   Change all items at the cursor position. Requires in-game cursor.
+   Change all items at the keyboard cursor position. Requires the vanilla
+   keyboard cursor to be enabled.
 
 Examples
 --------

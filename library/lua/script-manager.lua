@@ -88,25 +88,52 @@ local INSTALLED_MODS_PATH = 'data/installed_mods/'
 -- changes to the files)
 local MOD_PATH_ROOTS = {WORKSHOP_MODS_PATH, MODS_PATH, INSTALLED_MODS_PATH}
 
-local function get_mod_id_and_version(path)
-    local idfile = path .. '/info.txt'
+-- returns the values of the given list of tags from the info.txt file in the given mod directory
+-- if a requested tag includes the string 'NUMERIC_', it will return the numeric value for that tag
+-- (e.g. NUMERIC_VERSION will return the numeric version of the mod as a number instead of a string).
+function get_mod_info_metadata(mod_path, tags)
+    local idfile = mod_path .. '/info.txt'
     local ok, lines = pcall(io.lines, idfile)
     if not ok then return end
-    local id, version
-    for line in lines do
-        if not id then
-            _,_,id = line:find('^%[ID:([^%]]+)%]')
-        end
-        if not version then
-            -- note this doesn't include the closing brace since some people put
-            -- non-number characters in here, and DF only reads the leading digits
-            -- as the numeric version
-            _,_,version = line:find('^%[NUMERIC_VERSION:(%d+)')
-        end
-        -- note that we do *not* want to break out of this loop early since
-        -- lines has to hit EOF to close the file
+
+    if type(tags) ~= 'table' then
+        tags = {tags}
     end
-    return id, version
+
+    local tag_regexes = {}
+    for _,tag in ipairs(tags) do
+        local tag_regex = ('^%%[%s:'):format(tag)
+        if tag:find('NUMERIC_') then
+            -- note this doesn't go all the way to the closing brace since some people put
+            -- non-number characters in here, and DF only reads the leading digits for
+            -- numeric fields
+            tag_regex = tag_regex .. '(%d+)'
+        else
+            tag_regex = tag_regex .. '([^%]]+)'
+        end
+        tag_regexes[tag] = tag_regex
+    end
+
+    local values = {}
+    for line in lines do
+        local _,_,info_tag = line:find('^%[([^:]+):')
+        if not info_tag or not tag_regexes[info_tag] then
+            goto continue
+        end
+        local _,_,value = line:find(tag_regexes[info_tag])
+        if value then
+            values[info_tag] = value
+        end
+        ::continue::
+    end
+
+    return values
+end
+
+local function get_mod_id_and_version(path)
+    local values = get_mod_info_metadata(path, {'ID', 'NUMERIC_VERSION'})
+    if not values then return end
+    return values.ID, values.NUMERIC_VERSION
 end
 
 local function add_mod_paths(mod_paths, id, base_path, subdir)
@@ -170,6 +197,35 @@ function get_mod_paths(installed_subdir, active_subdir)
     end
 
     return mod_paths
+end
+
+-- returns a list of tables in load order with the following fields:
+--   id: mod id
+--   name: mod display name
+--   version: mod display version
+--   numeric_version: numeric mod version
+--   path: path to the mod directory
+--   vanilla: true if this is a vanilla mod
+function get_active_mods()
+    if not dfhack.isWorldLoaded() then return {} end
+
+    local mods = {}
+
+    local ol = df.global.world.object_loader
+
+    for idx=0,#ol.object_load_order_id-1 do
+        local path = ol.object_load_order_src_dir[idx].value
+        table.insert(mods, {
+            id=ol.object_load_order_id[idx].value,
+            name=ol.object_load_order_name[idx].value,
+            version=ol.object_load_order_displayed_version[idx].value,
+            numeric_version=ol.object_load_order_numeric_version[idx],
+            path=path,
+            vanilla=path:startswith('data/vanilla/'), -- windows also uses forward slashes
+        })
+    end
+
+    return mods
 end
 
 function get_mod_script_paths()

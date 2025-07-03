@@ -108,8 +108,8 @@ using df::global::gametype;
 using df::global::plotinfo;
 using df::global::world;
 
-#define IS_ACTIVE_CASTE_FLAG(cf) !unit->curse.rem_tags1.bits.cf && \
-(unit->curse.add_tags1.bits.cf || casteFlagSet(unit->race, unit->caste, caste_raw_flags::cf))
+#define IS_ACTIVE_CASTE_FLAG(cf) !unit->uwss_remove_caste_flag.bits.cf && \
+(unit->uwss_add_caste_flag.bits.cf || casteFlagSet(unit->race, unit->caste, caste_raw_flags::cf))
 
 // Common flags to exclude for fort members
 constexpr uint32_t exclude_flags1 = (
@@ -208,7 +208,7 @@ bool Units::isOwnRace(df::unit *unit) {
 
 bool Units::isAlive(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
-    return !isDead(unit) && !unit->curse.add_tags1.bits.NOT_LIVING;
+    return !isDead(unit) && !unit->uwss_add_caste_flag.bits.NOT_LIVING;
 }
 
 bool Units::isDead(df::unit *unit) {
@@ -606,7 +606,7 @@ bool Units::isInvader(df::unit *unit) {
 
 bool Units::isUndead(df::unit *unit, bool hiding_curse) {
     CHECK_NULL_POINTER(unit);
-    const auto &cb = unit->curse.add_tags1.bits;
+    const auto &cb = unit->uwss_add_caste_flag.bits;
     return unit->flags3.bits.ghostly ||
         ((cb.OPPOSED_TO_LIFE || cb.NOT_LIVING) && (hiding_curse || !isHidingCurse(unit)));
 }
@@ -1014,7 +1014,7 @@ int Units::getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr
     auto &aobj = unit->body.physical_attrs[attr];
     int value = max(0, aobj.value - aobj.soft_demotion);
 
-    if (auto mod = unit->curse.attr_change)
+    if (auto mod = unit->uwss_att_change)
     {
         int mvalue = (value * mod->phys_att_perc[attr] / 100) + mod->phys_att_add[attr];
         if (isHidingCurse(unit))
@@ -1033,7 +1033,7 @@ int Units::getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr) {
     auto &aobj = soul->mental_attrs[attr];
     int value = max(0, aobj.value - aobj.soft_demotion);
 
-    if (auto mod = unit->curse.attr_change)
+    if (auto mod = unit->uwss_att_change)
     {
         int mvalue = (value * mod->ment_att_perc[attr] / 100) + mod->ment_att_add[attr];
         if (isHidingCurse(unit))
@@ -1192,8 +1192,8 @@ string Units::getReadableName(df::unit *unit, bool skip_english) {
     CHECK_NULL_POINTER(unit);
     string prof_name = getProfessionName(unit, false, false, true);
 
-    if (unit->curse.name_visible) // Necromancer, etc.
-        prof_name += " " + unit->curse.name;
+    if (unit->uwss_use_display_name) // Necromancer, etc.
+        prof_name += " " + unit->uwss_display_name_sing;
     else if (isGhost(unit)) // TODO: Should be "Ghost" instead of "Ghostly Peasant"
         prof_name = "Ghostly " + prof_name;
     // TODO: impersonating deity/force

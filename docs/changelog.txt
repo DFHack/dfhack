@@ -54,7 +54,6 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- ``widgets.Slider``: new mouse-controlled single-headed slider widget
 
 ## Fixes
 
@@ -65,6 +64,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``widgets.Slider``: new mouse-controlled single-headed slider widget
 
 ## Removed
 

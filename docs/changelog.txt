@@ -54,6 +54,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- ``widgets.Slider``: new mouse-controlled single-headed slider widget
 
 ## Fixes
 
@@ -207,12 +208,9 @@ Template for new versions:
 - ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 - ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
 - ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
-- ``widgets.Slider``: new mouse-controlled single-headed slider widget
-- ``dfhack.buildings.checkFreeTiles``: now replaces the extents parameter for a building pointer
 - ``dfhack.buildings.checkFreeTiles``: now takes a building pointer instead of an extents parameter
 - ``overlay.isOverlayEnabled``: new API for querying whether a given overlay is enabled
 - ``overlay``: widgets can now declare ``overlay_onenable`` and ``overlay_ondisable`` functions to hook enable/disable
-
 
 ## Removed
 - `orders`: MakeCheese job removed from library/basic orders set. Please use `autocheese` instead!

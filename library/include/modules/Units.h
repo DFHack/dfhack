@@ -281,9 +281,9 @@ DFHACK_EXPORT std::string getRaceBabyName(df::unit *unit, bool plural = false);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id, bool plural = false);
 DFHACK_EXPORT std::string getRaceChildName(df::unit *unit, bool plural = false);
 // Full readable name including profession. HF profession might be different from unit profession.
-DFHACK_EXPORT std::string getReadableName(df::historical_figure *hf);
+DFHACK_EXPORT std::string getReadableName(df::historical_figure *hf, bool skip_english = false);
 // Full readable name including profession, curse name, and tame description.
-DFHACK_EXPORT std::string getReadableName(df::unit *unit);
+DFHACK_EXPORT std::string getReadableName(df::unit *unit, bool skip_english = false);
 
 // Unit's age (in non-integer years). Ignore false identities if true_age.
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
@@ -350,5 +350,7 @@ DFHACK_EXPORT void multiplyActionTimers(color_ostream &out, df::unit *unit, floa
 DFHACK_EXPORT void multiplyGroupActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypeGroup);
 DFHACK_EXPORT void setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType);
 DFHACK_EXPORT void setGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup);
+
+DFHACK_EXPORT df::unit* get_cached_unit_by_global_id(int32_t id, int32_t& index);
 }
 }

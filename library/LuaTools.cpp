@@ -426,7 +426,7 @@ static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
 
     DFHack::CommandHistory hist;
     if (hfile)
-        hist.load(hfile);
+        hist.load(std::filesystem::path{ hfile });
 
     std::string ret;
     int rv = pstream->lineedit(prompt, ret, hist);
@@ -446,7 +446,7 @@ static int dfhack_lineedit_sync(lua_State *S, Console *pstream)
     else
     {
         if (hfile)
-            hist.save(hfile);
+            hist.save(std::filesystem::path{ hfile });
         lua_pushlstring(S, ret.data(), ret.size());
         return 1;
     }
@@ -1193,9 +1193,7 @@ static int resume_query_loop(color_ostream &out,
     return rv;
 }
 
-bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
-                                   bool (*init)(color_ostream&, lua_State*, void*),
-                                   void *arg)
+bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state, DFHack::Lua::init_fn init)
 {
     if (!lua_checkstack(state, 20))
         return false;
@@ -1213,7 +1211,7 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
 
         int base = lua_gettop(state);
 
-        if (!init(out, state, arg))
+        if (!init(out, state))
         {
             lua_settop(state, base);
             return false;
@@ -1240,13 +1238,13 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
         if (histfile != histname)
         {
             if (!histname.empty())
-                hist.save(histname.c_str());
+                hist.save(std::filesystem::path{ histname });
 
             hist.clear();
             histname = histfile;
 
             if (!histname.empty())
-                hist.load(histname.c_str());
+                hist.load(std::filesystem::path{ histname });
         }
 
         if (prompt.empty())
@@ -1269,7 +1267,7 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
     }
 
     if (!histname.empty())
-        hist.save(histname.c_str());
+        hist.save(std::filesystem::path{ histname });
 
     {
         CoreSuspender suspend;
@@ -1283,21 +1281,13 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
     return (rv == LUA_OK);
 }
 
-namespace {
-    struct InterpreterArgs {
-        const char *prompt;
-        const char *hfile;
-    };
-}
-
-static bool init_interpreter(color_ostream &out, lua_State *state, void *info)
+static bool init_interpreter(color_ostream &out, lua_State *state, const char* prompt, const char* hfile)
 {
-    auto args = (InterpreterArgs*)info;
     lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
     lua_getfield(state, -1, "interpreter");
     lua_remove(state, -2);
-    lua_pushstring(state, args->prompt);
-    lua_pushstring(state, args->hfile);
+    lua_pushstring(state, prompt);
+    lua_pushstring(state, hfile);
     return true;
 }
 
@@ -1312,11 +1302,10 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
     if (!prompt)
         prompt = "lua";
 
-    InterpreterArgs args;
-    args.prompt = prompt;
-    args.hfile = hfile;
+    using namespace std::placeholders;
+    auto init_fn = std::bind(init_interpreter, _1, _2, prompt, hfile);
 
-    return RunCoreQueryLoop(out, state, init_interpreter, &args);
+    return RunCoreQueryLoop(out, state, init_fn);
 }
 
 static bool do_invoke_cleanup(lua_State *L, int nargs, int errorfun, bool success)

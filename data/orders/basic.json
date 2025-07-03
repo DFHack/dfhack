@@ -118,27 +118,6 @@
 		"amount_left" : 1,
 		"amount_total" : 1,
 		"frequency" : "Daily",
-		"id" : 3,
-		"is_active" : false,
-		"is_validated" : false,
-		"item_conditions" : 
-		[
-			{
-				"condition" : "AtLeast",
-				"flags" : 
-				[
-					"unrotten",
-					"milk"
-				],
-				"value" : 2
-			}
-		],
-		"job" : "MakeCheese"
-	},
-	{
-		"amount_left" : 1,
-		"amount_total" : 1,
-		"frequency" : "Daily",
 		"id" : 4,
 		"is_active" : false,
 		"is_validated" : false,

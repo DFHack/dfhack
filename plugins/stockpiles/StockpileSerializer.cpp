@@ -210,24 +210,15 @@ bool StockpileSettingsSerializer::unserialize_from_file(color_ostream &out, cons
 
 /**
  * Find an enum's value based off the string label.
- * @param traits the enum's trait struct
  * @param token the string value in key_table
- * @return the enum's value,  -1 if not found
+ * @return the enum's value, -1 if not found
  */
 template <typename E>
-static typename df::enum_traits<E>::base_type linear_index(df::enum_traits<E> traits, const string& token) {
-    auto j = traits.first_item_value;
-    auto limit = traits.last_item_value;
-    // sometimes enums start at -1, which is bad news for array indexing
-    if (j < 0) {
-        j += abs(traits.first_item_value);
-        limit += abs(traits.first_item_value);
-    }
-    for (; j <= limit; ++j) {
-        if (token.compare(traits.key_table[j]) == 0)
-            return j;
-    }
-    return -1;
+static typename df::enum_traits<E>::base_type token_to_enum_val(const string& token) {
+    E val;
+    if (!find_enum_item(&val, token))
+        return -1;
+    return val;
 }
 
 static bool matches_filter(color_ostream& out, const vector<string>& filters, const string& name) {
@@ -360,10 +351,9 @@ static void unserialize_list_quality(color_ostream& out, const char* subcat, boo
     }
 
     using df::enums::item_quality::item_quality;
-    df::enum_traits<item_quality> quality_traits;
     for (int i = 0; i < list_size; ++i) {
         const string quality = read_value(i);
-        df::enum_traits<item_quality>::base_type idx = linear_index(quality_traits, quality);
+        df::enum_traits<item_quality>::base_type idx = token_to_enum_val<item_quality>(quality);
         if (idx < 0) {
             WARN(log, out).print("invalid quality token: %s\n", quality.c_str());
             continue;
@@ -551,11 +541,9 @@ static void unserialize_list_item_type(color_ostream& out, const char* subcat, b
     }
 
     using df::enums::item_type::item_type;
-    df::enum_traits<item_type> type_traits;
     for (int i = 0; i < list_size; ++i) {
         const string token = read_value(i);
-        // subtract one because item_type starts at -1
-        const df::enum_traits<item_type>::base_type idx = linear_index(type_traits, token) - 1;
+        const df::enum_traits<item_type>::base_type idx = token_to_enum_val<item_type>(token);
         if (!is_allowed((item_type)idx))
             continue;
         if (idx < 0 || size_t(idx) >= num_elems) {
@@ -1806,7 +1794,7 @@ void StockpileSettingsSerializer::read_furniture(color_ostream& out, Deserialize
             } else {
                 for (int i = 0; i < bfurniture.type_size(); ++i) {
                     const string token = bfurniture.type(i);
-                    df::enum_traits<furniture_type>::base_type idx = linear_index(type_traits, token);
+                    df::enum_traits<furniture_type>::base_type idx = token_to_enum_val<furniture_type>(token);
                     if (idx < 0 || size_t(idx) >= pfurniture.type.size()) {
                         WARN(log, out).print("furniture type index invalid %s, idx=%d\n", token.c_str(), idx);
                         continue;

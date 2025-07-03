@@ -140,12 +140,18 @@ if not ok then
     buildingplan = nil
 end
 
+local function show_suspend_overlay()
+    return dfhack.screen.inGraphicsMode() or
+        dfhack.gui.matchFocusString('dwarfmode/Default', dfhack.gui.getDFViewscreen(true))
+end
+
 SuspendOverlay = defclass(SuspendOverlay, overlay.OverlayWidget)
 SuspendOverlay.ATTRS{
     desc='Annotates suspended buildings with a visible marker.',
     viewscreens='dwarfmode',
     default_enabled=true,
     frame={w=0, h=0},
+    visible=show_suspend_overlay,
     overlay_onupdate_max_freq_seconds=30,
 }
 

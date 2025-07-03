@@ -387,7 +387,12 @@ private:
         if (isSuitableAccess(pos))
             return true;
 
-        // if a wall is being constructed below, the tile will be suitable
+        // wall-type tiles can never become suitable
+        auto tile_type = Maps::getTileType(pos);
+        if (!tile_type || isWallTerrain(*tile_type))
+            return false;
+
+        // other tiles can become suitable if a wall is being constructed below
         auto below = Buildings::findAtTile(coord(pos.x,pos.y,pos.z-1));
         if (below && below->getType() == df::building_type::Construction &&
             below->getSubtype() == construction_type::Wall)

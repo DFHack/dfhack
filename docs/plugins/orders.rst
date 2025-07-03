@@ -145,7 +145,14 @@ This collection of orders handles basic fort necessities:
 You should import it as soon as you have enough dwarves to perform the tasks.
 Right after the first migration wave is usually a good time.
 
-Note that the jugs are specifically made out of wood. This is so, as long as you don't may any other "Tools" out of wood, you can have a stockpile just for jugs by restricting a finished goods stockpile to only take wooden tools.
+These orders do not contain milking, shearing, or cheesemaking jobs since the
+game does not provide sufficient order conditions. Please enable ``automilk``,
+``autoshear``, and `autocheese` on the DFHack `gui/control-panel` for these
+types of jobs.
+
+Note that the jugs are specifically made out of wood. This is so, as long as
+you don't may any other "Tools" out of wood, you can have a stockpile just for
+jugs by restricting a finished goods stockpile to only take wooden tools.
 
 Armok's additional note: "shleggings? Yes,
 `shleggings <https://youtu.be/bLN8cOcTjdo&t=3458>`__."
@@ -155,7 +162,7 @@ Armok's additional note: "shleggings? Yes,
 
 This collection creates basic items that require heat. It is separated out from
 ``library/basic`` to give players the opportunity to set up magma furnaces first
-in order to save resources. It handles:
+(if desired) in order to save resources. It handles:
 
 - charcoal (including smelting of bituminous coal and lignite)
 - pearlash

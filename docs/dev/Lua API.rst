@@ -6514,7 +6514,7 @@ Slider class
 
 This widget implements a mouse-interactable slider. The player can move the handle to
 set the value of the slider. The parent widget owns the slider value, and can control
-it independently (e.g., with ``CycleHotkeyLabels``). If the value changes, the ``Slider``
+it independently (e.g., with a ``CycleHotkeyLabel``). If the value changes, the ``Slider``
 appearance will adjust automatically.
 
 :num_stops: Used to specify the number of "notches" in the slider, the places

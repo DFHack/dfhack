@@ -1161,14 +1161,16 @@ static string formatReadableName(T *unit_or_hf, const string &prof_name, bool sk
     if (native_name.empty())
         return prof_name;
 
+    std::string prof_suffix{ (prof_name.size() > 0) ? (", " + prof_name) : "" };
+
     if (skip_english)
-        return native_name + ", " + prof_name;
+        return native_name + prof_suffix;
 
     string english_name = Translation::translateName(visible_name, true, true);
     if (english_name.empty())
-        return native_name + ", " + prof_name;
+        return native_name + prof_suffix;
 
-    return native_name + " \"" + english_name + "\", " + prof_name;
+    return native_name + " \"" + english_name + "\"" + prof_suffix;
 }
 
 string Units::getReadableName(df::historical_figure *hf, bool skip_english) {

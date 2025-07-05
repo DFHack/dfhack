@@ -57,6 +57,7 @@ Template for new versions:
 - `tweak`: ``animaltrap-reuse``: make it so built animal traps automatically unload the vermin they catch into stockpiled animal traps, so that they can be automatically re-baited and reused
 
 ## Fixes
+- ``Units::getReadableName`` will no longer append a comma to the names of histfigs with no profession
 
 ## Misc Improvements
 

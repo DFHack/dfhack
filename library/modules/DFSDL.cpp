@@ -1,11 +1,17 @@
-#include "Internal.h"
-
 #include "modules/DFSDL.h"
 
 #include "Debug.h"
 #include "PluginManager.h"
 
+#include <SDL_clipboard.h>
+#include <SDL_events.h>
+#include <SDL_hints.h>
+#include <SDL_messagebox.h>
+#include <SDL_pixels.h>
+#include <SDL_rect.h>
+#include <SDL_render.h>
 #include <SDL_stdinc.h>
+#include <SDL_surface.h>
 
 #ifdef WIN32
 # include <regex>
@@ -43,21 +49,67 @@ static const vector<string> SDL_IMAGE_LIBS {
 };
 
 SDL_Surface * (*g_IMG_Load)(const char *) = nullptr;
-SDL_Surface * (*g_SDL_CreateRGBSurface)(uint32_t, int, int, int, uint32_t, uint32_t, uint32_t, uint32_t) = nullptr;
-SDL_Surface * (*g_SDL_CreateRGBSurfaceFrom)(void *pixels, int width, int height, int depth, int pitch, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask) = nullptr;
-int (*g_SDL_UpperBlit)(SDL_Surface *, const SDL_Rect *, SDL_Surface *, SDL_Rect *) = nullptr;
-SDL_Surface * (*g_SDL_ConvertSurface)(SDL_Surface *, const SDL_PixelFormat *, uint32_t) = nullptr;
-void (*g_SDL_FreeSurface)(SDL_Surface *) = nullptr;
 // int (*g_SDL_SemWait)(DFSDL_sem *) = nullptr;
 // int (*g_SDL_SemPost)(DFSDL_sem *) = nullptr;
-int (*g_SDL_PushEvent)(SDL_Event *) = nullptr;
-SDL_bool (*g_SDL_HasClipboardText)();
-int (*g_SDL_SetClipboardText)(const char *text);
-char * (*g_SDL_GetClipboardText)();
-void (*g_SDL_free)(void *);
-SDL_PixelFormat* (*g_SDL_AllocFormat)(uint32_t pixel_format) = nullptr;
-SDL_Surface* (*g_SDL_CreateRGBSurfaceWithFormat)(uint32_t flags, int width, int height, int depth, uint32_t format) = nullptr;
-int (*g_SDL_ShowSimpleMessageBox)(uint32_t flags, const char *title, const char *message, SDL_Window *window) = nullptr;
+
+// These two pull in SDL.h
+int SDL_InitSubSystem(Uint32 flags);
+void SDL_QuitSubSystem(Uint32 flags);
+
+#define DFSDL_DECLARE_SYMBOL(sym) decltype(sym)* g_##sym = nullptr
+
+DFSDL_DECLARE_SYMBOL(SDL_AllocFormat);
+DFSDL_DECLARE_SYMBOL(SDL_ConvertSurface);
+DFSDL_DECLARE_SYMBOL(SDL_ConvertSurfaceFormat);
+DFSDL_DECLARE_SYMBOL(SDL_CreateRGBSurface);
+DFSDL_DECLARE_SYMBOL(SDL_CreateRGBSurfaceFrom);
+DFSDL_DECLARE_SYMBOL(SDL_CreateRGBSurfaceWithFormat);
+DFSDL_DECLARE_SYMBOL(SDL_CreateRenderer);
+DFSDL_DECLARE_SYMBOL(SDL_CreateTexture);
+DFSDL_DECLARE_SYMBOL(SDL_CreateTextureFromSurface);
+DFSDL_DECLARE_SYMBOL(SDL_CreateWindow);
+DFSDL_DECLARE_SYMBOL(SDL_DestroyRenderer);
+DFSDL_DECLARE_SYMBOL(SDL_DestroyTexture);
+DFSDL_DECLARE_SYMBOL(SDL_DestroyWindow);
+DFSDL_DECLARE_SYMBOL(SDL_free);
+DFSDL_DECLARE_SYMBOL(SDL_FreeSurface);
+DFSDL_DECLARE_SYMBOL(SDL_GetClipboardText);
+DFSDL_DECLARE_SYMBOL(SDL_GetError);
+DFSDL_DECLARE_SYMBOL(SDL_GetEventFilter);
+DFSDL_DECLARE_SYMBOL(SDL_GetModState);
+DFSDL_DECLARE_SYMBOL(SDL_GetRendererOutputSize);
+DFSDL_DECLARE_SYMBOL(SDL_GetWindowFlags);
+DFSDL_DECLARE_SYMBOL(SDL_GetWindowID);
+DFSDL_DECLARE_SYMBOL(SDL_HasClipboardText);
+DFSDL_DECLARE_SYMBOL(SDL_HideWindow);
+DFSDL_DECLARE_SYMBOL(SDL_iconv_string);
+DFSDL_DECLARE_SYMBOL(SDL_InitSubSystem);
+DFSDL_DECLARE_SYMBOL(SDL_MapRGB);
+DFSDL_DECLARE_SYMBOL(SDL_memset);
+DFSDL_DECLARE_SYMBOL(SDL_RenderClear);
+DFSDL_DECLARE_SYMBOL(SDL_RenderCopy);
+DFSDL_DECLARE_SYMBOL(SDL_RenderDrawRect);
+DFSDL_DECLARE_SYMBOL(SDL_RenderFillRect);
+DFSDL_DECLARE_SYMBOL(SDL_RenderPresent);
+DFSDL_DECLARE_SYMBOL(SDL_RenderSetIntegerScale);
+DFSDL_DECLARE_SYMBOL(SDL_RenderSetViewport);
+//DFSDL_DECLARE_SYMBOL(SDL_PointInRect); defined in SDL_rect.h
+DFSDL_DECLARE_SYMBOL(SDL_PushEvent);
+DFSDL_DECLARE_SYMBOL(SDL_SetClipboardText);
+DFSDL_DECLARE_SYMBOL(SDL_SetColorKey);
+DFSDL_DECLARE_SYMBOL(SDL_SetEventFilter);
+DFSDL_DECLARE_SYMBOL(SDL_SetHint);
+DFSDL_DECLARE_SYMBOL(SDL_SetRenderDrawColor);
+DFSDL_DECLARE_SYMBOL(SDL_SetTextureBlendMode);
+DFSDL_DECLARE_SYMBOL(SDL_SetTextureColorMod);
+DFSDL_DECLARE_SYMBOL(SDL_SetWindowMinimumSize);
+DFSDL_DECLARE_SYMBOL(SDL_ShowSimpleMessageBox);
+DFSDL_DECLARE_SYMBOL(SDL_ShowWindow);
+DFSDL_DECLARE_SYMBOL(SDL_StartTextInput);
+DFSDL_DECLARE_SYMBOL(SDL_StopTextInput);
+DFSDL_DECLARE_SYMBOL(SDL_UpperBlit);
+DFSDL_DECLARE_SYMBOL(SDL_UpdateTexture);
+DFSDL_DECLARE_SYMBOL(SDL_QuitSubSystem);
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -86,21 +138,62 @@ bool DFSDL::init(color_ostream &out) {
         }
 
     bind(g_sdl_image_handle, IMG_Load);
-    bind(g_sdl_handle, SDL_CreateRGBSurface);
-    bind(g_sdl_handle, SDL_CreateRGBSurfaceFrom);
-    bind(g_sdl_handle, SDL_UpperBlit);
-    bind(g_sdl_handle, SDL_ConvertSurface);
-    bind(g_sdl_handle, SDL_FreeSurface);
     // bind(g_sdl_handle, SDL_SemWait);
     // bind(g_sdl_handle, SDL_SemPost);
-    bind(g_sdl_handle, SDL_PushEvent);
-    bind(g_sdl_handle, SDL_HasClipboardText);
-    bind(g_sdl_handle, SDL_SetClipboardText);
-    bind(g_sdl_handle, SDL_GetClipboardText);
-    bind(g_sdl_handle, SDL_free);
+
     bind(g_sdl_handle, SDL_AllocFormat);
+    bind(g_sdl_handle, SDL_ConvertSurface);
+    bind(g_sdl_handle, SDL_ConvertSurfaceFormat);
+    bind(g_sdl_handle, SDL_CreateRenderer);
+    bind(g_sdl_handle, SDL_CreateRGBSurface);
+    bind(g_sdl_handle, SDL_CreateRGBSurfaceFrom);
     bind(g_sdl_handle, SDL_CreateRGBSurfaceWithFormat);
+    bind(g_sdl_handle, SDL_CreateTexture);
+    bind(g_sdl_handle, SDL_CreateTextureFromSurface);
+    bind(g_sdl_handle, SDL_CreateWindow);
+    bind(g_sdl_handle, SDL_DestroyRenderer);
+    bind(g_sdl_handle, SDL_DestroyTexture);
+    bind(g_sdl_handle, SDL_DestroyWindow);
+    bind(g_sdl_handle, SDL_free);
+    bind(g_sdl_handle, SDL_FreeSurface);
+    bind(g_sdl_handle, SDL_GetClipboardText);
+    bind(g_sdl_handle, SDL_GetError);
+    bind(g_sdl_handle, SDL_GetEventFilter);
+    bind(g_sdl_handle, SDL_GetModState);
+    bind(g_sdl_handle, SDL_GetRendererOutputSize);
+    bind(g_sdl_handle, SDL_GetWindowFlags);
+    bind(g_sdl_handle, SDL_GetWindowID);
+    bind(g_sdl_handle, SDL_HasClipboardText);
+    bind(g_sdl_handle, SDL_HideWindow);
+    bind(g_sdl_handle, SDL_iconv_string);
+    bind(g_sdl_handle, SDL_InitSubSystem);
+    bind(g_sdl_handle, SDL_MapRGB);
+    bind(g_sdl_handle, SDL_memset);
+    //bind(g_sdl_handle, SDL_PointInRect); defined in SDL_rect.h
+    bind(g_sdl_handle, SDL_PushEvent);
+    bind(g_sdl_handle, SDL_QuitSubSystem);
+    bind(g_sdl_handle, SDL_RenderClear);
+    bind(g_sdl_handle, SDL_RenderCopy);
+    bind(g_sdl_handle, SDL_RenderDrawRect);
+    bind(g_sdl_handle, SDL_RenderFillRect);
+    bind(g_sdl_handle, SDL_RenderPresent);
+    bind(g_sdl_handle, SDL_RenderSetIntegerScale);
+    bind(g_sdl_handle, SDL_RenderSetViewport);
+    bind(g_sdl_handle, SDL_SetClipboardText);
+    bind(g_sdl_handle, SDL_SetColorKey);
+    bind(g_sdl_handle, SDL_SetEventFilter);
+    bind(g_sdl_handle, SDL_SetHint);
+    bind(g_sdl_handle, SDL_SetRenderDrawColor);
+    bind(g_sdl_handle, SDL_SetTextureBlendMode);
+    bind(g_sdl_handle, SDL_SetTextureColorMod);
+    bind(g_sdl_handle, SDL_SetWindowMinimumSize);
     bind(g_sdl_handle, SDL_ShowSimpleMessageBox);
+    bind(g_sdl_handle, SDL_ShowWindow);
+    bind(g_sdl_handle, SDL_StartTextInput);
+    bind(g_sdl_handle, SDL_StopTextInput);
+    bind(g_sdl_handle, SDL_UpperBlit);
+    bind(g_sdl_handle, SDL_UpdateTexture);
+
 #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
@@ -117,6 +210,18 @@ void DFSDL::cleanup() {
         ClosePlugin(g_sdl_image_handle);
         g_sdl_image_handle = nullptr;
     }
+}
+
+void * DFSDL::lookup_DFSDL_Symbol(const char *name) {
+    if (!g_sdl_handle)
+        return nullptr;
+    return LookupPlugin(g_sdl_handle, name);
+}
+
+void * DFSDL::lookup_DFIMG_Symbol(const char *name) {
+    if (!g_sdl_image_handle)
+        return nullptr;
+    return LookupPlugin(g_sdl_image_handle, name);
 }
 
 SDL_Surface * DFSDL::DFIMG_Load(const char *file) {
@@ -250,4 +355,161 @@ DFHACK_EXPORT bool DFHack::setClipboardTextCp437Multiline(string text) {
         }
     }
     return 0 == DFHack::DFSDL::DFSDL_SetClipboardText(str.str().c_str());
+}
+
+SDL_Surface* DFSDL::DFSDL_ConvertSurfaceFormat(SDL_Surface* surface, uint32_t format, uint32_t flags) {
+    return g_SDL_ConvertSurfaceFormat(surface, format, flags);
+}
+
+SDL_Renderer* DFSDL::DFSDL_CreateRenderer(SDL_Window* window, int index, uint32_t flags) {
+    return g_SDL_CreateRenderer(window, index, flags);
+}
+
+SDL_Texture* DFSDL::DFSDL_CreateTexture(SDL_Renderer* renderer, uint32_t format, int access, int w, int h) {
+    return g_SDL_CreateTexture(renderer, format, access, w, h);
+}
+
+SDL_Texture* DFSDL::DFSDL_CreateTextureFromSurface(SDL_Renderer* renderer, SDL_Surface* surface) {
+    return g_SDL_CreateTextureFromSurface(renderer, surface);
+}
+
+SDL_Window* DFSDL::DFSDL_CreateWindow(const char* title, int x, int y, int w, int h, uint32_t flags) {
+    return g_SDL_CreateWindow(title, x, y, w, h, flags);
+}
+
+void DFSDL::DFSDL_DestroyRenderer(SDL_Renderer* renderer) {
+    g_SDL_DestroyRenderer(renderer);
+}
+
+void DFSDL::DFSDL_DestroyTexture(SDL_Texture* texture) {
+    g_SDL_DestroyTexture(texture);
+}
+
+void DFSDL::DFSDL_DestroyWindow(SDL_Window* window) {
+    g_SDL_DestroyWindow(window);
+}
+
+const char* DFSDL::DFSDL_GetError(void) {
+    return g_SDL_GetError();
+}
+
+SDL_bool DFSDL::DFSDL_GetEventFilter(SDL_EventFilter* filter, void** userdata) {
+    return g_SDL_GetEventFilter(filter, userdata);
+}
+
+SDL_Keymod DFSDL::DFSDL_GetModState(void) {
+    return g_SDL_GetModState();
+}
+
+int DFSDL::DFSDL_GetRendererOutputSize(SDL_Renderer* renderer, int* w, int* h) {
+    return g_SDL_GetRendererOutputSize(renderer, w, h);
+}
+
+uint32_t DFSDL::DFSDL_GetWindowFlags(SDL_Window* window) {
+    return g_SDL_GetWindowFlags(window);
+}
+
+uint32_t DFSDL::DFSDL_GetWindowID(SDL_Window* window) {
+    return g_SDL_GetWindowID(window);
+}
+
+void DFSDL::DFSDL_HideWindow(SDL_Window* window) {
+    g_SDL_HideWindow(window);
+}
+
+char* DFSDL::DFSDL_iconv_string(const char* tocode, const char* fromcode, const char* inbuf, size_t inbytesleft) {
+    return g_SDL_iconv_string(tocode, fromcode, inbuf, inbytesleft);
+}
+
+int DFSDL::DFSDL_InitSubSystem(uint32_t flags) {
+    return g_SDL_InitSubSystem(flags);
+}
+
+uint32_t DFSDL::DFSDL_MapRGB(const SDL_PixelFormat* format, uint8_t r, uint8_t g, uint8_t b) {
+    return g_SDL_MapRGB(format, r, g, b);
+}
+
+void* DFSDL::DFSDL_memset(void* dst, int c, size_t len) {
+    return g_SDL_memset(dst, c, len);
+}
+
+int DFSDL::DFSDL_RenderClear(SDL_Renderer* renderer) {
+    return g_SDL_RenderClear(renderer);
+}
+
+int DFSDL::DFSDL_RenderCopy(SDL_Renderer* renderer, SDL_Texture* texture, const SDL_Rect* srcrect, const SDL_Rect* dstrect) {
+    return g_SDL_RenderCopy(renderer, texture, srcrect, dstrect);
+}
+
+int DFSDL::DFSDL_RenderDrawRect(SDL_Renderer* renderer, const SDL_Rect* rect) {
+    return g_SDL_RenderDrawRect(renderer, rect);
+}
+
+int DFSDL::DFSDL_RenderFillRect(SDL_Renderer* renderer, const SDL_Rect* rect) {
+    return g_SDL_RenderFillRect(renderer, rect);
+}
+
+void DFSDL::DFSDL_RenderPresent(SDL_Renderer* renderer) {
+    g_SDL_RenderPresent(renderer);
+}
+
+int DFSDL::DFSDL_RenderSetIntegerScale(SDL_Renderer* renderer, SDL_bool enable) {
+    return g_SDL_RenderSetIntegerScale(renderer, enable);
+}
+
+int DFSDL::DFSDL_RenderSetViewport(SDL_Renderer* renderer, const SDL_Rect* rect) {
+    return g_SDL_RenderSetViewport(renderer, rect);
+}
+
+// Defined in SDL_rect.h
+SDL_bool DFSDL::DFSDL_PointInRect(const SDL_Point* p, const SDL_Rect* r) {
+    return SDL_PointInRect(p, r);
+}
+
+int DFSDL::DFSDL_SetColorKey(SDL_Surface* surface, int flag, uint32_t key) {
+    return g_SDL_SetColorKey(surface, flag, key);
+}
+
+void DFSDL::DFSDL_SetEventFilter(SDL_EventFilter filter, void* userdata) {
+    g_SDL_SetEventFilter(filter, userdata);
+}
+
+SDL_bool DFSDL::DFSDL_SetHint(const char* name, const char* value) {
+    return g_SDL_SetHint(name, value);
+}
+
+int DFSDL::DFSDL_SetRenderDrawColor(SDL_Renderer* renderer, uint8_t r, uint8_t g, uint8_t b, uint8_t a) {
+    return g_SDL_SetRenderDrawColor(renderer, r, g, b, a);
+}
+
+int DFSDL::DFSDL_SetTextureBlendMode(SDL_Texture* texture, SDL_BlendMode blendMode) {
+    return g_SDL_SetTextureBlendMode(texture, blendMode);
+}
+
+int DFSDL::DFSDL_SetTextureColorMod(SDL_Texture* texture, uint8_t r, uint8_t g, uint8_t b) {
+    return g_SDL_SetTextureColorMod(texture, r, g, b);
+}
+
+void DFSDL::DFSDL_SetWindowMinimumSize(SDL_Window* window, int min_w, int min_h) {
+    g_SDL_SetWindowMinimumSize(window, min_w, min_h);
+}
+
+void DFSDL::DFSDL_ShowWindow(SDL_Window* window) {
+    g_SDL_ShowWindow(window);
+}
+
+void DFSDL::DFSDL_StartTextInput(void) {
+    g_SDL_StartTextInput();
+}
+
+void DFSDL::DFSDL_StopTextInput(void) {
+    g_SDL_StopTextInput();
+}
+
+int DFSDL::DFSDL_UpdateTexture(SDL_Texture* texture, const SDL_Rect* rect, const void* pixels, int pitch) {
+    return g_SDL_UpdateTexture(texture, rect, pixels, pitch);
+}
+
+void DFSDL::DFSDL_QuitSubSystem(uint32_t flags) {
+    g_SDL_QuitSubSystem(flags);
 }

@@ -129,6 +129,19 @@ struct ClothingRequirement {
 
     bool SetFromParameters(color_ostream &out, vector<string> &parameters)
     {
+        if (parameters[0] == "clear") { // handle the clear case
+            if (!set_bitfield_field(&material_category, parameters[1], 1))
+                out << "Unrecognized material type: " << parameters[1] << endl;
+            if (!setItem(parameters[2], this)) {
+                out << "Unrecognized item name or token: " << parameters[2] << endl;
+                return false;
+            }
+            else if (!validateMaterialCategory(this)) {
+                out << parameters[1] << " is not a valid material category for " << parameters[2] << endl;
+                return false;
+            }
+            return true;
+        }
         if (!set_bitfield_field(&material_category, parameters[0], 1))
             out << "Unrecognized material type: " << parameters[0] << endl;
         if (!setItem(parameters[1], this)) {
@@ -442,14 +455,20 @@ command_result autoclothing(color_ostream &out, vector<string> &parameters)
     bool settingSize = false;
     bool matchedExisting = false;
     if (parameters.size() > 2) {
-        try {
-            newRequirement.needed_per_citizen = std::stoi(parameters[2]);
+        if (parameters[0] == "clear") {
+            newRequirement.needed_per_citizen = 0;
+            settingSize = true;
         }
-        catch (const std::exception&) {
-            out << parameters[2] << " is not a valid number." << endl;
-            return CR_WRONG_USAGE;
+        else {
+            try {
+                newRequirement.needed_per_citizen = std::stoi(parameters[2]);
+            }
+            catch (const std::exception&) {
+                out << parameters[2] << " is not a valid number." << endl;
+                return CR_WRONG_USAGE;
+            }
+            settingSize = true;
         }
-        settingSize = true;
     }
 
     for (size_t i = clothingOrders.size(); i-- > 0;) {
@@ -459,7 +478,10 @@ command_result autoclothing(color_ostream &out, vector<string> &parameters)
         if (settingSize) {
             if (newRequirement.needed_per_citizen == 0) {
                 clothingOrders.erase(clothingOrders.begin() + i);
-                out << "Unset " << parameters[0] << " " << parameters[1] << endl;
+                    if (parameters[0] == "clear")
+                        out << "Unset " << parameters[1] << " " << parameters[2] << endl;
+                    else
+                        out << "Unset " << parameters[0] << " " << parameters[1] << endl;
             }
             else {
                 clothingOrders[i] = newRequirement;

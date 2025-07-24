@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- several fixes related to changes in file system handling in DF 52.01
 
 ## Misc Improvements
 - `autoclothing`: added a ``clear`` option to unset previously set orders

@@ -186,13 +186,7 @@ static std::string filterSaveFileName(std::string s) {
 }
 
 static std::filesystem::path getSavePath(const std::string &world) {
-    auto getsavebase = []() {
-        if (df::global::init->media.flag.is_set(df::enums::init_media_flags::PORTABLE_MODE))
-            return DFSDL::DFSDL_GetPrefPath("Bay 12 Games", "Dwarf Fortress");
-        else
-            return DFSDL::DFSDL_GetBasePath();
-        };
-    std::filesystem::path base{ getsavebase() };
+    auto base{ Filesystem::getBaseDir() };
     return base / "save" / world;
 }
 

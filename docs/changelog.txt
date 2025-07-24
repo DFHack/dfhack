@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- Honor the "portable mode" preference setting for locating save folders. Fixes DFHack cosaves not working.
 
 ## Misc Improvements
 

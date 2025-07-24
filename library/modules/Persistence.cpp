@@ -29,12 +29,14 @@ distribution.
 #include "LuaTools.h"
 #include "MemAccess.h"
 
+#include "modules/DFSDL.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
 #include "df/world.h"
+#include "df/init.h"
 
 #include <json/json.h>
 
@@ -184,7 +186,14 @@ static std::string filterSaveFileName(std::string s) {
 }
 
 static std::filesystem::path getSavePath(const std::string &world) {
-    return std::filesystem::path{} / "save" / world;
+    auto getsavebase = []() {
+        if (df::global::init->media.flag.is_set(df::enums::init_media_flags::PORTABLE_MODE))
+            return DFSDL::DFSDL_GetPrefPath("Bay 12 Games", "Dwarf Fortress");
+        else
+            return DFSDL::DFSDL_GetBasePath();
+        };
+    std::filesystem::path base{ getsavebase() };
+    return base / "save" / world;
 }
 
 static std::filesystem::path getSaveFilePath(const std::string &world, const std::string &name) {

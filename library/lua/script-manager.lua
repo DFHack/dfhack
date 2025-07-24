@@ -80,8 +80,8 @@ end
 -- this perhaps could/should be queried from the Steam API
 -- are there any installation configurations where this will be wrong, though?
 local WORKSHOP_MODS_PATH = '../../workshop/content/975370/'
-local MODS_PATH = 'mods/'
-local INSTALLED_MODS_PATH = 'data/installed_mods/'
+local MODS_PATH = dfhack.filesystem.getBaseDir() .. 'mods/'
+local INSTALLED_MODS_PATH = dfhack.filesystem.getBaseDir() .. 'data/installed_mods/'
 
 -- last instance of the same version of the same mod wins, so read them in this
 -- order (in increasing order of liklihood that players may have made custom
@@ -214,7 +214,7 @@ function get_active_mods()
     local ol = df.global.world.object_loader
 
     for idx=0,#ol.object_load_order_id-1 do
-        local path = ol.object_load_order_src_dir[idx].value
+        local path = ol.object_load_order_src_dir[idx]
         table.insert(mods, {
             id=ol.object_load_order_id[idx].value,
             name=ol.object_load_order_name[idx].value,

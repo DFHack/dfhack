@@ -41,6 +41,7 @@ distribution.
 
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "modules/Filesystem.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -191,7 +192,7 @@ void df::stl_string_identity::lua_write(lua_State *state, int fname_idx, void *p
 void df::path_identity::lua_read(lua_State* state, int fname_idx, void* ptr) const
 {
     auto ppath = (std::filesystem::path*)ptr;
-    auto str = ppath->u8string();
+    auto str = DFHack::Filesystem::as_string(*ppath);
     lua_pushlstring(state, (char*)str.data(), str.size());
 }
 

@@ -3206,6 +3206,16 @@ unless otherwise noted.
   following it for each entry. Set ``include_prefix`` to false if you don't
   want the ``path`` string prepended to the returned filenames.
 
+* ``dfhack.filesystem.getBaseDir()``
+
+  Returns a directory to which DF (and thus DFHack) can save files. This will either
+  be DF's install directory, or the path returned by ``SDLGetPrefDir``, depending on whether
+  DF is in "portable mode" or not.
+
+* ``dfhack.filesystem.getInstallDir()``
+
+  Returns the the directory in which DF is installed.
+
 Console API
 -----------
 

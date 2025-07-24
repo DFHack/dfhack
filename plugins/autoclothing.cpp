@@ -136,6 +136,10 @@ struct ClothingRequirement {
                 out << "Unrecognized item name or token: " << parameters[2] << endl;
                 return false;
             }
+            else if (!validateMaterialCategory(this)) {
+                out << parameters[1] << " is not a valid material category for " << parameters[2] << endl;
+                return false;
+            }
             return true;
         }
         if (!set_bitfield_field(&material_category, parameters[0], 1))

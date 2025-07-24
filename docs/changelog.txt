@@ -58,6 +58,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `autoclothing`: Added a `clear` option to unset previously set orders
 
 ## Documentation
 

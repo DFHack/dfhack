@@ -37,6 +37,7 @@ distribution.
 #include <filesystem>
 
 #include "DataDefs.h"
+#include "LuaWrapper.h"
 
 namespace std {
     class condition_variable;
@@ -113,6 +114,7 @@ namespace DFHack
     };
 
     class DFHACK_EXPORT container_identity : public constructed_identity {
+    protected:
         const type_identity *item;
         const enum_identity *ienum;
 
@@ -417,6 +419,25 @@ namespace df
             auto &ct = *(T*)ptr;
             ct.insert(ct.begin()+idx, *(typename T::value_type*)item);
             return true;
+        }
+        virtual bool lua_insert2(lua_State* state, int fname_idx, void* ptr, int idx, int val_index) const
+        {
+            using VT = typename T::value_type;
+            VT tmp{};
+            auto id = (type_identity*)lua_touserdata(state, DFHack::LuaWrapper::UPVAL_ITEM_ID);
+            auto pitem = DFHack::LuaWrapper::get_object_internal(state, id, val_index, false);
+            bool useTemporary = (!pitem && id->isPrimitive());
+
+            if (useTemporary)
+            {
+                pitem = &tmp;
+                id->lua_write(state, fname_idx, pitem, val_index);
+            }
+
+            if (id != item || !pitem)
+                DFHack::LuaWrapper::field_error(state, fname_idx, "incompatible object type", "insert");
+
+            return insert(ptr, idx, pitem);
         }
 
     protected:

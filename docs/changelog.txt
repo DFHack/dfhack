@@ -64,8 +64,10 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Filesystem::getBaseDir`` and ``Filesystem::getInstallDir`` added (and made available in Lua)
 
 ## Lua
+- inserting values into STL containers containing nonprimitive types is now supported
 
 ## Removed
 

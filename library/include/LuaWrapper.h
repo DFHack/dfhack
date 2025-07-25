@@ -29,8 +29,6 @@ distribution.
 #include <vector>
 #include <map>
 
-#include "DataDefs.h"
-
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -41,6 +39,9 @@ distribution.
 
 namespace DFHack {
     struct FunctionReg;
+
+    class function_identity_base;
+
 namespace LuaWrapper {
     struct LuaToken;
 

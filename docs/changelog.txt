@@ -35,6 +35,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
 
 ## Lua
 

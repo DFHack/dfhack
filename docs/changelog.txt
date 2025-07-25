@@ -67,7 +67,7 @@ Template for new versions:
 - ``Filesystem::getBaseDir`` and ``Filesystem::getInstallDir`` added (and made available in Lua)
 
 ## Lua
-- ``insert``ing values into STL containers containing nonprimitive types is now supported
+- inserting values into STL containers containing nonprimitive types is now supported
 
 ## Removed
 

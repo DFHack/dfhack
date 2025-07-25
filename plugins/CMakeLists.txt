@@ -32,6 +32,10 @@ set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 # proto file must be in the proto/ folder
 # dfhack_plugin(rename rename.cpp LINK_LIBRARIES lua PROTOBUFS rename)
 
+# warning: for complicated reasons, if a plugin uses a vmethod interpose, it must
+# link to lua even if it doesn't otherwise use lua. we'll fix this someday, we promise.
+# we apologize for the inconvenience.
+
 option(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if(BUILD_SUPPORTED)
     dfhack_plugin(3dveins 3dveins.cpp)

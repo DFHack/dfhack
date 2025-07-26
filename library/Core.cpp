@@ -108,11 +108,18 @@ size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::st
 
 namespace DFHack {
 
-DBG_DECLARE(core,keybinding,DebugCategory::LINFO);
-DBG_DECLARE(core,script,DebugCategory::LINFO);
+    DBG_DECLARE(core, keybinding, DebugCategory::LINFO);
+    DBG_DECLARE(core, script, DebugCategory::LINFO);
 
-static const std::filesystem::path CONFIG_PATH{ std::filesystem::path{} / "dfhack-config" };
-static const std::filesystem::path CONFIG_DEFAULTS_PATH{ std::filesystem::path{} / "hack" / "data" / "dfhack-config-defaults" };
+    static const std::filesystem::path getConfigPath()
+    {
+        return Filesystem::getInstallDir() / "dfhack-config";
+    };
+
+    static const std::filesystem::path getConfigDefaultsPath()
+    {
+        return Filesystem::getInstallDir() / "hack" / "data" / "dfhack-config-defaults";
+    };
 
 class MainThread {
 public:
@@ -504,16 +511,18 @@ void Core::getScriptPaths(std::vector<std::filesystem::path> *dest)
 {
     std::lock_guard<std::mutex> lock(script_path_mutex);
     dest->clear();
-    std::filesystem::path df_path = this->p->getPath();
+    std::filesystem::path df_pref_path = Filesystem::getBaseDir();
+    std::filesystem::path df_install_path = Filesystem::getInstallDir();
     for (auto & path : script_paths[0])
         dest->emplace_back(path);
-    dest->push_back(df_path / CONFIG_PATH / "scripts");
+    // should this be df_pref_path? probably
+    dest->push_back(getConfigPath() / "scripts");
     if (df::global::world && isWorldLoaded()) {
         std::string save = World::ReadWorldFolder();
         if (save.size())
-            dest->emplace_back(df_path / "save" / save / "scripts");
+            dest->emplace_back(df_pref_path / "save" / save / "scripts");
     }
-    dest->emplace_back(df_path / "hack" / "scripts");
+    dest->emplace_back(df_install_path / "hack" / "scripts");
     for (auto & path : script_paths[2])
         dest->emplace_back(path);
     for (auto & path : script_paths[1])
@@ -535,7 +544,7 @@ std::filesystem::path Core::findScript(std::string name)
 
 bool loadScriptPaths(color_ostream &out, bool silent = false)
 {
-    std::filesystem::path filename{ CONFIG_PATH / "script-paths.txt" };
+    std::filesystem::path filename{ getConfigPath() / "script-paths.txt" };
     std::ifstream file(filename);
     if (!file)
     {
@@ -1372,11 +1381,11 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     }
 
     // load baseline defaults
-    core->loadScriptFile(out, CONFIG_PATH / "init" / "default.dfhack.init", false);
+    core->loadScriptFile(out, getConfigPath() / "init" / "default.dfhack.init", false);
 
     // load user overrides
     std::vector<std::string> prefixes(1, "dfhack");
-    loadScriptFiles(core, out, prefixes, CONFIG_PATH / "init");
+    loadScriptFiles(core, out, prefixes, getConfigPath() / "init");
 
     // show the terminal if requested
     auto L = DFHack::Core::getInstance().getLuaState();
@@ -1399,7 +1408,7 @@ static void fInitthread(IODATA * iod)
 // A thread function... for the interactive console.
 static void fIOthread(IODATA * iod)
 {
-    static const std::filesystem::path HISTORY_FILE = CONFIG_PATH / "dfhack.history";
+    static const std::filesystem::path HISTORY_FILE = getConfigPath() / "dfhack.history";
 
     Core * core = iod->core;
     PluginManager * plug_mgr = iod->plug_mgr;
@@ -1763,16 +1772,16 @@ bool Core::InitSimulationThread()
     virtual_identity::Init(this);
 
     // create config directory if it doesn't already exist
-    if (!Filesystem::mkdir_recursive(CONFIG_PATH))
-        con.printerr("Failed to create config directory: '%s'\n", CONFIG_PATH.c_str());
+    if (!Filesystem::mkdir_recursive(getConfigPath()))
+        con.printerr("Failed to create config directory: '%s'\n", getConfigPath().c_str());
 
     // copy over default config files if necessary
     std::map<std::filesystem::path, bool> config_files;
     std::map<std::filesystem::path, bool> default_config_files;
-    if (Filesystem::listdir_recursive(CONFIG_PATH, config_files, 10, false) != 0)
-        con.printerr("Failed to list directory: '%s'\n", CONFIG_PATH.c_str());
-    else if (Filesystem::listdir_recursive(CONFIG_DEFAULTS_PATH, default_config_files, 10, false) != 0)
-        con.printerr("Failed to list directory: '%s'\n", CONFIG_DEFAULTS_PATH.c_str());
+    if (Filesystem::listdir_recursive(getConfigPath(), config_files, 10, false) != 0)
+        con.printerr("Failed to list directory: '%s'\n", getConfigPath().c_str());
+    else if (Filesystem::listdir_recursive(getConfigDefaultsPath(), default_config_files, 10, false) != 0)
+        con.printerr("Failed to list directory: '%s'\n", getConfigDefaultsPath().c_str());
     else
     {
         // ensure all config file directories exist before we start copying files
@@ -1780,7 +1789,7 @@ bool Core::InitSimulationThread()
             // skip over files
             if (!entry.second)
                 continue;
-            std::filesystem::path dirname = CONFIG_PATH / entry.first;
+            std::filesystem::path dirname = getConfigPath() / entry.first;
             if (!Filesystem::mkdir_recursive(dirname))
                 con.printerr("Failed to create config directory: '%s'\n", dirname.c_str());
         }
@@ -1792,10 +1801,10 @@ bool Core::InitSimulationThread()
                 continue;
             std::filesystem::path filename = entry.first;
             if (!config_files.count(filename)) {
-                std::filesystem::path src_file = CONFIG_DEFAULTS_PATH / filename;
+                std::filesystem::path src_file = getConfigDefaultsPath() / filename;
                 if (!Filesystem::isfile(src_file))
                     continue;
-                std::filesystem::path dest_file = CONFIG_PATH / filename;
+                std::filesystem::path dest_file = getConfigPath() / filename;
                 std::ifstream src(src_file, std::ios::binary);
                 std::ofstream dest(dest_file, std::ios::binary);
                 if (!src.good() || !dest.good()) {
@@ -2224,16 +2233,16 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
     if (!df::global::world)
         return;
 
-    std::filesystem::path rawFolder = !isWorldLoaded() ? std::filesystem::path{} : std::filesystem::path{} / "save" / World::ReadWorldFolder() / "init";
+    std::filesystem::path rawFolder = !isWorldLoaded() ? Filesystem::getInstallDir() : Filesystem::getBaseDir() / "save" / World::ReadWorldFolder() / "init";
 
     auto i = table.find(event);
     if ( i != table.end() ) {
         const std::vector<std::string>& set = i->second;
 
         // load baseline defaults
-        this->loadScriptFile(out, CONFIG_PATH / "init" / ("default." + set[0] + ".init"), false);
+        this->loadScriptFile(out, getConfigPath() / "init" / ("default." + set[0] + ".init"), false);
 
-        loadScriptFiles(this, out, set, CONFIG_PATH / "init");
+        loadScriptFiles(this, out, set, getConfigPath() / "init");
         loadScriptFiles(this, out, set, rawFolder);
     }
 

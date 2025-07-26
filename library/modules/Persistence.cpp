@@ -186,8 +186,7 @@ static std::string filterSaveFileName(std::string s) {
 }
 
 static std::filesystem::path getSavePath(const std::string &world) {
-    auto base{ Filesystem::getBaseDir() };
-    return base / "save" / world;
+    return Filesystem::getBaseDir() / "save" / world;
 }
 
 static std::filesystem::path getSaveFilePath(const std::string &world, const std::string &name) {

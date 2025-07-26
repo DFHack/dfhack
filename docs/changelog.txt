@@ -58,6 +58,7 @@ Template for new versions:
 
 ## Fixes
 - several fixes related to changes in file system handling in DF 52.01
+- `dig-now`: don't allow UNDIGGABLE stones to be excavated
 
 ## Misc Improvements
 - `autoclothing`: added a ``clear`` option to unset previously set orders

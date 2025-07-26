@@ -214,14 +214,44 @@ function get_active_mods()
     local ol = df.global.world.object_loader
 
     for idx=0,#ol.object_load_order_id-1 do
-        local path = ol.object_load_order_src_dir[idx]
+        local path = nil
+        if ol.object_load_order_src_dir[idx] then
+            path = ol.object_load_order_src_dir[idx].value
+        end
+        -- If path is still nil, try to construct a fallback path
+        if not path then
+            local mod_id = ol.object_load_order_id[idx].value
+            if mod_id then
+                -- Try to find the mod path using existing functions
+                path = getModSourcePath(mod_id)
+                if not path then
+                    -- If we can't find the path, assume it might be vanilla
+                    -- Vanilla mods typically don't have entries in the mod path system
+                    path = 'data/vanilla/' .. mod_id
+                end
+            else
+                path = 'unknown'
+            end
+        end
+        -- Convert path to string if it's not already
+        if path then
+            path = tostring(path)
+        end
+        -- Determine if this is a vanilla mod
+        -- Vanilla mods are those that don't start with installed mods path or other mod paths
+        local is_vanilla = false
+        if path then
+            is_vanilla = not (path:startswith(INSTALLED_MODS_PATH) or
+                             path:startswith(MODS_PATH) or
+                             path:startswith(WORKSHOP_MODS_PATH))
+        end
         table.insert(mods, {
             id=ol.object_load_order_id[idx].value,
             name=ol.object_load_order_name[idx].value,
             version=ol.object_load_order_displayed_version[idx].value,
             numeric_version=ol.object_load_order_numeric_version[idx],
             path=path,
-            vanilla=path:startswith('data/vanilla/'), -- windows also uses forward slashes
+            vanilla=is_vanilla,
         })
     end
 

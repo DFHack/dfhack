@@ -120,6 +120,7 @@ Kurik Amudnil
 Kévin Boissonneault     KABoissonneault
 Lethosor                lethosor
 LordGolias              LordGolias
+Malik Alnakhaleh        MalikMAlna
 Mark Nielson            pseudodragon
 Mason11987              Mason11987
 Matt Regul              mattregul

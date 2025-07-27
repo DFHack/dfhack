@@ -450,12 +450,10 @@ static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
         break;
     }
 
-    if (mat == df::tiletype_material::FEATURE) {
-        // adamantine is the only is diggable feature
-        t_feature feature;
-        return map.BlockAtTile(pos)->GetLocalFeature(&feature)
-                && feature.type == feature_type::deep_special_tube;
-    }
+    MaterialInfo mi;
+    mi.decode(map.baseMaterialAt(pos));
+    if (mi.material != nullptr && mi.material->flags.is_set(df::material_flags::UNDIGGABLE))
+        return false;
 
     return true;
 }

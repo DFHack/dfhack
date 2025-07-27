@@ -57,7 +57,25 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- several fixes related to changes in file system handling in DF 52.01
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.02-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Several fixes related to changes in file system handling in DF 52.01
 - `dig-now`: don't allow UNDIGGABLE stones to be excavated
 
 ## Misc Improvements
@@ -66,11 +84,12 @@ Template for new versions:
 ## Documentation
 
 ## API
+- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
 - ``Filesystem::getBaseDir`` and ``Filesystem::getInstallDir`` added (and made available in Lua)
-- expand the partial implementations of ``Military::addToSquad`` and ``Military::removeFromSquad``
+- Expanded the partial implementations of ``Military::addToSquad`` and ``Military::removeFromSquad``
 
 ## Lua
-- inserting values into STL containers containing nonprimitive types is now supported
+- Inserting values into STL containers containing nonprimitive types is now supported
 
 ## Removed
 

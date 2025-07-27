@@ -5,6 +5,8 @@
 #include "modules/Military.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
+#include "df/activity_entry.h"
+#include "df/activity_event.h"
 #include "df/building.h"
 #include "df/building_civzonest.h"
 #include "df/building_squad_infost.h"
@@ -17,6 +19,7 @@
 #include "df/history_event_remove_hf_entity_linkst.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
+#include "df/equipment_update.h"
 #include "df/plotinfost.h"
 #include "df/military_routinest.h"
 #include "df/squad.h"
@@ -460,6 +463,15 @@ bool Military::addToSquad(int32_t unit_id, int32_t squad_id, int32_t squad_pos)
     unit->military.squad_position = squad_pos;
 
     add_soldier_entity_link(hf, squad, squad_pos);
+
+    #define F(flag) df::equipment_update::mask_##flag
+    auto constexpr update_flags = F(weapon) | F(armor) | F(shoes) | F(shield) | F(helm) | F(gloves)
+                                | F(ammo) | F(pants) | F(backpack) | F(quiver) | F(flask);
+    #undef F
+
+    squad->ammo.update.whole |= update_flags;
+    df::global::plotinfo->equipment.update.whole |= update_flags;
+
     return true;
 }
 
@@ -488,6 +500,19 @@ bool Military::removeFromSquad(int32_t unit_id)
     // remove from unit information
     unit->military.squad_id = -1;
     unit->military.squad_position = -1;
+
+    // abort individual training
+    if (unit->individual_drills.size()) {
+        unit->flags3.bits.verify_personal_training = true;
+    }
+
+    // remove unit from squad activities
+    auto activity_entry = binsearch_in_vector(df::global::world->activities.all,&df::activity_entry::id,squad->activity);
+    if (activity_entry) {
+        for (auto const activity_event : activity_entry->events) {
+            activity_event->removeParticipant(unit->hist_figure_id, unit->id, false);
+        }
+    }
 
     if (squad_pos == 0) // is unit a commander?
         remove_officer_entity_link(hf, squad);

@@ -39,12 +39,14 @@ distribution.
 #include "df/job_skill.h"
 #include "df/mental_attribute_type.h"
 #include "df/misc_trait_type.h"
+#include "df/need_type.h"
 #include "df/physical_attribute_type.h"
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
 #include "df/unit_path_goal.h"
 
 #include <ranges>
+#include <bitset>
 
 namespace df {
     struct activity_entry;
@@ -338,6 +340,17 @@ DFHACK_EXPORT bool isGoalAchieved(df::unit *unit, size_t goalIndex = 0);
 
 DFHACK_EXPORT df::activity_entry *getMainSocialActivity(df::unit *unit);
 DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);
+
+// get largest (i.e. most negative) focus penalty for a set of needs
+using need_types_set = std::bitset<ENUM_LAST_ITEM(need_type)+1UL>;
+DFHACK_EXPORT int32_t getFocusPenalty(df::unit* unit, need_types_set need_types);
+// get focused penalty for a single need
+DFHACK_EXPORT int32_t getFocusPenalty(df::unit* unit, df::need_type need_type);
+
+// unit has an unbailable social activity (e.g. "Socialize!")
+DFHACK_EXPORT bool unbailableSocialActivity(df::unit *unit);
+// unit can be assigned a job
+DFHACK_EXPORT bool isJobAvailable(df::unit *unit, bool interrupt_social);
 
 // Stress categories. 0 is highest stress, 6 is lowest.
 DFHACK_EXPORT extern const std::vector<int32_t> stress_cutoffs;

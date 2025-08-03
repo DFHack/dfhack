@@ -63,6 +63,8 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Job``: new functions ``createLinked`` and ``assignToWorkshop``
+- ``Units``: new functions ``getFocusPenalty``, ``unbailableSocialActivity``, ``isJobAvailable``
 
 ## Lua
 

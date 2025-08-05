@@ -7,6 +7,7 @@ local json = require('json')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
 local widgets = require('gui.widgets')
+local researchInfo = reqscript("internal/research-info/overlay")
 
 -- settings starting with 'tooltip-' are not passed to the C++ plugin
 local lua_only_settings_prefix = 'tooltip-'
@@ -31,6 +32,7 @@ local function get_default_state()
         ['tooltip-follow-hold-to-show']='none', -- one of none, ctrl, alt, or shift
         ['tooltip-follow-job']=true,
         ['tooltip-follow-activity']=true,
+        ['tooltip-follow-research']=false,
         ['tooltip-follow-job-shortenings'] = {
             ["Store item in stockpile"] = "Store item",
         },
@@ -48,6 +50,7 @@ local function get_default_state()
         ['tooltip-hover']=true,
         ['tooltip-hover-job']=true,
         ['tooltip-hover-activity']=true,
+        ['tooltip-hover-research']=true,
         ['tooltip-hover-name']=true,
         ['tooltip-hover-stress']=true,
         ['tooltip-hover-stress-levels']={
@@ -310,23 +313,29 @@ local function GetUnitActivity(unit)
     return activity and activity_GetName(activity)
 end
 
+local function GetUnitResearch(unit)
+    return researchInfo.GetUnitKnowledge(unit.id) and researchInfo.GetUnitResearchInfo(unit.id)
+end
+
 local function GetRelevantSettings(key)
     return config['tooltip-' .. key .. '-name'],
            config['tooltip-' .. key .. '-job'],
            config['tooltip-' .. key .. '-activity'],
            config['tooltip-' .. key .. '-stress'],
            config['tooltip-' .. key .. '-stress-levels'],
-           config['tooltip-' .. key .. '-job-shortenings']
+           config['tooltip-' .. key .. '-job-shortenings'],
+           config['tooltip-' .. key .. '-research']
 end
 
 local function GetUnitInfoText(unit, settings_group_name)
-    local show_name, show_job, show_activity, show_stress, stress_levels, job_shortenings = GetRelevantSettings(settings_group_name)
+    local show_name, show_job, show_activity, show_stress, stress_levels, job_shortenings, show_research = GetRelevantSettings(settings_group_name)
 
     local stress = show_stress and GetUnitStress(unit, stress_levels) or nil
     local name = show_name and GetUnitName(unit) or nil
     local job = show_job and GetUnitJob(unit) or nil
     if job_shortenings then job = job_shortenings[job] or job end
     local activity = show_activity and GetUnitActivity(unit) or nil
+    local research = show_research and GetUnitResearch(unit) or nil 
 
     local job_or_activity = job or activity
 
@@ -341,6 +350,9 @@ local function GetUnitInfoText(unit, settings_group_name)
     if job_or_activity then
         if name then txt[#txt+1] = ": " end
         txt[#txt+1] = job_or_activity
+    end
+    if research then
+        txt[#txt+1] = '\n '..research
     end
 
     return txt

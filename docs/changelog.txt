@@ -57,6 +57,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `preserve-rooms` will no longer hang on startup in the presence of a cycle in the replacement relationship of noble positions
 
 ## Misc Improvements
 

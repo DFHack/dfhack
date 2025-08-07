@@ -57,6 +57,25 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
+
+## Lua
+
+## Removed
+
+# 52.03-1
+
+## New Tools
+
+## New Features
+
+## Fixes
 - `preserve-rooms` will no longer hang on startup in the presence of a cycle in the replacement relationship of noble positions
 
 ## Misc Improvements

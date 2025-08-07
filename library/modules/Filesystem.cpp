@@ -238,7 +238,8 @@ std::filesystem::path Filesystem::getInstallDir() noexcept
 std::filesystem::path Filesystem::getBaseDir() noexcept
 {
     auto getsavebase = []() {
-        if (df::global::init->media.flag.is_set(df::enums::init_media_flags::PORTABLE_MODE))
+        // assume portable mode is _on_ if init is missing
+        if (!df::global::init || df::global::init->media.flag.is_set(df::enums::init_media_flags::PORTABLE_MODE))
             return DFSDL::DFSDL_GetBasePath();
         else
             return DFSDL::DFSDL_GetPrefPath("Bay 12 Games", "Dwarf Fortress");

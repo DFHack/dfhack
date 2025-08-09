@@ -655,6 +655,9 @@ std::string Job::getName(df::job *job)
     button->matgloss = job->mat_index;
     button->specflag = job->specflag;
     button->job_item_flag = job->material_category;
+    button->specdata = job->specdata;
+    button->art_specifier_id1 = job->art_spec.id;
+    button->art_specifier_id2 = job->art_spec.subid;
 
     button->text(&desc);
     delete button;

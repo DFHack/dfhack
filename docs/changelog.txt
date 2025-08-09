@@ -57,19 +57,19 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- job descriptions of mix dye job will display proper dye names
 
 ## Misc Improvements
 
 ## Documentation
 
 ## API
-- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
 
 ## Lua
 
 ## Removed
 
-# 52.03-1
+# 52.03-r1
 
 ## New Tools
 
@@ -83,6 +83,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
 
 ## Lua
 

@@ -35,7 +35,6 @@ Template for new versions:
 ## Documentation
 
 ## API
-- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
 
 ## Lua
 
@@ -51,6 +50,24 @@ Template for new versions:
 ================================================================================
 
 # Future
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.03-r1.1
 
 ## New Tools
 
@@ -83,7 +100,6 @@ Template for new versions:
 ## Documentation
 
 ## API
-- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
 
 ## Lua
 

@@ -44,11 +44,6 @@ distribution.
 #include <lua.h>
 #include <lauxlib.h>
 
-/// Allocate a new user data object and push it on the stack
-inline void *operator new (std::size_t size, lua_State *L) {
-    return lua_newuserdata(L, size);
-}
-
 namespace DFHack {
     class function_identity_base;
     struct MaterialInfo;
@@ -66,6 +61,20 @@ namespace DFHack::Lua {
      * Create or initialize a lua interpreter with access to DFHack tools.
      */
     DFHACK_EXPORT lua_State *Open(color_ostream &out, lua_State *state = NULL);
+
+    /**
+     * Allocate a lua userdata and construct a C++ object in that userdata's storage space
+     * The C++ object must be trivially destructible as lua GC will _not_ call the object's destructor
+     * be aware that the created userdata is left on the Lua stack as well as returned to the caller
+     */
+    template <typename T, typename... Args>
+        requires (std::is_trivially_destructible_v<T>)
+    T* make_lua_userdata(lua_State* L, Args&&... args)
+    {
+        void* stg = lua_newuserdata(L, sizeof(T));
+        T * obj = ::new (stg) T(std::forward<Args>(args)...);
+        return obj;
+    }
 
     DFHACK_EXPORT void PushDFHack(lua_State *state);
     DFHACK_EXPORT void PushBaseGlobals(lua_State *state);

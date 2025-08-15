@@ -101,6 +101,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- Adjusted the logic inside ``Military::removeFromSquad`` to more closely match the game's own behavior
 
 ## Lua
 

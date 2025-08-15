@@ -629,7 +629,7 @@ void Lua::Push(lua_State *L, const Screen::Pen &info)
         return;
     }
 
-    new (L) Pen(info);
+    Lua::make_lua_userdata<Pen>(L, info);
 
     lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_PEN_TOKEN);
     lua_setmetatable(L, -2);
@@ -1128,7 +1128,7 @@ static int dfhack_random_init(lua_State *L)
 
 static int dfhack_random_new(lua_State *L)
 {
-    new (L) MersenneRNG();
+    Lua::make_lua_userdata<MersenneRNG>(L);
 
     lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_RANDOM_TOKEN);
     lua_setmetatable(L, -2);
@@ -1212,19 +1212,19 @@ static int dfhack_random_perlin(lua_State *L)
     switch (size)
     {
         case 1: {
-            auto pdata = new (L) PerlinNoise1D<float>();
+            auto pdata = Lua::make_lua_userdata<PerlinNoise1D<float>>(L);
             pdata->init(*prng);
             lua_pushcclosure(L, eval_perlin_1, 1);
             break;
         }
         case 2: {
-            auto pdata = new (L) PerlinNoise2D<float>();
+            auto pdata = Lua::make_lua_userdata<PerlinNoise2D<float>>(L);
             pdata->init(*prng);
             lua_pushcclosure(L, eval_perlin_2, 1);
             break;
         }
         case 3: {
-            auto pdata = new (L) PerlinNoise3D<float>();
+            auto pdata = Lua::make_lua_userdata<PerlinNoise3D<float>>(L);
             pdata->init(*prng);
             lua_pushcclosure(L, eval_perlin_3, 1);
             break;

@@ -56,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- ``Units::getReadableName`` will no longer append a comma to the names of histfigs with no profession
 
 ## Misc Improvements
 

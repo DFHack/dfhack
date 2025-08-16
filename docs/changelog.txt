@@ -35,7 +35,6 @@ Template for new versions:
 ## Documentation
 
 ## API
-- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
 
 ## Lua
 
@@ -57,6 +56,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- ``Units::getReadableName`` will no longer append a comma to the names of histfigs with no profession
 
 ## Misc Improvements
 
@@ -65,6 +65,45 @@ Template for new versions:
 ## API
 - ``Job``: new functions ``createLinked`` and ``assignToWorkshop``
 - ``Units``: new functions ``getFocusPenalty``, ``unbailableSocialActivity``, ``isJobAvailable``
+
+## Lua
+
+## Removed
+
+# 52.03-r1.1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- job descriptions of mix dye job will display proper dye names
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.03-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `preserve-rooms` will no longer hang on startup in the presence of a cycle in the replacement relationship of noble positions
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- Adjusted the logic inside ``Military::removeFromSquad`` to more closely match the game's own behavior
 
 ## Lua
 

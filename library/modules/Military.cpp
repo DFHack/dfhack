@@ -477,42 +477,53 @@ bool Military::addToSquad(int32_t unit_id, int32_t squad_id, int32_t squad_pos)
 
 bool Military::removeFromSquad(int32_t unit_id)
 {
+    // based on unitst::remove_squad_info
     df::unit *unit = df::unit::find(unit_id);
     if (unit == nullptr || unit->military.squad_id == -1 || unit->military.squad_position == -1)
         return false;
 
+    // abort individual training
+    if (unit->individual_drills.size())
+        unit->flags3.bits.verify_personal_training = true;
+
     int32_t squad_id = unit->military.squad_id;
-    df::squad* squad = df::squad::find(squad_id);
-    if (squad == nullptr)
-        return false;
-
     int32_t squad_pos = unit->military.squad_position;
-    df::squad_position* pos = vector_get(squad->positions, squad_pos);
-    if (pos == nullptr)
-        return false;
 
-    df::historical_figure* hf = df::historical_figure::find(unit->hist_figure_id);
-    if (hf == nullptr)
-        return false;
+    df::squad* squad = df::squad::find(squad_id);
 
-    // remove from squad information
-    pos->occupant = -1;
+    if (squad)
+    {
+        df::squad_position* pos = vector_get(squad->positions, squad_pos);
+        if (pos)
+        {
+            // based on unitst::remove_squad_activity_info
+            FOR_ENUM_ITEMS(squad_event_type, i)
+            {
+                auto activity_entry = df::activity_entry::find(pos->activities[i]);
+                if (activity_entry)
+                {
+                    auto activity_event = binsearch_in_vector(activity_entry->events, &df::activity_event::event_id, pos->events[i]);
+                    if (activity_event)
+                    {
+                        activity_event->removeParticipant(unit->hist_figure_id, unit->id, false);
+                        pos->activities[i] = -1;
+                        pos->events[i] = -1;
+                    }
+                }
+            }
+
+            // remove from squad position
+            pos->occupant = -1;
+        }
+    }
     // remove from unit information
     unit->military.squad_id = -1;
     unit->military.squad_position = -1;
 
-    // abort individual training
-    if (unit->individual_drills.size()) {
-        unit->flags3.bits.verify_personal_training = true;
-    }
-
-    // remove unit from squad activities
-    auto activity_entry = binsearch_in_vector(df::global::world->activities.all,&df::activity_entry::id,squad->activity);
-    if (activity_entry) {
-        for (auto const activity_event : activity_entry->events) {
-            activity_event->removeParticipant(unit->hist_figure_id, unit->id, false);
-        }
-    }
+    // remove entity squad link
+    df::historical_figure* hf = df::historical_figure::find(unit->hist_figure_id);
+    if (hf == nullptr || squad == nullptr)
+        return false;
 
     if (squad_pos == 0) // is unit a commander?
         remove_officer_entity_link(hf, squad);

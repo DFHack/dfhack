@@ -151,7 +151,7 @@ game does not provide sufficient order conditions. Please enable ``automilk``,
 types of jobs.
 
 Note that the jugs are specifically made out of wood. This is so, as long as
-you don't may any other "Tools" out of wood, you can have a stockpile just for
+you don't make any other "Tools" out of wood, you can have a stockpile just for
 jugs by restricting a finished goods stockpile to only take wooden tools.
 
 Armok's additional note: "shleggings? Yes,

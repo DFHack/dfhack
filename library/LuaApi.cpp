@@ -2337,7 +2337,7 @@ int32_t units_getFocusPenalty(lua_State *L) {
     for (int i = 2; i <= top; ++i) {
       try {
         needs.set(luaL_checkint(L, i));
-      } catch (const std::out_of_range &e) {
+      } catch ([[maybe_unused]] const std::out_of_range &e) {
         luaL_argerror(L, i, "Expected a need type");
       }
     }

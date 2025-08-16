@@ -525,7 +525,7 @@ df::job* DFHack::Job::createLinked()
     return job;
 }
 
-bool assignToWorkshop(df::job *job, df::building_workshopst *workshop)
+bool DFHack::Job::assignToWorkshop(df::job *job, df::building_workshopst *workshop)
 {
     CHECK_NULL_POINTER(job);
     CHECK_NULL_POINTER(workshop);

@@ -2023,7 +2023,7 @@ df::activity_event *Units::getMainSocialEvent(df::unit *unit) {
     return entry->events[entry->events.size() - 1];
 }
 
-int32_t Units::getFocusPenalty(df::unit* unit, need_types_set need_types) {
+int32_t Units::getFocusPenalty(df::unit* unit, need_type_set need_types) {
     CHECK_NULL_POINTER(unit);
 
     int max_penalty = INT_MAX;
@@ -2037,24 +2037,24 @@ int32_t Units::getFocusPenalty(df::unit* unit, need_types_set need_types) {
 }
 
 int32_t Units::getFocusPenalty(df::unit* unit, df::need_type need_type) {
-    auto need_types = need_types_set().set(need_type);
+    auto need_types = need_type_set().set(need_type);
     return getFocusPenalty(unit, need_types);
 }
 
 // reverse engineered from unitst::have_unbailable_sp_activities (partial implementation)
-bool Units::unbailableSocialActivity(df::unit *unit)
+bool Units::hasUnbailableSocialActivity(df::unit *unit)
 {
     // these can become constexpr with C++23
-    static const need_types_set pray_needs = need_types_set()
+    static const need_type_set pray_needs = need_type_set()
         .set(df::need_type::PrayOrMeditate);
 
-    static const need_types_set socialize_needs = need_types_set()
+    static const need_type_set socialize_needs = need_type_set()
         .set(df::need_type::Socialize)
         .set(df::need_type::BeCreative)
         .set(df::need_type::Excitement)
         .set(df::need_type::AdmireArt);
 
-    static const need_types_set read_needs = need_types_set()
+    static const need_type_set read_needs = need_type_set()
         .set(df::need_type::ThinkAbstractly)
         .set(df::need_type::LearnSomething);
 
@@ -2097,7 +2097,7 @@ bool Units::isJobAvailable(df::unit *unit, bool preserve_social = false){
         if (activity && (activity->type == df::activity_entry_type::FillServiceOrder))
             return false;
     }
-    if (unbailableSocialActivity(unit))
+    if (hasUnbailableSocialActivity(unit))
         return false;
     if (preserve_social && unit->social_activities.size() > 0)
         return false;

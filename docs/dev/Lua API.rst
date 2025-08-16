@@ -1313,6 +1313,10 @@ Job module
 
   Creates a deep copy of the given job.
 
+* ``dfhack.job.createLinked()``
+
+  Create a job and immediately link it into the global job list.
+
 * ``dfhack.job.printJobDetails(job)``
 
   Prints info about the job.
@@ -1337,6 +1341,12 @@ Job module
 * ``dfhack.job.getSpecificRef(job, type)``
 
   Searches for a specific_ref with the given type.
+
+* ``dfhack.job.assignToWorkshop(job, workshop)``
+
+  Assign job to workshop (i.e. establish the bidirectional link between the job
+  and the workshop). Does nothing and returns ``false`` if the workshop already
+  has the maximum of ten jobs.
 
 * ``dfhack.job.getHolder(job)``
 
@@ -1628,7 +1638,7 @@ Units module
   Returns true if the unit is within a box defined by the
   specified coordinates.
 
-``dfhack.units.getUnitsInBox(pos1, pos2[, filter])``
+* ``dfhack.units.getUnitsInBox(pos1, pos2[, filter])``
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
   Returns a table of all units within the specified coordinates.
@@ -1893,6 +1903,22 @@ Units module
 
   Return the ``df.activity_entry`` or ``df.activity_event`` representing the
   unit's current social activity.
+
+* ``dfhack.units.hasUnbailableSocialActivity(unit)``
+
+  Unit has an uninterruptible social activity (e.g. a purple "Socialize!").
+
+* ``dfhack.units.isJobAvailable(unit [, interrupt_social])``
+
+  Check whether a unit can be assigned to (i.e. is looking for) a job. Will
+  return ``true`` if the unit is engaged in "green" social activities, unless
+  the boolean ``interrupt_social`` is true.
+
+* ``dfhack.units.getFocusPenalty(unit, need_type [, need_type, ...])``
+
+  Get largest (i.e. most negative) focus penalty associated to a collection of
+  ``df.need_type`` arguments. Returns a number strictly greater than 400 if the
+  unit does not have any of the requested needs.
 
 * ``dfhack.units.getStressCategory(unit)``
 

@@ -171,6 +171,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``widgets.Slider``: new mouse-controlled single-headed slider widget
 
 ## Removed
 

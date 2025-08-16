@@ -63,8 +63,12 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Job``: new functions ``createLinked`` and ``assignToWorkshop``
+- ``Units``: new functions ``getFocusPenalty``, ``unbailableSocialActivity``, ``isJobAvailable``
 
 ## Lua
+
+- New functions: ``dfhack.jobs.createLinked``, ``dfhack.jobs.assignToWorkshop``, ``dfhack.units.getFocusPenalty``, ``dfhack.units.unbailableSocialActivity``, and ``dfhack.units.isJobAvailable``
 
 ## Removed
 

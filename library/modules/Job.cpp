@@ -38,6 +38,7 @@ distribution.
 #include "modules/References.h"
 
 #include "df/building.h"
+#include "df/building_workshopst.h"
 #include "df/general_ref.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/general_ref_building_holderst.h"
@@ -515,6 +516,27 @@ bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
         linked_list_insert_after(ins_pos, job->list_link);
         return true;
     }
+}
+
+df::job* DFHack::Job::createLinked()
+{
+    auto job = new df::job();
+    DFHack::Job::linkIntoWorld(job, true);
+    return job;
+}
+
+bool DFHack::Job::assignToWorkshop(df::job *job, df::building_workshopst *workshop)
+{
+    CHECK_NULL_POINTER(job);
+    CHECK_NULL_POINTER(workshop);
+
+    if (workshop->jobs.size() >= 10) {
+        return false;
+    }
+    job->pos = df::coord(workshop->centerx, workshop->centery, workshop->z);
+    DFHack::Job::addGeneralRef(job, df::general_ref_type::BUILDING_HOLDER, workshop->id);
+    workshop->jobs.push_back(job);
+    return true;
 }
 
 bool DFHack::Job::removePostings(df::job *job, bool remove_all)

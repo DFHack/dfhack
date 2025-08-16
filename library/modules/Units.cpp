@@ -64,12 +64,15 @@ distribution.
 #include "df/interaction_profilest.h"
 #include "df/item.h"
 #include "df/job.h"
+#include "df/need_type.h"
 #include "df/nemesis_record.h"
 #include "df/personality_goalst.h"
+#include "df/personality_needst.h"
 #include "df/plotinfost.h"
 #include "df/proj_unitst.h"
 #include "df/reputation_profilest.h"
 #include "df/syndrome.h"
+#include "df/squad.h"
 #include "df/tile_occupancy.h"
 #include "df/training_assignment.h"
 #include "df/unit.h"
@@ -89,6 +92,7 @@ distribution.
 #include "df/world_site.h"
 
 #include <algorithm>
+#include <bitset>
 #include <cstring>
 #include <functional>
 #include <map>
@@ -2017,6 +2021,92 @@ df::activity_event *Units::getMainSocialEvent(df::unit *unit) {
     if (!entry || entry->events.empty())
         return nullptr;
     return entry->events[entry->events.size() - 1];
+}
+
+int32_t Units::getFocusPenalty(df::unit* unit, need_type_set need_types) {
+    CHECK_NULL_POINTER(unit);
+
+    int max_penalty = INT_MAX;
+    auto& needs = unit->status.current_soul->personality.needs;
+    for (auto const need : needs) {
+        if (need_types.test(need->id)) {
+            max_penalty = min(max_penalty, need->focus_level);
+        }
+    }
+    return max_penalty;
+}
+
+int32_t Units::getFocusPenalty(df::unit* unit, df::need_type need_type) {
+    auto need_types = need_type_set().set(need_type);
+    return getFocusPenalty(unit, need_types);
+}
+
+// reverse engineered from unitst::have_unbailable_sp_activities (partial implementation)
+bool Units::hasUnbailableSocialActivity(df::unit *unit)
+{
+    // these can become constexpr with C++23
+    static const need_type_set pray_needs = need_type_set()
+        .set(df::need_type::PrayOrMeditate);
+
+    static const need_type_set socialize_needs = need_type_set()
+        .set(df::need_type::Socialize)
+        .set(df::need_type::BeCreative)
+        .set(df::need_type::Excitement)
+        .set(df::need_type::AdmireArt);
+
+    static const need_type_set read_needs = need_type_set()
+        .set(df::need_type::ThinkAbstractly)
+        .set(df::need_type::LearnSomething);
+
+    CHECK_NULL_POINTER(unit);
+
+    if (unit->social_activities.empty()) {
+        return false;
+    } else if (unit->social_activities.size() > 1) {
+        return true; // is this even possible?
+    }
+
+    auto activity = df::activity_entry::find(unit->social_activities[0]);
+    if (activity) {
+        using df::activity_entry_type;
+        switch (activity->type) {
+            case activity_entry_type::Socialize:
+                return getFocusPenalty(unit, socialize_needs) <= -10000;
+            case activity_entry_type::Prayer:
+                return getFocusPenalty(unit, pray_needs) <= -10000;
+            case activity_entry_type::Read:
+                return getFocusPenalty(unit, read_needs) <= -10000;
+            default:
+                // consider unhandled activities as uninterruptible
+                return true;
+        }
+    }
+    // this should never happen
+    return false;
+}
+
+bool Units::isJobAvailable(df::unit *unit, bool preserve_social = false){
+    if (unit->job.current_job)
+        return false;
+    if (unit->flags1.bits.caged || unit->flags1.bits.chained)
+        return false;
+    if (unit->individual_drills.size() > 0) {
+        if (unit->individual_drills.size() > 1)
+            return false; // this is even possible
+        auto activity = df::activity_entry::find(unit->individual_drills[0]);
+        if (activity && (activity->type == df::activity_entry_type::FillServiceOrder))
+            return false;
+    }
+    if (hasUnbailableSocialActivity(unit))
+        return false;
+    if (preserve_social && unit->social_activities.size() > 0)
+        return false;
+    if (unit->military.squad_id != -1) {
+        auto squad = df::squad::find(unit->military.squad_id);
+        if (squad)
+            return squad->orders.size() == 0 && squad->activity == -1;
+    }
+    return true;
 }
 
 // 50000 and up is level 0, 25000 and up is level 1, etc.

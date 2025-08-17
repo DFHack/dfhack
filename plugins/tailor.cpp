@@ -566,7 +566,6 @@ public:
         assert(dye != r->products.end());
         auto pp = virtual_cast<df::reaction_product_itemst>(*dye);
         assert(pp != nullptr);
-        auto mat = MaterialInfo(pp->mat_type, pp->mat_index);
 
         pp->getDescription(&descr);
 

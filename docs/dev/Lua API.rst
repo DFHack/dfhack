@@ -6541,9 +6541,23 @@ change, the ``RangeSlider`` appearance will adjust automatically.
 :get_left_idx_fn: The function used by the RangeSlider to get the notch index on which
                   to display the left handle.
 :get_right_idx_fn: The function used by the RangeSlider to get the notch index on which
-                   to display the right handle.
+                  to display the right handle.
 :on_left_change: Callback executed when moving the left handle.
 :on_right_change: Callback executed when moving the right handle.
+
+Slider class
+-----------------
+
+This widget implements a mouse-interactable slider. The player can move the handle to
+set the value of the slider. The parent widget owns the slider value, and can control
+it independently (e.g., with a ``CycleHotkeyLabel``). If the value changes, the ``Slider``
+appearance will adjust automatically.
+
+:num_stops: Used to specify the number of "notches" in the slider, the places
+            where the handle can stop. (This should match the parents' number of options.)
+:get_idx_fn: The function used by the Slider to get the notch index on which
+                  to display the handle.
+:on_change: Callback executed when moving the handle.
 
 DimensionsTooltip class
 -----------------------

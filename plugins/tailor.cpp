@@ -436,8 +436,6 @@ public:
             if (f == jobTypeMap.end())
                 continue;
 
-            int race = o->specdata.hist_figure_id;
-
             for (auto& m : all_materials)
             {
                 if (o->material_category.whole == m.job_material.whole)
@@ -571,11 +569,10 @@ public:
         auto mat = MaterialInfo(pp->mat_type, pp->mat_index);
         color_type color = mat.material->powder_dye;
 
-        auto& color_name = world->raws.descriptors.colors[color]->name;
         pp->getDescription(&descr);
 
         get_or_create_order(c, df::job_type::CustomReaction, -1, -1, 0, r->code);
-        INFO(cycle).print("tailor: ordered %d %s\n", c, descr);
+        INFO(cycle).print("tailor: ordered %d %s\n", c, DF2CONSOLE(descr.c_str()));
     }
 
     void order_dye_cloth(int c = 1)
@@ -591,8 +588,6 @@ public:
 
         for (auto r : std::ranges::views::filter(world->raws.reactions.reactions, reaction_produces_dye))
         {
-            auto& reaction_name = r->name;
-
             int max = get_reaction_max_count(r,1);
 
             if (max > 0)
@@ -792,9 +787,9 @@ public:
             if (automate_dye)
             {
                 int available_dyes = count_dyes();
-                int available_dyable_cloth = count_dyeables(df::item_type::CLOTH);
+                int available_dyeable_cloth = count_dyeables(df::item_type::CLOTH);
 
-                int to_dye = std::max(0, std::min(skipped, std::min(count_dyes(), count_dyeables(df::item_type::CLOTH))) - count_dye_cloth_orders());
+                int to_dye = std::max(0, std::min(skipped, std::min(count_dyes(), available_dyeable_cloth)) - count_dye_cloth_orders());
                 if (to_dye > 0)
                 {
                     INFO(cycle).print("tailor: dyeing %d cloth\n", to_dye);

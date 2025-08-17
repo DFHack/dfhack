@@ -59,6 +59,7 @@ Template for new versions:
 
 ## Fixes
 - ``Units::getReadableName`` will no longer append a comma to the names of histfigs with no profession
+- `stockpiles`: fixed off-by-one error in exporting furniture stockpiles
 
 ## Misc Improvements
 

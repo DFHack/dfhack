@@ -567,12 +567,11 @@ public:
         auto pp = virtual_cast<df::reaction_product_itemst>(*dye);
         assert(pp != nullptr);
         auto mat = MaterialInfo(pp->mat_type, pp->mat_index);
-        color_type color = mat.material->powder_dye;
 
         pp->getDescription(&descr);
 
         get_or_create_order(c, df::job_type::CustomReaction, -1, -1, 0, r->code);
-        INFO(cycle).print("tailor: ordered %d %s\n", c, DF2CONSOLE(descr.c_str()));
+        INFO(cycle).print("tailor: ordered %d %s\n", c, DF2CONSOLE(descr).c_str());
     }
 
     void order_dye_cloth(int c = 1)

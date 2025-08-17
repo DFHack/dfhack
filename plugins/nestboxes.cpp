@@ -1,6 +1,7 @@
 #include "Debug.h"
 #include "PluginManager.h"
 
+#include "modules/Burrows.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/Persistence.h"
@@ -8,6 +9,7 @@
 
 #include "df/buildingitemst.h"
 #include "df/building_nest_boxst.h"
+#include "df/burrow.h"
 #include "df/item.h"
 #include "df/item_eggst.h"
 #include "df/unit.h"
@@ -34,6 +36,7 @@ static PersistentDataItem config;
 
 enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
+    CONFIG_BURROW = 1
 };
 
 static const int32_t CYCLE_TICKS = 7; // need to react quickly when eggs are laid/unforbidden
@@ -41,8 +44,15 @@ static int32_t cycle_timestamp = 0;  // world->frame_counter at last cycle
 
 static void do_cycle(color_ostream &out);
 
+static command_result do_command(color_ostream &out, std::vector<string> &parameters);
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     DEBUG(control,out).print("initializing %s\n", plugin_name);
+
+    // provide a configuration interface for the plugin
+    commands.push_back(PluginCommand(
+        plugin_name,
+        "Protect fertile eggs incubating in a nestbox.",
+        do_command));
 
     return CR_OK;
 }
@@ -109,6 +119,65 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 }
 
 /////////////////////////////////////////////////////
+// configuration logic
+//
+
+static void setBurrow(color_ostream &out, const string &burrow_name){
+    auto burrow = Burrows::findByName(burrow_name);
+    if (burrow) {
+        config.set_int(CONFIG_BURROW, burrow->id);
+    } else {
+        config.set_int(CONFIG_BURROW, -1);
+    }
+}
+
+static df::burrow* getBurrow(color_ostream &out){
+    int id = config.get_int(CONFIG_BURROW);
+    auto burrow = df::burrow::find(id);
+    if (!burrow) {
+        config.set_int(CONFIG_BURROW, -1);
+    }
+    return burrow;
+}
+
+static void printStatus(color_ostream &out){
+    if (!is_enabled)
+        out.print("%s is disabled\n", plugin_name);
+    else {
+        out.print("%s is enabled\n", plugin_name);
+        auto burrow = getBurrow(out);
+        if (burrow)
+        {
+            out.print("only protecting eggs inside burrow: %s\n", burrow->name.c_str());
+        }
+        else
+        {
+            out.print("protecting all fertile eggs\n");
+        }
+    }
+}
+
+static command_result do_command(color_ostream &out, std::vector<string> &parameters){
+    if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
+        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        return CR_FAILURE;
+    }
+
+    if (parameters.size() == 0 || parameters[0] == "status")
+    {
+        printStatus(out);
+        return CR_OK;
+    } else if (parameters.size() > 1 && parameters[0] == "burrow") {
+        setBurrow(out, parameters[1]);
+        return CR_OK;
+    } else if (parameters[0] == "all") {
+        config.set_int(CONFIG_BURROW, -1);
+        return CR_OK;
+    } else {
+        return CR_WRONG_USAGE;
+    }
+}
+/////////////////////////////////////////////////////
 // cycle logic
 //
 
@@ -118,6 +187,9 @@ static void do_cycle(color_ostream &out) {
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
 
+    // see if egg protection is limited to a burrow
+    auto burrow = getBurrow(out);
+
     for (df::building_nest_boxst *nb : world->buildings.other.NEST_BOX) {
         for (auto &contained_item : nb->contained_items) {
             if (contained_item->use_mode == df::building_item_role_type::PERM)
@@ -126,6 +198,9 @@ static void do_cycle(color_ostream &out) {
                 bool fertile = item->egg_flags.bits.fertile;
                 if (item->flags.bits.forbid == fertile)
                     continue;
+                if (burrow && !Burrows::isAssignedTile(burrow, Items::getPosition(item))) {
+                    continue;
+                }
                 item->flags.bits.forbid = fertile;
                 if (fertile && item->flags.bits.in_job) {
                     // cancel any job involving the egg

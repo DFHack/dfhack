@@ -55,6 +55,8 @@ Template for new versions:
 
 ## New Features
 
+- `nestboxes`: allow limiting egg protection to nestboxes inside a designated burrow
+
 ## Fixes
 - ``Units::getReadableName`` will no longer append a comma to the names of histfigs with no profession
 

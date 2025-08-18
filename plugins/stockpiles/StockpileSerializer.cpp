@@ -1731,7 +1731,6 @@ static bool furniture_mat_is_allowed(const MaterialInfo& mi) {
 
 bool StockpileSettingsSerializer::write_furniture(color_ostream& out, StockpileSettings::FurnitureSet* furniture) {
     using df::enums::furniture_type::furniture_type;
-    using type_traits = df::enum_traits<furniture_type>;
 
     auto & pfurniture = mSettings->furniture;
     bool all = true;
@@ -1741,7 +1740,7 @@ bool StockpileSettingsSerializer::write_furniture(color_ostream& out, StockpileS
             all = false;
             continue;
         }
-        string f_type(type_traits::key_table[i]);
+        string f_type{ENUM_KEY_STR(furniture_type, furniture_type(i))};
         furniture->add_type(f_type);
         DEBUG(log, out).print("furniture_type %zd is %s\n", i, f_type.c_str());
     }

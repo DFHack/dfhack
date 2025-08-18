@@ -54,8 +54,8 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-
 - `nestboxes`: allow limiting egg protection to nestboxes inside a designated burrow
+- `tailor`: tailor now provides optional dye automation
 
 ## Fixes
 - ``Units::getReadableName`` will no longer append a comma to the names of histfigs with no profession

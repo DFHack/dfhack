@@ -771,7 +771,7 @@ public:
                     else
                     {
                         skipped += count;
-                        INFO(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", DF2CONSOLE(m.name).c_str(), supply[m]);
+                        DEBUG(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", DF2CONSOLE(m.name).c_str(), supply[m]);
                     }
 
                 }
@@ -786,15 +786,19 @@ public:
             {
                 int available_dyes = count_dyes();
                 int available_dyeable_cloth = count_dyeables(df::item_type::CLOTH);
+                int dye_cloth_orders = count_dye_cloth_orders();
 
-                int to_dye = std::max(0, std::min(skipped, std::min(count_dyes(), available_dyeable_cloth)) - count_dye_cloth_orders());
+                DEBUG(cycle).print("tailor: available dyes = %d, available dyeable cloth = %d, dye cloth orders = %d\n",
+                    available_dyes, available_dyeable_cloth, dye_cloth_orders);
+                int to_dye = std::min(skipped, std::min(available_dyes, available_dyeable_cloth) - dye_cloth_orders);
+                DEBUG(cycle).print("tailor: to dye = %d\n", to_dye);
                 if (to_dye > 0)
                 {
                     INFO(cycle).print("tailor: dyeing %d cloth\n", to_dye);
                     order_dye_cloth(to_dye);
                 }
 
-                int dyes_to_make = std::max(0, skipped - available_dyes - to_dye);
+                int dyes_to_make = available_dyes - to_dye;
                 if (dyes_to_make > 0)
                 {
                     INFO(cycle).print("tailor: ordering up to %d dyes\n", dyes_to_make);
@@ -872,6 +876,7 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
     config = World::GetPersistentSiteData(CONFIG_KEY);
+    config2 = World::GetPersistentSiteData(CONFIG_KEY_2);
 
     if (!config.isValid()) {
         DEBUG(control,out).print("no config found in this save; initializing\n");

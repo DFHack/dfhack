@@ -546,6 +546,8 @@ public:
         return count;
     }
 
+    using oqt = decltype(df::manager_order::amount_total);
+
     using color_type = decltype(MaterialInfo::material->powder_dye);
 
     static auto product_is_dye (df::reaction_product* r) -> bool
@@ -559,7 +561,7 @@ public:
         return false;
     };
 
-    void order_dye_from_reaction(df::reaction* r, int c = 1)
+    oqt order_dye_from_reaction(df::reaction* r, int c = 1)
     {
         std::string descr;
         auto dye = std::ranges::find_if(r->products, product_is_dye);
@@ -569,13 +571,16 @@ public:
 
         pp->getDescription(&descr);
 
-        get_or_create_order(c, df::job_type::CustomReaction, -1, -1, 0, r->code);
-        INFO(cycle).print("tailor: ordered %d %s\n", c, DF2CONSOLE(descr).c_str());
+        auto [_, n] = get_or_create_order(c, df::job_type::CustomReaction, -1, -1, 0, r->code);
+        if (n > 0)
+            INFO(cycle).print("tailor: ordered %d %s\n", c, DF2CONSOLE(descr).c_str());
+        return n;
     }
 
-    void order_dye_cloth(int c = 1)
+    oqt order_dye_cloth(int c = 1)
     {
-        get_or_create_order(c, df::job_type::DyeCloth, -1, -1, 0);
+        auto [_, n] = get_or_create_order(c, df::job_type::DyeCloth, -1, -1, 0);
+        return n;
     }
 
     void make_dyes(int count)
@@ -590,7 +595,7 @@ public:
 
             if (max > 0)
             {
-                order_dye_from_reaction(r, max);
+                max = order_dye_from_reaction(r, max);
             }
 
             count = std::max(0, count - max);
@@ -613,9 +618,7 @@ public:
         return sum;
     }
 
-    using oqt = decltype(df::manager_order::amount_total);
-
-    static df::manager_order* get_or_create_order(oqt c, df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat, std::string custom_reaction = "")
+    static std::pair<df::manager_order*,oqt> get_or_create_order(oqt c, df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat, std::string custom_reaction = "")
     {
         auto f = [&] (df::manager_order* order) {
             return order->job_type == ty &&
@@ -634,12 +637,15 @@ public:
         if (orderIt != world->manager_orders.all.end())
         {
             auto o = *orderIt;
+            int chg = 0;
             if (o->amount_left > 0)
             {
+                int prev = o->amount_left;
                 o->amount_left = std::max(c, o->amount_left);
                 o->amount_total = std::max(c, o->amount_total);
+                chg = o->amount_left - prev;
             }
-            return o;
+            return {o, chg};
         }
 
         auto order = new df::manager_order;
@@ -659,7 +665,7 @@ public:
 
         world->manager_orders.all.push_back(order);
 
-        return order;
+        return {order, c};
     }
 
     int place_orders()
@@ -755,18 +761,21 @@ public:
                         }
                         supply[m] -= c;
 
-                        auto order = get_or_create_order(c, ty, sub, sizes[size], m.job_material);
+                        auto [order,n] = get_or_create_order(c, ty, sub, sizes[size], m.job_material);
 
-                        INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",
-                            order->id,
-                            c,
-                            bitfield_to_string(order->material_category).c_str(),
-                            DF2CONSOLE((c > 1) ? name_p : name_s).c_str(),
-                            DF2CONSOLE(world->raws.creatures.all[order->specdata.hist_figure_id]->name[1]).c_str()
-                        );
+                        if (n > 0)
+                        {
+                            INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",
+                                order->id,
+                                n,
+                                bitfield_to_string(order->material_category).c_str(),
+                                DF2CONSOLE((c > 1) ? name_p : name_s).c_str(),
+                                DF2CONSOLE(world->raws.creatures.all[order->specdata.hist_figure_id]->name[1]).c_str()
+                            );
 
-                        count -= c;
-                        ordered += c;
+                            count -= n;
+                            ordered += n;
+                        }
                     }
                     else
                     {
@@ -794,8 +803,9 @@ public:
                 DEBUG(cycle).print("tailor: to dye = %d\n", to_dye);
                 if (to_dye > 0)
                 {
-                    INFO(cycle).print("tailor: dyeing %d cloth\n", to_dye);
-                    order_dye_cloth(to_dye);
+                    int dyed = order_dye_cloth(to_dye);
+                    if (dyed > 0)
+                        INFO(cycle).print("tailor: dyeing %d cloth\n", to_dye);
                 }
 
                 int dyes_to_make = available_dyes - to_dye;
@@ -883,7 +893,12 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         config = World::AddPersistentSiteData(CONFIG_KEY);
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         config.set_bool(CONFIG_CONFISCATE, true);
-        config.set_bool(CONFIG_AUTOMATE_DYE, false);
+    }
+    if (!config2.isValid())
+    {
+        DEBUG(control, out).print("no extended config found in this save; initializing\n");
+        config2 = World::AddPersistentSiteData(CONFIG_KEY_2);
+        config2.set_bool(CONFIG_AUTOMATE_DYE, false);
     }
     // transition existing saves to CONFIG_CONFISCATE=true
     if (config.get_int(CONFIG_CONFISCATE) < 0) {

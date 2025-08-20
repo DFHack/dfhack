@@ -573,7 +573,9 @@ public:
 
         auto [_, n] = get_or_create_order(c, df::job_type::CustomReaction, -1, -1, 0, r->code);
         if (n > 0)
+        {
             INFO(cycle).print("tailor: ordered %d %s\n", c, DF2CONSOLE(descr).c_str());
+        }
         return n;
     }
 
@@ -805,7 +807,9 @@ public:
                 {
                     int dyed = order_dye_cloth(to_dye);
                     if (dyed > 0)
+                    {
                         INFO(cycle).print("tailor: dyeing %d cloth\n", to_dye);
+                    }
                 }
 
                 int dyes_to_make = available_dyes - to_dye;

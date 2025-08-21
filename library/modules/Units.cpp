@@ -2090,6 +2090,8 @@ bool Units::isJobAvailable(df::unit *unit, bool preserve_social = false){
         return false;
     if (unit->flags1.bits.caged || unit->flags1.bits.chained)
         return false;
+    if (Units::getSpecificRef(unit, df::specific_ref_type::ACTIVITY))
+        return false;
     if (unit->individual_drills.size() > 0) {
         if (unit->individual_drills.size() > 1)
             return false; // this is even possible

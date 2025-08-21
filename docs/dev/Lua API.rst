@@ -1908,11 +1908,12 @@ Units module
 
   Unit has an uninterruptible social activity (e.g. a purple "Socialize!").
 
-* ``dfhack.units.isJobAvailable(unit [, interrupt_social])``
+* ``dfhack.units.isJobAvailable(unit [, preserve_social])``
 
   Check whether a unit can be assigned to (i.e. is looking for) a job. Will
   return ``true`` if the unit is engaged in "green" social activities, unless
-  the boolean ``interrupt_social`` is true.
+  the boolean ``preserve_social`` is true. Will never interrupt uninterruptible
+  social activities (e.g. a purple "Socialize!").
 
 * ``dfhack.units.getFocusPenalty(unit, need_type [, need_type, ...])``
 

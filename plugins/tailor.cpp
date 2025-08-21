@@ -54,7 +54,7 @@ namespace DFHack {
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
-static const string CONFIG_KEY_2 = string(plugin_name) + "/config1";
+static const string CONFIG_KEY_2 = string(plugin_name) + "/config_2";
 static PersistentDataItem config;
 static PersistentDataItem config2;
 
@@ -885,8 +885,6 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     return CR_OK;
 }
 
-
-
 DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
     config = World::GetPersistentSiteData(CONFIG_KEY);
@@ -910,7 +908,6 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         config.set_bool(CONFIG_CONFISCATE, true);
     }
 
-    config2 = World::GetPersistentSiteData(CONFIG_KEY_2);
     // transition existing saves to CONFIG_AUTOMATE_DYE=false
     if (config2.get_int(CONFIG_AUTOMATE_DYE) < 0)
     {
@@ -922,9 +919,12 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
     tailor_instance->set_confiscate(config.get_bool(CONFIG_CONFISCATE));
-    tailor_instance->set_automate_dye(config2.get_bool(CONFIG_AUTOMATE_DYE));
     DEBUG(control,out).print("loading persisted confiscation state: %s\n",
                             tailor_instance->get_confiscate() ? "true" : "false");
+    tailor_instance->set_automate_dye(config2.get_bool(CONFIG_AUTOMATE_DYE));
+    DEBUG(control, out).print("loading persisted dye automation state: %s\n",
+                            tailor_instance->get_automate_dye() ? "true" : "false");
+
     tailor_instance->sync_material_order();
 
     return CR_OK;

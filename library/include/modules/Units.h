@@ -350,7 +350,7 @@ DFHACK_EXPORT int32_t getFocusPenalty(df::unit* unit, df::need_type need_type);
 // unit has an unbailable social activity (e.g. "Socialize!")
 DFHACK_EXPORT bool hasUnbailableSocialActivity(df::unit *unit);
 // unit can be assigned a job
-DFHACK_EXPORT bool isJobAvailable(df::unit *unit, bool interrupt_social);
+DFHACK_EXPORT bool isJobAvailable(df::unit *unit, bool preserve_social);
 
 // Stress categories. 0 is highest stress, 6 is lowest.
 DFHACK_EXPORT extern const std::vector<int32_t> stress_cutoffs;

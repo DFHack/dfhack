@@ -54,6 +54,24 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.03-r2
+
+## New Tools
+
+## New Features
 - `nestboxes`: allow limiting egg protection to nestboxes inside a designated burrow
 - `tailor`: tailor now provides optional dye automation
 
@@ -70,7 +88,6 @@ Template for new versions:
 - ``Units``: new functions ``getFocusPenalty``, ``unbailableSocialActivity``, ``isJobAvailable``
 
 ## Lua
-
 - New functions: ``dfhack.jobs.createLinked``, ``dfhack.jobs.assignToWorkshop``, ``dfhack.units.getFocusPenalty``, ``dfhack.units.unbailableSocialActivity``, and ``dfhack.units.isJobAvailable``
 
 ## Removed

@@ -62,6 +62,8 @@ def parse_args(source_args):
         help='Sphinx executable to run [environment variable: SPHINX; default: "sphinx-build"]')
     parser.add_argument('-j', '--jobs', type=str, default=os.environ.get('JOBS', 'auto'),
         help='Number of Sphinx threads to run [environment variable: JOBS; default: "auto"]')
+    parser.add_argument('-q', '--quiet', action='store_true',
+        help='Disable most output on stdout (also passed to sphinx-build)')
     parser.add_argument('--debug', action='store_true',
         help='Log commands that are run, etc.')
     parser.add_argument('--offline', action='store_true',
@@ -91,6 +93,8 @@ if __name__ == '__main__':
         command = [args.sphinx] + OUTPUT_FORMATS[format_name].args + ['-j', args.jobs]
         if args.clean:
             command += ['-E']
+        if args.quiet:
+            command += ['-q']
         command += forward_args
 
         if args.debug:
@@ -98,4 +102,5 @@ if __name__ == '__main__':
             print('Running:', command)
         subprocess.run(command, check=True, env=sphinx_env)
 
-        print('')
+        if not args.quiet:
+            print('')

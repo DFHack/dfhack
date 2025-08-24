@@ -515,8 +515,8 @@ Changelog syntax
 ----------------
 
 .. include:: /docs/changelog.txt
-   :start-after: ===help
-   :end-before: ===end
+   :start-after: ===syntax-reference-start
+   :end-before: ===syntax-reference-end
 
 .. _docs-ci:
 

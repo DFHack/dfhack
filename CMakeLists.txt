@@ -523,7 +523,7 @@ if(BUILD_DOCS)
 
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/docs/build.py"
-        ${SPHINX_BUILD_TARGETS} --sphinx="${SPHINX_EXECUTABLE}" -- -q -W
+        ${SPHINX_BUILD_TARGETS} --sphinx="${SPHINX_EXECUTABLE}" --quiet -- -W
         DEPENDS ${SPHINX_DEPS}
         COMMENT "Building documentation with Sphinx"
     )

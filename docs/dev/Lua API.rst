@@ -1313,6 +1313,10 @@ Job module
 
   Creates a deep copy of the given job.
 
+* ``dfhack.job.createLinked()``
+
+  Create a job and immediately link it into the global job list.
+
 * ``dfhack.job.printJobDetails(job)``
 
   Prints info about the job.
@@ -1337,6 +1341,12 @@ Job module
 * ``dfhack.job.getSpecificRef(job, type)``
 
   Searches for a specific_ref with the given type.
+
+* ``dfhack.job.assignToWorkshop(job, workshop)``
+
+  Assign job to workshop (i.e. establish the bidirectional link between the job
+  and the workshop). Does nothing and returns ``false`` if the workshop already
+  has the maximum of ten jobs.
 
 * ``dfhack.job.getHolder(job)``
 
@@ -1628,7 +1638,7 @@ Units module
   Returns true if the unit is within a box defined by the
   specified coordinates.
 
-``dfhack.units.getUnitsInBox(pos1, pos2[, filter])``
+* ``dfhack.units.getUnitsInBox(pos1, pos2[, filter])``
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
   Returns a table of all units within the specified coordinates.
@@ -1893,6 +1903,23 @@ Units module
 
   Return the ``df.activity_entry`` or ``df.activity_event`` representing the
   unit's current social activity.
+
+* ``dfhack.units.hasUnbailableSocialActivity(unit)``
+
+  Unit has an uninterruptible social activity (e.g. a purple "Socialize!").
+
+* ``dfhack.units.isJobAvailable(unit [, preserve_social])``
+
+  Check whether a unit can be assigned to (i.e. is looking for) a job. Will
+  return ``true`` if the unit is engaged in "green" social activities, unless
+  the boolean ``preserve_social`` is true. Will never interrupt uninterruptible
+  social activities (e.g. a purple "Socialize!").
+
+* ``dfhack.units.getFocusPenalty(unit, need_type [, need_type, ...])``
+
+  Get largest (i.e. most negative) focus penalty associated to a collection of
+  ``df.need_type`` arguments. Returns a number strictly greater than 400 if the
+  unit does not have any of the requested needs.
 
 * ``dfhack.units.getStressCategory(unit)``
 
@@ -3205,6 +3232,16 @@ unless otherwise noted.
   while ``listdir_recursive()`` returns the initial path and all components
   following it for each entry. Set ``include_prefix`` to false if you don't
   want the ``path`` string prepended to the returned filenames.
+
+* ``dfhack.filesystem.getBaseDir()``
+
+  Returns a directory to which DF (and thus DFHack) can save files. This will either
+  be DF's install directory, or the path returned by ``SDLGetPrefDir``, depending on whether
+  DF is in "portable mode" or not.
+
+* ``dfhack.filesystem.getInstallDir()``
+
+  Returns the the directory in which DF is installed.
 
 Console API
 -----------
@@ -6505,9 +6542,23 @@ change, the ``RangeSlider`` appearance will adjust automatically.
 :get_left_idx_fn: The function used by the RangeSlider to get the notch index on which
                   to display the left handle.
 :get_right_idx_fn: The function used by the RangeSlider to get the notch index on which
-                   to display the right handle.
+                  to display the right handle.
 :on_left_change: Callback executed when moving the left handle.
 :on_right_change: Callback executed when moving the right handle.
+
+Slider class
+-----------------
+
+This widget implements a mouse-interactable slider. The player can move the handle to
+set the value of the slider. The parent widget owns the slider value, and can control
+it independently (e.g., with a ``CycleHotkeyLabel``). If the value changes, the ``Slider``
+appearance will adjust automatically.
+
+:num_stops: Used to specify the number of "notches" in the slider, the places
+            where the handle can stop. (This should match the parents' number of options.)
+:get_idx_fn: The function used by the Slider to get the notch index on which
+                  to display the handle.
+:on_change: Callback executed when moving the handle.
 
 DimensionsTooltip class
 -----------------------

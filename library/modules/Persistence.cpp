@@ -29,12 +29,14 @@ distribution.
 #include "LuaTools.h"
 #include "MemAccess.h"
 
+#include "modules/DFSDL.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
 #include "df/world.h"
+#include "df/init.h"
 
 #include <json/json.h>
 
@@ -184,7 +186,7 @@ static std::string filterSaveFileName(std::string s) {
 }
 
 static std::filesystem::path getSavePath(const std::string &world) {
-    return std::filesystem::path{} / "save" / world;
+    return Filesystem::getBaseDir() / "save" / world;
 }
 
 static std::filesystem::path getSaveFilePath(const std::string &world, const std::string &name) {

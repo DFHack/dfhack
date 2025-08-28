@@ -1752,7 +1752,7 @@ int Items::getValue(df::item *item, df::caravan_state *caravan) {
 }
 
 bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_type item_type,
-    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor)
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor, int32_t count)
 {   // Based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
     auto pos = Units::getPosition(unit);
@@ -1765,7 +1765,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
     prod->mat_type = mat_type;
     prod->mat_index = mat_index;
     prod->probability = 100;
-    prod->count = 1;
+    prod->count = count;
 
     switch(item_type)
     {   using namespace df::enums::item_type;

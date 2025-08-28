@@ -6,8 +6,8 @@ cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0074 NEW)
 
 # set up versioning.
-set(DF_VERSION "51.11")
-set(DFHACK_RELEASE "r1.2")
+set(DF_VERSION "52.03")
+set(DFHACK_RELEASE "r2")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -66,7 +66,7 @@ endif()
 
 if(WIN32)
     set(MSVC_MIN_VER 1930)
-    set(MSVC_MAX_VER 1943)
+    set(MSVC_MAX_VER 1944)
     if(NOT MSVC)
         message(SEND_ERROR "No MSVC found! MSVC 2022 version ${MSVC_MIN_VER} to ${MSVC_MAX_VER} is required.")
     elseif((MSVC_VERSION LESS MSVC_MIN_VER) OR (MSVC_VERSION GREATER MSVC_MAX_VER))

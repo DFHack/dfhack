@@ -69,6 +69,7 @@ distribution.
 #include "df/building_civzonest.h"
 #include "df/building_stockpilest.h"
 #include "df/building_tradedepotst.h"
+#include "df/building_workshopst.h"
 #include "df/burrow.h"
 #include "df/caravan_state.h"
 #include "df/construction.h"
@@ -116,6 +117,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <filesystem>
+#include <stdexcept>
 
 namespace DFHack {
     DBG_DECLARE(core, luaapi, DebugCategory::LINFO);
@@ -629,7 +631,7 @@ void Lua::Push(lua_State *L, const Screen::Pen &info)
         return;
     }
 
-    new (L) Pen(info);
+    Lua::make_lua_userdata<Pen>(L, info);
 
     lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_PEN_TOKEN);
     lua_setmetatable(L, -2);
@@ -1128,7 +1130,7 @@ static int dfhack_random_init(lua_State *L)
 
 static int dfhack_random_new(lua_State *L)
 {
-    new (L) MersenneRNG();
+    Lua::make_lua_userdata<MersenneRNG>(L);
 
     lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_RANDOM_TOKEN);
     lua_setmetatable(L, -2);
@@ -1212,19 +1214,19 @@ static int dfhack_random_perlin(lua_State *L)
     switch (size)
     {
         case 1: {
-            auto pdata = new (L) PerlinNoise1D<float>();
+            auto pdata = Lua::make_lua_userdata<PerlinNoise1D<float>>(L);
             pdata->init(*prng);
             lua_pushcclosure(L, eval_perlin_1, 1);
             break;
         }
         case 2: {
-            auto pdata = new (L) PerlinNoise2D<float>();
+            auto pdata = Lua::make_lua_userdata<PerlinNoise2D<float>>(L);
             pdata->init(*prng);
             lua_pushcclosure(L, eval_perlin_2, 1);
             break;
         }
         case 3: {
-            auto pdata = new (L) PerlinNoise3D<float>();
+            auto pdata = Lua::make_lua_userdata<PerlinNoise3D<float>>(L);
             pdata->init(*prng);
             lua_pushcclosure(L, eval_perlin_3, 1);
             break;
@@ -1902,6 +1904,8 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,disconnectJobItem),
     WRAPM(Job,disconnectJobGeneralRef),
     WRAPM(Job,removeJob),
+    WRAPM(Job,createLinked),
+    WRAPM(Job,assignToWorkshop),
     WRAPN(is_equal, jobEqual),
     WRAPN(is_item_equal, jobItemEqual),
     { NULL, NULL }
@@ -2128,6 +2132,8 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, setGroupActionTimers),
     WRAPM(Units, getUnitByNobleRole),
     WRAPM(Units, unassignTrainer),
+    WRAPM(Units, hasUnbailableSocialActivity),
+    WRAPM(Units, isJobAvailable),
     { NULL, NULL }
 };
 
@@ -2321,6 +2327,25 @@ static int units_getProfessionName(lua_State *L) {
     return 1;
 }
 
+int32_t units_getFocusPenalty(lua_State *L) {
+  auto unit = Lua::GetDFObject<df::unit>(L, 1);
+  Units::need_type_set needs;
+  auto top = lua_gettop(L);
+  if (top < 2) {
+    luaL_argerror(L, 2, "Expected at least one need type");
+  } else {
+    for (int i = 2; i <= top; ++i) {
+      try {
+        needs.set(luaL_checkint(L, i));
+      } catch ([[maybe_unused]] const std::out_of_range &e) {
+        luaL_argerror(L, i, "Expected a need type");
+      }
+    }
+    Lua::Push(L, Units::getFocusPenalty(unit, needs));
+  }
+  return 1;
+}
+
 static const luaL_Reg dfhack_units_funcs[] = {
     { "getPosition", units_getPosition },
     { "getOuterContainerRef", units_getOuterContainerRef },
@@ -2335,6 +2360,7 @@ static const luaL_Reg dfhack_units_funcs[] = {
     { "getReadableName", units_getReadablename },
     { "getVisibleName", units_getVisibleName },
     { "getProfessionName", units_getProfessionName },
+    { "getFocusPenalty", units_getFocusPenalty },
     { NULL, NULL }
 };
 
@@ -2461,8 +2487,11 @@ static int items_createItem(lua_State *state)
     auto mat_type = lua_tointeger(state, 4);
     auto mat_index = lua_tointeger(state, 5);
     bool no_floor = lua_toboolean(state, 6);
+    int count = lua_tointeger(state, 7);
+    if (count < 1)
+        count = 1;
     vector<df::item *> out_items;
-    Items::createItem(out_items, unit, item_type, item_subtype, mat_type, mat_index, no_floor);
+    Items::createItem(out_items, unit, item_type, item_subtype, mat_type, mat_index, no_floor, count);
     Lua::PushVector(state, out_items);
     return 1;
 }
@@ -3156,6 +3185,8 @@ static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
     WRAPM(Filesystem, isdir),
     WRAPM(Filesystem, mtime),
     WRAPM(Filesystem, canonicalize),
+    WRAPM(Filesystem, getInstallDir),
+    WRAPM(Filesystem, getBaseDir),
     {NULL, NULL}
 };
 

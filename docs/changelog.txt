@@ -56,6 +56,160 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.03-r2
+
+## New Tools
+
+## New Features
+- `nestboxes`: allow limiting egg protection to nestboxes inside a designated burrow
+- `tailor`: tailor now provides optional dye automation
+
+## Fixes
+- ``Units::getReadableName`` will no longer append a comma to the names of histfigs with no profession
+- `stockpiles`: fixed off-by-one error in exporting furniture stockpiles
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- ``Job``: new functions ``createLinked`` and ``assignToWorkshop``
+- ``Units``: new functions ``getFocusPenalty``, ``unbailableSocialActivity``, ``isJobAvailable``
+
+## Lua
+- New functions: ``dfhack.jobs.createLinked``, ``dfhack.jobs.assignToWorkshop``, ``dfhack.units.getFocusPenalty``, ``dfhack.units.unbailableSocialActivity``, and ``dfhack.units.isJobAvailable``
+
+## Removed
+
+# 52.03-r1.1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- job descriptions of mix dye job will display proper dye names
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.03-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `preserve-rooms` will no longer hang on startup in the presence of a cycle in the replacement relationship of noble positions
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- Adjusted the logic inside ``Military::removeFromSquad`` to more closely match the game's own behavior
+
+## Lua
+
+## Removed
+
+# 52.02-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Several fixes related to changes in file system handling in DF 52.01
+- `dig-now`: don't allow UNDIGGABLE stones to be excavated
+
+## Misc Improvements
+- `autoclothing`: added a ``clear`` option to unset previously set orders
+
+## Documentation
+
+## API
+- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
+- ``Filesystem::getBaseDir`` and ``Filesystem::getInstallDir`` added (and made available in Lua)
+- Expanded the partial implementations of ``Military::addToSquad`` and ``Military::removeFromSquad``
+
+## Lua
+- Inserting values into STL containers containing nonprimitive types is now supported
+
+## Removed
+
+# 52.02-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Honor the "portable mode" preference setting for locating save folders. Fixes DFHack cosaves not working in most cases.
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.01-r1
+
+## New Tools
+
+## New Features
+- `tweak`: ``animaltrap-reuse``: make it so built animal traps automatically unload the vermin they catch into stockpiled animal traps, so that they can be automatically re-baited and reused
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+- ``widgets.Slider``: new mouse-controlled single-headed slider widget
+
+## Removed
+
+# 51.13-r1
+
+## New Features
+
+- Compatibility with DF 51.13
+
+# 51.12-r1.1
+
+## New Features
+
+- Compatibility with Itch release of DF 51.12
+
+# 51.12-r1
+
+## Fixes
 - `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
 - `getplants`: use updated formula for calculating whether plant growths are ripe
 - `getplants`: fix logic for determining whether plant growths have been picked
@@ -64,6 +218,7 @@ Template for new versions:
 - `preserve-rooms`: don't warn when a room is assigned to a non-existent unit.  this is now common behavior for DF when it keeps a room for an unloaded unit
 - fixed an overly restrictive type constraint that resulted in some object types being glossed as a boolean when passed as an argument from C++ to Lua
 - `plants`: will no longer generate a traceback when a filter is used
+- `createitem`: multiple items should be properly created in stacks again
 
 ## Misc Improvements
 - All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
@@ -71,8 +226,7 @@ Template for new versions:
 - `spectate`: added prefer nicknamed units
 - `blueprint`: support for recording zones
 - `blueprint`: support for recording stockpile properties like names and stockpile links; does not yet support recording detailed contents configuration
-
-## Documentation
+- `strangemood`: support added for specifying unit id instead of selected unit or random one.
 
 ## API
 - ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness

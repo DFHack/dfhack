@@ -168,12 +168,15 @@ static void BuildTypeMetatable(lua_State *state, const type_identity *type);
 void LuaWrapper::push_object_ref(lua_State *state, void *ptr)
 {
     // stack: [metatable]
-    auto ref = (DFRefHeader*)lua_newuserdata(state, sizeof(DFRefHeader));
-    ref->ptr = ptr;
-    ref->field_info = NULL;
-    ref->tag_ptr = NULL;
-    ref->tag_identity = NULL;
-    ref->tag_attr = NULL;
+    void* stg = lua_newuserdata(state, sizeof(DFRefHeader));
+    new (stg) DFRefHeader
+    {
+        .ptr = ptr,
+        .field_info = NULL,
+        .tag_ptr = NULL,
+        .tag_identity = NULL,
+        .tag_attr = NULL,
+    };
 
     lua_swap(state);
     lua_setmetatable(state, -2);

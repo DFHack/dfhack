@@ -90,6 +90,7 @@ distribution.
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_legendsst.h"
+#include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_titlest.h"
@@ -186,6 +187,18 @@ DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
 
     if (focusStrings.empty())
         focusStrings.push_back(baseFocus);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(new_arena)
+{
+    if (screen->raw_load)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->doing_mods)
+        focusStrings.push_back(baseFocus + "/Mods");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus);
+
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(choose_start_site)
@@ -760,11 +773,6 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
     if (game->main_interface.create_squad.open) {
         newFocusString = baseFocus;
         newFocusString += "/CreateSquad";
-        focusStrings.push_back(newFocusString);
-    }
-    if (game->main_interface.squad_supplies.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/SquadSupplies";
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.squads.open) {

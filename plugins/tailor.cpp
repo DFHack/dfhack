@@ -2,6 +2,8 @@
  * Tailor plugin. Automatically manages keeping your dorfs clothed.
  */
 
+#include <algorithm>
+
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
@@ -12,7 +14,9 @@
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/building.h"
 #include "df/creature_raw.h"
+#include "df/descriptor_color.h"
 #include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/item_flags.h"
@@ -25,6 +29,10 @@
 #include "df/manager_order.h"
 #include "df/material.h"
 #include "df/plotinfost.h"
+#include "df/reaction.h"
+#include "df/reaction_reagent.h"
+#include "df/reaction_reagent_itemst.h"
+#include "df/reaction_product_itemst.h"
 #include "df/unit.h"
 #include "df/world.h"
 
@@ -46,7 +54,9 @@ namespace DFHack {
 }
 
 static const string CONFIG_KEY = string(plugin_name) + "/config";
+static const string CONFIG_KEY_2 = string(plugin_name) + "/config_2";
 static PersistentDataItem config;
+static PersistentDataItem config2;
 
 enum ConfigValues {
     CONFIG_IS_ENABLED = 0,
@@ -56,6 +66,11 @@ enum ConfigValues {
     CONFIG_LEATHER_IDX = 4,
     CONFIG_ADAMANTINE_IDX = 5,
     CONFIG_CONFISCATE = 6
+};
+
+enum Config2Values
+{
+    CONFIG_AUTOMATE_DYE = 0
 };
 
 static const int32_t CYCLE_TICKS = 1231; // one day
@@ -144,10 +159,16 @@ private:
 
     bool confiscate = true;
 
+    bool automate_dye = false;
+
 public:
     void set_confiscate(bool f){ confiscate = f; }
 
     bool get_confiscate() { return confiscate; }
+
+    void set_automate_dye(bool f) { automate_dye = f; }
+
+    bool get_automate_dye() { return automate_dye; }
 
     void sync_material_order()
     {
@@ -415,8 +436,6 @@ public:
             if (f == jobTypeMap.end())
                 continue;
 
-            int race = o->specdata.hist_figure_id;
-
             for (auto& m : all_materials)
             {
                 if (o->material_category.whole == m.job_material.whole)
@@ -426,45 +445,235 @@ public:
                         DF2CONSOLE(m.name).c_str(), o->amount_left);
                 }
             }
-
-            if (race == -1)
-                continue; // -1 means that the race of the worker will determine the size made; we must ignore these jobs
-
-            int size = world->raws.creatures.all[race]->adultsize;
-
-            auto tt = jobTypeMap.find(o->job_type);
-            if (tt == jobTypeMap.end())
-            {
-                continue;
-            }
-
-            needed[std::make_pair(tt->second, size)] -= o->amount_left;
-            TRACE(cycle).print("tailor: existing order for %d %s of size %d detected\n",
-                o->amount_left,
-                ENUM_KEY_STR(job_type, o->job_type).c_str(),
-                size);
         }
-
     }
 
-    static df::manager_order * get_existing_order(df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat) {
-        for (auto order : world->manager_orders.all) {
-            if (order->job_type == ty &&
-                    order->item_type == df::item_type::NONE &&
-                    order->item_subtype == sub &&
-                    order->mat_type == -1 &&
-                    order->mat_index == -1 &&
-                    order->specdata.hist_figure_id == hfid &&
-                    order->material_category.whole == mcat.whole &&
-                    order->frequency == df::workquota_frequency_type::OneTime)
-                return order;
+    using jiqt = decltype(df::reaction_reagent_itemst::quantity);
+
+    int get_reaction_max_count(df::reaction* r, jiqt lim = std::numeric_limits<jiqt>::max())
+    {
+        jiqt max = lim;
+
+        for (auto rr : r->reagents)
+        {
+            if (rr->getType() == df::reaction_reagent_type::item)
+            {
+                max = std::min(get_reagent_max_count(virtual_cast<df::reaction_reagent_itemst>(rr), max), max);
+            }
         }
-        return NULL;
+
+        return max;
+    }
+
+    int get_reagent_max_count(df::reaction_reagent_itemst* r, jiqt lim = std::numeric_limits<jiqt>::max())
+    {
+        df::reaction_reagent_itemst* t = df::allocate<df::reaction_reagent_itemst>();
+        *t = *r;
+        jiqt orig = t->quantity;
+
+        std::vector<int32_t> tbc;
+        std::vector<int32_t> toc;
+        std::vector<std::string*> trc;
+        std::vector<int32_t> tcc;
+
+        auto test = [&] (jiqt m) {
+            t->quantity = orig * m;
+            return t->have_enough_from_precalc_info(NULL, &tbc, &toc, &trc, &tcc, -1);
+            };
+
+        jiqt max = lim / orig;
+
+        jiqt lo = 0;
+        jiqt hi = max;
+
+        // exit fast when 0
+        if (test(1))
+        {
+            lo = 1;
+
+            while (hi > lo + 1)
+            {
+                // can't do (hi+lo)/2 because hi+lo may overflow!
+                jiqt mult = hi / 2 + lo / 2;
+                if (mult == lo) mult += 1;
+                if (test(mult))
+                    lo = mult;
+                else
+                    hi = mult;
+            }
+        }
+
+        delete t;
+
+        return lo;
+    }
+
+    int count_dyeables(df::item_type ty)
+    {
+        auto reagent = df::allocate<df::reaction_reagent_itemst>();
+        reagent->item_subtype = -1;
+        reagent->mat_type = -1;
+        reagent->mat_index = -1;
+        reagent->flags2.bits.dyeable = true;
+        reagent->has_tool_use = df::tool_uses::NONE;
+        if (ty == df::item_type::SKIN_TANNED)
+        {
+            reagent->quantity = 1;
+            reagent->min_dimension = 1;
+        }
+        else
+        {
+            reagent->quantity = 10000;
+            reagent->min_dimension = 10000;
+        }
+        reagent->item_type = ty;
+        return get_reagent_max_count(reagent);
+    }
+
+    int count_dyes()
+    {
+        auto reagent = df::allocate<df::reaction_reagent_itemst>();
+        reagent->item_type = df::item_type::NONE;
+        reagent->item_subtype = -1;
+        reagent->mat_type = -1;
+        reagent->mat_index = -1;
+        reagent->flags1.bits.unrotten = true;
+        reagent->flags2.bits.dye = true;
+        reagent->has_tool_use = df::tool_uses::NONE;
+        reagent->quantity = 1;
+        int count = get_reagent_max_count(reagent);
+        delete reagent;
+        return count;
+    }
+
+    using oqt = decltype(df::manager_order::amount_total);
+
+    using color_type = decltype(MaterialInfo::material->powder_dye);
+
+    static auto product_is_dye (df::reaction_product* r) -> bool
+    {
+        if (r->getType() == df::reaction_product_type::item)
+        {
+            auto rr = virtual_cast<df::reaction_product_itemst> (r);
+            auto mat = MaterialInfo(rr->mat_type, rr->mat_index);
+            return mat.material && mat.material->flags.is_set(df::enums::material_flags::IS_DYE);
+        }
+        return false;
+    };
+
+    oqt order_dye_from_reaction(df::reaction* r, int c = 1)
+    {
+        std::string descr;
+        auto dye = std::ranges::find_if(r->products, product_is_dye);
+        assert(dye != r->products.end());
+        auto pp = virtual_cast<df::reaction_product_itemst>(*dye);
+        assert(pp != nullptr);
+
+        pp->getDescription(&descr);
+
+        auto [_, n] = get_or_create_order(c, df::job_type::CustomReaction, -1, -1, 0, r->code);
+        if (n > 0)
+        {
+            INFO(cycle).print("tailor: ordered %d %s\n", c, DF2CONSOLE(descr).c_str());
+        }
+        return n;
+    }
+
+    oqt order_dye_cloth(int c = 1)
+    {
+        auto [_, n] = get_or_create_order(c, df::job_type::DyeCloth, -1, -1, 0);
+        return n;
+    }
+
+    void make_dyes(int count)
+    {
+        auto reaction_produces_dye = [] (df::reaction* r) {
+            return std::ranges::any_of(r->products, product_is_dye);
+            };
+
+        for (auto r : std::ranges::views::filter(world->raws.reactions.reactions, reaction_produces_dye))
+        {
+            int max = get_reaction_max_count(r,1);
+
+            if (max > 0)
+            {
+                max = order_dye_from_reaction(r, max);
+            }
+
+            count = std::max(0, count - max);
+            if (count <= 0)
+                break;
+        }
+    }
+
+    int count_dye_cloth_orders()
+    {
+        auto f = [] (df::manager_order* o) {
+            return o->job_type == df::job_type::DyeCloth;
+            };
+
+        int sum = 0;
+        for (auto o : std::ranges::views::filter(world->manager_orders.all, f))
+        {
+            sum += o->amount_left;
+        }
+        return sum;
+    }
+
+    static std::pair<df::manager_order*,oqt> get_or_create_order(oqt c, df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat, std::string custom_reaction = "")
+    {
+        auto f = [&] (df::manager_order* order) {
+            return order->job_type == ty &&
+                order->item_type == df::item_type::NONE &&
+                order->item_subtype == sub &&
+                order->mat_type == -1 &&
+                order->mat_index == -1 &&
+                order->specdata.race == hfid &&
+                order->material_category.whole == mcat.whole &&
+                order->frequency == df::workquota_frequency_type::OneTime &&
+                order->reaction_name == custom_reaction;
+            };
+
+        auto orderIt = std::ranges::find_if(world->manager_orders.all, f);
+
+        if (orderIt != world->manager_orders.all.end())
+        {
+            auto o = *orderIt;
+            int chg = 0;
+            if (o->amount_left > 0)
+            {
+                int prev = o->amount_left;
+                o->amount_left = std::max(c, o->amount_left);
+                o->amount_total = std::max(c, o->amount_total);
+                chg = o->amount_left - prev;
+            }
+            return {o, chg};
+        }
+
+        auto order = new df::manager_order;
+        order->job_type = ty;
+        order->item_type = df::item_type::NONE;
+        order->item_subtype = sub;
+        order->reaction_name = custom_reaction;
+        order->specdata.race = hfid;
+        order->material_category = mcat;
+        order->mat_type = -1;
+        order->mat_index = -1;
+        order->amount_left = c;
+        order->amount_total = c;
+        order->status.bits.validated = false;
+        order->status.bits.active = false;
+        order->id = world->manager_orders.manager_order_next_id++;
+
+        world->manager_orders.all.push_back(order);
+
+        return {order, c};
     }
 
     int place_orders()
     {
         int ordered = 0;
+        int skipped = 0;
         auto entity = world->entities.all[plotinfo->civ_id];
 
         for (auto& o : orders)
@@ -550,52 +759,68 @@ public:
                             c = supply[m] - res;
                             TRACE(cycle).print("tailor: order reduced from %d to %d to protect reserves of %s\n",
                                 count, c, DF2CONSOLE(m.name).c_str());
+                            skipped += (count - c);
                         }
                         supply[m] -= c;
 
-                        auto order = get_existing_order(ty, sub, sizes[size], m.job_material);
-                        if (order) {
-                            if (order->amount_total > 0) {
-                                order->amount_left += c;
-                                order->amount_total += c;
-                            }
-                        } else {
-                            order = new df::manager_order;
-                            order->job_type = ty;
-                            order->item_type = df::item_type::NONE;
-                            order->item_subtype = sub;
-                            order->mat_type = -1;
-                            order->mat_index = -1;
-                            order->amount_left = c;
-                            order->amount_total = c;
-                            order->status.bits.validated = false;
-                            order->status.bits.active = false;
-                            order->id = world->manager_orders.manager_order_next_id++;
-                            order->specdata.hist_figure_id = sizes[size];
-                            order->material_category = m.job_material;
+                        auto [order,n] = get_or_create_order(c, ty, sub, sizes[size], m.job_material);
 
-                            world->manager_orders.all.push_back(order);
+                        if (n > 0)
+                        {
+                            INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",
+                                order->id,
+                                n,
+                                bitfield_to_string(order->material_category).c_str(),
+                                DF2CONSOLE((c > 1) ? name_p : name_s).c_str(),
+                                DF2CONSOLE(world->raws.creatures.all[order->specdata.hist_figure_id]->name[1]).c_str()
+                            );
+
+                            count -= n;
+                            ordered += n;
                         }
-
-                        INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",
-                            order->id,
-                            c,
-                            bitfield_to_string(order->material_category).c_str(),
-                            DF2CONSOLE((c > 1) ? name_p : name_s).c_str(),
-                            DF2CONSOLE(world->raws.creatures.all[order->specdata.hist_figure_id]->name[1]).c_str()
-                        );
-
-                        count -= c;
-                        ordered += c;
                     }
                     else
                     {
-                        TRACE(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", DF2CONSOLE(m.name).c_str(), supply[m]);
+                        skipped += count;
+                        DEBUG(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", DF2CONSOLE(m.name).c_str(), supply[m]);
                     }
 
                 }
             }
         }
+
+        if (skipped > 0)
+        {
+            INFO(cycle).print("tailor: %d item%s not ordered due to a lack of materials\n", skipped, skipped != 1 ? "s" : "");
+
+            if (automate_dye)
+            {
+                int available_dyes = count_dyes();
+                int available_dyeable_cloth = count_dyeables(df::item_type::CLOTH);
+                int dye_cloth_orders = count_dye_cloth_orders();
+
+                DEBUG(cycle).print("tailor: available dyes = %d, available dyeable cloth = %d, dye cloth orders = %d\n",
+                    available_dyes, available_dyeable_cloth, dye_cloth_orders);
+                int to_dye = std::min(skipped, std::min(available_dyes, available_dyeable_cloth) - dye_cloth_orders);
+                DEBUG(cycle).print("tailor: to dye = %d\n", to_dye);
+                if (to_dye > 0)
+                {
+                    int dyed = order_dye_cloth(to_dye);
+                    if (dyed > 0)
+                    {
+                        INFO(cycle).print("tailor: dyeing %d cloth\n", to_dye);
+                    }
+                }
+
+                int dyes_to_make = available_dyes - to_dye;
+                if (dyes_to_make > 0)
+                {
+                    INFO(cycle).print("tailor: ordering up to %d dyes\n", dyes_to_make);
+                    make_dyes(dyes_to_make);
+                }
+            }
+        }
+
         return ordered;
     }
 
@@ -660,11 +885,10 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
     return CR_OK;
 }
 
-
-
 DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
     config = World::GetPersistentSiteData(CONFIG_KEY);
+    config2 = World::GetPersistentSiteData(CONFIG_KEY_2);
 
     if (!config.isValid()) {
         DEBUG(control,out).print("no config found in this save; initializing\n");
@@ -672,17 +896,35 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         config.set_bool(CONFIG_CONFISCATE, true);
     }
+    if (!config2.isValid())
+    {
+        DEBUG(control, out).print("no extended config found in this save; initializing\n");
+        config2 = World::AddPersistentSiteData(CONFIG_KEY_2);
+        config2.set_bool(CONFIG_AUTOMATE_DYE, false);
+    }
     // transition existing saves to CONFIG_CONFISCATE=true
     if (config.get_int(CONFIG_CONFISCATE) < 0) {
         DEBUG(control,out).print("found existing configuration with CONFIG_CONFISCATE unset, initializing to true\n");
         config.set_bool(CONFIG_CONFISCATE, true);
     }
+
+    // transition existing saves to CONFIG_AUTOMATE_DYE=false
+    if (config2.get_int(CONFIG_AUTOMATE_DYE) < 0)
+    {
+        DEBUG(control, out).print("found existing configuration with CONFIG_AUTOMATE_DYE unset, initializing to false\n");
+        config2.set_bool(CONFIG_AUTOMATE_DYE, false);
+    }
+
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
     DEBUG(control,out).print("loading persisted enabled state: %s\n",
                             is_enabled ? "true" : "false");
     tailor_instance->set_confiscate(config.get_bool(CONFIG_CONFISCATE));
     DEBUG(control,out).print("loading persisted confiscation state: %s\n",
                             tailor_instance->get_confiscate() ? "true" : "false");
+    tailor_instance->set_automate_dye(config2.get_bool(CONFIG_AUTOMATE_DYE));
+    DEBUG(control, out).print("loading persisted dye automation state: %s\n",
+                            tailor_instance->get_automate_dye() ? "true" : "false");
+
     tailor_instance->sync_material_order();
 
     return CR_OK;
@@ -776,6 +1018,18 @@ static bool tailor_getConfiscate(color_ostream& out)
     return tailor_instance->get_confiscate();
 }
 
+static void tailor_setAutomateDye(color_ostream& out, bool enable)
+{
+    DEBUG(control, out).print("%s automation of dye\n", enable ? "enabling" : "disabling");
+    config2.set_bool(CONFIG_AUTOMATE_DYE, enable);
+    tailor_instance->set_automate_dye(enable);
+}
+
+static bool tailor_getAutomateDye(color_ostream& out)
+{
+    return tailor_instance->get_automate_dye();
+}
+
 static int tailor_getMaterialPreferences(lua_State *L) {
     color_ostream *out = Lua::GetOutput(L);
     if (!out)
@@ -793,6 +1047,8 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(tailor_setMaterialPreferences),
     DFHACK_LUA_FUNCTION(tailor_setConfiscate),
     DFHACK_LUA_FUNCTION(tailor_getConfiscate),
+    DFHACK_LUA_FUNCTION(tailor_setAutomateDye),
+    DFHACK_LUA_FUNCTION(tailor_getAutomateDye),
     DFHACK_LUA_END
 };
 

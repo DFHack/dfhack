@@ -14,6 +14,7 @@ using std::string;
 using namespace DFHack;
 
 #include "tweaks/adamantine-cloth-wear.h"
+#include "tweaks/animaltrap-reuse.h"
 #include "tweaks/craft-age-wear.h"
 #include "tweaks/eggs-fertile.h"
 #include "tweaks/fast-heat.h"
@@ -52,6 +53,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     TWEAK_HOOK("adamantine-cloth-wear", adamantine_cloth_wear_gloves_hook, incWearTimer);
     TWEAK_HOOK("adamantine-cloth-wear", adamantine_cloth_wear_shoes_hook, incWearTimer);
     TWEAK_HOOK("adamantine-cloth-wear", adamantine_cloth_wear_pants_hook, incWearTimer);
+
+    TWEAK_HOOK("animaltrap-reuse", animaltrap_reuse_hook, updateAction);
 
     TWEAK_HOOK("craft-age-wear", craft_age_wear_hook, ageItem);
 

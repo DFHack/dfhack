@@ -17,6 +17,7 @@ end
 function status()
     dfhack.print(('tailor is %s'):format(isEnabled() and "enabled" or "disabled"))
     print((' %s confiscating tattered clothing'):format(tailor_getConfiscate() and "and" or "but not"))
+    print(('tailor %s automating dye'):format(tailor_getAutomateDye() and "is" or "is not"))
     print('materials preference order:')
     for _,name in ipairs(tailor_getMaterialPreferences()) do
         print(('  %s'):format(name))
@@ -38,6 +39,11 @@ function setConfiscate(opt)
     tailor_setConfiscate(fl)
 end
 
+function setAutomateDye(opt)
+    local fl = argparse.boolean(opt[1], "set dye")
+    tailor_setAutomateDye(fl)
+end
+
 function parse_commandline(...)
     local args, opts = {...}, {}
     local positionals = process_args(opts, args)
@@ -55,6 +61,8 @@ function parse_commandline(...)
         setMaterials(positionals)
     elseif command == 'confiscate' then
         setConfiscate(positionals)
+    elseif command == 'dye' then
+        setAutomateDye(positionals)
     else
         return false
     end

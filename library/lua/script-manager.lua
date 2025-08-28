@@ -80,8 +80,8 @@ end
 -- this perhaps could/should be queried from the Steam API
 -- are there any installation configurations where this will be wrong, though?
 local WORKSHOP_MODS_PATH = '../../workshop/content/975370/'
-local MODS_PATH = 'mods/'
-local INSTALLED_MODS_PATH = 'data/installed_mods/'
+local MODS_PATH = dfhack.filesystem.getBaseDir() .. 'mods/'
+local INSTALLED_MODS_PATH = dfhack.filesystem.getBaseDir() .. 'data/installed_mods/'
 
 -- last instance of the same version of the same mod wins, so read them in this
 -- order (in increasing order of liklihood that players may have made custom
@@ -152,7 +152,6 @@ function get_mod_paths(installed_subdir, active_subdir)
     -- if a world is loaded, process active mods first, and lock to active version
     if dfhack.isWorldLoaded() then
         for _,path in ipairs(df.global.world.object_loader.object_load_order_src_dir) do
-            path = tostring(path.value)
             -- skip vanilla "mods"
             if not path:startswith(INSTALLED_MODS_PATH) then goto continue end
             local id = get_mod_id_and_version(path)
@@ -214,7 +213,7 @@ function get_active_mods()
     local ol = df.global.world.object_loader
 
     for idx=0,#ol.object_load_order_id-1 do
-        local path = ol.object_load_order_src_dir[idx].value
+        local path = ol.object_load_order_src_dir[idx]
         table.insert(mods, {
             id=ol.object_load_order_id[idx].value,
             name=ol.object_load_order_name[idx].value,

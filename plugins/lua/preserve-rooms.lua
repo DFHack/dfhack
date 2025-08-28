@@ -320,9 +320,13 @@ local function get_codes(positions)
         if position.replaced_by == -1 then
             ensure_key(grouped, id)[id] = position
         else
+            -- replaced-by links may be cyclic. this code will behave "incorrectly" in the event
+            -- of a cycle but will not hang. a proper fix is still needed. see issue DFHack/dfhack#5538
             local parent = positions[position.replaced_by]
-            while parent.replaced_by ~= -1 do
+            local counter = 0
+            while parent.replaced_by ~= -1 and counter < 10 do
                 parent = positions[parent.replaced_by]
+                counter = counter + 1
             end
             ensure_key(grouped, parent.id)[id] = position
         end

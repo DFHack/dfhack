@@ -58,6 +58,8 @@ void (*g_SDL_free)(void *);
 SDL_PixelFormat* (*g_SDL_AllocFormat)(uint32_t pixel_format) = nullptr;
 SDL_Surface* (*g_SDL_CreateRGBSurfaceWithFormat)(uint32_t flags, int width, int height, int depth, uint32_t format) = nullptr;
 int (*g_SDL_ShowSimpleMessageBox)(uint32_t flags, const char *title, const char *message, SDL_Window *window) = nullptr;
+char* (*g_SDL_GetPrefPath)(const char* org, const char* app) = nullptr;
+char* (*g_SDL_GetBasePath)() = nullptr;
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -101,6 +103,8 @@ bool DFSDL::init(color_ostream &out) {
     bind(g_sdl_handle, SDL_AllocFormat);
     bind(g_sdl_handle, SDL_CreateRGBSurfaceWithFormat);
     bind(g_sdl_handle, SDL_ShowSimpleMessageBox);
+    bind(g_sdl_handle, SDL_GetPrefPath);
+    bind(g_sdl_handle, SDL_GetBasePath);
 #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
@@ -173,6 +177,16 @@ SDL_PixelFormat* DFSDL::DFSDL_AllocFormat(uint32_t pixel_format) {
 
 SDL_Surface* DFSDL::DFSDL_CreateRGBSurfaceWithFormat(uint32_t flags, int width, int height, int depth, uint32_t format) {
     return g_SDL_CreateRGBSurfaceWithFormat(flags, width, height, depth, format);
+}
+
+char* DFSDL::DFSDL_GetPrefPath(const char* org, const char* app)
+{
+    return g_SDL_GetPrefPath(org, app);
+}
+
+char* DFSDL::DFSDL_GetBasePath()
+{
+    return g_SDL_GetBasePath();
 }
 
 int DFSDL::DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const char *message, SDL_Window *window) {

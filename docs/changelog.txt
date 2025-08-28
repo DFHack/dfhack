@@ -72,6 +72,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- Compatibility with DF 52.04
 
 ## Fixes
 

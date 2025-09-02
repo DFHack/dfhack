@@ -99,8 +99,6 @@ bool Burrows::isAssignedUnit(df::burrow *burrow, df::unit *unit)
 
 void Burrows::setAssignedUnit(df::burrow *burrow, df::unit *unit, bool enable)
 {
-    using df::global::plotinfo;
-
     CHECK_NULL_POINTER(unit);
     CHECK_NULL_POINTER(burrow);
 

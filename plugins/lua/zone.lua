@@ -602,9 +602,7 @@ local function is_assignable_unit(unit)
 end
 
 local function is_assignable_item(item)
-    -- small pets owned by traders are not assignable
-    if item.flags.trader then return false end
-    -- other vermin/small pets are assignable
+    -- all vermin/small pets are assignable
     return true
 end
 

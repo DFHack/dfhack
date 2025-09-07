@@ -56,7 +56,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- small animals owned by traders can no longer be assigned to pits, ponds, and cages.
 
 ## Misc Improvements
 

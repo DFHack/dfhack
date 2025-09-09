@@ -1,26 +1,30 @@
 === Scroll down for changes
 
 ===[[[
-The text below is included in docs/dev/Documentation.rst - see that file for more details on the changelog setup.
-This is kept in this file as a quick syntax reference.
+For information on how to edit/build the changelogs, see `docs/html/docs/dev/Documentation.html` or `docs/dev/Documentation.rst`.
 
-===help
+The text between the `syntax-reference` markers is included in `docs/dev/Documentation.rst`, so it must be valid RST.
+It is kept in this file as a quick syntax reference.
 
-changelog.txt uses a syntax similar to RST, with a few special sequences:
+===syntax-reference-start
+
+The changelogs use a syntax similar to RST, with a few special sequences:
 
 - ``===`` indicates the start of a comment
 - ``#`` indicates the start of a release name (do not include "DFHack")
-- ``##`` indicates the start of a section name (this must be listed in ``gen_changelog.py``)
+- ``##`` indicates the start of a section name (which must be listed in ``docs/sphinx_extensions/dfhack/changelog.py``)
 - ``-`` indicates the start of a changelog entry. **Note:** an entry currently must be only one line.
-- ``:`` (colon followed by space) separates the name of a feature from a description of a change to that feature.
-    Changes made to the same feature are grouped if they end up in the same section.
-- ``:\`` (colon, backslash, space) avoids the above behavior
-- ``- @`` (the space is optional) indicates the start of an entry that should only be displayed in NEWS-dev.rst.
-    Use this sparingly, e.g. for immediate fixes to one development build in another development build that
-    are not of interest to users of stable builds only.
+- ``:`` (followed by space) separates the name of a feature from a description of a change to that feature.
+    - Changes made to the same feature are grouped if they end up in the same section.
+- ``:\`` (followed by space) avoids the above behavior
+- ``- @`` (the space is optional) indicates the start of an entry that should only be displayed in ``NEWS-dev.rst``.
+    - Use this sparingly, e.g. for immediate fixes to one development build in another development build that
+      are not of interest to users of stable builds only.
 - Three ``[`` characters indicate the start of a block (possibly a comment) that
   spans multiple lines. Three ``]`` characters indicate the end of such a block.
-- ``!`` immediately before a phrase set up to be replaced (see gen_changelog.py) stops that occurrence from being replaced.
+- ``!`` immediately before a configured replacement (see ``docs/sphinx_extensions/dfhack/changelog.py``) stops that occurrence from being replaced.
+
+===syntax-reference-end
 
 Template for new versions:
 
@@ -40,7 +44,6 @@ Template for new versions:
 
 ## Removed
 
-===end
 ]]]
 
 ================================================================================

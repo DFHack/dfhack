@@ -989,7 +989,9 @@ local function get_zone_status(unit_or_vermin, bld_assignments)
             return PASTURE_STATUS.ASSIGNED_HERE.value
         else
             local civzone = df.building.find(assigned_zone_ref.building_id)
-            if civzone.type == df.civzone_type.Pen then
+            if not civzone or not df.building_civzonest:is_instance(civzone) then
+                return PASTURE_STATUS.NONE.value
+            elseif civzone.type == df.civzone_type.Pen then
                 return PASTURE_STATUS.PASTURED.value
             elseif civzone.type == df.civzone_type.Pond then
                 return PASTURE_STATUS.PITTED.value
@@ -1150,7 +1152,9 @@ local function get_cage_status(unit_or_vermin, bld_assignments)
     local assigned_zone_ref = get_general_ref(unit_or_vermin, df.general_ref_type.BUILDING_CIVZONE_ASSIGNED)
     if assigned_zone_ref then
         local civzone = df.building.find(assigned_zone_ref.building_id)
-        if civzone.type == df.civzone_type.Pen then
+        if not civzone or not df.building_civzonest:is_instance(civzone) then
+            return CAGE_STATUS.NONE.value
+        elseif civzone.type == df.civzone_type.Pen then
             return CAGE_STATUS.PASTURED.value
         elseif civzone.type == df.civzone_type.Pond then
             return CAGE_STATUS.PITTED.value

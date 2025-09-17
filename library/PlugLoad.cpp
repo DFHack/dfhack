@@ -18,7 +18,7 @@
 #define global_search_handle() GetModuleHandle(nullptr)
 #define get_function_address(plugin, function) GetProcAddress((HMODULE)plugin, function)
 #define clear_error()
-#define load_library(fn) LoadLibrary(fn)
+#define load_library(fn) LoadLibraryW(fn.c_str())
 #define close_library(handle) (!(FreeLibrary((HMODULE)handle)))
 #else
 #include <dlfcn.h>
@@ -33,7 +33,7 @@
 #define global_search_handle() (RTLD_DEFAULT)
 #define get_function_address(plugin, function) dlsym((void*)plugin, function)
 #define clear_error() dlerror()
-#define load_library(fn) dlopen(fn, RTLD_NOW | RTLD_LOCAL);
+#define load_library(fn) dlopen(fn.c_str(), RTLD_NOW | RTLD_LOCAL);
 #define close_library(handle) dlclose((void*)handle)
 #endif
 
@@ -71,13 +71,13 @@ namespace DFHack
         }
     }
 
-    DFLibrary * OpenPlugin (const char * filename)
+    DFLibrary * OpenPlugin (std::filesystem::path filename)
     {
         clear_error();
         DFLibrary* ret = (DFLibrary*)load_library(filename);
         if (!ret) {
             auto error = get_error();
-            WARN(plugins).print("OpenPlugin on %s failed: %s\n", filename, error.c_str());
+            WARN(plugins).print("OpenPlugin on %s failed: %s\n", filename.string().c_str(), error.c_str());
         }
         return ret;
     }

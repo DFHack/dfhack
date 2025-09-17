@@ -26,6 +26,8 @@ distribution.
 #pragma once
 
 #include <algorithm>
+#include <filesystem>
+#include <string>
 
 #include "Export.h"
 
@@ -118,7 +120,7 @@ namespace DFHack
         return rect.second - rect.first + df::coord2d(1,1);
     }
 
-    DFHACK_EXPORT int getdir(std::string dir, std::vector<std::string> &files);
+    DFHACK_EXPORT int getdir(std::filesystem::path dir, std::vector<std::filesystem::path> &files);
     DFHACK_EXPORT bool hasEnding (std::string const &fullString, std::string const &ending);
 
     DFHACK_EXPORT df::general_ref *findRef(std::vector<df::general_ref*> &vec, df::general_ref_type type);

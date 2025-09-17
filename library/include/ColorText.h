@@ -65,7 +65,7 @@ namespace  DFHack
     class DFHACK_EXPORT color_ostream : public std::ostream
     {
     public:
-        typedef DFHack::color_value color_value;
+        using color_value = DFHack::color_value;
 
     private:
         color_value cur_color;

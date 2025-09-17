@@ -44,10 +44,12 @@ distribution.
 #include "df/building.h"
 #include "df/building_actual.h"
 #include "df/building_tradedepotst.h"
+#include "df/buildingitemst.h"
 #include "df/builtin_mats.h"
 #include "df/caravan_state.h"
 #include "df/creature_raw.h"
 #include "df/dfhack_material_category.h"
+#include "df/d_init.h"
 #include "df/entity_buy_prices.h"
 #include "df/entity_buy_requests.h"
 #include "df/entity_raw.h"
@@ -63,6 +65,7 @@ distribution.
 #include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/item_bookst.h"
+#include "df/item_magicalst.h"
 #include "df/item_plant_growthst.h"
 #include "df/item_toolst.h"
 #include "df/item_type.h"
@@ -676,14 +679,54 @@ string Items::getDescription(df::item *item, int type, bool decorate) {
     item->getItemDescription(&tmp, type);
 
     if (decorate) {
-        addQuality(tmp, item->getQuality());
+        // Special indicators get added in a specific order
+        // Innermost is at the top, and outermost is at the bottom
 
-        if (item->isImproved()) {
+        // First, figure out the quality levels we're going to display
+        int craftquality = item->getQuality();
+        int craftquality_only_imps = item->getImprovementQuality();
+        bool has_displayed_item_improvements = item->isImproved();
+        if (!has_displayed_item_improvements && (craftquality < craftquality_only_imps))
+            craftquality = craftquality_only_imps;
+
+        // First, actual item quality
+        addQuality(tmp, craftquality);
+
+        // Next, magic enchants
+        if (item->getMagic() != NULL)
+            tmp = '\x11' + tmp + '\x10'; // <| |>
+
+        // Next, improvements
+        if (has_displayed_item_improvements) {
             tmp = '\xAE' + tmp + '\xAF'; // («) + tmp + (»)
-            addQuality(tmp, item->getImprovementQuality());
+            if (df::global::d_init->display.flags.is_set(d_init_flags1::SHOW_IMP_QUALITY))
+                addQuality(tmp, craftquality_only_imps);
         }
-        if (item->flags.bits.foreign)
-            tmp = "(" + tmp + ")";
+
+        // Dwarf mode only, forbid/foreign
+        if (*df::global::gamemode == game_mode::DWARF) {
+            if (item->flags.bits.forbid)
+                tmp = '{' + tmp + '}';
+            if (item->flags.bits.foreign)
+                tmp = '(' + tmp + ')';
+        }
+
+        // Wear
+        switch (item->getWear())
+        {
+            case 1: tmp = 'x' + tmp + 'x'; break;
+            case 2: tmp = 'X' + tmp + 'X'; break;
+            case 3: tmp = "XX" + tmp + "XX"; break;
+        }
+
+        // Fire
+        if (item->flags.bits.on_fire)
+            tmp = '\x13' + tmp + '\x13'; // !! !!
+
+        // Finally, Adventure civzone
+        if ((*df::global::gamemode == game_mode::ADVENTURE) &&
+            Items::getGeneralRef(item, general_ref_type::BUILDING_CIVZONE_ASSIGNED) != NULL)
+            tmp = '$' + tmp + '$';
     }
     return tmp;
 }
@@ -718,13 +761,6 @@ static string get_base_desc(df::item *item) {
 string Items::getReadableDescription(df::item *item) {
     CHECK_NULL_POINTER(item);
     auto desc = get_base_desc(item);
-
-    switch (item->getWear())
-    {
-        case 1: desc = "x" + desc + "x"; break; // Worn
-        case 2: desc = "X" + desc + "X"; break; // Threadbare
-        case 3: desc = "XX" + desc + "XX"; break; // Tattered
-    }
 
     if (auto gref = Items::getGeneralRef(item, general_ref_type::CONTAINS_UNIT)) {
         if (auto unit = gref->getUnit())
@@ -765,13 +801,13 @@ static bool removeItemOnGround(df::item *item)
 }
 
 static void resetUnitInvFlags(df::unit *unit, df::unit_inventory_item *inv_item) {
-    if (inv_item->mode == df::unit_inventory_item::Worn ||
-        inv_item->mode == df::unit_inventory_item::WrappedAround)
+    if (inv_item->mode == df::inv_item_role_type::Worn ||
+        inv_item->mode == df::inv_item_role_type::WrappedAround)
     {
         unit->flags2.bits.calculated_inventory = false;
         unit->flags2.bits.calculated_insulation = false;
     }
-    else if (inv_item->mode == df::unit_inventory_item::StuckIn)
+    else if (inv_item->mode == df::inv_item_role_type::StuckIn)
         unit->flags3.bits.stuck_weapon_computed = false;
 }
 
@@ -814,9 +850,12 @@ static bool detachItem(df::item *item)
         }
     }
 
-    if (auto ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
-        return linked_list_remove(&world->proj_list, ref->projectile_id)
-            && removeRef(item->general_refs, general_ref_type::PROJECTILE, ref->getID());
+    if (auto ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE))) {
+        auto proj_id = ref->projectile_id;
+        bool isRefRemoved = removeRef(item->general_refs, general_ref_type::PROJECTILE, proj_id);
+        bool isLinkRemoved = linked_list_remove(&world->projectiles.all, proj_id);
+        return isRefRemoved && isLinkRemoved;
+    }
 
     if (item->flags.bits.on_ground) {
         if (!removeItemOnGround(item))
@@ -960,7 +999,7 @@ bool DFHack::Items::moveToBuilding(df::item *item, df::building_actual *building
     ref->building_id = building->id;
     item->general_refs.push_back(ref);
 
-    auto con = new df::building_actual::T_contained_items;
+    auto con = new df::buildingitemst;
     con->item = item;
     con->use_mode = use_mode;
     building->contained_items.push_back(con);
@@ -969,7 +1008,7 @@ bool DFHack::Items::moveToBuilding(df::item *item, df::building_actual *building
 }
 
 bool DFHack::Items::moveToInventory(df::item *item, df::unit *unit,
-    df::unit_inventory_item::T_mode mode, int body_part)
+    df::inv_item_role_type mode, int body_part)
 {
     CHECK_NULL_POINTER(item);
     CHECK_NULL_POINTER(unit);
@@ -1063,7 +1102,7 @@ df::proj_itemst *Items::makeProjectile(df::item *item)
     ref->projectile_id = proj->id;
     item->general_refs.push_back(ref);
 
-    linked_list_append(&world->proj_list, proj->link);
+    linked_list_append(&world->projectiles.all, proj->link);
     return proj;
 }
 
@@ -1237,7 +1276,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype,
                 value = craw->misc.petvalue;
             return value;
         case FOOD:
-            return 10;
+            return 1;
         case CORPSE:
         case CORPSEPIECE:
         case REMAINS:
@@ -1644,7 +1683,10 @@ int Items::getValue(df::item *item, df::caravan_state *caravan) {
         case 3: value = value / 4; break; // (XX) tattered
     }
 
-    // Ignore value bonuses from magic, since that never actually happens
+    // Magical powers have 500 value each
+    auto magic = item->getMagic();
+    if (magic != NULL)
+        value += magic->power.size() * 500;
 
     // Artifacts have 10x value
     if (item->flags.bits.artifact_mood)
@@ -1710,7 +1752,7 @@ int Items::getValue(df::item *item, df::caravan_state *caravan) {
 }
 
 bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_type item_type,
-    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor)
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor, int32_t count)
 {   // Based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
     auto pos = Units::getPosition(unit);
@@ -1723,7 +1765,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
     prod->mat_type = mat_type;
     prod->mat_index = mat_index;
     prod->probability = 100;
-    prod->count = 1;
+    prod->count = count;
 
     switch(item_type)
     {   using namespace df::enums::item_type;
@@ -1799,8 +1841,8 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
 
 bool Items::checkMandates(df::item *item) {
     CHECK_NULL_POINTER(item);
-    for (auto mandate : world->mandates) {
-        if ((mandate->mode == df::mandate::Export) &&
+    for (auto mandate : world->mandates.all) {
+        if ((mandate->mode == df::mandate_type::Export) &&
             (item->getType() == mandate->item_type) &&
             (mandate->item_subtype == -1 || item->getSubtype() == mandate->item_subtype) &&
             (mandate->mat_type == -1 || item->getMaterial() == mandate->mat_type) &&
@@ -1881,7 +1923,7 @@ bool Items::markForTrade(df::item *item, df::building_tradedepotst *depot) {
     job->pos = df::coord(depot->centerx, depot->centery, depot->z);
 
     // job <-> item link
-    if (!Job::attachJobItem(job, item, df::job_item_ref::Hauled)) {
+    if (!Job::attachJobItem(job, item, df::job_role_type::Hauled)) {
         delete job;
         delete href;
         return false;

@@ -1,8 +1,8 @@
 // cursecheck plugin
 //
-// check single tile or whole map/world for cursed creatures by checking if a valid curse date (!=-1) is set
-// if a cursor is active only the selected tile will be observed
-// without cursor the whole map will be checked
+// check unit or whole map/world for cursed creatures by checking if a valid curse date (!=-1) is set
+// if a unit is selected only the selected unit will be observed
+// otherwise the whole map will be checked
 // by default cursed creatures will be only counted
 //
 // the tool was intended to help finding vampires but it will also list necromancers, werebeasts and zombies
@@ -29,7 +29,6 @@
 #include "df/unit_soul.h"
 #include "df/unit_syndrome.h"
 #include "df/world.h"
-#include "df/world_raws.h"
 
 using std::vector;
 using std::string;
@@ -38,7 +37,6 @@ using namespace df::enums;
 
 DFHACK_PLUGIN("cursecheck");
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(cursor);
 
 enum curses {
     None = 0,
@@ -92,15 +90,15 @@ curses determineCurse(df::unit * unit)
         cursetype = curses::Ghost;
 
     // zombies: undead or hate life (according to ag), not bloodsuckers
-    if( (unit->curse.add_tags1.bits.OPPOSED_TO_LIFE || unit->curse.add_tags1.bits.NOT_LIVING)
-        && !unit->curse.add_tags1.bits.BLOODSUCKER )
+    if( (unit->uwss_add_caste_flag.bits.OPPOSED_TO_LIFE || unit->uwss_add_caste_flag.bits.NOT_LIVING)
+        && !unit->uwss_add_caste_flag.bits.BLOODSUCKER)
         cursetype = curses::Zombie;
 
     // necromancers: alive, don't eat, don't drink, don't age
-    if(!unit->curse.add_tags1.bits.NOT_LIVING
-        && unit->curse.add_tags1.bits.NO_EAT
-        && unit->curse.add_tags1.bits.NO_DRINK
-        && unit->curse.add_tags2.bits.NO_AGING
+    if (!unit->uwss_add_caste_flag.bits.NOT_LIVING
+        && unit->uwss_add_caste_flag.bits.NO_EAT
+        && unit->uwss_add_caste_flag.bits.NO_DRINK
+        && unit->uwss_add_property.bits.NO_AGING
         )
         cursetype = curses::Necromancer;
 
@@ -110,21 +108,21 @@ curses determineCurse(df::unit * unit)
         auto syndrome = df::syndrome::find(active_syndrome->type);
         if (syndrome) {
             for (auto classname : syndrome->syn_class)
-            if (classname && *classname == "WERECURSE") {
-                cursetype = curses::Werebeast;
-                break;
-            }
+                if (classname && *classname == "WERECURSE") {
+                    cursetype = curses::Werebeast;
+                    break;
+                }
         }
     }
 
     // vampires: bloodsucker (obvious enough)
-    if(unit->curse.add_tags1.bits.BLOODSUCKER)
+    if (unit->uwss_add_caste_flag.bits.BLOODSUCKER)
         cursetype = curses::Vampire;
 
     return cursetype;
 }
 
-command_result cursecheck (color_ostream &out, vector <string> & parameters)
+command_result cursecheck(color_ostream& out, vector <string>& parameters)
 {
     df::unit* selected_unit = Gui::getSelectedUnit(out, true);
 
@@ -135,19 +133,19 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
     bool verbose = false;
     size_t cursecount = 0;
 
-    for(auto parameter : parameters)
+    for (auto parameter : parameters)
     {
-        if(parameter == "help" || parameter == "?")
+        if (parameter == "help" || parameter == "?")
             return CR_WRONG_USAGE;
-        if(parameter == "detail")
+        if (parameter == "detail")
             giveDetails = true;
-        if(parameter == "ids")
+        if (parameter == "ids")
             giveUnitID = true;
-        if(parameter == "nick")
+        if (parameter == "nick")
             giveNick = true;
-        if(parameter == "all")
+        if (parameter == "all")
             ignoreDead = false;
-        if(parameter == "verbose")
+        if (parameter == "verbose")
         {
             // verbose makes no sense without enabling details
             giveDetails = true;
@@ -159,11 +157,11 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
     vector<df::unit*> to_check;
     if (selected_unit)
         to_check.push_back(selected_unit);
-    for(df::unit *unit : to_check.size() ? to_check : world->units.all)
+    for (df::unit* unit : to_check.size() ? to_check : world->units.all)
     {
         // filter out all "living" units that are currently removed from play
         // don't spam all completely dead creatures if not explicitly wanted
-        if((!Units::isActive(unit) && !Units::isKilled(unit)) || (Units::isKilled(unit) && ignoreDead))
+        if ((!Units::isActive(unit) && !Units::isKilled(unit)) || (Units::isKilled(unit) && ignoreDead))
         {
             continue;
         }
@@ -172,9 +170,9 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
 
         if (cursetype != curses::None)
         {
-             cursecount++;
+            cursecount++;
 
-            if(giveNick)
+            if (giveNick)
             {
                 Units::setNickname(unit, curse_names[cursetype]); //"CURSED");
             }
@@ -198,8 +196,8 @@ command_result cursecheck (color_ostream &out, vector <string> & parameters)
                 if (verbose)
                 {
                     out << "Curse flags: "
-                        << bitfield_to_string(unit->curse.add_tags1) << std::endl
-                        << bitfield_to_string(unit->curse.add_tags2) << std::endl;
+                        << bitfield_to_string(unit->uwss_add_caste_flag) << std::endl
+                        << bitfield_to_string(unit->uwss_add_property) << std::endl;
                 }
             }
 

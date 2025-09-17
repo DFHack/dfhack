@@ -21,7 +21,7 @@ local zone_names = {
     [df.civzone_type.SandCollection] = 'Sand',
     [df.civzone_type.Office] = 'Office',
     [df.civzone_type.Dormitory] = 'Dormitory',
-    [df.civzone_type.Barracks] = 'Barrachs',
+    [df.civzone_type.Barracks] = 'Barracks',
     [df.civzone_type.ArcheryRange] = 'Archery Range',
     [df.civzone_type.Dump] = 'Garbage Dump',
     [df.civzone_type.AnimalTraining] = 'Animal Training',
@@ -79,8 +79,9 @@ local function get_zone_search_key(zone)
     end
 
     -- allow zones w/ assignments to be searchable by their assigned unit
-    if zone.assigned_unit ~= nil then
-        table.insert(result, sortoverlay.get_unit_search_key(zone.assigned_unit))
+    local owner = dfhack.buildings.getOwner(zone)
+    if owner then
+        table.insert(result, sortoverlay.get_unit_search_key(owner))
     end
 
     -- allow zones to be searchable by type

@@ -32,10 +32,15 @@ set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 # proto file must be in the proto/ folder
 # dfhack_plugin(rename rename.cpp LINK_LIBRARIES lua PROTOBUFS rename)
 
+# warning: for complicated reasons, if a plugin uses a vmethod interpose, it must
+# link to lua even if it doesn't otherwise use lua. we'll fix this someday, we promise.
+# we apologize for the inconvenience.
+
 option(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if(BUILD_SUPPORTED)
     dfhack_plugin(3dveins 3dveins.cpp)
-    dfhack_plugin(add-spatter add-spatter.cpp)
+    dfhack_plugin(army-controller-sanity army-controller-sanity.cpp)
+    dfhack_plugin(add-spatter add-spatter.cpp LINK_LIBRARIES lua)
     dfhack_plugin(aquifer aquifer.cpp LINK_LIBRARIES lua)
     dfhack_plugin(autobutcher autobutcher.cpp LINK_LIBRARIES lua)
     dfhack_plugin(autochop autochop.cpp LINK_LIBRARIES lua)
@@ -111,7 +116,7 @@ if(BUILD_SUPPORTED)
     #dfhack_plugin(siege-engine siege-engine.cpp LINK_LIBRARIES lua)
     dfhack_plugin(sort sort.cpp LINK_LIBRARIES lua)
     #dfhack_plugin(steam-engine steam-engine.cpp)
-    add_subdirectory(spectate)
+    dfhack_plugin(spectate spectate.cpp LINK_LIBRARIES lua)
     #dfhack_plugin(stockflow stockflow.cpp LINK_LIBRARIES lua)
     add_subdirectory(stockpiles)
     dfhack_plugin(stocks stocks.cpp LINK_LIBRARIES lua)

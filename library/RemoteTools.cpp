@@ -336,22 +336,22 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
         }
     }
 
-    if (unit->curse.add_tags1.whole ||
-        unit->curse.add_tags2.whole ||
-        unit->curse.rem_tags1.whole ||
-        unit->curse.rem_tags2.whole ||
-        unit->curse.name_visible)
+    if (unit->uwss_add_caste_flag.whole ||
+        unit->uwss_remove_caste_flag.whole ||
+        unit->uwss_add_property.whole ||
+        unit->uwss_remove_property.whole ||
+        unit->uwss_use_display_name)
     {
         auto curse = info->mutable_curse();
 
-        curse->set_add_tags1(unit->curse.add_tags1.whole);
-        curse->set_rem_tags1(unit->curse.rem_tags1.whole);
-        curse->set_add_tags2(unit->curse.add_tags2.whole);
-        curse->set_rem_tags2(unit->curse.rem_tags2.whole);
+        curse->set_add_tags1(unit->uwss_add_caste_flag.whole);
+        curse->set_rem_tags1(unit->uwss_add_property.whole);
+        curse->set_add_tags2(unit->uwss_remove_caste_flag.whole);
+        curse->set_rem_tags2(unit->uwss_remove_property.whole);
 
-        if (unit->curse.name_visible)
-            describeNameTriple(curse->mutable_name(), unit->curse.name,
-                               unit->curse.name_plural, unit->curse.name_adjective);
+        if (unit->uwss_use_display_name)
+            describeNameTriple(curse->mutable_name(), unit->uwss_display_name_sing,
+                               unit->uwss_display_name_plur, unit->uwss_display_name_adj);
     }
 
     for (size_t i = 0; i < unit->burrows.size(); i++)
@@ -458,7 +458,7 @@ static command_result ListEnums(color_ostream &stream,
     BITFIELD(cie_add_tag_mask1);
     BITFIELD(cie_add_tag_mask2);
 
-    describe_bitfield<df::incident::T_flags>(out->mutable_death_info_flags());
+    describe_bitfield<df::incident_flag>(out->mutable_death_info_flags());
 
     ENUM(profession);
 

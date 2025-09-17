@@ -34,8 +34,10 @@ distribution.
 #include <variant>
 #include <vector>
 #include <variant>
+#include <filesystem>
 
 #include "DataDefs.h"
+#include "LuaWrapper.h"
 
 namespace std {
     class condition_variable;
@@ -112,6 +114,7 @@ namespace DFHack
     };
 
     class DFHACK_EXPORT container_identity : public constructed_identity {
+    protected:
         const type_identity *item;
         const enum_identity *ienum;
 
@@ -298,9 +301,27 @@ namespace df
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
     };
 
+    class DFHACK_EXPORT path_identity : public DFHack::constructed_identity {
+    public:
+        path_identity()
+            : constructed_identity(sizeof(std::filesystem::path), &allocator_fn<std::filesystem::path>)
+        {
+        };
+
+        const std::string getFullName() const { return "path"; }
+
+        virtual DFHack::identity_type type() const { return DFHack::IDTYPE_PRIMITIVE; }
+
+        virtual bool isPrimitive() const { return true; }
+
+        virtual void lua_read(lua_State* state, int fname_idx, void* ptr) const;
+        virtual void lua_write(lua_State* state, int fname_idx, void* ptr, int val_index) const;
+    };
+
+
     class DFHACK_EXPORT stl_ptr_vector_identity : public ptr_container_identity {
     public:
-        typedef std::vector<void*> container;
+        using container = std::vector<void*>;
 
         /*
          * This class assumes that std::vector<T*> is equivalent
@@ -399,6 +420,25 @@ namespace df
             ct.insert(ct.begin()+idx, *(typename T::value_type*)item);
             return true;
         }
+        virtual bool lua_insert2(lua_State* state, int fname_idx, void* ptr, int idx, int val_index) const
+        {
+            using VT = typename T::value_type;
+            VT tmp{};
+            auto id = (type_identity*)lua_touserdata(state, DFHack::LuaWrapper::UPVAL_ITEM_ID);
+            auto pitem = DFHack::LuaWrapper::get_object_internal(state, id, val_index, false);
+            bool useTemporary = (!pitem && id->isPrimitive());
+
+            if (useTemporary)
+            {
+                pitem = &tmp;
+                id->lua_write(state, fname_idx, pitem, val_index);
+            }
+
+            if (id != item || !pitem)
+                DFHack::LuaWrapper::field_error(state, fname_idx, "incompatible object type", "insert");
+
+            return insert(ptr, idx, pitem);
+        }
 
     protected:
         virtual int item_count(void *ptr, CountMode) const { return (int)((T*)ptr)->size(); }
@@ -467,7 +507,7 @@ namespace df
          * in layout and behavior to BitArray<int> for any T.
          */
 
-        typedef BitArray<int> container;
+        using container = BitArray<int>;
 
         bit_array_identity(const enum_identity *ienum = NULL)
             : bit_container_identity(sizeof(container), &allocator_fn<container>, ienum)
@@ -497,7 +537,7 @@ namespace df
 
     class DFHACK_EXPORT stl_bit_vector_identity : public bit_container_identity {
     public:
-        typedef std::vector<bool> container;
+        using container = std::vector<bool>;
 
         stl_bit_vector_identity(const enum_identity *ienum = NULL)
             : bit_container_identity(sizeof(container), &df::allocator_fn<container>, ienum)
@@ -528,7 +568,7 @@ namespace df
     template<class T>
     class enum_list_attr_identity : public container_identity {
     public:
-        typedef enum_list_attr<T> container;
+        using container = enum_list_attr<T>;
 
         enum_list_attr_identity(const type_identity *item)
             : container_identity(sizeof(container), NULL, item, NULL)
@@ -596,7 +636,7 @@ namespace df
     template<typename T>
     struct DFHACK_EXPORT identity_traits<std::shared_ptr<T>> {
         static opaque_identity *get() {
-            typedef std::shared_ptr<T> type;
+            using type = std::shared_ptr<T>;
             static std::string name = std::string("shared_ptr<") + typeid(T).name() + ">";
             static opaque_identity identity(sizeof(type), allocator_noassign_fn<type>, name);
             return &identity;
@@ -616,6 +656,11 @@ namespace df
         static const stl_string_identity *get() { return &identity; }
     };
 
+    template<> struct DFHACK_EXPORT identity_traits<std::filesystem::path> {
+        static const bool is_primitive = true;
+        static const path_identity identity;
+        static const path_identity* get() { return &identity; }
+    };
     template<> struct DFHACK_EXPORT identity_traits<char*> {
         static const bool is_primitive = true;
         static const ptr_string_identity identity;
@@ -748,7 +793,7 @@ namespace df
 
     template<class T>
     inline const container_identity *identity_traits<std::vector<T> >::get() {
-        typedef std::vector<T> container;
+        using container = std::vector<T>;
         static const stl_container_identity<container> identity("vector", identity_traits<T>::get());
         return &identity;
     }
@@ -776,28 +821,28 @@ namespace df
 #ifdef BUILD_DFHACK_LIB
     template<class T>
     inline const container_identity *identity_traits<std::deque<T> >::get() {
-        typedef std::deque<T> container;
+        using container = std::deque<T>;
         static const stl_container_identity<container> identity("deque", identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
     inline const container_identity *identity_traits<std::set<T> >::get() {
-        typedef std::set<T> container;
+        using container = std::set<T>;
         static const ro_stl_container_identity<container> identity("set", identity_traits<T>::get());
         return &identity;
     }
 
     template<class KT, class T>
     inline const container_identity *identity_traits<std::map<KT, T>>::get() {
-        typedef std::map<KT, T> container;
+        using container = std::map<KT, T>;
         static const ro_stl_assoc_container_identity<container> identity("map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
 
     template<class KT, class T>
     inline const container_identity *identity_traits<std::unordered_map<KT, T>>::get() {
-        typedef std::unordered_map<KT, T> container;
+        using container = std::unordered_map<KT, T>;
         static const ro_stl_assoc_container_identity<container> identity("unordered_map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
@@ -810,7 +855,7 @@ namespace df
 
     template<class T>
     inline const container_identity *identity_traits<DfArray<T> >::get() {
-        typedef DfArray<T> container;
+        using container = DfArray<T>;
         static const stl_container_identity<container> identity("DfArray", identity_traits<T>::get());
         return &identity;
     }

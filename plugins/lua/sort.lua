@@ -43,7 +43,7 @@ local function get_active_idx_cache()
 end
 
 local function is_original_dwarf(unit)
-    return df.global.plotinfo.fortress_age == unit.curse.time_on_site // 10
+    return df.global.plotinfo.fortress_age == unit.usable_interaction.time_on_site // 10
 end
 
 local WAVE_END_GAP = 10000
@@ -53,7 +53,7 @@ local function get_most_recent_wave_oldest_active_idx(cache)
     for idx=#active_units-1,0,-1 do
         local unit = active_units[idx]
         if not dfhack.units.isCitizen(unit) then goto continue end
-        if oldest_unit and unit.curse.time_on_site - oldest_unit.curse.time_on_site > WAVE_END_GAP then
+        if oldest_unit and unit.usable_interaction.time_on_site - oldest_unit.usable_interaction.time_on_site > WAVE_END_GAP then
             return cache[oldest_unit.id]
         else
             oldest_unit = unit

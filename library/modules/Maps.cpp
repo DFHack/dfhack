@@ -47,6 +47,8 @@ distribution.
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
 #include "df/feature_init.h"
+#include "df/feature_map_shellst.h"
+#include "df/feature_mapst.h"
 #include "df/flow_info.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
@@ -195,10 +197,10 @@ bool cuboid::containsPos(int16_t x, int16_t y, int16_t z) const {
         x <= x_max && y <= y_max && z <= z_max;
 }
 
-void cuboid::forCoord(std::function<bool(df::coord)> fn) const
+void cuboid::forCoord(std::function<bool(df::coord)> fn, bool row_major) const
 {
     if (isValid()) // Only iterate if valid cuboid.
-        Maps::forCoord(fn, x_min, y_min, z_max, x_max, y_max, z_min);
+        Maps::forCoord(fn, x_min, y_min, z_max, x_max, y_max, z_min, row_major);
 }
 
 void cuboid::forBlock(std::function<bool(df::map_block *, cuboid)> fn, bool ensure_block) const
@@ -228,18 +230,27 @@ bool Maps::IsValid() {
 }
 
 void Maps::forCoord(std::function<bool(df::coord)> fn, int16_t x1, int16_t y1, int16_t z1,
-    int16_t x2, int16_t y2, int16_t z2)
+    int16_t x2, int16_t y2, int16_t z2, bool row_major)
 {
     int16_t dx = x1 > x2 ? -1 : 1;
     int16_t dy = y1 > y2 ? -1 : 1;
     int16_t dz = z1 > z2 ? -1 : 1;
 
-    // Process z, y, then x.
-    for (int16_t x = x1; x != x2 + dx; x += dx)
-        for (int16_t y = y1; y != y2 + dy; y += dy)
-            for (int16_t z = z1; z != z2 + dz; z += dz)
-                if (!fn(df::coord(x, y, z)))
-                    return; // Break iterator.
+    if (row_major) {
+        // Process z, y, then x.
+        for (int16_t z = z1; z != z2 + dz; z += dz)
+            for (int16_t y = y1; y != y2 + dy; y += dy)
+                for (int16_t x = x1; x != x2 + dx; x += dx)
+                    if (!fn(df::coord(x, y, z)))
+                        return; // Break iterator.
+    } else {
+        // Process z, x, then y.
+        for (int16_t z = z1; z != z2 + dz; z += dz)
+            for (int16_t x = x1; x != x2 + dx; x += dx)
+                for (int16_t y = y1; y != y2 + dy; y += dy)
+                    if (!fn(df::coord(x, y, z)))
+                        return; // Break iterator.
+    }
 }
 
 // getter for map size in blocks
@@ -515,7 +526,7 @@ df::feature_init *Maps::getLocalInitFeature(df::coord2d rgn_pos, int32_t index)
 
     df::coord2d sub = rgn_pos & 15;
 
-    vector <df::feature_init *> &features = fptr->feature_init[sub.x][sub.y];
+    vector<df::feature_init *> &features = fptr->feature_init[sub.x][sub.y];
 
     return vector_get(features, index);
 }
@@ -947,13 +958,13 @@ static int16_t basic_wet_dry_effect(int16_t region_y, int16_t rain)
     auto dimy = world->world_data->world_height;
     auto pole = world->world_data->flip_latitude;
 
-    if (dimy > 65 && pole != df::world_data::T_flip_latitude::None)
+    if (dimy > 65 && pole != df::pole_type::None)
     {   // Medium and Large worlds with at least one pole
         auto latitude = region_y;
 
-        if (pole == df::world_data::T_flip_latitude::South)
+        if (pole == df::pole_type::South)
             latitude = dimy - region_y - 1;
-        else if (pole == df::world_data::T_flip_latitude::Both)
+        else if (pole == df::pole_type::Both)
         {
             if (region_y < dimy / 2)
                 latitude = region_y * 2;
@@ -993,7 +1004,7 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
     bool tropical;
 
     // Determine tropicality
-    if (pole == df::world_data::T_flip_latitude::None)
+    if (pole == df::pole_type::None)
     {
         potential_tropical = region->temperature > 74;
         tropical = region->temperature > 84;
@@ -1002,9 +1013,9 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
     {
         auto latitude = region_ref_y; // DF just uses region_y, but embark assistant needs region_ref_y
 
-        if (pole == df::world_data::T_flip_latitude::South)
+        if (pole == df::pole_type::South)
             latitude = dimy - region_ref_y - 1;
-        else if (pole == df::world_data::T_flip_latitude::Both)
+        else if (pole == df::pole_type::Both)
         {
             if (region_ref_y < dimy / 2)
                 latitude = region_ref_y * 2;

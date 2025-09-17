@@ -2388,6 +2388,10 @@ static bool is_designated_for_track_carving(const designation &designation) {
     return occ.bits.carve_track_east || occ.bits.carve_track_north || occ.bits.carve_track_south || occ.bits.carve_track_west;
 }
 
+static bool is_designated_for_digging(const designation &designation) {
+    return designation.td.bits.dig != df::tile_dig_designation::No;
+}
+
 static char get_track_char(const designation &designation) {
     const df::tile_occupancy &occ = designation.to;
     if (occ.bits.carve_track_east && occ.bits.carve_track_north && occ.bits.carve_track_south && occ.bits.carve_track_west)
@@ -2444,8 +2448,8 @@ static char get_tile_char(const df::coord &pos, char desig_char, bool draw_prior
     }
 }
 
-static void paintScreenCarve() {
-    TRACE(log).print("entering paintScreenCarve\n");
+static void paintScreenDesignated() {
+    TRACE(log).print("entering paintScreenDesignated\n");
 
     if (Screen::inGraphicsMode() || blink(500))
         return;
@@ -2460,11 +2464,6 @@ static void paintScreenCarve() {
 
             if (!Maps::isValidTilePos(map_pos))
                 continue;
-
-            if (!Maps::isTileVisible(map_pos)) {
-                TRACE(log).print("skipping hidden tile\n");
-                continue;
-            }
 
             TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
                 map_pos.x, map_pos.y, map_pos.z, x, y);
@@ -2486,8 +2485,14 @@ static void paintScreenCarve() {
             else if (is_designated_for_track_carving(des)) {
                 cur_tile.ch = get_tile_char(map_pos, get_track_char(des), draw_priority); // directional track
             }
+            else if (is_designated_for_digging(des)) {
+                static char empty_char = (char)0x00;
+                cur_tile.ch = get_tile_char(map_pos, empty_char, draw_priority);
+                if (cur_tile.ch == empty_char)
+                    continue;
+            }
             else {
-                TRACE(log).print("skipping tile with no carving designation\n");
+                TRACE(log).print("skipping tile with no designation\n");
                 continue;
             }
 
@@ -2515,6 +2520,6 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(toggleCurLevelWarmDig),
     DFHACK_LUA_FUNCTION(toggleCurLevelDampDig),
     DFHACK_LUA_FUNCTION(paintScreenWarmDamp),
-    DFHACK_LUA_FUNCTION(paintScreenCarve),
+    DFHACK_LUA_FUNCTION(paintScreenDesignated),
     DFHACK_LUA_END
 };

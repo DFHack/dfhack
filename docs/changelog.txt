@@ -37,7 +37,6 @@ Template for new versions:
 ## API
 
 ## Lua
-- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
 
 ## Removed
 
@@ -57,7 +56,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
 
 ## Misc Improvements
 
@@ -68,6 +66,321 @@ Template for new versions:
 ## Lua
 
 ## Removed
+
+# 52.04-r1
+
+## New Tools
+
+## New Features
+- Compatibility with DF 52.04
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.03-r2
+
+## New Tools
+
+## New Features
+- `nestboxes`: allow limiting egg protection to nestboxes inside a designated burrow
+- `tailor`: tailor now provides optional dye automation
+
+## Fixes
+- ``Units::getReadableName`` will no longer append a comma to the names of histfigs with no profession
+- `stockpiles`: fixed off-by-one error in exporting furniture stockpiles
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- ``Job``: new functions ``createLinked`` and ``assignToWorkshop``
+- ``Units``: new functions ``getFocusPenalty``, ``unbailableSocialActivity``, ``isJobAvailable``
+
+## Lua
+- New functions: ``dfhack.jobs.createLinked``, ``dfhack.jobs.assignToWorkshop``, ``dfhack.units.getFocusPenalty``, ``dfhack.units.unbailableSocialActivity``, and ``dfhack.units.isJobAvailable``
+
+## Removed
+
+# 52.03-r1.1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- job descriptions of mix dye job will display proper dye names
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.03-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `preserve-rooms` will no longer hang on startup in the presence of a cycle in the replacement relationship of noble positions
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- Adjusted the logic inside ``Military::removeFromSquad`` to more closely match the game's own behavior
+
+## Lua
+
+## Removed
+
+# 52.02-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Several fixes related to changes in file system handling in DF 52.01
+- `dig-now`: don't allow UNDIGGABLE stones to be excavated
+
+## Misc Improvements
+- `autoclothing`: added a ``clear`` option to unset previously set orders
+
+## Documentation
+
+## API
+- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
+- ``Filesystem::getBaseDir`` and ``Filesystem::getInstallDir`` added (and made available in Lua)
+- Expanded the partial implementations of ``Military::addToSquad`` and ``Military::removeFromSquad``
+
+## Lua
+- Inserting values into STL containers containing nonprimitive types is now supported
+
+## Removed
+
+# 52.02-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Honor the "portable mode" preference setting for locating save folders. Fixes DFHack cosaves not working in most cases.
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.01-r1
+
+## New Tools
+
+## New Features
+- `tweak`: ``animaltrap-reuse``: make it so built animal traps automatically unload the vermin they catch into stockpiled animal traps, so that they can be automatically re-baited and reused
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+- ``widgets.Slider``: new mouse-controlled single-headed slider widget
+
+## Removed
+
+# 51.13-r1
+
+## New Features
+
+- Compatibility with DF 51.13
+
+# 51.12-r1.1
+
+## New Features
+
+- Compatibility with Itch release of DF 51.12
+
+# 51.12-r1
+
+## Fixes
+- `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
+- `getplants`: use updated formula for calculating whether plant growths are ripe
+- `getplants`: fix logic for determining whether plant growths have been picked
+- `gui/teleport`: adapt to new behavior in DF 51.11 to avoid a crash when teleporting items into mid-air
+- `script-manager`: fix lua scripts in mods not being reloaded properly upon entering a saved world on Windows
+- `preserve-rooms`: don't warn when a room is assigned to a non-existent unit.  this is now common behavior for DF when it keeps a room for an unloaded unit
+- fixed an overly restrictive type constraint that resulted in some object types being glossed as a boolean when passed as an argument from C++ to Lua
+- `plants`: will no longer generate a traceback when a filter is used
+- `createitem`: multiple items should be properly created in stacks again
+
+## Misc Improvements
+- All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
+- `dig`: ASCII overlay now displays priority of digging designations
+- `spectate`: added prefer nicknamed units
+- `blueprint`: support for recording zones
+- `blueprint`: support for recording stockpile properties like names and stockpile links; does not yet support recording detailed contents configuration
+- `strangemood`: support added for specifying unit id instead of selected unit or random one.
+
+## API
+- ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness
+- ``Items::getDescription``: fixed display of quality levels, now displays ALL item designations (in correct order) and obeys vanilla SHOW_IMP_QUALITY setting
+- ``cuboid::forCoord``, ``Maps::forCoord``: take additional parameter to control whether iteration goes in column major or row major order
+
+## Lua
+- ``script-manager``: new ``get_active_mods()`` function for getting information on active mods
+- ``script-manager``: new ``get_mod_info_metadata()`` function for getting information out of mod ``info.txt`` files
+
+## Removed
+- removed historically unused ``Core::RegisterData``/``Core::GetData`` API and associated internal data structures
+
+# 51.11-r1.2
+
+## Fixes
+- `preserve-tombs`: will no longer crash when a tomb is assigned to a unit that does not exist
+
+# 51.11-r1.1
+
+## Fixes
+- `preserve-rooms`: will no longer crash when a civzone is assigned to a unit that does not exist
+- `gui/design`: fix misaligned shape icons
+
+# 51.11-r1
+
+## Fixes
+- `spectate`: don't show a hover tooltip for hidden units (e.g. invisible snatchers)
+- `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
+- `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
+- `dig-now`: properly generate ice boulders when digging through ice walls
+- `gui/teleport`: now properly handles teleporting units that are currently falling or being flung
+- `unload`: fix recent regression where `unload` would immediately `reload` the target
+- ``Buildings`` module: do not crash if a ``map_block`` unexpectedly contains an item that is not on the master item vector
+- `suspendmanager`: fix walls being treated as potential suitable access if another wall is built underneath
+- text widgets no longer lose their cursor when the Ctrl-a (select all) hotkey is pressed when there is no text to select
+
+## Misc Improvements
+- `spectate`: show dwarves' activities (like prayer)
+
+## API
+- ``Military`` module: added ``addToSquad`` function
+- ``Units`` module: added ``get_cached_unit_by_global_id`` to emulate how DF handles unit vector index caching (used in civzones and in general references)
+- ``Buildings`` module: add ``getOwner`` (using the ``Units::get_cached_unit_by_global_id`` mechanic) to reflect changes in 51.11
+- ``Units::teleport``: projectile information is now cleared for teleported units
+- ``Buildings::setOwner``: updated for changes in 51.11
+
+## Lua
+- ``dfhack.military.addToSquad``: expose Military API function
+- ``dfhack.buildings.getOwner``: make new Buildings API available to Lua
+
+# 51.10-r1
+
+## Misc Improvements
+- Compatibility with DF 51.10
+
+# 51.09-r1
+
+## New Features
+- `gui/journal`: Ctrl-j hotkey to launch `gui/journal` now works in adventure mode!
+
+## Fixes
+- Fix processing error in the overlay that displays unit preferences in the baron selection list
+
+## API
+- ``Filesystem`` module: rewritten to use C++ standard library components, for better portability
+
+# 51.08-r1
+
+## Misc Improvements
+- Compatibility update for DF 51.08
+
+# 51.07-r1
+
+## New Features
+- `spectate`: can now specify number of seconds (in real time) before switching to follow a new unit
+- `spectate`: new "cinematic-action" mode that dynamically speeds up perspective switches based on intensity of conflict
+- `spectate`: new global keybinding for toggling spectate mode: Ctrl-Shift-S
+- `spectate`: new overlay panel that allows you to cycle through following next/previous units (regardless of whether spectate mode is enabled)
+- `gui/sitemap`: is now the official "go to" tool. new global hotkey for fort and adventure mode: Ctrl-G
+
+## Fixes
+- Windows console: fix possible hang if the console returns a too-small window width (for any reason)
+- `createitem`: produced items will now end up at the look cursor position (if it is active)
+- `spectate`: don't allow temporarily modified announcement settings to be written to disk when "auto-unpause" mode is enabled
+- `changevein`: fix a crash that could occur when attempting to change a vein into itself
+- `overlay`: reset draw context between rendering widgets so context changes can't propagate from widget to widget
+- `suspendmanager`: in ASCII mode, building planning mode overlay now only displays when viewing the default map, reducing issues with showing through the UI
+
+## Misc Improvements
+- `spectate`: player-set configuration is now stored globally instead of per-fort
+- `autobutcher`: treat animals on restraints as unavailable for slaughter
+- `stockpiles`: add property filters for brewable, millable, and processable (e.g. at a Farmer's workshop) organic materials
+- `quickfort`: redesigned ``library/aquifer_tap.cav`` to improve the water fill rate
+
+## Documentation
+- `stonesense-art-guide`: guide for making sprite art for Stonesense
+
+## API
+- ``Military::removeFromSquad``: removes unit from any squad assignments
+- ``Buildings::checkFreeTiles``: now takes a building instead of a pointer to the building extents
+- ``Units::isUnitInBox``, ``Units::getUnitsInBox``: don't include inactive units
+- ``Items::getItemBaseValue``: adjust to the reduced value of prepared meals (changed in DF 51.06)
+- ``Items::getValue``: magical powers now correctly contribute to item value
+
+## Lua
+- ``dfhack.units.setAutomaticProfessions``: sets unit labors according to current work detail settings
+- ``dfhack.military.removeFromSquad``: Lua API for ``Military::removeFromSquad``
+- ``gui.dwarfmode``: adventure mode cursor now supported in ``getCursorPos``, ``setCursorPos``, and ``clearCursorPos`` funcitons
+- ``dfhack.buildings.checkFreeTiles``: now takes a building pointer instead of an extents parameter
+- ``overlay.isOverlayEnabled``: new API for querying whether a given overlay is enabled
+- ``overlay``: widgets can now declare ``overlay_onenable`` and ``overlay_ondisable`` functions to hook enable/disable
+
+## Removed
+- `orders`: MakeCheese job removed from library/basic orders set. Please use `autocheese` instead!
+
+# 51.06-r1
+
+## Misc Improvements
+- Compatibility with DF 51.06
+
+# 51.05-r1
+
+## Misc Improvements
+- Compatibility with DF 51.05
+
+# 51.04-r1.1
+
+## Fixes
+- `gui/launcher`: ensure commandline is fully visible when searching through history and switching from a very long command to a short command
+- `gui/launcher`: flatten text when pasting multi-line text from the clipboard
+- Ctrl-a hotkeys have been changed to something else (Ctrl-n) for tools that also have an editable text field, where Ctrl-a is interpreted as select all text
+
+## API
+- ``Core::getUnpausedMs``: new API for getting unpaused ms since load in a fort-mode game
 
 # 51.04-r1
 

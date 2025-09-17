@@ -43,6 +43,7 @@ Cameron Ewell           Ozzatron
 Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Chris Parsons           chrismdp
+Christian Doczkal       chdoc
 cjhammel                cjhammel
 Clayton Hughes
 Clément Vuchener        cvuchener
@@ -63,6 +64,7 @@ DoctorVanGogh           DoctorVanGogh
 Donald Ruegsegger       hashaash
 doomchild               doomchild
 Droseran                Droseran
+dvantwisk               dvantwisk
 DwarvenM                DwarvenM
 Eamon Bode              eamondo2                Baron Von Munchhausen
 EarthPulseAcademy       EarthPulseAcademy
@@ -158,6 +160,7 @@ NotRexButCaesar         NotRexButCaesar
 Nuno Fernandes          UnknowableCoder
 nuvu                    vallode
 Omniclasm
+Ong Ying Gao            ong-yinggao98
 oorzkws                 oorzkws
 OwnageIsMagic           OwnageIsMagic
 palenerd                dlmarquis
@@ -242,6 +245,7 @@ thurin                  thurin
 Tim Siegel              softmoth
 Tim Walberg             twalberg
 Timothy Collett         danaris
+Timothy Torres          timothymtorres
 Timur Kelman            TymurGubayev
 Tom Jobbins             TheBloke
 Tom Prince

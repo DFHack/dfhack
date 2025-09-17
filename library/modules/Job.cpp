@@ -38,6 +38,7 @@ distribution.
 #include "modules/References.h"
 
 #include "df/building.h"
+#include "df/building_workshopst.h"
 #include "df/general_ref.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/general_ref_building_holderst.h"
@@ -46,6 +47,8 @@ distribution.
 #include "df/job.h"
 #include "df/job_item.h"
 #include "df/job_list_link.h"
+#include "df/job_postingst.h"
+#include "df/job_restrictionst.h"
 #include "df/plotinfost.h"
 #include "df/specific_ref.h"
 #include "df/unit.h"
@@ -323,11 +326,11 @@ void DFHack::Job::setJobCooldown(df::building *workshop, df::unit *worker, int c
     if (cooldown <= 0)
         return;
 
-    int idx = linear_index(workshop->job_claim_suppress, &df::building::T_job_claim_suppress::unit, worker);
+    int idx = linear_index(workshop->job_claim_suppress, &df::job_restrictionst::unit, worker);
 
     if (idx < 0)
     {
-        auto obj = new df::building::T_job_claim_suppress;
+        auto obj = new df::job_restrictionst;
         obj->unit = worker;
         obj->timer = cooldown;
         workshop->job_claim_suppress.push_back(obj);
@@ -515,6 +518,27 @@ bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
     }
 }
 
+df::job* DFHack::Job::createLinked()
+{
+    auto job = new df::job();
+    DFHack::Job::linkIntoWorld(job, true);
+    return job;
+}
+
+bool DFHack::Job::assignToWorkshop(df::job *job, df::building_workshopst *workshop)
+{
+    CHECK_NULL_POINTER(job);
+    CHECK_NULL_POINTER(workshop);
+
+    if (workshop->jobs.size() >= 10) {
+        return false;
+    }
+    job->pos = df::coord(workshop->centerx, workshop->centery, workshop->z);
+    DFHack::Job::addGeneralRef(job, df::general_ref_type::BUILDING_HOLDER, workshop->id);
+    workshop->jobs.push_back(job);
+    return true;
+}
+
 bool DFHack::Job::removePostings(df::job *job, bool remove_all)
 {
     using df::global::world;
@@ -575,7 +599,7 @@ bool DFHack::Job::listNewlyCreated(std::vector<df::job*> *pvec, int *id_var)
 }
 
 bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
-                                df::job_item_ref::T_role role,
+                                df::job_role_type role,
                                 int filter_idx, int insert_idx)
 {
     CHECK_NULL_POINTER(job);
@@ -585,7 +609,7 @@ bool DFHack::Job::attachJobItem(df::job *job, df::item *item,
      * Functionality 100% reverse-engineered from DF code.
      */
 
-    if (role != df::job_item_ref::TargetContainer)
+    if (role != df::job_role_type::TargetContainer)
     {
         if (item->flags.bits.in_job)
             return false;
@@ -653,6 +677,9 @@ std::string Job::getName(df::job *job)
     button->matgloss = job->mat_index;
     button->specflag = job->specflag;
     button->job_item_flag = job->material_category;
+    button->specdata = job->specdata;
+    button->art_specifier_id1 = job->art_spec.id;
+    button->art_specifier_id2 = job->art_spec.subid;
 
     button->text(&desc);
     delete button;

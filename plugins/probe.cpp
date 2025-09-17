@@ -46,7 +46,7 @@ static command_result df_cprobe(color_ostream &out, vector<string> & parameters)
 
     for (auto inv_item : unit->inventory) {
         df::item* item = inv_item->item;
-        if (inv_item->mode == df::unit_inventory_item::T_mode::Worn) {
+        if (inv_item->mode == df::inv_item_role_type::Worn) {
             out << "   wears item: #" << item->id;
             if (item->flags.bits.owned)
                 out << " (owned)";

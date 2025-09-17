@@ -318,6 +318,22 @@ namespace DFHack
                 return cur->item;
             }
 
+            I * operator->()
+            {
+                CHECK_NULL_POINTER(root);
+                CHECK_NULL_POINTER(cur);
+
+                return cur->item;
+            }
+
+            I * operator->() const
+            {
+                CHECK_NULL_POINTER(root);
+                CHECK_NULL_POINTER(cur);
+
+                return cur->item;
+            }
+
             operator const_iterator() const
             {
                 return const_iterator(*this);

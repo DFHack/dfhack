@@ -50,123 +50,42 @@ SOFTWARE.
 #include <map>
 #include <vector>
 
-#ifndef _WIN32
-    #ifndef _AIX
-        #define _FILE_OFFSET_BITS 64 /* Linux, Solaris and HP-UX */
-    #else
-        #define _LARGE_FILES 1 /* AIX */
-    #endif
-#endif
+#include <filesystem>
 
-#ifndef _LARGEFILE64_SOURCE
-    #define _LARGEFILE64_SOURCE
-#endif
-
-#include <cstdio>
-#include <cstdint>
-#include <errno.h>
-#include <stdio.h>
-#include <string.h>
-#include <stdlib.h>
-#include <time.h>
-#include <sys/stat.h>
-
-#ifdef _WIN32
-    #include <direct.h>
-    #define NOMINMAX
-    #include <windows.h>
-    #include <io.h>
-    #include <sys/locking.h>
-    #ifdef __BORLANDC__
-        #include <utime.h>
-    #else
-        #include <sys/utime.h>
-    #endif
-    #include <fcntl.h>
-    #include "wdirent.h"
-#else
-    #include <unistd.h>
-    #include <dirent.h>
-    #include <fcntl.h>
-    #include <sys/types.h>
-    #include <utime.h>
-#endif
-
-#ifdef _WIN32
-    #ifdef __BORLANDC__
-        #define lfs_setmode(L,file,m)   ((void)L, setmode(_fileno(file), m))
-        #define STAT_STRUCT struct stati64
-    #else
-        #define lfs_setmode(L,file,m)   ((void)L, _setmode(_fileno(file), m))
-        #define STAT_STRUCT struct _stati64
-    #endif
-    #define STAT_FUNC _stati64
-    #define LSTAT_FUNC STAT_FUNC
-#else
-    #define _O_TEXT 0
-    #define _O_BINARY 0
-    #define lfs_setmode(L,file,m)   ((void)L, (void)file, (void)m, 0)
-    #define STAT_STRUCT struct stat
-    #define STAT_FUNC stat
-    #define LSTAT_FUNC lstat
-#endif
-
-#ifdef _WIN32
-    #ifndef S_ISDIR
-        #define S_ISDIR(mode)  (mode&_S_IFDIR)
-    #endif
-    #ifndef S_ISREG
-        #define S_ISREG(mode)  (mode&_S_IFREG)
-    #endif
-    #ifndef S_ISLNK
-        #define S_ISLNK(mode)  (0)
-    #endif
-    #ifndef S_ISSOCK
-        #define S_ISSOCK(mode)  (0)
-    #endif
-    #ifndef S_ISCHR
-        #define S_ISCHR(mode)  (mode&_S_IFCHR)
-    #endif
-    #ifndef S_ISBLK
-        #define S_ISBLK(mode)  (0)
-    #endif
-#endif
-
-enum _filetype {
-    FILETYPE_NONE = -2,
-    FILETYPE_UNKNOWN = -1,
-    FILETYPE_FILE = 1,
-    FILETYPE_DIRECTORY,
-    FILETYPE_LINK,
-    FILETYPE_SOCKET,
-    FILETYPE_NAMEDPIPE,
-    FILETYPE_CHAR_DEVICE,
-    FILETYPE_BLOCK_DEVICE
-};
 
 namespace DFHack {
     namespace Filesystem {
-        DFHACK_EXPORT void init ();
-        DFHACK_EXPORT bool chdir (std::string path);
-        DFHACK_EXPORT std::string getcwd ();
-        DFHACK_EXPORT bool restore_cwd ();
-        DFHACK_EXPORT std::string get_initial_cwd ();
-        DFHACK_EXPORT bool mkdir (std::string path);
+        DFHACK_EXPORT void init();
+        DFHACK_EXPORT bool chdir(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT std::filesystem::path getcwd();
+        DFHACK_EXPORT bool restore_cwd();
+        DFHACK_EXPORT std::filesystem::path get_initial_cwd();
+        DFHACK_EXPORT bool mkdir(std::filesystem::path path) noexcept;
         // returns true on success or if directory already exists
-        DFHACK_EXPORT bool mkdir_recursive (std::string path);
-        DFHACK_EXPORT bool rmdir (std::string path);
-        DFHACK_EXPORT bool stat (std::string path, STAT_STRUCT &info);
-        DFHACK_EXPORT bool exists (std::string path);
-        DFHACK_EXPORT _filetype filetype (std::string path);
-        DFHACK_EXPORT bool isfile (std::string path);
-        DFHACK_EXPORT bool isdir (std::string path);
-        DFHACK_EXPORT int64_t atime (std::string path);
-        DFHACK_EXPORT int64_t ctime (std::string path);
-        DFHACK_EXPORT int64_t mtime (std::string path);
-        DFHACK_EXPORT int listdir (std::string dir, std::vector<std::string> &files);
+        DFHACK_EXPORT bool mkdir_recursive(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT bool rmdir(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT bool stat(std::filesystem::path path, std::filesystem::file_status& info) noexcept;
+        DFHACK_EXPORT bool exists(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT bool isfile(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT bool isdir(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT std::time_t mtime(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT int listdir(std::filesystem::path dir, std::vector<std::filesystem::path>& files) noexcept;
         // set include_prefix to false to prevent dir from being prepended to
         // paths returned in files
-        DFHACK_EXPORT int listdir_recursive (std::string dir, std::map<std::string, bool> &files,
-            int depth = 10, bool include_prefix = true);
+        DFHACK_EXPORT int listdir_recursive(std::filesystem::path dir, std::map<std::filesystem::path, bool>& files,
+            int depth = 10, bool include_prefix = true) noexcept;
+        DFHACK_EXPORT std::filesystem::path canonicalize(std::filesystem::path p) noexcept;
+        inline std::string as_string(const std::filesystem::path path) noexcept
+        {
+            auto pStr = path.string();
+            if constexpr (std::filesystem::path::preferred_separator != '/')
+            {
+                std::ranges::replace(pStr, std::filesystem::path::preferred_separator, '/');
+            }
+            return pStr;
+        }
+        DFHACK_EXPORT std::filesystem::path getInstallDir() noexcept;
+        DFHACK_EXPORT std::filesystem::path getBaseDir() noexcept;
+
     }
 }

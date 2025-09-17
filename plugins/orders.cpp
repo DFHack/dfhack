@@ -134,7 +134,7 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
 }
 
 static void list_library(color_ostream &out) {
-    std::map<std::string, bool> files;
+    std::map<std::filesystem::path, bool> files;
     if (0 < Filesystem::listdir_recursive(ORDERS_LIBRARY_DIR, files, 0, false)) {
         // if the library directory doesn't exist, just skip it
         return;
@@ -145,15 +145,15 @@ static void list_library(color_ostream &out) {
         return;
     }
 
-    for (auto it : files)
+    for (auto& it : files)
     {
         if (it.second)
             continue; // skip directories
-        std::string name = it.first;
-        if (name.length() <= 5 || name.rfind(".json") != name.length() - 5)
+        std::filesystem::path name = it.first;
+        if (name.extension() != ".json")
             continue; // skip non-.json files
-        name.resize(name.length() - 5);
-        out << "library/" << name << std::endl;
+        auto sname = name.stem();
+        out << Filesystem::as_string("library" / sname) << std::endl;
     }
 }
 
@@ -162,17 +162,17 @@ static command_result orders_list_command(color_ostream & out)
     // use listdir_recursive instead of listdir even though orders doesn't
     // support subdirs so we can identify and ignore subdirs with ".json" names.
     // also listdir_recursive will alphabetize the list for us.
-    std::map<std::string, bool> files;
+    std::map<std::filesystem::path, bool> files;
     Filesystem::listdir_recursive(ORDERS_DIR, files, 0, false);
 
-    for (auto it : files) {
+    for (auto& it : files) {
         if (it.second)
             continue; // skip directories
-        std::string name = it.first;
-        if (name.length() <= 5 || name.rfind(".json") != name.length() - 5)
+        std::filesystem::path name = it.first;
+        if (name.extension() != ".json")
             continue; // skip non-.json files
-        name.resize(name.length() - 5);
-        out << name << std::endl;
+        auto sname = name.stem();
+        out << sname.string() << std::endl;
     }
 
     list_library(out);
@@ -765,8 +765,8 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
                 if (it2.isMember("bearing"))
                 {
                     std::string bearing(it2["bearing"].asString());
-                    auto found = std::find_if(world->raws.inorganics.begin(), world->raws.inorganics.end(), [bearing](df::inorganic_raw *raw) -> bool { return raw->id == bearing; });
-                    if (found == world->raws.inorganics.end())
+                    auto found = std::find_if(world->raws.inorganics.all.begin(), world->raws.inorganics.all.end(), [bearing](df::inorganic_raw *raw) -> bool { return raw->id == bearing; });
+                    if (found == world->raws.inorganics.all.end())
                     {
                         delete condition;
 
@@ -774,7 +774,7 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
 
                         continue;
                     }
-                    condition->metal_ore = found - world->raws.inorganics.begin();
+                    condition->metal_ore = found - world->raws.inorganics.all.begin();
                 }
 
                 if (it2.isMember("reaction_class"))
@@ -1008,8 +1008,8 @@ static bool orders_compare(df::manager_order *a, df::manager_order *b)
         return a->workshop_id >= 0;
     }
 
-    if (a->frequency == df::manager_order::T_frequency::OneTime
-            || b->frequency == df::manager_order::T_frequency::OneTime)
+    if (a->frequency == df::workquota_frequency_type::OneTime
+            || b->frequency == df::workquota_frequency_type::OneTime)
         return a->frequency < b->frequency;
     return a->frequency > b->frequency;
 }

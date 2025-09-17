@@ -107,6 +107,7 @@ set(MAIN_SOURCES
     PluginManager.cpp
     PluginStatics.cpp
     PlugLoad.cpp
+    Process.cpp
     TileTypes.cpp
     VersionInfoFactory.cpp
     RemoteClient.cpp
@@ -138,7 +139,6 @@ set(DFCLIENT_CONSOLE_SOURCES Console.cpp)
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
     Hooks.cpp
-    Process-windows.cpp
 )
 
 if(WIN32)
@@ -148,13 +148,11 @@ endif()
 
 set(MAIN_SOURCES_LINUX
     ${CONSOLE_SOURCES}
-    Process-linux.cpp
 )
 
 set(MAIN_SOURCES_DARWIN
     ${CONSOLE_SOURCES}
     PlugLoad-posix.cpp
-    Process-darwin.cpp
 )
 
 set(MODULE_HEADERS

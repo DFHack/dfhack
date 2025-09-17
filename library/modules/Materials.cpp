@@ -99,7 +99,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
         return false;
     }
 
-    df::world_raws &raws = world->raws;
+    auto &raws = world->raws;
 
     if (size_t(type) >= sizeof(raws.mat_table.builtin)/sizeof(void*))
         return false;
@@ -216,7 +216,7 @@ bool MaterialInfo::findBuiltin(const std::string &token)
         return true;
     }
 
-    df::world_raws &raws = world->raws;
+    auto &raws = world->raws;
     for (int i = 0; i < NUM_BUILTIN; i++)
     {
         auto obj = raws.mat_table.builtin[i];
@@ -236,10 +236,10 @@ bool MaterialInfo::findInorganic(const std::string &token)
         return true;
     }
 
-    df::world_raws &raws = world->raws;
-    for (size_t i = 0; i < raws.inorganics.size(); i++)
+    auto &raws = world->raws;
+    for (size_t i = 0; i < raws.inorganics.all.size(); i++)
     {
-        df::inorganic_raw *p = raws.inorganics[i];
+        df::inorganic_raw *p = raws.inorganics.all[i];
         if (p->id == token)
             return decode(0, i);
     }
@@ -250,7 +250,7 @@ bool MaterialInfo::findPlant(const std::string &token, const std::string &subtok
 {
     if (token.empty())
         return decode(-1);
-    df::world_raws &raws = world->raws;
+    auto &raws = world->raws;
     for (size_t i = 0; i < raws.plants.all.size(); i++)
     {
         df::plant_raw *p = raws.plants.all[i];
@@ -274,7 +274,7 @@ bool MaterialInfo::findCreature(const std::string &token, const std::string &sub
 {
     if (token.empty() || subtoken.empty())
         return decode(-1);
-    df::world_raws &raws = world->raws;
+    auto &raws = world->raws;
     for (size_t i = 0; i < raws.creatures.all.size(); i++)
     {
         df::creature_raw *p = raws.creatures.all[i];
@@ -645,12 +645,12 @@ bool t_matglossInorganic::isGem()
 
 bool Materials::CopyInorganicMaterials (std::vector<t_matglossInorganic> & inorganic)
 {
-    size_t size = world->raws.inorganics.size();
+    size_t size = world->raws.inorganics.all.size();
     inorganic.clear();
     inorganic.reserve (size);
     for (size_t i = 0; i < size;i++)
     {
-        df::inorganic_raw *orig = world->raws.inorganics[i];
+        df::inorganic_raw *orig = world->raws.inorganics.all[i];
         t_matglossInorganic mat;
         mat.id = orig->id;
         mat.name = orig->material.stone_name;

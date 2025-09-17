@@ -49,7 +49,7 @@ using namespace DFHack::LuaWrapper;
 /**
  * Report an error while accessing a field (index = field name).
  */
-void LuaWrapper::field_error(lua_State *state, int index, const char *err, const char *mode)
+[[noreturn]] void LuaWrapper::field_error(lua_State *state, int index, const char *err, const char *mode)
 {
     if (lua_islightuserdata(state, UPVAL_METATABLE))
         lua_pushstring(state, "(global)");
@@ -59,14 +59,15 @@ void LuaWrapper::field_error(lua_State *state, int index, const char *err, const
     const char *fname = index ? lua_tostring(state, index) : "*";
     luaL_error(state, "Cannot %s field %s.%s: %s.",
                mode, (cname ? cname : "?"), (fname ? fname : "?"), err);
+    std::abort(); // should never be reached but makes gcc happy
 }
 
 /* */
 
-static int change_error(lua_State *state)
+[[noreturn]] static int change_error(lua_State *state)
 {
     luaL_error(state, "Attempt to change a read-only table.\n");
-    return 0;
+    std::abort(); // should never be reached but makes gcc happy
 }
 
 /**
@@ -167,12 +168,15 @@ static void BuildTypeMetatable(lua_State *state, const type_identity *type);
 void LuaWrapper::push_object_ref(lua_State *state, void *ptr)
 {
     // stack: [metatable]
-    auto ref = (DFRefHeader*)lua_newuserdata(state, sizeof(DFRefHeader));
-    ref->ptr = ptr;
-    ref->field_info = NULL;
-    ref->tag_ptr = NULL;
-    ref->tag_identity = NULL;
-    ref->tag_attr = NULL;
+    void* stg = lua_newuserdata(state, sizeof(DFRefHeader));
+    new (stg) DFRefHeader
+    {
+        .ptr = ptr,
+        .field_info = NULL,
+        .tag_ptr = NULL,
+        .tag_identity = NULL,
+        .tag_attr = NULL,
+    };
 
     lua_swap(state);
     lua_setmetatable(state, -2);
@@ -1641,7 +1645,7 @@ static void RenderType(lua_State *state, const compound_identity *node)
     case IDTYPE_UNION: // TODO: change this to union-type? what relies on this?
         lua_pushboolean(state, true);
         lua_setfield(state, ftable, "_union");
-        // fall through
+        [[fallthrough]];
     case IDTYPE_STRUCT:
         lua_pushstring(state, "struct-type");
         lua_setfield(state, ftable, "_kind");

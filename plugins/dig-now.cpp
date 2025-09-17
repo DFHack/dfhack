@@ -20,9 +20,11 @@
 #include "modules/World.h"
 
 #include "df/building.h"
+#include "df/builtin_mats.h"
 #include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/map_block.h"
+#include "df/material.h"
 #include "df/plotinfost.h"
 #include "df/reaction_product_itemst.h"
 #include "df/tile_designation.h"
@@ -391,7 +393,7 @@ struct dug_tile_info {
     DFCoord pos;
     df::tiletype_material tmat;
     df::item_type itype;
-    int32_t imat; // mat idx of boulder/gem potentially generated at this pos
+    t_matpair imat; // matpair of boulder/gem potentially generated at this pos
 
     dug_tile_info(MapExtras::MapCache &map, const DFCoord &pos) {
         this->pos = pos;
@@ -403,32 +405,32 @@ struct dug_tile_info {
         imat = -1;
 
         df::tiletype_shape shape = tileShape(tt);
-        if (shape == df::tiletype_shape::WALL || shape == df::tiletype_shape::FORTIFICATION) {
-            switch (tmat) {
-                case df::tiletype_material::STONE:
-                case df::tiletype_material::MINERAL:
-                case df::tiletype_material::FEATURE:
-                    imat = map.baseMaterialAt(pos).mat_index;
-                    break;
-                case df::tiletype_material::LAVA_STONE:
-                {
-                    MaterialInfo mi;
-                    if (mi.findInorganic("OBSIDIAN"))
-                        imat = mi.index;
-                    return; // itype should always be BOULDER, regardless of vein
-                }
-                default:
-                    break;
-            }
-        }
+        if (shape != df::tiletype_shape::WALL && shape != df::tiletype_shape::FORTIFICATION)
+            return;
 
-        switch (map.BlockAtTile(pos)->veinTypeAt(pos)) {
-            case df::inclusion_type::CLUSTER_ONE:
-            case df::inclusion_type::CLUSTER_SMALL:
-                itype = df::item_type::ROUGH;
+        switch (tmat) {
+            case df::tiletype_material::STONE:
+            case df::tiletype_material::MINERAL:
+            case df::tiletype_material::FEATURE:
+            case df::tiletype_material::LAVA_STONE:
+                imat = map.baseMaterialAt(pos);
+                break;
+            case df::tiletype_material::FROZEN_LIQUID:
+                // assume frozen water
+                // we can't use baseMaterialAt here because it will return the underlying river bed material
+                imat = t_matpair(df::builtin_mats::WATER, -1);
                 break;
             default:
-                break;
+                return;
+        }
+
+        MaterialInfo mi;
+        mi.decode(imat);
+        if (mi.type == -1 || !mi.material)
+            return;
+
+        if (mi.material->isGem()) {
+            itype = df::item_type::ROUGH;
         }
     }
 };
@@ -448,12 +450,10 @@ static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
         break;
     }
 
-    if (mat == df::tiletype_material::FEATURE) {
-        // adamantine is the only is diggable feature
-        t_feature feature;
-        return map.BlockAtTile(pos)->GetLocalFeature(&feature)
-                && feature.type == feature_type::deep_special_tube;
-    }
+    MaterialInfo mi;
+    mi.decode(map.baseMaterialAt(pos));
+    if (mi.material != nullptr && mi.material->flags.is_set(df::material_flags::UNDIGGABLE))
+        return false;
 
     return true;
 }
@@ -737,7 +737,7 @@ static bool produces_item(const boulder_percent_options &options,
     return rng.random(100) < probability;
 }
 
-typedef std::map<std::pair<df::item_type, int32_t>, std::vector<DFCoord>>
+typedef std::map<std::pair<df::item_type, t_matpair>, std::vector<DFCoord>>
     item_coords_t;
 
 static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
@@ -876,8 +876,8 @@ static void create_boulders(color_ostream &out,
 
         prod->item_type = entry.first.first;
         prod->item_subtype = -1;
-        prod->mat_type = 0;
-        prod->mat_index = entry.first.second;
+        prod->mat_type = entry.first.second.mat_type;
+        prod->mat_index = entry.first.second.mat_index;
         prod->probability = 100;
         prod->product_dimension = 1;
 

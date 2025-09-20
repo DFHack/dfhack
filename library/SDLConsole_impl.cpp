@@ -14,16 +14,13 @@
 #include <queue>
 #include <string>
 #include <thread>
-#include <unordered_set>
 #include <utility>
 #include <variant>
 #include <vector>
 #include <ranges>
 #include <condition_variable>
 #include <cmath>
-#include <cwctype>
 #include <numeric>
-//#include <cuchar>
 
 #include "SDL_pixels.h"
 #include "Core.h"
@@ -320,21 +317,6 @@ namespace text {
         };
     }
 
-#if 0
-    size_t skip_wspace(const std::u32string& text, size_t pos) {
-        if (text.empty()) return 0;
-        else if (pos >= text.size()) return text.size() - 1;
-
-        auto it = text.begin() + pos;
-        while (it != text.end() && is_wspace(*it)) {
-            ++it;
-        }
-
-        if (it == text.end()) --it;
-        return std::distance(text.begin(), it);
-    }
-#endif
-
     size_t skip_wspace(const std::u32string& text, size_t pos) {
         if (text.empty()) return 0;
         else if (pos >= text.size()) return text.size() - 1;
@@ -354,19 +336,6 @@ namespace text {
         }
         return std::distance(text.begin(), it);
     }
-
-    /*
-    size_t skip_graph(const std::u32string& text, size_t pos) {
-        if (text.empty()) return 0;
-        else if (pos >= text.size()) return text.size() - 1;
-
-        auto it = text.begin() + pos;
-        while (it != text.end() && !is_wspace(*it)) {
-            ++it;
-        }
-        if (it == text.end()) --it;
-        return std::distance(text.begin(), it);
-    }*/
 
     size_t skip_graph(const std::u32string& text, size_t pos) {
         if (text.empty()) return 0;
@@ -433,7 +402,7 @@ namespace text {
         return find_range_with_pred(text, pos, [](char32_t ch) { return is_wspace(ch); });
     }
 
-    std::pair<size_t, size_t> find_text_range(const std::u32string& text, size_t pos) {
+    std::pair<size_t, size_t> find_range(const std::u32string& text, size_t pos) {
         // Bounds check here since .at() is used below
         if (text.empty() || pos >= text.size()) {
             return { std::u32string::npos, std::u32string::npos };
@@ -549,44 +518,7 @@ static const std::unordered_map<uint16_t, uint8_t> unicode_to_cp437 = {
 };
 
 
-#if 0
-class Logger {
-public:
-    explicit Logger(const std::string& prefix)
-    : prefix_(prefix) {}
-
-    void log_error(const std::string& message) {
-        log("ERROR", message);
-    }
-
-    void log_status(const std::string& message) {
-        log("STATUS", message);
-    }
-
-    void log_message(const std::string& message) {
-        log("MESSAGE", message);
-    }
-
-private:
-    // Log with a prefix (e.g., ERROR, STATUS) and include the app name
-    void log(const std::string& level, const std::string& message) {
-        std::lock_guard<std::mutex> lock(mutex);
-
-        auto now = std::chrono::system_clock::now();
-        auto time = std::chrono::system_clock::to_time_t(now);
-
-        std::cerr << "[" << std::put_time(std::localtime(&time), "%Y-%m-%d %H:%M:%S")
-        << "] "
-        << "[" << prefix_ << "] "
-        << "[" << level << "] " << message << std::endl;
-    }
-
-    std::string prefix_;
-    std::mutex mutex;
-};
-#endif
-
-enum class ScrollDirection {
+enum class ScrollAction : std::uint8_t {
     up,
     down,
     page_up,
@@ -609,7 +541,7 @@ struct InternalEventType {
     };
 };
 
-enum class TextEntryType {
+enum class TextEntryType: std::uint8_t {
     input,
     output
 };
@@ -659,7 +591,7 @@ public:
 
     SDL_Texture* CreateTextureFromSurface(SDL_Renderer* r, SDL_Surface* s)
     {
-        auto p = sdl_console::SDL_CreateTextureFromSurface(r, s);
+        auto* p = sdl_console::SDL_CreateTextureFromSurface(r, s);
         if (!p) return nullptr;
         textures_.emplace_back(make_unique_texture(p));
         return p;
@@ -669,7 +601,7 @@ public:
                                 Uint32 format, int access,
                                 int w, int h)
     {
-        auto p = sdl_console::SDL_CreateTexture(r, format, access, w, h);
+        auto* p = sdl_console::SDL_CreateTexture(r, format, access, w, h);
         if (!p) return nullptr;
         textures_.emplace_back(make_unique_texture(p));
         return p;
@@ -688,7 +620,7 @@ public:
 
     SDL_Renderer* CreateRenderer(SDL_Window *handle, int index, Uint32 flags)
     {
-        auto p = sdl_console::SDL_CreateRenderer(handle, index, flags);
+        auto* p = sdl_console::SDL_CreateRenderer(handle, index, flags);
         if (!p) return nullptr;
         renderers_.emplace_back(make_unique_renderer(p));
         return p;
@@ -698,7 +630,7 @@ public:
                               int x, int y, int w, int h,
                               Uint32 flags)
     {
-        auto p = sdl_console::SDL_CreateWindow(title, x, y, w, h, flags);
+        auto* p = sdl_console::SDL_CreateWindow(title, x, y, w, h, flags);
         if (!p) return nullptr;
         windows_.emplace_back(make_unique_window(p));
         return p;
@@ -720,17 +652,17 @@ public:
     }
 
 private:
-    Texture make_unique_texture(SDL_Texture* texture)
+    static Texture make_unique_texture(SDL_Texture* texture)
     {
         return Texture(texture, sdl_console::SDL_DestroyTexture);
     }
 
-    Renderer make_unique_renderer(SDL_Renderer* renderer)
+    static Renderer make_unique_renderer(SDL_Renderer* renderer)
     {
         return Renderer(renderer, sdl_console::SDL_DestroyRenderer);
     }
 
-    Window make_unique_window(SDL_Window* window)
+    static Window make_unique_window(SDL_Window* window)
     {
         return Window(window, sdl_console::SDL_DestroyWindow);
     }
@@ -740,7 +672,7 @@ private:
     std::vector<Texture> textures_;
 };
 
-static thread_local SDLThreadSpecificData sdl_tsd;
+thread_local SDLThreadSpecificData sdl_tsd;
 
 /*
  * A lightweight implementation inspired by Qt's signals and slots, designed
@@ -949,27 +881,29 @@ private:
 /*
  * Stores configuration for components.
  */
+
+
 class Property {
-    using Value = std::variant<std::string, std::u32string, int64_t, int, SDL_Rect>;
 public:
     template <typename T>
-    void set(const std::string& key, const T& value) {
+    struct Key {
+        std::string_view name;
+    };
+
+    using Value = std::variant<std::string, std::u32string, int64_t, int, size_t, SDL_Rect>;
+    template <typename T>
+    void set(Key<T> key, const T& value) {
         std::scoped_lock l(m_);
-        props_[key] = value;
+        props_[std::string(key.name)] = value;
     }
 
     template <typename T>
-    T get(const std::string& key, const T& default_value = T{}) {
+    std::optional<T> get(Key<T> key) {
         std::scoped_lock l(m_);
-        auto it = props_.find(key);
-        if (it == props_.end()) {
-            return default_value;
-        }
-
-        if (!std::holds_alternative<T>(it->second)) {
-            return default_value; // TODO: log error
-        }
-        return std::get<T>(it->second);
+        auto it = props_.find(std::string(key.name));
+        if (it == props_.end()) return std::nullopt;
+        if (auto p = std::get_if<T>(&it->second)) return *p;
+        return std::nullopt;
     }
 
 private:
@@ -977,19 +911,20 @@ private:
     std::recursive_mutex m_;
 };
 
+
 namespace property {
     // These must be set before SDLConsole::init()
-    constexpr char WINDOW_MAIN_CREATE_RECT[] = "window.main.create.rect";
-    constexpr char WINDOW_MAIN_TITLE[] = "window.main.title";
+    inline constexpr Property::Key<SDL_Rect> WINDOW_MAIN_RECT { "window.main.rect" };
+    inline constexpr Property::Key<std::string> WINDOW_MAIN_TITLE { "window.main.title" };
 
     // Set any time.
-    constexpr char OUTPUT_SCROLLBACK[] = "output.scrollback";
-    constexpr char PROMPT_TEXT[] = "prompt.text";
+    inline constexpr Property::Key<int> OUTPUT_SCROLLBACK { "output.scrollback" };
+
+    inline constexpr Property::Key<std::u32string> PROMPT_TEXT { "prompt.text" };
 
     // Runtime information. Read only.
-    constexpr char RT_OUTPUT_ROWS[] = "rt.output.rows";
-    constexpr char RT_OUTPUT_COLUMNS[] = "rt.output.columns";
-
+    inline constexpr Property::Key<size_t> RT_OUTPUT_ROWS { "rt.output.rows" };
+    inline constexpr Property::Key<size_t> RT_OUTPUT_COLUMNS { "rt.output.columns" };
 }
 
 class Widget;
@@ -1230,7 +1165,7 @@ public:
         h = line_height_with_spacing();
     }
 
-    int line_height_with_spacing()
+    int line_height_with_spacing() const
     {
         return line_height + vertical_spacing;
     }
@@ -1248,7 +1183,7 @@ public:
     }
 
     // Returns '?' if not found.
-    char32_t unicode_glyph_index(const char32_t ch)
+    static char32_t unicode_glyph_index(const char32_t ch)
     {
         auto it = unicode_to_cp437.find(ch);
         if (it != unicode_to_cp437.end()) {
@@ -1333,12 +1268,12 @@ public:
 
     virtual Font* open(const std::string& path, int size) = 0;
 
-    Font* default_font()
+    Font* base_font()
     {
         return &fmap_.begin()->second;
     }
 
-    Font* get_copy(std::string key, Font* font)
+    Font* clone(std::string key, Font* font)
     {
         auto kp = std::make_pair(key, 0);
         auto result = fmap_.emplace(kp, font->make_copy());
@@ -1380,7 +1315,7 @@ public:
 
     ~BMPFontLoader()
     {
-        // Long-term resources are cleaned up by SDLConsole::destroy()
+        // cleaned up by SDLConsole::destroy()
         /*
         for (auto tex : textures_) {
             sdl_tsd.DestroyTexture(tex);
@@ -1401,19 +1336,6 @@ public:
             return nullptr;
         }
 
-        /* Don't think this is needed
-        if (surface->format->format != SDL_PIXELFORMAT_ARGB8888) {
-            SDL_Surface* conv_surface = SDL_ConvertSurfaceFormat(surface, SDL_PIXELFORMAT_ARGB8888, 0);
-            if (!conv_surface) {
-                std::cerr << "Error converting surface format: " << SDL_GetError() << std::endl;
-                SDL_FreeSurface(surface);
-                return nullptr;
-            }
-
-            SDL_FreeSurface(surface);
-            surface = conv_surface;
-        }*/
-
         //  FIXME: hardcoded magenta
         // Make this keyed color transparent.
         Uint32 bg_color = sdl_console::SDL_MapRGB(surface->format, 255, 0, 255);
@@ -1429,7 +1351,6 @@ public:
         sdl_console::SDL_FreeSurface(surface);
         surface = conv_surface;
 
-        // NOTE: Do not use surface->pitch
         int width = surface->w;
         int height = surface->h;
 
@@ -1437,7 +1358,7 @@ public:
         // FIXME: magic numbers
         glyphs = build_glyph_rects(width, height, 16, 16);
 
-        auto texture = sdl_tsd.CreateTextureFromSurface(renderer_, surface);
+        auto* texture = sdl_tsd.CreateTextureFromSurface(renderer_, surface);
         if (!texture) {
             std::cerr << "SDL_CreateTextureFromSurface Error: " << sdl_console::SDL_GetError() << std::endl;
             return nullptr;
@@ -1462,7 +1383,7 @@ public:
     BMPFontLoader& operator=(BMPFontLoader&& other) noexcept = default;
 
 private:
-    std::vector<Glyph> build_glyph_rects(int sheet_w, int sheet_h, int columns, int rows)
+    static std::vector<Glyph> build_glyph_rects(int sheet_w, int sheet_h, int columns, int rows)
     {
         int tile_w = sheet_w / columns;
         int tile_h = sheet_h / rows;
@@ -1520,8 +1441,8 @@ public:
     WidgetContext(WidgetContext&& other) noexcept
     : global_emitter(other.global_emitter)
     , props(other.props)
-    , window_handle(std::move(other.window_handle))
-    , renderer(std::move(other.renderer))
+    , window_handle(other.window_handle)
+    , renderer(other.renderer)
     , window_id(other.window_id)
     , font_loader(std::move(other.font_loader))
     , rect(other.rect)
@@ -1562,8 +1483,8 @@ public:
         // Inform SDL to pass the mouse click event when switching between windows.
         SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
 
-        auto title = props.get<std::string>(property::WINDOW_MAIN_TITLE, "SDL Console");
-        SDL_Rect create_rect = props.get<SDL_Rect>(property::WINDOW_MAIN_CREATE_RECT,
+        auto title = props.get(property::WINDOW_MAIN_TITLE).value_or("DFHack Console");
+        SDL_Rect create_rect = props.get(property::WINDOW_MAIN_RECT).value_or(
                                                      SDL_Rect{SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480});
         //auto flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
         auto flags = SDL_WINDOW_RESIZABLE;
@@ -1605,21 +1526,21 @@ class Widget : public SignalEmitter {
 public:
     Widget* parent;
     Font* font;
-    SDL_Rect viewport {};
+    SDL_Rect frame {};
     WidgetContext& context;
 
     Widget(Widget* parent)
         : parent(parent)
         , font(parent->font)
-        , viewport(parent->viewport)
+        , frame(parent->frame)
         , context(parent->context)
     {
     }
 
-    Widget(Widget* parent, SDL_Rect viewport)
+    Widget(Widget* parent, SDL_Rect rect)
         : parent(parent)
         , font(parent->font)
-        , viewport(viewport)
+        , frame(rect)
         , context(parent->context)
     {
     }
@@ -1630,29 +1551,29 @@ public:
         , context(window_context)
 
     {
-        auto bmpfont = context.font_loader.open("data/art/curses_640x300.png", 14);
+        auto* bmpfont = context.font_loader.open("data/art/curses_640x300.png", 14);
         if (!bmpfont)
             throw(std::runtime_error("Error loading font"));
         font = bmpfont;
-        viewport = context.rect;
+        frame = context.rect;
     }
 
-    SDL_Renderer* renderer()
+    SDL_Renderer* renderer() const
     {
         return context.renderer;
     }
 
-    SDL_Point mouse_coord()
+    SDL_Point mouse_coord() const
     {
         return context.mouse_coord;
     }
 
-    SDL_Point map_point_to_viewport(const SDL_Point& point)
+    SDL_Point map_to_local(const SDL_Point& point) const
     {
-        return { point.x - viewport.x, point.y - viewport.y };
+        return { point.x - frame.x, point.y - frame.y };
     }
 
-    Property& props()
+    Property& props() const
     {
         return context.props;
     }
@@ -1676,7 +1597,7 @@ public:
     }
 
     virtual void render() = 0;
-    virtual void resize(const SDL_Rect& new_viewport) = 0;
+    virtual void resize(const SDL_Rect& rect) = 0;
 
     virtual ~Widget() { }
 
@@ -1692,7 +1613,7 @@ public:
     std::u32string prompt_text;
     // The input portion of the prompt.
     std::u32string* input;
-    std::u32string interrupted_input;
+    std::u32string saved_input;
     size_t cursor { 0 }; // position of cursor within an entry
     // 1x1 texture stretched to font's single character dimensions
     SDL_Texture* cursor_texture;
@@ -1708,7 +1629,7 @@ public:
     {
         input = &history.emplace_back(U"");
 
-        set_prompt_text(props().get<std::u32string>(property::PROMPT_TEXT, U"> "));
+        set_prompt_text(props().get(property::PROMPT_TEXT).value_or(U"> "));
 
         create_cursor_texture();
 
@@ -1758,7 +1679,7 @@ public:
 
     void on_SDL_KEYDOWN(const SDL_KeyboardEvent& e)
     {
-        // TODO: check if keysym.sym mapping is universally friendly
+        // TODO: check if keysym.sym mapping is universally locale friendly
         auto sym = e.keysym.sym;
         switch (sym) {
         case SDLK_BACKSPACE:
@@ -1766,11 +1687,11 @@ public:
             break;
 
         case SDLK_UP:
-            set_input_from_history(ScrollDirection::up);
+            set_input_from_history(ScrollAction::up);
             break;
 
         case SDLK_DOWN:
-            set_input_from_history(ScrollDirection::down);
+            set_input_from_history(ScrollAction::down);
             break;
 
         case SDLK_LEFT:
@@ -1808,8 +1729,10 @@ public:
             // TODO: Add state for when selecting text
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
                 *input += U"^C";
-                interrupt();
+                save();
             }
+            break;
+        default:
             break;
         }
     }
@@ -1835,18 +1758,18 @@ public:
         wrap_text();
     }
 
-    void interrupt()
+    void save()
     {
-        interrupted_input = *input;
+        saved_input = *input;
         emit(InternalEventType::new_input, input);
         input->clear();
         reset_cursor();
         wrap_text();
     }
 
-    void restore_from_interrupt()
+    void restore()
     {
-        *input = interrupted_input;
+        *input = saved_input;
         cursor = input->length();
         wrap_text();
     }
@@ -1868,13 +1791,13 @@ public:
      * will skip lines with zero length. The cursor is always set to the length of
      * the line's input.
      */
-    void set_input_from_history(const ScrollDirection dir)
+    void set_input_from_history(const ScrollAction sa)
     {
         if (history.empty()) return;
 
-        if (dir == ScrollDirection::up && history_index > 0) {
+        if (sa == ScrollAction::up && history_index > 0) {
             history_index--;
-        } else if (dir == ScrollDirection::down && history_index < (int)history.size() - 1) {
+        } else if (sa == ScrollAction::down && history_index < (int)history.size() - 1) {
             history_index++;
         } else {
             return;
@@ -1934,16 +1857,16 @@ public:
         }
     }
 
-    void resize(const SDL_Rect& new_viewport) override
+    void resize(const SDL_Rect& r) override
     {
-        viewport = new_viewport;
+        frame = r;
         wrap_text();
     }
 
     void wrap_text()
     {
         entry.text = prompt_text + *input;
-        entry.wrap_text(font->char_width, viewport.w);
+        entry.wrap_text(font->char_width, frame.w);
     }
 
     // TODO: The cursor x,y position should be updated
@@ -1960,9 +1883,10 @@ public:
 
         // cursor is at the end
         if (cursor_pos == entry.text.length()) {
-            // cursor is not visible.
-            if (scroll_offset > 0)
+            if (scroll_offset > 0) {
+                // cursor is not visible.
                 return;
+            }
             line = &entry.fragments().back();
         // else find the line containing the cursor
         } else {
@@ -1976,6 +1900,7 @@ public:
             int r = (entry.size - 1) - line->entry_offset;
             // scroll_offset starts at 0.
             if (scroll_offset > r) {
+                // cursor is not visible.
                 return;
             }
         }
@@ -2028,14 +1953,14 @@ public:
             emit(InternalEventType::value_changed, &scroll_offset_);
         });
 
-        thumb_.rect = viewport;
+        thumb_.rect = frame;
         set_thumb_height();
     }
 
-    void resize(const SDL_Rect& new_viewport) override
+    void resize(const SDL_Rect& r) override
     {
-        viewport = new_viewport;
-        thumb_.rect = viewport;
+        frame = r;
+        thumb_.rect = frame;
         set_thumb_height();
         move_thumb_to(track_position_from_scroll_offset());
     }
@@ -2064,7 +1989,7 @@ public:
     {
         set_draw_color(renderer(), colors::gold);
 
-        SDL_RenderDrawRect(renderer(), &viewport);
+        SDL_RenderDrawRect(renderer(), &frame);
 
         set_draw_color(renderer(), colors::mauve);
 
@@ -2085,7 +2010,7 @@ public:
 private:
     void on_SDL_MOUSEBUTTONDOWN(SDL_MouseButtonEvent& e)
     {
-        if (!geometry::in_rect(e.x, e.y, viewport)) {
+        if (!geometry::in_rect(e.x, e.y, frame)) {
             return;
         }
 
@@ -2109,8 +2034,8 @@ private:
 
     int calculate_thumb_position(int target_y)
     {
-        int track_top = viewport.y;
-        int track_bot = viewport.y + viewport.h;
+        int track_top = frame.y;
+        int track_bot = frame.y + frame.h;
 
         // Position with offset and constrain within track limits
         return std::clamp(target_y - thumb_.rect.h, track_top, track_bot - thumb_.rect.h);
@@ -2125,23 +2050,23 @@ private:
     {
         if (content_size_ > 0) {
             float scroll_ratio = (float)page_size_ / content_size_;
-            int h = (int)std::round(scroll_ratio * viewport.h);
+            int h = (int)std::round(scroll_ratio * frame.h);
             // 30 is minimum height.
-            thumb_.rect.h = std::clamp(h, 30, viewport.h);
+            thumb_.rect.h = std::clamp(h, 30, frame.h);
         } else {
-            thumb_.rect.h = viewport.h;
+            thumb_.rect.h = frame.h;
         }
     }
 
     int scroll_offset_from_track_position(int y)
     {
-        int track_h = viewport.h;
+        int track_h = frame.h;
 
         // Track position is aligns with the middle of the thumb.
         int thumb_mid_y = y - (thumb_.rect.h / 2);
-        thumb_mid_y = std::clamp(thumb_mid_y, viewport.y, viewport.y + track_h - thumb_.rect.h);
+        thumb_mid_y = std::clamp(thumb_mid_y, frame.y, frame.y + track_h - thumb_.rect.h);
 
-        float pos_ratio = (float)(thumb_mid_y - viewport.y) / (track_h - thumb_.rect.h);
+        float pos_ratio = (float)(thumb_mid_y - frame.y) / (track_h - thumb_.rect.h);
         int offset = (int)((1.0f - pos_ratio) * (content_size_ - page_size_));
 
         // Ensure the scroll offset does not go beyond the valid range
@@ -2150,16 +2075,16 @@ private:
 
     int track_position_from_scroll_offset()
     {
-        int track_h = viewport.h;
+        int track_h = frame.h;
 
         if (content_size_ <= page_size_ || content_size_ == 0) {
-            return viewport.y;
+            return frame.y;
         }
 
         float offset_ratio = (float)scroll_offset_ / (content_size_);
         int pos = (int)((1.0f - offset_ratio) * track_h);
 
-        return pos + viewport.y;
+        return pos + frame.y;
     }
 
 };
@@ -2184,16 +2109,16 @@ public:
         });
     }
 
-    void resize(const SDL_Rect& new_viewport) override
+    void resize(const SDL_Rect& r) override
     {
-        label_rect.x = viewport.x + (viewport.w / 2) - (label_rect.w / 2);
-        label_rect.y = (viewport.h / 2) - (label_rect.h / 2);
+        label_rect.x = frame.x + (frame.w / 2) - (label_rect.w / 2);
+        label_rect.y = (frame.h / 2) - (label_rect.h / 2);
     }
 
     void compute_button_size()
     {
         font->size_text(this->label, label_rect.w, label_rect.h);
-        viewport.w = label_rect.w + (font->char_width * 2);
+        frame.w = label_rect.w + (font->char_width * 2);
     }
 
     ~Button()
@@ -2202,7 +2127,7 @@ public:
 
     void on_SDL_MOUSEBUTTONDOWN(SDL_MouseButtonEvent& e)
     {
-        if (!geometry::in_rect(e.x, e.y, viewport)) {
+        if (!geometry::in_rect(e.x, e.y, frame)) {
             return;
         }
         depressed = true;
@@ -2210,7 +2135,7 @@ public:
 
     void on_SDL_MOUSEBUTTONUP(SDL_MouseButtonEvent& e)
     {
-        if (!geometry::in_rect(e.x, e.y, viewport)) {
+        if (!geometry::in_rect(e.x, e.y, frame)) {
             if (depressed)
                 depressed = false;
             return;
@@ -2228,12 +2153,12 @@ public:
             SDL_Point coord = mouse_coord();
             if (depressed) {
                 set_draw_color(renderer(), colors::teal);
-                sdl_console::SDL_RenderFillRect(renderer(), &viewport);
+                sdl_console::SDL_RenderFillRect(renderer(), &frame);
                 // SDL_RenderDrawRect(ui.renderer, &w.rect);
                 set_draw_color(renderer(), colors::darkgray);
-            } else if (geometry::in_rect(coord, viewport)) {
+            } else if (geometry::in_rect(coord, frame)) {
                 set_draw_color(renderer(), colors::teal);
-                sdl_console::SDL_RenderDrawRect(renderer(), &viewport);
+                sdl_console::SDL_RenderDrawRect(renderer(), &frame);
                 set_draw_color(renderer(), colors::darkgray);
             }
             font->render(label, label_rect.x, label_rect.y);
@@ -2254,10 +2179,10 @@ public:
 
 class Toolbar : public Widget {
 public:
-    Toolbar(Widget* parent, SDL_Rect viewport);
+    Toolbar(Widget* parent, SDL_Rect rect);
     ~Toolbar() {};
     virtual void render() override;
-    virtual void resize(const SDL_Rect& new_viewport) override;
+    virtual void resize(const SDL_Rect& rect) override;
     void layout_buttons();
     Button* add_button(std::u32string text);
     int compute_widgets_startx();
@@ -2346,21 +2271,21 @@ public:
     Scrollbar scrollbar;
     // Scrollbar could be made optional.
     int scroll_offset { 0 };
-    SDL_Rect frame;
+    SDL_Rect content_rect;
     int scrollback_;
     int num_rows { 0 };
     bool depressed { false };
     TextSelection text_selection;
     ISlot* mouse_motion_slot { nullptr };
 
-    OutputPane(Widget* parent, SDL_Rect& viewport)
-        : Widget(parent, viewport)
+    OutputPane(Widget* parent, SDL_Rect& frame_)
+        : Widget(parent, frame_)
         , prompt(this)
         , scrollbar(this, rows())
     {
-        resize(viewport);
+        resize(frame_);
 
-        set_scrollback(props().get<int>(property::OUTPUT_SCROLLBACK, 1000));
+        set_scrollback(props().get(property::OUTPUT_SCROLLBACK).value_or(1000));
 
         scrollbar.set_page_size(rows());
         scrollbar.set_content_size(1); // account for prompt
@@ -2395,12 +2320,10 @@ public:
         });
 
         mouse_motion_slot = context.global_emitter->connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](SDL_MouseMotionEvent& e) {
-            //if (!geometry::in_rect(e.x, e.y, this->viewport))
-            //    return;
             if (depressed) {
                 end_text_selection({ e.x, e.y });
 
-                if (e.y > this->viewport.h) {
+                if (e.y > this->frame.h) {
                     scroll(-1);
                 } else if (e.y < 0) {
                     scroll(1);
@@ -2453,7 +2376,7 @@ public:
                             [](const std::string& a, const std::string& b) {
                             return a + " " + b;
                         });
-                    con.interrupt_prompt();
+                    con.save_prompt();
                     con.write_line(result);
                     con.restore_prompt();
                 }
@@ -2476,11 +2399,11 @@ public:
             break;
 
         case SDLK_PAGEUP:
-            scroll(ScrollDirection::page_up);
+            scroll(ScrollAction::page_up);
             break;
 
         case SDLK_PAGEDOWN:
-            scroll(ScrollDirection::page_down);
+            scroll(ScrollAction::page_down);
             break;
 
         case SDLK_RETURN:
@@ -2491,41 +2414,44 @@ public:
         case SDLK_RIGHT:
             set_scroll_offset(0);
             break;
+        default: break;
         }
         return 0;
     }
 
     void on_SDL_MOUSEBUTTONDOWN(SDL_MouseButtonEvent& e)
     {
-        if (!geometry::in_rect(e.x, e.y, viewport))
+        if (!geometry::in_rect(e.x, e.y, frame)) {
             return;
+        }
 
         if (e.button != SDL_BUTTON_LEFT) {
             return;
         }
 
+        SDL_Point point = map_to_local({e.x, e.y});
+
         // TODO: cleanup text selection bidness, this is ugly.
         if (e.clicks == 1) {
-            begin_text_selection({ e.x, e.y });
+            begin_text_selection(point);
         } else if (e.clicks == 2) {
-            SDL_Point vp = map_point_to_viewport({e.x, e.y});
-            auto frag = find_fragment_at_y(vp.y);
+            auto frag = find_fragment_at_y(point.y);
             if (frag.has_value()) {
-                const std::u32string& text = frag.value().get().text.data();
-                auto wordpos = text::find_text_range(text, (size_t)get_column(vp.x));
+                const std::u32string text(frag.value().get().text);
+                auto wordpos = text::find_range(text, get_column(point.x));
 
                 auto get_x = [this](std::u32string::size_type pos, int fallback) -> int {
                     return (pos != std::u32string::npos) ? pos * font->char_width : fallback;
                 };
 
-                begin_text_selection({get_x(wordpos.first, viewport.x), vp.y}, false);
+                begin_text_selection({get_x(wordpos.first, content_rect.x), point.y});
                 // wordpos is 0-based
-                end_text_selection({get_x(wordpos.second+1, viewport.w), vp.y}, false);
+                end_text_selection({get_x(wordpos.second+1, content_rect.w), point.y});
             }
         } else if (e.clicks == 3) {
-            // NOTE: using 0 for x doesn't work.
-            begin_text_selection({viewport.x, e.y});
-            end_text_selection({viewport.w, e.y});
+            // NOTE: 0 for x doesn't work.
+            begin_text_selection({content_rect.x, point.y});
+            end_text_selection({content_rect.w, point.y});
         }
 
         depressed = true;
@@ -2557,17 +2483,17 @@ public:
         scrollbar.scroll_to(v);
     }
 
-    void begin_text_selection(const SDL_Point& point, bool need_map = true)
+    void begin_text_selection(const SDL_Point p)
     {
         text_selection.reset();
-        text_selection.begin = need_map ? map_point_to_viewport(point) : point;
+        text_selection.begin = p;
         emit_text_selection_changed();
     }
 
-    void end_text_selection(const SDL_Point& point, bool need_map = true)
+    void end_text_selection(const SDL_Point p)
     {
-        text_selection.end = need_map ? map_point_to_viewport(point) : point;
-        text_selection.rects = get_selected_rects();
+        text_selection.end = p;
+        text_selection.rects = selected_text_to_rects();
         emit_text_selection_changed();
     }
 
@@ -2585,25 +2511,25 @@ public:
     void scroll(int y)
     {
         if (y > 0) {
-            scroll(ScrollDirection::up);
+            scroll(ScrollAction::up);
         } else if (y < 0) {
-            scroll(ScrollDirection::down);
+            scroll(ScrollAction::down);
         }
     }
 
-    void scroll(ScrollDirection dir)
+    void scroll(ScrollAction sa)
     {
-        switch (dir) {
-        case ScrollDirection::up:
+        switch (sa) {
+        case ScrollAction::up:
             scroll_offset += 1;
             break;
-        case ScrollDirection::down:
+        case ScrollAction::down:
             scroll_offset -= 1;
             break;
-        case ScrollDirection::page_up:
+        case ScrollAction::page_up:
             scroll_offset += rows() / 2;
             break;
-        case ScrollDirection::page_down:
+        case ScrollAction::page_down:
             scroll_offset -= rows() / 2;
             break;
         }
@@ -2611,52 +2537,52 @@ public:
         set_scroll_offset(std::min(std::max(0, scroll_offset), num_rows - 1));
     }
 
-    void resize(const SDL_Rect& new_viewport) override
+    void resize(const SDL_Rect& rect) override
     {
-        frame = new_viewport;
-        viewport = new_viewport;
+        frame = rect;
         // FIXME: magic numbers
-        scrollbar.resize({ viewport.w - (8 * 2), viewport.y, (8 * 2), viewport.h });
-        apply_margin_and_align_viewport();
+        scrollbar.resize({ frame.w - (8 * 2), frame.y, (8 * 2), frame.h });
+
+        set_content_rect();
+        prompt.resize(content_rect);
 
         num_rows = 0;
         for (auto& e : entries) {
             wrap_text(e);
         }
 
-        context.props.set<int>(property::RT_OUTPUT_COLUMNS, columns());
-        context.props.set<int>(property::RT_OUTPUT_ROWS, rows());
+        context.props.set(property::RT_OUTPUT_COLUMNS, columns());
+        context.props.set(property::RT_OUTPUT_ROWS, rows());
     }
 
     /*
-     * Adjust viewport dimensions to align with margin and font properties.
-     * For character alignment consistency, the viewport must be divisible
+     * Adjust content_rect dimensions to align with margin and font properties.
+     * For character alignment consistency, content_rect must be divisible
      * into rows and columns that match the font's fixed character dimensions.
      */
-    void apply_margin_and_align_viewport()
+    void set_content_rect()
     {
+        content_rect = frame;
          // (8px each side + 4px buffer tweak)
         const int scrollbar_space = (8 * 2) + 4;
         // Make room for scrollbar. TODO: needs layout framework
         // Deduct space on the right.
-        viewport.w -= scrollbar_space;
+        content_rect.w -= scrollbar_space;
 
         const int margin = 4; // // Margin around the viewport in px.
 
         // max width respect to font and margin
-        const int max_width = viewport.w - (margin * 2);
+        const int max_width = content_rect.w - (margin * 2);
         const int wfit = (max_width / font->char_width) * font->char_width;
 
         // max height with respect to font and margin
-        const int max_height = viewport.h - (margin * 2);
+        const int max_height = content_rect.h - (margin * 2);
         const int hfit = (max_height / font->line_height_with_spacing()) * font->line_height_with_spacing();
 
-        viewport.x = frame.x + margin;
-        viewport.y = frame.y + margin;
-        viewport.w = wfit;
-        viewport.h = hfit;
-        // Prompt viewport is shared with this
-        prompt.resize(viewport);
+        content_rect.x = frame.x + margin;
+        content_rect.y = frame.y + margin;
+        content_rect.w = wfit;
+        content_rect.h = hfit;
     }
 
     void new_output(const std::u32string& text, std::optional<SDL_Color> color)
@@ -2675,7 +2601,7 @@ public:
     void wrap_text(
         TextEntry& entry)
     {
-        entry.wrap_text(font->char_width, viewport.w);
+        entry.wrap_text(font->char_width, content_rect.w);
         num_rows += entry.size;
         scrollbar.set_content_size(num_rows + prompt.entry.size);
     }
@@ -2734,7 +2660,7 @@ public:
             if (col < frag.text.size()) {
                 if (!clipboard_text.empty())
                     clipboard_text += sep;
-                auto extent = column_extent(rect.w) + col;
+                auto extent = column_extent(rect.w) + col - 1;
                 auto end_idx = std::min(extent, frag.text.size() - 1);
                 clipboard_text += frag.text.substr(col, (end_idx - col) + 1);
             }
@@ -2756,12 +2682,12 @@ public:
 
     size_t columns()
     {
-        return (float)viewport.w / font->char_width;
+        return (float)content_rect.w / font->char_width;
     }
 
     size_t rows()
     {
-        return (float)viewport.h / font->line_height_with_spacing();
+        return (float)content_rect.h / font->line_height_with_spacing();
     }
 
 #if 0
@@ -2786,49 +2712,54 @@ public:
     void render() override
     {
         // SDL_RenderSetScale(renderer(), 1.2, 1.2);
-        sdl_console::SDL_RenderSetViewport(renderer(), &viewport);
+        sdl_console::SDL_RenderSetViewport(renderer(), &content_rect);
         // TODO: make sure renderer supports blending else highlighting
         // will make the text invisible.
-        if (!text_selection.rects.empty())
-            render_highlight_selected_text();
+        if (!text_selection.rects.empty()) {
+            render_selected_text();
+        }
         // SDL_SetTextureColorMod(font->texture, 0, 128, 0);
 
         render_prompt_and_output();
         // SDL_SetTextureColorMod(font->texture, 255, 255, 255);
         prompt.render_cursor(scroll_offset);
-        sdl_console::SDL_RenderSetViewport(renderer(), &parent->viewport);
+        sdl_console::SDL_RenderSetViewport(renderer(), &parent->frame);
         scrollbar.render();
         // SDL_RenderSetScale(renderer(), 1.0, 1.0);
     }
 
     void render_prompt_and_output()
     {
-        const int max_screen_row = rows() + scroll_offset;
-        int ypos = viewport.h; // Start from the bottom
-        int row_counter = 0;
+        const int max_row = rows() + scroll_offset;
+        int ypos = content_rect.h; // Start from the bottom
+        int row_counter = scroll_offset;
 
-        render_entry(prompt.entry, ypos, row_counter, max_screen_row);
+        render_entry(prompt.entry, ypos, row_counter, max_row);
 
-        if (entries.empty())
+        if (entries.empty()) {
             return;
+        }
 
         for (auto& entry : entries) {
-            if (row_counter > max_screen_row) {
+            if (row_counter > max_row) {
                 break;
             }
-            render_entry(entry, ypos, row_counter, max_screen_row);
+            render_entry(entry, ypos, row_counter, max_row);
         }
     }
 
     // FIXME: Position and rows to render calculations should be done elsewhere.
-    void render_entry(TextEntry& entry, int& ypos, int& row_counter, int max_screen_row)
+    void render_entry(TextEntry& entry, int& ypos, int& row_counter, int max_row)
     {
         auto scoped_color = font->set_color(entry.color_opt);
+
         for (auto& row : entry.fragments() | std::views::reverse) {
             row_counter++;
             if (row_counter <= scroll_offset) {
                 continue;
-            } else if (row_counter > max_screen_row) {
+            }
+
+            if (row_counter > max_row) {
                 break;
             }
 
@@ -2838,7 +2769,7 @@ public:
         }
     }
 
-    void render_highlight_selected_text()
+    void render_selected_text()
     {
         set_draw_color(renderer(), colors::mediumgray);
         sdl_console::SDL_RenderFillRects(renderer(), text_selection.rects.data(), text_selection.rects.size());
@@ -2854,10 +2785,9 @@ public:
     }
 
     /*
-     * FIXME: This function handles regions of text shown on screen.
-     * TODO:  Support highlighting while scrolling (keep highlighted state when off screen).
+     * TODO:Preserve selected state while scrolling.
      */
-    std::vector<SDL_Rect> get_selected_rects()
+    std::vector<SDL_Rect> selected_text_to_rects()
     {
         const int char_width = font->char_width;
         const int line_height = font->line_height_with_spacing();
@@ -2888,13 +2818,13 @@ public:
 
         int rows = std::ceil((float)(bottom - top) / line_height);
         std::vector<SDL_Rect> selected_rects;
-        current_rect.w = viewport.w;
+        current_rect.w = content_rect.w;
         selected_rects.push_back(current_rect);
         // Handle intermediate rows
         for (int i = 1; i < rows; ++i) {
             current_rect.x = 0;
             current_rect.y = top + i * line_height;
-            current_rect.w = viewport.w;
+            current_rect.w = content_rect.w;
             selected_rects.push_back(current_rect);
         }
         // Fill last row to end of selected text
@@ -2935,6 +2865,7 @@ public:
                 break;
             case SDL_WINDOWEVENT_MINIMIZED:
                 is_minimized = true;
+            /* FALLTHROUGH */
             case SDL_WINDOWEVENT_HIDDEN:
                 is_shown = false;
                 break;
@@ -2944,6 +2875,7 @@ public:
                 is_shown = true;
                 is_minimized = false;
                 break;
+            default: break;
             }
         });
 
@@ -2953,10 +2885,10 @@ public:
         });
 
         // TODO: make toolbar optional
-        SDL_Rect tv = { 0, 0, viewport.w, font->line_height * 2 };
+        SDL_Rect tv = { 0, 0, frame.w, font->line_height * 2 };
         toolbar = std::make_unique<Toolbar>(this, tv);
 
-        SDL_Rect lv = { 0, toolbar->viewport.h, viewport.w, viewport.h - toolbar->viewport.h };
+        SDL_Rect lv = { 0, toolbar->frame.h, frame.w, frame.h - toolbar->frame.h };
         outpane = std::make_unique<OutputPane>(this, lv);
 
         Button& copy = *toolbar->add_button(U"Copy");
@@ -3001,22 +2933,22 @@ public:
         sdl_console::SDL_RenderPresent(renderer());
     }
 
-    void resize(const SDL_Rect& new_viewport) override
+    void resize(const SDL_Rect& rect) override
     {
-        sdl_console::SDL_GetRendererOutputSize(renderer(), &viewport.w, &viewport.h);
-        toolbar->resize({ 0, 0, viewport.w, font->line_height_with_spacing() * 2 });
-        outpane->resize({ 0, toolbar->viewport.h, viewport.w, viewport.h - toolbar->viewport.h });
+        sdl_console::SDL_GetRendererOutputSize(renderer(), &frame.w, &frame.h);
+        toolbar->resize({ 0, 0, frame.w, font->line_height_with_spacing() * 2 });
+        outpane->resize({ 0, toolbar->frame.h, frame.w, frame.h - toolbar->frame.h });
     }
 
     MainWindow(const MainWindow&) = delete;
     MainWindow& operator=(const MainWindow&) = delete;
 };
 
-Toolbar::Toolbar(Widget* parent, SDL_Rect viewport)
-    : Widget(parent, viewport)
+Toolbar::Toolbar(Widget* parent, SDL_Rect rect)
+    : Widget(parent, rect)
 {
     // Copy so that font size changes don't propogate to the toolbar.
-    font = context.font_loader.get_copy("toolbar", font);
+    font = context.font_loader.clone("toolbar", font);
 };
 
 void Toolbar::render()
@@ -3025,7 +2957,7 @@ void Toolbar::render()
     // Render bg
     // SDL_RenderFillRect(renderer(), &viewport);
     // Draw a border
-    sdl_console::SDL_RenderDrawRect(renderer(), &viewport);
+    sdl_console::SDL_RenderDrawRect(renderer(), &frame);
     // Lay out horizontally
     for (auto& w : widgets) {
         w->render();
@@ -3034,9 +2966,9 @@ void Toolbar::render()
     set_draw_color(renderer(), colors::darkgray);
 }
 
-void Toolbar::resize(const SDL_Rect& new_viewport)
+void Toolbar::resize(const SDL_Rect& rect)
 {
-    viewport.w = new_viewport.w;
+    frame.w = rect.w;
     layout_buttons();
 }
 
@@ -3044,9 +2976,9 @@ Button* Toolbar::add_button(std::u32string text)
 {
     auto button = std::make_unique<Button>(this, text, colors::white);
     Button& b = *button.get();
-    b.viewport.h = viewport.h;
-    b.viewport.y = 0;
-    b.viewport.w = b.label_rect.w + (font->char_width * 2);
+    b.frame.h = frame.h;
+    b.frame.y = 0;
+    b.frame.w = b.label_rect.w + (font->char_width * 2);
     widgets.emplace_back(std::move(button));
     layout_buttons();
     return &b;
@@ -3055,15 +2987,15 @@ Button* Toolbar::add_button(std::u32string text)
 void Toolbar::layout_buttons()
 {
     int margin_right = 4;
-    int x = (viewport.w - margin_right) - compute_widgets_startx();
+    int x = (frame.w - margin_right) - compute_widgets_startx();
 
     for (auto& w : widgets) {
-        w->viewport.x = x;
-        x += w->viewport.w;
+        w->frame.x = x;
+        x += w->frame.w;
     }
 
     for (auto& w : widgets) {
-        w->resize(viewport);
+        w->resize(frame);
     }
 }
 
@@ -3071,7 +3003,7 @@ int Toolbar::compute_widgets_startx()
 {
     int x = 0;
     for (auto& w : widgets) {
-        x += w->viewport.w;
+        x += w->frame.w;
     }
     return x;
 }
@@ -3215,7 +3147,7 @@ public:
     }
 #endif
 
-    OutputPane& outpane() {
+    OutputPane& outpane() const {
         return *main_window.outpane;
     }
 
@@ -3302,7 +3234,6 @@ SDLConsole::~SDLConsole()  {}
  */
 bool SDLConsole::init()
 {
-    if (state.is_failed()) return false;
     if (!state.is_inactive()) return true;
     bool success = true;
     std::cerr << "SDLConsole: init() from thread: " << std::this_thread::get_id() << std::endl;
@@ -3312,12 +3243,11 @@ bool SDLConsole::init()
         impl = std::make_shared<SDLConsole_impl>(this);
         pshare->impl_weak = impl;
         state.set_state(SDLConsole::State::active);
-        // throw std::runtime_error("test");
     } catch(std::runtime_error &e) {
         success = false;
         impl.reset();
         sdl_tsd.clear();
-        state.set_state(State::failed);
+        reset();
         std::cerr << "Caught exception: " << e.what();
     }
     return success;
@@ -3349,23 +3279,23 @@ void SDLConsole::write_line_(std::string& line, std::optional<SDL_Color> color)
 
 int SDLConsole::get_columns()
 {
-    return pshare->props.get<int>(property::RT_OUTPUT_COLUMNS, -1);
+    return pshare->props.get(property::RT_OUTPUT_COLUMNS).value_or(-1);
 }
 
 int SDLConsole::get_rows()
 {
-    return pshare->props.get<int>(property::RT_OUTPUT_ROWS, -1);
+    return pshare->props.get(property::RT_OUTPUT_ROWS).value_or(-1);
 }
 
 SDLConsole& SDLConsole::set_mainwindow_create_rect(int w, int h, int x, int y)
 {
     SDL_Rect rect{x, y, w, h};
-    pshare->props.set<SDL_Rect>(property::WINDOW_MAIN_CREATE_RECT, rect);
+    pshare->props.set(property::WINDOW_MAIN_RECT, rect);
     return *this;
 }
 
 SDLConsole& SDLConsole::set_scrollback(int scrollback) {
-    pshare->props.set<int>(property::OUTPUT_SCROLLBACK, scrollback);
+    pshare->props.set(property::OUTPUT_SCROLLBACK, scrollback);
     push_api_task([this, scrollback] {
         impl->outpane().set_scrollback(scrollback);
     });
@@ -3375,7 +3305,7 @@ SDLConsole& SDLConsole::set_scrollback(int scrollback) {
 SDLConsole& SDLConsole::set_prompt(std::string text)
 {
     auto my_text = text::from_utf8(text);
-    pshare->props.set<std::u32string>(property::PROMPT_TEXT, my_text);
+    pshare->props.set(property::PROMPT_TEXT, my_text);
     push_api_task([this, my_text = my_text] {
         impl->outpane().prompt.set_prompt_text(my_text);
     });
@@ -3389,17 +3319,17 @@ void SDLConsole::set_prompt_input(std::string text)
     });
 }
 
-void SDLConsole::interrupt_prompt()
+void SDLConsole::save_prompt()
 {
     push_api_task([this] {
-        impl->outpane().prompt.interrupt();
+        impl->outpane().prompt.save();
     });
 }
 
 void SDLConsole::restore_prompt()
 {
     push_api_task([this] {
-        impl->outpane().prompt.restore_from_interrupt();
+        impl->outpane().prompt.restore();
     });
 }
 
@@ -3447,7 +3377,7 @@ SDLConsole& SDLConsole::get_console()
     return instance;
 }
 
-// Can be called from any thread.
+// Callable from any thread.
 void SDLConsole::shutdown()
 {
     state.set_state(State::shutdown);

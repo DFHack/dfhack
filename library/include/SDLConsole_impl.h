@@ -26,7 +26,7 @@ std::pair<size_t, size_t> find_range_with_pred(const std::u32string& text, size_
  * If pos falls on a word, returns range of word.
  * If pos falls on whitespace, returns range of whitespace.
  */
-std::pair<size_t, size_t> find_text_range(const std::u32string& text, size_t pos);
+std::pair<size_t, size_t> find_range(const std::u32string& text, size_t pos);
 }
 }
 #endif

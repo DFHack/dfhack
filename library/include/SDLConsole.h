@@ -63,7 +63,7 @@ public:
 
     void set_prompt_input(std::string text);
     void restore_prompt();
-    void interrupt_prompt();
+    void save_prompt();
 
     /*
      * Configures the dimensions for the console window.
@@ -120,7 +120,6 @@ public:
             active,     // console is active and operational.
             inactive,   // console is inactive and can be activated.
             shutdown,   // console is shutting down.
-            failed      // console failed. cannot be started.
         };
 
         State() : current_state(Value::inactive) {}
@@ -131,14 +130,14 @@ public:
 
         [[nodiscard]] bool is_shutdown() const { return current_state.load() == Value::shutdown; }
 
-        [[nodiscard]] bool is_failed() const { return current_state.load() == Value::failed; }
-
     protected:
         friend class SDLConsole;
         friend class SDLConsole_impl;
         void set_state(Value new_state) {
-            if (is_failed()) return;
             current_state.store(new_state);
+        }
+        void reset() {
+            set_state(Value::inactive);
         }
         std::atomic<Value> current_state;
     };

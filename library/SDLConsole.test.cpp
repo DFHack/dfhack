@@ -172,27 +172,27 @@ TEST(SDLConsole, find_wspace_range) {
 
 }
 
-TEST(SDLConsole, find_text_range) {
+TEST(SDLConsole, find_range) {
     std::u32string tstr;
     std::pair<size_t, size_t> ret;
     std::pair<size_t, size_t> exp;
 
     tstr = U"foo";
-    ret = text::find_text_range(tstr, 0);
+    ret = text::find_range(tstr, 0);
     exp.first = 0;
     exp.second = 2;
     ASSERT_EQ(ret.first, exp.first);
     ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foo bar";
-    ret = text::find_text_range(tstr, 5);
+    ret = text::find_range(tstr, 5);
     exp.first = 4;
     exp.second = 6;
     ASSERT_EQ(ret.first, exp.first);
     ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foo bar ";
-    ret = text::find_text_range(tstr, 5);
+    ret = text::find_range(tstr, 5);
     exp.first = 4;
     exp.second = 6;
     ASSERT_EQ(ret.first, exp.first);

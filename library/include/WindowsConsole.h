@@ -63,7 +63,7 @@ namespace  DFHack
         bool hide() override;
         bool show() override;
 
-        static bool is_supported() { return true; };
+        static bool is_supported() { return false; };
 
         static constexpr ConsoleType type_tag = ConsoleType::Windows;
     private:

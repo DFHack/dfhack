@@ -14,7 +14,7 @@ union SDL_Event;
 
 namespace sdl_console {
 
-struct SDLConsole_pshare;
+struct SDLConsole_private;
 class SDLConsole_impl;
 
 class DFHACK_EXPORT SDLConsole {
@@ -59,9 +59,9 @@ public:
     /*
      * Sets the prompt text.
      */
-    SDLConsole& set_prompt(std::string text);
+    SDLConsole& set_prompt(const std::string& text);
 
-    void set_prompt_input(std::string text);
+    void set_prompt_input(const std::string& text);
     void restore_prompt();
     void save_prompt();
 
@@ -153,7 +153,7 @@ public:
 
 protected:
     friend class SDLConsole_impl;
-    std::unique_ptr<SDLConsole_pshare> pshare;
+    std::unique_ptr<SDLConsole_private> priv;
 
 private:
     void write_line_(std::string& line, std::optional<SDL_Color> color);

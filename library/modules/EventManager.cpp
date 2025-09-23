@@ -500,7 +500,8 @@ static void manageJobStartedEvent(color_ostream& out) {
     std::vector<int32_t> newStartedJobs;
     newStartedJobs.reserve(startedJobs.size());
 
-    for (const auto jobPtr : df::global::world->jobs.list) {
+    const auto& jobsList = df::global::world->jobs.list;
+    for (const auto jobPtr : jobsList) {
         // posting_index of -1 implies a worker has been assigned to a new job.
         if (jobPtr->posting_index == -1) {
             auto jobId = jobPtr->id;
@@ -534,7 +535,8 @@ static void manageJobCompletedEvent(color_ostream& out) {
     std::vector<JobCompleteData> nowJobs;
     // predict the size in advance, this will prevent or reduce memory reallocation.
     nowJobs.reserve(prevJobs.size());
-    for (const auto jobPtr : df::global::world->jobs.list) {
+    const auto& jobsList = df::global::world->jobs.list;
+    for (const auto jobPtr : jobsList) {
         auto& job = *jobPtr;
 
         auto seenIt = seenJobs.find(job.id);
@@ -726,7 +728,9 @@ static void manageNewUnitActiveEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_NEW_ACTIVE].begin(), handlers[EventType::UNIT_NEW_ACTIVE].end());
     unordered_set<int32_t> next_activeUnits;
     vector<int32_t> newly_active_unit_ids;
-    for (df::unit* unit : df::global::world->units.active) {
+
+    const auto& units = df::global::world->units.active;
+    for (df::unit* unit : units) {
         if (!Units::isActive(unit))
             continue;
         next_activeUnits.emplace(unit->id);
@@ -748,7 +752,9 @@ static void manageUnitDeathEvent(color_ostream& out) {
         return;
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_DEATH].begin(), handlers[EventType::UNIT_DEATH].end());
     vector<int32_t> dead_unit_ids;
-    for (auto unit : df::global::world->units.all) {
+
+    const auto& units = df::global::world->units.all;
+    for (auto unit : units) {
         //if ( unit->counters.death_id == -1 ) {
         if ( Units::isActive(unit) ) {
             livingUnits.insert(unit->id);
@@ -780,12 +786,14 @@ static void manageItemCreationEvent(color_ostream& out) {
     }
 
     multimap<Plugin*,EventHandler> copy(handlers[EventType::ITEM_CREATED].begin(), handlers[EventType::ITEM_CREATED].end());
-    size_t index = df::item::binsearch_index(df::global::world->items.all, nextItem, false);
+
+    const auto& items = df::global::world->items.all;
+    size_t index = df::item::binsearch_index(items, nextItem, false);
     if ( index != 0 ) index--;
 
     std::vector<int32_t> created_items;
-    for ( size_t a = index; a < df::global::world->items.all.size(); a++ ) {
-        df::item* item = df::global::world->items.all[a];
+    for ( size_t a = index; a < items.size(); a++ ) {
+        df::item* item = items[a];
         //already processed
         if ( item->id < nextItem )
             continue;
@@ -825,10 +833,12 @@ static void manageBuildingEvent(color_ostream& out) {
      * consider looking at jobs: building creation / destruction
      **/
     multimap<Plugin*,EventHandler> copy(handlers[EventType::BUILDING].begin(), handlers[EventType::BUILDING].end());
+    const auto& worldBuildings = df::global::world->buildings.all;
+
     //first alert people about new buildings
     vector<int32_t> new_buildings;
     for ( int32_t a = nextBuilding; a < *df::global::building_next_id; a++ ) {
-        int32_t index = df::building::binsearch_index(df::global::world->buildings.all, a);
+        int32_t index = df::building::binsearch_index(worldBuildings, a);
         if ( index == -1 ) {
             //out.print("%s, line %d: Couldn't find new building with id %d.\n", __FILE__, __LINE__, a);
             //the tricky thing is that when the game first starts, it's ok to skip buildings, but otherwise, if you skip buildings, something is probably wrong. TODO: make this smarter
@@ -843,7 +853,7 @@ static void manageBuildingEvent(color_ostream& out) {
     //now alert people about destroyed buildings
     for ( auto it = buildings.begin(); it != buildings.end(); ) {
         int32_t id = *it;
-        int32_t index = df::building::binsearch_index(df::global::world->buildings.all,id);
+        int32_t index = df::building::binsearch_index(worldBuildings,id);
         if ( index != -1 ) {
             ++it;
             continue;
@@ -877,7 +887,8 @@ static void manageConstructionEvent(color_ostream& out) {
     vector<df::construction> new_constructions;
 
     // find new constructions - swapping found constructions over from constructions to next_construction_set
-    for (auto c : df::global::world->event.constructions) {
+    const auto& worldConstructs = df::global::world->event.constructions;
+    for (auto c : worldConstructs) {
         auto &construction = *c;
         auto it = constructions.find(construction);
         if (it == constructions.end()) {
@@ -917,7 +928,8 @@ static void manageSyndromeEvent(color_ostream& out) {
     int32_t highestTime = -1;
 
     std::vector<SyndromeData> new_syndrome_data;
-    for (auto unit : df::global::world->units.all) {
+    const auto& units = df::global::world->units.all;
+    for (auto unit : units) {
 
 /*
         if ( unit->flags1.bits.inactive )
@@ -978,7 +990,8 @@ static void manageEquipmentEvent(color_ostream& out) {
     // and then once we are done we delete everything.
     vector<InventoryItem*> changed_items;
 
-    for (auto unit : df::global::world->units.all) {
+    const auto& units = df::global::world->units.all;
+    for (auto unit : units) {
         itemIdToInventoryItem.clear();
         currentlyEquipped.clear();
         /*if ( unit->flags1.bits.inactive )
@@ -1075,7 +1088,8 @@ static void updateReportToRelevantUnits() {
         return;
     reportToRelevantUnitsTime = df::global::world->frame_counter;
 
-    for (auto unit : df::global::world->units.all) {
+    const auto& units = df::global::world->units.all;
+    for (auto unit : units) {
         for ( int16_t b = df::enum_traits<df::unit_report_type>::first_item_value; b <= df::enum_traits<df::unit_report_type>::last_item_value; b++ ) {
             if ( b == df::unit_report_type::Sparring )
                 continue;

@@ -539,7 +539,7 @@ std::filesystem::path Core::findScript(std::string name)
         std::filesystem::path path = std::filesystem::weakly_canonical(*it / name, ec);
         if (ec)
         {
-            con.printerr("Error loading ''%s' (%s)\n", (*it / name).string().c_str(), ec.message().c_str());
+            con.printerr("Error loading '%s' (%s)\n", (*it / name).string().c_str(), ec.message().c_str());
             continue;
         }
 

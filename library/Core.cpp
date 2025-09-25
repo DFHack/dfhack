@@ -535,7 +535,14 @@ std::filesystem::path Core::findScript(std::string name)
     getScriptPaths(&paths);
     for (auto it = paths.begin(); it != paths.end(); ++it)
     {
-        std::filesystem::path path = std::filesystem::weakly_canonical(*it / name);
+        std::error_code ec;
+        std::filesystem::path path = std::filesystem::weakly_canonical(*it / name, ec);
+        if (ec)
+        {
+            con.printerr("Error loading ''%s' (%s)\n", (*it / name).string().c_str(), ec.message().c_str());
+            continue;
+        }
+
         if (Filesystem::isfile(path))
             return path;
     }

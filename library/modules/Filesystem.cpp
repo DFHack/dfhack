@@ -155,19 +155,30 @@ bool Filesystem::stat (std::filesystem::path path, std::filesystem::file_status 
 bool Filesystem::exists (std::filesystem::path path) noexcept
 {
     std::error_code ec;
-    return std::filesystem::exists(path, ec);
+    auto r = std::filesystem::exists(path, ec);
+    if (ec)
+        return false;
+    return r;
 }
 
 bool Filesystem::isfile(std::filesystem::path path) noexcept
 {
     std::error_code ec;
-    return std::filesystem::exists(path, ec) && std::filesystem::is_regular_file(path, ec);
+    // is_regular_file() also checks for existence.
+    auto r = std::filesystem::is_regular_file(path, ec);
+    if (ec)
+        return false;
+    return r;
 }
 
 bool Filesystem::isdir (std::filesystem::path path) noexcept
 {
     std::error_code ec;
-    return std::filesystem::exists(path, ec) && std::filesystem::is_directory(path, ec);
+    // is_directory() also checks for existence.
+    auto r = std::filesystem::is_directory(path, ec);
+    if (ec)
+        return false;
+    return r;
 }
 
 std::time_t Filesystem::mtime (std::filesystem::path path) noexcept

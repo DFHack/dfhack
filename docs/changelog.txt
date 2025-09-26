@@ -57,6 +57,7 @@ Template for new versions:
 
 ## Fixes
 - `zone`: animal assignment dialog now tolerates corrupt animal-to-pasture links.
+- improved file system handling: gracefully handle errors from operations, preventing crashes.
 
 ## Misc Improvements
 

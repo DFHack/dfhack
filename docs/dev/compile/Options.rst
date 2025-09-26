@@ -136,16 +136,26 @@ Usage::
 
 Documentation
 =============
-If you need to build documentation. Documentation can be built as HTML, and PDF,
-but there are also plain text files generated for in-game.
+If you need to build `documentation <documentation>`.
 
-Variable: ``BUILD_DOCS``
+.. note::
+
+    These options are primarily useful for verifying that the end-to-end process
+    for building and packaging the documentation is working as expected. For
+    iterating on documentation changes, `faster alternatives <docs-build>` are
+    available.
+
+Variables:
+
+* ``BUILD_DOCS``: enables the default documentation build
+* ``BUILD_DOCS_NO_HTML``: disables the HTML documentation build (only builds the text documentation used in-game)
 
 Usage::
 
     cmake .. -DBUILD_DOCS:bool=ON
     cmake .. -DBUILD_DOCS=1
-
+    cmake .. -DBUILD_DOCS_NO_HTML:bool=ON
+    cmake .. -DBUILD_DOCS_NO_HTML=1
 
 The generated documentation is stored in ``docs/html`` and ``docs/text`` (respectively)
 in the root DFHack folder, and they will both be installed to ``hack/docs`` when you

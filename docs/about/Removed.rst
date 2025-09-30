@@ -10,12 +10,6 @@ work (e.g. links from the `changelog`).
   :local:
   :depth: 1
 
-.. _linger:
-
-linger
-======
-Merged into `bodyswap` as ``bodyswap linger``.
-
 .. _adv-rumors:
 
 adv-rumors

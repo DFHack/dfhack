@@ -59,6 +59,24 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.05-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
 - improved file system handling: gracefully handle errors from operations, preventing crashes.
 - `zone`: animal assignment dialog now tolerates corrupt animal-to-pasture links.
 

@@ -3054,38 +3054,32 @@ class ExternalEventQueue {
 
         void push(T event) {
             std::scoped_lock l(mutex_);
-            queue_.push(std::move(event));
+            events_.push_back(std::move(event));
             // relaxed should be fine here because of the mutex.
             dirty_.store(true, std::memory_order_relaxed);
         }
 
-        std::optional<T> batch_pop() {
-            if (!queue_.empty()) {
-                T event = std::move(queue_.front());
-                queue_.pop();
-                return event;
+        std::vector<T> drain() {
+            // quick check before locking
+            if (!dirty_.load(std::memory_order_relaxed)) {
+                return {};
             }
-            return std::nullopt;
+
+            std::scoped_lock l(mutex_);
+            std::vector<T> out;
+            out.swap(events_);         // O(1)
+            dirty_.store(false, std::memory_order_relaxed);
+            return out;
         }
 
         bool is_empty()
         {
             std::scoped_lock l(mutex_);
-            return queue_.empty();
-        }
-
-        auto lock() {
-            return std::scoped_lock(mutex_);
-        }
-
-        void drain() {
-            std::scoped_lock l(mutex_);
-            std::queue<T> empty;
-            queue_.swap(empty);
+            return events_.empty();
         }
 
     private:
-        std::queue<T> queue_;
+        std::vector<T> events_;
         std::mutex& mutex_;
         std::atomic<bool>& dirty_;
     };
@@ -3192,12 +3186,8 @@ public:
 private:
     void handle_tasks()
     {
-        // Let's not acquire the lock unless we absolutely have to.
-        if (external_event_queue.is_dirty()) {
-            auto locker = external_event_queue.api_task.lock();
-            while (auto task_opt = external_event_queue.api_task.batch_pop()) {
-                task_opt.value()();
-            }
+        for (auto& t : external_event_queue.api_task.drain()) {
+            t();
         }
     }
 

@@ -21,11 +21,11 @@ jobs:
         # steam_branch: leave blank if no DFHack steam push is desired
         include:
           - df_steam_branch: public
-          - df_steam_branch: beta
-          - df_steam_branch: experimental
-            structures_ref: experimental
-            dfhack_ref: experimental
-            steam_branch: experimental
+#          - df_steam_branch: beta
+#          - df_steam_branch: experimental
+#            structures_ref: experimental
+#            dfhack_ref: experimental
+#            steam_branch: experimental
     steps:
     - name: Fetch state
       uses: actions/cache/restore@v4

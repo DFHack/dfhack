@@ -911,8 +911,7 @@ public:
     using Fragments = std::deque<Fragment>;
 
     TextEntryType type;
-    // Unfragmented text.
-    std::u32string text;
+    std::u32string text; // whole text
     std::optional<SDL_Color> color_opt;
 
     TextEntry() = default;
@@ -3162,6 +3161,7 @@ public:
             emit_sdl_event(e);
             return true;
         }
+
         return false;
     }
 
@@ -3302,6 +3302,11 @@ SDLConsole& SDLConsole::set_prompt(const std::string& text)
     return *this;
 }
 
+std::string SDLConsole::get_prompt()
+{
+    return text::to_utf8(priv->props.get(property::PROMPT_TEXT).value_or(U"> "));
+}
+
 void SDLConsole::set_prompt_input(const std::string& text)
 {
     push_api_task([this, t = text::from_utf8(std::move(text))] {
@@ -3407,7 +3412,7 @@ bool SDLConsole::destroy()
 // this function is called by the same thread that manages impl's lifetime.
 bool SDLConsole::sdl_event_hook(SDL_Event &e)
 {
-    if (impl) {
+    if (impl) [[likely]]  {
         return impl->sdl_event_hook(e);
     }
     return false;

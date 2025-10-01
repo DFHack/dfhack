@@ -61,6 +61,8 @@ public:
      */
     SDLConsole& set_prompt(const std::string& text);
 
+    std::string get_prompt();
+
     void set_prompt_input(const std::string& text);
     void restore_prompt();
     void save_prompt();

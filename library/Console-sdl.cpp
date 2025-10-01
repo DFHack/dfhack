@@ -61,7 +61,7 @@ using namespace DFHack;
 using namespace sdl_console;
 
 struct con_render_hook : df::renderer_2d {
-    typedef df::renderer_2d interpose_base;
+    using interpose_base = df::renderer_2d;
 
     DEFINE_VMETHOD_INTERPOSE(void, render, ())
     {
@@ -128,8 +128,7 @@ namespace DFHack
     constexpr SDL_Color ANSI_YELLOW       = {255, 255, 0, 255};    // non-ANSI
     constexpr SDL_Color ANSI_WHITE        = {255, 255, 255, 255};
 
-    // Function to get the color
-    SDL_Color getANSIColor(int c)
+    static SDL_Color getANSIColor(int c)
     {
         switch (c)
         {
@@ -190,15 +189,14 @@ namespace DFHack
                 did_set_history = true;
             }
 
-            if (prompt != this->prompt) {
+            if (prompt != con.get_prompt()) {
                 con.set_prompt(prompt);
-                this->prompt = prompt;
             }
 
             int ret = con.get_line(output);
             if (ret == 0)
                 return Console::RETRY;
-            else if (ret == -1)
+            if (ret == -1)
                 return Console::SHUTDOWN;
 
             return ret;
@@ -210,7 +208,6 @@ namespace DFHack
         }
 
         SDLConsole &con;
-        std::string prompt;      // current prompt string
     };
 }
 
@@ -223,7 +220,6 @@ SDLConsoleDriver::SDLConsoleDriver() : Console(this)
 }
 SDLConsoleDriver::~SDLConsoleDriver()
 {
-    assert(!inited);
     delete wlock;
     delete d;
 }
@@ -234,6 +230,7 @@ SDLConsoleDriver::~SDLConsoleDriver()
  */
 bool SDLConsoleDriver::init(bool dont_redirect)
 {
+    // inited is true after init_sdl() succeeds.
     if (inited)
         INTERPOSE_HOOK(con_render_hook,render).apply(true);
 
@@ -252,7 +249,7 @@ bool SDLConsoleDriver::init_sdl()
     return inited.load();
 }
 
-bool SDLConsoleDriver::shutdown(void)
+bool SDLConsoleDriver::shutdown()
 {
     if (!inited.load()) return true;
     d->con.shutdown();
@@ -290,13 +287,13 @@ void SDLConsoleDriver::add_text(color_value color, const std::string &text)
         fwrite(text.data(), 1, text.size(), stderr);
 }
 
-int SDLConsoleDriver::get_columns(void)
+int SDLConsoleDriver::get_columns()
 {
     // returns Console::FAILURE if inactive
     return d->con.get_columns();
 }
 
-int SDLConsoleDriver::get_rows(void)
+int SDLConsoleDriver::get_rows()
 {
     // returns Console::FAILURE if inactive
     return d->con.get_rows();
@@ -316,7 +313,7 @@ void SDLConsoleDriver::cursor(bool enable)
     d->cursor(enable);
 }
 
-int SDLConsoleDriver::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
+int SDLConsoleDriver::lineedit(const std::string& prompt, std::string& output, CommandHistory& ch)
 {
     // Tell fiothread we are done.
     if(!inited.load())
@@ -339,20 +336,28 @@ bool SDLConsoleDriver::show()
 
 /*
  * We should cleanup() if the console failed after init (unlikely to happen),
- * or if commanded to shutdown during run time (but df not exiting).
+ * or if commanded to shutdown during run time.
  *
- * NOTE: We do not absolutely have to clean up here. It can be done at exit.
- * This is for the ability to shutdown and restart the console at run time.
  */
 bool SDLConsoleDriver::sdl_event_hook(SDL_Event &e)
 {
     auto& con = d->con;
-    //auto& con = SDLConsole::get_console();
+
+    // If we got here this console is enabled.
+    // 99.9% of the time it will be active.
+
+    // the overwhelming majority of sdl events stem
+    // from mouse movement within the df/console window.
+    // It can generate 1000s of events in short order.
+
     if (con.state.is_active()) [[likely]] {
         return con.sdl_event_hook(e);
-    } else if (con.state.is_shutdown()) {
+    }
+
+    if (con.state.is_shutdown()) [[unlikely]] {
         cleanup();
     }
+
     return false;
 }
 

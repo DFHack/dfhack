@@ -25,6 +25,13 @@ It does not describe all of the utility functions
 implemented by Lua files located in :file:`hack/lua/*`
 (:file:`library/lua/*` in the git repo).
 
+.. admonition:: Is this the DF or DFHack Lua API?
+   :class: warning
+
+    This document describes the Lua API provided by DFHack, not
+    the Lua API provided by Dwarf Fortress. For information about DF's Lua API, see
+    :wiki:`Lua scripting`
+    on the Dwarf Fortress Wiki.
 
 .. contents:: Contents
   :local:

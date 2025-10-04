@@ -77,6 +77,7 @@ CONSOLE_DECLARE_SYMBOL(SDL_SetClipboardText);
 CONSOLE_DECLARE_SYMBOL(SDL_SetColorKey);
 CONSOLE_DECLARE_SYMBOL(SDL_SetEventFilter);
 CONSOLE_DECLARE_SYMBOL(SDL_SetHint);
+CONSOLE_DECLARE_SYMBOL(SDL_SetRenderDrawBlendMode);
 CONSOLE_DECLARE_SYMBOL(SDL_SetRenderDrawColor);
 CONSOLE_DECLARE_SYMBOL(SDL_SetTextureBlendMode);
 CONSOLE_DECLARE_SYMBOL(SDL_SetTextureColorMod);
@@ -147,6 +148,7 @@ void bind_sdl_symbols()
         CONSOLE_ADD_SYMBOL(SDL_SetColorKey),
         CONSOLE_ADD_SYMBOL(SDL_SetEventFilter),
         CONSOLE_ADD_SYMBOL(SDL_SetHint),
+        CONSOLE_ADD_SYMBOL(SDL_SetRenderDrawBlendMode),
         CONSOLE_ADD_SYMBOL(SDL_SetRenderDrawColor),
         CONSOLE_ADD_SYMBOL(SDL_SetTextureBlendMode),
         CONSOLE_ADD_SYMBOL(SDL_SetTextureColorMod),
@@ -205,10 +207,10 @@ namespace text {
         return ch == U' ' || ch == U'\t';
     }
 
-    std::pair<size_t, size_t> find_range_with_pred(const std::u32string& text, size_t pos, const std::function<bool(char32_t)> predicate) {
-        if (text.empty()) return { 0, 0 };
+    std::pair<size_t, size_t> find_run_with_pred(const std::u32string& text, size_t pos, const std::function<bool(char32_t)> predicate) {
+        if (text.empty()) return { std::u32string::npos, std::u32string::npos };
 
-        if (pos >= text.size()) return { text.size()-1, text.size()-1 };
+        if (pos >= text.size()) return { std::u32string::npos, std::u32string::npos };
 
         auto left = text.begin() + pos;
         auto right = left;
@@ -277,9 +279,6 @@ namespace text {
      * position of the end of the previous word or non-space character.
      */
     size_t find_prev_word(const std::u32string& text, size_t pos) {
-        //if (text.empty()) return 0;
-        //else if (pos >= text.size()) pos = text.size() - 1;
-
         size_t start = pos;
         start = skip_wspace_reverse(text, start);
         if (start == pos) {
@@ -310,20 +309,20 @@ namespace text {
         return pos;
     }
 
-    std::pair<size_t, size_t> find_wspace_range(const std::u32string& text, size_t pos) {
-        return find_range_with_pred(text, pos, [](char32_t ch) { return is_wspace(ch); });
+    std::pair<size_t, size_t> find_wspace_run(const std::u32string& text, size_t pos) {
+        return find_run_with_pred(text, pos, [](char32_t ch) { return is_wspace(ch); });
     }
 
-    std::pair<size_t, size_t> find_range(const std::u32string& text, size_t pos) {
+    std::pair<size_t, size_t> find_run(const std::u32string& text, size_t pos) {
         // Bounds check here since .at() is used below
         if (text.empty() || pos >= text.size()) {
             return { std::u32string::npos, std::u32string::npos };
         }
 
         if (is_wspace(text.at(pos))) {
-            return find_wspace_range(text, pos);
+            return find_wspace_run(text, pos);
         }
-        return find_range_with_pred(text, pos, [](char32_t ch) { return !is_wspace(ch); });
+        return find_run_with_pred(text, pos, [](char32_t ch) { return !is_wspace(ch); });
     }
 }
 
@@ -358,6 +357,7 @@ static bool is_y_within_bounds(int y, int y_top, int height)
  * simplify the logic in components like OutputPane.
  */
 namespace grid {
+#if 0
 static int floor_boundary(int position, int cell_size)
 {
     return std::floor(float(position) / cell_size) * cell_size;
@@ -367,6 +367,7 @@ static int ceil_boundary(int position, int cell_size)
 {
     return std::ceil(float(position) / cell_size) * cell_size;
 }
+#endif
 } // grid
 
 // Should probably be kept for effecient mapping --
@@ -475,10 +476,12 @@ namespace colors {
     const SDL_Color teal = {  94, 173, 146, 255};
 }
 
+/*
 static void render_texture(
     SDL_Renderer* renderer,
     SDL_Texture* texture,
     const SDL_Rect& dst);
+*/
 
 static int set_draw_color(SDL_Renderer*, const SDL_Color&);
 
@@ -897,11 +900,13 @@ public:
     // A fragment is simply a chunk of text.
     struct Fragment {
         std::u32string_view text;
+        size_t index;
         size_t start_offset; // 0-based start position of this fragment
         size_t end_offset; // 0-based send position of this fragment
 
-        Fragment(std::u32string_view text, size_t start_offset, size_t end_offset)
+        Fragment(std::u32string_view text, size_t index, size_t start_offset, size_t end_offset)
         : text(text)
+        , index(index)
         , start_offset(start_offset)
         , end_offset(end_offset) {};
 
@@ -911,6 +916,7 @@ public:
     using Fragments = std::deque<Fragment>;
 
     TextEntryType type;
+    size_t id;
     std::u32string text; // whole text
     std::optional<SDL_Color> color_opt;
 
@@ -918,15 +924,17 @@ public:
 
     ~TextEntry() = default;
 
-    TextEntry(TextEntryType type, std::u32string text, std::optional<SDL_Color>& color)
+    TextEntry(TextEntryType type, size_t id, std::u32string text, std::optional<SDL_Color>& color)
         : type(type)
+        , id(id)
         , text(std::move(text))
         , color_opt(color)
         {};
 
     auto& add_fragment(std::u32string_view text, size_t start_offset, size_t end_offset)
     {
-        return fragments_.emplace_back(text, start_offset, end_offset);
+        fragments_.emplace_back(text, fragments_.size(), start_offset, end_offset);
+        return fragments_.back();
     }
 
     void clear()
@@ -944,72 +952,50 @@ public:
         return fragments_;
     }
 
-    void wrap_text(
-        const int char_width,
-        const int viewport_width)
-    {
-        // clear the fragments we're rebuilding.
+    void wrap_text(int char_width, int viewport_width) {
         clear();
 
-        struct Range {
-            int start;
-            int end;
-        };
-
+        int range_start = 0;
         int delim_idx = -1;
-        int range_start_idx = 0;
-        int text_idx = 0;
-        std::vector<Range> ranges;
+        int idx = 0;
 
-        auto close = [&](int end_idx) {
-            ranges.emplace_back(range_start_idx, end_idx);
+        auto close = [this, &range_start](int end_idx) {
+            if (end_idx >= range_start) {
+                add_fragment(std::u32string_view(text).substr(range_start,
+                                                              end_idx - range_start + 1),
+                                                              range_start, end_idx);
+            }
         };
 
-        auto open = [&](int idx) {
-            range_start_idx = idx + 1;
+        auto open = [&range_start](int new_start) {
+            range_start = new_start + 1;
         };
 
-        for (const auto& ch : text) {
+        for (auto ch : text) {
             if (text::is_newline(ch)) {
-                if (text_idx > range_start_idx) {
-                    close(text_idx-1); // Up to newline
-                }
-                open(text_idx); // Skip new line
+                close(idx - 1); // Up to newline
+                open(idx); // Skip new line
                 delim_idx = -1;
             } else if (text::is_wspace(ch)) {
-                delim_idx = text_idx; // Last space or tab character
+                delim_idx = idx; // Last whitespace
             }
 
-            if ((text_idx - range_start_idx + 1) * char_width >= viewport_width) {
+            if ((idx - range_start + 1) * char_width >= viewport_width) {
                 if (delim_idx != -1) {
-                    close(delim_idx); // Wrap at the last whitespace
+                    close(delim_idx); // Wrap at the last character
                     open(delim_idx);
                     delim_idx = -1;
                 } else {
-                    close(text_idx); // Wrap at current character
-                    open(text_idx);
+                    close(idx); // Wrap at current character (no whitespace)
+                    open(idx);
                 }
             }
 
-            text_idx++;
+            ++idx;
         }
 
-        // Handle remaining text
-        /*
-        if (range_start_idx < (int)text.size()) {
-            close_fragment(text.size() - 1);
-        }*/
-
-        close((int(text.size()) - 1));
-
-
-        for (const auto& range : ranges) {
-           // assert(range.end >= range.start);
-            if (range.end >= range.start) { // guard against empty fragments for insurance
-                std::u32string_view view(text);
-                add_fragment(view.substr(range.start, range.end - range.start + 1), range.start, range.end);
-            }
-        }
+        // remaining text
+        close(int(text.size()) - 1);
     }
 
     Fragment* fragment_from_offset(size_t index) {
@@ -1073,10 +1059,10 @@ public:
     std::vector<Glyph> glyphs;
     int char_width;
     int line_height;
-    int vertical_spacing;
-    float scale_factor { 1 };
     int orig_char_width;
     int orig_line_height;
+    int vertical_spacing;
+    float scale_factor { 1 };
     int size_change_delta_ { 2 };
 
     Font(SDL_Renderer* renderer, SDL_Texture* texture, std::vector<Glyph>& glyphs, int char_width, int line_height)
@@ -1085,12 +1071,11 @@ public:
         , glyphs(glyphs)
         , char_width(char_width)
         , line_height(line_height)
+        , orig_char_width(char_width)
+        , orig_line_height(line_height)
     {
-        this->char_width = char_width;
-        this->line_height = line_height;
-        this->vertical_spacing = line_height * 0.5;
-        orig_char_width = this->char_width;
-        orig_line_height = this->line_height;
+        // FIXME: magic numbers
+        vertical_spacing = line_height * 0.5;
     }
 
     std::optional<ScopedColor> set_color(const std::optional<SDL_Color>& color)
@@ -1153,13 +1138,13 @@ public:
 
     void incr_size()
     {
-        change_size(size_change_delta_);
+        resize(size_change_delta_);
         emit(FontSizeChangedEvent{});
     }
 
     void decr_size()
     {
-        change_size(-size_change_delta_);
+        resize(-size_change_delta_);
         emit(FontSizeChangedEvent{});
     }
 
@@ -1184,10 +1169,10 @@ public:
         , glyphs(std::move(other.glyphs))
         , char_width(other.char_width)
         , line_height(other.line_height)
-        , vertical_spacing(other.vertical_spacing)
-        , scale_factor(other.scale_factor)
         , orig_char_width(other.orig_char_width)
         , orig_line_height(other.orig_line_height)
+        , vertical_spacing(other.vertical_spacing)
+        , scale_factor(other.scale_factor)
     {
     }
 
@@ -1211,7 +1196,7 @@ public:
     Font& operator=(const Font&) = delete;
 
 private:
-    void change_size(int delta) {
+    void resize(int delta) {
         // Enforce minimum size 8, maximum size 32
         if ((char_width <= 8 && delta < 0) || (char_width >= 32 && delta > 0)) {
             return;
@@ -1230,10 +1215,10 @@ private:
     , glyphs(other.glyphs)
     , char_width(other.char_width)
     , line_height(other.line_height)
-    , vertical_spacing(other.vertical_spacing)
-    , scale_factor(other.scale_factor)
     , orig_char_width(other.orig_char_width)
     , orig_line_height(other.orig_line_height)
+    , vertical_spacing(other.vertical_spacing)
+    , scale_factor(other.scale_factor)
     {
     }
 };
@@ -1457,8 +1442,6 @@ public:
 
 class Cursor {
 private:
-    // 1x1 texture stretched to font's single character dimensions
-    SDL_Texture* texture_;
     SDL_Renderer* const renderer_;
     size_t position_ { 0 };
 public:
@@ -1468,18 +1451,6 @@ public:
 
     explicit Cursor(SDL_Renderer* renderer) : renderer_(renderer)
     {
-        texture_ = sdl_tsd.CreateTexture(renderer_, SDL_PIXELFORMAT_RGBA8888, SDL_TEXTUREACCESS_STATIC, 1, 1);
-        if (texture_ == nullptr) {
-            throw(std::runtime_error(sdl_console::SDL_GetError()));
-        }
-
-        // FFFFFF = rgb white, 7F = 50% transparant
-        int pixel = 0xFFFFFF7F;
-        if (sdl_console::SDL_UpdateTexture(texture_, nullptr, &pixel, sizeof(int)) != 0) {
-            throw(std::runtime_error(sdl_console::SDL_GetError()));
-        }
-        // For transparancy
-        sdl_console::SDL_SetTextureBlendMode(texture_, SDL_BLENDMODE_BLEND);
     }
 
     size_t position() const
@@ -1495,7 +1466,12 @@ public:
     void render() const
     {
         if (!visible) { return; }
-        render_texture(renderer_, texture_, rect);
+        SDL_Color c = colors::white;
+        c.a = 128;
+        set_draw_color(renderer_, c); // 128 - about 50% transparant
+        sdl_console::SDL_RenderFillRect(renderer_, &rect);
+        c.a = 255;
+        set_draw_color(renderer_, c);
     }
 
     Cursor& operator=(size_t position) {
@@ -1504,20 +1480,41 @@ public:
         return *this;
     }
 
-    Cursor& operator++() { ++position_; rebuild = true; return *this; }
-    Cursor& operator--() { if (position_ > 0) { --position_; rebuild = true; } return *this; }
+    Cursor& operator++() {
+        ++position_;
+        rebuild = true;
+        return *this;
+    }
 
-    Cursor& operator+=(std::size_t n) { position_ += n; rebuild = true; return *this; }
-    Cursor& operator-=(std::size_t n) { position_ = (n > position_) ? 0 : position_ - n; rebuild = true; return *this; }
+    Cursor& operator--() {
+        if (position_ > 0) {
+            --position_;
+            rebuild = true;
+        }
+        return *this;
+    }
+
+    Cursor& operator+=(std::size_t n) {
+        position_ += n;
+        rebuild = true;
+        return *this;
+    }
+
+    Cursor& operator-=(std::size_t n) {
+        position_ = (n > position_) ? 0 : position_ - n;
+        rebuild = true;
+        return *this;
+    }
 
     Cursor(const Cursor&) = delete;
     Cursor& operator=(const Cursor&) = delete;
     Cursor(Cursor&&) = delete;
     Cursor& operator=(Cursor&&) = delete;
-
 };
 
 struct VisibleRow {
+    //TextEntry& entry;
+    size_t entry_id;
     TextEntry::Fragment& frag;
     SDL_Point coord;
     GlyphPosVector gpv;
@@ -1527,6 +1524,19 @@ struct VisibleRow {
 struct VisibleRowsCache {
     std::vector<VisibleRow> rows;
     bool rebuild { true };
+
+    VisibleRow* find_row_at_y(Font* font, int y)
+    {
+        auto it = std::ranges::find_if(rows, [font, y](VisibleRow const& r) {
+            return geometry::is_y_within_bounds(y, r.coord.y, font->line_height);
+        });
+
+        if (it != rows.end()) {
+            return &(*it);
+        }
+
+        return nullptr;
+    }
 };
 
 // Non-movable. Non-copyable.
@@ -1608,7 +1618,7 @@ public:
 
         case SDLK_RETURN:
             new_command_input();
-        /*FALLTHROUGH*/
+        [[fallthrough]];
         case SDLK_HOME:
             cursor = 0;
             break;
@@ -2182,16 +2192,136 @@ private:
 
 class TextSelection {
 public:
-    SDL_Point begin{-1, -1};
-    SDL_Point end{-1, -1};
-    std::vector<SDL_Rect> rects;
+    struct Anchor {
+        size_t entry_id{-1UL};
+        size_t frag_index;
+        size_t column;
+
+        bool operator<(const Anchor& other) const {
+            if (entry_id != other.entry_id)
+                return entry_id < other.entry_id;
+            if (frag_index != other.frag_index)
+                return frag_index < other.frag_index;
+            return column < other.column;
+        }
+
+        bool operator==(const Anchor& other) const {
+            return entry_id == other.entry_id &&
+            frag_index == other.frag_index &&
+            column == other.column;
+        }
+    };
+
+    Anchor begin{};
+    Anchor end{};
 
     void reset()
     {
-        begin = {.x = -1, .y = -1};
-        end = {.x = -1, .y = -1};
-        rects.clear();
+        begin = {};
+        end = {};
     }
+
+    bool active() const {
+        return begin.entry_id != -1UL && end.entry_id != -1UL;
+    }
+
+    std::vector<SDL_Rect> to_rects(const Font* font,
+                                   const std::vector<VisibleRow>& rows) const
+    {
+        if (!active()) return {};
+
+        // normalize so we always go from top to bottom
+        auto [top, bottom] = std::minmax(begin, end);
+
+        auto top_pos = std::make_pair(top.entry_id, top.frag_index);
+        auto bottom_pos = std::make_pair(bottom.entry_id, bottom.frag_index);
+
+        std::vector<SDL_Rect> rects;
+        for (const auto &row : rows) {
+            const auto &frag = row.frag;
+            auto frag_pos = std::make_pair(row.entry_id, frag.index);
+
+            // skip outside range
+            if (frag_pos < top_pos || frag_pos > bottom_pos) continue;
+
+            size_t frag_len = frag.text.size();
+            size_t sel_start = 0;
+            size_t sel_end = frag_len;
+
+            // If this fragment is the top anchor fragment
+            if (frag_pos == top_pos) {
+                sel_start = std::min(top.column, frag_len);
+            }
+
+            // If this fragment is the bottom anchor fragment
+            if (frag_pos == bottom_pos) {
+                sel_end = std::min(bottom.column, frag_len);
+            }
+
+            if (sel_start >= sel_end) continue; // empty selection
+
+            int x = int(sel_start * font->char_width);
+            int w = int((sel_end - sel_start) * font->char_width);
+            int y = row.coord.y;
+
+            rects.push_back({.x = x,
+                             .y = y,
+                             .w = w,
+                             .h = font->line_height_with_spacing()});
+        }
+        return rects;
+    }
+
+std::vector<std::u32string_view> get_selected_text(std::deque<TextEntry>& entries) const
+{
+    if (!active()) return {};
+
+    // normalize so we always go from top to bottom
+    const auto [top, bottom] = std::minmax(begin, end);
+
+    std::vector<std::u32string_view> result;
+
+    for (auto& entry : entries | std::views::reverse) {
+        if (entry.id < top.entry_id || entry.id > bottom.entry_id)
+            continue; // skip outside selection
+
+        auto vec = get_selected_text_from_one(entry);
+        if (!vec.empty()) {
+            std::ranges::move(vec, std::back_inserter(result));
+        }
+    }
+
+    return result;
+}
+
+std::vector<std::u32string_view> get_selected_text_from_one(TextEntry& entry) const
+{
+    const auto [top, bottom] = std::minmax(begin, end);
+
+    std::vector<std::u32string_view> result;
+    if (entry.id < top.entry_id || entry.id > bottom.entry_id)
+        return result;// skip outside selection
+
+    for (const auto& frag : entry.fragments()) {
+        if (frag.index < top.frag_index || frag.index > bottom.frag_index)
+            continue;
+
+        size_t sel_start = 0;
+        size_t sel_end = frag.text.size();
+
+        bool is_top    = (entry.id == top.entry_id && frag.index == top.frag_index);
+        bool is_bottom = (entry.id == bottom.entry_id && frag.index == bottom.frag_index);
+
+        if (is_top) sel_start = std::min(top.column, frag.text.size());
+        if (is_bottom) sel_end = std::min(bottom.column, frag.text.size());
+
+        if (sel_start >= sel_end) continue; // empty selection
+
+        result.push_back(frag.text.substr(sel_start, sel_end - sel_start));
+    }
+    return result;
+}
+
 };
 
 class OutputPane : public Widget {
@@ -2368,8 +2498,7 @@ public:
         } else if (e.clicks == 2) {
             const auto* frag = find_fragment_at_y(point.y);
             if (frag) {
-                const std::u32string text(frag->text);
-                auto wordpos = text::find_range(text, get_column(point.x));
+                auto wordpos = text::find_run(std::u32string(frag->text), get_column(point.x));
 
                 auto get_x = [this](std::u32string::size_type pos, int fallback) -> int {
                     return (pos != std::u32string::npos) ? pos * font->char_width : fallback;
@@ -2425,21 +2554,33 @@ public:
     void begin_text_selection(const SDL_Point p)
     {
         text_selection.reset();
-        text_selection.begin = p;
+        auto* vr = visible_rows.find_row_at_y(font, p.y);
+        if (!vr) return;
+        auto col = get_column(p.x);
+      //  col = std::clamp(col, 0UL, vr->frag.text.size() - 1);
+        text_selection.begin = {.entry_id = vr->entry_id,
+            .frag_index = vr->frag.index,
+            .column = col};
         emit_text_selection_changed();
     }
 
     void end_text_selection(const SDL_Point p)
     {
-        text_selection.end = p;
-        text_selection.rects = selected_text_to_rects();
+        auto* vr = visible_rows.find_row_at_y(font, p.y);
+        if (!vr) return;
+        auto col = get_column(p.x);
+        //col = std::clamp(col, std::size_t(0), vr->frag.text.size() - 1);
+        text_selection.end = {.entry_id = vr->entry_id,
+            .frag_index = vr->frag.index,
+            .column = col};
+
         emit_text_selection_changed();
     }
 
     void emit_text_selection_changed()
     {
         static bool previous_state = false;
-        bool has_selection = !text_selection.rects.empty();
+        bool has_selection = text_selection.active();
 
         if (has_selection != previous_state) {
             previous_state = has_selection;
@@ -2474,7 +2615,7 @@ public:
             break;
         }
 
-        int max = (int)std::max(std::size_t(0), (num_lines + prompt.entry.size()) - rows());
+        int max = (int)std::max(0UL, (num_lines + prompt.entry.size()) - rows());
         set_scroll_offset(std::clamp(scroll_offset + step, 0, max));
     }
 
@@ -2530,15 +2671,13 @@ public:
 
     void new_output(const std::u32string& text, std::optional<SDL_Color> color)
     {
-        TextEntry& entry = create_entry(TextEntryType::output, text, color);
-        wrap_text(entry);
+        create_entry(TextEntryType::output, text, color);
     }
 
     void new_input(const std::u32string& text)
     {
         auto both = prompt.prompt_text + text;
-        auto& entry = create_entry(TextEntryType::input, both, std::nullopt);
-        wrap_text(entry);
+        create_entry(TextEntryType::input, both, std::nullopt);
     }
 
     void wrap_text(
@@ -2558,15 +2697,17 @@ public:
     TextEntry& create_entry(const TextEntryType entry_type,
                             const std::u32string& text, std::optional<SDL_Color> color)
     {
-        TextEntry& entry = entries.emplace_front(entry_type, text, color);
+        static size_t entry_id = 1; // 0 reserved for prompt
+
+        TextEntry& entry = entries.emplace_front(entry_type, ++entry_id, text, color);
 
         /* When the list is too long, start chopping */
         if (num_lines > scrollback_) {
             num_lines -= entries.back().size();
             entries.pop_back();
+            // FIXME: Cleanup anything that points to this
         }
-
-
+        wrap_text(entry);
         return entry;
     }
 
@@ -2585,39 +2726,38 @@ public:
 
     void copy_selected_text_to_clipboard()
     {
-        auto sep = U'\n';
+        std::u32string sep{U"\n"};
         std::u32string clipboard_text;
 
-        for (const auto& rect : text_selection.rects) {
-            const auto* frag = find_fragment_at_y(rect.y);
-            if (!frag) {
-                continue;
-            }
+        auto vec = text_selection.get_selected_text(entries);
+        auto pvec = text_selection.get_selected_text_from_one(prompt.entry);
 
-            auto col = get_column(rect.x);
+        std::ranges::move(pvec, std::back_inserter(vec));
 
-            if (col < frag->text.size()) {
-                if (!clipboard_text.empty()) {
-                    clipboard_text += sep;
-                }
-                auto extent = column_extent(rect.w) + col - 1;
-                auto end_idx = std::min(extent, frag->text.size() - 1);
-                clipboard_text += frag->text.substr(col, (end_idx - col) + 1);
-            }
-        }
+        if (vec.empty())
+            return;
+
+        clipboard_text = std::accumulate(std::next(vec.begin()), vec.end(),
+                        std::u32string(vec[0]),
+                        [&](std::u32string acc, std::u32string_view s) {
+                            acc.append(sep);
+                            acc.append(s);
+                            return acc;
+                        });
+
         sdl_console::SDL_SetClipboardText(text::to_utf8(clipboard_text).c_str());
     }
 
     size_t get_column(int x)
     {
         size_t column = x / font->char_width;
-        return std::clamp(column, size_t(0), columns());
+        return std::clamp(column, 0UL, columns());
     }
 
     size_t column_extent(int width)
     {
         size_t extent = width / font->char_width;
-        return std::clamp(extent, size_t(0), columns());
+        return std::clamp(extent, 0UL, columns());
     }
 
     size_t columns()
@@ -2652,22 +2792,18 @@ public:
 
     void render() override
     {
-        // SDL_RenderSetScale(renderer(), 1.2, 1.2);
+        // Clip and localize coordinates to content_rect.
         sdl_console::SDL_RenderSetViewport(renderer(), &content_rect);
+
         // TODO: make sure renderer supports blending else highlighting
         // will make the text invisible.
-        if (!text_selection.rects.empty()) {
-            render_selected_text();
-        }
-        // SDL_SetTextureColorMod(font->texture, 0, 128, 0);
+        render_selected_text();
 
         render_prompt_and_output();
 
-        // SDL_SetTextureColorMod(font->texture, 255, 255, 255);
         prompt.render_cursor();
         sdl_console::SDL_RenderSetViewport(renderer(), &parent->frame);
         scrollbar.render();
-        // SDL_RenderSetScale(renderer(), 1.0, 1.0);
     }
 
     void build_visible_prompt_and_output_rows()
@@ -2705,7 +2841,7 @@ public:
     {
         std::vector<VisibleRow> vrows;
 
-        for (auto& row : entry.fragments() | std::views::reverse) {
+        for (auto& line : entry.fragments() | std::views::reverse) {
             row_counter++;
             if (row_counter <= scroll_offset) {
                 continue;
@@ -2717,10 +2853,11 @@ public:
 
             ypos -= font->line_height_with_spacing();
 
-            vrows.push_back({row,
-                            {0, ypos},
-                            font->get_glyph_layout(row.text, 0, ypos),
-                            entry.color_opt});
+            vrows.push_back({.entry_id = entry.id,
+                             .frag = line,
+                             .coord = {0, ypos},
+                             .gpv = font->get_glyph_layout(line.text, 0, ypos),
+                             .color = entry.color_opt});
         }
         return vrows;
     }
@@ -2739,61 +2876,14 @@ public:
 
     void render_selected_text()
     {
+        if (!text_selection.active()) return;
+
+        auto rects = text_selection.to_rects(font, visible_rows.rows);
+
         set_draw_color(renderer(), colors::mediumgray);
-        sdl_console::SDL_RenderFillRects(renderer(), text_selection.rects.data(), text_selection.rects.size());
+        sdl_console::SDL_RenderFillRects(renderer(), rects.data(), rects.size());
         set_draw_color(renderer(), colors::darkgray);
     }
-
-    /*
-     * TODO:Preserve selected state while scrolling.
-     */
-    std::vector<SDL_Rect> selected_text_to_rects()
-    {
-        const int char_width = font->char_width;
-        const int line_height = font->line_height_with_spacing();
-
-        // Calculate the start and end positions, snapping to line and character boundaries
-        auto [top_point, bottom_point] = std::minmax({text_selection.begin, text_selection.end},
-                                            [](const SDL_Point& a, const SDL_Point& b) {
-                                                return a.y < b.y;
-                                            });
-
-        auto top = grid::floor_boundary(top_point.y, line_height);
-        auto bottom = grid::ceil_boundary(bottom_point.y, line_height);
-        bool is_single_row = (bottom_point.y - top_point.y) <= line_height;
-
-        int left;
-        int right;
-        if (is_single_row) {
-            left = grid::floor_boundary(std::min(text_selection.begin.x, text_selection.end.x), char_width);
-            right = grid::ceil_boundary(std::max(text_selection.begin.x, text_selection.end.x), char_width);
-        } else {
-            left = grid::floor_boundary(top_point.x, char_width);
-            right = grid::ceil_boundary(bottom_point.x, char_width);
-        }
-
-        SDL_Rect current_rect = { left, top, (right - left), line_height };
-        if (is_single_row) {
-            return { current_rect };
-        }
-
-        int rows = std::ceil((float)(bottom - top) / line_height);
-        std::vector<SDL_Rect> selected_rects;
-        current_rect.w = content_rect.w;
-        selected_rects.push_back(current_rect);
-        // Handle intermediate rows
-        for (int i = 1; i < rows; ++i) {
-            current_rect.x = 0;
-            current_rect.y = top + i * line_height;
-            current_rect.w = content_rect.w;
-            selected_rects.push_back(current_rect);
-        }
-        // Fill last row to end of selected text
-        selected_rects.back().w = right;
-
-        return selected_rects;
-    }
-
 
     OutputPane(const OutputPane&) = delete;
     OutputPane& operator=(const OutputPane&) = delete;
@@ -2844,7 +2934,7 @@ public:
                 break;
             case SDL_WINDOWEVENT_MINIMIZED:
                 is_minimized = true;
-            /* FALLTHROUGH */
+            [[fallthrough]];
             case SDL_WINDOWEVENT_HIDDEN:
                 is_shown = false;
                 break;
@@ -2911,7 +3001,10 @@ public:
         ms_per_frame = is_minimized ? minimized_ms : shown_ms;
     }
 
-    void render() override {
+    void render() override
+    {
+        if (!should_render()) return;
+
         // Should not fail unless OOM.
         sdl_console::SDL_RenderClear(renderer());
         // set background color
@@ -2921,6 +3014,24 @@ public:
         outpane->render();
 
         sdl_console::SDL_RenderPresent(renderer());
+    }
+
+    bool should_render() const
+    {
+        static auto last_render_tick = SDL_GetTicks64();
+
+        if (!is_shown) {
+            return false;
+        }
+
+        auto current_tick = sdl_console::SDL_GetTicks64();
+        auto rate = ms_per_frame;
+        if (current_tick - last_render_tick >= rate) {
+            last_render_tick = current_tick;
+            return true;
+        }
+
+        return false;
     }
 
     void resize(const SDL_Rect& /*r*/) override
@@ -2959,6 +3070,7 @@ public:
         SDL_RendererFlags rflags = (SDL_RendererFlags)0;
         //SDL_RendererFlags rflags = (SDL_RendererFlags)SDL_RENDERER_SOFTWARE;
         SDL_Renderer* rend = sdl_tsd.CreateRenderer(handle, -1, rflags);
+        SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
         sdl_console::SDL_RenderSetIntegerScale(rend, SDL_TRUE);
         return rend;
     }
@@ -3048,8 +3160,8 @@ class ExternalEventQueue {
         friend class ExternalEventQueue;
 
     public:
-        explicit Queue(std::mutex& mutex, std::atomic<bool>& dirty)
-        : mutex_(mutex), dirty_(dirty) {}
+        explicit Queue(std::mutex& mutex)
+        : mutex_(mutex) {}
 
         void push(T event) {
             std::scoped_lock l(mutex_);
@@ -3080,7 +3192,7 @@ class ExternalEventQueue {
     private:
         std::vector<T> events_;
         std::mutex& mutex_;
-        std::atomic<bool>& dirty_;
+        std::atomic<bool> dirty_;
     };
 
 public:
@@ -3088,15 +3200,10 @@ public:
     Queue<Task> api_task;
 
     ExternalEventQueue()
-    : api_task(mutex_, dirty_) {}
+    : api_task(mutex_) {}
 
     void reset() {
         api_task.drain();
-    }
-
-    bool is_dirty()
-    {
-        return dirty_.exchange(false, std::memory_order_acquire);
     }
 
     ExternalEventQueue(const ExternalEventQueue&) = delete;
@@ -3104,9 +3211,9 @@ public:
 
 private:
     std::mutex mutex_;
-    std::atomic<bool> dirty_{false};
 };
 
+#if 0
 void render_texture(
     SDL_Renderer* renderer,
     SDL_Texture* texture,
@@ -3114,6 +3221,7 @@ void render_texture(
 {
     sdl_console::SDL_RenderCopy(renderer, texture, nullptr, &dst);
 }
+#endif
 
 int set_draw_color(SDL_Renderer* renderer, const SDL_Color& color)
 {
@@ -3169,7 +3277,7 @@ public:
     {
         handle_tasks();
 
-        render_frame();
+        main_window.render();
     }
 
     void shutdown()
@@ -3188,22 +3296,6 @@ private:
     {
         for (auto& t : external_event_queue.api_task.drain()) {
             t();
-        }
-    }
-
-    void render_frame()
-    {
-        static auto last_tick = SDL_GetTicks64();
-
-        if (!main_window.is_shown) {
-            return;
-        }
-
-        auto current_tick = sdl_console::SDL_GetTicks64();
-        auto rate = main_window.ms_per_frame;
-        if (current_tick - last_tick >= rate) {
-            main_window.render();
-            last_tick = current_tick;
         }
     }
 

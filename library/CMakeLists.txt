@@ -122,7 +122,7 @@ file(GLOB_RECURSE TEST_SOURCES
 if (DFHACK_SDL_CONSOLE)
     list(APPEND TEST_SOURCES SDLConsole_impl.cpp)
 endif()
-# dfhack_test(dfhack-test "${TEST_SOURCES}")
+dfhack_test(dfhack-test "${TEST_SOURCES}")
 
 if(WIN32)
         set(CONSOLE_SOURCES Console-windows.cpp)
@@ -396,7 +396,7 @@ target_include_directories(dfhack-run PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/includ
 add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)
 
-# target_include_directories(dfhack-test PRIVATE ${SDL2_INCLUDE_DIRS})
+ target_include_directories(dfhack-test PRIVATE ${SDL2_INCLUDE_DIRS})
 
 if(WIN32)
     set_target_properties(dfhack PROPERTIES OUTPUT_NAME "dfhooks_dfhack" )

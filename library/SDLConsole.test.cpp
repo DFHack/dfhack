@@ -130,69 +130,69 @@ TEST(SDLConsole, find_next_word) {
     ASSERT_EQ(ret, tstr.size()-1);
 }
 
-TEST(SDLConsole, find_wspace_range) {
+TEST(SDLConsole, find_wspace_run) {
     std::u32string tstr;
     std::pair<size_t, size_t> ret;
     std::pair<size_t, size_t> exp;
 
     tstr = U"   ";
-    ret = text::find_wspace_range(tstr, 1);
+    ret = text::find_wspace_run(tstr, 1);
     exp.first = 0;
     exp.second = 2;
     ASSERT_EQ(ret.first, exp.first);
     ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foo   bar";
-    ret = text::find_wspace_range(tstr, 3);
+    ret = text::find_wspace_run(tstr, 3);
     exp.first = 3;
     exp.second = 5;
     ASSERT_EQ(ret.first, exp.first);
     ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foobar  ";
-    ret = text::find_wspace_range(tstr, 6);
+    ret = text::find_wspace_run(tstr, 6);
     exp.first = 6;
     exp.second = 7;
     ASSERT_EQ(ret.first, exp.first);
     ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foobar ";
-    ret = text::find_wspace_range(tstr, 6);
+    ret = text::find_wspace_run(tstr, 6);
     exp.first = 6;
     exp.second = 6;
     ASSERT_EQ(ret.first, exp.first);
     ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"";
-    ret = text::find_wspace_range(tstr, 0);
-    exp.first = 0;
-    exp.second = 0;
+    ret = text::find_wspace_run(tstr, 0);
+    exp.first = std::u32string::npos;
+    exp.second = std::u32string::npos;
     ASSERT_EQ(ret.first, exp.first);
     ASSERT_EQ(ret.second, exp.second);
 
 }
 
-TEST(SDLConsole, find_range) {
+TEST(SDLConsole, find_run) {
     std::u32string tstr;
     std::pair<size_t, size_t> ret;
     std::pair<size_t, size_t> exp;
 
     tstr = U"foo";
-    ret = text::find_range(tstr, 0);
+    ret = text::find_run(tstr, 0);
     exp.first = 0;
     exp.second = 2;
     ASSERT_EQ(ret.first, exp.first);
     ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foo bar";
-    ret = text::find_range(tstr, 5);
+    ret = text::find_run(tstr, 5);
     exp.first = 4;
     exp.second = 6;
     ASSERT_EQ(ret.first, exp.first);
     ASSERT_EQ(ret.second, exp.second);
 
     tstr = U"foo bar ";
-    ret = text::find_range(tstr, 5);
+    ret = text::find_run(tstr, 5);
     exp.first = 4;
     exp.second = 6;
     ASSERT_EQ(ret.first, exp.first);

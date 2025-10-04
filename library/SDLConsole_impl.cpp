@@ -3160,8 +3160,7 @@ class ExternalEventQueue {
         friend class ExternalEventQueue;
 
     public:
-        explicit Queue(std::mutex& mutex)
-        : mutex_(mutex) {}
+        Queue() = default;
 
         void push(T event) {
             std::scoped_lock l(mutex_);
@@ -3178,7 +3177,7 @@ class ExternalEventQueue {
 
             std::scoped_lock l(mutex_);
             std::vector<T> out;
-            out.swap(events_);         // O(1)
+            out.swap(events_);
             dirty_.store(false, std::memory_order_relaxed);
             return out;
         }
@@ -3191,7 +3190,7 @@ class ExternalEventQueue {
 
     private:
         std::vector<T> events_;
-        std::mutex& mutex_;
+        std::mutex mutex_;
         std::atomic<bool> dirty_;
     };
 
@@ -3199,8 +3198,7 @@ public:
     using Task = std::function<void()>;
     Queue<Task> api_task;
 
-    ExternalEventQueue()
-    : api_task(mutex_) {}
+    ExternalEventQueue() = default;
 
     void reset() {
         api_task.drain();
@@ -3208,9 +3206,6 @@ public:
 
     ExternalEventQueue(const ExternalEventQueue&) = delete;
     ExternalEventQueue& operator=(const ExternalEventQueue&) = delete;
-
-private:
-    std::mutex mutex_;
 };
 
 #if 0

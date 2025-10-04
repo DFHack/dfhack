@@ -132,7 +132,7 @@ bool LuaWrapper::LookupTypeInfo(lua_State *state, bool in_method)
         return true;
 }
 
-void LuaWrapper::LookupInTable(lua_State *state, void *id, LuaToken *tname)
+void LuaWrapper::LookupInTable(lua_State *state, const void *id, LuaToken *tname)
 {
     lua_rawgetp(state, LUA_REGISTRYINDEX, tname);
     lua_rawgetp(state, -1, id);

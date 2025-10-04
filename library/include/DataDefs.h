@@ -257,8 +257,8 @@ namespace DFHack
     };
 
     struct struct_field_info_extra {
-        enum_identity *index_enum;
-        type_identity *ref_target;
+        const enum_identity *index_enum;
+        const type_identity *ref_target;
         const char *union_tag_field;
         const char *union_tag_attr;
         const char *original_name;

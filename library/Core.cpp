@@ -30,6 +30,7 @@ distribution.
 #include "DataDefs.h"
 #include "Debug.h"
 #include "Console.h"
+#include "SDLConsoleDriver.h"
 #include "MiscUtils.h"
 #include "Module.h"
 #include "VersionInfoFactory.h"
@@ -468,6 +469,19 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     }
 
     return false;
+}
+
+void Core::getAutoCompletePossibles(const std::string &first, std::vector<std::string> &possibles)
+{
+    std::vector<std::string> commands;
+
+    get_commands(con, commands);
+    for (auto &command : commands) {
+        if (command.substr(0, first.size()) == first)
+            possibles.push_back(command);
+    }
+    if (commands.size() == possibles.size())
+        possibles.clear();
 }
 
 bool Core::addScriptPath(std::filesystem::path path, bool search_before)
@@ -1484,6 +1498,7 @@ Core::~Core()
 }
 
 Core::Core() :
+    con(getConsole()),
     d(std::make_unique<Private>()),
     script_path_mutex{},
     HotkeyMutex{},
@@ -1520,6 +1535,7 @@ void Core::fatal (std::string output, const char * title)
     if (output[output.size() - 1] != '\n')
         out << '\n';
     out << "DFHack will now deactivate.\n";
+
     if(con.isInited())
     {
         con.printerr("%s", out.str().c_str());
@@ -1711,6 +1727,10 @@ bool Core::InitMainThread() {
     perf_counters.reset();
     unpaused_ms = 0;
 
+    if (con.get_type() == ConsoleType::SDL
+            && !con.as<SDLConsoleDriver>().init_sdl())
+        std::cerr << "SDLConsole: failed to initialize.\n";
+
     return true;
 }
 
@@ -1754,6 +1774,18 @@ bool Core::InitSimulationThread()
         std::cerr << "Headless mode not supported on Windows" << std::endl;
 #endif
     }
+/*
+    // dump offsets to a file
+    std::ofstream dump("offsets.log");
+    if(!dump.fail())
+    {
+        //dump << vinfo->PrintOffsets();
+        dump.close();
+    }
+    */
+    // initialize data defs
+    virtual_identity::Init(this);
+
     if (is_text_mode && !is_headless)
     {
         std::cerr << "Console is not available. Use dfhack-run to send commands.\n";
@@ -1766,17 +1798,6 @@ bool Core::InitSimulationThread()
         std::cerr << "Console is running.\n";
     else
         std::cerr << "Console has failed to initialize!\n";
-/*
-    // dump offsets to a file
-    std::ofstream dump("offsets.log");
-    if(!dump.fail())
-    {
-        //dump << vinfo->PrintOffsets();
-        dump.close();
-    }
-    */
-    // initialize data defs
-    virtual_identity::Init(this);
 
     // create config directory if it doesn't already exist
     if (!Filesystem::mkdir_recursive(getConfigPath()))
@@ -2418,6 +2439,7 @@ int Core::Shutdown ( void )
         plug_mgr = 0;
     }
     // invalidate all modules
+    con.cleanup();
     allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
@@ -2498,6 +2520,9 @@ void Core::setArmokTools(const std::vector<std::string> &tool_names) {
 
 // returns true if the event is handled
 bool Core::DFH_SDL_Event(SDL_Event* ev) {
+    if (con.get_type() == ConsoleType::SDL
+            && con.as<SDLConsoleDriver>().sdl_event_hook(*ev))
+        return true;
     uint32_t start_ms = p->getTickCount();
     bool ret = doSdlInputEvent(ev);
     perf_counters.incCounter(perf_counters.total_keybinding_ms, start_ms);

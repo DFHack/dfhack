@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- modding: the ``scripts_modactive`` and ``scripts_modinstalled`` subdirectories of mods will be searched for scripts as per the modding-guide documentation
 
 ## Misc Improvements
 

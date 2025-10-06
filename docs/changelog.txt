@@ -63,6 +63,7 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
+- added a clarification link to DF's Lua API documentation to the DFHack Lua API documentation, as a way to reduce end-user confusion
 
 ## API
 

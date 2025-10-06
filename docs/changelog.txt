@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `script-manager`: the ``scripts_modactive`` and ``scripts_modinstalled`` folders of a script-enabled mod will be properly added to the script path search list
 
 ## Misc Improvements
 

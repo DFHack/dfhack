@@ -152,6 +152,7 @@ function get_mod_paths(installed_subdir, active_subdir)
     -- if a world is loaded, process active mods first, and lock to active version
     if dfhack.isWorldLoaded() then
         for _,path in ipairs(df.global.world.object_loader.object_load_order_src_dir) do
+            path = dfhack.filesystem.getBaseDir() .. path
             -- skip vanilla "mods"
             if not path:startswith(INSTALLED_MODS_PATH) then goto continue end
             local id = get_mod_id_and_version(path)

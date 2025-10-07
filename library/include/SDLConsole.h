@@ -5,7 +5,7 @@
 #include <memory>
 #include <atomic>
 #include <optional>
-#include <vector>
+#include <span>
 
 #include "Export.h"
 
@@ -96,7 +96,7 @@ public:
      */
     [[nodiscard]] int get_line(std::string& buf);
 
-    void set_command_history(std::vector<std::string>& entries);
+    void set_command_history(std::span<const std::string> entries);
 
     /*
      * Retrieves an instance of the console.

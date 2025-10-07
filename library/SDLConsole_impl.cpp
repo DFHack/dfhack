@@ -760,7 +760,7 @@ public:
 private:
     std::vector<std::unique_ptr<ISlot>> owned_;
 
-    using SlotMap = std::map<Uint32, std::vector<ISlot*>>;
+    using SlotMap = std::map<uint32_t, std::vector<ISlot*>>;
     struct Slots {
         SlotMap active;
         SlotMap inactive;
@@ -776,7 +776,7 @@ private:
     int emit_depth_{0};
 
     template<typename EventType, typename F>
-    ISlot* make_slot(Uint32 event_type, F&& func) {
+    ISlot* make_slot(uint32_t event_type, F&& func) {
         auto slot = std::make_unique<Slot<EventType>>(*this, event_type, std::forward<F>(func));
         ISlot* p = slot.get();
         owned_.emplace_back(std::move(slot));
@@ -1258,7 +1258,7 @@ public:
 
         //  FIXME: hardcoded magenta
         // Make this keyed color transparent.
-        Uint32 bg_color = sdl_console::SDL_MapRGB(surface->format, 255, 0, 255);
+        uint32_t bg_color = sdl_console::SDL_MapRGB(surface->format, 255, 0, 255);
         sdl_console::SDL_SetColorKey(surface, SDL_TRUE, bg_color);
 
         // Create a surface in ARGB8888 format, and replace the keyed color
@@ -1280,11 +1280,11 @@ public:
         glyphs = build_glyph_rects(surface->w, surface->h, cols, rows);
 
         auto* texture = sdl_tsd.CreateTextureFromSurface(renderer_, surface);
+        sdl_console::SDL_FreeSurface(surface);
         if (!texture ) {
             std::cerr << "SDL_CreateTextureFromSurface Error: " << sdl_console::SDL_GetError() << '\n';
             return nullptr;
         }
-        sdl_console::SDL_FreeSurface(surface);
         sdl_console::SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
         textures_.push_back(texture);
 
@@ -1784,7 +1784,7 @@ public:
         rebuild = true;
     }
 
-    void update_cursor_geometry_for_render(std::vector<VisibleRow>& vrows)
+    void update_cursor_geometry_for_render(std::span<const VisibleRow> vrows)
     {
         if (entry.fragments().empty()) { // Shouldn't happen'
              return;
@@ -2226,7 +2226,7 @@ public:
     }
 
     std::vector<SDL_Rect> to_rects(const Font* font,
-                                   const std::vector<VisibleRow>& rows) const
+                                   std::span<const VisibleRow> rows) const
     {
         if (!active()) return {};
 
@@ -3442,10 +3442,10 @@ int SDLConsole::get_line(std::string& buf)
     return -1;
 }
 
-void SDLConsole::set_command_history(std::vector<std::string>& entries)
+void SDLConsole::set_command_history(std::span<const std::string> entries)
 {
     std::deque<std::u32string> my_entries;
-    for (auto& entry : entries) {
+    for (const auto& entry : entries) {
         my_entries.push_front(text::from_utf8(entry));
     }
     push_api_task([this, my_entries = std::move(my_entries)] {

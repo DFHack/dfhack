@@ -1366,6 +1366,56 @@ struct ImplContext {
     ImplContext& operator=(const ImplContext&) = delete;
 };
 
+namespace layout {
+enum class Align : uint8_t {
+    None   = 0,
+    Left   = 1 << 0,
+    Right  = 1 << 1,
+    HCenter= 1 << 2,
+    Top    = 1 << 3,
+    Bottom = 1 << 4,
+    VCenter= 1 << 5,
+    Fill   = 1 << 6,
+};
+
+static Align operator|(Align a, Align b) {
+    return static_cast<Align>(
+        static_cast<uint8_t>(a) | static_cast<uint8_t>(b)
+    );
+}
+
+#if 0
+static Align& operator|=(Align& a, Align b) {
+    a = a | b;
+    return a;
+}
+
+static bool operator&(Align a, Align b) {
+    return (static_cast<uint8_t>(a) & static_cast<uint8_t>(b)) != 0;
+}
+#endif
+
+static bool has_align(Align a, Align flag) {
+    return (uint8_t(a) & uint8_t(flag)) != 0;
+}
+
+struct Margins {
+    int left   = 0;
+    int top    = 0;
+    int right  = 0;
+    int bottom = 0;
+};
+
+struct Layout {
+    Margins margin {.left = 0, .top = 0, .right = 0, .bottom = 0};
+    int stretch = 0;           // relative flex factor (0 = fixed)
+    int preferred_width = 0;
+    int preferred_height = 0;
+    Align align = Align::Fill;
+};
+
+} // namespace layout
+
 // TODO: needs work
 // Non-movable. Non-copyable.
 class Widget : public SignalEmitter {
@@ -1375,6 +1425,10 @@ public:
     SDL_Rect frame {};
     ImplContext& context;
     Widget& window;
+
+    layout::Layout layout;
+
+    std::vector<std::unique_ptr<Widget>> children;
 
     explicit Widget(Widget* parent)
         : parent(parent)
@@ -1429,7 +1483,27 @@ public:
     }
 
     virtual void render() = 0;
-    virtual void resize(const SDL_Rect& rect) = 0;
+    //virtual void resize(const SDL_Rect& rect) = 0;
+
+    virtual void layout_children() {};
+
+    virtual void resize(const SDL_Rect& new_frame) {
+        frame = new_frame;
+
+        layout_children();
+
+        for (auto& child : children) {
+            child->resize(child->frame);
+        }
+    }
+
+    template <typename T, typename... Args>
+    T& add_child(Args&&... args) {
+        auto ptr = std::make_unique<T>(this, std::forward<Args>(args)...);
+        T& ref = *ptr;
+        children.emplace_back(std::move(ptr));
+        return ref;
+    }
 
     ~Widget() override = default;
 
@@ -1438,6 +1512,154 @@ public:
 
     Widget(const Widget&) = delete;
     Widget& operator=(const Widget&) = delete;
+};
+
+class VBox : public Widget {
+public:
+    int spacing = 0;
+
+    explicit VBox(Widget* parent)
+    : Widget(parent)
+    {}
+
+    explicit VBox(ImplContext& ctx)
+    : Widget(ctx)
+    {}
+
+    void render() override
+    {
+        for (auto& child : children) {
+            child->render();
+        }
+    }
+
+    void layout_children() override {
+        if (children.empty())
+            return;
+
+        int total_stretch = 0;
+        int total_fixed = 0;
+
+        const int avail_w = frame.w - (layout.margin.left + layout.margin.right);
+        const int avail_h = frame.h - (layout.margin.top + layout.margin.bottom);
+
+        for (auto& child : children) {
+            if (child->layout.stretch > 0) {
+                total_stretch += child->layout.stretch;
+            } else {
+                total_fixed += (child->layout.preferred_height > 0 ? child->layout.preferred_height : child->frame.h);
+            }
+        }
+
+        total_fixed += spacing * (std::ssize(children) - 1);
+        int available = std::max(avail_h - total_fixed, 0);
+        int offset = frame.y + layout.margin.top;
+
+        for (size_t i = 0; i < children.size(); ++i) {
+            auto& child = children[i];
+            SDL_Rect r = child->frame;
+
+            r.x = frame.x + layout.margin.left;
+            r.w = avail_w;
+
+            if (child->layout.stretch > 0) {
+                r.h = available * child->layout.stretch / total_stretch;
+            } else if (child->layout.preferred_height > 0) {
+                r.h = child->layout.preferred_height;
+            }
+
+            r.y = offset;
+            offset += r.h;
+            if (i < children.size() - 1)
+                offset += spacing;
+
+            // Horizontal alignment
+            if (child->layout.align != layout::Align::Fill) {
+                if (has_align(child->layout.align, layout::Align::HCenter))
+                    r.x = frame.x + layout.margin.left + (avail_w - r.w) / 2;
+                else if (has_align(child->layout.align, layout::Align::Right))
+                    r.x = frame.x + avail_w - r.w - layout.margin.right;
+            }
+            child->resize(r);
+        }
+    }
+};
+
+class HBox : public Widget {
+public:
+    int spacing = 0;
+
+    explicit HBox(Widget* parent)
+    : Widget(parent)
+    {}
+
+    explicit HBox(ImplContext& ctx)
+    : Widget(ctx)
+    {}
+
+    void render() override
+    {
+        for (auto& child : children) {
+            child->render();
+        }
+    }
+
+    void layout_children() override
+    {
+        if (children.empty())
+            return;
+
+        int total_stretch = 0;
+        int total_fixed = 0;
+
+        const int avail_w = frame.w - (layout.margin.left + layout.margin.right);
+        const int avail_h = frame.h - (layout.margin.top + layout.margin.bottom);
+
+        for (auto& child : children) {
+            if (child->layout.stretch > 0) {
+                total_stretch += child->layout.stretch;
+            } else {
+                total_fixed += (child->layout.preferred_width  > 0 ? child->layout.preferred_width  : child->frame.w);
+            }
+        }
+
+        total_fixed += spacing * (std::ssize(children) - 1);
+        int available = std::max(avail_w - total_fixed, 0);
+        int offset = frame.x + layout.margin.left;
+
+        for (size_t i = 0; i < children.size(); ++i) {
+            auto& child = children[i];
+            SDL_Rect r = child->frame;
+
+            r.y = frame.y + layout.margin.top;
+
+            if (child->layout.preferred_height > 0) {
+                r.h = child->layout.preferred_height;
+            } else {
+                r.h = avail_h;
+            }
+
+            if (child->layout.stretch > 0) {
+                r.w = available * child->layout.stretch / total_stretch;
+            } else if (child->layout.preferred_width >  0) {
+                r.w = child->layout.preferred_width;
+            }
+
+            r.x = offset;
+            offset += r.w;
+            if (i < children.size() - 1)
+                offset += spacing;
+
+            // Vertical alignment
+            if (child->layout.align != layout::Align::Fill) {
+                if (layout::has_align(child->layout.align, layout::Align::VCenter))
+                    r.y = frame.y + (avail_h - r.h) / 2;
+                else if (layout::has_align(child->layout.align, layout::Align::Bottom))
+                    r.y = frame.y + (avail_h - r.h);
+            }
+            child->resize(r);
+        }
+    }
 };
 
 class Cursor {
@@ -1860,9 +2082,8 @@ private:
     Thumb thumb_;
 
 public:
-    Scrollbar(Widget* parent, int page_size)
+    Scrollbar(Widget* parent)
         : Widget(parent)
-        , page_size_(page_size)
     {
         window.connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
             on_SDL_MOUSEBUTTONDOWN(e);
@@ -2115,7 +2336,7 @@ public:
 
 class Toolbar : public Widget {
 public:
-    Toolbar(Widget* parent, SDL_Rect rect);
+    explicit Toolbar(Widget* parent);
     ~Toolbar() override = default;
     void render() override;
     void resize(const SDL_Rect& rect) override;
@@ -2330,7 +2551,7 @@ public:
     std::deque<TextEntry> entries;
     VisibleRowsCache visible_rows;
     Prompt prompt;
-    Scrollbar scrollbar;
+    Scrollbar* scrollbar{nullptr};
     // Scrollbar could be made optional.
     int scroll_offset { 0 };
     SDL_Rect content_rect;
@@ -2340,17 +2561,11 @@ public:
     TextSelection text_selection;
     ISlot* mouse_motion_slot { nullptr };
 
-    OutputPane(Widget* parent, SDL_Rect& frame_)
-        : Widget(parent, frame_)
+    explicit OutputPane(Widget* parent)
+        : Widget(parent)
         , prompt(this)
-        , scrollbar(this, rows())
     {
-        resize(frame_);
-
         set_scrollback(props().get(property::OUTPUT_SCROLLBACK).value_or(1000));
-
-        scrollbar.set_page_size(rows());
-        scrollbar.set_content_size(1); // account for prompt
 
         prompt.connect<NewCommandInputEvent>(InternalEventType::new_command_input, [this](auto& e)
         {
@@ -2402,17 +2617,26 @@ public:
             // multiple lines.
             // TODO: maybe it should connect to prompt for this.
             set_scroll_offset(0);
-            scrollbar.set_content_size(num_lines + prompt.entry.size());
-        });
-
-        scrollbar.connect<ValueChangedEvent>(InternalEventType::value_changed, [this](auto& e) {
-            set_scroll_offset_from_scrollbar(e.value);
+            if (scrollbar)
+                scrollbar->set_content_size(num_lines + prompt.entry.size());
         });
     }
 
     void set_scrollback(size_t scrollback)
     {
         scrollback_ = scrollback;
+    }
+
+    void apply_scrollbar(Scrollbar *s)
+    {
+        scrollbar = s;
+
+        scrollbar->set_page_size(rows());
+        scrollbar->set_content_size(1); // account for prompt
+
+        scrollbar->connect<ValueChangedEvent>(InternalEventType::value_changed, [this](auto& e) {
+            set_scroll_offset_from_scrollbar(e.value);
+        });
     }
 
     int on_SDL_KEYDOWN(const SDL_KeyboardEvent& e)
@@ -2532,7 +2756,8 @@ public:
         entries.clear();
         num_lines = 0;
         set_scroll_offset(0);
-        scrollbar.set_content_size(1);
+        if (scrollbar)
+            scrollbar->set_content_size(1);
         text_selection.reset();
         emit_text_selection_changed();
         visible_rows.rebuild = true;
@@ -2541,7 +2766,8 @@ public:
     void set_scroll_offset(int v)
     {
         scroll_offset = v;
-        scrollbar.scroll_to(v);
+        if (scrollbar)
+            scrollbar->scroll_to(v);
         visible_rows.rebuild = true;
     }
 
@@ -2622,8 +2848,6 @@ public:
     void resize(const SDL_Rect& rect) override
     {
         frame = rect;
-        // FIXME: magic numbers
-        scrollbar.resize({ frame.w - (8 * 2), frame.y, (8 * 2), frame.h });
 
         set_content_rect();
         prompt.resize(content_rect);
@@ -2647,11 +2871,6 @@ public:
     void set_content_rect()
     {
         content_rect = frame;
-         // (8px each side + 4px buffer tweak)
-        const int scrollbar_space = (8 * 2) + 4;
-        // Make room for scrollbar. TODO: needs layout framework
-        // Deduct space on the right.
-        content_rect.w -= scrollbar_space;
 
         const int margin = 4; // // Margin around the viewport in px.
 
@@ -2685,7 +2904,8 @@ public:
     {
         entry.wrap_text(font->char_width, content_rect.w);
         num_lines += entry.size();
-        scrollbar.set_content_size(num_lines + prompt.entry.size());
+        if (scrollbar)
+            scrollbar->set_content_size(num_lines + prompt.entry.size());
         visible_rows.rebuild = true;
     }
 
@@ -2802,8 +3022,7 @@ public:
         render_prompt_and_output();
 
         prompt.render_cursor();
-        sdl_console::SDL_RenderSetViewport(renderer(), &parent->frame);
-        scrollbar.render();
+        sdl_console::SDL_RenderSetViewport(renderer(), &window.frame);
     }
 
     void build_visible_prompt_and_output_rows()
@@ -2890,19 +3109,20 @@ public:
 };
 
 
-class MainWindow : public Widget {
+class MainWindow : public VBox {
 public:
-    std::unique_ptr<Toolbar> toolbar; // optional toolbar. XXX: implementation requires it
-    std::unique_ptr<OutputPane> outpane;
+  //  std::unique_ptr<Toolbar> toolbar; // optional toolbar. XXX: implementation requires it
+  //  std::unique_ptr<OutputPane> outpane;
+    OutputPane* outpane{nullptr};
     bool has_focus{false};
     bool is_shown{true};
     bool is_minimized{false};
 
-    using Ticks64T = decltype(sdl_console::SDL_GetTicks64());
-    Ticks64T ms_per_frame{1000/20};
+    using TicksT = decltype(sdl_console::SDL_GetTicks64());
+    TicksT ms_per_frame{1000/20};
 
     explicit MainWindow(ImplContext& ctx)
-        : Widget(ctx)
+        : VBox(ctx)
     {
         SDL_Window* h = create_window(ctx.props);
         SDL_Renderer* r = create_renderer(ctx.props, h);
@@ -2955,48 +3175,74 @@ public:
             context.ui.window.mouse_pos.y = e.y;
         });
 
-        // TODO: make toolbar optional
-        SDL_Rect tv = { 0, 0, frame.w, font->line_height * 2 };
-        toolbar = std::make_unique<Toolbar>(this, tv);
-
-        SDL_Rect lv = { 0, toolbar->frame.h, frame.w, frame.h - toolbar->frame.h };
-        outpane = std::make_unique<OutputPane>(this, lv);
-
-        Button& copy = *toolbar->add_button(U"Copy");
-        copy.enabled = false;
-        copy.connect<ClickedEvent>(InternalEventType::clicked, [this](auto& /*e*/) {
-            outpane->copy_selected_text_to_clipboard();
-        });
-
-        outpane->connect<TextSelectionChangedEvent>(InternalEventType::text_selection_changed, [&copy](auto& e) {
-            copy.enabled = e.selected;
-        });
-
-        Button& paste = *toolbar->add_button(U"Paste");
-        paste.connect<ClickedEvent>(InternalEventType::clicked, [this](auto& /*e*/) {
-            outpane->prompt.put_input_from_clipboard();
-        });
-
-        Button& font_inc = *toolbar->add_button(U"A+");
-        font_inc.connect<ClickedEvent>(InternalEventType::clicked, [this](auto& /*e*/) {
-            outpane->font->incr_size();
-        });
-
-        Button& font_dec = *toolbar->add_button(U"A-");
-        font_dec.connect<ClickedEvent>(InternalEventType::clicked, [this](auto& /*e*/) {
-            outpane->font->decr_size();
-        });
+        build_ui();
     }
 
     ~MainWindow() override = default;
 
+    void build_ui()
+    {
+        auto& toolbar_hbox = add_child<HBox>();
+        toolbar_hbox.layout.preferred_height = font->line_height_with_spacing() * 2;
+        toolbar_hbox.layout.align = layout::Align::Top | layout::Align::Fill;
+        toolbar_hbox.layout.stretch = 0;
+
+
+        auto& toolbar = toolbar_hbox.add_child<Toolbar>();
+        toolbar.layout.align = layout::Align::Fill | layout::Align::Top;
+        toolbar.layout.stretch = 1;
+
+
+        auto& outbox = add_child<HBox>();
+        outbox.layout.stretch = 1;
+        outbox.layout.margin = {4, 4, 4, 4};
+
+        auto& output = outbox.add_child<OutputPane>();
+        outpane = &output;
+        output.layout.stretch = 1;
+        output.layout.align = layout::Align::Fill;
+
+        auto& scrollbar = outbox.add_child<Scrollbar>();
+        scrollbar.layout.preferred_width = 16;
+        scrollbar.layout.align = layout::Align::Right | layout::Align::Fill | layout::Align::Top;
+
+        resize({0, 0, frame.w, frame.h});
+
+        output.apply_scrollbar(&scrollbar); // Size of output area needs to be known before applying scrollbar
+
+        Button& copy = *toolbar.add_button(U"Copy");
+        copy.enabled = false;
+        copy.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
+            output.copy_selected_text_to_clipboard();
+        });
+
+        output.connect<TextSelectionChangedEvent>(InternalEventType::text_selection_changed, [&copy](auto& e) {
+            copy.enabled = e.selected;
+        });
+
+        Button& paste = *toolbar.add_button(U"Paste");
+        paste.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
+            output.prompt.put_input_from_clipboard();
+        });
+
+        Button& font_inc = *toolbar.add_button(U"A+");
+        font_inc.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
+            output.font->incr_size();
+        });
+
+        Button& font_dec = *toolbar.add_button(U"A-");
+        font_dec.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
+            output.font->decr_size();
+        });
+    }
+
     void set_ms_per_frame()
     {
-        constexpr Ticks64T fps_shown = 20;
-        constexpr Ticks64T fps_minimized = 1;
+        constexpr TicksT fps_shown = 20;
+        constexpr TicksT fps_minimized = 1;
 
-        constexpr Ticks64T shown_ms = 1000 / fps_shown; // 20 fps;
-        constexpr Ticks64T minimized_ms = 1000 / fps_minimized;
+        constexpr TicksT shown_ms = 1000 / fps_shown; // 20 fps;
+        constexpr TicksT minimized_ms = 1000 / fps_minimized;
 
         ms_per_frame = is_minimized ? minimized_ms : shown_ms;
     }
@@ -3008,10 +3254,15 @@ public:
         // Should not fail unless OOM.
         sdl_console::SDL_RenderClear(renderer());
         // set background color
+
         // should not fail unless renderer is invalid
+        //set_draw_color(renderer(), colors::darkgray);
+
+        for (auto& child : children) {
+            child->render();
+        }
+
         set_draw_color(renderer(), colors::darkgray);
-        toolbar->render();
-        outpane->render();
 
         sdl_console::SDL_RenderPresent(renderer());
     }
@@ -3037,8 +3288,9 @@ public:
     void resize(const SDL_Rect& /*r*/) override
     {
         sdl_console::SDL_GetRendererOutputSize(renderer(), &frame.w, &frame.h);
-        toolbar->resize({ 0, 0, frame.w, font->line_height_with_spacing() * 2 });
-        outpane->resize({ 0, toolbar->frame.h, frame.w, frame.h - toolbar->frame.h });
+        //toolbar->resize({ 0, 0, frame.w, font->line_height_with_spacing() * 2 });
+        //outpane->resize({ 0, toolbar->frame.h, frame.w, frame.h - toolbar->frame.h });
+        layout_children();
     }
 
     static SDL_Window* create_window(Property& props)
@@ -3079,8 +3331,8 @@ public:
     MainWindow& operator=(const MainWindow&) = delete;
 };
 
-Toolbar::Toolbar(Widget* parent, SDL_Rect rect)
-    : Widget(parent, rect)
+Toolbar::Toolbar(Widget* parent)
+    : Widget(parent)
 {
     // Copy so that font size changes don't propogate to the toolbar.
     font = context.ui.window.font_loader.clone("toolbar", font);
@@ -3103,7 +3355,7 @@ void Toolbar::render()
 
 void Toolbar::resize(const SDL_Rect& rect)
 {
-    frame.w = rect.w;
+    frame = rect;
     layout_buttons();
 }
 
@@ -3112,7 +3364,7 @@ Button* Toolbar::add_button(std::u32string text)
     auto button = std::make_unique<Button>(this, text);
     Button& b = *button.get();
     b.frame.h = frame.h;
-    b.frame.y = 0;
+    b.frame.y = frame.y;
     b.frame.w = b.label_rect.w + (font->char_width * 2);
     widgets.emplace_back(std::move(button));
     layout_buttons();
@@ -3121,7 +3373,7 @@ Button* Toolbar::add_button(std::u32string text)
 
 void Toolbar::layout_buttons()
 {
-    int margin_right = 4;
+    int margin_right = 0;
     int x = (frame.w - margin_right) - compute_widgets_startx();
 
     for (auto& w : widgets) {

@@ -211,7 +211,7 @@ namespace DFHack
         /// Get the current top-level view-screen
         DFHACK_EXPORT df::viewscreen *getCurViewscreen(bool skip_dismissed = false);
 
-        DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(virtual_identity &id, int n = 1);
+        DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(const virtual_identity &id, int n = 1);
 
         /// Get the top-most underlying DF viewscreen (not owned by DFHack)
         DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false, df::viewscreen *top = NULL);

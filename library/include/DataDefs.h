@@ -326,8 +326,8 @@ namespace DFHack
     class DFHACK_EXPORT union_identity : public struct_identity {
     public:
         union_identity(size_t size, TAllocateFn alloc,
-                compound_identity *scope_parent, const char *dfhack_name,
-                struct_identity *parent, const struct_field_info *fields);
+                const compound_identity *scope_parent, const char *dfhack_name,
+                const struct_identity *parent, const struct_field_info *fields);
 
         virtual identity_type type() const { return IDTYPE_UNION; }
 
@@ -418,13 +418,13 @@ namespace DFHack
         template<class P> static P get_vmethod_ptr(P selector);
 
     public:
-        bool can_instantiate() { return can_allocate(); }
-        virtual_ptr instantiate() { return can_instantiate() ? (virtual_ptr)do_allocate() : NULL; }
+        bool can_instantiate() const { return can_allocate(); }
+        virtual_ptr instantiate() const { return can_instantiate() ? (virtual_ptr)do_allocate() : NULL; }
         static virtual_ptr clone(virtual_ptr obj);
 
     public:
         // Strictly for use in virtual class constructors
-        void adjust_vtable(virtual_ptr obj, virtual_identity *main);
+        void adjust_vtable(virtual_ptr obj, const virtual_identity *main) const;
     };
 
     template<class T>
@@ -536,10 +536,10 @@ namespace df
     struct identity_traits {};
 
     template<class T>
-        requires requires () { { &T::_identity } -> std::convertible_to<compound_identity*>; }
+        requires requires () { { &T::_identity } -> std::convertible_to<const compound_identity*>; }
     struct identity_traits<T> {
         static const bool is_primitive = false;
-        static compound_identity *get() { return &T::_identity; }
+        static const compound_identity *get() { return &T::_identity; }
     };
 
     template<class T>

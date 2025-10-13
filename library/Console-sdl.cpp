@@ -178,7 +178,7 @@ namespace DFHack
 
             // I don't believe this check is necessary.
             // unless, somwhow, fiothread is inited before the console.
-            if (con.state.is_inactive()) {
+            if (con.run_state.is_inactive()) {
                 return Console::RETRY;
             }
             // kludge. This is the only place to set it?
@@ -350,11 +350,10 @@ bool SDLConsoleDriver::sdl_event_hook(SDL_Event &e)
     // from mouse movement within the df/console window.
     // It can generate 1000s of events in short order.
 
-    if (con.state.is_active()) [[likely]] {
-        return con.sdl_event_hook(e);
-    }
 
-    if (con.state.is_shutdown()) [[unlikely]] {
+    if (con.run_state.is_active()) [[likely]] {
+        return con.sdl_event_hook(e);
+    } else if (con.run_state.is_shutdown()) [[unlikely]] {
         cleanup();
     }
 

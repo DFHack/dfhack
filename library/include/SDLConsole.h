@@ -116,7 +116,7 @@ public:
      */
     void update();
 
-    class State {
+    class RunState {
     public:
         enum Value {
             active,     // console is active and operational.
@@ -124,7 +124,7 @@ public:
             shutdown,   // console is shutting down.
         };
 
-        State() : current_state(Value::inactive) {}
+        RunState() : current_state(Value::inactive) {}
 
         [[nodiscard]] bool is_active() const { return current_state.load() == Value::active; }
 
@@ -144,7 +144,7 @@ public:
         std::atomic<Value> current_state;
     };
 
-    State state;
+    RunState run_state;
 
     SDLConsole(const SDLConsole&) = delete;
     SDLConsole& operator=(const SDLConsole&) = delete;

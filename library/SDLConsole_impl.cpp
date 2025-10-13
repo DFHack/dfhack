@@ -26,12 +26,17 @@
 #include "SDL_pixels.h"
 #include "Core.h"
 #include "modules/DFSDL.h"
+#include "MiscUtils.h"
 #include "SDLConsole.h"
 #include "SDLConsole_impl.h"
 
 using namespace DFHack;
 
 namespace sdl_console {
+using String = std::u32string;
+using StringView = std::u32string_view;
+using Char = char32_t;
+
 namespace {
 
 // These macros to be removed.
@@ -186,11 +191,11 @@ namespace text {
         return result;
     }
 
-    static std::u32string from_utf8(const std::string& u8_string)
+    static String from_utf8(const std::string& u8_string)
     {
         char* conv = sdl_console::SDL_iconv_string("UTF-32LE", "UTF-8",
-                                      u8_string.c_str(),
-                                      u8_string.size() + 1);
+                                                   u8_string.c_str(),
+                                                   u8_string.size() + 1);
         if (!conv)
             return U"?u8?";
 
@@ -199,18 +204,18 @@ namespace text {
         return result;
     }
 
-    static bool is_newline(char32_t ch) {
+    static bool is_newline(Char ch) {
         return ch == U'\n' || ch == U'\r';
     }
 
-    static bool is_wspace(char32_t ch) {
+    static bool is_wspace(Char ch) {
         return ch == U' ' || ch == U'\t';
     }
 
-    std::pair<size_t, size_t> find_run_with_pred(const std::u32string& text, size_t pos, const std::function<bool(char32_t)> predicate) {
-        if (text.empty()) return { std::u32string::npos, std::u32string::npos };
+    std::pair<size_t, size_t> find_run_with_pred(const String& text, size_t pos, const std::function<bool(Char)> predicate) {
+        if (text.empty()) return { String::npos, String::npos };
 
-        if (pos >= text.size()) return { std::u32string::npos, std::u32string::npos };
+        if (pos >= text.size()) return { String::npos, String::npos };
 
         auto left = text.begin() + pos;
         auto right = left;
@@ -231,7 +236,7 @@ namespace text {
         };
     }
 
-    size_t skip_wspace(const std::u32string& text, size_t pos) {
+    size_t skip_wspace(const String& text, size_t pos) {
         if (text.empty()) return 0;
         if (pos >= text.size()) return text.size() - 1;
 
@@ -240,7 +245,7 @@ namespace text {
                                                       is_wspace));
     }
 
-    size_t skip_wspace_reverse(const std::u32string& text, size_t pos) {
+    size_t skip_wspace_reverse(const String& text, size_t pos) {
         if (text.empty()) return 0;
         if (pos >= text.size()) pos = text.size() - 1;
 
@@ -251,7 +256,7 @@ namespace text {
         return std::distance(text.begin(), it);
     }
 
-    size_t skip_graph(const std::u32string& text, size_t pos) {
+    size_t skip_graph(const String& text, size_t pos) {
         if (text.empty()) return 0;
         if (pos >= text.size()) return text.size() - 1;
 
@@ -260,7 +265,7 @@ namespace text {
                                                   is_wspace));
     }
 
-    size_t skip_graph_reverse(const std::u32string& text, size_t pos) {
+    size_t skip_graph_reverse(const String& text, size_t pos) {
         if (text.empty()) return 0;
         if (pos >= text.size()) pos = text.size() - 1;
 
@@ -272,13 +277,13 @@ namespace text {
     }
 
     /*
-     * Finds the end of the previous word or non-space character in the text,
-     * starting from `pos`. If `pos` points to a space, it skips consecutive
-     * spaces to find the previous word. If `pos` is already at a word, it skips
-     * the current word and trailing spaces to find the next one. Returns the
-     * position of the end of the previous word or non-space character.
-     */
-    size_t find_prev_word(const std::u32string& text, size_t pos) {
+    * Finds the end of the previous word or non-space character in the text,
+    * starting from `pos`. If `pos` points to a space, it skips consecutive
+    * spaces to find the previous word. If `pos` is already at a word, it skips
+    * the current word and trailing spaces to find the next one. Returns the
+    * position of the end of the previous word or non-space character.
+    */
+    size_t find_prev_word(const String& text, size_t pos) {
         size_t start = pos;
         start = skip_wspace_reverse(text, start);
         if (start == pos) {
@@ -291,13 +296,13 @@ namespace text {
     }
 
     /*
-     * Finds the start of the next word or non-space character in the text,
-     * starting from `pos`. If `pos` points to a space, it skips consecutive
-     * spaces to find the next word. If `pos` is already at a word, it skips
-     * the current word and trailing spaces to find the next one. Returns the
-     * position of the start of the next word or non-space character.
-     */
-    size_t find_next_word(const std::u32string& text, size_t pos) {
+    * Finds the start of the next word or non-space character in the text,
+    * starting from `pos`. If `pos` points to a space, it skips consecutive
+    * spaces to find the next word. If `pos` is already at a word, it skips
+    * the current word and trailing spaces to find the next one. Returns the
+    * position of the start of the next word or non-space character.
+    */
+    size_t find_next_word(const String& text, size_t pos) {
         size_t start = pos;
         start = skip_wspace(text, start);
         if (start == pos) {
@@ -309,24 +314,54 @@ namespace text {
         return pos;
     }
 
-    std::pair<size_t, size_t> find_wspace_run(const std::u32string& text, size_t pos) {
+    std::pair<size_t, size_t> find_wspace_run(const String& text, size_t pos) {
         return find_run_with_pred(text, pos, [](char32_t ch) { return is_wspace(ch); });
     }
 
-    std::pair<size_t, size_t> find_run(const std::u32string& text, size_t pos) {
+    std::pair<size_t, size_t> find_run(const String& text, size_t pos) {
         // Bounds check here since .at() is used below
         if (text.empty() || pos >= text.size()) {
-            return { std::u32string::npos, std::u32string::npos };
+            return { String::npos, String::npos };
         }
 
         if (is_wspace(text.at(pos))) {
             return find_wspace_run(text, pos);
         }
-        return find_run_with_pred(text, pos, [](char32_t ch) { return !is_wspace(ch); });
+        return find_run_with_pred(text, pos, [](Char ch) { return !is_wspace(ch); });
+    }
+
+    static size_t insert_at(String& text, size_t pos, const String& str) {
+        if (pos >= text.size()) {
+            text += str;
+        } else {
+            text.insert(pos, str);
+        }
+        pos += str.length();
+        return pos;
+    }
+
+    static size_t backspace(String& text, size_t pos)
+    {
+        if (pos == 0 || text.empty()) {
+            return pos;
+        }
+
+        if (text.length() == pos) {
+            text.pop_back();
+        } else {
+            /* else shift the text from cursor left by one character */
+            text.erase(pos-1, 1);
+        }
+
+        return --pos;
     }
 }
 
 namespace geometry {
+struct Size {
+    int w{0};
+    int h{0};
+};
 #if 0
 void center_rect(SDL_Rect& r)
 {
@@ -352,10 +387,10 @@ static bool is_y_within_bounds(int y, int y_top, int height)
 } // geometry
 
 /*
- * These utility functions provide basic grid-based boundary calculations.
- * They are likely better suited for a dedicated Grid class which can
- * simplify the logic in components like OutputPane.
- */
+* These utility functions provide basic grid-based boundary calculations.
+* They are likely better suited for a dedicated Grid class which can
+* simplify the logic in components like OutputPane.
+*/
 namespace grid {
 #if 0
 static int floor_boundary(int position, int cell_size)
@@ -440,24 +475,6 @@ enum class ScrollAction : std::uint8_t {
     page_down
 };
 
-/*
- * SDL_EventType has storage uint32, but
- * only uses up to uint16 for use by its internal arrays. This leaves
- * plenty of room for custom types.
- */
-
-/*
-struct InternalEventType {
-    enum Type : Uint32 {
-        new_command_input = SDL_LASTEVENT + 1,
-        new_input,
-        clicked,
-        font_size_changed,
-        value_changed,
-        text_selection_changed,
-    };
-};*/
-
 enum class TextEntryType: std::uint8_t {
     input,
     output
@@ -486,20 +503,22 @@ static void render_texture(
 static int set_draw_color(SDL_Renderer*, const SDL_Color&);
 
 /*
- * Manages the lifetime of thread-specific, long-term SDL resources.
- * This class should not be used to store temporary resources.
- *
- * - Long-term resources: SDL objects (e.g., textures, renderers, windows)
- *   that persist beyond the scope of a single function or operation and are shared
- *   across multiple parts of a thread. This class ensures they are properly tracked
- *   and destroyed from the correct thread when no longer needed.
- *
- * - Temporary resources: SDL objects created and used entirely within the scope
- *   of a function or operation (e.g., a texture generated to render a single frame
- *   or a surface used for immediate computation). Such resources should be managed
- *   directly within the components that create them and do not need to be tracked
- *   by this class.
- */
+* Manages the lifetime of thread-specific, long-term SDL resources.
+* This class should not be used to store temporary resources.
+* SDL makes no guarantee on thread safety. Some renderers
+* support sharing resources across threads. While others do not.
+*
+* - Long-term resources: SDL objects (e.g., textures, renderers, windows)
+*   that persist beyond the scope of a single function or operation and are shared
+*   across multiple parts of a thread. This class ensures they are properly tracked
+*   and destroyed from the correct thread when no longer needed.
+*
+* - Temporary resources: SDL objects created and used entirely within the scope
+*   of a function or operation (e.g., a texture generated to render a single frame
+*   or a surface used for immediate computation). Such resources should be managed
+*   directly within the components that create them and do not need to be tracked
+*   by this class.
+*/
 class SDLThreadSpecificData {
 public:
     using Texture = std::unique_ptr<SDL_Texture, decltype(sdl_console::SDL_DestroyTexture)>;
@@ -517,8 +536,8 @@ public:
     }
 
     SDL_Texture* CreateTexture(SDL_Renderer* r,
-                                Uint32 format, int access,
-                                int w, int h)
+                               Uint32 format, int access,
+                               int w, int h)
     {
         auto* p = sdl_console::SDL_CreateTexture(r, format, access, w, h);
         if (!p) { return nullptr; }
@@ -546,8 +565,8 @@ public:
     }
 
     SDL_Window* CreateWindow(const char *title,
-                              int x, int y, int w, int h,
-                              Uint32 flags)
+                             int x, int y, int w, int h,
+                             Uint32 flags)
     {
         auto* p = sdl_console::SDL_CreateWindow(title, x, y, w, h, flags);
         if (!p) { return nullptr; }
@@ -594,37 +613,45 @@ private:
 static thread_local SDLThreadSpecificData sdl_tsd;
 
 /*
- * A lightweight implementation inspired by Qt's signals and slots, designed
- * for integrating with SDL_Event.
- *
- * TODO: Consider adding a custom event type for internal events to eliminate
- * the dependency on SDL_UserEvent.
- *
- * ISlot: An interface for slots, which are event handlers. A slot can:
- *   - Be invoked with an SDL_Event.
- *   - Be connected or disconnected from a signal.
- *   - Check its connection status.
- *
- * ISignal: An interface for signals, which are event emitters. A signal can:
- *   - Disconnect specific slots based on the event type.
- *   - Reconnect slots to specific event types.
- *   - Check if a slot is connected to an event type.
- *
- * Slot<EventType>: A templated implementation of ISlot for specific SDL event
- * types (e.g., SDL_KeyboardEvent, SDL_MouseButtonEvent). It wraps a callable
- * object (std::function) that is invoked when the event occurs.
- */
+* A lightweight implementation inspired by Qt's signals and slots, designed
+* for integrating with SDL_Event.
+*
+* TODO: Consider wrapping SDL_Event with a thin abstraction layer.
+*
+* ISlot: An interface for slots, which are event handlers. A slot can:
+*   - Be invoked with an SDL_Event or custom event.
+*   - Be connected or disconnected from a signal.
+*   - Check its connection status.
+*
+* ISignal: An interface for signals, which are event emitters. A signal can:
+*   - Disconnect specific slots based on the event type.
+*   - Reconnect slots to specific event types.
+*   - Check if a slot is connected to an event type.
+*
+* Slot<EventType>: A templated implementation of ISlot for specific SDL event
+* types (e.g., SDL_KeyboardEvent, SDL_MouseButtonEvent). It wraps a callable
+* object (std::function) that is invoked when the event occurs.
+*
+* NOTE: Widgets inherit this. If memory overhead is a concern (roughly 150 bytes
+* for widgets with no connections) we can lazy init the data structures within.
+*
+*/
 
+class SignalEmitter;
 class ISlot {
 public:
     virtual ~ISlot() = default;
 
-    virtual void invoke(void* event_ptr) = 0;
-    virtual Uint32 event_type() = 0;
+    virtual bool invoke(void* event_ptr) = 0;
+    virtual Uint32 event_type_id() = 0;
 
     virtual void disconnect() = 0;
     virtual void connect() = 0;
     virtual bool is_connected() = 0;
+
+protected:
+    friend class SignalEmitter;
+    virtual void set_connected(bool c) = 0;
 };
 
 class ISignal {
@@ -632,129 +659,108 @@ public:
     virtual ~ISignal() = default;
     virtual void disconnect(ISlot* slot) = 0;
     virtual void reconnect(ISlot* slot) = 0;
-    virtual bool is_connected(ISlot* slot) = 0;
 };
 
 template <typename EventType>
 class Slot : public ISlot {
 public:
-    using Func = std::function<void(EventType&)>;
+    using Func = std::function<bool(EventType&)>;
 
     template <typename F>
     Slot(ISignal& emitter, uint32_t event_type, F&& func)
     : emitter_(emitter)
-    , event_type_(event_type)
+    , event_type_id_(event_type)
     , func_(std::forward<F>(func))
     {
     }
 
-    void invoke(void* event_ptr) override
+    bool invoke(void* event_ptr) override
     {
         EventType& e = *static_cast<EventType*>(event_ptr);
-        func_(e);
+        return func_(e);
     }
 
     void disconnect() override { emitter_.disconnect(this); }
     void connect() override { emitter_.reconnect(this); }
-    bool is_connected() override { return emitter_.is_connected(this); }
-    uint32_t event_type() override { return event_type_; }
+    bool is_connected() override { return connected_; }
+    uint32_t event_type_id() override { return event_type_id_; }
+
+protected:
+    void set_connected(bool status) override {
+        connected_ = status;
+    }
 
 private:
     ISignal& emitter_;
-    uint32_t event_type_;
+    uint32_t event_type_id_;
     const Func func_;
+    bool connected_{true};
 };
 
 class SignalEmitter : public ISignal {
 public:
     template <typename EventType, typename F>
-    ISlot* connect(uint32_t event_type, F&& func) {
-        auto slot_ptr = make_slot<EventType>(event_type, std::forward<F>(func));
+    ISlot* connect(uint32_t type_id, F&& func) {
+        auto slot_ptr = make_slot<EventType>(type_id, std::forward<F>(func));
 
         if (emit_depth_ == 0) {
-            slots_.active[event_type].emplace_back(slot_ptr);
+            slots_.active[type_id].emplace_back(slot_ptr);
         } else {
-            pending_.active.insert(slot_ptr);
+            slots_.dirty = true;
         }
         return slot_ptr;
     }
 
     template <typename EventType, typename F>
-    ISlot* connect_later(uint32_t event_type, F&& func) {
-        auto slot_ptr = make_slot<EventType>(event_type, std::forward<F>(func));
+    ISlot* connect_later(uint32_t type_id, F&& func) {
+        auto slot_ptr = make_slot<EventType>(type_id, std::forward<F>(func));
 
-        if (emit_depth_ == 0) {
-            slots_.inactive[event_type].emplace_back(slot_ptr);
-        } else {
-            pending_.inactive.insert(slot_ptr);
-        }
+        slot_ptr->set_connected(false);
         return slot_ptr;
     }
 
     void disconnect(ISlot* slot) override {
         if (emit_depth_ == 0) {
-            move_slot(slots_.active, slots_.inactive, slot);
+            disengage(slot);
         } else {
-            pending_.active.erase(slot);
-            pending_.inactive.insert(slot);
+            slots_.dirty = true;
         }
     }
 
     void reconnect(ISlot* slot) override {
+        slot->set_connected(true);
         if (emit_depth_ == 0) {
-            move_slot(slots_.inactive, slots_.active, slot);
+            slots_.active[slot->event_type_id()].emplace_back(slot);
         } else {
-            pending_.inactive.erase(slot);
-            pending_.active.insert(slot);
-        }
-    }
-
-    bool is_connected(ISlot* slot) override {
-        auto it = slots_.active.find(slot->event_type());
-        if (it == slots_.active.end()) return false;
-
-        return std::ranges::any_of(it->second, [slot](const auto* s) {
-            return s == slot;
-        });
-    }
-
-    void process_pending() {
-        if (!pending_.inactive.empty()) {
-            for (auto* slot : pending_.inactive) {
-                move_slot(slots_.active, slots_.inactive, slot);
-            }
-            pending_.inactive.clear();
-        }
-
-        if (!pending_.active.empty()) {
-            for (auto* slot : pending_.active) {
-                move_slot(slots_.inactive, slots_.active, slot);
-            }
-            pending_.active.clear();
+            slots_.dirty = true;
         }
     }
 
     template <typename EventType>
-    void emit(EventType&& event) {
+    bool emit(EventType&& event) {
         auto it = slots_.active.find(event.type);
-        if (it == slots_.active.end()) return;
+        if (it == slots_.active.end()) return false;
+
+        bool handled = false;
 
         ++emit_depth_;
         for (auto* s : it->second) {
-            s->invoke(&event);
+            if (s->invoke(&event)) {
+                handled = true;
+                break;
+            }
         }
         --emit_depth_;
 
-        if (emit_depth_ == 0) process_pending();
+        if (slots_.dirty && emit_depth_ == 0)
+            process_pending();
+
+        return handled;
     }
 
     void clear() {
         slots_.active.clear();
-        slots_.inactive.clear();
-        pending_.active.clear();
-        pending_.inactive.clear();
         owned_.clear();
-        emit_depth_ = 0;
     }
 
 private:
@@ -763,15 +769,9 @@ private:
     using SlotMap = std::map<uint32_t, std::vector<ISlot*>>;
     struct Slots {
         SlotMap active;
-        SlotMap inactive;
+        bool dirty;
     };
     Slots slots_;
-
-    struct PendingSlots {
-        std::set<ISlot*> active;
-        std::set<ISlot*> inactive;
-    };
-    PendingSlots pending_;
 
     int emit_depth_{0};
 
@@ -783,23 +783,29 @@ private:
         return p;
     }
 
-    static void move_slot(SlotMap& from, SlotMap& to, ISlot* slot) {
-        auto et = slot->event_type();
-        auto it = from.find(et);
-        if (it == from.end()) {
-            // If it's not in from, it was pending
-            to[et].emplace_back(slot);
-            return;
-        }
+    void process_pending()
+    {
+        slots_.dirty = false;
 
-        auto& vec = it->second;
-        auto sit = std::ranges::find_if(vec, [slot](const auto s) {
-            return s == slot;
-        });
-        if (sit != vec.end()) {
-            to[et].emplace_back(*sit);
-            vec.erase(sit);
+        for (auto& slot_uptr : owned_) {
+            ISlot* slot = slot_uptr.get();
+            auto& vec = slots_.active[slot->event_type_id()];
+
+            if (slot->is_connected()) {
+                if (!std::ranges::any_of(vec, [slot](ISlot* s){ return s == slot; })) {
+                    vec.push_back(slot);
+                }
+            } else {
+                vec.erase(std::ranges::remove(vec, slot).begin(), vec.end());
+            }
         }
+    }
+
+    void disengage(ISlot* slot)
+    {
+        slot->set_connected(false);
+        auto& vec = slots_.active[slot->event_type_id()];
+        vec.erase(std::ranges::remove(vec, slot).begin(), vec.end());
     }
 };
 
@@ -811,20 +817,40 @@ struct InternalEventType {
         font_size_changed,
         value_changed,
         text_selection_changed,
+        text_find,
+        mouse_button_event
     };
+};
+
+struct Event {
+    bool handled = false;
+    virtual ~Event() = default;
+
+    virtual void dispatch_to(class Widget& w) {};
+};
+
+/*
+struct MouseButtonDownEvent : Event {
+
+};*/
+
+struct MouseButtonEvent {
+    static constexpr uint32_t type = InternalEventType::mouse_button_event;
+    int which;
+    SDL_MouseButtonEvent &e;
 };
 
 struct NewCommandInputEvent {
     static constexpr uint32_t type = InternalEventType::new_command_input;
-    std::u32string text;
+    String text;
 };
 
 struct NewInputEvent {
     static constexpr uint32_t type = InternalEventType::new_input;
-    std::u32string text;
+    String text;
 };
 
-struct ClickedEvent {
+struct ClickedEvent : Event {
     static constexpr uint32_t type = InternalEventType::clicked;
 };
 
@@ -832,9 +858,10 @@ struct FontSizeChangedEvent {
     static constexpr uint32_t type = InternalEventType::font_size_changed;
 };
 
+template <typename T>
 struct ValueChangedEvent {
     static constexpr uint32_t type = InternalEventType::value_changed;
-    int value{};
+    T value;
 };
 
 struct TextSelectionChangedEvent {
@@ -842,10 +869,15 @@ struct TextSelectionChangedEvent {
     bool selected{};
 };
 
+struct TextFindEvent {
+    static constexpr uint32_t type = InternalEventType::text_find;
+    String text;
+};
+
 
 /*
- * Stores configuration for components.
- */
+* Stores configuration for components.
+*/
 
 
 class Property {
@@ -885,7 +917,7 @@ namespace property {
     // Set any time.
     constexpr Property::Key<int> OUTPUT_SCROLLBACK { "output.scrollback" };
 
-    constexpr Property::Key<std::u32string> PROMPT_TEXT { "prompt.text" };
+    constexpr Property::Key<String> PROMPT_TEXT { "prompt.text" };
 
     // Runtime information. Read only.
     constexpr Property::Key<size_t> RT_OUTPUT_ROWS { "rt.output.rows" };
@@ -893,18 +925,17 @@ namespace property {
 }
 
 class Widget;
-SDL_Texture* create_text_texture(Widget&, const std::u32string&, const SDL_Color&);
 
 class TextEntry {
 public:
-    // A fragment is simply a chunk of text.
+    // A chunk of text within an entry
     struct Fragment {
-        std::u32string_view text;
+        StringView text;
         size_t index;
-        size_t start_offset; // 0-based start position of this fragment
-        size_t end_offset; // 0-based send position of this fragment
+        size_t start_offset; // 0-based absolute start position within entry text
+        size_t end_offset; // 0-based absolutely end position within entry text
 
-        Fragment(std::u32string_view text, size_t index, size_t start_offset, size_t end_offset)
+        Fragment(StringView text, size_t index, size_t start_offset, size_t end_offset)
         : text(text)
         , index(index)
         , start_offset(start_offset)
@@ -915,23 +946,23 @@ public:
     };
     using Fragments = std::deque<Fragment>;
 
-    TextEntryType type;
+    TextEntryType type; // To differentiate output / input
     size_t id;
-    std::u32string text; // whole text
+    String text; // whole text
     std::optional<SDL_Color> color_opt;
 
     TextEntry() = default;
 
     ~TextEntry() = default;
 
-    TextEntry(TextEntryType type, size_t id, std::u32string text, std::optional<SDL_Color>& color)
+    TextEntry(TextEntryType type, size_t id, String text, std::optional<SDL_Color>& color)
         : type(type)
         , id(id)
         , text(std::move(text))
         , color_opt(color)
         {};
 
-    auto& add_fragment(std::u32string_view text, size_t start_offset, size_t end_offset)
+    auto& add_fragment(StringView text, size_t start_offset, size_t end_offset)
     {
         fragments_.emplace_back(text, fragments_.size(), start_offset, end_offset);
         return fragments_.back();
@@ -961,7 +992,7 @@ public:
 
         auto close = [this, &range_start](int end_idx) {
             if (end_idx >= range_start) {
-                add_fragment(std::u32string_view(text).substr(range_start,
+                add_fragment(StringView(text).substr(range_start,
                                                               end_idx - range_start + 1),
                                                               range_start, end_idx);
             }
@@ -1089,7 +1120,7 @@ public:
         return ScopedColor(this, color);
     }
 
-    GlyphPosVector get_glyph_layout(const std::u32string_view& text, int x, int y)
+    GlyphPosVector get_glyph_layout(const StringView& text, int x, int y)
     {
         GlyphPosVector g_pos;
         g_pos.reserve(text.size());
@@ -1115,7 +1146,7 @@ public:
         }
     }
 
-    void render(const std::u32string_view& text, int x, int y)
+    void render(const StringView& text, int x, int y)
     {
         GlyphPosVector g_pos = get_glyph_layout(text, x, y);
         for (const auto& p : g_pos) {
@@ -1125,10 +1156,10 @@ public:
 
     // Get the surface size of a text.
     // Mono-spaced faces have the equal widths and heights.
-    void size_text(const std::u32string& s, int& w, int& h) const
+    auto size_text(const String& s) const
     {
-        w = s.length() * char_width;
-        h = line_height_with_spacing();
+        return geometry::Size{.w = int(s.length()) * char_width,
+                              .h = line_height_with_spacing()};
     }
 
     int line_height_with_spacing() const
@@ -1270,7 +1301,7 @@ public:
         sdl_console::SDL_FreeSurface(surface);
         surface = conv_surface;
 
-         // FIXME: magic numbers
+        // FIXME: magic numbers
         int cols = 16;
         int rows = 16;
         int glyph_w = surface->w / cols;
@@ -1329,10 +1360,10 @@ private:
 class MainWindow;
 
 /*
- * Shared context object for a window and its children.
- *
- * Non-movable. Non-copyable.
- */
+* Shared context object for a window and its children.
+*
+* Non-movable. Non-copyable.
+*/
 struct ImplContext {
     Property& props;
 
@@ -1345,6 +1376,8 @@ struct ImplContext {
             BMPFontLoader font_loader;
             decltype(sdl_console::SDL_GetWindowID(nullptr)) id{};
             SDL_Point mouse_pos{};
+            Widget* focus_widget { nullptr };
+            Widget* input_widget{nullptr};
 
             Window() = default;
 
@@ -1406,13 +1439,28 @@ struct Margins {
     int bottom = 0;
 };
 
-struct Layout {
+struct LayoutSpec {
     Margins margin {.left = 0, .top = 0, .right = 0, .bottom = 0};
     int stretch = 0;           // relative flex factor (0 = fixed)
-    int preferred_width = 0;
-    int preferred_height = 0;
+    int fixed_width = 0;
+    int fixed_height = 0;
     Align align = Align::Fill;
+
+    void apply_margins(SDL_Rect& r) const
+    {
+        r.x += margin.left;
+        r.y += margin.top;
+        r.w -= (margin.left + margin.right);
+        r.h -= (margin.top  + margin.bottom);
+    }
 };
+
+// Safe guard frames from 0 width and height
+static void ensure_frame(SDL_Rect& r)
+{
+    r.w = std::max(r.w, 1);
+    r.h = std::max(r.h, 1);
+}
 
 } // namespace layout
 
@@ -1422,11 +1470,12 @@ class Widget : public SignalEmitter {
 public:
     Widget* parent;
     Font* font;
-    SDL_Rect frame {};
+    // Give sane default. Width and Height should be at least 1.
+    SDL_Rect frame {.x = 0, .y = 0, .w = 1, .h = 1};
     ImplContext& context;
     Widget& window;
 
-    layout::Layout layout;
+    layout::LayoutSpec layout_spec;
 
     std::vector<std::unique_ptr<Widget>> children;
 
@@ -1487,6 +1536,10 @@ public:
 
     virtual void layout_children() {};
 
+    virtual geometry::Size preferred_size() const { return {.w = 0, .h = 0}; }
+
+    virtual bool accepts_text_input() const { return false; }
+
     virtual void resize(const SDL_Rect& new_frame) {
         frame = new_frame;
 
@@ -1505,7 +1558,27 @@ public:
         return ref;
     }
 
-    ~Widget() override = default;
+    static Widget* find_widget_at(Widget* root, int x, int y)
+    {
+        if (!root)
+            return nullptr;
+
+        if (!geometry::in_rect(x, y, root->frame))
+            return nullptr;
+
+        for (auto& child_uptr : std::views::reverse(root->children)) {
+            Widget* child = child_uptr.get();
+            if (Widget* hit = find_widget_at(child, x, y))
+                return hit;
+        }
+
+        return root;
+    }
+
+    ~Widget() override {
+        if (context.ui.window.focus_widget == this)
+            context.ui.window.focus_widget = nullptr;
+    }
 
     Widget(Widget&&) = delete;
     Widget& operator=(Widget&&) = delete;
@@ -1522,10 +1595,6 @@ public:
     : Widget(parent)
     {}
 
-    explicit VBox(ImplContext& ctx)
-    : Widget(ctx)
-    {}
-
     void render() override
     {
         for (auto& child : children) {
@@ -1540,46 +1609,51 @@ public:
         int total_stretch = 0;
         int total_fixed = 0;
 
-        const int avail_w = frame.w - (layout.margin.left + layout.margin.right);
-        const int avail_h = frame.h - (layout.margin.top + layout.margin.bottom);
+        const int avail_w = frame.w - (layout_spec.margin.left + layout_spec.margin.right);
+        const int avail_h = frame.h - (layout_spec.margin.top + layout_spec.margin.bottom);
 
         for (auto& child : children) {
-            if (child->layout.stretch > 0) {
-                total_stretch += child->layout.stretch;
+            if (child->layout_spec.stretch > 0) {
+                total_stretch += child->layout_spec.stretch;
             } else {
-                total_fixed += (child->layout.preferred_height > 0 ? child->layout.preferred_height : child->frame.h);
+                total_fixed += (child->layout_spec.fixed_height > 0 ? child->layout_spec.fixed_height : child->frame.h);
             }
         }
 
         total_fixed += spacing * (std::ssize(children) - 1);
-        int available = std::max(avail_h - total_fixed, 0);
-        int offset = frame.y + layout.margin.top;
+        // At least 1 pixel high.
+        int available = std::max(avail_h - total_fixed, 1);
+        int offset = frame.y + layout_spec.margin.top;
 
         for (size_t i = 0; i < children.size(); ++i) {
             auto& child = children[i];
             SDL_Rect r = child->frame;
 
-            r.x = frame.x + layout.margin.left;
+            r.x = frame.x + layout_spec.margin.left;
             r.w = avail_w;
 
-            if (child->layout.stretch > 0) {
-                r.h = available * child->layout.stretch / total_stretch;
-            } else if (child->layout.preferred_height > 0) {
-                r.h = child->layout.preferred_height;
-            }
+            if (child->layout_spec.stretch > 0) {
+                r.h = available * child->layout_spec.stretch / total_stretch;
+            } else if (child->layout_spec.fixed_height > 0) {
+                r.h = child->layout_spec.fixed_height;
+            } // else r.h = 1
 
             r.y = offset;
             offset += r.h;
             if (i < children.size() - 1)
                 offset += spacing;
 
+            child->layout_spec.apply_margins(r);
+
             // Horizontal alignment
-            if (child->layout.align != layout::Align::Fill) {
-                if (has_align(child->layout.align, layout::Align::HCenter))
-                    r.x = frame.x + layout.margin.left + (avail_w - r.w) / 2;
-                else if (has_align(child->layout.align, layout::Align::Right))
-                    r.x = frame.x + avail_w - r.w - layout.margin.right;
+            if (child->layout_spec.align != layout::Align::Fill) {
+                if (has_align(child->layout_spec.align, layout::Align::HCenter))
+                    r.x = frame.x + layout_spec.margin.left + (avail_w - r.w) / 2;
+                else if (has_align(child->layout_spec.align, layout::Align::Right))
+                    r.x = frame.x + avail_w - r.w - layout_spec.margin.right;
             }
+
+            layout::ensure_frame(r);
             child->resize(r);
         }
     }
@@ -1591,10 +1665,6 @@ public:
 
     explicit HBox(Widget* parent)
     : Widget(parent)
-    {}
-
-    explicit HBox(ImplContext& ctx)
-    : Widget(ctx)
     {}
 
     void render() override
@@ -1612,51 +1682,56 @@ public:
         int total_stretch = 0;
         int total_fixed = 0;
 
-        const int avail_w = frame.w - (layout.margin.left + layout.margin.right);
-        const int avail_h = frame.h - (layout.margin.top + layout.margin.bottom);
+        const int avail_w = frame.w - (layout_spec.margin.left + layout_spec.margin.right);
+        const int avail_h = frame.h - (layout_spec.margin.top + layout_spec.margin.bottom);
 
         for (auto& child : children) {
-            if (child->layout.stretch > 0) {
-                total_stretch += child->layout.stretch;
+            if (child->layout_spec.stretch > 0) {
+                total_stretch += child->layout_spec.stretch;
             } else {
-                total_fixed += (child->layout.preferred_width  > 0 ? child->layout.preferred_width  : child->frame.w);
+                total_fixed += (child->layout_spec.fixed_width  > 0 ? child->layout_spec.fixed_width  : child->frame.w);
             }
         }
 
         total_fixed += spacing * (std::ssize(children) - 1);
-        int available = std::max(avail_w - total_fixed, 0);
-        int offset = frame.x + layout.margin.left;
+        // At least 1 pixel wide.
+        int available = std::max(avail_w - total_fixed, 1);
+        int offset = frame.x + layout_spec.margin.left;
 
         for (size_t i = 0; i < children.size(); ++i) {
             auto& child = children[i];
             SDL_Rect r = child->frame;
 
-            r.y = frame.y + layout.margin.top;
+            r.y = frame.y + layout_spec.margin.top;
 
-            if (child->layout.preferred_height > 0) {
-                r.h = child->layout.preferred_height;
+            if (child->layout_spec.fixed_height > 0) {
+                r.h = child->layout_spec.fixed_height;
             } else {
                 r.h = avail_h;
             }
 
-            if (child->layout.stretch > 0) {
-                r.w = available * child->layout.stretch / total_stretch;
-            } else if (child->layout.preferred_width >  0) {
-                r.w = child->layout.preferred_width;
-            }
+            if (child->layout_spec.stretch > 0) {
+                r.w = available * child->layout_spec.stretch / total_stretch;
+            } else if (child->layout_spec.fixed_width >  0) {
+                r.w = child->layout_spec.fixed_width;
+            } // else r.w = 1
 
             r.x = offset;
             offset += r.w;
             if (i < children.size() - 1)
                 offset += spacing;
 
+            child->layout_spec.apply_margins(r);
+
             // Vertical alignment
-            if (child->layout.align != layout::Align::Fill) {
-                if (layout::has_align(child->layout.align, layout::Align::VCenter))
+            if (child->layout_spec.align != layout::Align::Fill) {
+                if (layout::has_align(child->layout_spec.align, layout::Align::VCenter))
                     r.y = frame.y + (avail_h - r.h) / 2;
-                else if (layout::has_align(child->layout.align, layout::Align::Bottom))
+                else if (layout::has_align(child->layout_spec.align, layout::Align::Bottom))
                     r.y = frame.y + (avail_h - r.h);
             }
+
+            layout::ensure_frame(r);
             child->resize(r);
         }
     }
@@ -1666,6 +1741,9 @@ class Cursor {
 private:
     SDL_Renderer* const renderer_;
     size_t position_ { 0 };
+    uint64_t last_blink_time_{0};
+    bool blink_on_{false};
+    static constexpr uint32_t blink_interval_ms{500};
 public:
     SDL_Rect rect;
     bool visible{true}; // false when scrolling away from the line it sits on
@@ -1673,6 +1751,16 @@ public:
 
     explicit Cursor(SDL_Renderer* renderer) : renderer_(renderer)
     {
+    }
+
+    void update_blink()
+    {
+        uint64_t now = SDL_GetTicks64();
+        if (now - last_blink_time_ >= blink_interval_ms) {
+            blink_on_ = !blink_on_;
+            visible = blink_on_;
+            last_blink_time_ = now;
+        }
     }
 
     size_t position() const
@@ -1734,6 +1822,130 @@ public:
     Cursor& operator=(Cursor&&) = delete;
 };
 
+class SingleLineEdit : public Widget {
+public:
+    String text;
+    Cursor cursor;
+    std::optional<SDL_Color> color;
+    int text_baseline_y { 0 };
+    int text_start_x { 0 };
+    size_t max_visible_chars{20};
+    size_t scroll_chars { 0 };
+
+    explicit SingleLineEdit(Widget* parent)
+    : Widget(parent), cursor(renderer())
+    {
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
+            auto str = text::from_utf8(e.text);
+            cursor = text::insert_at(text, cursor.position(), str);
+            adjust_scroll();
+            rebuild_cursor();
+            emit(ValueChangedEvent<String>{.value = text});
+            return true;
+        });
+
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+            on_SDL_KEYDOWN(e);
+            return true;
+        });
+    }
+
+    void on_SDL_KEYDOWN(const SDL_KeyboardEvent& e)
+    {
+        // TODO: check if keysym.sym mapping is universally locale friendly
+        auto sym = e.keysym.sym;
+        switch (sym) {
+            case SDLK_BACKSPACE:
+                backspace();
+                break;
+
+            case SDLK_LEFT:
+                --cursor;
+                break;
+
+            case SDLK_RIGHT:
+                if (cursor.position() < text.length())
+                    ++cursor;
+                break;
+
+            case SDLK_HOME:
+                cursor = 0;
+                break;
+
+            case SDLK_END:
+                cursor = text.length();
+                break;
+            default:;
+        }
+
+        adjust_scroll();
+    }
+
+    void resize(const SDL_Rect& r) override {
+        frame = r;
+        compute_text_baseline();
+        text_start_x = frame.x + font->char_width;
+        max_visible_chars = (frame.w - 2 * font->char_width) / font->char_width;
+        rebuild_cursor();
+    }
+
+    void compute_text_baseline() {
+        const int text_height = font->line_height;
+        const int available = frame.h - 4;
+        text_baseline_y = frame.y + 2 + (available - text_height) / 2;
+    }
+
+    void backspace()
+    {
+        cursor = text::backspace(text, cursor.position());
+    }
+
+    void rebuild_cursor()
+    {
+        cursor.rect.x = text_start_x + ((cursor.position() - scroll_chars) * font->char_width);
+        cursor.rebuild = false;
+    }
+
+
+    void adjust_scroll() {
+        if (cursor.position() < scroll_chars) {
+            scroll_chars = cursor.position(); // scroll left
+        } else if (cursor.position() >= scroll_chars + max_visible_chars) {
+            scroll_chars = cursor.position() - max_visible_chars + 1; // scroll right
+        }
+
+        if (scroll_chars > text.size() - max_visible_chars)
+            scroll_chars = std::max(0UL, text.size() - max_visible_chars);
+    }
+
+    void render() override
+    {
+        if (cursor.rebuild) {
+            rebuild_cursor();
+        }
+        set_draw_color(renderer(), {0, 0, 0, 255});
+        SDL_RenderFillRect(renderer(), &frame);
+
+        int first_char = scroll_chars;
+        String visible_text = text.substr(first_char, max_visible_chars);
+
+        SDL_Point pos{ text_start_x, text_baseline_y };
+        font->render(visible_text, pos.x, pos.y);
+        cursor.update_blink();
+        cursor.rect = {cursor.rect.x, text_baseline_y, 2, font->line_height_with_spacing()};
+        cursor.render();
+    }
+
+    geometry::Size preferred_size() const override {
+        geometry::Size sz;
+        sz.w = max_visible_chars * font->char_width + 4;
+        sz.h = font->line_height_with_spacing() * 2;
+        return sz;
+    }
+
+    bool accepts_text_input() const override { return true; }
+};
+
 struct VisibleRow {
     //TextEntry& entry;
     size_t entry_id;
@@ -1750,7 +1962,7 @@ struct VisibleRowsCache {
     VisibleRow* find_row_at_y(Font* font, int y)
     {
         auto it = std::ranges::find_if(rows, [font, y](VisibleRow const& r) {
-            return geometry::is_y_within_bounds(y, r.coord.y, font->line_height);
+            return geometry::is_y_within_bounds(y, r.coord.y, font->line_height_with_spacing());
         });
 
         if (it != rows.end()) {
@@ -1767,17 +1979,17 @@ public:
     // Holds wrapped lines from input
     TextEntry entry;
     // The text of the prompt itself.
-    std::u32string prompt_text;
+    String prompt_text;
     // The input portion of the prompt.
-    std::u32string* input;
-    std::u32string saved_input;
+    String* input;
+    String saved_input;
     Cursor cursor;
     bool rebuild { true };
     /*
-     * For input history.
-     * use deque to hold a stable reference.
-     */
-    std::deque<std::u32string> history;
+    * For input history.
+    * use deque to hold a stable reference.
+    */
+    std::deque<String> history;
     int history_index;
 
     explicit Prompt(Widget* parent)
@@ -1787,12 +1999,14 @@ public:
 
         set_prompt_text(props().get(property::PROMPT_TEXT).value_or(U"> "));
 
-        window.connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
             on_SDL_KEYDOWN(e);
+            return true;
         });
 
-        window.connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
-            put_input_at_cursor(text::from_utf8(e.text));
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
+            insert_at_cursor(text::from_utf8(e.text));
+            return true;
         });
     }
 
@@ -1807,7 +2021,7 @@ public:
     {
         auto* str = sdl_console::SDL_GetClipboardText();
         if (*str != '\0') {
-            put_input_at_cursor(text::from_utf8(str));
+            insert_at_cursor(text::from_utf8(str));
         }
         // Always free, even when empty.
         sdl_console::SDL_free(str);
@@ -1819,7 +2033,7 @@ public:
         auto sym = e.keysym.sym;
         switch (sym) {
         case SDLK_BACKSPACE:
-            erase_input();
+            backspace();
             break;
 
         case SDLK_UP:
@@ -1870,7 +2084,7 @@ public:
         }
     }
 
-    void set_command_history(std::deque<std::u32string> saved_history)
+    void set_command_history(std::deque<String> saved_history)
     {
         std::swap(history, saved_history);
         input = &history.emplace_back(U"");
@@ -1913,18 +2127,18 @@ public:
         wrap_text();
     }
 
-    void set_prompt_text(const std::u32string& value)
+    void set_prompt_text(const String& value)
     {
         prompt_text = value;
         wrap_text();
     }
 
     /*
-     * Set the current line. We can go UP (next) or DOWN (previous) through the
-     * lines. This function essentially acts as a history viewer. This function
-     * will skip lines with zero length. The cursor is always set to the length of
-     * the line's input.
-     */
+    * Set the current line. We can go UP (next) or DOWN (previous) through the
+    * lines. This function essentially acts as a history viewer. This function
+    * will skip lines with zero length. The cursor is always set to the length of
+    * the line's input.
+    */
     void set_input_from_history(const ScrollAction sa)
     {
         if (history.empty()) { return; }
@@ -1942,40 +2156,22 @@ public:
         wrap_text();
     }
 
-    void put_input_at_cursor(const std::u32string& str)
+    void insert_at_cursor(const String& str)
     {
-        /* if cursor is at end of line, it's a simple concatenation */
-        if (cursor.position() == input->length()) {
-            *input += str;
-        } else {
-        /* else insert text into line at cursor's index */
-            input->insert(cursor.position(), str);
-        }
-        cursor += str.length();
-
+        cursor = text::insert_at(*input, cursor.position(), str);
         wrap_text();
     }
 
-    void set_input(const std::u32string& str)
+    void set_input(const String& str)
     {
         *input = str;
         cursor = str.length();
         wrap_text();
     }
 
-    void erase_input()
+    void backspace()
     {
-        if (cursor.position() == 0 || input->empty()) {
-            return;
-        }
-
-        if (input->length() == cursor.position()) {
-            input->pop_back();
-        } else {
-            /* else shift the text from cursor left by one character */
-            input->erase(cursor.position()-1, 1);
-        }
-        --cursor;
+        cursor = text::backspace(*input, cursor.position());
         wrap_text();
     }
 
@@ -2009,7 +2205,7 @@ public:
     void update_cursor_geometry_for_render(std::span<const VisibleRow> vrows)
     {
         if (entry.fragments().empty()) { // Shouldn't happen'
-             return;
+            return;
         }
 
         // cursor's starting position
@@ -2082,19 +2278,19 @@ private:
     Thumb thumb_;
 
 public:
-    Scrollbar(Widget* parent)
+    explicit Scrollbar(Widget* parent)
         : Widget(parent)
     {
         window.connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
-            on_SDL_MOUSEBUTTONDOWN(e);
+            return on_SDL_MOUSEBUTTONDOWN(e);
         });
 
         window.connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
-            on_SDL_MOUSEBUTTONUP(e);
+            return on_SDL_MOUSEBUTTONUP(e);
         });
 
         mouse_motion_slot_ = window.connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](auto& e) {
-            on_SDL_MOUSEMOTION(e);
+            return on_SDL_MOUSEMOTION(e);
         });
 
         thumb_.rect = frame;
@@ -2154,10 +2350,10 @@ private:
         move_thumb_to(track_position_from_scroll_offset());
     }
 
-    void on_SDL_MOUSEBUTTONDOWN(auto& e)
+    bool on_SDL_MOUSEBUTTONDOWN(auto& e)
     {
         if (!geometry::in_rect(e.x, e.y, frame)) {
-            return;
+            return false;
         }
 
         if (!mouse_motion_slot_->is_connected()) {
@@ -2167,25 +2363,29 @@ private:
         depressed_ = true;
         scroll_offset_ = scroll_offset_from_track_position(e.y);
         move_thumb_to(track_position_from_scroll_offset());
-        emit(ValueChangedEvent{.value = scroll_offset_});
+        emit(ValueChangedEvent<int>{.value = scroll_offset_});
+        return true;
     }
 
-    void on_SDL_MOUSEBUTTONUP(auto& /*e*/)
+    bool on_SDL_MOUSEBUTTONUP(auto& /*e*/)
     {
         if (depressed_) {
             depressed_ = false;
             mouse_motion_slot_->disconnect();
+            return true;
         }
+        return false;
     }
 
-    void on_SDL_MOUSEMOTION(auto& e)
+    bool on_SDL_MOUSEMOTION(auto& e)
     {
-        if (!depressed_) { return; }
+        if (!depressed_) { return false; }
 
         scroll_offset_ = scroll_offset_from_track_position(e.y);
         move_thumb_to(track_position_from_scroll_offset());
 
-        emit(ValueChangedEvent{.value = scroll_offset_});
+        emit(ValueChangedEvent<int>{.value = scroll_offset_});
+        return true;
     }
 
     int calculate_thumb_position(int target_y)
@@ -2247,79 +2447,89 @@ private:
 
 class Button : public Widget {
 public:
-    Button(Widget* parent, std::u32string& label)
+    Button(Widget* parent, String label)
         : Widget(parent)
-        , label(label)
+        , label(std::move(label))
     {
-        resize_button();
-        window.connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
-            on_SDL_MOUSEBUTTONDOWN(e);
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
+            return on_SDL_MOUSEBUTTONDOWN(e);
         });
 
-        window.connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
-            on_SDL_MOUSEBUTTONUP(e);
-        });
-
-        font->connect<FontSizeChangedEvent>(InternalEventType::font_size_changed, [this](auto& /*e*/) {
-            resize_button();
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
+            return on_SDL_MOUSEBUTTONUP(e);
         });
     }
 
-    void resize(const SDL_Rect& /*r*/) override
+    void resize(const SDL_Rect& r) override
     {
-        label_rect.x = frame.x + (frame.w / 2) - (label_rect.w / 2);
-        label_rect.y = (frame.h / 2) - (label_rect.h / 2);
-        resize_button();
+        frame = r;
+
+        auto sz = font->size_text(label);
+        label_rect.w = sz.w;
+        label_rect.h = sz.h;
+
+        // Center label within the frame
+        label_rect.x = frame.x + (frame.w - label_rect.w) / 2;
+        label_rect.y = frame.y + (frame.h - label_rect.h) / 2;
     }
 
-    void resize_button()
-    {
-        font->size_text(this->label, label_rect.w, label_rect.h);
-        frame.w = label_rect.w + (font->char_width * 2);
-    }
-
-    void on_SDL_MOUSEBUTTONDOWN(SDL_MouseButtonEvent& e)
+    bool on_SDL_MOUSEBUTTONDOWN(SDL_MouseButtonEvent& e)
     {
         if (!geometry::in_rect(e.x, e.y, frame)) {
-            return;
+            return false;
         }
         depressed = true;
+        return true;
     }
 
-    void on_SDL_MOUSEBUTTONUP(SDL_MouseButtonEvent& e)
+    bool on_SDL_MOUSEBUTTONUP(SDL_MouseButtonEvent& e)
     {
         if (!geometry::in_rect(e.x, e.y, frame)) {
             if (depressed) {
                 depressed = false;
             }
-            return;
+            return false;
         }
 
         if (depressed) {
             emit(ClickedEvent{});
             depressed = false;
         }
+        return true;
     }
 
     void render() override
     {
-        if (enabled) {
-            SDL_Point coord = mouse_pos();
-            if (depressed) {
-                set_draw_color(renderer(), colors::teal);
-                sdl_console::SDL_RenderFillRect(renderer(), &frame);
-                // SDL_RenderDrawRect(ui.renderer, &w.rect);
-                set_draw_color(renderer(), colors::darkgray);
-            } else if (geometry::in_rect(coord, frame)) {
-                set_draw_color(renderer(), colors::teal);
-                sdl_console::SDL_RenderDrawRect(renderer(), &frame);
-                set_draw_color(renderer(), colors::darkgray);
-            }
-            font->render(label, label_rect.x, label_rect.y);
-        } else {
+        if (!enabled) {
             auto scoped_color = font->set_color(colors::mediumgray);
             font->render(label, label_rect.x, label_rect.y);
+            return;
         }
+
+        int offset = 0;
+        SDL_Point coord = mouse_pos();
+        const bool hovered = geometry::in_rect(coord, frame);
+
+        if (depressed) {
+            offset = 1; // click effect
+            set_draw_color(renderer(), colors::teal);
+            SDL_RenderFillRect(renderer(), &frame);
+            set_draw_color(renderer(), colors::darkgray);
+        } else if (hovered) {
+            set_draw_color(renderer(), colors::teal);
+            SDL_RenderDrawRect(renderer(), &frame);
+            set_draw_color(renderer(), colors::darkgray);
+        }
+
+        font->render(label,
+                     label_rect.x + offset,
+                     label_rect.y + offset);
+    }
+
+    geometry::Size preferred_size() const override {
+        auto sz = font->size_text(label);
+        return { .w = sz.w + (font->char_width * 2),
+                 .h = sz.h + (font->line_height_with_spacing()) };
     }
 
     Button(Button&&) = delete;
@@ -2328,7 +2538,7 @@ public:
     Button(const Button&) = delete;
     Button& operator=(const Button&) = delete;
 
-    std::u32string label;
+    String label;
     SDL_Rect label_rect {};
     bool depressed { false };
     bool enabled { true };
@@ -2341,12 +2551,10 @@ public:
     void render() override;
     void resize(const SDL_Rect& rect) override;
     void layout_buttons();
-    Button* add_button(std::u32string text);
+    Button* add_button(const String& text);
     int compute_widgets_startx();
     Toolbar(const Toolbar&) = delete;
     Toolbar& operator=(const Toolbar&) = delete;
-    // Should be changed to children and probably moved to base class
-    std::deque<std::unique_ptr<Widget>> widgets;
 };
 
 class CommandPipe {
@@ -2357,10 +2565,11 @@ public:
     {
         emitter.connect<NewCommandInputEvent>(InternalEventType::new_command_input, [this](auto& e) {
             push(e.text);
+            return false;
         });
     }
 
-    void push(const std::u32string& s)
+    void push(const String& s)
     {
         {
             std::scoped_lock lock(mutex_);
@@ -2407,7 +2616,7 @@ public:
 private:
     std::condition_variable_any cv_;
     std::recursive_mutex mutex_;
-    std::queue<std::u32string> queue_;
+    std::queue<String> queue_;
     bool shutdown_{false};
 };
 
@@ -2493,14 +2702,14 @@ public:
         return rects;
     }
 
-std::vector<std::u32string_view> get_selected_text(std::deque<TextEntry>& entries) const
+std::vector<StringView> get_selected_text(std::deque<TextEntry>& entries) const
 {
     if (!active()) return {};
 
     // normalize so we always go from top to bottom
     const auto [top, bottom] = std::minmax(begin, end);
 
-    std::vector<std::u32string_view> result;
+    std::vector<StringView> result;
 
     for (auto& entry : entries | std::views::reverse) {
         if (entry.id < top.entry_id || entry.id > bottom.entry_id)
@@ -2515,11 +2724,11 @@ std::vector<std::u32string_view> get_selected_text(std::deque<TextEntry>& entrie
     return result;
 }
 
-std::vector<std::u32string_view> get_selected_text_from_one(TextEntry& entry) const
+std::vector<StringView> get_selected_text_from_one(TextEntry& entry) const
 {
     const auto [top, bottom] = std::minmax(begin, end);
 
-    std::vector<std::u32string_view> result;
+    std::vector<StringView> result;
     if (entry.id < top.entry_id || entry.id > bottom.entry_id)
         return result;// skip outside selection
 
@@ -2545,6 +2754,177 @@ std::vector<std::u32string_view> get_selected_text_from_one(TextEntry& entry) co
 
 };
 
+class TextFinder {
+public:
+    struct Match {
+        size_t entry_id;
+        size_t frag_index;
+        size_t start_col;  // column in fragment
+        size_t end_col;    // column in fragment
+    };
+
+    void clear() { matches.clear(); }
+    bool empty() const { return matches.empty(); }
+
+    void find(std::deque<TextEntry>& entries, StringView needle)
+    {
+        clear();
+        if (needle.empty()) return;
+
+        for (auto& entry : entries) {
+            size_t pos = 0;
+            while ((pos = entry.text.find(needle, pos)) != String::npos) {
+                size_t match_start = pos;
+                size_t match_end = pos + needle.size();
+
+                for (auto& frag : entry.fragments()) {
+                    if (frag.end_offset <= match_start) continue;  // fragment ends before match
+                    if (frag.start_offset >= match_end) break;     // fragment starts after match
+
+                    size_t local_start = std::max(match_start, frag.start_offset) - frag.start_offset;
+                    size_t local_end   = std::min(match_end, frag.end_offset) - frag.start_offset;
+
+                    matches.push_back({entry.id, frag.index, local_start, local_end});
+                }
+
+                pos = match_end; // advance past current match
+            }
+        }
+    }
+
+    const std::vector<Match>& all_matches() const { return matches; }
+
+    std::vector<SDL_Rect> to_rects(const Font* font,
+                                   std::span<const VisibleRow> rows) const
+    {
+        std::vector<SDL_Rect> rects;
+        for (const auto& m : matches) {
+            for (const auto& row : rows) {
+                if (row.entry_id != m.entry_id || row.frag.index != m.frag_index)
+                    continue;
+
+                int x = int(m.start_col * font->char_width);
+                int w = int((m.end_col - m.start_col) * font->char_width);
+                int y = row.coord.y;
+                int h = font->line_height_with_spacing();
+
+                rects.push_back({x, y, w, h});
+            }
+        }
+        return rects;
+    }
+
+private:
+    std::vector<Match> matches;
+};
+
+class FindWidget : public Widget {
+    HBox* layout_ptr;
+    SingleLineEdit* edit_ptr;
+
+public:
+    std::function<void(FindWidget*)> on_close;
+
+    explicit FindWidget(Widget* parent)
+    : Widget(parent)
+    {
+        auto& layout = add_child<HBox>();
+        layout_ptr = &layout;
+
+     //   auto& spacer = layout.add_child<HBox>();
+      //  spacer.layout_spec.stretch = 1;
+
+        geometry::Size sz;
+        auto& e = layout.add_child<SingleLineEdit>();
+        edit_ptr = &e;
+        e.text = U"";
+        e.max_visible_chars = 30;
+        e.layout_spec.stretch = 0;
+        e.layout_spec.align = layout::Align::Right | layout::Align::Top;
+        sz = e.preferred_size();
+        e.layout_spec.fixed_width = sz.w;
+        e.layout_spec.fixed_height = sz.h;
+        e.connect<ValueChangedEvent<String>>(InternalEventType::value_changed, [this](ValueChangedEvent<String>& e) {
+            window.emit(TextFindEvent{.text = e.value});
+            return true;
+        });
+
+        auto& next = layout.add_child<Button>(U"next");
+        sz = next.preferred_size();
+        next.layout_spec.fixed_width = sz.w;
+        next.layout_spec.fixed_height = sz.h;
+        next.layout_spec.align = layout::Align::Right | layout::Align::Top;
+
+        auto& prev = layout.add_child<Button>(U"prev");
+        sz = prev.preferred_size();
+        prev.layout_spec.fixed_width = sz.w;
+        prev.layout_spec.fixed_height = sz.h;
+        prev.layout_spec.align = layout::Align::Right | layout::Align::Top;
+
+        auto&x = layout.add_child<Button>(U"X"); // close
+        sz = x.preferred_size();
+        x.layout_spec.fixed_width = sz.w;
+        x.layout_spec.fixed_height = sz.h;
+        x.layout_spec.align = layout::Align::Right | layout::Align::Top;
+        x.connect<ClickedEvent>(InternalEventType::clicked, [this](auto&) -> bool {
+            if (on_close)
+                on_close(this);
+            return true;
+        });
+
+        layout.layout_children();
+
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
+            if (edit_ptr)
+                edit_ptr->emit(e);
+            return true;
+        });
+
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+            if (edit_ptr)
+                edit_ptr->emit(e);
+            return true;
+        });
+
+        /* testing
+        window.connect<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](auto& e) {
+            // do stuff
+            return false;
+        });*/
+    }
+
+    void render() override {
+        set_draw_color(renderer(), colors::darkgray);
+        sdl_console::SDL_RenderFillRect(renderer(), &frame); // paint a background layer to cover output history
+        layout_ptr->render();
+    }
+
+    void resize(const SDL_Rect& r) override {
+        // We want this widget to snap to the top right corner
+        // of the history, and only take up the necessary width.
+        // NOTE: It shouldn't be necessary to fetch the parent's frame
+        // here (outputpane). this->frame should already be set to it.
+        int fw = 0;
+        // Let some history show to the left of this widget.
+        for(auto& child : layout_ptr->children) {
+            fw += child->frame.w;
+        }
+        //fw += 16;
+        const int fh = font->line_height_with_spacing() * 2;
+        const auto& pf = parent->frame;
+
+        frame.x = pf.x + pf.w - fw;
+        frame.y = pf.y + 2;
+        frame.w = fw;
+        frame.h = fh;
+
+        layout_ptr->frame = frame;
+        layout_ptr->layout_children();
+    }
+
+    bool accepts_text_input() const override { return true; }
+};
+
 class OutputPane : public Widget {
 public:
     // Use deque to hold a stable reference.
@@ -2552,13 +2932,13 @@ public:
     VisibleRowsCache visible_rows;
     Prompt prompt;
     Scrollbar* scrollbar{nullptr};
-    // Scrollbar could be made optional.
     int scroll_offset { 0 };
-    SDL_Rect content_rect;
+    SDL_Rect content_frame;
     int scrollback_;
-    int num_lines { 0 };
+    int total_lines { 0 };
     bool depressed { false };
     TextSelection text_selection;
+    TextFinder text_finder;
     ISlot* mouse_motion_slot { nullptr };
 
     explicit OutputPane(Widget* parent)
@@ -2570,47 +2950,65 @@ public:
         prompt.connect<NewCommandInputEvent>(InternalEventType::new_command_input, [this](auto& e)
         {
             new_input(e.text);
+            return false;
         });
 
         prompt.connect<NewInputEvent>(InternalEventType::new_input, [this](auto& e)
         {
             new_input(e.text);
+            return true;
         });
 
         font->connect<FontSizeChangedEvent>(InternalEventType::font_size_changed, [this](auto& /*e*/)
         {
             resize(frame);
+            return false;;
         });
 
-        window.connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
+        window.connect<TextFindEvent>(InternalEventType::text_find, [this](auto& e)
+        {
+            text_finder.find(entries, e.text);
+            return true;
+        });
+
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
             on_SDL_MOUSEBUTTONDOWN(e);
+            return true;
         });
 
-        window.connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
             on_SDL_MOUSEBUTTONUP(e);
+            return true;
         });
 
         window.connect<SDL_MouseWheelEvent>(SDL_MOUSEWHEEL, [this](auto& e) {
             scroll(e.y);
+            return true;
         });
 
         mouse_motion_slot = window.connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](auto& e) {
             if (depressed) {
-                end_text_selection(map_to({ e.x, e.y }, content_rect));
+                end_text_selection(map_to({ e.x, e.y }, content_frame));
 
                 if (e.y > this->frame.h) {
                     scroll(-1);
                 } else if (e.y < 0) {
                     scroll(1);
                 }
+
+                return true;
             }
+            return false;
         });
 
-        window.connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+            prompt.emit(e);
             on_SDL_KEYDOWN(e);
+            return true;
         });
 
-        window.connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& /*e*/) {
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
+            prompt.emit(e);
             // When inputting into the prompt, we should keep anchored to the
             // bottom so the prompt is visible.
             // We also need to adjust the scrollbar range as the prompt may span
@@ -2618,7 +3016,9 @@ public:
             // TODO: maybe it should connect to prompt for this.
             set_scroll_offset(0);
             if (scrollbar)
-                scrollbar->set_content_size(num_lines + prompt.entry.size());
+                scrollbar->set_content_size(total_lines + prompt.entry.size());
+
+            return true;
         });
     }
 
@@ -2634,8 +3034,9 @@ public:
         scrollbar->set_page_size(rows());
         scrollbar->set_content_size(1); // account for prompt
 
-        scrollbar->connect<ValueChangedEvent>(InternalEventType::value_changed, [this](auto& e) {
+        scrollbar->connect<ValueChangedEvent<int>>(InternalEventType::value_changed, [this](auto& e) {
             set_scroll_offset_from_scrollbar(e.value);
+            return true;
         });
     }
 
@@ -2643,7 +3044,7 @@ public:
     {
         auto sym = e.keysym.sym;
         switch (sym) {
-        case SDLK_TAB:
+            case SDLK_TAB: // FIXME: belongs in prompt
         {
             std::thread cmdhelper([input = text::to_utf8(*prompt.input)]() {
                 auto& core = DFHack::Core::getInstance();
@@ -2670,14 +3071,14 @@ public:
         }
             break;
         /* copy */
-        case SDLK_c:
+        case SDLK_c: // FIXME: belongs in prompt
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
                 copy_selected_text_to_clipboard();
             }
             break;
 
         /* paste */
-        case SDLK_v:
+        case SDLK_v: // FIXME: belongs in prompt
             if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
                 prompt.put_input_from_clipboard();
             }
@@ -2706,7 +3107,7 @@ public:
 
     void on_SDL_MOUSEBUTTONDOWN(SDL_MouseButtonEvent& e)
     {
-        if (!geometry::in_rect(e.x, e.y, content_rect)) {
+        if (!geometry::in_rect(e.x, e.y, content_frame)) {
             return;
         }
 
@@ -2714,28 +3115,26 @@ public:
             return;
         }
 
-        SDL_Point point = map_to({e.x, e.y}, content_rect);
+        SDL_Point point = map_to({e.x, e.y}, content_frame);
 
-        // TODO: cleanup text selection bidness, this is ugly.
         if (e.clicks == 1) {
             begin_text_selection(point);
         } else if (e.clicks == 2) {
             const auto* frag = find_fragment_at_y(point.y);
             if (frag) {
-                auto wordpos = text::find_run(std::u32string(frag->text), get_column(point.x));
+                auto wordpos = text::find_run(String(frag->text), get_column(point.x));
 
-                auto get_x = [this](std::u32string::size_type pos, int fallback) -> int {
-                    return (pos != std::u32string::npos) ? pos * font->char_width : fallback;
+                auto get_x = [this](String::size_type pos, int fallback) -> int {
+                    return (pos != String::npos) ? pos * font->char_width : fallback;
                 };
 
-                begin_text_selection({get_x(wordpos.first, content_rect.x), point.y});
+                begin_text_selection({get_x(wordpos.first, content_frame.x), point.y});
                 // wordpos is 0-based
-                end_text_selection({get_x(wordpos.second+1, content_rect.w), point.y});
+                end_text_selection({get_x(wordpos.second+1, content_frame.w), point.y});
             }
         } else if (e.clicks == 3) {
-            // NOTE: 0 for x doesn't work.
-            begin_text_selection({content_rect.x, point.y});
-            end_text_selection({content_rect.w, point.y});
+            begin_text_selection({content_frame.x, point.y});
+            end_text_selection({content_frame.w, point.y});
         }
 
         depressed = true;
@@ -2754,7 +3153,7 @@ public:
     void clear()
     {
         entries.clear();
-        num_lines = 0;
+        total_lines = 0;
         set_scroll_offset(0);
         if (scrollbar)
             scrollbar->set_content_size(1);
@@ -2783,8 +3182,9 @@ public:
         auto* vr = visible_rows.find_row_at_y(font, p.y);
         if (!vr) return;
         auto col = get_column(p.x);
-      //  col = std::clamp(col, 0UL, vr->frag.text.size() - 1);
-        text_selection.begin = {.entry_id = vr->entry_id,
+    //  col = std::clamp(col, 0UL, vr->frag.text.size() - 1);
+        text_selection.begin = {
+            .entry_id = vr->entry_id,
             .frag_index = vr->frag.index,
             .column = col};
         emit_text_selection_changed();
@@ -2796,7 +3196,8 @@ public:
         if (!vr) return;
         auto col = get_column(p.x);
         //col = std::clamp(col, std::size_t(0), vr->frag.text.size() - 1);
-        text_selection.end = {.entry_id = vr->entry_id,
+        text_selection.end = {
+            .entry_id = vr->entry_id,
             .frag_index = vr->frag.index,
             .column = col};
 
@@ -2841,7 +3242,7 @@ public:
             break;
         }
 
-        int max = (int)std::max(0UL, (num_lines + prompt.entry.size()) - rows());
+        int max = (int)std::max(0UL, (total_lines + prompt.entry.size()) - rows());
         set_scroll_offset(std::clamp(scroll_offset + step, 0, max));
     }
 
@@ -2850,9 +3251,9 @@ public:
         frame = rect;
 
         set_content_rect();
-        prompt.resize(content_rect);
+        prompt.resize(content_frame);
 
-        num_lines = 0;
+        total_lines = 0;
         for (auto& e : entries) {
             wrap_text(e);
         }
@@ -2861,39 +3262,32 @@ public:
 
         context.props.set(property::RT_OUTPUT_COLUMNS, columns());
         context.props.set(property::RT_OUTPUT_ROWS, rows());
+
+        if (scrollbar)
+            scrollbar->set_page_size(rows());
     }
 
     /*
-     * Adjust content_rect dimensions to align with margin and font properties.
-     * For character alignment consistency, content_rect must be divisible
-     * into rows and columns that match the font's fixed character dimensions.
-     */
+    * Adjust content_rect dimensions to align with font properties.
+    * For character alignment consistency, content_rect must be divisible
+    * into rows and columns that match the font's fixed character dimensions.
+    */
     void set_content_rect()
     {
-        content_rect = frame;
+        content_frame = frame;
 
-        const int margin = 4; // // Margin around the viewport in px.
+        content_frame.w = (content_frame.w / font->char_width) * font->char_width;
+        content_frame.h = (content_frame.h / font->line_height_with_spacing()) * font->line_height_with_spacing();
 
-        // max width respect to font and margin
-        const int max_width = content_rect.w - (margin * 2);
-        const int wfit = (max_width / font->char_width) * font->char_width;
-
-        // max height with respect to font and margin
-        const int max_height = content_rect.h - (margin * 2);
-        const int hfit = (max_height / font->line_height_with_spacing()) * font->line_height_with_spacing();
-
-        content_rect.x = frame.x + margin;
-        content_rect.y = frame.y + margin;
-        content_rect.w = wfit;
-        content_rect.h = hfit;
+        layout::ensure_frame(content_frame);
     }
 
-    void new_output(const std::u32string& text, std::optional<SDL_Color> color)
+    void new_output(const String& text, std::optional<SDL_Color> color)
     {
         create_entry(TextEntryType::output, text, color);
     }
 
-    void new_input(const std::u32string& text)
+    void new_input(const String& text)
     {
         auto both = prompt.prompt_text + text;
         create_entry(TextEntryType::input, both, std::nullopt);
@@ -2902,28 +3296,28 @@ public:
     void wrap_text(
         TextEntry& entry)
     {
-        entry.wrap_text(font->char_width, content_rect.w);
-        num_lines += entry.size();
+        entry.wrap_text(font->char_width, content_frame.w);
+        total_lines += entry.size();
         if (scrollbar)
-            scrollbar->set_content_size(num_lines + prompt.entry.size());
+            scrollbar->set_content_size(total_lines + prompt.entry.size());
         visible_rows.rebuild = true;
     }
 
     /*
-     * Create a new entry which may span multiple rows and set it to be the head.
-     * This function will automatically cycle-out entries when the number of rows
-     * has reached the max specified by scrollbac_.
-     */
+    * Create a new entry which may span multiple rows and set it to be the head.
+    * This function will automatically cycle-out entries when the number of rows
+    * has reached the max specified by scrollbac_.
+    */
     TextEntry& create_entry(const TextEntryType entry_type,
-                            const std::u32string& text, std::optional<SDL_Color> color)
+                            const String& text, std::optional<SDL_Color> color)
     {
         static size_t entry_id = 1; // 0 reserved for prompt
 
         TextEntry& entry = entries.emplace_front(entry_type, ++entry_id, text, color);
 
         /* When the list is too long, start chopping */
-        if (num_lines > scrollback_) {
-            num_lines -= entries.back().size();
+        if (total_lines > scrollback_) {
+            total_lines -= entries.back().size();
             entries.pop_back();
             // FIXME: Cleanup anything that points to this
         }
@@ -2946,8 +3340,8 @@ public:
 
     void copy_selected_text_to_clipboard()
     {
-        std::u32string sep{U"\n"};
-        std::u32string clipboard_text;
+        String sep{U"\n"};
+        String clipboard_text;
 
         auto vec = text_selection.get_selected_text(entries);
         auto pvec = text_selection.get_selected_text_from_one(prompt.entry);
@@ -2958,8 +3352,8 @@ public:
             return;
 
         clipboard_text = std::accumulate(std::next(vec.begin()), vec.end(),
-                        std::u32string(vec[0]),
-                        [&](std::u32string acc, std::u32string_view s) {
+                        String(vec[0]),
+                        [&](String acc, StringView s) {
                             acc.append(sep);
                             acc.append(s);
                             return acc;
@@ -2982,12 +3376,12 @@ public:
 
     size_t columns()
     {
-        return (float)content_rect.w / font->char_width;
+        return (float)content_frame.w / font->char_width;
     }
 
     size_t rows()
     {
-        return (float)content_rect.h / font->line_height_with_spacing();
+        return (float)content_frame.h / font->line_height_with_spacing();
     }
 
 #if 0
@@ -3013,11 +3407,13 @@ public:
     void render() override
     {
         // Clip and localize coordinates to content_rect.
-        sdl_console::SDL_RenderSetViewport(renderer(), &content_rect);
+        sdl_console::SDL_RenderSetViewport(renderer(), &content_frame);
 
         // TODO: make sure renderer supports blending else highlighting
         // will make the text invisible.
         render_selected_text();
+
+        render_find_text();
 
         render_prompt_and_output();
 
@@ -3033,7 +3429,7 @@ public:
         prompt.cursor.rebuild = false;
 
         const int max_row = rows() + scroll_offset;
-        int ypos = content_rect.h; // Start from the bottom
+        int ypos = content_frame.h; // Start from the bottom
         int row_counter = 0;
 
         std::vector<VisibleRow> rows;
@@ -3073,10 +3469,10 @@ public:
             ypos -= font->line_height_with_spacing();
 
             vrows.push_back({.entry_id = entry.id,
-                             .frag = line,
-                             .coord = {0, ypos},
-                             .gpv = font->get_glyph_layout(line.text, 0, ypos),
-                             .color = entry.color_opt});
+                            .frag = line,
+                            .coord = {0, ypos},
+                            .gpv = font->get_glyph_layout(line.text, 0, ypos),
+                            .color = entry.color_opt});
         }
         return vrows;
     }
@@ -3104,25 +3500,37 @@ public:
         set_draw_color(renderer(), colors::darkgray);
     }
 
+    void render_find_text()
+    {
+        if (text_finder.empty()) return;
+
+        set_draw_color(renderer(), {0, 0, 255, 255});
+        auto fr = text_finder.to_rects(font, visible_rows.rows);
+        sdl_console::SDL_RenderFillRects(renderer(), fr.data(), fr.size());
+        set_draw_color(renderer(), colors::darkgray);
+    }
+
+    bool accepts_text_input() const override { return true; }
+
     OutputPane(const OutputPane&) = delete;
     OutputPane& operator=(const OutputPane&) = delete;
 };
 
 
-class MainWindow : public VBox {
+class MainWindow : public Widget {
 public:
-  //  std::unique_ptr<Toolbar> toolbar; // optional toolbar. XXX: implementation requires it
-  //  std::unique_ptr<OutputPane> outpane;
+    std::unique_ptr<VBox> layout;
     OutputPane* outpane{nullptr};
+    std::vector<std::unique_ptr<Widget>> overlays;
     bool has_focus{false};
     bool is_shown{true};
     bool is_minimized{false};
 
     using TicksT = decltype(sdl_console::SDL_GetTicks64());
-    TicksT ms_per_frame{1000/20};
+    TicksT frame_refresh_rate{1000/20};
 
     explicit MainWindow(ImplContext& ctx)
-        : VBox(ctx)
+        : Widget(ctx)
     {
         SDL_Window* h = create_window(ctx.props);
         SDL_Renderer* r = create_renderer(ctx.props, h);
@@ -3139,6 +3547,9 @@ public:
             throw(std::runtime_error("Error loading font"));
         }
 
+        set_frame_refresh_rate();
+        layout = std::make_unique<VBox>(this);
+
         connect<SDL_WindowEvent>(SDL_WINDOWEVENT, [this](auto& e) {
             switch(e.event) {
             case SDL_WINDOWEVENT_RESIZED:
@@ -3154,25 +3565,75 @@ public:
                 break;
             case SDL_WINDOWEVENT_MINIMIZED:
                 is_minimized = true;
-            [[fallthrough]];
+                break;
             case SDL_WINDOWEVENT_HIDDEN:
                 is_shown = false;
                 break;
             case SDL_WINDOWEVENT_SHOWN:
             case SDL_WINDOWEVENT_EXPOSED:
             case SDL_WINDOWEVENT_MAXIMIZED:
+            case SDL_WINDOWEVENT_RESTORED:
                 is_shown = true;
                 is_minimized = false;
                 break;
             default: break;
             }
 
-            set_ms_per_frame();
+            return true;
         });
 
         connect<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](auto& e) {
             context.ui.window.mouse_pos.x = e.x;
             context.ui.window.mouse_pos.y = e.y;
+            return false;
+        });
+
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+            auto* target = context.ui.window.focus_widget;
+            // Try to locate a widget that accepts keyboard input.
+            // dispatch_event will return false when top level widgets
+            // like the toolbar or scrollbar have focus.
+            // So default to the prompt when there's no takers.
+            if (!dispatch_event(target, e))
+                outpane->emit(e);
+            return false;
+        });
+
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
+            Widget* target{nullptr};
+
+            if (!overlays.empty()) {
+                target = find_widget_at(overlays.back().get(), e.x, e.y);
+            }
+
+            if (!target) {
+                target = find_widget_at(layout.get(), e.x, e.y);
+                if (!target)
+                    target = outpane;
+            }
+
+            context.ui.window.focus_widget = target;
+            target->emit(e);
+            return false;
+        });
+
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
+            if (context.ui.window.focus_widget)
+                context.ui.window.focus_widget->emit(e);
+
+            return false;
+        });
+
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
+            auto* target = context.ui.window.focus_widget;
+
+            // Try to locate a widget that accepts text input.
+            // dispatch_event will return false when top level widgets
+            // like the toolbar or scrollbar have focus.
+            // So default to the prompt when there's no takers.
+            if (!dispatch_event(target, e))
+                outpane->emit(e);
+            return false;
         });
 
         build_ui();
@@ -3180,71 +3641,113 @@ public:
 
     ~MainWindow() override = default;
 
+    template <typename EventType>
+    bool dispatch_event(Widget* start, EventType& e) {
+        if (!start)
+            return false;
+
+        auto handled = false;
+        // Infinite recursion without w != this
+        for (Widget* w = start; w && w != this; w = w->parent) {
+            if (w->emit(e)) {
+                handled = true;
+                break;
+            }
+        }
+        return handled;
+    }
+
     void build_ui()
     {
-        auto& toolbar_hbox = add_child<HBox>();
-        toolbar_hbox.layout.preferred_height = font->line_height_with_spacing() * 2;
-        toolbar_hbox.layout.align = layout::Align::Top | layout::Align::Fill;
-        toolbar_hbox.layout.stretch = 0;
+        auto& toolbar_hbox = layout->add_child<HBox>();
+        toolbar_hbox.layout_spec.fixed_height = font->line_height_with_spacing() * 2;
+        toolbar_hbox.layout_spec.align = layout::Align::Top | layout::Align::Fill;
+        toolbar_hbox.layout_spec.stretch = 0;
 
 
         auto& toolbar = toolbar_hbox.add_child<Toolbar>();
-        toolbar.layout.align = layout::Align::Fill | layout::Align::Top;
-        toolbar.layout.stretch = 1;
+        toolbar.layout_spec.align = layout::Align::Fill | layout::Align::Top;
+        toolbar.layout_spec.stretch = 1;
 
 
-        auto& outbox = add_child<HBox>();
-        outbox.layout.stretch = 1;
-        outbox.layout.margin = {4, 4, 4, 4};
+        auto& outbox = layout->add_child<HBox>();
+        outbox.layout_spec.stretch = 1;
+        outbox.layout_spec.margin = {4, 4, 4, 4};
 
         auto& output = outbox.add_child<OutputPane>();
         outpane = &output;
-        output.layout.stretch = 1;
-        output.layout.align = layout::Align::Fill;
+        output.layout_spec.stretch = 1;
+        output.layout_spec.align = layout::Align::Fill;
+        output.layout_spec.margin = {4, 4, 4, 4};
 
         auto& scrollbar = outbox.add_child<Scrollbar>();
-        scrollbar.layout.preferred_width = 16;
-        scrollbar.layout.align = layout::Align::Right | layout::Align::Fill | layout::Align::Top;
+        scrollbar.layout_spec.fixed_width = 16;
+        scrollbar.layout_spec.align = layout::Align::Right | layout::Align::Fill | layout::Align::Top;
 
         resize({0, 0, frame.w, frame.h});
 
-        output.apply_scrollbar(&scrollbar); // Size of output area needs to be known before applying scrollbar
+        output.apply_scrollbar(&scrollbar); // Size of output area needs known before applying scrollbar
 
         Button& copy = *toolbar.add_button(U"Copy");
         copy.enabled = false;
         copy.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
             output.copy_selected_text_to_clipboard();
+            return true;
         });
 
         output.connect<TextSelectionChangedEvent>(InternalEventType::text_selection_changed, [&copy](auto& e) {
             copy.enabled = e.selected;
+            return true;
         });
 
         Button& paste = *toolbar.add_button(U"Paste");
         paste.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
             output.prompt.put_input_from_clipboard();
+            return true;
+        });
+
+        Button& find = *toolbar.add_button(U"Find");
+        find.connect<ClickedEvent>(InternalEventType::clicked, [this, &output](auto& /*e*/) {
+            if (has_overlay<FindWidget>())
+                return true;
+
+            auto find_widget = std::make_unique<FindWidget>(&output);
+            find_widget->resize({});
+
+            find_widget->on_close = [this](FindWidget* fw) {
+                std::erase_if(overlays, [fw](const auto& o) {
+                    return o.get() == fw;
+                });
+            };
+
+            context.ui.window.focus_widget = find_widget.get();
+
+            overlays.push_back(std::move(find_widget));
+            return true;
         });
 
         Button& font_inc = *toolbar.add_button(U"A+");
         font_inc.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
             output.font->incr_size();
+            return true;
         });
 
         Button& font_dec = *toolbar.add_button(U"A-");
         font_dec.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
             output.font->decr_size();
+            return true;
         });
     }
 
-    void set_ms_per_frame()
+    void set_frame_refresh_rate()
     {
         constexpr TicksT fps_shown = 20;
         constexpr TicksT fps_minimized = 1;
 
-        constexpr TicksT shown_ms = 1000 / fps_shown; // 20 fps;
+        constexpr TicksT shown_ms = 1000 / fps_shown;
         constexpr TicksT minimized_ms = 1000 / fps_minimized;
 
-        ms_per_frame = is_minimized ? minimized_ms : shown_ms;
+        frame_refresh_rate = is_minimized ? minimized_ms : shown_ms;
     }
 
     void render() override
@@ -3253,13 +3756,13 @@ public:
 
         // Should not fail unless OOM.
         sdl_console::SDL_RenderClear(renderer());
-        // set background color
 
-        // should not fail unless renderer is invalid
-        //set_draw_color(renderer(), colors::darkgray);
-
-        for (auto& child : children) {
+        for (auto& child : layout->children) {
             child->render();
+        }
+
+        for (auto& w : overlays) {
+            w->render();
         }
 
         set_draw_color(renderer(), colors::darkgray);
@@ -3276,7 +3779,7 @@ public:
         }
 
         auto current_tick = sdl_console::SDL_GetTicks64();
-        auto rate = ms_per_frame;
+        auto rate = frame_refresh_rate;
         if (current_tick - last_render_tick >= rate) {
             last_render_tick = current_tick;
             return true;
@@ -3288,9 +3791,13 @@ public:
     void resize(const SDL_Rect& /*r*/) override
     {
         sdl_console::SDL_GetRendererOutputSize(renderer(), &frame.w, &frame.h);
-        //toolbar->resize({ 0, 0, frame.w, font->line_height_with_spacing() * 2 });
-        //outpane->resize({ 0, toolbar->frame.h, frame.w, frame.h - toolbar->frame.h });
-        layout_children();
+        layout->frame = frame;
+        layout->layout_children();
+
+        for (auto& w : overlays) {
+            if (w->parent)
+                w->resize(w->parent->frame);
+        }
     }
 
     static SDL_Window* create_window(Property& props)
@@ -3327,6 +3834,17 @@ public:
         return rend;
     }
 
+    bool has_overlay_of_type(const std::type_info& ti) const {
+        return std::ranges::any_of(overlays, [&](const auto& o) {
+            return typeid(*o) == ti;
+        });
+    }
+
+    template <typename T>
+    bool has_overlay() const {
+        return has_overlay_of_type(typeid(T));
+    }
+
     MainWindow(const MainWindow&) = delete;
     MainWindow& operator=(const MainWindow&) = delete;
 };
@@ -3341,12 +3859,9 @@ Toolbar::Toolbar(Widget* parent)
 void Toolbar::render()
 {
     set_draw_color(renderer(), colors::gold);
-    // Render bg
-    // SDL_RenderFillRect(renderer(), &viewport);
-    // Draw a border
     sdl_console::SDL_RenderDrawRect(renderer(), &frame);
     // Lay out horizontally
-    for (auto& w : widgets) {
+    for (auto& w : children) {
         w->render();
     }
 
@@ -3359,57 +3874,50 @@ void Toolbar::resize(const SDL_Rect& rect)
     layout_buttons();
 }
 
-Button* Toolbar::add_button(std::u32string text)
+Button* Toolbar::add_button(const String& text)
 {
     auto button = std::make_unique<Button>(this, text);
     Button& b = *button.get();
-    b.frame.h = frame.h;
     b.frame.y = frame.y;
-    b.frame.w = b.label_rect.w + (font->char_width * 2);
-    widgets.emplace_back(std::move(button));
+    geometry::Size sz = b.preferred_size();
+    b.frame.w = sz.w;
+    b.frame.h = sz.h;
+    children.emplace_back(std::move(button));
     layout_buttons();
     return &b;
 }
 
 void Toolbar::layout_buttons()
 {
-    int margin_right = 0;
-    int x = (frame.w - margin_right) - compute_widgets_startx();
+    int x = frame.w - compute_widgets_startx();
 
-    for (auto& w : widgets) {
+    for (auto& w : children) {
         w->frame.x = x;
+        w->resize(w->frame);
         x += w->frame.w;
-    }
-
-    for (auto& w : widgets) {
-        w->resize(frame);
     }
 }
 
 int Toolbar::compute_widgets_startx()
 {
     int x = 0;
-    for (auto& w : widgets) {
+    for (auto& w : children) {
         x += w->frame.w;
     }
     return x;
 }
 
 /*
- * Manages a centralized queue system designed for thread-safe handling
- * of external events.
- *
- * Previously, this class supported two distinct queues: one for SDL events and
- * another for API task events. However, it now only stores API tasks.
- *
- * A shared mutex and a dirty flag are used to facilitate synchronization and
- * integration with a condition variable (should one be required).
- * The dirty flag indicates whether any of the queues have items to process.
- */
+* Manages a centralized queue system designed for thread-safe handling
+* of external events.
+*
+* Previously, this class supported two distinct queues: one for SDL events and
+* another for API task events. However, it now only stores API tasks.
+*
+*/
 class ExternalEventQueue {
     template <typename T>
     class Queue {
-        friend class ExternalEventQueue;
 
     public:
         Queue() = default;
@@ -3432,12 +3940,6 @@ class ExternalEventQueue {
             out.swap(events_);
             dirty_.store(false, std::memory_order_relaxed);
             return out;
-        }
-
-        bool is_empty()
-        {
-            std::scoped_lock l(mutex_);
-            return events_.empty();
         }
 
     private:
@@ -3483,7 +3985,7 @@ struct SDLConsole_private {
 
 class SDLConsole_impl : public std::enable_shared_from_this<SDLConsole_impl> {
 public:
-    SDLConsole::State& state;
+    SDLConsole::RunState& run_state;
     SDLConsole_private& priv;
     CommandPipe command_pipe;
     ExternalEventQueue external_event_queue;
@@ -3491,7 +3993,7 @@ public:
     MainWindow main_window;
 
     explicit SDLConsole_impl(SDLConsole* con)
-    : state(con->state)
+    : run_state(con->run_state)
     , priv(*con->priv)
     , impl_context(priv.props)
     , main_window(impl_context)
@@ -3529,7 +4031,7 @@ public:
 
     void shutdown()
     {
-        state.set_state(SDLConsole::State::shutdown);
+        run_state.set_state(SDLConsole::RunState::shutdown);
         command_pipe.shutdown();
     }
 
@@ -3555,20 +4057,20 @@ private:
 SDLConsole::SDLConsole()
 {
     priv = std::make_unique<SDLConsole_private>();
-    state.reset();
+    run_state.reset();
 }
 
 SDLConsole::~SDLConsole() = default;
 
 
 /*
- * SDL events and video subsystems must be initialized
- * before this function is called.
- */
+* SDL events and video subsystems must be initialized
+* before this function is called.
+*/
 bool SDLConsole::init()
 {
     // state is either active or shutting down
-    if (!state.is_inactive()) { return true; }
+    if (!run_state.is_inactive()) { return true; }
     bool success = true;
     //std::cerr << "SDLConsole: init() from thread: " << std::this_thread::get_id() << '\n';
     priv->init_thread_id = std::this_thread::get_id();
@@ -3576,12 +4078,12 @@ bool SDLConsole::init()
         bind_sdl_symbols();
         impl = std::make_shared<SDLConsole_impl>(this);
         priv->impl_weak = impl;
-        state.set_state(SDLConsole::State::active);
+        run_state.set_state(RunState::active);
     } catch(std::runtime_error &e) {
         success = false;
         impl.reset();
         sdl_tsd.clear();
-        state.reset();
+        run_state.reset();
         std::cerr << "SDLConsole: caught exception: " << e.what();
     }
     return success;
@@ -3618,7 +4120,7 @@ int SDLConsole::get_rows()
 
 SDLConsole& SDLConsole::set_mainwindow_create_rect(int w, int h, int x, int y)
 {
-    SDL_Rect rect{x, y, w, h};
+    SDL_Rect rect{.x = x, .y = y, .w = w, .h = h};
     priv->props.set(property::WINDOW_MAIN_RECT, rect);
     return *this;
 }
@@ -3696,7 +4198,7 @@ int SDLConsole::get_line(std::string& buf)
 
 void SDLConsole::set_command_history(std::span<const std::string> entries)
 {
-    std::deque<std::u32string> my_entries;
+    std::deque<String> my_entries;
     for (const auto& entry : entries) {
         my_entries.push_front(text::from_utf8(entry));
     }
@@ -3714,7 +4216,7 @@ SDLConsole& SDLConsole::get_console()
 // Callable from any thread.
 void SDLConsole::shutdown()
 {
-    state.set_state(State::shutdown);
+    run_state.set_state(RunState::shutdown);
     if (auto I = std::weak_ptr<SDLConsole_impl>(impl).lock()) {
         I->shutdown();
     }
@@ -3743,7 +4245,7 @@ bool SDLConsole::destroy()
     // Cleanup thread specific resources.
     sdl_tsd.clear();
     // Back to inactive state.
-    state.reset();
+    run_state.reset();
     return true;
 }
 
@@ -3761,7 +4263,7 @@ bool SDLConsole::sdl_event_hook(SDL_Event &e)
 // this function is called by the same thread that manages impl's lifetime.
 void SDLConsole::update()
 {
-    if (impl) {
+    if (impl) [[likely]] {
         impl->update();
     }
 }
@@ -3773,9 +4275,9 @@ void SDLConsole::push_api_task(F&& func)
     static_assert(std::is_invocable_v<F>, "Callable must be invocable");
 
     /* We could use SDL_PushEvent() here. However, we may need to allocate
-     * memory, which could result in memory leaks if the event is not received
-     * for cleanup.
-     */
+    * memory, which could result in memory leaks if the event is not received
+    * for cleanup.
+    */
     if (auto I = std::weak_ptr<SDLConsole_impl>(impl).lock()) {
         I->external_event_queue.api_task.push(std::forward<F>(func));
     }

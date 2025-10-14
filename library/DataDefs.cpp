@@ -232,8 +232,8 @@ const std::string df::buffer_container_identity::getFullName(const type_identity
 }
 
 union_identity::union_identity(size_t size, const TAllocateFn alloc,
-        compound_identity *scope_parent, const char *dfhack_name,
-        struct_identity *parent, const struct_field_info *fields)
+        const compound_identity *scope_parent, const char *dfhack_name,
+        const struct_identity *parent, const struct_field_info *fields)
     : struct_identity(size, alloc, scope_parent, dfhack_name, parent, fields)
 {
 }
@@ -350,7 +350,7 @@ virtual_identity *virtual_identity::find(void *vtable)
     return NULL;
 }
 
-void virtual_identity::adjust_vtable(virtual_ptr obj, virtual_identity *main)
+void virtual_identity::adjust_vtable(virtual_ptr obj, const virtual_identity *main) const
 {
     if (vtable_ptr) {
         *(void**)obj = vtable_ptr;

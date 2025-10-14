@@ -152,9 +152,10 @@ static std::string getNameChunk(virtual_identity *id, int start, int end)
  */
 
 typedef void (*getFocusStringsHandler)(std::string &str, std::vector<std::string> &strList, df::viewscreen *screen);
-static std::map<virtual_identity*, getFocusStringsHandler> getFocusStringsHandlers;
+static std::map<const virtual_identity*, getFocusStringsHandler> getFocusStringsHandlers;
 
 #define VIEWSCREEN(name) df::viewscreen_##name##st
+
 #define DEFINE_GET_FOCUS_STRING_HANDLER(screen_type) \
     static void getFocusStrings_##screen_type(const std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen);\
     DFHACK_STATIC_ADD_TO_MAP(\
@@ -2718,7 +2719,7 @@ df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
     return ws;
 }
 
-df::viewscreen *Gui::getViewscreenByIdentity (virtual_identity &id, int n)
+df::viewscreen *Gui::getViewscreenByIdentity (const virtual_identity &id, int n)
 {
     bool limit = (n > 0);
     df::viewscreen *screen = Gui::getCurViewscreen();

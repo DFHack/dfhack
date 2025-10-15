@@ -7,15 +7,62 @@
 #include <optional>
 #include <span>
 
+#include <string_view>
+#include <variant>
+#include <unordered_map>
+#include <mutex>
+#include <cstdint>
+#include <thread>
+
 #include "Export.h"
 
+struct SDL_Rect;
 struct SDL_Color;
 union SDL_Event;
 
 namespace sdl_console {
 
-struct SDLConsole_private;
 class SDLConsole_impl;
+
+/*
+ * Stores configuration for components.
+ */
+
+
+struct Rect {
+    int x{};
+    int y{};
+    int w{};
+    int h{};
+};
+
+class Property {
+public:
+    template <typename T>
+    struct Key {
+        std::string_view name;
+    };
+
+    using Value = std::variant<std::string, std::u32string, int64_t, int, std::size_t, Rect>;
+    template <typename T>
+    void set(Key<T> key, const T& value) {
+        std::scoped_lock l(m_);
+        props_[std::string(key.name)] = value;
+    }
+
+    template <typename T>
+    std::optional<T> get(Key<T> key) {
+        std::scoped_lock l(m_);
+        auto it = props_.find(std::string(key.name));
+        if (it == props_.end()) { return std::nullopt; }
+        if (auto p = std::get_if<T>(&it->second)) { return *p; }
+        return std::nullopt;
+    }
+
+private:
+    std::unordered_map<std::string, Value> props_;
+    std::recursive_mutex m_;
+};
 
 class DFHACK_EXPORT SDLConsole {
 public:
@@ -118,33 +165,34 @@ public:
 
     class RunState {
     public:
-        enum Value {
+        enum States {
             active,     // console is active and operational.
             inactive,   // console is inactive and can be activated.
             shutdown,   // console is shutting down.
         };
 
-        RunState() : current_state(Value::inactive) {}
+        RunState() : current_state(States::inactive) {}
 
-        [[nodiscard]] bool is_active() const { return current_state.load() == Value::active; }
+        [[nodiscard]] bool is_active() const { return current_state.load() == States::active; }
 
-        [[nodiscard]] bool is_inactive() const { return current_state.load() == Value::inactive; }
+        [[nodiscard]] bool is_inactive() const { return current_state.load() == States::inactive; }
 
-        [[nodiscard]] bool is_shutdown() const { return current_state.load() == Value::shutdown; }
+        [[nodiscard]] bool is_shutdown() const { return current_state.load() == States::shutdown; }
 
     protected:
         friend class SDLConsole;
         friend class SDLConsole_impl;
-        void set_state(Value new_state) {
+        void set_state(States new_state) {
             current_state.store(new_state);
         }
         void reset() {
-            set_state(Value::inactive);
+            set_state(States::inactive);
         }
-        std::atomic<Value> current_state;
+        std::atomic<States> current_state;
     };
 
     RunState run_state;
+    Property props;
 
     SDLConsole(const SDLConsole&) = delete;
     SDLConsole& operator=(const SDLConsole&) = delete;
@@ -155,7 +203,6 @@ public:
 
 protected:
     friend class SDLConsole_impl;
-    std::unique_ptr<SDLConsole_private> priv;
 
 private:
     void write_line_(std::string& line, std::optional<SDL_Color> color);
@@ -163,6 +210,8 @@ private:
     template<typename F>
     void push_api_task(F&& func);
     std::shared_ptr<SDLConsole_impl> impl;
+    std::weak_ptr<SDLConsole_impl> impl_weak;
+    std::thread::id init_thread_id;
 
     SDLConsole();
     ~SDLConsole();

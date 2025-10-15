@@ -20,7 +20,8 @@ size_t find_next_word(const std::u32string& text, size_t pos);
 
 std::pair<size_t, size_t> find_wspace_run(const std::u32string& text, size_t pos);
 
-std::pair<size_t, size_t> find_run_with_pred(const std::u32string& text, size_t pos, std::function<bool(char32_t)> predicate);
+template <typename T>
+std::pair<size_t, size_t> find_run_with_pred(const std::u32string& text, size_t pos, T&& pred);
 
 /*
  * If pos falls on a word, returns range of word.

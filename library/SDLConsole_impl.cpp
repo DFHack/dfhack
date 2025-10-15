@@ -204,15 +204,19 @@ namespace text {
         return result;
     }
 
-    static bool is_newline(Char ch) {
+    static bool is_newline(Char ch)
+    {
         return ch == U'\n' || ch == U'\r';
     }
 
-    static bool is_wspace(Char ch) {
+    static bool is_wspace(Char ch)
+    {
         return ch == U' ' || ch == U'\t';
     }
 
-    std::pair<size_t, size_t> find_run_with_pred(const String& text, size_t pos, const std::function<bool(Char)> predicate) {
+    template <typename T>
+    std::pair<size_t, size_t> find_run_with_pred(const String& text, size_t pos, T&& pred)
+    {
         if (text.empty()) return { String::npos, String::npos };
 
         if (pos >= text.size()) return { String::npos, String::npos };
@@ -220,11 +224,11 @@ namespace text {
         auto left = text.begin() + pos;
         auto right = left;
 
-        while (left != text.begin() && predicate(*(left - 1)))
+        while (left != text.begin() && pred(*(left - 1)))
             --left;
 
         auto t = right;
-        while (right != text.end() && predicate(*right))
+        while (right != text.end() && pred(*right))
             ++right;
 
         if (t != right)
@@ -236,7 +240,8 @@ namespace text {
         };
     }
 
-    size_t skip_wspace(const String& text, size_t pos) {
+    size_t skip_wspace(const String& text, size_t pos)
+    {
         if (text.empty()) return 0;
         if (pos >= text.size()) return text.size() - 1;
 
@@ -245,7 +250,8 @@ namespace text {
                                                       is_wspace));
     }
 
-    size_t skip_wspace_reverse(const String& text, size_t pos) {
+    size_t skip_wspace_reverse(const String& text, size_t pos)
+    {
         if (text.empty()) return 0;
         if (pos >= text.size()) pos = text.size() - 1;
 
@@ -256,7 +262,8 @@ namespace text {
         return std::distance(text.begin(), it);
     }
 
-    size_t skip_graph(const String& text, size_t pos) {
+    size_t skip_graph(const String& text, size_t pos)
+    {
         if (text.empty()) return 0;
         if (pos >= text.size()) return text.size() - 1;
 
@@ -265,7 +272,8 @@ namespace text {
                                                   is_wspace));
     }
 
-    size_t skip_graph_reverse(const String& text, size_t pos) {
+    size_t skip_graph_reverse(const String& text, size_t pos)
+    {
         if (text.empty()) return 0;
         if (pos >= text.size()) pos = text.size() - 1;
 
@@ -283,7 +291,8 @@ namespace text {
     * the current word and trailing spaces to find the next one. Returns the
     * position of the end of the previous word or non-space character.
     */
-    size_t find_prev_word(const String& text, size_t pos) {
+    size_t find_prev_word(const String& text, size_t pos)
+    {
         size_t start = pos;
         start = skip_wspace_reverse(text, start);
         if (start == pos) {
@@ -302,7 +311,8 @@ namespace text {
     * the current word and trailing spaces to find the next one. Returns the
     * position of the start of the next word or non-space character.
     */
-    size_t find_next_word(const String& text, size_t pos) {
+    size_t find_next_word(const String& text, size_t pos)
+    {
         size_t start = pos;
         start = skip_wspace(text, start);
         if (start == pos) {
@@ -314,12 +324,13 @@ namespace text {
         return pos;
     }
 
-    std::pair<size_t, size_t> find_wspace_run(const String& text, size_t pos) {
-        return find_run_with_pred(text, pos, [](char32_t ch) { return is_wspace(ch); });
+    std::pair<size_t, size_t> find_wspace_run(const String& text, size_t pos)
+    {
+        return find_run_with_pred(text, pos, [](Char ch) { return is_wspace(ch); });
     }
 
-    std::pair<size_t, size_t> find_run(const String& text, size_t pos) {
-        // Bounds check here since .at() is used below
+    std::pair<size_t, size_t> find_run(const String& text, size_t pos)
+    {
         if (text.empty() || pos >= text.size()) {
             return { String::npos, String::npos };
         }
@@ -330,7 +341,8 @@ namespace text {
         return find_run_with_pred(text, pos, [](Char ch) { return !is_wspace(ch); });
     }
 
-    static size_t insert_at(String& text, size_t pos, const String& str) {
+    static size_t insert_at(String& text, size_t pos, const String& str)
+    {
         if (pos >= text.size()) {
             text += str;
         } else {
@@ -637,7 +649,7 @@ static thread_local SDLThreadSpecificData sdl_tsd;
 *
 */
 
-class SignalEmitter;
+class EventBus;
 class ISlot {
 public:
     virtual ~ISlot() = default;
@@ -646,12 +658,20 @@ public:
     virtual Uint32 event_type_id() = 0;
 
     virtual void disconnect() = 0;
+    virtual void destroy() = 0;
     virtual void connect() = 0;
     virtual bool is_connected() = 0;
 
 protected:
-    friend class SignalEmitter;
+    friend class EventBus;
     virtual void set_connected(bool c) = 0;
+
+    // opaque connection identities. never dereference.
+    void* sender{};
+    void* receiver{};
+
+    bool destroyed{false};
+    bool connected_{true};
 };
 
 class ISignal {
@@ -667,11 +687,13 @@ public:
     using Func = std::function<bool(EventType&)>;
 
     template <typename F>
-    Slot(ISignal& emitter, uint32_t event_type, F&& func)
+    Slot(ISignal& emitter, uint32_t event_type, void* sender, void* receiver, F&& func)
     : emitter_(emitter)
     , event_type_id_(event_type)
     , func_(std::forward<F>(func))
     {
+        this->sender = sender;
+        this->receiver = receiver;
     }
 
     bool invoke(void* event_ptr) override
@@ -681,6 +703,7 @@ public:
     }
 
     void disconnect() override { emitter_.disconnect(this); }
+    void destroy() override { destroyed = true; emitter_.disconnect(this); }
     void connect() override { emitter_.reconnect(this); }
     bool is_connected() override { return connected_; }
     uint32_t event_type_id() override { return event_type_id_; }
@@ -694,15 +717,18 @@ private:
     ISignal& emitter_;
     uint32_t event_type_id_;
     const Func func_;
-    bool connected_{true};
 };
 
-class SignalEmitter : public ISignal {
+class EventBus : public ISignal {
 public:
-    template <typename EventType, typename F>
-    ISlot* connect(uint32_t type_id, F&& func) {
-        auto slot_ptr = make_slot<EventType>(type_id, std::forward<F>(func));
+    EventBus() {
+        owned_.reserve(64);
+    }
 
+    template <typename EventType, typename F>
+    ISlot* connect(uint32_t type_id, void* sender, void* receiver, F&& func)
+    {
+        auto slot_ptr = make_slot<EventType>(type_id, sender, receiver, std::forward<F>(func));
         if (emit_depth_ == 0) {
             slots_.active[type_id].emplace_back(slot_ptr);
         } else {
@@ -712,14 +738,16 @@ public:
     }
 
     template <typename EventType, typename F>
-    ISlot* connect_later(uint32_t type_id, F&& func) {
-        auto slot_ptr = make_slot<EventType>(type_id, std::forward<F>(func));
-
+    ISlot* connect_later(uint32_t type_id, void* sender, void* receiver, F&& func)
+    {
+        auto slot_ptr = make_slot<EventType>(type_id, sender, receiver, std::forward<F>(func));
         slot_ptr->set_connected(false);
         return slot_ptr;
     }
 
-    void disconnect(ISlot* slot) override {
+    void disconnect(ISlot* slot) override
+    {
+        slot->set_connected(false);
         if (emit_depth_ == 0) {
             disengage(slot);
         } else {
@@ -736,18 +764,34 @@ public:
         }
     }
 
+    void clear_receiver(void* receiver) {
+        for (auto& slot_uptr : owned_) {
+            ISlot* s = slot_uptr.get();
+            if (s->receiver == receiver) {
+                s->connected_ = false;
+                s->destroyed = true;
+            }
+        }
+
+        if (emit_depth_ == 0)
+            destroy_slots_if_needed();
+    }
+
     template <typename EventType>
-    bool emit(EventType&& event) {
+    bool emit(EventType&& event, void* sender)
+    {
         auto it = slots_.active.find(event.type);
         if (it == slots_.active.end()) return false;
 
         bool handled = false;
-
         ++emit_depth_;
         for (auto* s : it->second) {
-            if (s->invoke(&event)) {
-                handled = true;
-                break;
+            if (s->is_connected() &&
+                    (s->sender == nullptr || s->sender == sender)) {
+                if (s->invoke(&event)) {
+                    handled = true;
+                    break;
+                }
             }
         }
         --emit_depth_;
@@ -769,34 +813,52 @@ private:
     using SlotMap = std::map<uint32_t, std::vector<ISlot*>>;
     struct Slots {
         SlotMap active;
-        bool dirty;
+        bool dirty{false};
+        bool dirty_destroy{false};
     };
     Slots slots_;
 
     int emit_depth_{0};
 
     template<typename EventType, typename F>
-    ISlot* make_slot(uint32_t event_type, F&& func) {
-        auto slot = std::make_unique<Slot<EventType>>(*this, event_type, std::forward<F>(func));
+    ISlot* make_slot(uint32_t type_id, void* sender, void* receiver, F&& func) {
+        auto slot = std::make_unique<Slot<EventType>>(*this, type_id, sender, receiver, std::forward<F>(func));
         ISlot* p = slot.get();
         owned_.emplace_back(std::move(slot));
         return p;
     }
 
+    void destroy_slots_if_needed() {
+        if (!slots_.dirty_destroy)
+            return;
+
+        slots_.dirty_destroy = false;
+        auto& actv = slots_.active;
+        std::erase_if(owned_, [&actv](const auto& slot_uptr) {
+            ISlot* slot = slot_uptr.get();
+            if (slot->destroyed) {
+                std::erase(actv[slot->event_type_id()], slot);
+                return true;
+            }
+            return false;
+        });
+    }
+
     void process_pending()
     {
         slots_.dirty = false;
+        destroy_slots_if_needed();
 
+        auto& actv = slots_.active;
         for (auto& slot_uptr : owned_) {
             ISlot* slot = slot_uptr.get();
-            auto& vec = slots_.active[slot->event_type_id()];
+            auto& vec = actv[slot->event_type_id()];
 
             if (slot->is_connected()) {
-                if (!std::ranges::any_of(vec, [slot](ISlot* s){ return s == slot; })) {
+                if (std::ranges::find(vec, slot) == vec.end())
                     vec.push_back(slot);
-                }
             } else {
-                vec.erase(std::ranges::remove(vec, slot).begin(), vec.end());
+                std::erase(vec, slot);
             }
         }
     }
@@ -805,7 +867,7 @@ private:
     {
         slot->set_connected(false);
         auto& vec = slots_.active[slot->event_type_id()];
-        vec.erase(std::ranges::remove(vec, slot).begin(), vec.end());
+        std::erase(vec, slot);
     }
 };
 
@@ -854,8 +916,9 @@ struct ClickedEvent : Event {
     static constexpr uint32_t type = InternalEventType::clicked;
 };
 
-struct FontSizeChangedEvent {
+struct FontSizeRequestEvent {
     static constexpr uint32_t type = InternalEventType::font_size_changed;
+    int delta{0};
 };
 
 template <typename T>
@@ -869,49 +932,16 @@ struct TextSelectionChangedEvent {
     bool selected{};
 };
 
-struct TextFindEvent {
+struct FindTextEvent {
     static constexpr uint32_t type = InternalEventType::text_find;
-    String text;
-};
-
-
-/*
-* Stores configuration for components.
-*/
-
-
-class Property {
-public:
-    template <typename T>
-    struct Key {
-        std::string_view name;
-    };
-
-    using Value = std::variant<std::string, std::u32string, int64_t, int, size_t, SDL_Rect>;
-    template <typename T>
-    void set(Key<T> key, const T& value) {
-        std::scoped_lock l(m_);
-        props_[std::string(key.name)] = value;
-    }
-
-    template <typename T>
-    std::optional<T> get(Key<T> key) {
-        std::scoped_lock l(m_);
-        auto it = props_.find(std::string(key.name));
-        if (it == props_.end()) { return std::nullopt; }
-        if (auto p = std::get_if<T>(&it->second)) { return *p; }
-        return std::nullopt;
-    }
-
-private:
-    std::unordered_map<std::string, Value> props_;
-    std::recursive_mutex m_;
+    String query;
+    int direction{0};
 };
 
 
 namespace property {
     // These must be set before SDLConsole::init()
-    constexpr Property::Key<SDL_Rect> WINDOW_MAIN_RECT { "window.main.rect" };
+    constexpr Property::Key<Rect> WINDOW_MAIN_RECT { "window.main.rect" };
     constexpr Property::Key<std::string> WINDOW_MAIN_TITLE { "window.main.title" };
 
     // Set any time.
@@ -923,8 +953,6 @@ namespace property {
     constexpr Property::Key<size_t> RT_OUTPUT_ROWS { "rt.output.rows" };
     constexpr Property::Key<size_t> RT_OUTPUT_COLUMNS { "rt.output.columns" };
 }
-
-class Widget;
 
 class TextEntry {
 public:
@@ -1057,7 +1085,7 @@ struct GlyphPosition {
 using GlyphPosVector = std::vector<GlyphPosition>;
 
 // XXX, TODO: cleanup.
-class Font : public SignalEmitter {
+class Font {
     class ScopedColor {
     public:
         explicit ScopedColor(Font* font) : font_(font) {}
@@ -1085,9 +1113,9 @@ class Font : public SignalEmitter {
 
 // FIXME: make members private and add accessors
 public:
-    SDL_Renderer* renderer_;
-    SDL_Texture* texture_;
-    std::vector<Glyph> glyphs;
+    SDL_Renderer* const renderer_;
+    SDL_Texture* const texture_;
+    const std::vector<Glyph> glyphs;
     int char_width;
     int line_height;
     int orig_char_width;
@@ -1131,7 +1159,7 @@ public:
             } else {
                 index = unicode_glyph_index(ch);
             }
-            Glyph& g = glyphs.at(index);
+            const Glyph& g = glyphs.at(index);
             SDL_Rect dst = { x, y + (vertical_spacing / 2), (int)(g.rect.w * scale_factor), (int)((g.rect.h * scale_factor)) };
             x += g.rect.w * scale_factor;
             g_pos.push_back({g.rect, dst});
@@ -1170,13 +1198,11 @@ public:
     void incr_size()
     {
         resize(size_change_delta_);
-        emit(FontSizeChangedEvent{});
     }
 
     void decr_size()
     {
         resize(-size_change_delta_);
-        emit(FontSizeChangedEvent{});
     }
 
     // Returns '?' if not found.
@@ -1207,23 +1233,10 @@ public:
     {
     }
 
-    Font& operator=(Font&& other) noexcept
-    {
-        if (this != &other) {
-            renderer_ = other.renderer_;
-            texture_ = other.texture_;
-            glyphs = other.glyphs;
-            char_width = other.char_width;
-            line_height = other.line_height;
-            vertical_spacing = other.vertical_spacing;
-            scale_factor = other.scale_factor;
-            orig_char_width = other.char_width;
-            orig_line_height = other.line_height;
-        }
-        return *this;
-    }
+    // Let texture and renderer pointers be const
+    Font& operator=(Font&&) = delete;
 
-    // No copy
+    // No accidental copying
     Font& operator=(const Font&) = delete;
 
 private:
@@ -1324,12 +1337,14 @@ public:
         return &it.first->second;
     }
 
+    // No copies
     BMPFontLoader(const BMPFontLoader&) = delete;
     BMPFontLoader& operator=(const BMPFontLoader&) = delete;
 
-
+    // Move ok. Font doesn't own any resources.
     BMPFontLoader(BMPFontLoader&& other) noexcept = default;
     BMPFontLoader& operator=(BMPFontLoader&& other) noexcept = default;
+
 
 private:
     static std::vector<Glyph> build_glyph_rects(int sheet_w, int sheet_h, int columns, int rows)
@@ -1357,7 +1372,7 @@ private:
     }
 };
 
-class MainWindow;
+class Widget;
 
 /*
 * Shared context object for a window and its children.
@@ -1366,8 +1381,9 @@ class MainWindow;
 */
 struct ImplContext {
     Property& props;
+    EventBus& event_bus;
 
-    explicit ImplContext(Property& p) : props(p) {};
+    explicit ImplContext(Property& p, EventBus& em) : props(p), event_bus(em) {};
 
     struct UI {
         struct Window {
@@ -1376,10 +1392,8 @@ struct ImplContext {
             BMPFontLoader font_loader;
             decltype(sdl_console::SDL_GetWindowID(nullptr)) id{};
             SDL_Point mouse_pos{};
-            Widget* focus_widget { nullptr };
+            Widget* focus_widget {nullptr};
             Widget* input_widget{nullptr};
-
-            Window() = default;
 
             void init(SDL_Window* h, SDL_Renderer* r)
             {
@@ -1466,7 +1480,7 @@ static void ensure_frame(SDL_Rect& r)
 
 // TODO: needs work
 // Non-movable. Non-copyable.
-class Widget : public SignalEmitter {
+class Widget {
 public:
     Widget* parent;
     Font* font;
@@ -1536,7 +1550,9 @@ public:
 
     virtual void layout_children() {};
 
-    virtual geometry::Size preferred_size() const { return {.w = 0, .h = 0}; }
+    virtual geometry::Size preferred_size() const { return {.w = 1, .h = 1}; }
+
+
 
     virtual bool accepts_text_input() const { return false; }
 
@@ -1575,9 +1591,12 @@ public:
         return root;
     }
 
-    ~Widget() override {
+
+    virtual ~Widget() {
         if (context.ui.window.focus_widget == this)
             context.ui.window.focus_widget = nullptr;
+
+        context.event_bus.clear_receiver(this);
     }
 
     Widget(Widget&&) = delete;
@@ -1585,6 +1604,20 @@ public:
 
     Widget(const Widget&) = delete;
     Widget& operator=(const Widget&) = delete;
+
+    template <typename EventType>
+    bool emit(EventType&& event) {
+        return context.event_bus.emit(std::forward<EventType>(event), this);
+    }
+
+protected:
+    // Must remain protected.
+    // 1. 'this' registers the object with the event bus.
+    // 2. Objects that call connect() must call clear_receiver() before destruction.
+    template <typename EventType, typename F>
+    ISlot* connect(uint32_t type_id, void* sender, F&& func) {
+        return context.event_bus.connect<EventType>(type_id, sender, this, std::forward<F>(func));
+    }
 };
 
 class VBox : public Widget {
@@ -1825,6 +1858,7 @@ public:
 class SingleLineEdit : public Widget {
 public:
     String text;
+    String visible_text;
     Cursor cursor;
     std::optional<SDL_Color> color;
     int text_baseline_y { 0 };
@@ -1835,7 +1869,7 @@ public:
     explicit SingleLineEdit(Widget* parent)
     : Widget(parent), cursor(renderer())
     {
-        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, this, [this](auto& e) {
             auto str = text::from_utf8(e.text);
             cursor = text::insert_at(text, cursor.position(), str);
             adjust_scroll();
@@ -1844,10 +1878,15 @@ public:
             return true;
         });
 
-        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, this, [this](auto& e) {
+            auto sz = text.size();
             on_SDL_KEYDOWN(e);
+            if (sz != text.size())
+                emit(ValueChangedEvent<String>{.value = text});
             return true;
         });
+
+        visible_text = text;
     }
 
     void on_SDL_KEYDOWN(const SDL_KeyboardEvent& e)
@@ -1886,6 +1925,7 @@ public:
         compute_text_baseline();
         text_start_x = frame.x + font->char_width;
         max_visible_chars = (frame.w - 2 * font->char_width) / font->char_width;
+        visible_text = text.substr(scroll_chars, max_visible_chars);
         rebuild_cursor();
     }
 
@@ -1916,24 +1956,30 @@ public:
 
         if (scroll_chars > text.size() - max_visible_chars)
             scroll_chars = std::max(0UL, text.size() - max_visible_chars);
+
+        visible_text = text.substr(scroll_chars, max_visible_chars);
     }
 
     void render() override
     {
-        if (cursor.rebuild) {
-            rebuild_cursor();
-        }
         set_draw_color(renderer(), {0, 0, 0, 255});
         SDL_RenderFillRect(renderer(), &frame);
 
-        int first_char = scroll_chars;
-        String visible_text = text.substr(first_char, max_visible_chars);
+        if (context.ui.window.focus_widget == this) {
+            set_draw_color(renderer(), colors::gold);
+            SDL_RenderDrawRect(renderer(), &frame);
 
-        SDL_Point pos{ text_start_x, text_baseline_y };
-        font->render(visible_text, pos.x, pos.y);
+        if (cursor.rebuild) {
+            rebuild_cursor();
+        }
+
         cursor.update_blink();
         cursor.rect = {cursor.rect.x, text_baseline_y, 2, font->line_height_with_spacing()};
         cursor.render();
+        }
+
+        SDL_Point pos{ text_start_x, text_baseline_y };
+        font->render(visible_text, pos.x, pos.y);
     }
 
     geometry::Size preferred_size() const override {
@@ -1947,7 +1993,6 @@ public:
 };
 
 struct VisibleRow {
-    //TextEntry& entry;
     size_t entry_id;
     TextEntry::Fragment& frag;
     SDL_Point coord;
@@ -1999,12 +2044,12 @@ public:
 
         set_prompt_text(props().get(property::PROMPT_TEXT).value_or(U"> "));
 
-        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, this, [this](auto& e) {
             on_SDL_KEYDOWN(e);
             return true;
         });
 
-        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, this, [this](auto& e) {
             insert_at_cursor(text::from_utf8(e.text));
             return true;
         });
@@ -2233,7 +2278,7 @@ public:
         }
 
         cursor.visible = true;
-        VisibleRow const& vr = *it;
+        const VisibleRow& vr = *it;
 
         auto lh = font->line_height_with_spacing();
         auto cw = font->char_width;
@@ -2281,15 +2326,15 @@ public:
     explicit Scrollbar(Widget* parent)
         : Widget(parent)
     {
-        window.connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, &window, [this](auto& e) {
             return on_SDL_MOUSEBUTTONDOWN(e);
         });
 
-        window.connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, &window, [this](auto& e) {
             return on_SDL_MOUSEBUTTONUP(e);
         });
 
-        mouse_motion_slot_ = window.connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](auto& e) {
+        mouse_motion_slot_ = context.event_bus.connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, &window, this, [this](auto& e) {
             return on_SDL_MOUSEMOTION(e);
         });
 
@@ -2451,11 +2496,11 @@ public:
         : Widget(parent)
         , label(std::move(label))
     {
-        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, this, [this](auto& e) {
             return on_SDL_MOUSEBUTTONDOWN(e);
         });
 
-        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, this, [this](auto& e) {
             return on_SDL_MOUSEBUTTONUP(e);
         });
     }
@@ -2561,9 +2606,9 @@ class CommandPipe {
 public:
     CommandPipe() = default;
 
-    void make_connection(SignalEmitter& emitter)
+    void make_connection(EventBus& emitter, Widget* w)
     {
-        emitter.connect<NewCommandInputEvent>(InternalEventType::new_command_input, [this](auto& e) {
+        emitter.connect<NewCommandInputEvent>(InternalEventType::new_command_input, w, this, [this](auto& e) {
             push(e.text);
             return false;
         });
@@ -2756,14 +2801,60 @@ std::vector<StringView> get_selected_text_from_one(TextEntry& entry) const
 
 class TextFinder {
 public:
-    struct Match {
+    struct LineKey {
         size_t entry_id;
         size_t frag_index;
+
+        bool operator==(const LineKey& other) const noexcept {
+            return entry_id == other.entry_id && frag_index == other.frag_index;
+        }
+    };
+    struct Match {
+        LineKey line_key;
         size_t start_col;  // column in fragment
         size_t end_col;    // column in fragment
     };
 
-    void clear() { matches.clear(); }
+    const Match* next()
+    {
+        if (matches.empty()) return nullptr;
+        current_index = (current_index + 1) % matches.size();
+        return &matches[current_index];
+    }
+
+    const Match* prev()
+    {
+        if (matches.empty()) return nullptr;
+        current_index = (current_index - 1) % matches.size();
+        return &matches[current_index];
+    }
+
+    const LineKey* next_line()
+    {
+        if (line_matches.empty()) return nullptr;
+        current_line_index = (current_line_index + 1) % line_matches.size();
+        return &line_matches[current_line_index];
+    }
+
+    const LineKey* prev_line()
+    {
+        if (line_matches.empty()) return nullptr;
+        current_line_index = (current_line_index - 1) % line_matches.size();
+        return &line_matches[current_line_index];
+    }
+
+    const Match* current() const
+    {
+        return matches.empty() ? nullptr : &matches[current_index];
+    }
+
+    void clear()
+    {
+        current_index = 0;
+        current_line_index = 0;
+        matches.clear();
+        line_matches.clear();
+    }
     bool empty() const { return matches.empty(); }
 
     void find(std::deque<TextEntry>& entries, StringView needle)
@@ -2772,6 +2863,7 @@ public:
         if (needle.empty()) return;
 
         for (auto& entry : entries) {
+            std::vector<LineKey> entry_buf;
             size_t pos = 0;
             while ((pos = entry.text.find(needle, pos)) != String::npos) {
                 size_t match_start = pos;
@@ -2784,15 +2876,45 @@ public:
                     size_t local_start = std::max(match_start, frag.start_offset) - frag.start_offset;
                     size_t local_end   = std::min(match_end, frag.end_offset) - frag.start_offset;
 
-                    matches.push_back({entry.id, frag.index, local_start, local_end});
+                    LineKey key{.entry_id = entry.id, .frag_index = frag.index};
+                    matches.push_back({key, local_start, local_end});
+
+                    if (entry_buf.empty() || entry_buf.back() != key)
+                        entry_buf.push_back(key);
                 }
 
                 pos = match_end; // advance past current match
             }
+
+            if (!entry_buf.empty()) {
+                std::ranges::reverse(entry_buf);
+                line_matches.insert(line_matches.end(),
+                                    entry_buf.begin(), entry_buf.end());
+            }
+
         }
     }
 
     const std::vector<Match>& all_matches() const { return matches; }
+
+    SDL_Rect active_rect(const Font* font, std::span<const VisibleRow> rows) const
+    {
+        if (line_matches.empty()) return {};
+
+        const auto& active_line = line_matches[current_line_index];
+        for (const auto& row : rows) {
+            LineKey key{.entry_id = row.entry_id, .frag_index = row.frag.index};
+            if (key == active_line) {
+                return {
+                    .x = row.coord.x,
+                    .y = row.coord.y,
+                    .w = int(row.frag.text.size()) * font->char_width,
+                    .h = font->line_height_with_spacing()
+                };
+            }
+        }
+        return {};
+    }
 
     std::vector<SDL_Rect> to_rects(const Font* font,
                                    std::span<const VisibleRow> rows) const
@@ -2800,8 +2922,8 @@ public:
         std::vector<SDL_Rect> rects;
         for (const auto& m : matches) {
             for (const auto& row : rows) {
-                if (row.entry_id != m.entry_id || row.frag.index != m.frag_index)
-                    continue;
+                LineKey key{.entry_id = row.entry_id, .frag_index = row.frag.index};
+                if (key != m.line_key) continue;
 
                 int x = int(m.start_col * font->char_width);
                 int w = int((m.end_col - m.start_col) * font->char_width);
@@ -2816,11 +2938,14 @@ public:
 
 private:
     std::vector<Match> matches;
+    std::vector<LineKey> line_matches;
+    size_t current_index{0};
+    size_t current_line_index{0};
 };
 
 class FindWidget : public Widget {
     HBox* layout_ptr;
-    SingleLineEdit* edit_ptr;
+    FindTextEvent ft_event{.query = String(U""), .direction = 0};
 
 public:
     std::function<void(FindWidget*)> on_close;
@@ -2835,17 +2960,18 @@ public:
       //  spacer.layout_spec.stretch = 1;
 
         geometry::Size sz;
-        auto& e = layout.add_child<SingleLineEdit>();
-        edit_ptr = &e;
-        e.text = U"";
-        e.max_visible_chars = 30;
-        e.layout_spec.stretch = 0;
-        e.layout_spec.align = layout::Align::Right | layout::Align::Top;
-        sz = e.preferred_size();
-        e.layout_spec.fixed_width = sz.w;
-        e.layout_spec.fixed_height = sz.h;
-        e.connect<ValueChangedEvent<String>>(InternalEventType::value_changed, [this](ValueChangedEvent<String>& e) {
-            window.emit(TextFindEvent{.text = e.value});
+        auto& edit = layout.add_child<SingleLineEdit>();
+        edit.text = U"";
+        edit.max_visible_chars = 30;
+        edit.layout_spec.stretch = 0;
+        edit.layout_spec.align = layout::Align::Right | layout::Align::Top;
+        sz = edit.preferred_size();
+        edit.layout_spec.fixed_width = sz.w;
+        edit.layout_spec.fixed_height = sz.h;
+        connect<ValueChangedEvent<String>>(InternalEventType::value_changed, &edit, [this](ValueChangedEvent<String>& e) {
+            ft_event.query = e.value;
+            ft_event.direction = 0;
+            window.emit(ft_event);
             return true;
         });
 
@@ -2854,19 +2980,29 @@ public:
         next.layout_spec.fixed_width = sz.w;
         next.layout_spec.fixed_height = sz.h;
         next.layout_spec.align = layout::Align::Right | layout::Align::Top;
+        connect<ClickedEvent>(InternalEventType::clicked, &next, [this](auto&) -> bool {
+            ft_event.direction = 1;
+            window.emit(ft_event);
+            return false;
+        });
 
         auto& prev = layout.add_child<Button>(U"prev");
         sz = prev.preferred_size();
         prev.layout_spec.fixed_width = sz.w;
         prev.layout_spec.fixed_height = sz.h;
         prev.layout_spec.align = layout::Align::Right | layout::Align::Top;
+        connect<ClickedEvent>(InternalEventType::clicked, &prev, [this](auto&) -> bool {
+            ft_event.direction = -1;
+            window.emit(ft_event);
+            return false;
+        });
 
         auto&x = layout.add_child<Button>(U"X"); // close
         sz = x.preferred_size();
         x.layout_spec.fixed_width = sz.w;
         x.layout_spec.fixed_height = sz.h;
         x.layout_spec.align = layout::Align::Right | layout::Align::Top;
-        x.connect<ClickedEvent>(InternalEventType::clicked, [this](auto&) -> bool {
+        connect<ClickedEvent>(InternalEventType::clicked, &x, [this](auto&) -> bool {
             if (on_close)
                 on_close(this);
             return true;
@@ -2874,23 +3010,17 @@ public:
 
         layout.layout_children();
 
-        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
-            if (edit_ptr)
-                edit_ptr->emit(e);
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, this, [&edit](auto& e) {
+            edit.emit(e);
             return true;
         });
 
-        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
-            if (edit_ptr)
-                edit_ptr->emit(e);
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, this, [&edit](auto& e) {
+            edit.emit(e);
             return true;
         });
 
-        /* testing
-        window.connect<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](auto& e) {
-            // do stuff
-            return false;
-        });*/
+         context.ui.window.focus_widget = &edit;
     }
 
     void render() override {
@@ -2909,7 +3039,7 @@ public:
         for(auto& child : layout_ptr->children) {
             fw += child->frame.w;
         }
-        //fw += 16;
+
         const int fh = font->line_height_with_spacing() * 2;
         const auto& pf = parent->frame;
 
@@ -2947,46 +3077,73 @@ public:
     {
         set_scrollback(props().get(property::OUTPUT_SCROLLBACK).value_or(1000));
 
-        prompt.connect<NewCommandInputEvent>(InternalEventType::new_command_input, [this](auto& e)
+        connect<NewCommandInputEvent>(InternalEventType::new_command_input, &prompt, [this](auto& e)
         {
             new_input(e.text);
             return false;
         });
 
-        prompt.connect<NewInputEvent>(InternalEventType::new_input, [this](auto& e)
+        connect<NewInputEvent>(InternalEventType::new_input, &prompt, [this](auto& e)
         {
             new_input(e.text);
             return true;
         });
 
-        font->connect<FontSizeChangedEvent>(InternalEventType::font_size_changed, [this](auto& /*e*/)
+        connect<FontSizeRequestEvent>(InternalEventType::font_size_changed, nullptr, [this](auto& e)
         {
+            if (e.delta > 0)
+                font->incr_size();
+            else if (e.delta < 0)
+                font->decr_size();
             resize(frame);
             return false;;
         });
 
-        window.connect<TextFindEvent>(InternalEventType::text_find, [this](auto& e)
+        connect<FindTextEvent>(InternalEventType::text_find, &window, [this](auto& e)
         {
-            text_finder.find(entries, e.text);
+            const TextFinder::LineKey* lk{nullptr};
+
+            if (e.direction > 0) {
+                lk = text_finder.next_line();
+            } else if (e.direction < 0) {
+                lk = text_finder.prev_line();
+            } else {
+                text_finder.find(entries, e.query);
+            }
+
+            if (!lk) return true;
+
+            size_t target_line = 0;
+            for (auto& entry : entries) {
+                if (entry.id == lk->entry_id) {
+                    target_line += lk->frag_index;
+                    break;
+                }
+                target_line += entry.size();
+            }
+
+            int scroll = int(target_line) - ((int)rows() / 2);
+            set_scroll_offset(scroll);
+
             return true;
         });
 
-        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, this, [this](auto& e) {
             on_SDL_MOUSEBUTTONDOWN(e);
             return true;
         });
 
-        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, this, [this](auto& e) {
             on_SDL_MOUSEBUTTONUP(e);
             return true;
         });
 
-        window.connect<SDL_MouseWheelEvent>(SDL_MOUSEWHEEL, [this](auto& e) {
+        connect<SDL_MouseWheelEvent>(SDL_MOUSEWHEEL, &window, [this](auto& e) {
             scroll(e.y);
             return true;
         });
 
-        mouse_motion_slot = window.connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](auto& e) {
+        mouse_motion_slot = context.event_bus.connect_later<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, &window, this, [this](auto& e) {
             if (depressed) {
                 end_text_selection(map_to({ e.x, e.y }, content_frame));
 
@@ -3001,13 +3158,13 @@ public:
             return false;
         });
 
-        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, this, [this](auto& e) {
             prompt.emit(e);
             on_SDL_KEYDOWN(e);
             return true;
         });
 
-        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, this, [this](auto& e) {
             prompt.emit(e);
             // When inputting into the prompt, we should keep anchored to the
             // bottom so the prompt is visible.
@@ -3034,7 +3191,7 @@ public:
         scrollbar->set_page_size(rows());
         scrollbar->set_content_size(1); // account for prompt
 
-        scrollbar->connect<ValueChangedEvent<int>>(InternalEventType::value_changed, [this](auto& e) {
+        connect<ValueChangedEvent<int>>(InternalEventType::value_changed, scrollbar, [this](auto& e) {
             set_scroll_offset_from_scrollbar(e.value);
             return true;
         });
@@ -3164,7 +3321,10 @@ public:
 
     void set_scroll_offset(int v)
     {
-        scroll_offset = v;
+        int max = (int)std::max(0UL, (total_lines + prompt.entry.size()) - rows());
+        scroll_offset = std::clamp(v, 0, max);
+
+        //scroll_offset = v;
         if (scrollbar)
             scrollbar->scroll_to(v);
         visible_rows.rebuild = true;
@@ -3242,8 +3402,9 @@ public:
             break;
         }
 
-        int max = (int)std::max(0UL, (total_lines + prompt.entry.size()) - rows());
-        set_scroll_offset(std::clamp(scroll_offset + step, 0, max));
+        //int max = (int)std::max(0UL, (total_lines + prompt.entry.size()) - rows());
+        //set_scroll_offset(std::clamp(scroll_offset + step, 0, max));
+        set_scroll_offset(scroll_offset + step);
     }
 
     void resize(const SDL_Rect& rect) override
@@ -3504,7 +3665,12 @@ public:
     {
         if (text_finder.empty()) return;
 
-        set_draw_color(renderer(), {0, 0, 255, 255});
+        set_draw_color(renderer(), {0, 0, 255, 200});
+
+        auto lr = text_finder.active_rect(font, visible_rows.rows);
+        sdl_console::SDL_RenderFillRect(renderer(), &lr);
+
+        set_draw_color(renderer(), SDL_Color{50, 100, 200, 200});
         auto fr = text_finder.to_rects(font, visible_rows.rows);
         sdl_console::SDL_RenderFillRects(renderer(), fr.data(), fr.size());
         set_draw_color(renderer(), colors::darkgray);
@@ -3550,7 +3716,7 @@ public:
         set_frame_refresh_rate();
         layout = std::make_unique<VBox>(this);
 
-        connect<SDL_WindowEvent>(SDL_WINDOWEVENT, [this](auto& e) {
+        connect<SDL_WindowEvent>(SDL_WINDOWEVENT, this, [this](auto& e) {
             switch(e.event) {
             case SDL_WINDOWEVENT_RESIZED:
                 resize({});
@@ -3582,13 +3748,13 @@ public:
             return true;
         });
 
-        connect<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, [this](auto& e) {
+        connect<SDL_MouseMotionEvent>(SDL_MOUSEMOTION, this, [this](auto& e) {
             context.ui.window.mouse_pos.x = e.x;
             context.ui.window.mouse_pos.y = e.y;
             return false;
         });
 
-        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, [this](auto& e) {
+        connect<SDL_KeyboardEvent>(SDL_KEYDOWN, this, [this](auto& e) {
             auto* target = context.ui.window.focus_widget;
             // Try to locate a widget that accepts keyboard input.
             // dispatch_event will return false when top level widgets
@@ -3599,7 +3765,7 @@ public:
             return false;
         });
 
-        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, [this](auto& e) {
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONDOWN, this, [this](auto& e) {
             Widget* target{nullptr};
 
             if (!overlays.empty()) {
@@ -3608,29 +3774,31 @@ public:
 
             if (!target) {
                 target = find_widget_at(layout.get(), e.x, e.y);
-                if (!target)
-                    target = outpane;
             }
+
+            // No takers. set to default.
+            if (!target)
+                target = outpane;
 
             context.ui.window.focus_widget = target;
             target->emit(e);
             return false;
         });
 
-        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, [this](auto& e) {
+        connect<SDL_MouseButtonEvent>(SDL_MOUSEBUTTONUP, this, [this](auto& e) {
             if (context.ui.window.focus_widget)
                 context.ui.window.focus_widget->emit(e);
 
             return false;
         });
 
-        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, [this](auto& e) {
+        connect<SDL_TextInputEvent>(SDL_TEXTINPUT, this, [this](auto& e) {
             auto* target = context.ui.window.focus_widget;
 
             // Try to locate a widget that accepts text input.
             // dispatch_event will return false when top level widgets
             // like the toolbar or scrollbar have focus.
-            // So default to the prompt when there's no takers.
+            // default to the prompt when there's no takers.
             if (!dispatch_event(target, e))
                 outpane->emit(e);
             return false;
@@ -3690,24 +3858,24 @@ public:
 
         Button& copy = *toolbar.add_button(U"Copy");
         copy.enabled = false;
-        copy.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
+        connect<ClickedEvent>(InternalEventType::clicked, &copy, [&output](auto& /*e*/) {
             output.copy_selected_text_to_clipboard();
             return true;
         });
 
-        output.connect<TextSelectionChangedEvent>(InternalEventType::text_selection_changed, [&copy](auto& e) {
+        connect<TextSelectionChangedEvent>(InternalEventType::text_selection_changed, &output, [&copy](auto& e) {
             copy.enabled = e.selected;
             return true;
         });
 
         Button& paste = *toolbar.add_button(U"Paste");
-        paste.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
+        connect<ClickedEvent>(InternalEventType::clicked, &paste, [&output](auto& /*e*/) {
             output.prompt.put_input_from_clipboard();
             return true;
         });
 
         Button& find = *toolbar.add_button(U"Find");
-        find.connect<ClickedEvent>(InternalEventType::clicked, [this, &output](auto& /*e*/) {
+        connect<ClickedEvent>(InternalEventType::clicked, &find, [this, &output](auto& /*e*/) {
             if (has_overlay<FindWidget>())
                 return true;
 
@@ -3720,21 +3888,19 @@ public:
                 });
             };
 
-            context.ui.window.focus_widget = find_widget.get();
-
             overlays.push_back(std::move(find_widget));
             return true;
         });
 
         Button& font_inc = *toolbar.add_button(U"A+");
-        font_inc.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
-            output.font->incr_size();
+        connect<ClickedEvent>(InternalEventType::clicked, &font_inc, [&output](auto& /*e*/) {
+            output.emit(FontSizeRequestEvent{.delta = 1});
             return true;
         });
 
         Button& font_dec = *toolbar.add_button(U"A-");
-        font_dec.connect<ClickedEvent>(InternalEventType::clicked, [&output](auto& /*e*/) {
-            output.font->decr_size();
+        connect<ClickedEvent>(InternalEventType::clicked, &font_dec, [&output](auto& /*e*/) {
+            output.emit(FontSizeRequestEvent{.delta = -1});
             return true;
         });
     }
@@ -3806,8 +3972,8 @@ public:
         SDL_SetHint(SDL_HINT_MOUSE_FOCUS_CLICKTHROUGH, "1");
 
         auto title = props.get(property::WINDOW_MAIN_TITLE).value_or("DFHack Console");
-        SDL_Rect create_rect = props.get(property::WINDOW_MAIN_RECT).value_or(
-            SDL_Rect{SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480});
+        Rect create_rect = props.get(property::WINDOW_MAIN_RECT).value_or(
+            Rect{SDL_WINDOWPOS_UNDEFINED, SDL_WINDOWPOS_UNDEFINED, 640, 480});
         //auto flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
         auto flags = SDL_WINDOW_RESIZABLE;
 
@@ -3920,8 +4086,6 @@ class ExternalEventQueue {
     class Queue {
 
     public:
-        Queue() = default;
-
         void push(T event) {
             std::scoped_lock l(mutex_);
             events_.push_back(std::move(event));
@@ -3977,28 +4141,21 @@ int set_draw_color(SDL_Renderer* renderer, const SDL_Color& color)
     return sdl_console::SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 }
 
-struct SDLConsole_private {
-    Property props;
-    std::weak_ptr<SDLConsole_impl> impl_weak;
-    std::thread::id init_thread_id;
-};
-
 class SDLConsole_impl : public std::enable_shared_from_this<SDLConsole_impl> {
 public:
     SDLConsole::RunState& run_state;
-    SDLConsole_private& priv;
     CommandPipe command_pipe;
     ExternalEventQueue external_event_queue;
+    EventBus event_bus;
     ImplContext impl_context;
     MainWindow main_window;
 
-    explicit SDLConsole_impl(SDLConsole* con)
+    explicit SDLConsole_impl(SDLConsole* con, Property& props)
     : run_state(con->run_state)
-    , priv(*con->priv)
-    , impl_context(priv.props)
+    , impl_context(props, event_bus)
     , main_window(impl_context)
     {
-        command_pipe.make_connection(outpane().prompt);
+        command_pipe.make_connection(event_bus, &outpane().prompt);
     }
 
     OutputPane& outpane() const {
@@ -4050,13 +4207,13 @@ private:
 
     void emit_sdl_event(SDL_Event& e)
     {
+        //main_window.context.event_bus.emit(e, &main_window);
         main_window.emit(e);
     }
 };
 
 SDLConsole::SDLConsole()
 {
-    priv = std::make_unique<SDLConsole_private>();
     run_state.reset();
 }
 
@@ -4073,11 +4230,11 @@ bool SDLConsole::init()
     if (!run_state.is_inactive()) { return true; }
     bool success = true;
     //std::cerr << "SDLConsole: init() from thread: " << std::this_thread::get_id() << '\n';
-    priv->init_thread_id = std::this_thread::get_id();
+    init_thread_id = std::this_thread::get_id();
     try {
         bind_sdl_symbols();
-        impl = std::make_shared<SDLConsole_impl>(this);
-        priv->impl_weak = impl;
+        impl = std::make_shared<SDLConsole_impl>(this, props);
+        impl_weak = impl;
         run_state.set_state(RunState::active);
     } catch(std::runtime_error &e) {
         success = false;
@@ -4110,23 +4267,23 @@ void SDLConsole::write_line_(std::string& line, std::optional<SDL_Color> color)
 
 int SDLConsole::get_columns()
 {
-    return priv->props.get(property::RT_OUTPUT_COLUMNS).value_or(-1);
+    return props.get(property::RT_OUTPUT_COLUMNS).value_or(-1);
 }
 
 int SDLConsole::get_rows()
 {
-    return priv->props.get(property::RT_OUTPUT_ROWS).value_or(-1);
+    return props.get(property::RT_OUTPUT_ROWS).value_or(-1);
 }
 
 SDLConsole& SDLConsole::set_mainwindow_create_rect(int w, int h, int x, int y)
 {
-    SDL_Rect rect{.x = x, .y = y, .w = w, .h = h};
-    priv->props.set(property::WINDOW_MAIN_RECT, rect);
+    Rect rect{.x = x, .y = y, .w = w, .h = h};
+    props.set(property::WINDOW_MAIN_RECT, rect);
     return *this;
 }
 
 SDLConsole& SDLConsole::set_scrollback(int scrollback) {
-    priv->props.set(property::OUTPUT_SCROLLBACK, scrollback);
+    props.set(property::OUTPUT_SCROLLBACK, scrollback);
     push_api_task([this, scrollback] {
         impl->outpane().set_scrollback(scrollback);
     });
@@ -4136,7 +4293,7 @@ SDLConsole& SDLConsole::set_scrollback(int scrollback) {
 SDLConsole& SDLConsole::set_prompt(const std::string& text)
 {
     auto t = text::from_utf8(text);
-    priv->props.set(property::PROMPT_TEXT, t);
+    props.set(property::PROMPT_TEXT, t);
     push_api_task([this, t = std::move(t)] {
         impl->outpane().prompt.set_prompt_text(t);
     });
@@ -4145,7 +4302,7 @@ SDLConsole& SDLConsole::set_prompt(const std::string& text)
 
 std::string SDLConsole::get_prompt()
 {
-    return text::to_utf8(priv->props.get(property::PROMPT_TEXT).value_or(U"> "));
+    return text::to_utf8(props.get(property::PROMPT_TEXT).value_or(U"> "));
 }
 
 void SDLConsole::set_prompt_input(const std::string& text)
@@ -4190,7 +4347,7 @@ void SDLConsole::clear()
 
 int SDLConsole::get_line(std::string& buf)
 {
-    if (auto I = std::weak_ptr<SDLConsole_impl>(impl).lock()) {
+    if (auto I = impl_weak.lock()) {
         return I->command_pipe.wait_get(buf);
     }
     return -1;
@@ -4228,10 +4385,10 @@ bool SDLConsole::destroy()
         return true;
     }
 
-    if (priv->init_thread_id != std::this_thread::get_id()) {
+    if (init_thread_id != std::this_thread::get_id()) {
         std::cerr << "SDLConsole: destroy() called from non-init thread "
         << std::this_thread::get_id()
-        << " (expected " << priv->init_thread_id << ")\n";
+        << " (expected " << init_thread_id << ")\n";
         return false;
     }
 
@@ -4239,7 +4396,7 @@ bool SDLConsole::destroy()
     impl.reset();
     // NOTE: The only other long living impl shared_ptr is get_line()
     // which runs on a separate thread and is commanded to close when shutdown() is called.
-    while (!priv->impl_weak.expired()) {
+    while (!impl_weak.expired()) {
         std::this_thread::sleep_for(std::chrono::milliseconds(1));
     }
     // Cleanup thread specific resources.
@@ -4278,7 +4435,7 @@ void SDLConsole::push_api_task(F&& func)
     * memory, which could result in memory leaks if the event is not received
     * for cleanup.
     */
-    if (auto I = std::weak_ptr<SDLConsole_impl>(impl).lock()) {
+    if (auto I = impl_weak.lock()) {
         I->external_event_queue.api_task.push(std::forward<F>(func));
     }
 }

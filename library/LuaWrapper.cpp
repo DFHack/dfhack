@@ -221,7 +221,7 @@ void LuaWrapper::push_object_internal(lua_State *state, const type_identity *typ
 
     if (type->type() == IDTYPE_CLASS)
     {
-        virtual_identity *class_vid = virtual_identity::get(virtual_ptr(ptr));
+        const virtual_identity *class_vid = virtual_identity::get(virtual_ptr(ptr));
         if (class_vid)
             type = class_vid;
     }

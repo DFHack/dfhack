@@ -72,7 +72,7 @@ namespace DFHack
         PTRFLAG_HAS_BAD_POINTERS = 2,
     };
 
-    typedef void *(*TAllocateFn)(void*,const void*);
+    using TAllocateFn = void *(*)(void*, const void*);
 
     class DFHACK_EXPORT type_identity {
         const size_t size;
@@ -122,10 +122,10 @@ namespace DFHack
         constructed_identity(size_t size, const TAllocateFn alloc)
             : type_identity(size), allocator(alloc) {};
 
-        virtual bool can_allocate() const { return (allocator != NULL); }
-        virtual void *do_allocate() const { return allocator(NULL,NULL); }
+        virtual bool can_allocate() const { return (allocator != nullptr); }
+        virtual void *do_allocate() const { return allocator(nullptr,nullptr); }
         virtual bool do_copy(void *tgt, const void *src) const { return allocator(tgt,src) == tgt; }
-        virtual bool do_destroy(void *obj) const { return allocator(NULL,obj) == obj; }
+        virtual bool do_destroy(void *obj) const { return allocator(nullptr,obj) == obj; }
     public:
         virtual bool isPrimitive() const { return false; }
         virtual bool isConstructed() const { return true; }
@@ -526,42 +526,53 @@ namespace df
     using DFHack::DfLinkedList;
     using DFHack::DfOtherVectors;
 
+    /*
+     *
+     * Allocator functions are used to allocate, deallocate, and copy-assign objects
+     *
+     * When out is non-null, the object pointed to by in is copy-assigned over the object
+     * pointed to by out, if possible. When assignment is possible, out is returned.
+     * When assignment is not possible, nothing is done and nullptr is returned.
+     * The type must be copy-assignable for this to work; move-assignment is not
+     * supported. Callers can determine if the assignment succeeded by checking for the
+     * return value matching out (or simply being not null).
+     *
+     * When only in is non-null, the object pointed to by in is destroyed and deallocated,
+     * and in is returned. Note that the return value points to deallocated memory
+     * and should not be dereferenced.
+     *
+     * When both out and in are null, a new object is constructed and returned.
+     *
+     * Calling an allocator function with out non-null and in null is undefined behavior.
+     *
+     */
+
     template<typename T> concept copy_assignable = std::assignable_from<T&, T&> && std::assignable_from<T&, const T&>;
 
     template<typename T>
-    void* allocator_try_assign(void *out, const void *in) {
-        if constexpr (copy_assignable<T>) {
-            *(T*)out = *(const T*)in;
-            return out;
+    void *allocator_fn(void *out, const void *in) {
+        if (out)
+        {
+            if constexpr (copy_assignable<T>)
+            {
+                *(T*)out = *(const T*)in;
+                return out;
+            }
+            else
+            {
+                return nullptr;
+            }
         }
-        else {
-            // assignment is not possible; do nothing
-            return nullptr;
-        }
-    }
-
+        else if (in)
+        {
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-    template<class T>
-    void *allocator_fn(void *out, const void *in) {
-        if (out) { return allocator_try_assign<T>(out, in); }
-        else if (in) { delete (T*)in; return (T*)in; }
-        else return new T();
-    }
+            delete (T*)in;
 #pragma GCC diagnostic pop
-
-    template<class T>
-    void *allocator_nodel_fn(void *out, const void *in) {
-        if (out) { *(T*)out = *(const T*)in; return out; }
-        else if (in) { return NULL; }
-        else return new T();
-    }
-
-    template<class T>
-    void *allocator_noassign_fn(void *out, const void *in) {
-        if (out) { return NULL; }
-        else if (in) { delete (T*)in; return (T*)in; }
-        else return new T();
+            return (T*)in;
+        }
+        else
+            return new T();
     }
 
     template<class T>

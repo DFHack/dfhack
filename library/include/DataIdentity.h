@@ -638,7 +638,7 @@ namespace df
         static opaque_identity *get() {
             using type = std::shared_ptr<T>;
             static std::string name = std::string("shared_ptr<") + typeid(T).name() + ">";
-            static opaque_identity identity(sizeof(type), allocator_noassign_fn<type>, name);
+            static opaque_identity identity(sizeof(type), allocator_fn<type>, name);
             return &identity;
         }
     };

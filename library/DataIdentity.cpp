@@ -19,7 +19,7 @@ namespace df {
 #define INTEGER_IDENTITY_TRAITS(type, name) NUMBER_IDENTITY_TRAITS(integer, type, name)
 #define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type, #type)
 #define OPAQUE_IDENTITY_TRAITS_NAME(name, ...) \
-    const opaque_identity identity_traits<__VA_ARGS__ >::identity(sizeof(__VA_ARGS__), allocator_noassign_fn<__VA_ARGS__ >, name)
+    const opaque_identity identity_traits<__VA_ARGS__ >::identity(sizeof(__VA_ARGS__), allocator_fn<__VA_ARGS__ >, name)
 #define OPAQUE_IDENTITY_TRAITS(...) OPAQUE_IDENTITY_TRAITS_NAME(#__VA_ARGS__, __VA_ARGS__ )
 
     INTEGER_IDENTITY_TRAITS(char,               "char");

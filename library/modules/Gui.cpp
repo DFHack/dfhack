@@ -135,7 +135,7 @@ static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int id
 }
 */
 
-static std::string getNameChunk(virtual_identity *id, int start, int end)
+static std::string getNameChunk(const virtual_identity *id, int start, int end)
 {
     if (!id)
         return "UNKNOWN";
@@ -970,7 +970,7 @@ std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
         }
     }
 
-    if (virtual_identity *id = virtual_identity::get(top))
+    if (const virtual_identity *id = virtual_identity::get(top))
     {
         std::string name = getNameChunk(id, 11, 2);
 

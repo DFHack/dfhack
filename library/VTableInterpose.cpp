@@ -210,7 +210,7 @@ void DFHack::addr_to_method_pointer_(void *pptr, void *addr)
 void *virtual_identity::get_vmethod_ptr(int idx) const
 {
     assert(idx >= 0);
-    void **vtable = (void**)vtable_ptr;
+    void **vtable = (void**)vtable_ptr();
     if (!vtable) return NULL;
     return vtable[idx];
 }
@@ -218,7 +218,7 @@ void *virtual_identity::get_vmethod_ptr(int idx) const
 bool virtual_identity::set_vmethod_ptr(MemoryPatcher &patcher, int idx, void *ptr) const
 {
     assert(idx >= 0);
-    void **vtable = (void**)vtable_ptr;
+    void **vtable = (void**)vtable_ptr();
     if (!vtable) return NULL;
     return patcher.write(&vtable[idx], &ptr, sizeof(void*));
 }
@@ -326,16 +326,13 @@ VMethodInterposeLinkBase::~VMethodInterposeLinkBase()
 
 VMethodInterposeLinkBase *VMethodInterposeLinkBase::get_first_interpose(const virtual_identity *id)
 {
-    auto pitem = id->interpose_list.find(vmethod_idx);
-    if (pitem == id->interpose_list.end())
-        return NULL;
 
-    auto item = pitem->second;
+    auto item = id->get_interpose(vmethod_idx);
     if (!item)
-        return NULL;
+        return nullptr;
 
     if (item->host != id)
-        return NULL;
+        return nullptr;
     while (item->prev && item->prev->host == id)
         item = item->prev;
 
@@ -364,7 +361,7 @@ bool VMethodInterposeLinkBase::find_child_hosts(const virtual_identity *cur, voi
             child_next.insert(base);
             found = true;
         }
-        else if (child->vtable_ptr)
+        else if (child->vtable_ptr())
         {
             void *cptr = child->get_vmethod_ptr(vmethod_idx);
             if (cptr != vmptr)
@@ -401,7 +398,7 @@ void VMethodInterposeLinkBase::on_host_delete(const virtual_identity *from)
     {
         // Otherwise, drop the link to that child:
         assert(child_hosts.count(from) != 0 &&
-               from->interpose_list[vmethod_idx] == this); // while mutating this gets cleaned up below so machts nichts
+               from->get_interpose(vmethod_idx) == this); // while mutating this gets cleaned up below so machts nichts
 
         // Find and restore the original vmethod ptr
         auto last = this;
@@ -413,7 +410,7 @@ void VMethodInterposeLinkBase::on_host_delete(const virtual_identity *from)
 
         // Unlink the chains
         child_hosts.erase(from);
-        from->interpose_list.erase(vmethod_idx);
+        from->set_interpose(vmethod_idx,nullptr);
     }
 }
 
@@ -427,7 +424,7 @@ bool VMethodInterposeLinkBase::apply(bool enable)
 
     if (is_applied())
         return true;
-    if (!host->vtable_ptr)
+    if (!host->vtable_ptr())
     {
         std::cerr << "VMethodInterposeLinkBase::apply(" << enable << "): " << name()
             << ": no vtable pointer: " << host->getName() << endl;
@@ -435,10 +432,10 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     }
 
     // Retrieve the current vtable entry
-    auto l = host->interpose_list.find(vmethod_idx);
+    auto l = host->get_interpose(vmethod_idx);
 
-    VMethodInterposeLinkBase* old_link = (l != host->interpose_list.end()) ? (l->second) : nullptr;
-    VMethodInterposeLinkBase* next_link = NULL;
+    VMethodInterposeLinkBase* old_link = (l != nullptr) ? l : nullptr;
+    VMethodInterposeLinkBase* next_link = nullptr;
 
     while (old_link && old_link->host == host && old_link->priority > priority)
     {
@@ -473,7 +470,7 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     if (next_link)
         next_link->prev = this;
     else
-        host->interpose_list[vmethod_idx] = this;
+        host->set_interpose(vmethod_idx,this);
 
     child_hosts.clear();
     child_next.clear();
@@ -532,9 +529,9 @@ bool VMethodInterposeLinkBase::apply(bool enable)
     for (auto it = child_hosts.begin(); it != child_hosts.end(); ++it)
     {
         auto nhost = *it;
-        assert(nhost->interpose_list[vmethod_idx] == old_link); // acceptable due to assign below
+        assert(nhost->get_interpose(vmethod_idx) == old_link); // acceptable due to assign below
         nhost->set_vmethod_ptr(patcher, vmethod_idx, interpose_method);
-        nhost->interpose_list[vmethod_idx] = this;
+        nhost->set_interpose(vmethod_idx, this);
     }
 
     return true;
@@ -573,7 +570,7 @@ void VMethodInterposeLinkBase::remove()
         MemoryPatcher patcher;
 
         // Remove from the list in the identity and vtable
-        host->interpose_list[vmethod_idx] = prev;
+        host->set_interpose(vmethod_idx, prev);
         host->set_vmethod_ptr(patcher, vmethod_idx, saved_chain);
 
         for (auto it = child_next.begin(); it != child_next.end(); ++it)
@@ -589,8 +586,8 @@ void VMethodInterposeLinkBase::remove()
         for (auto it = child_hosts.begin(); it != child_hosts.end(); ++it)
         {
             auto nhost = *it;
-            assert(nhost->interpose_list[vmethod_idx] == this); // acceptable due to assign below
-            nhost->interpose_list[vmethod_idx] = prev;
+            assert(nhost->get_interpose(vmethod_idx) == this); // acceptable due to assign below
+            nhost->set_interpose(vmethod_idx,prev);
             nhost->set_vmethod_ptr(patcher, vmethod_idx, saved_chain);
             if (prev)
                 prev->child_hosts.insert(nhost);

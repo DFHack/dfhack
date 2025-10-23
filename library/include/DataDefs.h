@@ -24,6 +24,7 @@ distribution.
 
 #pragma once
 
+#include <list>
 #include <map>
 #include <set>
 #include <sstream>
@@ -134,28 +135,30 @@ namespace DFHack
     };
 
     class DFHACK_EXPORT compound_identity : public constructed_identity {
-        static compound_identity *list;
-        mutable compound_identity *next;
+        static std::list<const compound_identity*>* list;
+        static std::map<const compound_identity*, const compound_identity*>* parent_map;
+        static std::map<const compound_identity*, std::vector<const compound_identity*>>* children_map;
+        static std::vector<const compound_identity*>* top_scope;
 
         const char *dfhack_name;
-        mutable compound_identity *scope_parent;
-        mutable std::vector<const compound_identity*> scope_children;
-        static std::vector<const compound_identity*> top_scope;
+        const compound_identity *const scope_parent;
+
+        static void ensure_compound_identity_init();
 
     protected:
         compound_identity(size_t size, TAllocateFn alloc,
             const compound_identity *scope_parent, const char *dfhack_name);
 
-        virtual void doInit(Core *core);
+        virtual void doInit(Core *core) const;
 
     public:
         const char *getName() const { return dfhack_name; }
 
         virtual const std::string getFullName() const;
 
-        const compound_identity *getScopeParent() const { return scope_parent; }
-        const std::vector<const compound_identity*> &getScopeChildren() const { return scope_children; }
-        static const std::vector<const compound_identity*> &getTopScope() { return top_scope; }
+        const compound_identity *getScopeParent() const { return (*parent_map)[this]; }
+        const std::vector<const compound_identity*> &getScopeChildren() const { return (*children_map)[this]; }
+        static const std::vector<const compound_identity*> &getTopScope() { return *top_scope; }
 
         static void Init(Core *core);
     };
@@ -286,14 +289,15 @@ namespace DFHack
     };
 
     class DFHACK_EXPORT struct_identity : public compound_identity {
-        mutable struct_identity *parent;
-        mutable std::vector<const struct_identity*> children;
-        bool has_children;
+        static std::map<const struct_identity*, const struct_identity*>* parent_map;
+        static std::map<const struct_identity*, std::vector<const struct_identity*>>* children_map;
 
         const struct_field_info *fields;
 
+        static void ensure_struct_identity_init();
+
     protected:
-        virtual void doInit(Core *core);
+        virtual void doInit(Core *core) const override;
 
     public:
         struct_identity(size_t size, TAllocateFn alloc,
@@ -302,9 +306,9 @@ namespace DFHack
 
         virtual identity_type type() const { return IDTYPE_STRUCT; }
 
-        const struct_identity *getParent() const { return parent; }
-        const std::vector<const struct_identity*> &getChildren() const { return children; }
-        bool hasChildren() const { return has_children; }
+        const struct_identity *getParent() const { return (*parent_map)[this]; }
+        const std::vector<const struct_identity*> &getChildren() const { return (*children_map)[this]; }
+        bool hasChildren() const { return (*children_map)[this].size() > 0; }
 
         const struct_field_info *getFields() const { return fields; }
 
@@ -361,26 +365,54 @@ namespace DFHack
     class MemoryPatcher;
 
     class DFHACK_EXPORT virtual_identity : public struct_identity {
-        static std::map<void*, virtual_identity*> known;
+    public:
+        using interpose_t = VMethodInterposeLinkBase*;
+        using interpose_list_t = std::map<int, interpose_t>;
+
+    private:
+        static std::map<const std::string, const virtual_identity*, std::less<>> *name_lookup;
+        static std::map<void*, const virtual_identity*>* known;
+        static std::map<const virtual_identity*, void*>* vtable_ptr_map;
+        static std::map<const virtual_identity*, interpose_list_t>* interpose_list_map;
 
         const char *original_name;
-
-        mutable void *vtable_ptr;
 
         bool is_plugin;
 
         friend class VMethodInterposeLinkBase;
-        mutable std::map<int,VMethodInterposeLinkBase*> interpose_list;
+
+        static void ensure_virtual_identity_init();
 
     protected:
-        virtual void doInit(Core *core);
+        virtual void doInit(Core *core) const override;
 
         static void *get_vtable(virtual_ptr instance_ptr) { return *(void**)instance_ptr; }
 
-        bool can_allocate() const { return struct_identity::can_allocate() && (vtable_ptr != NULL); }
+        void* vtable_ptr() const
+        {
+            auto& lst = (*vtable_ptr_map);
+            auto it = lst.find(this);
+            return it != lst.end() ? it->second : nullptr;
+        }
+
+        bool can_allocate() const { return struct_identity::can_allocate() && (vtable_ptr() != nullptr); }
 
         void *get_vmethod_ptr(int index) const;
         bool set_vmethod_ptr(MemoryPatcher &patcher, int index, void *ptr) const;
+
+        interpose_list_t& get_interpose_list() const { return (*interpose_list_map)[this]; }
+        interpose_t get_interpose(int index) const {
+            auto &lst = get_interpose_list();
+            auto it = lst.find(index);
+            return it != lst.end() ? it->second : nullptr;
+        }
+        void set_interpose(int index, interpose_t link) const {
+            auto &lst = get_interpose_list();
+            if (link)
+                lst[index] = link;
+            else
+                lst.erase(index);
+        }
 
     public:
         virtual_identity(size_t size, const TAllocateFn alloc,
@@ -394,16 +426,16 @@ namespace DFHack
         const char *getOriginalName() const { return original_name ? original_name : getName(); }
 
     public:
-        static virtual_identity *get(virtual_ptr instance_ptr);
+        static const virtual_identity *get(virtual_ptr instance_ptr);
 
-        static virtual_identity *find(void *vtable);
-        static virtual_identity *find(const std::string &name);
+        static const virtual_identity *find(void *vtable);
+        static const virtual_identity *find(std::string_view name);
 
         bool is_instance(virtual_ptr instance_ptr) const {
             if (!instance_ptr) return false;
-            if (vtable_ptr) {
+            if (vtable_ptr()) {
                 void *vtable = get_vtable(instance_ptr);
-                if (vtable == vtable_ptr) return true;
+                if (vtable == vtable_ptr()) return true;
                 if (!hasChildren()) return false;
             }
             return is_subclass(get(instance_ptr));
@@ -411,8 +443,8 @@ namespace DFHack
 
         bool is_direct_instance(virtual_ptr instance_ptr) const {
             if (!instance_ptr) return false;
-            return vtable_ptr ? (vtable_ptr == get_vtable(instance_ptr))
-                              : (this == get(instance_ptr));
+            auto vp = vtable_ptr();
+            return vp ? (vp == get_vtable(instance_ptr)) : (this == get(instance_ptr));
         }
 
         template<class P> static P get_vmethod_ptr(P selector);

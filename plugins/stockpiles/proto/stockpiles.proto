@@ -100,10 +100,16 @@ message StockpileSettings {
       repeated string mats = 3;
       repeated string quality_core = 4;
       repeated string quality_total = 5;
+      optional bool dyed = 7;
+      optional bool undyed = 8;
+      repeated string color = 9;
   }
   message LeatherSet {
       optional bool all = 2;
       repeated string mats = 1;
+      optional bool dyed = 3;
+      optional bool undyed = 4;
+      repeated string color = 5;
   }
   message ClothSet {
       optional bool all = 9;
@@ -115,6 +121,9 @@ message StockpileSettings {
       repeated string cloth_plant = 6;
       repeated string cloth_yarn = 7;
       repeated string cloth_metal = 8;
+      optional bool dyed = 10;
+      optional bool undyed = 11;
+      repeated string color = 12;
   }
   message WoodSet {
       optional bool all = 2;
@@ -145,6 +154,9 @@ message StockpileSettings {
       repeated string quality_total = 10;
       optional bool usable = 11;
       optional bool unusable = 12;
+      optional bool dyed = 14;
+      optional bool undyed = 15;
+      repeated string color = 16;
   }
   message CorpsesSet {
       optional bool all = 1;

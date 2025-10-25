@@ -61,6 +61,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `stockpiles`: add support for managing the dyed, undyed, and color filter settings.
 
 ## Documentation
 

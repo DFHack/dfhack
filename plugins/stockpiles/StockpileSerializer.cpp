@@ -499,7 +499,7 @@ static void unserialize_list_organic_mat(color_ostream& out, const char* subcat,
 }
 
 static bool serialize_list_color(color_ostream& out, FuncWriteExport add_value, const vector<char>* colors) {
-    bool all = true;
+    bool all = world->raws.descriptors.colors.size() == colors->size();
     if (!colors) {
         DEBUG(log, out).print("serialize_list_color: list null\n");
         return all;
@@ -1508,14 +1508,14 @@ static bool finished_goods_mat_is_allowed(const MaterialInfo& mi) {
 }
 
 bool StockpileSettingsSerializer::write_finished_goods(color_ostream& out, StockpileSettings::FinishedGoodsSet* finished_goods) {
-    bool all = mSettings->leather.dyed && mSettings->leather.undyed;
+    bool all = mSettings->finished_goods.dyed && mSettings->finished_goods.undyed;
     finished_goods->set_dyed(mSettings->finished_goods.dyed);
     finished_goods->set_undyed(mSettings->finished_goods.undyed);
 
     all = serialize_list_item_type(out,
         finished_goods_type_is_allowed,
         [&](const string& token) { finished_goods->add_type(token); },
-        mSettings->finished_goods.type);
+        mSettings->finished_goods.type) && all;
 
     all = serialize_list_material(out,
         finished_goods_mat_is_allowed,

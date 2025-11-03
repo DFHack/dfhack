@@ -61,6 +61,24 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.01-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
 - `stockpiles`: add support for managing the dyed, undyed, and color filter settings.
 
 ## Documentation

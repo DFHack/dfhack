@@ -1682,6 +1682,7 @@ bool Core::InitMainThread() {
             { "world", sizeof(df::world) },
             { "game", sizeof(df::gamest) },
             { "plotinfo", sizeof(df::plotinfost) },
+            { "gps", sizeof(df::graphic) },
         };
 
         for (auto& gte : *df::global::global_table)

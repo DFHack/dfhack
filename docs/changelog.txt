@@ -61,6 +61,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- Core: added ``gps`` (``graphicst``) to the set of globals whose sizes must agree for DFHack to pass initialization checks
 
 ## Documentation
 

@@ -130,7 +130,6 @@ local building_inputs = {
             vector_id=df.job_item_vector_id.PIPE_SECTION
         }
     },
-    [df.building_type.Construction] = { { flags2={ building_material=true, non_economic=true } } },
     [df.building_type.Hatch] = {
         {
             item_type=df.item_type.HATCH_COVER,
@@ -353,6 +352,26 @@ local siegeengine_input = {
             quantity=3
         }
     },
+    [df.siegeengine_type.BoltThrower] = {
+        {
+            item_type=df.item_type.BOLT_THROWER_PARTS,
+            vector_id=df.job_item_vector_id.BOLT_THROWER_PARTS,
+        },
+        {
+            item_type=df.item_type.BIN,
+            vector_id=df.job_item_vector_id.BIN,
+        },
+        {
+            name='mechanism',
+            item_type=df.item_type.TRAPPARTS,
+            vector_id=df.job_item_vector_id.TRAPPARTS,
+        },
+        {
+            name='chain',
+            item_type=df.item_type.CHAIN,
+            vector_id=df.job_item_vector_id.CHAIN
+        },
+    },
 }
 --[[ Functions for lookup in tables. ]]
 
@@ -380,6 +399,11 @@ local function get_inputs_by_type(type,subtype,custom)
         return trap_inputs[subtype]
     elseif type == df.building_type.SiegeEngine then
         return siegeengine_input[subtype]
+    elseif type == df.building_type.Construction then
+        if subtype == df.construction_type.ReinforcedWall then
+            return { { flags2={ building_material=true, non_economic=true }, quantity=2 }, { flags3={ metal=true }, item_type=df.item_type.BAR, vector_id=df.job_item_vector_id.BAR } }
+        end
+        return { { flags2={ building_material=true, non_economic=true } } }
     else
         return building_inputs[type]
     end

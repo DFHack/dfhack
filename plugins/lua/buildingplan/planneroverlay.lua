@@ -119,6 +119,10 @@ local function is_construction()
     return uibs.building_type == df.building_type.Construction
 end
 
+local function is_siege_engine()
+    return uibs.building_type == df.building_type.SiegeEngine
+end
+
 local function tile_is_construction(pos)
     local tt = dfhack.maps.getTileType(pos)
     if not tt then return false end
@@ -605,7 +609,7 @@ function PlannerOverlay:init()
 
     local main_panel = widgets.Panel{
         view_id='main',
-        frame={t=1, l=0, r=0, h=14},
+        frame={t=1, l=0, r=0, h=15},
         frame_style=gui.FRAME_INTERIOR_MEDIUM,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('is_not_minimized'),
@@ -743,6 +747,24 @@ function PlannerOverlay:init()
                 buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'engraved', val)
             end,
         },
+        widgets.CycleHotkeyLabel {
+            view_id='siege_facing',
+            frame = {b=4, l=1, w=28},
+            key='CUSTOM_T',
+            key_back='CUSTOM_SHIFT_T',
+            label='Facing:',
+            visible=is_siege_engine,
+            options={
+                {label='North',value=0},
+                {label='Northeast',value=1},
+                {label='East',value=2},
+                {label='Southeast',value=3},
+                {label='South',value=4},
+                {label='Southwest',value=5},
+                {label='West',value=6},
+                {label='Northwest',value=7},
+            },
+        },
         widgets.ToggleHotkeyLabel {
             view_id='empty',
             frame={b=4, l=1, w=22},
@@ -829,7 +851,7 @@ function PlannerOverlay:init()
     }
 
     local divider_widget = widgets.Divider{
-        frame={t=10, l=0, r=0, h=1},
+        frame={t=11, l=0, r=0, h=1},
         frame_style=gui.FRAME_INTERIOR_MEDIUM,
         visible=self:callback('is_not_minimized'),
     }
@@ -1307,10 +1329,16 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         if is_stairs() then
             subtype = self:get_stairs_subtype(pos, pd)
         end
+        local fields = {}
+        if is_siege_engine() then
+            local val = self.subviews.siege_facing:getOptionValue()
+            fields.facing = val
+            fields.resting_orientation = val
+        end
         local bld, err = dfhack.buildings.constructBuilding{pos=pos,
             type=uibs.building_type, subtype=subtype, custom=uibs.custom_type,
             width=pd.width, height=pd.height,
-            direction=uibs.direction, filters=filters}
+            direction=uibs.direction, filters=filters, fields=fields}
         if err then
             -- it's ok if some buildings fail to build
             goto continue

@@ -59,8 +59,10 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `buildingplan`: Building costs for reinforced walls are now correct.
 
 ## Misc Improvements
+- `buildingplan`: Added support for bolt throwers and siege engine rotation.
 
 ## Documentation
 

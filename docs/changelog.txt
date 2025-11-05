@@ -33,6 +33,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `cleanconst`: do not attempt to clean Reinforced constructions
 
 ## Misc Improvements
 

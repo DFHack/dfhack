@@ -66,7 +66,7 @@ on:
         default: false
       gcc-ver:
         type: string
-        default: "10"
+        default: "11"
 
 jobs:
   build-linux64:

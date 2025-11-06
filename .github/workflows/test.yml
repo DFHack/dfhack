@@ -59,9 +59,11 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - gcc: 10
+        - gcc: 11 # baseline compatibility with ubuntu LTS 22.04
           plugins: "default"
-        - gcc: 12
+        - gcc: 13 # future compatibility with ubuntu LTS 24.04
+          plugins: "all"
+        - gcc: 15 # cutting-edge
           plugins: "all"
 
   test-windows:

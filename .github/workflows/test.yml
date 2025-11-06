@@ -61,9 +61,7 @@ jobs:
         include:
         - gcc: 11 # baseline compatibility with ubuntu LTS 22.04
           plugins: "default"
-        - gcc: 13 # future compatibility with ubuntu LTS 24.04
-          plugins: "all"
-        - gcc: 15 # cutting-edge
+        - gcc: 12 # highest available in ubuntu 22.04
           plugins: "all"
 
   test-windows:

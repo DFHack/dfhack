@@ -7,7 +7,7 @@ cmake_policy(SET CMP0074 NEW)
 
 # set up versioning.
 set(DF_VERSION "53.02")
-set(DFHACK_RELEASE "r1")
+set(DFHACK_RELEASE "r2")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")

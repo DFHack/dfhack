@@ -33,7 +33,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `cleanconst`: do not attempt to clean Reinforced constructions
 
 ## Misc Improvements
 
@@ -60,7 +59,26 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.02-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
 - `buildingplan`: Building costs for reinforced walls are now correct.
+- `cleanconst`: do not attempt to clean Reinforced constructions
 
 ## Misc Improvements
 - `buildingplan`: Added support for bolt throwers and siege engine rotation.

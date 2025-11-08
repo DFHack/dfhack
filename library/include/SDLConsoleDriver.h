@@ -50,7 +50,7 @@ namespace  DFHack
         ///dtor, NOT thread-safe
         ~SDLConsoleDriver();
 
-        static bool is_supported() {
+        static bool is_enabled() {
 #ifdef DISABLE_SDL_CONSOLE
             return false;
 #endif
@@ -75,10 +75,11 @@ namespace  DFHack
 
         bool hide() override;
         bool show() override;
-
-        bool sdl_event_hook(SDL_Event& event);
-        bool init_sdl();
         void cleanup() override;
+
+        bool sdl_event_hook(const SDL_Event& event);
+        bool init_sdl();
+        static void hook_df_renderer(bool enabled);
 
         static constexpr ConsoleType type_tag = ConsoleType::SDL;
     private:

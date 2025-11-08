@@ -50,86 +50,48 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include <string>
 #include <SDL_pixels.h>
 
-#include "df/renderer_2d.h"
-#include <VTableInterpose.h>
-
 #include "SDLConsoleDriver.h"
 #include "SDLConsole.h"
+#include "df/renderer_2d.h"
+#include <VTableInterpose.h>
 
 using namespace DFHack;
 
 using namespace sdl_console;
 
-struct con_render_hook : df::renderer_2d {
-    using interpose_base = df::renderer_2d;
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ())
-    {
-        SDLConsole::get_console().update();
-        INTERPOSE_NEXT(render)();
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(con_render_hook, render);
-
 namespace DFHack
 {
-#if 0
-    //! Convert a locale defined multibyte coding to UTF-32 string for easier
-    //! character processing.
-    static u32string fromLocaleMB(const std::string& str)
-    {
-        u32string rv;
-        u32string::value_type ch;
-        size_t pos = 0;
-        ssize_t sz;
-        std::mbstate_t state{};
-        while ((sz = mbrtoc32(&ch,&str[pos], str.size() - pos, &state)) != 0) {
-            if (sz == -1 || sz == -2)
-                break;
-            rv.push_back(ch);
-            if (sz == -3) /* multi value character */
-                continue;
-            pos += sz;
-        }
-        return rv;
-    }
+    struct con_render_hook : df::renderer_2d {
+        using interpose_base = df::renderer_2d;
 
-    //! Convert a UTF-32 string back to locale defined multibyte coding.
-    static std::string toLocaleMB(const u32string& wstr)
-    {
-        std::stringstream ss{};
-        char mb[MB_CUR_MAX];
-        std::mbstate_t state{};
-        const size_t err = -1;
-        for (auto ch: wstr) {
-            size_t sz = c32rtomb(mb, ch, &state);
-            if (sz == err)
-                break;
-            ss.write(mb, sz);
+        DEFINE_VMETHOD_INTERPOSE(void, render, ())
+        {
+            SDLConsole::get_console().update();
+            INTERPOSE_NEXT(render)();
         }
-        return ss.str();
-    }
-#endif
-    constexpr SDL_Color ANSI_BLACK        = {0, 0, 0, 255};
-    constexpr SDL_Color ANSI_BLUE         = {0, 0, 128, 255};      // non-ANSI
-    constexpr SDL_Color ANSI_GREEN        = {0, 128, 0, 255};
-    constexpr SDL_Color ANSI_CYAN         = {0, 128, 128, 255};    // non-ANSI
-    constexpr SDL_Color ANSI_RED          = {128, 0, 0, 255};      // non-ANSI
-    constexpr SDL_Color ANSI_MAGENTA      = {128, 0, 128, 255};
-    constexpr SDL_Color ANSI_BROWN        = {128, 128, 0, 255};
-    constexpr SDL_Color ANSI_GREY         = {192, 192, 192, 255};
-    constexpr SDL_Color ANSI_DARKGREY     = {128, 128, 128, 255};
-    constexpr SDL_Color ANSI_LIGHTBLUE    = {0, 0, 255, 255};      // non-ANSI
-    constexpr SDL_Color ANSI_LIGHTGREEN   = {0, 255, 0, 255};
-    constexpr SDL_Color ANSI_LIGHTCYAN    = {0, 255, 255, 255};    // non-ANSI
-    constexpr SDL_Color ANSI_LIGHTRED     = {255, 0, 0, 255};      // non-ANSI
-    constexpr SDL_Color ANSI_LIGHTMAGENTA = {255, 0, 255, 255};
-    constexpr SDL_Color ANSI_YELLOW       = {255, 255, 0, 255};    // non-ANSI
-    constexpr SDL_Color ANSI_WHITE        = {255, 255, 255, 255};
+    };
 
-    static SDL_Color getANSIColor(int c)
+    IMPLEMENT_VMETHOD_INTERPOSE(con_render_hook, render);
+
+    static SDL_Color getSDLColor(int c)
     {
+        constexpr SDL_Color ANSI_BLACK        = {0, 0, 0, 255};
+        constexpr SDL_Color ANSI_BLUE         = {0, 0, 128, 255};      // non-ANSI
+        constexpr SDL_Color ANSI_GREEN        = {0, 128, 0, 255};
+        constexpr SDL_Color ANSI_CYAN         = {0, 128, 128, 255};    // non-ANSI
+        constexpr SDL_Color ANSI_RED          = {128, 0, 0, 255};      // non-ANSI
+        constexpr SDL_Color ANSI_MAGENTA      = {128, 0, 128, 255};
+        constexpr SDL_Color ANSI_BROWN        = {128, 128, 0, 255};
+        constexpr SDL_Color ANSI_GREY         = {192, 192, 192, 255};
+        constexpr SDL_Color ANSI_DARKGREY     = {128, 128, 128, 255};
+        constexpr SDL_Color ANSI_LIGHTBLUE    = {0, 0, 255, 255};      // non-ANSI
+        constexpr SDL_Color ANSI_LIGHTGREEN   = {0, 255, 0, 255};
+        constexpr SDL_Color ANSI_LIGHTCYAN    = {0, 255, 255, 255};    // non-ANSI
+        constexpr SDL_Color ANSI_LIGHTRED     = {255, 0, 0, 255};      // non-ANSI
+        constexpr SDL_Color ANSI_LIGHTMAGENTA = {255, 0, 255, 255};
+        constexpr SDL_Color ANSI_YELLOW       = {255, 255, 0, 255};    // non-ANSI
+        constexpr SDL_Color ANSI_WHITE        = {255, 255, 255, 255};
+
         switch (c)
         {
             case -1: return ANSI_WHITE;
@@ -156,29 +118,16 @@ namespace DFHack
     class Private
     {
     public:
-        Private() : con(SDLConsole::get_console()) {};
+        Private() : con(SDLConsole::get_console()) { };
         virtual ~Private() = default;
-    private:
 
-    public:
-
-        void print(const char *data)
-        {
-            con.write_line(data);
-        }
-
-        void print_text(color_ostream::color_value clr, const std::string &chunk)
-        {
-            con.write_line(chunk, getANSIColor(clr));
-        }
-
-        int lineedit(const std::string& prompt, std::string& output, CommandHistory & ch)
+        int lineedit(const std::string_view prompt, std::string& output, CommandHistory & ch)
         {
             static bool did_set_history = false;
 
             // I don't believe this check is necessary.
             // unless, somwhow, fiothread is inited before the console.
-            if (con.run_state.is_inactive()) {
+            if (!con.is_active()) {
                 return Console::RETRY;
             }
             // kludge. This is the only place to set it?
@@ -207,21 +156,31 @@ namespace DFHack
         {
         }
 
-        SDLConsole &con;
+        SDLConsole& con;
     };
 }
 
-SDLConsoleDriver::SDLConsoleDriver() : Console(this)
+SDLConsoleDriver::SDLConsoleDriver()
+    : Console(this)
+    , inited(false)
 {
     d = new Private();
-    inited.store(false);
-    // we can't create the mutex at this time. the SDL functions aren't hooked yet.
+
+    // we can't create the mutex at this time. the S DL functions aren't hooked yet.
     wlock = new std::recursive_mutex();
 }
 SDLConsoleDriver::~SDLConsoleDriver()
 {
     delete wlock;
     delete d;
+}
+
+// Must be called before init()
+// init_sdl() must be called from the main renderer thread.
+bool SDLConsoleDriver::init_sdl()
+{
+    inited.store(d->con.init_session());
+    return inited.load();
 }
 
 /**
@@ -231,8 +190,14 @@ SDLConsoleDriver::~SDLConsoleDriver()
 bool SDLConsoleDriver::init(bool dont_redirect)
 {
     // inited is true after init_sdl() succeeds.
-    if (inited)
-        INTERPOSE_HOOK(con_render_hook,render).apply(true);
+    if (inited) {
+        // Not sure about this. Useful if the console shuts down on its own
+        // after init.
+        //d->con.set_destroy_session_callback([this]() {
+        //  cleanup();
+        //});
+        hook_df_renderer(true);
+    }
 
     if (!dont_redirect)
     {
@@ -243,16 +208,12 @@ bool SDLConsoleDriver::init(bool dont_redirect)
     return inited.load();
 }
 
-bool SDLConsoleDriver::init_sdl()
-{
-    inited.store(d->con.init());
-    return inited.load();
-}
-
 bool SDLConsoleDriver::shutdown()
 {
-    if (!inited.load()) return true;
-    d->con.shutdown();
+    if (!inited.load())
+        return true;
+    hook_df_renderer(false);
+    d->con.shutdown_session();
     inited.store(false);
     return true;
 }
@@ -282,7 +243,7 @@ void SDLConsoleDriver::add_text(color_value color, const std::string &text)
     // interleaving prints. But we have batch for that?
     std::lock_guard <std::recursive_mutex> g(*wlock);
     if(inited.load())
-        d->print_text(color, text);
+        d->con.write_line(text, getSDLColor(color));
     else
         fwrite(text.data(), 1, text.size(), stderr);
 }
@@ -339,25 +300,14 @@ bool SDLConsoleDriver::show()
  * or if commanded to shutdown during run time.
  *
  */
-bool SDLConsoleDriver::sdl_event_hook(SDL_Event &e)
+bool SDLConsoleDriver::sdl_event_hook(const SDL_Event &e)
 {
-    auto& con = d->con;
+    return d->con.sdl_event_hook(e);
+}
 
-    // If we got here this console is enabled.
-    // 99.9% of the time it will be active.
-
-    // the overwhelming majority of sdl events stem
-    // from mouse movement within the df/console window.
-    // It can generate 1000s of events in short order.
-
-
-    if (con.run_state.is_active()) [[likely]] {
-        return con.sdl_event_hook(e);
-    } else if (con.run_state.is_shutdown()) [[unlikely]] {
-        cleanup();
-    }
-
-    return false;
+void SDLConsoleDriver::hook_df_renderer(bool enabled)
+{
+    INTERPOSE_HOOK(DFHack::con_render_hook,render).apply(enabled);
 }
 
 /*
@@ -366,8 +316,9 @@ bool SDLConsoleDriver::sdl_event_hook(SDL_Event &e)
  */
 void SDLConsoleDriver::cleanup()
 {
-    INTERPOSE_HOOK(con_render_hook,render).apply(false);
-    // destroy() will change console's state to inactive
-    d->con.destroy();
+    hook_df_renderer(false);
+    d->con.destroy_session();
     inited.store(false);
 }
+
+

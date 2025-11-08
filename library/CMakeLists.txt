@@ -119,9 +119,9 @@ file(GLOB_RECURSE TEST_SOURCES
     LIST_DIRECTORIES false
     *test.cpp)
 
-if (DFHACK_SDL_CONSOLE)
-    list(APPEND TEST_SOURCES SDLConsole_impl.cpp)
-endif()
+#if (DFHACK_SDL_CONSOLE)
+#    list(APPEND TEST_SOURCES SDLConsole_impl.cpp)
+#endif()
 dfhack_test(dfhack-test "${TEST_SOURCES}")
 
 if(WIN32)
@@ -378,11 +378,19 @@ endif()
 
 add_library(dfhack SHARED ${PROJECT_SOURCES})
 target_include_directories(dfhack PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
-
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(FREETYPE REQUIRED freetype2)
+find_package(Freetype REQUIRED)
 get_target_property(xlsxio_INCLUDES xlsxio_read_STATIC INTERFACE_INCLUDE_DIRECTORIES)
+target_include_directories(dfhack PUBLIC ${FREETYPE_INCLUDE_DIRS})
 target_include_directories(dfhack PRIVATE ${xlsxio_INCLUDES} ${SDL2_INCLUDE_DIRS})
 add_dependencies(dfhack generate_proto_core)
 add_dependencies(dfhack generate_headers)
+
+if (DFHACK_SDL_CONSOLE)
+	target_link_libraries(dfhack ${FREETYPE_LIBRARIES})
+endif()
+
 
 add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS} ${DFCLIENT_CONSOLE_SOURCES})
 target_include_directories(dfhack-client PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
@@ -397,6 +405,9 @@ add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)
 
  target_include_directories(dfhack-test PRIVATE ${SDL2_INCLUDE_DIRS})
+
+ target_link_libraries(dfhack-test ${FREETYPE_LIBRARIES})
+
 
 if(WIN32)
     set_target_properties(dfhack PROPERTIES OUTPUT_NAME "dfhooks_dfhack" )

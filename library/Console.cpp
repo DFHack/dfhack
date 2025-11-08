@@ -63,7 +63,7 @@ std::unique_ptr<Console> Console::makeConsole() {
 #ifdef BUILD_DFHACK_CLIENT
     return std::make_unique<Console>();
 #else
-    if (PLATFORM_CONSOLE::is_supported())
+    if (PLATFORM_CONSOLE::is_enabled())
         return std::make_unique<PLATFORM_CONSOLE>();
 
     return std::make_unique<SDLConsoleDriver>();

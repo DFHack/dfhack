@@ -154,8 +154,8 @@ namespace  DFHack
 
         ///ctor, NOT thread-safe
         Console() = default;
-        template <typename Derived>
-        Console(Derived*) : con_type(Derived::type_tag) {}
+        template <typename T>
+        Console(T*) : con_type(T::type_tag) {}
         ///dtor, NOT thread-safe
         virtual ~Console() = default;
 
@@ -188,16 +188,11 @@ namespace  DFHack
         /// Platform independent. Waits given number of milliseconds before continuing.
         void msleep(unsigned int msec);
         bool is_console() { return true; }
-        ConsoleType get_type() const { return con_type; }
+        ConsoleType get_type() const noexcept { return con_type; }
         void use_ansi_colors(bool choice) { use_ansi_colors_ = choice; };
 
         template <typename T>
-        T& as() {
-            return static_cast<T&>(*this);
-        }
-
-        template <typename T>
-        T* try_as() {
+        T* try_as() noexcept {
             return (get_type() == T::type_tag) ? static_cast<T*>(this) : nullptr;
         }
 

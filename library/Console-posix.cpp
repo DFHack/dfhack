@@ -838,7 +838,7 @@ bool PosixConsole::init(bool dont_redirect)
     return true;
 }
 
-bool PosixConsole::is_supported()
+bool PosixConsole::is_enabled()
 {
     return !isUnsupportedTerm() && isatty(STDIN_FILENO);
 }

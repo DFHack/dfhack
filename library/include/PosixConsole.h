@@ -62,7 +62,7 @@ namespace  DFHack
         bool hide() override;
         bool show() override;
 
-        static bool is_supported();
+        static bool is_enabled();
 
         static constexpr ConsoleType type_tag = ConsoleType::Posix;
 

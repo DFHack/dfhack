@@ -14,28 +14,27 @@
 #include <cstdint>
 #include <thread>
 
+#include <functional>
+
 #include "Export.h"
 
-struct SDL_Rect;
 struct SDL_Color;
 union SDL_Event;
 
 namespace sdl_console {
 
-class SDLConsole_impl;
+class SDLConsole_session;
+
+struct Rect {
+    int x {};
+    int y {};
+    int w {};
+    int h {};
+};
 
 /*
  * Stores configuration for components.
  */
-
-
-struct Rect {
-    int x{};
-    int y{};
-    int w{};
-    int h{};
-};
-
 class Property {
 public:
     template <typename T>
@@ -43,7 +42,7 @@ public:
         std::string_view name;
     };
 
-    using Value = std::variant<std::string, std::u32string, int64_t, int, std::size_t, Rect>;
+    using Value = std::variant<std::string, std::u32string, int,  Rect>;
     template <typename T>
     void set(Key<T> key, const T& value) {
         std::scoped_lock l(m_);
@@ -67,57 +66,83 @@ private:
 class DFHACK_EXPORT SDLConsole {
 public:
     /*
-     * Constructs the console window and its widgets.
-     * Returns true on success, otherwise false on failure.
+     * Commands the console to shutdown.
+     * Safe to call any time from any thread.
      */
-    bool init();
+    void shutdown_session() noexcept;
     /*
-     * Commands the console to shutdown. Safe to call from any thread.
+     * Cleans up resources.
+     * Not thread safe. Must be called from the thread that called init_session().
      */
-    void shutdown();
-    /*
-     * Cleans up resources. Must be called from the thread that initialized SDL.
-     */
-    bool destroy();
+    bool destroy_session() noexcept;
 
     /*
      * Prints a colored line of text to the output area.
+     * Safe to call any time from any thread.
      */
-    void write_line(std::string line, SDL_Color color);
+    void write_line(std::string_view line, SDL_Color color);
+
     /*
      * Prints a line of text to the output area with the default color (white).
+     * Safe to call any time from any thread.
      */
-    void write_line(std::string line);
+    void write_line(std::string_view line);
 
     /*
      * Shows the console window.
+     * Safe to call any time from any thread.
      */
     void show_window();
+
     /*
      * Hides the console window.
+     * Safe to call any time from any thread.
      */
     void hide_window();
 
     /*
-     * Clears the output area.
+     * Clears the output history.
+     * Safe to call any time from any thread.
      */
     void clear();
 
     /*
      * Sets the prompt text.
+     * Safe to call any time from any thread.
      */
-    SDLConsole& set_prompt(const std::string& text);
+    SDLConsole& set_prompt(std::string_view text);
 
+    /*
+     * Gets the prompt text.
+     * Safe to call any time from any thread.
+     */
     std::string get_prompt();
 
+    /*
+     * Sets the prompt input.
+     * Safe to call any time from any thread.
+     */
     void set_prompt_input(const std::string& text);
+
+    /*
+     * Restores previously saved prompt input.
+     * Safe to call any time from any thread.
+     */
     void restore_prompt();
+
+    /*
+     * Saves current prompt input.
+     * Safe to call any time from any thread.
+     */
     void save_prompt();
 
     /*
      * Configures the dimensions for the console window.
      * Default values are: width=640, height=480
      * x = 0 (SDL chooses), y = 0 (SDL chooses)
+     *
+     * Must be called before init_session() to take effect.
+     * Safe to call any time from any thread.
      */
     SDLConsole& set_mainwindow_create_rect(int width, int height, int x = 0, int y = 0);
 
@@ -125,73 +150,78 @@ public:
      * Maximum number of lines the console stores in its output buffer.
      * When the number of lines hits the scrollback limit,
      * old lines will be removed as new ones are added.
+     *
+     * Safe to call any time from any thread.
      */
-    SDLConsole& set_scrollback(int lines);
+    SDLConsole& set_scrollback(int scrollback);
 
     /*
      * Number of characters that fit horizontally in the output area.
+     *
+     * Safe to call any time from any thread.
      */
     [[nodiscard]] int get_columns();
     /*
      * Number of characters that fit vertically in the output area.
+     *
+     * Safe to call any time from any thread.
      */
     [[nodiscard]] int get_rows();
 
     /*
-     * Copies a new line into the provided string object.
-     * Returns the number of characters read, or -1 if the console is closing.
+     * Copies a new line into the provided string.
+     * Returns the number of characters read, or -1 if console is shutting down.
+     *
+     * Safe to call any time from any thread.
      */
     [[nodiscard]] int get_line(std::string& buf);
 
+    /*
+     * Sets the prompt's command history
+     *
+     * Safe to call any time from any thread.
+     */
     void set_command_history(std::span<const std::string> entries);
 
     /*
      * Retrieves an instance of the console.
      * Currently supports only one instance.
+     *
+     * Safe to call any time from any thread.
      */
-    static SDLConsole& get_console();
+    static SDLConsole& get_console() noexcept;
+
+    /*
+     * Returns true if a console session is active.
+     */
+    [[nodiscard]] bool is_active();
+
 
     /*
      * Handle SDL events. Returns true if handled, otherwise false.
-     * Must be called from the thread that initialized SDL.
+     *
+     * Not thread safe. Must be called from the thread that called SDLConsole::init_session().
      */
-    [[nodiscard]] bool sdl_event_hook(SDL_Event& e);
+    [[nodiscard]] bool sdl_event_hook(const SDL_Event& e);
 
     /*
      * Render, handle various tasks.
-     * Must be called from the thread that initialized SDL.
+     *
+     * Not thread safe. Must be called from the thread that called SDLConsole::init_session().
      */
     void update();
 
-    class RunState {
-    public:
-        enum States {
-            active,     // console is active and operational.
-            inactive,   // console is inactive and can be activated.
-            shutdown,   // console is shutting down.
-        };
+    /*
+     * Constructs a console session and its window.
+     * Returns true on success, otherwise false on failure.
+     * Not thread safe.
+     */
+    [[nodiscard]] bool init_session();
 
-        RunState() : current_state(States::inactive) {}
+    void set_destroy_session_callback(std::function<void()> cb) {
+        on_destroy_session = std::move(cb);
+    }
 
-        [[nodiscard]] bool is_active() const { return current_state.load() == States::active; }
-
-        [[nodiscard]] bool is_inactive() const { return current_state.load() == States::inactive; }
-
-        [[nodiscard]] bool is_shutdown() const { return current_state.load() == States::shutdown; }
-
-    protected:
-        friend class SDLConsole;
-        friend class SDLConsole_impl;
-        void set_state(States new_state) {
-            current_state.store(new_state);
-        }
-        void reset() {
-            set_state(States::inactive);
-        }
-        std::atomic<States> current_state;
-    };
-
-    RunState run_state;
     Property props;
 
     SDLConsole(const SDLConsole&) = delete;
@@ -202,16 +232,20 @@ public:
 
 
 protected:
-    friend class SDLConsole_impl;
+    friend class SDLConsole_session;
 
 private:
-    void write_line_(std::string& line, std::optional<SDL_Color> color);
-    void reset();
+    void write_line_(std::string_view line, std::optional<SDL_Color> color);
     template<typename F>
     void push_api_task(F&& func);
-    std::shared_ptr<SDLConsole_impl> impl;
-    std::weak_ptr<SDLConsole_impl> impl_weak;
+    std::shared_ptr<SDLConsole_session> impl;
+    std::weak_ptr<SDLConsole_session> impl_weak;
     std::thread::id init_thread_id;
+
+    /*
+     * Callback for when the session is just about to be destroyed.
+     */
+    std::function<void()> on_destroy_session{ nullptr };
 
     SDLConsole();
     ~SDLConsole();

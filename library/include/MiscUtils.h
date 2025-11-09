@@ -400,7 +400,7 @@ typename T::mapped_type findPrefixInMap(
 #endif
 
 template<class CT>
-inline bool static_add_to_map(CT *pmap, typename CT::key_type key, typename CT::mapped_type value) {
+inline bool static_add_to_map(CT *pmap, const typename CT::key_type key, const typename CT::mapped_type value) {
     (*pmap)[key] = value;
     return true;
 }

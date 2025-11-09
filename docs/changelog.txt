@@ -70,6 +70,85 @@ Template for new versions:
 
 ## Removed
 
+# 53.02-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `buildingplan`: Building costs for reinforced walls are now correct.
+- `cleanconst`: do not attempt to clean Reinforced constructions
+
+## Misc Improvements
+- `buildingplan`: Added support for bolt throwers and siege engine rotation.
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.02-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+- Core: added ``gps`` (``graphicst``) to the set of globals whose sizes must agree for DFHack to pass initialization checks
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.01-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+- `stockpiles`: add support for managing the dyed, undyed, and color filter settings.
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.05-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `script-manager`: the ``scripts_modactive`` and ``scripts_modinstalled`` folders of a script-enabled mod will be properly added to the script path search list
+
+## Misc Improvements
+
+## Documentation
+- added a clarification link to DF's Lua API documentation to the DFHack Lua API documentation, as a way to reduce end-user confusion
+
+## API
+
+## Lua
+
+## Removed
+
 # 52.05-r1
 
 ## New Tools

@@ -45,6 +45,10 @@ command_result df_cleanconst(color_ostream &out, vector <string> & parameters)
         if (cons->flags.bits.no_build_item)
             continue;
 
+        // Skip reinforced constructions as well
+        if (cons->flags.bits.reinforced)
+            continue;
+
         // only destroy the item if the construction claims to be made of the exact same thing
         if (item->getType() != cons->item_type ||
             item->getSubtype() != cons->item_subtype ||

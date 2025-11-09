@@ -27,6 +27,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+#include <mutex>
 
 #include "MemAccess.h"
 #include "Core.h"
@@ -86,27 +87,43 @@ void *enum_identity::do_allocate() const {
     return p;
 }
 
-/* The order of global object constructor calls is
- * undefined between compilation units. Therefore,
- * this list has to be plain data, so that it gets
- * initialized by the loader in the initial mmap.
- */
-compound_identity *compound_identity::list = NULL;
-std::vector<const compound_identity*> compound_identity::top_scope;
+/****** COMPOUND IDENTITIES ******/
 
-compound_identity::compound_identity(size_t size, TAllocateFn alloc,
-    const compound_identity *scope_parent, const char *dfhack_name)
-    : constructed_identity(size, alloc), dfhack_name(dfhack_name), scope_parent(const_cast<compound_identity*>(scope_parent)) // fixme
+decltype(compound_identity::list) compound_identity::list = nullptr;
+decltype(compound_identity::parent_map) compound_identity::parent_map = nullptr;
+decltype(compound_identity::children_map) compound_identity::children_map = nullptr;
+decltype(compound_identity::top_scope) compound_identity::top_scope = nullptr;
+
+void compound_identity::ensure_compound_identity_init()
 {
-    next = list; list = this;
+    static std::once_flag compound_identity_init_flag;
+    std::call_once(compound_identity_init_flag, [] () {
+        list = new (std::remove_pointer<decltype(list)>::type)();
+        parent_map = new (std::remove_pointer<decltype(parent_map)>::type)();
+        children_map = new (std::remove_pointer<decltype(children_map)>::type)();
+        top_scope = new std::vector<const compound_identity*>();
+    });
 }
 
-void compound_identity::doInit(Core *)
+compound_identity::compound_identity(size_t size, TAllocateFn alloc,
+    const compound_identity* scope_parent, const char* dfhack_name)
+    : constructed_identity(size, alloc), dfhack_name(dfhack_name), scope_parent(scope_parent)
 {
+    ensure_compound_identity_init();
+
     if (scope_parent)
-        scope_parent->scope_children.push_back(this);
+    {
+        (*parent_map)[this] = scope_parent;
+        (*children_map)[scope_parent].push_back(this);
+    }
     else
-        top_scope.push_back(this);
+        (*top_scope).push_back(this);
+
+    list->push_back(this);
+}
+
+void compound_identity::doInit(Core *) const
+{
 }
 
 const std::string compound_identity::getFullName() const
@@ -124,10 +141,10 @@ void compound_identity::Init(Core *core)
     if (!known_mutex)
         known_mutex = new std::mutex();
 
-    // This cannot be done in the constructors, because
-    // they are called in an undefined order.
-    for (compound_identity *p = list; p; p = p->next)
-        p->doInit(core);
+    // do any late initialization required for compound identities
+
+    for (auto ci : *list)
+        ci->doInit(core);
 }
 
 bitfield_identity::bitfield_identity(size_t size,
@@ -176,27 +193,44 @@ enum_identity::ComplexData::ComplexData(std::initializer_list<int64_t> values)
     }
 }
 
+/****** STRUCT IDENTITIES ******/
+
+decltype(struct_identity::parent_map) struct_identity::parent_map = nullptr;
+decltype(struct_identity::children_map) struct_identity::children_map = nullptr;
+
+void struct_identity::ensure_struct_identity_init()
+{
+    static std::once_flag struct_identity_init_flag;
+    std::call_once(struct_identity_init_flag, []() {
+        parent_map = new (std::remove_pointer<decltype(parent_map)>::type)();
+        children_map = new (std::remove_pointer<decltype(children_map)>::type)();
+        });
+}
+
+
+
 struct_identity::struct_identity(size_t size, TAllocateFn alloc,
     const compound_identity *scope_parent, const char *dfhack_name,
     const struct_identity *parent, const struct_field_info *fields)
     : compound_identity(size, alloc, scope_parent, dfhack_name),
-      parent(const_cast<struct_identity*>(parent)), has_children(false), fields(fields)
+      fields(fields)
 {
+    ensure_struct_identity_init();
+    if (parent)
+    {
+        (*parent_map)[this] = parent;
+        (*children_map)[parent].push_back(this);
+    }
 }
 
-void struct_identity::doInit(Core *core)
+void struct_identity::doInit(Core *core) const
 {
     compound_identity::doInit(core);
-
-    if (parent) {
-        parent->children.push_back(this);
-        parent->has_children = true;
-    }
 }
 
 bool struct_identity::is_subclass(const struct_identity *actual) const
 {
-    if (!has_children && actual != this)
+    if (!hasChildren() && actual != this)
         return false;
 
     for (; actual; actual = actual->getParent())
@@ -232,10 +266,28 @@ const std::string df::buffer_container_identity::getFullName(const type_identity
 }
 
 union_identity::union_identity(size_t size, const TAllocateFn alloc,
-        compound_identity *scope_parent, const char *dfhack_name,
-        struct_identity *parent, const struct_field_info *fields)
+        const compound_identity *scope_parent, const char *dfhack_name,
+        const struct_identity *parent, const struct_field_info *fields)
     : struct_identity(size, alloc, scope_parent, dfhack_name, parent, fields)
 {
+}
+
+/****** VIRTUAL IDENTITIES ******/
+
+decltype(virtual_identity::name_lookup) virtual_identity::name_lookup = nullptr;
+decltype(virtual_identity::known) virtual_identity::known = nullptr;
+decltype(virtual_identity::vtable_ptr_map) virtual_identity::vtable_ptr_map = nullptr;
+decltype(virtual_identity::interpose_list_map) virtual_identity::interpose_list_map = nullptr;
+
+void virtual_identity::ensure_virtual_identity_init()
+{
+    static std::once_flag virtual_identity_init_flag;
+    std::call_once(virtual_identity_init_flag, []() {
+        name_lookup = new (std::remove_pointer<decltype(name_lookup)>::type)();
+        known = new (std::remove_pointer<decltype(known)>::type)();
+        vtable_ptr_map = new (std::remove_pointer<decltype(vtable_ptr_map)>::type)();
+        interpose_list_map = new (std::remove_pointer<decltype(interpose_list_map)>::type)();
+    });
 }
 
 virtual_identity::virtual_identity(size_t size, const TAllocateFn alloc,
@@ -243,8 +295,9 @@ virtual_identity::virtual_identity(size_t size, const TAllocateFn alloc,
                                    const virtual_identity *parent, const struct_field_info *fields,
                                    bool is_plugin)
     : struct_identity(size, alloc, NULL, dfhack_name, parent, fields), original_name(original_name),
-      vtable_ptr(NULL), is_plugin(is_plugin)
+      is_plugin(is_plugin)
 {
+    ensure_virtual_identity_init();
     // Plugins are initialized after Init was called, so they need to be added to the name table here
     if (is_plugin)
     {
@@ -252,15 +305,10 @@ virtual_identity::virtual_identity(size_t size, const TAllocateFn alloc,
     }
 }
 
-/* Vtable name to identity lookup. */
-static std::map<std::string, virtual_identity*> name_lookup;
-
-/* Vtable pointer to identity lookup. */
-std::map<void*, virtual_identity*> virtual_identity::known;
-
 virtual_identity::~virtual_identity()
 {
     // Remove interpose entries, so that they don't try accessing this object later
+    auto& interpose_list = (*interpose_list_map)[this];
     for (auto it = interpose_list.begin(); it != interpose_list.end(); ++it)
         if (it->second)
             it->second->on_host_delete(this);
@@ -269,75 +317,79 @@ virtual_identity::~virtual_identity()
     // Remove global lookup table entries if we're from a plugin
     if (is_plugin)
     {
-        name_lookup.erase(getOriginalName());
+        (*name_lookup).erase(getOriginalName());
 
-        if (vtable_ptr)
-            known.erase(vtable_ptr);
+        if (vtable_ptr())
+            (*known).erase(vtable_ptr());
     }
 }
 
-void virtual_identity::doInit(Core *core)
+void virtual_identity::doInit(Core *core) const
 {
     struct_identity::doInit(core);
 
     auto vtname = getOriginalName();
-    name_lookup[vtname] = this;
+    (*name_lookup)[vtname] = this;
 
-    vtable_ptr = core->vinfo->getVTable(vtname);
+    auto vtable_ptr = core->vinfo->getVTable(vtname);
     if (vtable_ptr)
-        known[vtable_ptr] = this;
+    {
+        (*known)[vtable_ptr] = this;
+        (*vtable_ptr_map)[this] = vtable_ptr;
+    }
 }
 
-virtual_identity *virtual_identity::find(const std::string &name)
+const virtual_identity *virtual_identity::find(std::string_view name)
 {
-    auto name_it = name_lookup.find(name);
+    auto name_it = (*name_lookup).find(name);
 
-    return (name_it != name_lookup.end()) ? name_it->second : NULL;
+    return (name_it != (*name_lookup).end()) ? name_it->second : nullptr;
 }
 
-virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
+const virtual_identity *virtual_identity::get(virtual_ptr instance_ptr)
 {
-    if (!instance_ptr) return NULL;
+    if (!instance_ptr) return nullptr;
 
     return find(get_vtable(instance_ptr));
 }
 
-virtual_identity *virtual_identity::find(void *vtable)
+const virtual_identity *virtual_identity::find(void *vtable)
 {
     if (!vtable || !known_mutex)
-        return NULL;
+        return nullptr;
+
+    ensure_virtual_identity_init();
 
     // Actually, a reader/writer lock would be sufficient,
     // since the table is only written once per class.
     std::lock_guard<std::mutex> lock(*known_mutex);
 
-    std::map<void*, virtual_identity*>::iterator it = known.find(vtable);
-
-    if (it != known.end())
+    auto it = (*known).find(vtable);
+    if (it != (*known).end())
         return it->second;
 
     // If using a reader/writer lock, re-grab as write here, and recheck
     Core &core = Core::getInstance();
     std::string name = core.p->doReadClassName(vtable);
 
-    auto name_it = name_lookup.find(name);
-    if (name_it != name_lookup.end()) {
-        virtual_identity *p = name_it->second;
+    auto name_it = (*name_lookup).find(name);
+    if (name_it != (*name_lookup).end()) {
+        const virtual_identity *p = name_it->second;
 
-        if (p->vtable_ptr && p->vtable_ptr != vtable) {
+        if (p->vtable_ptr() && p->vtable_ptr() != vtable) {
             std::cerr << "Conflicting vtable ptr for class '" << p->getName()
                       << "': found 0x" << std::hex << uintptr_t(vtable)
-                      << ", previous 0x" << uintptr_t(p->vtable_ptr) << std::dec << std::endl;
+                      << ", previous 0x" << uintptr_t(p->vtable_ptr()) << std::dec << std::endl;
             abort();
-        } else if (!p->vtable_ptr) {
+        } else if (!p->vtable_ptr()) {
             uintptr_t pv = uintptr_t(vtable);
             pv -= Core::getInstance().vinfo->getRebaseDelta();
             std::cerr << "<vtable-address name='" << p->getOriginalName() << "' value='0x"
                       << std::hex << pv << std::dec << "'/>" << std::endl;
         }
 
-        known[vtable] = p;
-        p->vtable_ptr = vtable;
+        (*known)[vtable] = p;
+        (*vtable_ptr_map)[p] = vtable;
         return p;
     }
 
@@ -346,14 +398,15 @@ virtual_identity *virtual_identity::find(void *vtable)
                 << std::hex << uintptr_t(vtable) << std::dec << std::endl;
     }
 
-    known[vtable] = NULL;
-    return NULL;
+    (*known).erase(vtable);
+    return nullptr;
 }
 
-void virtual_identity::adjust_vtable(virtual_ptr obj, virtual_identity *main)
+void virtual_identity::adjust_vtable(virtual_ptr obj, const virtual_identity *main) const
 {
-    if (vtable_ptr) {
-        *(void**)obj = vtable_ptr;
+    auto vp = vtable_ptr();
+    if (vp) {
+        *(void**)obj = vp;
         return;
     }
 
@@ -366,10 +419,10 @@ void virtual_identity::adjust_vtable(virtual_ptr obj, virtual_identity *main)
 
 virtual_ptr virtual_identity::clone(virtual_ptr obj)
 {
-    virtual_identity *id = get(obj);
-    if (!id) return NULL;
+    const virtual_identity *id = get(obj);
+    if (!id) return nullptr;
     virtual_ptr copy = id->instantiate();
-    if (!copy) return NULL;
+    if (!copy) return nullptr;
     id->do_copy(copy, obj);
     return copy;
 }

@@ -11,7 +11,6 @@
 #include <variant>
 #include <unordered_map>
 #include <mutex>
-#include <cstdint>
 #include <thread>
 
 #include <functional>
@@ -21,6 +20,7 @@
 struct SDL_Color;
 union SDL_Event;
 
+namespace DFHack {
 namespace sdl_console {
 
 class SDLConsole_session;
@@ -267,5 +267,5 @@ private:
 };
 
 } // namespace sdl_console
-
+} // namespace DFHack
 #endif

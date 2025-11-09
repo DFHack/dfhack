@@ -195,7 +195,7 @@ namespace  DFHack
             return (instance_tag == T::type_tag) ? static_cast<T*>(this) : nullptr;
         }
 
-        static constexpr type_tag_t type_tag = (const void*)&type_tag;
+        static constexpr type_tag_t type_tag = (const void*)&Console::type_tag;
 
         static std::unique_ptr<Console> makeConsole();
         template <typename T>

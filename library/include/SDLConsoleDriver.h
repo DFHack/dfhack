@@ -32,7 +32,6 @@ distribution.
 
 union SDL_Event;
 
-using namespace sdl_console;
 namespace  DFHack
 {
     class DFHACK_EXPORT SDLConsoleDriver : public Console
@@ -83,9 +82,9 @@ namespace  DFHack
         // Initialize a an sdl console session.
         bool init_sdl();
 
-        static constexpr type_tag_t type_tag = &type_tag;
+        static constexpr type_tag_t type_tag = &SDLConsoleDriver::type_tag;
     private:
-        SDLConsole& con_impl;
+        sdl_console::SDLConsole& con_impl;
         std::recursive_mutex mutex_;
     };
 }

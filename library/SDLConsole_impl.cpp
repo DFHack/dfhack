@@ -33,8 +33,7 @@
 #include "SDLConsole.h"
 #include "SDLConsole_impl.h"
 
-using namespace DFHack;
-
+namespace DFHack {
 namespace sdl_console {
 namespace {
 
@@ -5011,11 +5010,6 @@ SDLConsole::SDLConsole() = default;
 
 SDLConsole::~SDLConsole() = default;
 
-/*
- * Not thread safe.
- * SDL events and video subsystems must be initialized
- * before this function is called.
- */
 bool SDLConsole::init_session()
 {
     if (impl)
@@ -5255,6 +5249,6 @@ bool SDLConsole::is_active()
 }
 
 } // end namespace sdl_console
-
+} // DFHack
 
 // kate: replace-tabs on; indent-width 4;

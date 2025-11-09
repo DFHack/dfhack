@@ -64,7 +64,7 @@ namespace  DFHack
 
         static bool is_enabled();
 
-        static constexpr type_tag_t type_tag = &type_tag;
+        static constexpr type_tag_t type_tag = &PosixConsole::type_tag;
 
     private:
         Private * d;

@@ -2,7 +2,7 @@
 #include <gtest/gtest.h>
 #include <string>
 
-using namespace sdl_console;
+using namespace DFHack::sdl_console;
 
 TEST(SDLConsole, skip_wspace) {
     std::u32string tstr;

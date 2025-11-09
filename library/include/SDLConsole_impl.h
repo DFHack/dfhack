@@ -10,6 +10,7 @@
 #include <iostream>
 #include <source_location>
 
+namespace DFHack {
 namespace sdl_console {
 
 enum class Error {
@@ -227,5 +228,6 @@ public:
     static GlyphRec get_fallback_glyph_rec(Font& font, char32_t codepoint);
 };
 
-}
+} // namespace sdl_console
+} // namespace DFHack
 #endif

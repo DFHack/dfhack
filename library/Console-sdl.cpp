@@ -320,5 +320,3 @@ void SDLConsoleDriver::cleanup()
     d->con.destroy_session();
     inited.store(false);
 }
-
-

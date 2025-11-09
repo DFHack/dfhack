@@ -2168,8 +2168,8 @@ static void ensure_frame(SDL_Rect& r)
 
 class Widget {
 public:
-    Widget* parent;
-    Font* font;
+    Widget* parent { nullptr };
+    Font* font { nullptr };
     // Give sane default. Width and Height should be at least 1.
     SDL_Rect frame { .x = 0, .y = 0, .w = 1, .h = 1 };
     WidgetContext& context;
@@ -2208,8 +2208,7 @@ public:
 
     // Constructor for Window
     explicit Widget(WidgetContext& ctx)
-        : parent(nullptr)
-        , context(ctx)
+        : context(ctx)
         , window(*this)
 
     {
@@ -2271,6 +2270,18 @@ public:
         return root;
     }
 
+    void take_input_focus()
+    {
+        auto* prev = context.widget.input;
+        if (prev == this)
+            return;
+
+        if (prev)
+            prev->emit(InputFocusChangedEvent { .has_focus = false });
+
+        context.widget.input = this;
+        emit(InputFocusChangedEvent { .has_focus = true });
+    }
 
     virtual ~Widget() noexcept {
         context.event_bus.invalidate_receiver_slots(this);
@@ -4481,7 +4492,7 @@ public:
 
             context.widget.focused = target;
             if (context.event_bus.has_connection(SDLTextInputEvent::type, target)) {
-                take_input_focus(target);
+                target->take_input_focus();
             }
             target->emit(e);
             return false;
@@ -4509,7 +4520,7 @@ public:
                 return true;
 
             if (nullptr == context.widget.input) {
-                take_input_focus(outpane);
+                outpane->take_input_focus();
             }
 
             if (nullptr == context.widget.focused)
@@ -4583,20 +4594,8 @@ public:
         }
     }
 
-    void take_input_focus(Widget* target)
+    ~MainWindow() override
     {
-        auto* prev = context.widget.input;
-        if (prev == target)
-            return;
-
-        if (prev)
-            prev->emit(InputFocusChangedEvent { .has_focus = false });
-
-        context.widget.input = target;
-        target->emit(InputFocusChangedEvent { .has_focus = true });
-    }
-
-    ~MainWindow() override {
         context.event_bus.clear();
     }
 
@@ -4629,7 +4628,7 @@ public:
         outbox.layout_spec.stretch = 1;
         outbox.layout_spec.margin = {4, 4, 4, 4};
 
-        //auto out_font = context.font_loader.load_truetype("default_atlas", "DejaVuSansMono.ttf", 16);
+        //auto out_font = context.font_loader.load_truetype("default_atlas", "DejaVuSansMono.ttf", 16);                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                vbZ
         auto out_font = context.font_loader.load_bitmap("default_atlas", "data/art/curses_640x300.png", 8);
         //out_font->set_fallback(context.font_loader.load_bitmap("default", "data/art/curses_640x300.png", 8));
 

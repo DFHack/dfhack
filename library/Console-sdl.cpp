@@ -52,8 +52,6 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 #include "SDLConsoleDriver.h"
 #include "SDLConsole.h"
-#include "df/renderer_2d.h"
-#include <VTableInterpose.h>
 
 using namespace DFHack;
 
@@ -61,18 +59,6 @@ using namespace sdl_console;
 
 namespace DFHack
 {
-    struct con_render_hook : df::renderer_2d {
-        using interpose_base = df::renderer_2d;
-
-        DEFINE_VMETHOD_INTERPOSE(void, render, ())
-        {
-            SDLConsole::get_console().update();
-            INTERPOSE_NEXT(render)();
-        }
-    };
-
-    IMPLEMENT_VMETHOD_INTERPOSE(con_render_hook, render);
-
     static SDL_Color getSDLColor(int c)
     {
         constexpr SDL_Color ANSI_BLACK        = {0, 0, 0, 255};
@@ -114,73 +100,21 @@ namespace DFHack
             default: return ANSI_WHITE;
         }
     }
-
-    class Private
-    {
-    public:
-        Private() : con(SDLConsole::get_console()) { };
-        virtual ~Private() = default;
-
-        int lineedit(const std::string_view prompt, std::string& output, CommandHistory & ch)
-        {
-            static bool did_set_history = false;
-
-            // I don't believe this check is necessary.
-            // unless, somwhow, fiothread is inited before the console.
-            if (!con.is_active()) {
-                return Console::RETRY;
-            }
-            // kludge. This is the only place to set it?
-            if (!did_set_history) {
-                std::vector<std::string> hist;
-                ch.getEntries(hist);
-                con.set_command_history(hist);
-                did_set_history = true;
-            }
-
-            if (prompt != con.get_prompt()) {
-                con.set_prompt(prompt);
-            }
-
-            int ret = con.get_line(output);
-            if (ret == 0)
-                return Console::RETRY;
-            if (ret == -1)
-                return Console::SHUTDOWN;
-
-            return ret;
-        }
-
-        /// Enable or disable the caret/cursor
-        void cursor(bool enable = true)
-        {
-        }
-
-        SDLConsole& con;
-    };
 }
 
 SDLConsoleDriver::SDLConsoleDriver()
     : Console(this)
-    , inited(false)
+    , con_impl(SDLConsole::get_console())
 {
-    d = new Private();
+}
 
-    // we can't create the mutex at this time. the S DL functions aren't hooked yet.
-    wlock = new std::recursive_mutex();
-}
-SDLConsoleDriver::~SDLConsoleDriver()
-{
-    delete wlock;
-    delete d;
-}
+SDLConsoleDriver::~SDLConsoleDriver() = default;
 
 // Must be called before init()
 // init_sdl() must be called from the main renderer thread.
 bool SDLConsoleDriver::init_sdl()
 {
-    inited.store(d->con.init_session());
-    return inited.load();
+    return con_impl.init_session();
 }
 
 /**
@@ -189,32 +123,18 @@ bool SDLConsoleDriver::init_sdl()
  */
 bool SDLConsoleDriver::init(bool dont_redirect)
 {
-    // inited is true after init_sdl() succeeds.
-    if (inited) {
-        // Not sure about this. Useful if the console shuts down on its own
-        // after init.
-        //d->con.set_destroy_session_callback([this]() {
-        //  cleanup();
-        //});
-        hook_df_renderer(true);
-    }
-
     if (!dont_redirect)
     {
         if (freopen("stdout.log", "w", stdout) == nullptr) {
             fputs("Failed to redirect stdout to file\n", stderr);
         }
     }
-    return inited.load();
+    return con_impl.is_active();
 }
 
 bool SDLConsoleDriver::shutdown()
 {
-    if (!inited.load())
-        return true;
-    hook_df_renderer(false);
-    d->con.shutdown_session();
-    inited.store(false);
+    con_impl.shutdown_session();
     return true;
 }
 
@@ -224,12 +144,12 @@ bool SDLConsoleDriver::shutdown()
  */
 void SDLConsoleDriver::begin_batch()
 {
-    wlock->lock();
+    mutex_.lock();
 }
 
 void SDLConsoleDriver::end_batch()
 {
-    wlock->unlock();
+    mutex_.unlock();
 }
 
 /* Don't think we need this? */
@@ -241,9 +161,9 @@ void SDLConsoleDriver::add_text(color_value color, const std::string &text)
 {
     // I don't think this lock is needed, unless to prevent
     // interleaving prints. But we have batch for that?
-    std::lock_guard <std::recursive_mutex> g(*wlock);
-    if(inited.load())
-        d->con.write_line(text, getSDLColor(color));
+    std::scoped_lock l(mutex_);
+    if(con_impl.is_active())
+        con_impl.write_line(text, getSDLColor(color));
     else
         fwrite(text.data(), 1, text.size(), stderr);
 }
@@ -251,18 +171,18 @@ void SDLConsoleDriver::add_text(color_value color, const std::string &text)
 int SDLConsoleDriver::get_columns()
 {
     // returns Console::FAILURE if inactive
-    return d->con.get_columns();
+    return con_impl.get_columns();
 }
 
 int SDLConsoleDriver::get_rows()
 {
     // returns Console::FAILURE if inactive
-    return d->con.get_rows();
+    return con_impl.get_rows();
 }
 
 void SDLConsoleDriver::clear()
 {
-    d->con.clear();
+    con_impl.clear();
 }
 /* XXX: Not implemented */
 void SDLConsoleDriver::gotoxy(int x, int y)
@@ -271,27 +191,53 @@ void SDLConsoleDriver::gotoxy(int x, int y)
 /* XXX: Not implemented */
 void SDLConsoleDriver::cursor(bool enable)
 {
-    d->cursor(enable);
+    //con.cursor(enable);
 }
 
 int SDLConsoleDriver::lineedit(const std::string& prompt, std::string& output, CommandHistory& ch)
 {
-    // Tell fiothread we are done.
-    if(!inited.load())
+    if(con_impl.was_shutdown())
         return Console::SHUTDOWN;
 
-    return d->lineedit(prompt,output,ch);
+    static bool did_set_history = false;
+
+    // I don't believe this check is necessary.
+    // unless, somwhow, fiothread is inited before the console.
+    if (!con_impl.is_active()) {
+        // fiothread doesn't wait before retrying
+        msleep(100);
+        return Console::RETRY;
+    }
+    // kludge. This is the only place to set it?
+    if (!did_set_history) {
+        std::vector<std::string> hist;
+        ch.getEntries(hist);
+        con_impl.set_command_history(hist);
+        did_set_history = true;
+    }
+
+    if (prompt != con_impl.get_prompt()) {
+        con_impl.set_prompt(prompt);
+    }
+
+    int ret = con_impl.get_line(output);
+    if (ret == 0)
+        return Console::RETRY;
+    if (ret == -1)
+        return Console::SHUTDOWN;
+
+    return ret;
 }
 
 bool SDLConsoleDriver::hide()
 {
-    d->con.hide_window();
+    con_impl.hide_window();
     return true;
 }
 
 bool SDLConsoleDriver::show()
 {
-    d->con.show_window();
+    con_impl.show_window();
     return true;
 }
 
@@ -302,21 +248,18 @@ bool SDLConsoleDriver::show()
  */
 bool SDLConsoleDriver::sdl_event_hook(const SDL_Event &e)
 {
-    return d->con.sdl_event_hook(e);
+    return con_impl.sdl_event_hook(e);
 }
 
-void SDLConsoleDriver::hook_df_renderer(bool enabled)
+void SDLConsoleDriver::update()
 {
-    INTERPOSE_HOOK(DFHack::con_render_hook,render).apply(enabled);
+    con_impl.update();
 }
 
 /*
- * Cleanup must be done from the main thread.
- * NOTE: may be able to do this in the destructor instead.
+ * Cleanup must be done from the main thread (or the thread that called init_sdl()).
  */
 void SDLConsoleDriver::cleanup()
 {
-    hook_df_renderer(false);
-    d->con.destroy_session();
-    inited.store(false);
+    con_impl.destroy_session();
 }

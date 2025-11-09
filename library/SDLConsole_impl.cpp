@@ -4674,7 +4674,7 @@ public:
 
             auto find_widget = std::make_unique<TextFinderWidget>(&output, window.font);
             find_widget->resize({});
-            take_input_focus(find_widget->input);
+            find_widget->input->take_input_focus();
             find_widget->input->set_text(saved_needle);
 
             find_widget->on_close = [this, &output](TextFinderWidget* fw) {
@@ -5027,9 +5027,11 @@ bool SDLConsole::init_session()
         bind_sdl_symbols();
         impl = std::make_shared<SDLConsole_session>(props);
         impl_weak = impl;
+        was_shutdown_.store(false);
     } catch(std::runtime_error &e) {
         success = false;
         impl.reset();
+        was_shutdown_.store(true);
         log_error<Error::Internal>("Caught exception", e.what());
     }
     return success;
@@ -5139,7 +5141,7 @@ int SDLConsole::get_line(std::string& buf)
     if (auto I = impl_weak.lock()) {
         return I->command_pipe.wait_get(buf);
     }
-    return -1;
+    return 0;
 }
 
 void SDLConsole::set_command_history(std::span<const std::string> entries)
@@ -5162,7 +5164,6 @@ SDLConsole& SDLConsole::get_console() noexcept
     return instance;
 }
 
-// Callable from any thread.
 void SDLConsole::shutdown_session() noexcept
 {
     if (auto I = std::weak_ptr<SDLConsole_session>(impl).lock()) {
@@ -5172,6 +5173,8 @@ void SDLConsole::shutdown_session() noexcept
 
 bool SDLConsole::destroy_session() noexcept
 {
+    was_shutdown_.store(true);
+
     if (!impl) {
         return true;
     }
@@ -5224,8 +5227,6 @@ bool SDLConsole::sdl_event_hook(const SDL_Event &e)
     return false;
 }
 
-// NOTE:
-// This function must be called by the thread that called init().
 void SDLConsole::update()
 {
     if (impl) [[likely]] {

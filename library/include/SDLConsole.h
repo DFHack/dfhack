@@ -66,6 +66,16 @@ private:
 class DFHACK_EXPORT SDLConsole {
 public:
     /*
+     * Constructs a console session and its window.
+     * Returns true on success, otherwise false on failure.
+     * Not thread safe.
+     *
+     * SDL events and video subsystems must be initialized
+     * before this function is called.
+     */
+    [[nodiscard]] bool init_session();
+
+    /*
      * Commands the console to shutdown.
      * Safe to call any time from any thread.
      */
@@ -196,27 +206,31 @@ public:
      */
     [[nodiscard]] bool is_active();
 
+    /*
+     * True if console was shutdown for any reason.
+     * Reasons include:
+     * 1. init_session() failed.
+     * 2. commanded to shutdown via shutdown()
+     */
+    bool was_shutdown()
+    {
+        return was_shutdown_.load();
+    }
+
 
     /*
      * Handle SDL events. Returns true if handled, otherwise false.
      *
-     * Not thread safe. Must be called from the thread that called SDLConsole::init_session().
+     * Not thread safe. Must be called from the thread that called init_session().
      */
     [[nodiscard]] bool sdl_event_hook(const SDL_Event& e);
 
     /*
      * Render, handle various tasks.
      *
-     * Not thread safe. Must be called from the thread that called SDLConsole::init_session().
+     * Not thread safe. Must be called from the thread that called init_session().
      */
     void update();
-
-    /*
-     * Constructs a console session and its window.
-     * Returns true on success, otherwise false on failure.
-     * Not thread safe.
-     */
-    [[nodiscard]] bool init_session();
 
     void set_destroy_session_callback(std::function<void()> cb) {
         on_destroy_session = std::move(cb);
@@ -241,6 +255,7 @@ private:
     std::shared_ptr<SDLConsole_session> impl;
     std::weak_ptr<SDLConsole_session> impl_weak;
     std::thread::id init_thread_id;
+    std::atomic<bool> was_shutdown_ { false };
 
     /*
      * Callback for when the session is just about to be destroyed.

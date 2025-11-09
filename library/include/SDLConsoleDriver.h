@@ -26,16 +26,15 @@ distribution.
 #include "Export.h"
 #include "ColorText.h"
 #include "Console.h"
-#include <atomic>
-#include <assert.h>
+#include "SDLConsole.h"
 #include <mutex>
 #include <string>
 
 union SDL_Event;
 
+using namespace sdl_console;
 namespace  DFHack
 {
-    class Private;
     class DFHACK_EXPORT SDLConsoleDriver : public Console
     {
     protected:
@@ -48,7 +47,7 @@ namespace  DFHack
         ///ctor, NOT thread-safe
         SDLConsoleDriver();
         ///dtor, NOT thread-safe
-        ~SDLConsoleDriver();
+        ~SDLConsoleDriver() override;
 
         static bool is_enabled() {
 #ifdef DISABLE_SDL_CONSOLE
@@ -58,18 +57,18 @@ namespace  DFHack
         };
 
         bool init( bool dont_redirect ) override;
-        /// shutdown the console. NOT thread-safe
-        bool shutdown( void ) override;
+        /// shutdown the console.
+        bool shutdown() override;
         void clear() override;
-        /// Position cursor at x,y. 1,1 = top left corner
+        /// Not implemented
         void gotoxy(int x, int y) override;
         /// Enable or disable the caret/cursor
         void cursor(bool enable = true) override;
 
         /// get the current number of columns
-        int  get_columns(void) override;
+        int  get_columns() override;
         /// get the current number of rows
-        int  get_rows(void) override;
+        int  get_rows() override;
 
         int lineedit(const std::string& prompt, std::string& output, CommandHistory & history ) override;
 
@@ -78,13 +77,15 @@ namespace  DFHack
         void cleanup() override;
 
         bool sdl_event_hook(const SDL_Event& event);
+        // Render frame, misc update loop
+        void update();
+        // Bind sdl functions.
+        // Initialize a an sdl console session.
         bool init_sdl();
-        static void hook_df_renderer(bool enabled);
 
-        static constexpr ConsoleType type_tag = ConsoleType::SDL;
+        static constexpr type_tag_t type_tag = &type_tag;
     private:
-        Private * d;
-        std::recursive_mutex * wlock;
-        std::atomic<bool> inited;
+        SDLConsole& con_impl;
+        std::recursive_mutex mutex_;
     };
 }

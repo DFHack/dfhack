@@ -106,7 +106,7 @@ namespace  DFHack
             assert(index < history.size());
             return history[index];
         }
-        void remove( void )
+        void remove()
         {
             history.pop_front();
         }
@@ -121,20 +121,16 @@ namespace  DFHack
         std::deque <std::string> history;
     };
 
-    enum class ConsoleType {
-        Base,
-        Posix,
-        Windows,
-        SDL
-    };
-
+    // Base Console has print only capabilities.
+    // Used by dfhack-run.
     class DFHACK_EXPORT Console : public color_ostream
     {
     private:
         bool use_ansi_colors_{false};
 
     protected:
-        ConsoleType con_type{type_tag};
+        using type_tag_t = const void*;
+        const type_tag_t instance_tag{};
 
         virtual void begin_batch() {};
         virtual void add_text(color_value color, const std::string &text);
@@ -142,7 +138,7 @@ namespace  DFHack
         virtual void flush_proxy() { std::cout << std::flush; }
 
     public:
-        static const char * getANSIColor(const int c);
+        static const char * getANSIColor(int c) noexcept;
 
         //! \defgroup lineedit_return_values Possible errors from lineedit
         //! \{
@@ -150,18 +146,18 @@ namespace  DFHack
         static constexpr int SHUTDOWN = -2;
         static constexpr int RETRY = -3;
         //! \}
-        static constexpr ConsoleType type_tag = ConsoleType::Base;
 
         ///ctor, NOT thread-safe
         Console() = default;
         template <typename T>
-        Console(T*) : con_type(T::type_tag) {}
+        explicit Console(T*) : instance_tag(T::type_tag) {}
         ///dtor, NOT thread-safe
         virtual ~Console() = default;
 
         /// initialize the console. NOT thread-safe
         virtual bool init( bool dont_redirect ) { return true; };
         /// shutdown the console. NOT thread-safe
+        /// however, it is thread safe for SDL console.
         virtual bool shutdown( void ) { return true; };
 
         /// Clear the console, along with its scrollback
@@ -171,30 +167,35 @@ namespace  DFHack
         /// Enable or disable the caret/cursor
         virtual void cursor(bool enable = true) {};
         /// get the current number of columns
-        virtual int  get_columns(void) { return -1; };
+        virtual int  get_columns() { return -1; };
         /// get the current number of rows
-        virtual int  get_rows(void) { return -1; };
+        virtual int  get_rows() { return -1; };
         /// beep. maybe?
         //void beep (void);
         /// A simple line edit (raw mode)
-        virtual int lineedit(const std::string& prompt, std::string& output, CommandHistory & history ) { return SHUTDOWN; };
-        virtual bool isInited (void) { return true; };
+        virtual int lineedit(const std::string& prompt, std::string& output, CommandHistory & history ) { return FAILURE; };
+        virtual bool isInited () { return true; };
 
         virtual bool hide() { return false; };
         virtual bool show() { return false; };
 
+        // Used by SDL console. However calling shutdown() has the same effect, so
+        // this can be probably be removed.
         virtual void cleanup() {};
 
         /// Platform independent. Waits given number of milliseconds before continuing.
-        void msleep(unsigned int msec);
-        bool is_console() { return true; }
-        ConsoleType get_type() const noexcept { return con_type; }
-        void use_ansi_colors(bool choice) { use_ansi_colors_ = choice; };
+        static void msleep(unsigned int msec);
+        bool is_console() noexcept override { return true; }
+
+        // Used by dfhack-run, and any other that just wants a basic dumb console with ansi color support.
+        void use_ansi_colors(bool choice) noexcept { use_ansi_colors_ = choice; };
 
         template <typename T>
         T* try_as() noexcept {
-            return (get_type() == T::type_tag) ? static_cast<T*>(this) : nullptr;
+            return (instance_tag == T::type_tag) ? static_cast<T*>(this) : nullptr;
         }
+
+        static constexpr type_tag_t type_tag = (const void*)&type_tag;
 
         static std::unique_ptr<Console> makeConsole();
         template <typename T>

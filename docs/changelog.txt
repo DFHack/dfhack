@@ -70,6 +70,25 @@ Template for new versions:
 
 ## Removed
 
+# 53.03-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+- Release builds for Linux are now compiled with gcc 11
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
 # 53.02-r2
 
 ## New Tools

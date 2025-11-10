@@ -65,7 +65,8 @@ namespace  DFHack
 
         static bool is_enabled() { return false; }; // temporary, for testing
 
-        static constexpr type_tag_t type_tag = &WindowsConsole::type_tag;
+        static constexpr type_tag_t type_tag_ {};
+        static constexpr type_tag_t type_tag = (const void*)&type_tag_;
     private:
         Private * d;
         std::recursive_mutex * wlock;

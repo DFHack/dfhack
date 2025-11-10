@@ -190,14 +190,17 @@ namespace  DFHack
         // Used by dfhack-run, and any other that just wants a basic dumb console with ansi color support.
         void use_ansi_colors(bool choice) noexcept { use_ansi_colors_ = choice; };
 
+        // For calling SDL console specific methods.
+        // Casting this way will only work on the most derived type.
+        // Should probably just use dynamic_cast here,
+        // and perhaps cache the result assuming the console is stable.
         template <typename T>
         T* try_as() noexcept {
             return (instance_tag == T::type_tag) ? static_cast<T*>(this) : nullptr;
         }
-
-        static constexpr type_tag_t type_tag = (const void*)&Console::type_tag;
-
+        // Used by dfhack-run
         static std::unique_ptr<Console> makeConsole();
+        // Used by PosixConsole, SDLConsoleDriver, WindowsConsole
         template <typename T>
         static std::unique_ptr<Console> makeConsole();
     };

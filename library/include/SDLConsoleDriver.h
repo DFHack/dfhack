@@ -82,7 +82,8 @@ namespace  DFHack
         // Initialize a an sdl console session.
         bool init_sdl();
 
-        static constexpr type_tag_t type_tag = &SDLConsoleDriver::type_tag;
+        static constexpr type_tag_t type_tag_ {};
+        static constexpr type_tag_t type_tag = (const void*)&type_tag_;
     private:
         sdl_console::SDLConsole& con_impl;
         std::recursive_mutex mutex_;

@@ -59,9 +59,9 @@ jobs:
       fail-fast: false
       matrix:
         include:
-        - gcc: 10
+        - gcc: 11 # baseline compatibility with ubuntu LTS 22.04
           plugins: "default"
-        - gcc: 12
+        - gcc: 12 # highest available in ubuntu 22.04
           plugins: "all"
 
   test-windows:
@@ -96,7 +96,7 @@ jobs:
       dfhack_repo: ${{ inputs.dfhack_repo }}
       dfhack_ref: ${{ inputs.dfhack_ref }}
       os: ubuntu
-      compiler: gcc-10
+      compiler: gcc-11
       plugins: default
       config: default
 

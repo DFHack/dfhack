@@ -3,14 +3,12 @@ local _ENV = mkmodule('plugins.regrass')
 local argparse = require('argparse')
 local utils = require('utils')
 
-local function search_str(s)
-    return dfhack.upperCp437(dfhack.toSearchNormalized(s))
-end
+local toSearch = dfhack.toSearchNormalized
 
 local function find_grass_idx(s) --find plant raw index by id string
-    local id_str = search_str(s)
+    local id_str = toSearch(s)
     for _,grass in ipairs(df.global.world.raws.plants.grasses) do
-        if search_str(grass.id) == id_str then
+        if toSearch(grass.id) == id_str then
             return grass.index
         end
     end

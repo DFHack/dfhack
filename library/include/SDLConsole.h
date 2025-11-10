@@ -76,12 +76,14 @@ public:
     [[nodiscard]] bool init_session();
 
     /*
-     * Commands the console to shutdown.
+     * Requests the console to shutdown.
      * Safe to call any time from any thread.
      */
     void shutdown_session() noexcept;
+
     /*
-     * Cleans up resources.
+     * Performs the actual shutdown.
+     * Cleans up any resources associated with the console session.
      * Not thread safe. Must be called from the thread that called init_session().
      */
     bool destroy_session() noexcept;
@@ -210,7 +212,7 @@ public:
      * True if console was shutdown for any reason.
      * Reasons include:
      * 1. init_session() failed.
-     * 2. commanded to shutdown via shutdown()
+     * 2. commanded to shutdown via shutdown_session()
      */
     bool was_shutdown()
     {
@@ -232,6 +234,7 @@ public:
      */
     void update();
 
+    // Not currently used.
     void set_destroy_session_callback(std::function<void()> cb) {
         on_destroy_session = std::move(cb);
     }

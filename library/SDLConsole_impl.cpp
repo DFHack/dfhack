@@ -5167,8 +5167,6 @@ void SDLConsole::shutdown_session() noexcept
 
 bool SDLConsole::destroy_session() noexcept
 {
-    was_shutdown_.store(true);
-
     if (!impl) {
         return true;
     }
@@ -5191,6 +5189,7 @@ bool SDLConsole::destroy_session() noexcept
 
     // Kill our impl shared_ptr.
     impl.reset();
+    was_shutdown_.store(true);
 
     // NOTE: The only other long living impl shared_ptr is get_line()
     // which runs on a separate thread (fiothread) and is commanded to close when shutdown() is called.

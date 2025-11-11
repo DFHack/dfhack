@@ -75,6 +75,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <ranges>
+#include <span>
 #include <map>
 #include <set>
 #include <cstdio>

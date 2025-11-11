@@ -84,6 +84,7 @@ distribution.
 #include <type_traits>
 #include <cstdarg>
 #include <filesystem>
+#include <optional>
 #include <SDL_events.h>
 
 #ifdef _WIN32

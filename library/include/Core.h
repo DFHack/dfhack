@@ -180,7 +180,7 @@ namespace DFHack
         std::filesystem::path findScript(std::string name);
         void getScriptPaths(std::vector<std::filesystem::path> *dest);
 
-        bool getSuppressDuplicateKeyboardEvents();
+        bool getSuppressDuplicateKeyboardEvents() const;
         void setSuppressDuplicateKeyboardEvents(bool suppress);
         void setMortalMode(bool value);
         void setArmokTools(const std::vector<std::string> &tool_names);

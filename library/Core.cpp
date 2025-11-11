@@ -74,6 +74,7 @@ distribution.
 #include <condition_variable>
 #include <string>
 #include <vector>
+#include <ranges>
 #include <map>
 #include <set>
 #include <cstdio>
@@ -806,11 +807,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         bool reload = (first == "reload");
         if (parts.size())
         {
-            for (auto p = parts.begin(); p != parts.end(); p++)
+            for (const auto& p : parts)
             {
-                if (p->size() && (*p)[0] == '-')
+                if (p.empty() && p[0] == '-')
                 {
-                    if (p->find('a') != std::string::npos)
+                    if (p.find('a') != std::string::npos)
                         all = true;
                 }
             }
@@ -826,15 +827,15 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             }
             else
             {
-                for (auto p = parts.begin(); p != parts.end(); p++)
+               for (auto& p : parts)
                 {
-                    if (!p->size() || (*p)[0] == '-')
+                    if (p.empty() || p[0] == '-')
                         continue;
-                    if (load && !plug_mgr->load(*p))
+                    if (load && !plug_mgr->load(p))
                         ret = CR_FAILURE;
-                    else if (unload && !plug_mgr->unload(*p))
+                    else if (unload && !plug_mgr->unload(p))
                         ret = CR_FAILURE;
-                    else if (reload && !plug_mgr->reload(*p))
+                    else if (reload && !plug_mgr->reload(p))
                         ret = CR_FAILURE;
                 }
             }
@@ -854,16 +855,15 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
 
         if(parts.size())
         {
-            for (size_t i = 0; i < parts.size(); i++)
+            for (auto& part : parts)
             {
-                std::string part = parts[i];
                 if (part.find('\\') != std::string::npos)
                 {
                     con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", part.c_str());
-                    for (size_t j = 0; j < part.size(); j++)
+                    for (char& c : part)
                     {
-                        if (part[j] == '\\')
-                            part[j] = '/';
+                        if (c == '\\')
+                            c = '/';
                     }
                 }
 
@@ -902,9 +902,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         }
         else
         {
-            for (auto it = plug_mgr->begin(); it != plug_mgr->end(); ++it)
+           for (auto& [key, plug] : *plug_mgr)
             {
-                Plugin * plug = it->second;
+                if (!plug)
+                    continue;
                 if (!plug->can_be_enabled()) continue;
 
                 con.print(
@@ -929,13 +930,14 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         con.print(header_format, "Name", "State", "Cmds", "Enabled");
 
         plug_mgr->refresh();
-        for (auto it = plug_mgr->begin(); it != plug_mgr->end(); ++it)
+        for (auto& [key, plug] : *plug_mgr)
         {
-            Plugin * plug = it->second;
             if (!plug)
                 continue;
-            if (parts.size() && std::find(parts.begin(), parts.end(), plug->getName()) == parts.end())
+
+            if (std::ranges::find(parts, plug->getName()) == parts.end())
                 continue;
+
             color_value color;
             switch (plug->getState())
             {
@@ -1012,9 +1014,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             std::string keystr = parts[1];
             if (parts[0] == "set")
                 ClearKeyBindings(keystr);
-            for (int i = parts.size()-1; i >= 2; i--)
+            // for (int i = parts.size()-1; i >= 2; i--)
+            for (const auto& part : parts | std::views::drop(2) | std::views::reverse)
             {
-                if (!AddKeyBinding(keystr, parts[i])) {
+                if (!AddKeyBinding(keystr, part)) {
                     con.printerr("Invalid key spec: %s\n", keystr.c_str());
                     break;
                 }
@@ -1022,10 +1025,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         }
         else if (parts.size() >= 2 && parts[0] == "clear")
         {
-            for (size_t i = 1; i < parts.size(); i++)
+            // for (size_t i = 1; i < parts.size(); i++)
+            for (const auto& part : parts | std::views::drop(1))
             {
-                if (!ClearKeyBindings(parts[i])) {
-                    con.printerr("Invalid key spec: %s\n", parts[i].c_str());
+                if (!ClearKeyBindings(part)) {
+                    con.printerr("Invalid key spec: %s\n", part.c_str());
                     break;
                 }
             }
@@ -1035,8 +1039,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             std::vector<std::string> list = ListKeyBindings(parts[1]);
             if (list.empty())
                 con << "No bindings." << std::endl;
-            for (size_t i = 0; i < list.size(); i++)
-                con << "  " << list[i] << std::endl;
+            for (const auto& kb : list)
+                con << "  " << kb << std::endl;
         }
         else
         {
@@ -1121,9 +1125,9 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     else if (first == "kill-lua")
     {
         bool force = false;
-        for (auto it = parts.begin(); it != parts.end(); ++it)
+        for (const auto& part : parts)
         {
-            if (*it == "force")
+            if (part == "force")
                 force = true;
         }
         if (!Lua::Interrupt(force))
@@ -1189,14 +1193,14 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                 con << "Unrecognized event name: " << parts[1] << std::endl;
                 return CR_WRONG_USAGE;
             }
-            for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
+            for (const auto& state_script : state_change_scripts)
             {
-                if (!parts[1].size() || (it->event == sc_event_id(parts[1])))
+                if (!parts[1].size() || (state_script.event == sc_event_id(parts[1])))
                 {
-                    con.print("%s (%s): %s%s\n", sc_event_name(it->event).c_str(),
-                        it->save_specific ? "save-specific" : "global",
-                        it->save_specific ? "<save folder>/raw/" : "<DF folder>/",
-                        it->path.c_str());
+                    con.print("%s (%s): %s%s\n", sc_event_name(state_script.event).c_str(),
+                        state_script.save_specific ? "save-specific" : "global",
+                        state_script.save_specific ? "<save folder>/raw/" : "<DF folder>/",
+                        state_script.path.c_str());
                 }
             }
             return CR_OK;
@@ -1216,9 +1220,9 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             }
             bool save_specific = (parts.size() >= 4 && parts[3] == "-save");
             StateChangeScript script(evt, parts[2], save_specific);
-            for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
+            for (const auto& state_script : state_change_scripts)
             {
-                if (script == *it)
+                if (script == state_script)
                 {
                     con << "Script already registered" << std::endl;
                     return CR_FAILURE;
@@ -1448,7 +1452,7 @@ static void fIOthread(IODATA * iod)
 
     while (true)
     {
-        std::string command = "";
+        std::string command;
         int ret;
         while ((ret = con.lineedit("[DFHack]# ",command, main_history))
                 == Console::RETRY);
@@ -1812,7 +1816,7 @@ bool Core::InitSimulationThread()
             if (entry.second)
                 continue;
             std::filesystem::path filename = entry.first;
-            if (!config_files.count(filename)) {
+            if (!config_files.contains(filename)) {
                 std::filesystem::path src_file = getConfigDefaultsPath() / filename;
                 if (!Filesystem::isfile(src_file))
                     continue;
@@ -1855,7 +1859,7 @@ bool Core::InitSimulationThread()
     plug_mgr->init();
     std::cerr << "Starting the TCP listener.\n";
     auto listen = ServerMain::listen(RemoteClient::GetDefaultPort());
-    IODATA *temp = new IODATA;
+    auto *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
 
@@ -1890,13 +1894,13 @@ bool Core::InitSimulationThread()
             if (raw[offset] == '"')
             {
                 offset++;
-                size_t next = raw.find("\"", offset);
+                size_t next = raw.find('"', offset);
                 args.push_back(raw.substr(offset, next - offset));
                 offset = next + 2;
             }
             else
             {
-                size_t next = raw.find(" ", offset);
+                size_t next = raw.find(' ', offset);
                 if (next == std::string::npos)
                 {
                     args.push_back(raw.substr(offset));
@@ -1915,9 +1919,9 @@ bool Core::InitSimulationThread()
             if (first.length() > 0 && first[0] == '+')
             {
                 std::vector<std::string> cmd;
-                for (it++; it != args.end(); it++) {
-                    const std::string & arg = *it;
-                    if (arg.length() > 0 && arg[0] == '+')
+                for (const auto& arg : args)
+                {
+                    if (!arg.empty() && arg[0] == '+')
                     {
                         break;
                     }
@@ -1927,9 +1931,9 @@ bool Core::InitSimulationThread()
                 if (runCommand(con, first.substr(1), cmd) != CR_OK)
                 {
                     std::cerr << "Error running command: " << first.substr(1);
-                    for (auto it2 = cmd.begin(); it2 != cmd.end(); it2++)
+                    for (const auto& arg : cmd)
                     {
-                        std::cerr << " \"" << *it2 << "\"";
+                        std::cerr << " \"" << arg << "\"";
                     }
                     std::cerr << "\n";
                 }
@@ -1953,7 +1957,7 @@ bool Core::setHotkeyCmd( std::string cmd )
     // access command
     std::lock_guard<std::mutex> lock(HotkeyMutex);
     hotkey_set = SET;
-    hotkey_cmd = cmd;
+    hotkey_cmd = std::move(cmd);
     HotkeyCond.notify_all();
     return true;
 }
@@ -2170,43 +2174,44 @@ void Core::onUpdate(color_ostream &out)
     perf_counters.incCounter(perf_counters.update_lua_ms, step_start_ms);
 }
 
-void getFilesWithPrefixAndSuffix(const std::filesystem::path& folder, const std::string& prefix, const std::string& suffix, std::vector<std::filesystem::path>& result) {
+static void getFilesWithPrefixAndSuffix(const std::filesystem::path& folder, const std::string& prefix, const std::string& suffix, std::vector<std::filesystem::path>& result) {
     std::vector<std::filesystem::path> files;
     DFHack::Filesystem::listdir(folder, files);
-    for ( auto f : files) {
+    for ( const auto& f : files) {
         if (f.stem().string().starts_with(prefix) && f.extension() == suffix)
             result.push_back(f);
     }
-    return;
 }
 
 size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::string>& prefix, const std::filesystem::path& folder) {
     static const std::string suffix = ".init";
     std::vector<std::filesystem::path> scriptFiles;
-    for ( size_t a = 0; a < prefix.size(); a++ ) {
-        getFilesWithPrefixAndSuffix(folder, prefix[a], ".init", scriptFiles);
+    for ( const auto& p : prefix ) {
+        getFilesWithPrefixAndSuffix(folder, p, ".init", scriptFiles);
     }
-    std::sort(scriptFiles.begin(), scriptFiles.end(),
-        [](const std::filesystem::path& a, const std::filesystem::path& b) {
-            return a.stem() < b.stem();
-        });
+
+    std::ranges::sort(scriptFiles,
+                      [](const std::filesystem::path& a, const std::filesystem::path& b) {
+                          return a.stem() < b.stem();
+                      });
+
     size_t result = 0;
-    for ( size_t a = 0; a < scriptFiles.size(); a++ ) {
+    for ( const auto& file : scriptFiles) {
         result++;
-        core->loadScriptFile(out, folder / scriptFiles[a], false);
+        core->loadScriptFile(out, folder / file, false);
     }
     return result;
 }
 
 namespace DFHack {
     namespace X {
-        typedef state_change_event Key;
-        typedef std::vector<std::string> Val;
-        typedef std::pair<Key,Val> Entry;
-        typedef std::vector<Entry> EntryVector;
-        typedef std::map<Key,Val> InitVariationTable;
+        using Key = state_change_event;
+        using Val = std::vector<std::string>;
+        using Entry = std::pair<Key,Val>;
+        using EntryVector =  std::vector<Entry>;
+        using InitVariationTable = std::map<Key,Val>;
 
-        EntryVector computeInitVariationTable(void* none, ...) {
+        static EntryVector computeInitVariationTable(void* none, ...) {
             va_list list;
             va_start(list,none);
             EntryVector result;
@@ -2227,7 +2232,7 @@ namespace DFHack {
             return result;
         }
 
-        InitVariationTable getTable(const EntryVector& vec) {
+        static InitVariationTable getTable(const EntryVector& vec) {
             return InitVariationTable(vec.begin(),vec.end());
         }
     }
@@ -2258,17 +2263,17 @@ void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event eve
         loadScriptFiles(this, out, set, rawFolder);
     }
 
-    for (auto it = state_change_scripts.begin(); it != state_change_scripts.end(); ++it)
+    for (const auto& script : state_change_scripts)
     {
-        if (it->event == event)
+        if (script.event == event)
         {
-            if (!it->save_specific)
+            if (!script.save_specific)
             {
-                loadScriptFile(out, it->path, false);
+                loadScriptFile(out, script.path, false);
             }
-            else if (it->save_specific && isWorldLoaded())
+            else if (script.save_specific && isWorldLoaded())
             {
-                loadScriptFile(out, rawFolder / it->path, false);
+                loadScriptFile(out, rawFolder / script.path, false);
             }
         }
     }
@@ -2278,7 +2283,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 {
     using df::global::gametype;
     static md5wrapper md5w;
-    static std::string ostype = "";
+    static std::string ostype;
 
     if (!ostype.size())
     {
@@ -2480,7 +2485,7 @@ bool Core::DFH_ncurses_key(int key)
     return ncurses_wgetch(key, dummy);
 }
 
-bool Core::getSuppressDuplicateKeyboardEvents() {
+bool Core::getSuppressDuplicateKeyboardEvents() const {
     return suppress_duplicate_keyboard_events;
 }
 
@@ -2605,8 +2610,8 @@ bool Core::SelectHotkey(int sym, int modifiers)
 
         // Check the internal keybindings
         std::vector<KeyBinding> &bindings = key_bindings[sym];
-        for (int i = bindings.size()-1; i >= 0; --i) {
-            auto &binding = bindings[i];
+        //for (int i = bindings.size()-1; i >= 0; --i) {
+        for (const auto& binding : bindings | std::views::reverse) {
             DEBUG(keybinding).print("examining hotkey with commandline: '%s'\n", binding.cmdline.c_str());
 
             if (binding.modifiers != modifiers) {
@@ -2662,8 +2667,8 @@ bool Core::SelectHotkey(int sym, int modifiers)
         setHotkeyCmd(cmd);
         return true;
     }
-    else
-        return false;
+
+    return false;
 }
 
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus)
@@ -2684,13 +2689,13 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
 
     // ugh, ugly
     for (;;) {
-        if (keyspec.size() > 6 && keyspec.substr(0, 6) == "Shift-") {
+        if (keyspec.size() > 6 && keyspec.starts_with("Shift-")) {
             *pmod |= 1;
             keyspec = keyspec.substr(6);
-        } else if (keyspec.size() > 5 && keyspec.substr(0, 5) == "Ctrl-") {
+        } else if (keyspec.size() > 5 && keyspec.starts_with("Ctrl-")) {
             *pmod |= 2;
             keyspec = keyspec.substr(5);
-        } else if (keyspec.size() > 4 && keyspec.substr(0, 4) == "Alt-") {
+        } else if (keyspec.size() > 4 && keyspec.starts_with("Alt-")) {
             *pmod |= 4;
             keyspec = keyspec.substr(4);
         } else
@@ -2709,13 +2714,13 @@ static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string 
     } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
         *psym = SDLK_F1 + (keyspec[1]-'1');
         return true;
-    } else if (keyspec.size() == 3 && keyspec.substr(0, 2) == "F1" && keyspec[2] >= '0' && keyspec[2] <= '2') {
+    } else if (keyspec.size() == 3 && keyspec.starts_with("F1") && keyspec[2] >= '0' && keyspec[2] <= '2') {
         *psym = SDLK_F10 + (keyspec[2]-'0');
         return true;
-    } else if (keyspec.size() == 6 && keyspec.substr(0, 5) == "MOUSE" && keyspec[5] >= '4' && keyspec[5] <= '9') {
+    } else if (keyspec.size() == 6 && keyspec.starts_with("MOUSE") && keyspec[5] >= '4' && keyspec[5] <= '9') {
         *psym = SDLK_F13 + (keyspec[5]-'4');
         return true;
-    } else if (keyspec.size() == 7 && keyspec.substr(0, 6) == "MOUSE1" && keyspec[5] >= '0' && keyspec[5] <= '5') {
+    } else if (keyspec.size() == 7 && keyspec.starts_with("MOUSE1") && keyspec[5] >= '0' && keyspec[5] <= '5') {
         *psym = SDLK_F19 + (keyspec[5]-'0');
         return true;
     } else if (keyspec == "Enter") {
@@ -2754,9 +2759,9 @@ bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
         {
             std::vector<std::string> focus_strings;
             split_string(&focus_strings, raw_focus, "|");
-            for (size_t i = 0; i < focus_strings.size(); i++)
+            for (const auto& fs : focus_strings)
             {
-                if (!AddKeyBinding(raw_spec + "@" + focus_strings[i], cmdline))
+                if (!AddKeyBinding(raw_spec + "@" + fs, cmdline))
                     return false;
             }
             return true;
@@ -2838,7 +2843,7 @@ bool Core::RemoveAlias(const std::string &name)
 bool Core::IsAlias(const std::string &name)
 {
     std::lock_guard<std::recursive_mutex> lock(alias_mutex);
-    return aliases.find(name) != aliases.end();
+    return aliases.contains(name);
 }
 
 bool Core::RunAlias(color_ostream &out, const std::string &name,
@@ -2903,10 +2908,9 @@ bool ClassNameCheck::operator() (Process *p, void * ptr) const {
 
 void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
 {
-    std::set<std::string>::iterator it = known_class_names.begin();
-
-    for (; it != known_class_names.end(); it++)
-        names.push_back(*it);
+    for(const auto& kcn : known_class_names) {
+        names.push_back(kcn);
+    }
 }
 
 MemoryPatcher::MemoryPatcher(Process *p_) : p(p_)
@@ -2922,7 +2926,7 @@ MemoryPatcher::~MemoryPatcher()
 
 bool MemoryPatcher::verifyAccess(void *target, size_t count, bool write)
 {
-    uint8_t *sptr = (uint8_t*)target;
+    auto *sptr = (uint8_t*)target;
     uint8_t *eptr = sptr + count;
 
     // Find the valid memory ranges

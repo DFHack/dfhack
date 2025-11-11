@@ -301,21 +301,6 @@ static void fHKthread(IODATA * iodata)
     }
 }
 
-struct sortable
-{
-    bool recolor;
-    std::string name;
-    std::string description;
-    //FIXME: Nuke when MSVC stops failing at being C++11 compliant
-    sortable(bool recolor_,const std::string& name_,const std::string & description_): recolor(recolor_), name(name_), description(description_){};
-    bool operator <(const sortable & rhs) const
-    {
-        if( name < rhs.name )
-            return true;
-        return false;
-    };
-};
-
 static std::string dfhack_version_desc()
 {
     std::stringstream s;

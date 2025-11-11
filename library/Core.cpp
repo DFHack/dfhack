@@ -416,13 +416,12 @@ bool is_builtin(color_ostream &con, const std::string &command) {
     return lua_toboolean(L, -1);
 }
 
-void get_commands(color_ostream &con, std::vector<std::string> &commands) {
+std::optional<std::string> get_commands(color_ostream &con, std::vector<std::string> &commands) {
     ConditionalCoreSuspender suspend{};
 
     if (!suspend) {
-        con.printerr("Cannot acquire core lock in helpdb.get_commands\n");
         commands.clear();
-        return;
+        return "Cannot acquire core lock in helpdb.get_commands";
     }
 
     auto L = DFHack::Core::getInstance().getLuaState();
@@ -430,22 +429,26 @@ void get_commands(color_ostream &con, std::vector<std::string> &commands) {
 
     if (!lua_checkstack(L, 1) ||
         !Lua::PushModulePublic(con, L, "helpdb", "get_commands")) {
-        con.printerr("Failed to load helpdb Lua code\n");
-        return;
+        return "Failed to load helpdb Lua code";
     }
 
     if (!Lua::SafeCall(con, L, 0, 1)) {
-        con.printerr("Failed Lua call to helpdb.get_commands.\n");
+        return "Failed Lua call to helpdb.get_commands.";
     }
 
     Lua::GetVector(L, commands, top + 1);
+    return std::nullopt;
 }
 
 static bool try_autocomplete(color_ostream &con, const std::string &first, std::string &completed)
 {
     std::vector<std::string> commands, possible;
 
-    get_commands(con, commands);
+    if (auto err = get_commands(con, commands)) {
+        con.printerr("%s\n", err->c_str());
+        return false;
+    }
+
     for (auto &command : commands)
         if (command.substr(0, first.size()) == first)
             possible.push_back(command);

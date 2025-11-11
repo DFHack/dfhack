@@ -103,7 +103,7 @@ using std::string;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = NULL);
+static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = nullptr);
 size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::string>& prefix, const std::filesystem::path& folder);
 
 namespace DFHack {
@@ -210,7 +210,7 @@ thread_local int CommandDepthCounter::depth = 0;
 
 void Core::cheap_tokenise(std::string const& input, std::vector<std::string>& output)
 {
-    std::string *cur = NULL;
+    std::string *cur = nullptr;
     size_t i = 0;
 
     // Check the first non-space character
@@ -241,7 +241,7 @@ void Core::cheap_tokenise(std::string const& input, std::vector<std::string>& ou
     {
         unsigned char c = input[i];
         if (isspace(c)) {
-            cur = NULL;
+            cur = nullptr;
         } else {
             if (!cur) {
                 output.push_back("");
@@ -280,7 +280,7 @@ static void fHKthread(IODATA * iodata)
 {
     Core * core = iodata->core;
     PluginManager * plug_mgr = iodata->plug_mgr;
-    if(plug_mgr == 0 || core == 0)
+    if(!plug_mgr || !core)
     {
         std::cerr << "Hotkey thread has croaked." << std::endl;
         return;
@@ -1424,7 +1424,7 @@ static void fIOthread(IODATA * iod)
     main_history.load(HISTORY_FILE.c_str());
 
     Console & con = core->getConsole();
-    if (plug_mgr == 0)
+    if (plug_mgr == nullptr)
     {
         con.printerr("Something horrible happened in Core's constructor...\n");
         return;
@@ -1496,7 +1496,7 @@ Core::Core() :
     toolCount{0}
 {
     // init the console. This must be always the first step!
-    plug_mgr = 0;
+    plug_mgr = nullptr;
     errorstate = false;
     vinfo = 0;
     memset(&(s_mods), 0, sizeof(s_mods));
@@ -1504,10 +1504,10 @@ Core::Core() :
     // set up hotkey capture
     suppress_duplicate_keyboard_events = true;
     hotkey_set = NO;
-    last_world_data_ptr = NULL;
-    last_local_map_ptr = NULL;
+    last_world_data_ptr = nullptr;
+    last_local_map_ptr = nullptr;
     last_pause_state = false;
-    top_viewscreen = NULL;
+    top_viewscreen = nullptr;
 
     color_ostream::log_errors_to_stderr = true;
 };
@@ -1531,7 +1531,7 @@ void Core::fatal (std::string output, const char * title)
     std::cout << "DFHack fatal error: " << out.str() << std::endl;
     if (!title)
         title = "DFHack error!";
-    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, title, out.str().c_str(), NULL);
+    DFSDL::DFSDL_ShowSimpleMessageBox(0x10 /* SDL_MESSAGEBOX_ERROR */, title, out.str().c_str(), nullptr);
 
     bool is_headless = bool(getenv("DFHACK_HEADLESS"));
     if (is_headless)
@@ -2004,7 +2004,7 @@ void Core::doUpdate(color_ostream &out)
     Lua::Core::Reset(out, "DF code execution");
 
     // find the current viewscreen
-    df::viewscreen *screen = NULL;
+    df::viewscreen *screen = nullptr;
     if (df::global::gview)
     {
         screen = &df::global::gview->view;
@@ -2230,7 +2230,7 @@ namespace DFHack {
 }
 
 void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event event) {
-    static const X::InitVariationTable table = X::getTable(X::computeInitVariationTable(0,
+    static const X::InitVariationTable table = X::getTable(X::computeInitVariationTable(nullptr,
         (int)SC_WORLD_LOADED, "onLoad", "onLoadWorld", "onWorldLoaded", "",
         (int)SC_WORLD_UNLOADED, "onUnload", "onUnloadWorld", "onWorldUnloaded", "",
         (int)SC_MAP_LOADED, "onMapLoad", "onLoadMap", "",
@@ -2330,7 +2330,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
             else
             {
                 char timebuf[30];
-                time_t rawtime = time(NULL);
+                time_t rawtime = time(nullptr);
                 struct tm * timeinfo = localtime(&rawtime);
                 strftime(timebuf, sizeof(timebuf), "[%Y-%m-%dT%H:%M:%S%z] ", timeinfo);
                 evtlog << timebuf;
@@ -2416,7 +2416,7 @@ int Core::Shutdown ( void )
     if(plug_mgr)
     {
         delete plug_mgr;
-        plug_mgr = 0;
+        plug_mgr = nullptr;
     }
     // invalidate all modules
     allModules.clear();
@@ -2998,7 +2998,7 @@ bool Process::patchMemory(void *target, const void* src, size_t count)
 #define MODULE_GETTER(TYPE) \
 TYPE * Core::get##TYPE() \
 { \
-    if(errorstate) return NULL;\
+    if(errorstate) return nullptr;\
     if(!s_mods.p##TYPE)\
     {\
         std::unique_ptr<Module> mod = create##TYPE();\

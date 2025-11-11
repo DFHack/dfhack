@@ -80,7 +80,6 @@ distribution.
 #include <set>
 #include <cstdio>
 #include <cstring>
-#include <iterator>
 #include <sstream>
 #include <forward_list>
 #include <type_traits>
@@ -810,7 +809,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         {
             for (const auto& p : parts)
             {
-                if (p.empty() && p[0] == '-')
+                if (p.empty())
+                    continue;
+
+                if (p[0] == '-')
                 {
                     if (p.find('a') != std::string::npos)
                         all = true;

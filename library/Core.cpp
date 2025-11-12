@@ -794,10 +794,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         {
             for (const auto& p : parts)
             {
-                if (p.empty())
-                    continue;
-
-                if (p[0] == '-')
+                if (p.size() && p[0] == '-')
                 {
                     if (p.find('a') != std::string::npos)
                         all = true;

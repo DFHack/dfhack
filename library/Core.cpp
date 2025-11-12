@@ -105,7 +105,7 @@ using std::string;
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
 static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = nullptr);
-size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::string>& prefix, const std::filesystem::path& folder);
+static size_t loadScriptFiles(Core* core, color_ostream& out, std::span<const std::string> prefix, const std::filesystem::path& folder);
 
 namespace DFHack {
 
@@ -316,7 +316,7 @@ static std::string dfhack_version_desc()
     return s.str();
 }
 
-static bool init_run_script(color_ostream &out, lua_State *state, const std::string& pcmd, std::span<const std::string> pargs)
+static bool init_run_script(color_ostream &out, lua_State *state, const std::string& pcmd, const std::span<const std::string> pargs)
 {
     if (!lua_checkstack(state, pargs.size()+10))
         return false;
@@ -329,7 +329,7 @@ static bool init_run_script(color_ostream &out, lua_State *state, const std::str
     return true;
 }
 
-static command_result runLuaScript(color_ostream &out, std::string name, std::span<const std::string> args)
+static command_result runLuaScript(color_ostream &out, std::string name, const std::span<const std::string> args)
 {
     auto init_fn = [n = std::move(name), args](color_ostream& out, lua_State* state) -> bool {
         return init_run_script(out, state, n, args);
@@ -673,14 +673,14 @@ void tags_helper(color_ostream &con, const std::string &tag) {
     }
 }
 
-void ls_helper(color_ostream &con, const std::vector<std::string> &params) {
+static void ls_helper(color_ostream &con, const std::span<const std::string> params) {
     std::vector<std::string> filter;
     bool skip_tags = false;
     bool show_dev_commands = false;
-    std::string exclude_strs = "";
+    std::string exclude_strs;
 
     bool in_exclude = false;
-    for (auto str : params) {
+    for (const auto& str : params) {
         if (in_exclude)
             exclude_strs = str;
         else if (str == "--notags")
@@ -733,14 +733,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     if (first.empty())
         return CR_NOT_IMPLEMENTED;
 
-    if (first.find('\\') != std::string::npos)
+    if (has_backslashes(first))
     {
         con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", first.c_str());
-        for (size_t i = 0; i < first.size(); i++)
-        {
-            if (first[i] == '\\')
-                first[i] = '/';
-        }
+        replace_backslashes_with_forwardslashes(first);
     }
 
     // let's see what we actually got
@@ -842,14 +838,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         {
             for (auto& part : parts)
             {
-                if (part.find('\\') != std::string::npos)
+                if (has_backslashes(part))
                 {
                     con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", part.c_str());
-                    for (char& c : part)
-                    {
-                        if (c == '\\')
-                            c = '/';
-                    }
+                    replace_backslashes_with_forwardslashes(part);
                 }
 
                 part = GetAliasCommand(part, true);
@@ -920,7 +912,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             if (!plug)
                 continue;
 
-            if (parts.size() && std::ranges::find(parts, key) == std::ranges::end(parts))
+            if (parts.size() && std::ranges::find(parts, key) == parts.end())
                 continue;
 
             color_value color;
@@ -2168,7 +2160,7 @@ static void getFilesWithPrefixAndSuffix(const std::filesystem::path& folder, con
     }
 }
 
-size_t loadScriptFiles(Core* core, color_ostream& out, const std::vector<std::string>& prefix, const std::filesystem::path& folder) {
+size_t loadScriptFiles(Core* core, color_ostream& out, const std::span<const std::string> prefix, const std::filesystem::path& folder) {
     static const std::string suffix = ".init";
     std::vector<std::filesystem::path> scriptFiles;
     for ( const auto& p : prefix ) {

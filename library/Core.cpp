@@ -895,7 +895,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
 
                 con.print(
                     "%21s  %-3s%s\n",
-                    (plug->getName()+":").c_str(),
+                    (key+":").c_str(),
                     plug->is_enabled() ? "on" : "off",
                     plug->can_set_enabled() ? "" : " (controlled internally)"
                 );
@@ -920,7 +920,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             if (!plug)
                 continue;
 
-            if (std::ranges::find(parts, plug->getName()) == parts.end())
+            if (parts.size() && std::ranges::find(parts, key) == std::ranges::end(parts))
                 continue;
 
             color_value color;

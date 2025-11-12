@@ -4071,6 +4071,7 @@ public:
             scrollbar->set_content_size(1);
         text_selection.reset();
         emit_text_selection_changed();
+        viewport.clear();
         viewport.rebuild = true;
     }
 
@@ -4169,6 +4170,7 @@ public:
             wrap_text(e);
         }
 
+        viewport.clear();
         viewport.rebuild = true;
 
         context.props.set(property::RT_OUTPUT_COLUMNS, columns());

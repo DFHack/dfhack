@@ -33,11 +33,9 @@ distribution.
 #include <unordered_map>
 #include <variant>
 #include <vector>
-#include <variant>
 #include <filesystem>
 
 #include "DataDefs.h"
-#include "LuaWrapper.h"
 
 namespace std {
     class condition_variable;
@@ -393,6 +391,10 @@ namespace df
     };
 #endif
 
+    type_identity* lua_touserdata_(lua_State* state);
+    void* get_object_internal_(lua_State* state, type_identity*, int val_index, bool);
+    [[noreturn]] void field_error_(lua_State *state, int index, const char* err, const char* mode);
+
     template<class T>
     class stl_container_identity : public container_identity {
         const char *name;
@@ -424,8 +426,8 @@ namespace df
         {
             using VT = typename T::value_type;
             VT tmp{};
-            auto id = (type_identity*)lua_touserdata(state, DFHack::LuaWrapper::UPVAL_ITEM_ID);
-            auto pitem = DFHack::LuaWrapper::get_object_internal(state, id, val_index, false);
+            auto id = lua_touserdata_(state);
+            auto pitem = get_object_internal_(state, id, val_index, false);
             bool useTemporary = (!pitem && id->isPrimitive());
 
             if (useTemporary)
@@ -435,7 +437,7 @@ namespace df
             }
 
             if (id != item || !pitem)
-                DFHack::LuaWrapper::field_error(state, fname_idx, "incompatible object type", "insert");
+                field_error_(state, fname_idx, "incompatible object type", "insert");
 
             return insert(ptr, idx, pitem);
         }

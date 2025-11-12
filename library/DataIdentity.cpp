@@ -9,6 +9,7 @@
 
 #include "DataFuncs.h"
 #include "DataIdentity.h"
+#include "LuaWrapper.h"
 
 // the space after the uses of "type" in OPAQUE_IDENTITY_TRAITS_NAME is _required_
 // without it the macro generates a syntax error when type is a template specification
@@ -62,4 +63,19 @@ namespace df {
 
     const stl_container_identity<std::vector<int32_t> > stl_vector_int32_t_identity("vector", identity_traits<int32_t>::get());
     const stl_container_identity<std::vector<int16_t> > stl_vector_int16_t_identity("vector", identity_traits<int16_t>::get());
+
+    type_identity* lua_touserdata_(lua_State* state)
+    {
+        return (type_identity*)lua_touserdata(state, DFHack::LuaWrapper::UPVAL_ITEM_ID);
+    }
+
+    void* get_object_internal_(lua_State* state, type_identity* id, int val_index, bool val)
+    {
+        return DFHack::LuaWrapper::get_object_internal(state, id, val_index, val);
+    }
+
+    void field_error_(lua_State *state, int index, const char* err, const char* mode)
+    {
+        DFHack::LuaWrapper::field_error(state, index, err, mode);
+    }
 }

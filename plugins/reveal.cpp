@@ -16,6 +16,7 @@
 #include "df/map_block.h"
 #include "df/world.h"
 
+#include <stack>
 #include <unordered_set>
 
 using std::string;

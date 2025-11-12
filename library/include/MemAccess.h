@@ -29,7 +29,6 @@ distribution.
 #define PROCESS_H_INCLUDED
 
 #include "Export.h"
-#include <iostream>
 #include <cstring>
 #include <map>
 #include <memory>

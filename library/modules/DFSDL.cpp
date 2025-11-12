@@ -1,3 +1,4 @@
+#include "Error.h"
 #include "Internal.h"
 
 #include "modules/DFSDL.h"

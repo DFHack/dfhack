@@ -26,10 +26,8 @@ distribution.
 
 #include <list>
 #include <map>
-#include <set>
 #include <sstream>
 #include <string>
-#include <type_traits>
 #include <utility>
 #include <vector>
 

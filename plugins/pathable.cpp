@@ -1,3 +1,5 @@
+#include <stack>
+
 #include "Debug.h"
 #include "Error.h"
 #include "PluginManager.h"

@@ -25,7 +25,6 @@ distribution.
 #pragma once
 
 #include "Export.h"
-#include "Hooks.h"
 #include "ColorText.h"
 #include "MiscUtils.h"
 #include <map>

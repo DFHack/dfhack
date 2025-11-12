@@ -31,8 +31,6 @@ distribution.
 #define CL_MOD_MAPS
 
 #include "Export.h"
-#include "Module.h"
-#include "BitArray.h"
 
 #include "modules/Materials.h"
 

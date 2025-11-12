@@ -25,7 +25,6 @@ distribution.
 #pragma once
 
 #include <exception>
-#include <sstream>
 #include <string>
 
 #include "Export.h"

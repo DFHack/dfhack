@@ -37,7 +37,6 @@ distribution.
 #include <map>
 #include <memory>
 #include <mutex>
-#include <stack>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>

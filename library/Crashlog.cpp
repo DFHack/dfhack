@@ -36,7 +36,7 @@ void signal_crashlog_complete() {
     if (crashlog_complete == -1)
         return;
     uint64_t v = 1;
-    write(crashlog_complete, &v, sizeof(v));
+    [[maybe_unused]] auto _ = write(crashlog_complete, &v, sizeof(v));
 }
 
 std::thread crashlog_thread;
@@ -55,8 +55,8 @@ extern "C" void dfhack_crashlog_handle_signal(int sig) {
     flag_set(crashlog_ready);
     // Wait for completion via eventfd read, if fd isn't valid, bail
     if (crashlog_complete != -1) {
-        [[maybe_unused]] uint64_t _;
-        read(crashlog_complete, &_, sizeof(_));
+        [[maybe_unused]] uint64_t v;
+        [[maybe_unused]] auto _ = read(crashlog_complete, &v, sizeof(v));
     }
     std::quick_exit(1);
 }

@@ -130,13 +130,15 @@ void dfhack_crashlog_thread() {
     std::quick_exit(1);
 }
 
+std::terminate_handler term_handler = nullptr;
+
 const int desired_signals[3] = {SIGSEGV,SIGILL,SIGABRT};
 namespace DFHack {
     void dfhack_crashlog_init() {
         for (int signal : desired_signals) {
             std::signal(signal, dfhack_crashlog_handle_signal);
         }
-        std::set_terminate(dfhack_crashlog_handle_terminate);
+        term_handler = std::set_terminate(dfhack_crashlog_handle_terminate);
 
         // https://sourceware.org/glibc/manual/latest/html_mono/libc.html#index-backtrace-1
         // backtrace is AsyncSignal-Unsafe due to dynamic loading of libgcc_s
@@ -147,6 +149,11 @@ namespace DFHack {
     }
 
     void dfhack_crashlog_shutdown() {
+        for (int signal : desired_signals) {
+            std::signal(signal, SIG_DFL);
+        }
+        std::set_terminate(term_handler);
+
         shutdown = true;
         flag_set(crashlog_ready);
         crashlog_thread.join();

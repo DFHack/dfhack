@@ -5,7 +5,9 @@
 #include <fstream>
 #include <thread>
 
+#include <sys/eventfd.h>
 #include <execinfo.h>
+#include <unistd.h>
 
 const int BT_ENTRY_MAX = 25;
 struct CrashInfo {
@@ -16,13 +18,11 @@ struct CrashInfo {
 
 CrashInfo crash_info;
 
-/*
- * As of c++17 the only safe stdc++ methods are plain lock-free atomic methods
- * This sadly means that using std::semaphore *could* cause issues according to the standard.
- */
-std::atomic_bool crashed = false;
-std::atomic_bool crashlog_ready = false;
-std::atomic_bool crashlog_complete = false;
+std::atomic<bool> crashed = false;
+std::atomic<bool> crashlog_ready = false;
+
+// Use eventfd for async-signal safe waiting
+int crashlog_complete = -1;
 
 void flag_set(std::atomic_bool &atom) {
     atom.store(true);
@@ -32,20 +32,32 @@ void flag_wait(std::atomic_bool &atom) {
     atom.wait(false);
 }
 
+void signal_crashlog_complete() {
+    if (crashlog_complete == -1)
+        return;
+    uint64_t v = 1;
+    write(crashlog_complete, &v, sizeof(v));
+}
+
 std::thread crashlog_thread;
-bool shutdown = false;
+volatile bool shutdown = false;
 
 extern "C" void dfhack_crashlog_handle_signal(int sig) {
-    if (crashed.exchange(true)) {
-        // Crashlog already produced, bail thread.
+    if (shutdown || crashed.exchange(true) || crashlog_ready.load()) {
+        // Ensure the signal handler doesn't try to write a crashlog
+        // whilst the crashlog thread is unavailable.
         std::quick_exit(1);
     }
     crash_info.signal = sig;
     crash_info.backtrace_entries = backtrace(crash_info.backtrace, BT_ENTRY_MAX);
 
-    // Signal saving of crashlog and wait for completion
+    // Signal saving of crashlog
     flag_set(crashlog_ready);
-    flag_wait(crashlog_complete);
+    // Wait for completion via eventfd read, if fd isn't valid, bail
+    if (crashlog_complete != -1) {
+        [[maybe_unused]] uint64_t _;
+        read(crashlog_complete, &_, sizeof(_));
+    }
     std::quick_exit(1);
 }
 
@@ -125,8 +137,7 @@ void dfhack_crashlog_thread() {
         return;
 
     dfhack_save_crashlog();
-
-    flag_set(crashlog_complete);
+    signal_crashlog_complete();
     std::quick_exit(1);
 }
 
@@ -135,6 +146,11 @@ std::terminate_handler term_handler = nullptr;
 const int desired_signals[3] = {SIGSEGV,SIGILL,SIGABRT};
 namespace DFHack {
     void dfhack_crashlog_init() {
+        // Initialize eventfd flag
+        crashlog_complete = eventfd(0, EFD_CLOEXEC);
+
+        crashlog_thread = std::thread(dfhack_crashlog_thread);
+
         for (int signal : desired_signals) {
             std::signal(signal, dfhack_crashlog_handle_signal);
         }
@@ -144,19 +160,23 @@ namespace DFHack {
         // backtrace is AsyncSignal-Unsafe due to dynamic loading of libgcc_s
         // Using it here ensures it is loaded before use in the signal handler.
         [[maybe_unused]] int _ = backtrace(crash_info.backtrace, 1);
-
-        crashlog_thread = std::thread(dfhack_crashlog_thread);
     }
 
     void dfhack_crashlog_shutdown() {
+        shutdown = true;
         for (int signal : desired_signals) {
             std::signal(signal, SIG_DFL);
         }
         std::set_terminate(term_handler);
 
-        shutdown = true;
+        // Shutdown the crashlog thread.
         flag_set(crashlog_ready);
         crashlog_thread.join();
+
+        // If the signal handler is somehow running whilst here, let it terminate
+        signal_crashlog_complete();
+        if (crashlog_complete != -1)
+            close(crashlog_complete); // Close fd
         return;
     }
 }

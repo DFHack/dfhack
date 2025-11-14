@@ -1,8 +1,9 @@
 #include "DFHackVersion.h"
 #include <csignal>
-#include <thread>
+#include <iomanip>
 #include <filesystem>
 #include <fstream>
+#include <thread>
 
 #include <execinfo.h>
 
@@ -41,7 +42,7 @@ extern "C" void dfhack_crashlog_handle_signal(int sig) {
     }
     crash_info.signal = sig;
     crash_info.backtrace_entries = backtrace(crash_info.backtrace, BT_ENTRY_MAX);
-    
+
     // Signal saving of crashlog and wait for completion
     flag_set(crashlog_ready);
     flag_wait(crashlog_complete);
@@ -70,27 +71,49 @@ std::string signal_name(int sig) {
     return "";
 }
 
+std::filesystem::path get_crashlog_path() {
+    std::time_t time = std::time(nullptr);
+    std::tm* tm = std::localtime(&time);
+
+    std::string timestamp = "unknown";
+    if (tm) {
+        char stamp[64];
+        std::size_t out = strftime(&stamp[0], 63, "%Y-%m-%d-%H-%M-%S", tm);
+        if (out != 0)
+            timestamp = stamp;
+    }
+
+    std::filesystem::path dir = "crashlog";
+    std::error_code err;
+    std::filesystem::create_directories(dir, err);
+
+    std::filesystem::path log_path = dir / ("crash_" + timestamp + ".txt");
+    return log_path;
+}
+
 void dfhack_save_crashlog() {
     char** backtrace_strings = backtrace_symbols(crash_info.backtrace, crash_info.backtrace_entries);
     if (!backtrace_strings) {
         // Allocation failed, give up
         return;
     }
-    std::filesystem::path crashlog_path = "./crash.txt";
-    std::ofstream crashlog(crashlog_path);
+    try {
+        std::filesystem::path crashlog_path = get_crashlog_path();
+        std::ofstream crashlog(crashlog_path);
 
-    crashlog << "Dwarf Fortress Linux has crashed!" << "\n";
-    crashlog << "Dwarf Fortress Version " << DFHack::Version::df_version() << "\n";
-    crashlog << "DFHack Version " << DFHack::Version::dfhack_version() << "\n\n";
+        crashlog << "Dwarf Fortress Linux has crashed!" << "\n";
+        crashlog << "Dwarf Fortress Version " << DFHack::Version::df_version() << "\n";
+        crashlog << "DFHack Version " << DFHack::Version::dfhack_version() << "\n\n";
 
-    std::string signal = signal_name(crash_info.signal);
-    if (!signal.empty()) {
-        crashlog << "Signal " << signal << "\n";
-    }
+        std::string signal = signal_name(crash_info.signal);
+        if (!signal.empty()) {
+            crashlog << "Signal " << signal << "\n";
+        }
 
-    for (int i = 0; i < crash_info.backtrace_entries; i++) {
-        crashlog << i << "> " << backtrace_strings[i] << "\n";
-    }
+        for (int i = 0; i < crash_info.backtrace_entries; i++) {
+            crashlog << i << "> " << backtrace_strings[i] << "\n";
+        }
+    } catch (...) {}
 
     free(backtrace_strings);
 }
@@ -118,7 +141,7 @@ namespace DFHack {
         // https://sourceware.org/glibc/manual/latest/html_mono/libc.html#index-backtrace-1
         // backtrace is AsyncSignal-Unsafe due to dynamic loading of libgcc_s
         // Using it here ensures it is loaded before use in the signal handler.
-        int _ = backtrace(crash_info.backtrace, 1);
+        [[maybe_unused]] int _ = backtrace(crash_info.backtrace, 1);
 
         crashlog_thread = std::thread(dfhack_crashlog_thread);
     }

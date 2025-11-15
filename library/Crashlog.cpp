@@ -20,6 +20,7 @@ CrashInfo crash_info;
 
 std::atomic<bool> crashed = false;
 std::atomic<bool> crashlog_ready = false;
+std::atomic<bool> shutdown = false;
 
 // Use eventfd for async-signal safe waiting
 int crashlog_complete = -1;
@@ -40,10 +41,9 @@ void signal_crashlog_complete() {
 }
 
 std::thread crashlog_thread;
-volatile bool shutdown = false;
 
 extern "C" void dfhack_crashlog_handle_signal(int sig) {
-    if (shutdown || crashed.exchange(true) || crashlog_ready.load()) {
+    if (shutdown.load() || crashed.exchange(true) || crashlog_ready.load()) {
         // Ensure the signal handler doesn't try to write a crashlog
         // whilst the crashlog thread is unavailable.
         std::quick_exit(1);
@@ -133,7 +133,7 @@ void dfhack_save_crashlog() {
 void dfhack_crashlog_thread() {
     // Wait for activation signal
     flag_wait(crashlog_ready);
-    if (shutdown) // Shutting down gracefully, end thread.
+    if (shutdown.load()) // Shutting down gracefully, end thread.
         return;
 
     dfhack_save_crashlog();
@@ -163,7 +163,7 @@ namespace DFHack {
     }
 
     void dfhack_crashlog_shutdown() {
-        shutdown = true;
+        shutdown.exchange(true);
         for (int signal : desired_signals) {
             std::signal(signal, SIG_DFL);
         }

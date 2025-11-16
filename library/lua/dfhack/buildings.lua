@@ -358,6 +358,7 @@ local siegeengine_input = {
             vector_id=df.job_item_vector_id.BOLT_THROWER_PARTS,
         },
         {
+            flags1={ empty=true },
             item_type=df.item_type.BIN,
             vector_id=df.job_item_vector_id.BIN,
         },

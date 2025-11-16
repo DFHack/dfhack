@@ -113,11 +113,13 @@ using df::coord;
 // impassible constructions
 static const std::bitset<64> construction_impassible = std::bitset<64>()
     .set(construction_type::Wall)
+    .set(construction_type::ReinforcedWall)
     .set(construction_type::Fortification);
 
 // constructions requiring same support as walls
 static const std::bitset<64> construction_wall_support = std::bitset<64>()
     .set(construction_type::Wall)
+    .set(construction_type::ReinforcedWall)
     .set(construction_type::Fortification)
     .set(construction_type::UpStair)
     .set(construction_type::UpDownStair);
@@ -395,7 +397,8 @@ private:
         // other tiles can become suitable if a wall is being constructed below
         auto below = Buildings::findAtTile(coord(pos.x,pos.y,pos.z-1));
         if (below && below->getType() == df::building_type::Construction &&
-            below->getSubtype() == construction_type::Wall)
+            (below->getSubtype() == construction_type::Wall ||
+             below->getSubtype() == construction_type::ReinforcedWall))
             return true;
 
         return false;

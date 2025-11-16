@@ -1200,6 +1200,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype,
             break;
         case CATAPULTPARTS:
         case BALLISTAPARTS:
+        case BOLT_THROWER_PARTS:
         case TRAPPARTS:
             value = 30;
             break;

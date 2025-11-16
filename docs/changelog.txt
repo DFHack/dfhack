@@ -59,8 +59,11 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `suspendmanager`: treat reinforced walls as a blocking construction and buildable platform
 
 ## Misc Improvements
+- `blueprint`: support for reinforced walls and bolt throwers
+- `autolabor`: support for new dying and siege-related labors
 
 ## Documentation
 

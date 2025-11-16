@@ -31,7 +31,9 @@ distribution.
 #include <string>
 #include <type_traits>
 #include <utility>
+#include <unordered_map>
 #include <vector>
+#include <functional>
 
 #include "BitArray.h"
 #include "Export.h"
@@ -136,8 +138,8 @@ namespace DFHack
 
     class DFHACK_EXPORT compound_identity : public constructed_identity {
         static std::list<const compound_identity*>* list;
-        static std::map<const compound_identity*, const compound_identity*>* parent_map;
-        static std::map<const compound_identity*, std::vector<const compound_identity*>>* children_map;
+        static std::unordered_map<const compound_identity*, const compound_identity*>* parent_map;
+        static std::unordered_map<const compound_identity*, std::vector<const compound_identity*>>* children_map;
         static std::vector<const compound_identity*>* top_scope;
 
         const char *dfhack_name;
@@ -204,7 +206,7 @@ namespace DFHack
     class DFHACK_EXPORT enum_identity : public compound_identity {
     public:
         struct ComplexData {
-            std::map<int64_t, size_t> value_index_map;
+            std::unordered_map<int64_t, size_t> value_index_map;
             std::vector<int64_t> index_value_map;
             ComplexData(std::initializer_list<int64_t> values);
             size_t size() const {
@@ -289,8 +291,8 @@ namespace DFHack
     };
 
     class DFHACK_EXPORT struct_identity : public compound_identity {
-        static std::map<const struct_identity*, const struct_identity*>* parent_map;
-        static std::map<const struct_identity*, std::vector<const struct_identity*>>* children_map;
+        static std::unordered_map<const struct_identity*, const struct_identity*>* parent_map;
+        static std::unordered_map<const struct_identity*, std::vector<const struct_identity*>>* children_map;
 
         const struct_field_info *fields;
 
@@ -355,6 +357,30 @@ namespace DFHack
         virtual void build_metatable(lua_State *state) const;
     };
 
+    namespace
+    {
+        template<typename ... Bases>
+        struct overload : Bases ...
+        {
+            using is_transparent = void;
+            using Bases::operator() ...;
+        };
+
+        struct char_pointer_hash
+        {
+            auto operator()(const char* ptr) const noexcept
+            {
+                return std::hash<std::string_view>{}(ptr);
+            }
+        };
+
+        using transparent_string_hash = overload<
+            std::hash<std::string>,
+            std::hash<std::string_view>,
+            char_pointer_hash
+        >;
+    }
+
 #ifdef _MSC_VER
     using virtual_ptr = void*;
 #else
@@ -367,13 +393,13 @@ namespace DFHack
     class DFHACK_EXPORT virtual_identity : public struct_identity {
     public:
         using interpose_t = VMethodInterposeLinkBase*;
-        using interpose_list_t = std::map<int, interpose_t>;
+        using interpose_list_t = std::unordered_map<int, interpose_t>;
 
     private:
-        static std::map<const std::string, const virtual_identity*, std::less<>> *name_lookup;
-        static std::map<void*, const virtual_identity*>* known;
-        static std::map<const virtual_identity*, void*>* vtable_ptr_map;
-        static std::map<const virtual_identity*, interpose_list_t>* interpose_list_map;
+        static std::unordered_map<std::string, const virtual_identity*, transparent_string_hash, std::equal_to<>> *name_lookup;
+        static std::unordered_map<void*, const virtual_identity*>* known;
+        static std::unordered_map<const virtual_identity*, void*>* vtable_ptr_map;
+        static std::unordered_map<const virtual_identity*, interpose_list_t>* interpose_list_map;
 
         const char *original_name;
 

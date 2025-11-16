@@ -136,6 +136,7 @@ endif()
 
 set(MAIN_SOURCES_LINUX
     ${CONSOLE_SOURCES}
+    Crashlog.cpp
 )
 
 set(MAIN_SOURCES_DARWIN

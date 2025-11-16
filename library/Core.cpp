@@ -316,23 +316,23 @@ static std::string dfhack_version_desc()
     return s.str();
 }
 
-static bool init_run_script(color_ostream &out, lua_State *state, const std::string& pcmd, const std::span<const std::string> pargs)
+static bool init_run_script(color_ostream &out, lua_State *state, const std::string_view pcmd, const std::span<const std::string> pargs)
 {
     if (!lua_checkstack(state, pargs.size()+10))
         return false;
     Lua::PushDFHack(state);
     lua_getfield(state, -1, "run_script");
     lua_remove(state, -2);
-    lua_pushstring(state, pcmd.c_str());
+    lua_pushlstring(state, pcmd.data(), pcmd.size());
     for (const auto& arg : pargs)
         lua_pushstring(state, arg.c_str());
     return true;
 }
 
-static command_result runLuaScript(color_ostream &out, std::string name, const std::span<const std::string> args)
+static command_result runLuaScript(color_ostream &out, const std::string_view name, const std::span<const std::string> args)
 {
-    auto init_fn = [n = std::move(name), args](color_ostream& out, lua_State* state) -> bool {
-        return init_run_script(out, state, n, args);
+    auto init_fn = [name, args](color_ostream& out, lua_State* state) -> bool {
+        return init_run_script(out, state, name, args);
     };
 
     bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(true), init_fn);
@@ -340,22 +340,22 @@ static command_result runLuaScript(color_ostream &out, std::string name, const s
     return ok ? CR_OK : CR_FAILURE;
 }
 
-static bool init_enable_script(color_ostream &out, lua_State *state, const std::string& name, bool enable)
+static bool init_enable_script(color_ostream &out, lua_State *state, const std::string_view name, bool enable)
 {
     if (!lua_checkstack(state, 4))
         return false;
     Lua::PushDFHack(state);
     lua_getfield(state, -1, "enable_script");
     lua_remove(state, -2);
-    lua_pushstring(state, name.c_str());
+    lua_pushlstring(state, name.data(), name.size());
     lua_pushboolean(state, enable);
     return true;
 }
 
-static command_result enableLuaScript(color_ostream &out, std::string name, bool enabled)
+static command_result enableLuaScript(color_ostream &out, const std::string_view name, bool enabled)
 {
-    auto init_fn = [n = std::move(name), enabled](color_ostream& out, lua_State* state) -> bool {
-        return init_enable_script(out, state, n, enabled);
+    auto init_fn = [name, enabled](color_ostream& out, lua_State* state) -> bool {
+        return init_enable_script(out, state, name, enabled);
     };
 
     bool ok = Lua::RunCoreQueryLoop(out, DFHack::Core::getInstance().getLuaState(), init_fn);
@@ -677,7 +677,7 @@ static void ls_helper(color_ostream &con, const std::span<const std::string> par
     std::vector<std::string> filter;
     bool skip_tags = false;
     bool show_dev_commands = false;
-    std::string exclude_strs;
+    std::string_view exclude_strs;
 
     bool in_exclude = false;
     for (const auto& str : params) {
@@ -2188,24 +2188,31 @@ namespace DFHack {
         using EntryVector =  std::vector<Entry>;
         using InitVariationTable = std::map<Key,Val>;
 
-        static EntryVector computeInitVariationTable(void* none, ...) {
-            va_list list;
-            va_start(list,none);
+        template <typename T>
+        concept VariationTableTypes = std::same_as<T, Key> || std::convertible_to<T, std::string_view>;
+
+        template <VariationTableTypes... Ts>
+        static EntryVector computeInitVariationTable(Ts&&... ts) {
+            using Arg = std::variant<Key, std::string_view>;
+            std::vector<Arg> args{ Arg{std::forward<Ts>(ts)}... };
+
+            Key current_key = SC_UNKNOWN;
             EntryVector result;
-            while(true) {
-                Key key = (Key)va_arg(list,int);
-                if ( key == SC_UNKNOWN )
-                    break;
-                Val val;
-                while (true) {
-                    const char *v = va_arg(list, const char *);
-                    if (!v || !v[0])
-                        break;
-                    val.emplace_back(v);
+            Val val;
+            for (auto& arg : args) {
+                if (std::holds_alternative<Key>(arg)) {
+                    if (current_key != SC_UNKNOWN && !val.empty()) {
+                        result.emplace_back(current_key, val);
+                        val.clear();
+                    }
+                    current_key = std::get<Key>(arg);
+                } else if (std::holds_alternative<std::string_view>(arg)) {
+                    auto str = std::get<std::string_view>(arg);
+                    if (!str.empty())
+                        val.emplace_back(str);
                 }
-                result.push_back(Entry(key,val));
             }
-            va_end(list);
+
             return result;
         }
 
@@ -2216,12 +2223,12 @@ namespace DFHack {
 }
 
 void Core::handleLoadAndUnloadScripts(color_ostream& out, state_change_event event) {
-    static const X::InitVariationTable table = X::getTable(X::computeInitVariationTable(nullptr,
-        (int)SC_WORLD_LOADED, "onLoad", "onLoadWorld", "onWorldLoaded", "",
-        (int)SC_WORLD_UNLOADED, "onUnload", "onUnloadWorld", "onWorldUnloaded", "",
-        (int)SC_MAP_LOADED, "onMapLoad", "onLoadMap", "",
-        (int)SC_MAP_UNLOADED, "onMapUnload", "onUnloadMap", "",
-        (int)SC_UNKNOWN
+    static const X::InitVariationTable table = X::getTable(X::computeInitVariationTable(
+        SC_WORLD_LOADED, "onLoad", "onLoadWorld", "onWorldLoaded",
+        SC_WORLD_UNLOADED, "onUnload", "onUnloadWorld", "onWorldUnloaded",
+        SC_MAP_LOADED, "onMapLoad", "onLoadMap",
+        SC_MAP_UNLOADED, "onMapUnload", "onUnloadMap",
+        SC_UNKNOWN
     ));
 
     if (!df::global::world)

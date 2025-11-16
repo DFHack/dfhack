@@ -1,6 +1,6 @@
 template<>
 struct std::hash<> {
-    auto operator()(const labor_kitchen_interface_food_key &a) const -> size_t {
+    auto operator()(const df::labor_kitchen_interface_food_key &a) const -> size_t {
         struct thing {
             int16_t t;
             int16_t st;

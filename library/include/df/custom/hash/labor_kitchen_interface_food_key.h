@@ -1,3 +1,5 @@
+#pragma once
+
 #include <functional>
 #include <bit>
 #include "df/labor_kitchen_interface_food_key.h"

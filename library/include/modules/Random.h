@@ -31,9 +31,6 @@ distribution.
  */
 
 #include "Export.h"
-#include "Module.h"
-#include "Types.h"
-
 #include "DataDefs.h"
 
 namespace DFHack

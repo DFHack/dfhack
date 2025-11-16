@@ -27,15 +27,12 @@ distribution.
 #define CL_MOD_JOB
 
 #include "Export.h"
-#include "Module.h"
 #include "Types.h"
 #include "DataDefs.h"
 
 #include "df/building_workshopst.h"
 #include "df/item_type.h"
 #include "df/job_item_ref.h"
-
-#include <ostream>
 
 namespace df
 {

@@ -21,6 +21,8 @@
 #include "df/world_object_data.h"
 #include "df/world_site.h"
 
+#include <set>
+
 using std::string;
 using std::vector;
 using std::set;

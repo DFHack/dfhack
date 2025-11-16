@@ -31,8 +31,6 @@ distribution.
  */
 #include "Export.h"
 #include "Module.h"
-#include "Types.h"
-#include "BitArray.h"
 #include "DataDefs.h"
 
 #include "df/craft_material_class.h"

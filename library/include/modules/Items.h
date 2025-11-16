@@ -28,8 +28,6 @@ distribution.
 */
 #include "DataDefs.h"
 #include "Export.h"
-#include "MemAccess.h"
-#include "Module.h"
 #include "Types.h"
 
 #include "modules/Materials.h"

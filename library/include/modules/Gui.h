@@ -25,8 +25,6 @@ distribution.
 #pragma once
 
 #include "Export.h"
-#include "Module.h"
-#include "BitArray.h"
 #include "ColorText.h"
 #include "Types.h"
 #include "DataDefs.h"
@@ -34,7 +32,6 @@ distribution.
 #include "modules/GuiHooks.h"
 
 #include "df/announcement_type.h"
-#include "df/report_zoom_type.h"
 #include "df/unit_report_type.h"
 
 namespace df {

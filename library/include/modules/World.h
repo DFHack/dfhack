@@ -32,11 +32,9 @@ distribution.
  */
 
 #include "Export.h"
-#include "Module.h"
 #include "modules/Persistence.h"
-#include <ostream>
-
 #include "DataDefs.h"
+
 
 namespace df
 {

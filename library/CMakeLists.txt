@@ -120,18 +120,18 @@ file(GLOB_RECURSE TEST_SOURCES
     *test.cpp)
 
 if (DFHACK_SDL_CONSOLE)
-    list(APPEND TEST_SOURCES SDLConsole_impl.cpp)
+    list(APPEND TEST_SOURCES SDLConsole/SDLConsole_impl.cpp)
 endif()
 dfhack_test(dfhack-test "${TEST_SOURCES}")
 
 if(WIN32)
-        set(CONSOLE_SOURCES Console-windows.cpp)
+    set(CONSOLE_SOURCES Console-windows.cpp)
 else()
-        set(CONSOLE_SOURCES Console-posix.cpp)
+    set(CONSOLE_SOURCES Console-posix.cpp)
 endif()
 list(APPEND CONSOLE_SOURCES Console.cpp)
 if (DFHACK_SDL_CONSOLE)
-    list(APPEND CONSOLE_SOURCES Console-sdl.cpp SDLConsole_impl.cpp)
+    list(APPEND CONSOLE_SOURCES Console-sdl.cpp SDLConsole/SDLConsole_impl.cpp)
 endif()
 
 set(DFCLIENT_CONSOLE_SOURCES Console.cpp)

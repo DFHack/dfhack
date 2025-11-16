@@ -1,17 +1,16 @@
-#ifndef SDL_CONSOLE
-#define SDL_CONSOLE
+#pragma once
 
-#include <string>
-#include <memory>
 #include <atomic>
+#include <memory>
 #include <optional>
 #include <span>
+#include <string>
 
-#include <string_view>
-#include <variant>
-#include <unordered_map>
 #include <mutex>
+#include <string_view>
 #include <thread>
+#include <unordered_map>
+#include <variant>
 
 #include <functional>
 
@@ -20,8 +19,7 @@
 struct SDL_Color;
 union SDL_Event;
 
-namespace DFHack {
-namespace sdl_console {
+namespace DFHack::SDLConsoleLib {
 
 class SDLConsole_session;
 
@@ -42,19 +40,25 @@ public:
         std::string_view name;
     };
 
-    using Value = std::variant<std::string, std::u32string, int,  Rect>;
+    using Value = std::variant<std::string, std::u32string, int, Rect>;
     template <typename T>
-    void set(Key<T> key, const T& value) {
+    void set(Key<T> key, const T& value)
+    {
         std::scoped_lock l(m_);
         props_[std::string(key.name)] = value;
     }
 
     template <typename T>
-    std::optional<T> get(Key<T> key) {
+    std::optional<T> get(Key<T> key)
+    {
         std::scoped_lock l(m_);
         auto it = props_.find(std::string(key.name));
-        if (it == props_.end()) { return std::nullopt; }
-        if (auto p = std::get_if<T>(&it->second)) { return *p; }
+        if (it == props_.end()) {
+            return std::nullopt;
+        }
+        if (auto p = std::get_if<T>(&it->second)) {
+            return *p;
+        }
         return std::nullopt;
     }
 
@@ -219,7 +223,6 @@ public:
         return was_shutdown_.load();
     }
 
-
     /*
      * Handle SDL events. Returns true if handled, otherwise false.
      *
@@ -235,7 +238,8 @@ public:
     void update();
 
     // Not currently used.
-    void set_destroy_session_callback(std::function<void()> cb) {
+    void set_destroy_session_callback(std::function<void()> cb)
+    {
         on_destroy_session = std::move(cb);
     }
 
@@ -247,13 +251,12 @@ public:
     SDLConsole(SDLConsole&&) = delete;
     SDLConsole& operator=(SDLConsole&&) = delete;
 
-
 protected:
     friend class SDLConsole_session;
 
 private:
     void write_line_(std::string_view line, std::optional<SDL_Color> color);
-    template<typename F>
+    template <typename F>
     void push_api_task(F&& func);
     std::shared_ptr<SDLConsole_session> impl;
     std::weak_ptr<SDLConsole_session> impl_weak;
@@ -263,12 +266,10 @@ private:
     /*
      * Callback for when the session is just about to be destroyed.
      */
-    std::function<void()> on_destroy_session{ nullptr };
+    std::function<void()> on_destroy_session { nullptr };
 
     SDLConsole();
     ~SDLConsole();
 };
 
 } // namespace sdl_console
-} // namespace DFHack
-#endif

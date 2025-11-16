@@ -54,8 +54,7 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #include "SDLConsole.h"
 
 using namespace DFHack;
-
-using namespace sdl_console;
+using namespace SDLConsoleLib;
 
 namespace DFHack
 {

@@ -1,8 +1,8 @@
-#include "SDLConsole_impl.h"
+#include "SDLConsole/SDLConsoleText.h"
 #include <gtest/gtest.h>
 #include <string>
 
-using namespace DFHack::sdl_console;
+using namespace DFHack::SDLConsoleLib;
 
 TEST(SDLConsole, skip_wspace) {
     std::u32string tstr;

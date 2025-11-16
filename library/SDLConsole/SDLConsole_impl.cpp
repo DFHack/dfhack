@@ -32,74 +32,27 @@
 #include "modules/DFSDL.h"
 #include "SDLConsole.h"
 #include "SDLConsole_impl.h"
+#include "sdl_symbols.h"
+#include "SDLConsoleText.h"
+#include "font.h"
 
-namespace DFHack {
-namespace sdl_console {
-namespace {
+namespace DFHack::SDLConsoleLib {
 
-// NOTE: SDL calls are prefixed with the sdl_console namespace to make it easy
+// NOTE: SDL calls are prefixed with the SDLConsoleLib namespace to make it easy
 // to switch namespaces later.
-#define CONSOLE_SYMBOL_ADDR(sym) nullptr
-#define CONSOLE_DECLARE_SYMBOL(sym) decltype(sym)* sym = CONSOLE_SYMBOL_ADDR(sym) // NOLINT
 
-CONSOLE_DECLARE_SYMBOL(SDL_CaptureMouse);
-CONSOLE_DECLARE_SYMBOL(SDL_ConvertSurfaceFormat);
-CONSOLE_DECLARE_SYMBOL(SDL_CreateRenderer);
-CONSOLE_DECLARE_SYMBOL(SDL_CreateRGBSurface);
-CONSOLE_DECLARE_SYMBOL(SDL_CreateRGBSurfaceWithFormat);
-CONSOLE_DECLARE_SYMBOL(SDL_CreateRGBSurfaceWithFormatFrom);
-CONSOLE_DECLARE_SYMBOL(SDL_CreateTexture);
-CONSOLE_DECLARE_SYMBOL(SDL_CreateTextureFromSurface);
-CONSOLE_DECLARE_SYMBOL(SDL_CreateWindow);
-CONSOLE_DECLARE_SYMBOL(SDL_DestroyRenderer);
-CONSOLE_DECLARE_SYMBOL(SDL_DestroyTexture);
-CONSOLE_DECLARE_SYMBOL(SDL_DestroyWindow);
-CONSOLE_DECLARE_SYMBOL(SDL_free);
-CONSOLE_DECLARE_SYMBOL(SDL_FreeSurface);
-CONSOLE_DECLARE_SYMBOL(SDL_FillRect);
-CONSOLE_DECLARE_SYMBOL(SDL_GetClipboardText);
-CONSOLE_DECLARE_SYMBOL(SDL_GetError);
-CONSOLE_DECLARE_SYMBOL(SDL_GetEventFilter);
-CONSOLE_DECLARE_SYMBOL(SDL_GetModState);
-CONSOLE_DECLARE_SYMBOL(SDL_GetRendererOutputSize);
-CONSOLE_DECLARE_SYMBOL(SDL_GetWindowFlags);
-CONSOLE_DECLARE_SYMBOL(SDL_GetWindowID);
-CONSOLE_DECLARE_SYMBOL(SDL_GetWindowSize);
-CONSOLE_DECLARE_SYMBOL(SDL_GetTicks64);
-CONSOLE_DECLARE_SYMBOL(SDL_HideWindow);
-CONSOLE_DECLARE_SYMBOL(SDL_iconv_string);
-CONSOLE_DECLARE_SYMBOL(SDL_InitSubSystem);
-CONSOLE_DECLARE_SYMBOL(SDL_MapRGB);
-CONSOLE_DECLARE_SYMBOL(SDL_MapRGBA);
-CONSOLE_DECLARE_SYMBOL(SDL_memset);
-CONSOLE_DECLARE_SYMBOL(SDL_RenderClear);
-CONSOLE_DECLARE_SYMBOL(SDL_RenderCopy);
-CONSOLE_DECLARE_SYMBOL(SDL_RenderDrawRect);
-CONSOLE_DECLARE_SYMBOL(SDL_RenderFillRect);
-CONSOLE_DECLARE_SYMBOL(SDL_RenderFillRects);
-CONSOLE_DECLARE_SYMBOL(SDL_RenderGetWindow);
-CONSOLE_DECLARE_SYMBOL(SDL_RenderPresent);
-CONSOLE_DECLARE_SYMBOL(SDL_RenderSetIntegerScale);
-CONSOLE_DECLARE_SYMBOL(SDL_RenderSetViewport);
-//CONSOLE_DECLARE_SYMBOL(SDL_PointInRect); // defined in SDL's header
-CONSOLE_DECLARE_SYMBOL(SDL_SetClipboardText);
-CONSOLE_DECLARE_SYMBOL(SDL_SetColorKey);
-CONSOLE_DECLARE_SYMBOL(SDL_SetEventFilter);
-CONSOLE_DECLARE_SYMBOL(SDL_SetHint);
-CONSOLE_DECLARE_SYMBOL(SDL_SetRenderDrawBlendMode);
-CONSOLE_DECLARE_SYMBOL(SDL_SetRenderDrawColor);
-CONSOLE_DECLARE_SYMBOL(SDL_SetRenderTarget);
-CONSOLE_DECLARE_SYMBOL(SDL_SetTextureBlendMode);
-CONSOLE_DECLARE_SYMBOL(SDL_SetTextureColorMod);
-CONSOLE_DECLARE_SYMBOL(SDL_SetWindowMinimumSize);
-CONSOLE_DECLARE_SYMBOL(SDL_SetWindowOpacity);
-CONSOLE_DECLARE_SYMBOL(SDL_ShowCursor);
-CONSOLE_DECLARE_SYMBOL(SDL_ShowWindow);
-CONSOLE_DECLARE_SYMBOL(SDL_StartTextInput);
-CONSOLE_DECLARE_SYMBOL(SDL_StopTextInput);
-CONSOLE_DECLARE_SYMBOL(SDL_UpperBlit);
-CONSOLE_DECLARE_SYMBOL(SDL_UpdateTexture);
-CONSOLE_DECLARE_SYMBOL(SDL_QuitSubSystem);
+#define SDLCONSOLE_SDL_SYMBOL(name) decltype(name) name = nullptr;
+#include "sdl_symbols.inl"
+#undef SDLCONSOLE_SDL_SYMBOL
+
+
+void bind_sdl_symbol(const char* name, void** addr)
+{
+    *addr = DFSDL::lookup_DFSDL_Symbol(name);
+    if (!*addr) {
+        throw std::runtime_error(std::string("Failed to bind symbol: ") + name);
+    }
+}
 
 void bind_sdl_symbols()
 {
@@ -107,84 +60,9 @@ void bind_sdl_symbols()
     if (didit) return;
     didit = true;
 
-    struct Symbol {
-        const char* name;
-        void** addr;
-    };
-
-    #define CONSOLE_ADD_SYMBOL(sym)     \
-    {                               \
-        #sym, (void**)&sdl_console::sym \
-    }
-
-    /* This list must be in parity with CONSOLE_DEFINE_SYMBOL */
-    std::vector<Symbol> symbols = {
-        CONSOLE_ADD_SYMBOL(SDL_CaptureMouse),
-        CONSOLE_ADD_SYMBOL(SDL_ConvertSurfaceFormat),
-        CONSOLE_ADD_SYMBOL(SDL_CreateRenderer),
-        CONSOLE_ADD_SYMBOL(SDL_CreateRGBSurface),
-        CONSOLE_ADD_SYMBOL(SDL_CreateRGBSurfaceWithFormat),
-        CONSOLE_ADD_SYMBOL(SDL_CreateRGBSurfaceWithFormatFrom),
-        CONSOLE_ADD_SYMBOL(SDL_CreateTexture),
-        CONSOLE_ADD_SYMBOL(SDL_CreateTextureFromSurface),
-        CONSOLE_ADD_SYMBOL(SDL_CreateWindow),
-        CONSOLE_ADD_SYMBOL(SDL_DestroyRenderer),
-        CONSOLE_ADD_SYMBOL(SDL_DestroyTexture),
-        CONSOLE_ADD_SYMBOL(SDL_DestroyWindow),
-        CONSOLE_ADD_SYMBOL(SDL_free),
-        CONSOLE_ADD_SYMBOL(SDL_FreeSurface),
-        CONSOLE_ADD_SYMBOL(SDL_FillRect),
-        CONSOLE_ADD_SYMBOL(SDL_GetClipboardText),
-        CONSOLE_ADD_SYMBOL(SDL_GetError),
-        CONSOLE_ADD_SYMBOL(SDL_GetEventFilter),
-        CONSOLE_ADD_SYMBOL(SDL_GetModState),
-        CONSOLE_ADD_SYMBOL(SDL_GetRendererOutputSize),
-        CONSOLE_ADD_SYMBOL(SDL_GetWindowFlags),
-        CONSOLE_ADD_SYMBOL(SDL_GetWindowID),
-        CONSOLE_ADD_SYMBOL(SDL_GetWindowSize),
-        CONSOLE_ADD_SYMBOL(SDL_GetTicks64),
-        CONSOLE_ADD_SYMBOL(SDL_HideWindow),
-        CONSOLE_ADD_SYMBOL(SDL_iconv_string),
-        CONSOLE_ADD_SYMBOL(SDL_InitSubSystem),
-        CONSOLE_ADD_SYMBOL(SDL_MapRGB),
-        CONSOLE_ADD_SYMBOL(SDL_MapRGBA),
-        CONSOLE_ADD_SYMBOL(SDL_memset),
-        CONSOLE_ADD_SYMBOL(SDL_RenderClear),
-        CONSOLE_ADD_SYMBOL(SDL_RenderCopy),
-        CONSOLE_ADD_SYMBOL(SDL_RenderDrawRect),
-        CONSOLE_ADD_SYMBOL(SDL_RenderFillRect),
-        CONSOLE_ADD_SYMBOL(SDL_RenderFillRects),
-        CONSOLE_ADD_SYMBOL(SDL_RenderGetWindow),
-        CONSOLE_ADD_SYMBOL(SDL_RenderPresent),
-        CONSOLE_ADD_SYMBOL(SDL_RenderSetIntegerScale),
-        CONSOLE_ADD_SYMBOL(SDL_RenderSetViewport),
-//        CONSOLE_ADD_SYMBOL(SDL_PointInRect), // defined in header
-        CONSOLE_ADD_SYMBOL(SDL_SetClipboardText),
-        CONSOLE_ADD_SYMBOL(SDL_SetColorKey),
-        CONSOLE_ADD_SYMBOL(SDL_SetEventFilter),
-        CONSOLE_ADD_SYMBOL(SDL_SetHint),
-        CONSOLE_ADD_SYMBOL(SDL_SetRenderDrawBlendMode),
-        CONSOLE_ADD_SYMBOL(SDL_SetRenderDrawColor),
-        CONSOLE_ADD_SYMBOL(SDL_SetRenderTarget),
-        CONSOLE_ADD_SYMBOL(SDL_SetTextureBlendMode),
-        CONSOLE_ADD_SYMBOL(SDL_SetTextureColorMod),
-        CONSOLE_ADD_SYMBOL(SDL_SetWindowMinimumSize),
-        CONSOLE_ADD_SYMBOL(SDL_SetWindowOpacity),
-        CONSOLE_ADD_SYMBOL(SDL_ShowCursor),
-        CONSOLE_ADD_SYMBOL(SDL_ShowWindow),
-        CONSOLE_ADD_SYMBOL(SDL_StartTextInput),
-        CONSOLE_ADD_SYMBOL(SDL_StopTextInput),
-        CONSOLE_ADD_SYMBOL(SDL_UpperBlit),
-        CONSOLE_ADD_SYMBOL(SDL_UpdateTexture),
-        CONSOLE_ADD_SYMBOL(SDL_QuitSubSystem)
-    };
-    #undef CONSOLE_ADD_SYMBOL
-
-    for (auto& sym : symbols) {
-        *sym.addr = DFSDL::lookup_DFSDL_Symbol(sym.name);
-        if (*sym.addr == nullptr)
-            fatal<Error::Internal>("Failed to load sdl symbol", sym.name);
-    }
+    #define SDLCONSOLE_SDL_SYMBOL(sym) bind_sdl_symbol(#sym, (void**)&SDLConsoleLib::sym);
+    #include "sdl_symbols.inl"
+    #undef SDLCONSOLE_SDL_SYMBOL
 }
 
 #if 0 // NOLINT
@@ -221,8 +99,6 @@ std::string load_system_mono_font() {
 }
 #endif
 
-} // anonymous namespace
-
 template <Error S, typename T>
 void log_error(std::string_view ctx, T err, const std::source_location& loc)
 {
@@ -237,7 +113,7 @@ void log_error(std::string_view ctx, T err, const std::source_location& loc)
     }
 
     if constexpr (S == Error::SDL) {
-        const char* sdl_err = sdl_console::SDL_GetError();
+        const char* sdl_err = SDLConsoleLib::SDL_GetError();
         if (sdl_err && *sdl_err) std::cerr << " (SDL_Error: " << sdl_err << ")";
         std::cerr << " (SDL)";
     }
@@ -257,216 +133,18 @@ template <Error S, typename T>
     throw std::runtime_error(std::string(ctx));
 }
 
-using TicksT = decltype(sdl_console::SDL_GetTicks64());
-
-namespace text {
-    static std::string to_utf8(const std::u32string_view u32_string)
-    {
-        char* conv = sdl_console::SDL_iconv_string("UTF-8", "UTF-32LE",
-                                                   reinterpret_cast<const char*>(u32_string.data()),
-                                                   (u32_string.size()+1) * sizeof(char32_t));
-        if (!conv)
-            return "?u8?";
-
-        std::string result(conv);
-        sdl_console::SDL_free(conv);
-        return result;
-    }
-
-    static String from_utf8(const std::string_view& u8_string)
-    {
-        char* conv = sdl_console::SDL_iconv_string("UTF-32LE", "UTF-8",
-                                                   u8_string.data(),
-                                                   u8_string.size() + 1);
-        if (!conv)
-            return U"?u8?";
-
-        std::u32string result(reinterpret_cast<char32_t*>(conv));
-        sdl_console::SDL_free(conv);
-        return result;
-    }
-
-    static bool is_newline(Char ch) noexcept
-    {
-        return ch == U'\n' || ch == U'\r';
-    }
-
-    static bool is_wspace(Char ch) noexcept
-    {
-        return ch == U' ' || ch == U'\t';
-    }
-
-    template <typename T>
-    std::pair<size_t, size_t> find_run_with_pred(const StringView text, size_t pos, T&& pred)
-    {
-        if (text.empty()) return { StringView::npos, StringView::npos };
-
-        if (pos >= text.size()) return { StringView::npos, StringView::npos };
-
-        const auto* left = text.begin() + pos;
-        const auto* right = left;
-
-        while (left != text.begin() && pred(*(left - 1)))
-            --left;
-
-        const auto* tok = right;
-        while (right != text.end() && pred(*right))
-            ++right;
-
-        if (tok != right)
-            --right;
-
-        return {
-            std::distance(text.begin(), left),
-            std::distance(text.begin(), right)
-        };
-    }
-
-    size_t skip_wspace(const StringView text, size_t pos) noexcept
-    {
-        if (text.empty())
-            return 0;
-        if (pos >= text.size())
-            return text.size() - 1;
-
-        auto sub = std::ranges::subrange(text.begin() + pos, text.end() - 1);
-        return std::distance(text.begin(),
-                             std::ranges::find_if_not(sub, is_wspace));
-    }
-
-    size_t skip_wspace_reverse(const StringView text, size_t pos) noexcept
-    {
-        if (text.empty()) return 0;
-        if (pos >= text.size()) pos = text.size() - 1;
-
-        const auto* it = text.begin() + pos;
-        while (it != text.begin() && is_wspace(*it)) {
-            --it;
-        }
-        return std::distance(text.begin(), it);
-    }
-
-    size_t skip_graph(const StringView text, size_t pos) noexcept
-    {
-        if (text.empty())
-            return 0;
-        if (pos >= text.size())
-            return text.size() - 1;
-
-        const auto sub = std::ranges::subrange(text.begin() + pos, text.end() - 1);
-        return std::distance(text.begin(),
-                             std::ranges::find_if(sub, is_wspace));
-    }
-
-    size_t skip_graph_reverse(const StringView text, size_t pos) noexcept
-    {
-        if (text.empty())
-            return 0;
-        if (pos >= text.size())
-            pos = text.size() - 1;
-
-        const auto* it = text.begin() + pos;
-        while (it != text.begin() && !is_wspace(*it)) {
-            --it;
-        }
-        return std::distance(text.begin(), it);
-    }
-
-    /*
-    * Finds the end of the previous word or non-space character in the text,
-    * starting from `pos`. If `pos` points to a space, it skips consecutive
-    * spaces to find the previous word. If `pos` is already at a word, it skips
-    * the current word and trailing spaces to find the next one. Returns the
-    * position of the end of the previous word or non-space character.
-    */
-    size_t find_prev_word(const StringView text, size_t pos) noexcept
-    {
-        size_t start = pos;
-        start = skip_wspace_reverse(text, start);
-        if (start == pos) {
-            pos = skip_graph_reverse(text, pos);
-            pos = skip_wspace_reverse(text, pos);
-        } else {
-            pos = start;
-        }
-        return pos;
-    }
-
-    /*
-    * Finds the start of the next word or non-space character in the text,
-    * starting from `pos`. If `pos` points to a space, it skips consecutive
-    * spaces to find the next word. If `pos` is already at a word, it skips
-    * the current word and trailing spaces to find the next one. Returns the
-    * position of the start of the next word or non-space character.
-    */
-    size_t find_next_word(const StringView text, size_t pos) noexcept
-    {
-        size_t start = pos;
-        start = skip_wspace(text, start);
-        if (start == pos) {
-            pos = skip_graph(text, pos);
-            pos = skip_wspace(text, pos);
-        } else {
-            pos = start;
-        }
-        return pos;
-    }
-
-    std::pair<size_t, size_t> find_wspace_run(const StringView text, size_t pos) noexcept
-    {
-        return find_run_with_pred(text, pos, [](Char ch) { return is_wspace(ch); });
-    }
-
-    std::pair<size_t, size_t> find_run(const StringView text, size_t pos) noexcept
-    {
-        if (text.empty() || pos >= text.size()) {
-            return { String::npos, String::npos };
-        }
-
-        if (is_wspace(text[pos])) {
-            return find_wspace_run(text, pos);
-        }
-        return find_run_with_pred(text, pos, [](Char ch) { return !is_wspace(ch); });
-    }
-
-    static size_t insert_at(String& text, size_t pos, const StringView str)
-    {
-        if (pos >= text.size()) {
-            text += str;
-        } else {
-            text.insert(pos, str);
-        }
-        pos += str.length();
-        return pos;
-    }
-
-    static size_t backspace(String& text, size_t pos)
-    {
-        if (pos == 0 || text.empty()) {
-            return pos;
-        }
-
-        if (text.length() == pos) {
-            text.pop_back();
-        } else {
-            /* else shift the text from cursor left by one character */
-            text.erase(pos-1, 1);
-        }
-
-        return --pos;
-    }
-}
+using TicksT = decltype(SDLConsoleLib::SDL_GetTicks64());
 
 namespace clipboard {
     static String get_text()
     {
         String text;
-        auto* str = sdl_console::SDL_GetClipboardText();
+        auto* str = SDLConsoleLib::SDL_GetClipboardText();
         if (*str != '\0') {
             text = text::from_utf8(str);
         }
         // Always free, even when empty.
-        sdl_console::SDL_free(str);
+        SDLConsoleLib::SDL_free(str);
         return text;
     }
 }
@@ -611,34 +289,34 @@ namespace colors {
 
 static int set_draw_color(SDL_Renderer* const renderer, const SDL_Color& color) noexcept
 {
-    return sdl_console::SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    return SDLConsoleLib::SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
 }
 
 // Wrap a SDL_Surface with a unique_ptr.
 // It is safe to call with nullptr
 static Surface make_surface(SDL_Surface* s)
 {
-    return Surface(s, sdl_console::SDL_FreeSurface);
+    return Surface(s, SDLConsoleLib::SDL_FreeSurface);
 }
 
 // Wrap a SDL_Texture with a unique_ptr.
 // It is safe to call it with nullptr
 static Texture make_texture(SDL_Texture* t)
 {
-    return Texture(t, sdl_console::SDL_DestroyTexture);
+    return Texture(t, SDLConsoleLib::SDL_DestroyTexture);
 }
 
-using Renderer = std::unique_ptr<SDL_Renderer, decltype(sdl_console::SDL_DestroyRenderer)>;
-using Window = std::unique_ptr<SDL_Window, decltype(sdl_console::SDL_DestroyWindow)>;
+using Renderer = std::unique_ptr<SDL_Renderer, decltype(SDLConsoleLib::SDL_DestroyRenderer)>;
+using Window = std::unique_ptr<SDL_Window, decltype(SDLConsoleLib::SDL_DestroyWindow)>;
 
 static Renderer make_renderer(SDL_Renderer* renderer)
 {
-    return Renderer(renderer, sdl_console::SDL_DestroyRenderer);
+    return Renderer(renderer, SDLConsoleLib::SDL_DestroyRenderer);
 }
 
 static Window make_window(SDL_Window* window)
 {
-    return Window(window, sdl_console::SDL_DestroyWindow);
+    return Window(window, SDLConsoleLib::SDL_DestroyWindow);
 }
 
 // TODO: Some events are actions and some are notifications. Group them.
@@ -1148,7 +826,7 @@ ScopedColor::~ScopedColor() {
 void FontAtlas::render(const std::span<const GlyphPosition> vec) const
 {
     for (const auto& p : vec) {
-        sdl_console::SDL_RenderCopy(renderer_, p.texture, &p.src, &p.dst);
+        SDLConsoleLib::SDL_RenderCopy(renderer_, p.texture, &p.src, &p.dst);
     }
 }
 
@@ -1156,7 +834,7 @@ void FontAtlas::render(const StringView text, int x, int y)
 {
     const GlyphPosVector g_pos = get_glyph_layout(text, x, y);
     for (const auto& p : g_pos) {
-        sdl_console::SDL_RenderCopy(renderer_, p.texture, &p.src, &p.dst);
+        SDLConsoleLib::SDL_RenderCopy(renderer_, p.texture, &p.src, &p.dst);
     }
 }
 
@@ -1365,14 +1043,14 @@ private:
 
         //  FIXME: hardcoded magenta
         // Make this keyed color transparent.
-        uint32_t bg_color = sdl_console::SDL_MapRGB(surface->format, 255, 0, 255);
-        if (sdl_console::SDL_SetColorKey(surface.get(), SDL_TRUE, bg_color))
+        uint32_t bg_color = SDLConsoleLib::SDL_MapRGB(surface->format, 255, 0, 255);
+        if (SDLConsoleLib::SDL_SetColorKey(surface.get(), SDL_TRUE, bg_color))
             log_error<Error::SDL>("Failed to set color key"); // Continue anyway
 
         // Create a surface in ARGB8888 format, and replace the keyed color
         // with fully transparant pixels. This step completely removes the color.
         // NOTE: Do not use surface->pitch
-        auto conv_surface = make_surface(sdl_console::SDL_CreateRGBSurfaceWithFormat(0, surface->w, surface->h, 32,
+        auto conv_surface = make_surface(SDLConsoleLib::SDL_CreateRGBSurfaceWithFormat(0, surface->w, surface->h, 32,
                                                                                      SDL_PixelFormatEnum::SDL_PIXELFORMAT_ARGB8888));
 
         if (!conv_surface) {
@@ -1380,7 +1058,7 @@ private:
             return false;
         }
 
-        sdl_console::SDL_BlitSurface(surface.get(), nullptr, conv_surface.get(), nullptr);
+        SDLConsoleLib::SDL_BlitSurface(surface.get(), nullptr, conv_surface.get(), nullptr);
         surface = std::move(conv_surface);
 
         int char_width = surface->w / atlas_columns;
@@ -1401,12 +1079,12 @@ private:
 
         glyphs_ = build_glyph_rects(surface->w, surface->h, atlas_columns, atlas_rows);
 
-        texture_ = make_texture(sdl_console::SDL_CreateTextureFromSurface(Font::renderer_, surface.get()));
+        texture_ = make_texture(SDLConsoleLib::SDL_CreateTextureFromSurface(Font::renderer_, surface.get()));
         if (!texture_ ) {
             log_error<Error::SDL>("Failed to create texture from surface");
             return false;
         }
-        sdl_console::SDL_SetTextureBlendMode(texture_.get(), SDL_BLENDMODE_BLEND);
+        SDLConsoleLib::SDL_SetTextureBlendMode(texture_.get(), SDL_BLENDMODE_BLEND);
 
         return true;
     }
@@ -1444,7 +1122,7 @@ namespace freetype {
         int h = bmp.rows;
         int w = bmp.width;
 
-        auto surf = make_surface(sdl_console::SDL_CreateRGBSurfaceWithFormat(0, w, h,
+        auto surf = make_surface(SDLConsoleLib::SDL_CreateRGBSurfaceWithFormat(0, w, h,
                                                                              32, SDL_PIXELFORMAT_RGBA32));
         if (!surf)
             return surf;
@@ -1457,7 +1135,7 @@ namespace freetype {
                 auto a = bmp.buffer[(y * bmp.pitch) + x];
 
                 auto* pixel = reinterpret_cast<uint32_t*>(row + (x * bpp));
-                *pixel = sdl_console::SDL_MapRGBA(surf->format, 255, 255, 255, a);
+                *pixel = SDLConsoleLib::SDL_MapRGBA(surf->format, 255, 255, 255, a);
             }
         }
         return surf;
@@ -1627,7 +1305,7 @@ private:
 
         std::vector<Surface> surfaces;
         auto get_new_surface = [&surfaces]() {
-            auto s = make_surface(sdl_console::SDL_CreateRGBSurfaceWithFormat(0,
+            auto s = make_surface(SDLConsoleLib::SDL_CreateRGBSurfaceWithFormat(0,
                                                                               atlas_size.w, atlas_size.h,
                                                                               32, SDL_PIXELFORMAT_RGBA32));
             auto ptr = s.get();
@@ -1662,19 +1340,19 @@ private:
 
         int idx = 0;
         for (auto& surf : surfaces) {
-            auto tex = make_texture(sdl_console::SDL_CreateTextureFromSurface(renderer_, surf.get()));
+            auto tex = make_texture(SDLConsoleLib::SDL_CreateTextureFromSurface(renderer_, surf.get()));
 
             if (!tex) {
                 log_error<Error::SDL>("Failed to create texture");
                 return false;
             }
 
-            if (sdl_console::SDL_SetRenderTarget(renderer_, pages[idx].texture.get())) {
+            if (SDLConsoleLib::SDL_SetRenderTarget(renderer_, pages[idx].texture.get())) {
                 log_error<Error::SDL>("Failed to set render target");
                 return false;
             }
 
-            if (sdl_console::SDL_RenderCopy(renderer_, tex.get(), nullptr, nullptr)) {
+            if (SDLConsoleLib::SDL_RenderCopy(renderer_, tex.get(), nullptr, nullptr)) {
                 log_error<Error::SDL>("Failed to render copy");
                 return false;
             }
@@ -1683,7 +1361,7 @@ private:
         }
         assert(idx > 0);
 
-        sdl_console::SDL_SetRenderTarget(renderer_, nullptr);
+        SDLConsoleLib::SDL_SetRenderTarget(renderer_, nullptr);
         return true;
     }
 
@@ -1744,13 +1422,13 @@ private:
         if (!surface)
             return false;
 
-        auto glyph_tex = make_texture(sdl_console::SDL_CreateTextureFromSurface(renderer_, surface.get()));
+        auto glyph_tex = make_texture(SDLConsoleLib::SDL_CreateTextureFromSurface(renderer_, surface.get()));
         if (!glyph_tex)
             return false;
 
-        sdl_console::SDL_SetRenderTarget(renderer_, pages.back().texture.get());
-        sdl_console::SDL_RenderCopy(renderer_, glyph_tex.get(), nullptr, &cell.rect);
-        sdl_console::SDL_SetRenderTarget(renderer_, nullptr);
+        SDLConsoleLib::SDL_SetRenderTarget(renderer_, pages.back().texture.get());
+        SDLConsoleLib::SDL_RenderCopy(renderer_, glyph_tex.get(), nullptr, &cell.rect);
+        SDLConsoleLib::SDL_SetRenderTarget(renderer_, nullptr);
 
         glyphs_[codepoint] = {
             .rect = cell.rect,
@@ -1821,7 +1499,7 @@ private:
 
     bool create_page()
     {
-        auto tex = make_texture(sdl_console::SDL_CreateTexture(renderer_,
+        auto tex = make_texture(SDLConsoleLib::SDL_CreateTexture(renderer_,
                                                                SDL_PIXELFORMAT_RGBA32,
                                                                SDL_TEXTUREACCESS_TARGET,
                                                                atlas_size.w, atlas_size.h));
@@ -1829,7 +1507,7 @@ private:
         if (tex == nullptr)
             return false;
 
-        sdl_console::SDL_SetTextureBlendMode(tex.get(), SDL_BLENDMODE_BLEND);
+        SDLConsoleLib::SDL_SetTextureBlendMode(tex.get(), SDL_BLENDMODE_BLEND);
         pages.push_back({.texture = std::move(tex), .next_free_cell = 0});
 
         return true;
@@ -1879,21 +1557,21 @@ public:
     {
         // Anything less than 12px high is far too small for non-square fonts.
         desired_px = std::clamp(desired_px, 12, 32);
-        auto* window = sdl_console::SDL_RenderGetWindow(renderer_);
+        auto* window = SDLConsoleLib::SDL_RenderGetWindow(renderer_);
         if (!window) {
             log_error<Error::SDL>("Failed to get renderer window");
             return false;
         }
 
         int logical_height = 0;
-        sdl_console::SDL_GetWindowSize(window, nullptr, &logical_height);
+        SDLConsoleLib::SDL_GetWindowSize(window, nullptr, &logical_height);
         if (logical_height <= 0) {
             log_error<Error::SDL>("Failed to get window size");
             return false;
         }
 
         int pixel_height = 0;
-        sdl_console::SDL_GetRendererOutputSize(renderer_, nullptr, &pixel_height);
+        SDLConsoleLib::SDL_GetRendererOutputSize(renderer_, nullptr, &pixel_height);
         if (pixel_height <= 0) {
             log_error<Error::SDL>("Invalid output size");
             return false;
@@ -1935,7 +1613,7 @@ public:
             .char_width = char_width,
             .line_height = line_height,
             .line_spacing = spacing,
-            .line_height_with_spacing = clamp_max<FontMetrics::Int>(line_height + spacing),
+            .line_height_with_spacing = line_height + spacing,
             .ascent = ascent
         };
 
@@ -1954,13 +1632,13 @@ public:
             return make_texture(nullptr);
 
         auto width = metrics_.char_width * text.size();
-        auto target = make_surface(sdl_console::SDL_CreateRGBSurfaceWithFormat(0, width,
+        auto target = make_surface(SDLConsoleLib::SDL_CreateRGBSurfaceWithFormat(0, width,
                                                                                metrics_.line_height, 32,
                                                                                SDL_PIXELFORMAT_RGBA32));
         if (!target)
             return make_texture(nullptr);
 
-        sdl_console::SDL_FillRect(target.get(), nullptr, sdl_console::SDL_MapRGBA(target->format, 0, 0, 0, 0));
+        SDLConsoleLib::SDL_FillRect(target.get(), nullptr, SDLConsoleLib::SDL_MapRGBA(target->format, 0, 0, 0, 0));
 
         int pen_x = 0;
 
@@ -1986,7 +1664,7 @@ public:
             pen_x += metrics_.char_width;
         }
 
-        auto tex = make_texture(sdl_console::SDL_CreateTextureFromSurface(renderer_, target.get()));
+        auto tex = make_texture(SDLConsoleLib::SDL_CreateTextureFromSurface(renderer_, target.get()));
         return tex;
     }
 
@@ -2742,7 +2420,7 @@ private:
             break;
 
         case SDLK_v: // FIXME: belongs in prompt
-            if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
+            if (SDLConsoleLib::SDL_GetModState() & KMOD_CTRL) {
                 String cbtext = clipboard::get_text();
                 if (cbtext.size()) {
                     insert_at_cursor(cbtext);
@@ -2866,18 +2544,18 @@ public:
             break;
 
         case SDLK_b:
-            if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
+            if (SDLConsoleLib::SDL_GetModState() & KMOD_CTRL) {
                 cursor = text::find_prev_word(*input, cursor.position());
             }
             break;
 
         case SDLK_f:
-            if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
+            if (SDLConsoleLib::SDL_GetModState() & KMOD_CTRL) {
                 cursor = text::find_next_word(*input, cursor.position());
             }
             break;
         case SDLK_c:
-            if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
+            if (SDLConsoleLib::SDL_GetModState() & KMOD_CTRL) {
                 *input += U"^C";
                 save();
             }
@@ -3766,7 +3444,7 @@ public:
 
     void render() override {
         set_draw_color(renderer(), colors::darkgray);
-        sdl_console::SDL_RenderFillRect(renderer(), &frame); // paint a background layer to cover output history
+        SDLConsoleLib::SDL_RenderFillRect(renderer(), &frame); // paint a background layer to cover output history
         layout_ptr->render();
     }
 
@@ -3984,14 +3662,14 @@ public:
         } break;
         /* copy */
         case SDLK_c: // FIXME: belongs in prompt
-            if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
+            if (SDLConsoleLib::SDL_GetModState() & KMOD_CTRL) {
                 copy_selected_text_to_clipboard();
             }
             break;
 
         /* paste */
         case SDLK_v: // FIXME: belongs in prompt
-            if (sdl_console::SDL_GetModState() & KMOD_CTRL) {
+            if (SDLConsoleLib::SDL_GetModState() & KMOD_CTRL) {
                 String text = clipboard::get_text();
                 if (text.size())
                     prompt.insert_at_cursor(text);
@@ -4056,7 +3734,7 @@ public:
     void on_mouse_button_up(auto& /*e*/)
     {
         if (depressed) {
-            sdl_console::SDL_CaptureMouse(SDL_FALSE);
+            SDLConsoleLib::SDL_CaptureMouse(SDL_FALSE);
             depressed = false;
             mouse_motion_slot->disconnect();
         }
@@ -4277,7 +3955,7 @@ public:
                             return acc;
                         });
 
-        sdl_console::SDL_SetClipboardText(text::to_utf8(clipboard_text).c_str());
+        SDLConsoleLib::SDL_SetClipboardText(text::to_utf8(clipboard_text).c_str());
     }
 
     int columns() const noexcept
@@ -4295,7 +3973,7 @@ public:
     void render() override
     {
         // Clip and localize coordinates to content_rect.
-        sdl_console::SDL_RenderSetViewport(renderer(), &content_frame);
+        SDLConsoleLib::SDL_RenderSetViewport(renderer(), &content_frame);
 
         // TODO: make sure renderer supports blending else highlighting
         // will make the text invisible. Should always be the case.
@@ -4306,7 +3984,7 @@ public:
         render_viewport();
 
         prompt.render_cursor();
-        sdl_console::SDL_RenderSetViewport(renderer(), &window.frame);
+        SDLConsoleLib::SDL_RenderSetViewport(renderer(), &window.frame);
     }
 
     void build_viewport()
@@ -4382,7 +4060,7 @@ public:
         auto rects = text_selection.to_rects(font, viewport.rows);
 
         set_draw_color(renderer(), colors::mediumgray);
-        sdl_console::SDL_RenderFillRects(renderer(), rects.data(), rects.size());
+        SDLConsoleLib::SDL_RenderFillRects(renderer(), rects.data(), rects.size());
         //set_draw_color(renderer(), colors::darkgray);
     }
 
@@ -4393,11 +4071,11 @@ public:
         set_draw_color(renderer(), {0, 0, 255, 200});
 
         auto lr = text_finder.active_rect(font, viewport.rows);
-        sdl_console::SDL_RenderFillRect(renderer(), &lr);
+        SDLConsoleLib::SDL_RenderFillRect(renderer(), &lr);
 
         set_draw_color(renderer(), SDL_Color{50, 100, 200, 200});
         auto fr = text_finder.to_rects(font, viewport.rows);
-        sdl_console::SDL_RenderFillRects(renderer(), fr.data(), fr.size());
+        SDLConsoleLib::SDL_RenderFillRects(renderer(), fr.data(), fr.size());
         //set_draw_color(renderer(), colors::darkgray);
     }
 
@@ -4420,7 +4098,7 @@ public:
     explicit MainWindow(WidgetContext& ctx)
         : Widget(ctx)
     {
-        sdl_console::SDL_GetRendererOutputSize(renderer(), &frame.w, &frame.h);
+        SDLConsoleLib::SDL_GetRendererOutputSize(renderer(), &frame.w, &frame.h);
         // If either of these are true, something very bad happened with SDL.
         // Possible reasons: broken renderer, platform/sdl bugs.
         if (frame.w <= 0 || frame.h <= 0) {
@@ -4719,7 +4397,7 @@ public:
         if (!should_render()) return;
 
         // Should not fail unless OOM.
-        sdl_console::SDL_RenderClear(renderer());
+        SDLConsoleLib::SDL_RenderClear(renderer());
 
         for (auto& child : layout->children) {
             child->render();
@@ -4731,7 +4409,7 @@ public:
 
         set_draw_color(renderer(), colors::darkgray);
 
-        sdl_console::SDL_RenderPresent(renderer());
+        SDLConsoleLib::SDL_RenderPresent(renderer());
     }
 
     // Rate limit rendering if needed
@@ -4755,7 +4433,7 @@ public:
 
     void resize(const SDL_Rect& /*r*/) override
     {
-        sdl_console::SDL_GetRendererOutputSize(renderer(), &frame.w, &frame.h);
+        SDLConsoleLib::SDL_GetRendererOutputSize(renderer(), &frame.w, &frame.h);
         layout::ensure_frame(frame);
         layout->frame = frame;
         layout->layout_children();
@@ -4780,7 +4458,7 @@ public:
         //auto flags = SDL_WINDOW_RESIZABLE | SDL_WINDOW_HIDDEN;
         auto flags = SDL_WINDOW_RESIZABLE;
 
-        auto window = make_window(sdl_console::SDL_CreateWindow(title.c_str(),
+        auto window = make_window(SDLConsoleLib::SDL_CreateWindow(title.c_str(),
                                                                 create_rect.x, create_rect.y,
                                                                 create_rect.w, create_rect.h,
                                                                 flags));
@@ -4788,9 +4466,9 @@ public:
             fatal<Error::SDL>("Failed to create window");
         }
 
-        sdl_console::SDL_SetWindowMinimumSize(window.get(), 64, 48);
+        SDLConsoleLib::SDL_SetWindowMinimumSize(window.get(), 64, 48);
 
-        auto id = sdl_console::SDL_GetWindowID(window.get());
+        auto id = SDLConsoleLib::SDL_GetWindowID(window.get());
         if (id == 0)
             fatal<Error::SDL>("Failed to get window ID");
 
@@ -4800,17 +4478,17 @@ public:
 
     static SDL_Renderer* create_renderer(Property& props, SDL_Window* handle)
     {
-        sdl_console::SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
-        sdl_console::SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
+        SDLConsoleLib::SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "best");
+        SDLConsoleLib::SDL_SetHint(SDL_HINT_RENDER_VSYNC, "1");
         // Flags 0 instructs SDL to choose the default backend for the
         // host system. TODO: add config to force software rendering
         auto rflags = (SDL_RendererFlags)0;
         //SDL_RendererFlags rflags = (SDL_RendererFlags)SDL_RENDERER_SOFTWARE;
-        SDL_Renderer* rend = sdl_console::SDL_CreateRenderer(handle, -1, rflags);
+        SDL_Renderer* rend = SDLConsoleLib::SDL_CreateRenderer(handle, -1, rflags);
         if (!rend)
             fatal<Error::SDL>("Failed to create renderer");
         SDL_SetRenderDrawBlendMode(rend, SDL_BLENDMODE_BLEND);
-        sdl_console::SDL_RenderSetIntegerScale(rend, SDL_TRUE);
+        SDLConsoleLib::SDL_RenderSetIntegerScale(rend, SDL_TRUE);
         return rend;
     }
 
@@ -4837,7 +4515,7 @@ Toolbar::Toolbar(Widget* parent)
 void Toolbar::render()
 {
     set_draw_color(renderer(), colors::gold);
-    sdl_console::SDL_RenderDrawRect(renderer(), &frame);
+    SDLConsoleLib::SDL_RenderDrawRect(renderer(), &frame);
     // Lay out horizontally
     for (auto& w : children) {
         w->render();
@@ -4984,7 +4662,7 @@ public:
     void update()
     {
         // TODO: move to main_window?
-        widget_context.now_tick = sdl_console::SDL_GetTicks64();
+        widget_context.now_tick = SDLConsoleLib::SDL_GetTicks64();
 
         handle_tasks();
 
@@ -5115,13 +4793,13 @@ void SDLConsole::restore_prompt()
 
 void SDLConsole::show_window() {
     push_api_task([this] {
-        sdl_console::SDL_ShowWindow(impl->sdl_window.window.get());
+        SDLConsoleLib::SDL_ShowWindow(impl->sdl_window.window.get());
     });
 }
 
 void SDLConsole::hide_window() {
     push_api_task([this] {
-        sdl_console::SDL_HideWindow(impl->sdl_window.window.get());
+        SDLConsoleLib::SDL_HideWindow(impl->sdl_window.window.get());
     });
 }
 
@@ -5249,7 +4927,6 @@ bool SDLConsole::is_active()
     return !impl_weak.expired();
 }
 
-} // end namespace sdl_console
-} // DFHack
+} // end namespace
 
 // kate: replace-tabs on; indent-width 4;

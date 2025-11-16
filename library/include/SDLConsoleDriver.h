@@ -85,7 +85,7 @@ namespace  DFHack
         static constexpr type_tag_t type_tag_ {};
         static constexpr type_tag_t type_tag = (const void*)&type_tag_;
     private:
-        sdl_console::SDLConsole& con_impl;
+        SDLConsoleLib::SDLConsole& con_impl;
         std::recursive_mutex mutex_;
     };
 }

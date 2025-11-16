@@ -60,8 +60,11 @@ Template for new versions:
 
 ## Fixes
 - `buildingplan`: Bolt throwers will no longer be constructed using populated bins.
+- `suspendmanager`: treat reinforced walls as a blocking construction and buildable platform
 
 ## Misc Improvements
+- `blueprint`: support for reinforced walls and bolt throwers
+- `autolabor`: support for new dying and siege-related labors
 
 ## Documentation
 

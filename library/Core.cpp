@@ -1540,6 +1540,11 @@ bool Core::InitMainThread() {
 
     Filesystem::init();
 
+    #ifdef LINUX_BUILD
+        extern void dfhack_crashlog_init();
+        dfhack_crashlog_init();
+    #endif
+
     // Re-route stdout and stderr again - DF seems to set up stdout and
     // stderr.txt on Windows as of 0.43.05. Also, log before switching files to
     // make it obvious what's going on if someone checks the *.txt files.
@@ -2375,6 +2380,11 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 
 int Core::Shutdown ( void )
 {
+    #ifdef LINUX_BUILD
+        extern void dfhack_crashlog_shutdown();
+        dfhack_crashlog_shutdown();
+    #endif
+
     if(errorstate)
         return true;
     errorstate = 1;

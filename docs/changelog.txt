@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `buildingplan`: Bolt throwers will no longer be constructed using populated bins.
 - `suspendmanager`: treat reinforced walls as a blocking construction and buildable platform
 
 ## Misc Improvements

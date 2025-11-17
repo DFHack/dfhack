@@ -59,13 +59,31 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.04-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
 - `buildingplan`: Bolt throwers will no longer be constructed using populated bins.
 - `RemoteFortressReader`: updated siege engine facing enums for new diagonal directions
 - `suspendmanager`: treat reinforced walls as a blocking construction and buildable platform
 
 ## Misc Improvements
-- `blueprint`: support for reinforced walls and bolt throwers
 - `autolabor`: support for new dying and siege-related labors
+- `blueprint`: support for reinforced walls and bolt throwers
 
 ## Documentation
 

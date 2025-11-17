@@ -60,6 +60,7 @@ Template for new versions:
 
 ## Fixes
 - `buildingplan`: Bolt throwers will no longer be constructed using populated bins.
+- `RemoteFortressReader`: updated siege engine facing enums for new diagonal directions
 - `suspendmanager`: treat reinforced walls as a blocking construction and buildable platform
 
 ## Misc Improvements

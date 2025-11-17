@@ -1957,6 +1957,8 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, df::report 
     auto alert_type = announcement_alert_type::NONE;
     switch (slot)
     {
+        case unit_report_type::NONE: /* should never happen? */
+            return false;
         case unit_report_type::Combat:
             world->status.flags.bits.combat = true;
             alert_type = announcement_alert_type::COMBAT;

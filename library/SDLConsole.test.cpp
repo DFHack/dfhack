@@ -1,4 +1,4 @@
-#include "SDLConsole/SDLConsoleText.h"
+#include "SDLConsole/text.h"
 #include <gtest/gtest.h>
 #include <string>
 
@@ -115,6 +115,10 @@ TEST(SDLConsole, find_prev_word) {
     tstr = U"foo bar baz";
     ret = text::find_prev_word(tstr, 2);
     ASSERT_EQ(ret, 0);
+
+    tstr = U"foo bar baz";
+    ret = text::find_prev_word(tstr, 50);
+    ASSERT_EQ(ret, 9);
 }
 
 TEST(SDLConsole, find_next_word) {

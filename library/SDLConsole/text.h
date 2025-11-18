@@ -1,35 +1,20 @@
 #pragma once
 
 #include "SDLConsole_impl.h"
-#include "sdl_symbols.h"
 
 namespace DFHack::SDLConsoleLib::text {
 
-    inline std::string to_utf8(const std::u32string_view u32_string)
-    {
-        char* conv = SDLConsoleLib::SDL_iconv_string("UTF-8", "UTF-32LE",
-                                                     reinterpret_cast<const char*>(u32_string.data()),
-                                                     (u32_string.size()+1) * sizeof(char32_t));
-        if (!conv)
-            return "?u8?";
+    /*
+     * Converts a UTF-32 string to UTF-8.
+     * Returns the UTF-8 string, or "?u8?" on failure.
+     */
+    std::string to_utf8(std::u32string_view u32_string);
 
-        std::string result(conv);
-        SDLConsoleLib::SDL_free(conv);
-        return result;
-    }
-
-    inline String from_utf8(const std::string_view& u8_string)
-    {
-        char* conv = SDLConsoleLib::SDL_iconv_string("UTF-32LE", "UTF-8",
-                                                     u8_string.data(),
-                                                     u8_string.size() + 1);
-        if (!conv)
-            return U"?u8?";
-
-        std::u32string result(reinterpret_cast<char32_t*>(conv));
-        SDLConsoleLib::SDL_free(conv);
-        return result;
-    }
+    /*
+     * Converts a UTF-8 string to UTF-32.
+     * Returns the UTF-32 string, or U"?u8?" on failure.
+     */
+    std::u32string from_utf8(std::string_view u8_string);
 
     inline bool is_newline(Char ch) noexcept
     {
@@ -48,15 +33,23 @@ namespace DFHack::SDLConsoleLib::text {
         if (pos >= text.size())
             return text.size() - 1;
 
-        auto sub = std::ranges::subrange(text.begin() + pos, text.end() - 1);
-        return std::distance(text.begin(),
-                             std::ranges::find_if_not(sub, is_wspace));
+        const auto* it = std::ranges::find_if_not(
+            text.begin() + pos,
+            text.end(),
+            is_wspace);
+
+        if (it == text.end())
+            return text.size() - 1;
+
+        return std::distance(text.begin(), it);
     }
 
     inline size_t skip_wspace_reverse(const StringView text, size_t pos) noexcept
     {
-        if (text.empty()) return 0;
-        if (pos >= text.size()) pos = text.size() - 1;
+        if (text.empty())
+            return 0;
+        if (pos >= text.size())
+            pos = text.size() - 1;
 
         const auto* it = text.begin() + pos;
         while (it != text.begin() && is_wspace(*it)) {
@@ -72,9 +65,15 @@ namespace DFHack::SDLConsoleLib::text {
         if (pos >= text.size())
             return text.size() - 1;
 
-        const auto sub = std::ranges::subrange(text.begin() + pos, text.end() - 1);
-        return std::distance(text.begin(),
-                             std::ranges::find_if(sub, is_wspace));
+        const auto* it = std::ranges::find_if(
+            text.begin() + pos,
+            text.end(),
+            is_wspace);
+
+        if (it == text.end())
+            return text.size() - 1;
+
+        return std::distance(text.begin(), it);
     }
 
     inline size_t skip_graph_reverse(const StringView text, size_t pos) noexcept
@@ -93,10 +92,14 @@ namespace DFHack::SDLConsoleLib::text {
 
     /*
      * Finds the end of the previous word or non-space character in the text,
-     * starting from `pos`. If `pos` points to a space, it skips consecutive
-     * spaces to find the previous word. If `pos` is already at a word, it skips
-     * the current word and trailing spaces to find the next one. Returns the
-     * position of the end of the previous word or non-space character.
+     * starting from `pos`.
+     * - If `pos` points to spaces, skips backwards over them to find the previous word.
+     * - If `pos` is already at a word, skips backwards over the current word and trailing spaces.
+     * Returns the index of the end of that word or non-space character.
+     * - Returns 0 if text is empty.
+     * - Returns text.size() - 1 if `pos` is beyond the end of text.
+     *
+     * This function is a helper for callers expecting valid return indices.
      */
     inline size_t find_prev_word(const StringView text, size_t pos) noexcept
     {
@@ -113,10 +116,14 @@ namespace DFHack::SDLConsoleLib::text {
 
     /*
      * Finds the start of the next word or non-space character in the text,
-     * starting from `pos`. If `pos` points to a space, it skips consecutive
-     * spaces to find the next word. If `pos` is already at a word, it skips
-     * the current word and trailing spaces to find the next one. Returns the
-     * position of the start of the next word or non-space character.
+     * starting from `pos`.
+     * - If `pos` points to spaces, skips forwards over them to find the next word.
+     * - If `pos` is already at a word, skips forwards over the current word and trailing spaces.
+     * Returns the index of the start of that word or non-space character.
+     * - Returns 0 if text is empty.
+     * - Returns text.size() - 1 if pos is beyond the end of text.
+     *
+     * This function is a helper for callers expecting valid return indices.
      */
     inline size_t find_next_word(const StringView text, size_t pos) noexcept
     {
@@ -131,6 +138,14 @@ namespace DFHack::SDLConsoleLib::text {
         return pos;
     }
 
+    /*
+     * Finds the continuous run (range) of characters in `text` at `pos`
+     * for which the predicate `pred` returns true.
+     * - Expands to the left and right from `pos` until `pred` is false or the text boundary is reached.
+     *
+     * Returns a pair of indices {start, end} representing the inclusive range.
+     * - Returns {StringView::npos, StringView::npos} if `text` is empty or `pos` is beyond the end of text.
+     */
     template <typename T>
     inline std::pair<size_t, size_t> find_run_with_pred(const StringView text, size_t pos, T&& pred)
     {
@@ -163,8 +178,11 @@ namespace DFHack::SDLConsoleLib::text {
     }
 
     /*
-     * If pos falls on a word, returns range of word.
-     * If pos falls on whitespace, returns range of whitespace.
+     * Finds the continuous run (range) of characters at `pos`.
+     * - If `pos` falls on a word character, returns the range of that word.
+     * - If `pos` falls on whitespace, returns the range of consecutive whitespace.
+     * Returns a pair of indices {start, end} representing the range.
+     * - Returns {String::npos, String::npos} if text is empty or pos is beyond the end of text.
      */
     inline std::pair<size_t, size_t> find_run(const StringView text, size_t pos) noexcept
     {

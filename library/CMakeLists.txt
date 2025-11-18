@@ -120,7 +120,7 @@ file(GLOB_RECURSE TEST_SOURCES
     *test.cpp)
 
 if (DFHACK_SDL_CONSOLE)
-    list(APPEND TEST_SOURCES SDLConsole/SDLConsole_impl.cpp)
+    list(APPEND TEST_SOURCES SDLConsole/SDLConsole_impl.cpp SDLConsole/text.cpp SDLConsole/font.cpp)
 endif()
 dfhack_test(dfhack-test "${TEST_SOURCES}")
 
@@ -131,7 +131,7 @@ else()
 endif()
 list(APPEND CONSOLE_SOURCES Console.cpp)
 if (DFHACK_SDL_CONSOLE)
-    list(APPEND CONSOLE_SOURCES Console-sdl.cpp SDLConsole/SDLConsole_impl.cpp)
+    list(APPEND CONSOLE_SOURCES Console-sdl.cpp SDLConsole/SDLConsole_impl.cpp SDLConsole/text.cpp SDLConsole/font.cpp)
 endif()
 
 set(DFCLIENT_CONSOLE_SOURCES Console.cpp)

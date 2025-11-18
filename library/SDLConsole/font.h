@@ -6,6 +6,7 @@
 #include <optional>
 #include <span>
 #include <vector>
+#include "sdl_symbols.h"
 
 namespace DFHack::SDLConsoleLib {
 
@@ -71,14 +72,9 @@ public:
     static constexpr int size_min { 12 };
     static constexpr int size_max { 32 };
     static constexpr int line_spacing { 4 };
-    std::filesystem::path path;
     // int size_;
 
-    explicit Font(std::filesystem::path path)
-        : path(std::move(path))
-    {
-    }
-
+    //Font() = default;
     virtual ~Font() = default;
     virtual FontAtlas& atlas() = 0;
     virtual int size() const noexcept = 0;
@@ -160,4 +156,74 @@ public:
     static GlyphRec get_fallback_glyph_rec(Font& font, char32_t codepoint);
 };
 
+class DFBitmapFont : public Font, public FontAtlas {
+#if 0 // NOLINT
+    class ScopedColor {
+public:
+    explicit ScopedColor(BitmapFont* font);
+    ScopedColor(BitmapFont* font, const SDL_Color& color);
+
+    void set(const SDL_Color& color);
+    ~ScopedColor();
+
+    ScopedColor(const ScopedColor&) = delete;
+    ScopedColor& operator=(const ScopedColor&) = delete;
+
+private:
+    BitmapFont* font_;
+};
+#endif
+
+public:
+    explicit DFBitmapFont(SDL_Renderer* renderer);
+
+    static std::unique_ptr<DFBitmapFont> create(SDL_Renderer* renderer,
+                                                const std::filesystem::path& path,
+                                                int size);
+
+    Texture to_texture(StringView text) override;
+
+    int size() const noexcept override;
+
+    bool set_size(int new_size) override;
+
+    FontAtlas& atlas() override;
+
+    std::optional<ScopedColor> set_color(const std::optional<SDL_Color>& color) override;
+    ScopedColor set_color(const SDL_Color& color) override;
+
+    GlyphPosVector get_glyph_layout(StringView text, int x, int y) override;
+
+    void enlarge() override;
+    void shrink() override;
+
+    static bool is_ascii(char32_t codepoint) noexcept;
+
+    bool has_glyph(char32_t codepoint) const override;
+
+    SDL_Texture* get_texture(int page_idx) override;
+
+    GlyphRec& get_glyph_rec(char32_t codepoint, FallbackMode fbm) override;
+
+    DFBitmapFont(DFBitmapFont&& other) = delete;
+    DFBitmapFont& operator=(DFBitmapFont&&) = delete;
+
+    DFBitmapFont(const DFBitmapFont&) = delete;
+    DFBitmapFont& operator=(const DFBitmapFont&) = delete;
+
+private:
+    Texture texture_;
+    std::vector<GlyphRec> glyphs_;
+    int orig_char_width { 0 };
+    int orig_line_height { 0 };
+    float scale_factor { 0 };
+    std::unique_ptr<FontAtlas> atlas_;
+
+    static constexpr int atlas_columns = 16;
+    static constexpr int atlas_rows = 16;
+
+    bool init(const std::filesystem::path& path);
+    static std::vector<GlyphRec> build_glyph_rects(int sheet_w, int sheet_h,
+                                                   int columns, int rows);
+};
 }

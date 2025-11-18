@@ -29,9 +29,10 @@ distribution.
 #include <optional>
 #include <string>
 #include <set>
+#include <unordered_map>
+#include <unordered_set>
 #include <variant>
 #include <vector>
-#include <variant>
 #include <filesystem>
 
 #include "DataDefs.h"
@@ -748,6 +749,11 @@ namespace df
         static const container_identity *get();
     };
 
+    template<class T> struct identity_traits<std::unordered_set<T> >
+    {
+        static const container_identity* get();
+    };
+
     template<> struct identity_traits<BitArray<int> > {
         static const bit_array_identity identity;
         static const bit_container_identity *get() { return &identity; }
@@ -828,6 +834,14 @@ namespace df
     inline const container_identity *identity_traits<std::set<T> >::get() {
         using container = std::set<T>;
         static const ro_stl_container_identity<container> identity("set", identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class T>
+    inline const container_identity* identity_traits<std::unordered_set<T> >::get()
+    {
+        using container = std::set<T>;
+        static const ro_stl_container_identity<container> identity("unordered_set", identity_traits<T>::get());
         return &identity;
     }
 

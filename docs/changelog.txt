@@ -70,6 +70,25 @@ Template for new versions:
 
 ## Removed
 
+# 53.04-r1.1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- fixed misalignment in ``widgets::unit_list``
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
 # 53.04-r1
 
 ## New Tools

@@ -840,7 +840,7 @@ namespace df
     template<class T>
     inline const container_identity* identity_traits<std::unordered_set<T> >::get()
     {
-        using container = std::set<T>;
+        using container = std::unordered_set<T>;
         static const ro_stl_container_identity<container> identity("unordered_set", identity_traits<T>::get());
         return &identity;
     }

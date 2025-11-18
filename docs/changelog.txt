@@ -70,6 +70,24 @@ Template for new versions:
 
 ## Removed
 
+# 53.05-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
 # 53.04-r1.1
 
 ## New Tools

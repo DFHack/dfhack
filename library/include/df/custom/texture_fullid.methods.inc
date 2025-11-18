@@ -22,5 +22,3 @@ auto operator< (const texture_fullid &other) const {
     if (this->flag.whole < other.flag.whole) return true;
     return false;
 }
-
-

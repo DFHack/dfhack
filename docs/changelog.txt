@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
 
 ## Misc Improvements
 

@@ -4,9 +4,9 @@
 
 #include <condition_variable>
 #include <map>
+#include <optional>
 #include <thread>
 #include <vector>
-#include <optional>
 
 namespace DFHack {
     class DFHACK_EXPORT HotkeyManager {

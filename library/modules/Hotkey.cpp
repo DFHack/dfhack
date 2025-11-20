@@ -1,18 +1,19 @@
 #include "modules/Hotkey.h"
+
 #include "Core.h"
-#include "CoreDefs.h"
 #include "ColorText.h"
 #include "MiscUtils.h"
+#include "PluginManager.h"
+
 #include "modules/DFSDL.h"
 #include "modules/Gui.h"
-#include "PluginManager.h"
+
 #include "df/global_objects.h"
 #include "df/viewscreen.h"
 #include "df/interfacest.h"
 
 #include <ranges>
-
-#include "SDL_keycode.h"
+#include <SDL_keycode.h>
 
 using namespace DFHack;
 

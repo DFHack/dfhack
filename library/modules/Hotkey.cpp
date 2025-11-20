@@ -79,6 +79,9 @@ std::optional<KeySpec> Hotkey::parseKeySpec(std::string spec, std::string* err) 
         spec.erase(focus_idx);
     }
 
+    // Treat remaining keyspec as lowercase for case-insensitivity.
+    std::transform(spec.begin(), spec.end(), spec.begin(), tolower);
+
     // Determine modifier flags
     auto match_modifier = [&out, &spec](std::string_view prefix, int mod) {
         bool found = spec.starts_with(prefix);
@@ -88,25 +91,28 @@ std::optional<KeySpec> Hotkey::parseKeySpec(std::string spec, std::string* err) 
         }
         return found;
     };
-    while (match_modifier("Shift-", DFH_MOD_SHIFT) || match_modifier("Ctrl-", DFH_MOD_CTRL) || match_modifier("Alt-", DFH_MOD_ALT)) {}
+    while (match_modifier("shift-", DFH_MOD_SHIFT) || match_modifier("ctrl-", DFH_MOD_CTRL) || match_modifier("alt-", DFH_MOD_ALT)) {}
 
     out.sym = DFSDL::DFSDL_GetKeyFromName(spec.c_str());
     if (out.sym != SDLK_UNKNOWN)
         return out;
 
     // Attempt to parse as a mouse binding
-    if (spec.starts_with("MOUSE")) {
+    if (spec.starts_with("mouse")) {
         spec.erase(0, 5);
         // Read button number, ensuring between 1 and 15 inclusive
         try {
             int mbutton = std::stoi(spec);
-            if (mbutton >= 1 && mbutton <= 15) {
+            if (mbutton >= 4 && mbutton <= 15) {
                 out.sym = -mbutton;
                 return out;
             }
         } catch (...) {
             // If integer parsing fails, it isn't valid
         }
+        if (err)
+            *err = "Invalid mouse button '" + spec + "', only 4-15 are valid";
+        return std::nullopt;
     }
 
     if (err)

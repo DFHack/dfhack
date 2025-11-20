@@ -1,6 +1,7 @@
 #pragma once
 
 #include "Export.h"
+#include "ColorText.h"
 
 #include <condition_variable>
 #include <map>
@@ -10,6 +11,7 @@
 
 namespace DFHack {
     class DFHACK_EXPORT HotkeyManager {
+        friend class Core;
         public:
             HotkeyManager();
             ~HotkeyManager();
@@ -53,5 +55,6 @@ namespace DFHack {
             std::map<int, std::vector<KeyBinding>> bindings;
 
             void hotkey_thread_fn();
+            void handleKeybindingCommand(color_ostream& out, const std::vector<std::string>& parts);
     };
 }

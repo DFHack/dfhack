@@ -957,53 +957,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "keybinding")
     {
-        if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add"))
-        {
-            std::string keystr = parts[1];
-            if (parts[0] == "set")
-                hotkey_mgr->clearKeybind(keystr);
-            // for (int i = parts.size()-1; i >= 2; i--)
-            for (const auto& part : parts | std::views::drop(2) | std::views::reverse)
-            {
-                if (!hotkey_mgr->addKeybind(keystr, part)) {
-                    con.printerr("Invalid key spec: %s\n", keystr.c_str());
-                    break;
-                }
-            }
-        }
-        else if (parts.size() >= 2 && parts[0] == "clear")
-        {
-            // for (size_t i = 1; i < parts.size(); i++)
-            for (const auto& part : parts | std::views::drop(1))
-            {
-                if (!hotkey_mgr->clearKeybind(part)) {
-                    con.printerr("Invalid key spec: %s\n", part.c_str());
-                    break;
-                }
-            }
-        }
-        else if (parts.size() == 2 && parts[0] == "list")
-        {
-            std::vector<std::string> list = hotkey_mgr->listKeybinds(parts[1]);
-            if (list.empty())
-                con << "No bindings." << std::endl;
-            for (const auto& kb : list)
-                con << "  " << kb << std::endl;
-        }
-        else
-        {
-            con << "Usage:" << std::endl
-                << "  keybinding list <key>" << std::endl
-                << "  keybinding clear <key>[@context]..." << std::endl
-                << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-                << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-                << "Later adds, and earlier items within one command have priority." << std::endl
-                << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, 0-9, F1-F12, `, or Enter)." << std::endl
-                << "Context may be used to limit the scope of the binding, by" << std::endl
-                << "requiring the current context to have a certain prefix." << std::endl
-                << "Current UI context is: " << std::endl
-                << join_strings("\n", Gui::getCurFocus(true)) << std::endl;
-        }
+        this->hotkey_mgr->handleKeybindingCommand(con, parts);
     }
     else if (first == "alias")
     {

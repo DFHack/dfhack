@@ -24,6 +24,7 @@ namespace DFHack {
             std::string cmdline;
         };
 
+        DFHACK_EXPORT std::optional<Hotkey::KeySpec> parseKeySpec(std::string spec, std::string* err = nullptr);
         DFHACK_EXPORT std::string keyspec_to_string(const KeySpec& spec, bool include_focus=false);
     }
     class DFHACK_EXPORT HotkeyManager {
@@ -54,7 +55,6 @@ namespace DFHack {
             // Returns the latest requested keybind input
             std::string readKeybindInput();
 
-            std::optional<Hotkey::KeySpec> parseKeySpec(std::string spec);
         private:
             std::thread hotkey_thread;
             std::mutex lock {};

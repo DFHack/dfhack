@@ -68,35 +68,8 @@ std::string Hotkey::keyspec_to_string(const KeySpec &spec, bool include_focus) {
     return sym;
 }
 
-// Hotkeys actions are executed from an external thread to avoid deadlocks
-// that may occur if running commands from the render or simulation threads.
-void HotkeyManager::hotkey_thread_fn() {
-    auto& core = DFHack::Core::getInstance();
 
-    std::unique_lock<std::mutex> l(lock);
-    while (true) {
-        cond.wait(l, [this]() { return this->hotkey_sig != HotkeySignal::None; });
-        if (hotkey_sig == HotkeySignal::Shutdown)
-            return;
-        if (hotkey_sig != HotkeySignal::CmdReady)
-            continue;
-
-        // Copy and reset important data, then release the lock
-        this->hotkey_sig = HotkeySignal::None;
-        std::string cmd = this->queued_command;
-        this->queued_command.clear();
-        l.unlock();
-
-        // Attempt execution of command
-        DFHack::color_ostream_proxy out(core.getConsole());
-        auto res = core.runCommand(out, cmd);
-        if (res == DFHack::CR_NOT_IMPLEMENTED)
-            out.printerr("Invalid hotkey command: '%s'\n", cmd.c_str());
-        l.lock();
-    }
-}
-
-std::optional<KeySpec> HotkeyManager::parseKeySpec(std::string spec) {
+std::optional<KeySpec> Hotkey::parseKeySpec(std::string spec, std::string* err) {
     KeySpec out;
 
     // Determine focus string, if present
@@ -136,9 +109,41 @@ std::optional<KeySpec> HotkeyManager::parseKeySpec(std::string spec) {
         }
     }
 
+    if (err)
+        *err = "Unknown key '" + spec + "'";
+
     // Invalid key binding
     return std::nullopt;
 }
+
+// Hotkeys actions are executed from an external thread to avoid deadlocks
+// that may occur if running commands from the render or simulation threads.
+void HotkeyManager::hotkey_thread_fn() {
+    auto& core = DFHack::Core::getInstance();
+
+    std::unique_lock<std::mutex> l(lock);
+    while (true) {
+        cond.wait(l, [this]() { return this->hotkey_sig != HotkeySignal::None; });
+        if (hotkey_sig == HotkeySignal::Shutdown)
+            return;
+        if (hotkey_sig != HotkeySignal::CmdReady)
+            continue;
+
+        // Copy and reset important data, then release the lock
+        this->hotkey_sig = HotkeySignal::None;
+        std::string cmd = this->queued_command;
+        this->queued_command.clear();
+        l.unlock();
+
+        // Attempt execution of command
+        DFHack::color_ostream_proxy out(core.getConsole());
+        auto res = core.runCommand(out, cmd);
+        if (res == DFHack::CR_NOT_IMPLEMENTED)
+            out.printerr("Invalid hotkey command: '%s'\n", cmd.c_str());
+        l.lock();
+    }
+}
+
 
 bool HotkeyManager::addKeybind(KeySpec spec, std::string cmd) {
     // No point in a hotkey with no action
@@ -164,7 +169,7 @@ bool HotkeyManager::addKeybind(KeySpec spec, std::string cmd) {
 }
 
 bool HotkeyManager::addKeybind(std::string keyspec, std::string cmd) {
-    std::optional<KeySpec> spec_opt = parseKeySpec(keyspec);
+    std::optional<KeySpec> spec_opt = Hotkey::parseKeySpec(keyspec);
     if (!spec_opt.has_value())
         return false;
     return this->addKeybind(spec_opt.value(), cmd);
@@ -189,7 +194,7 @@ bool HotkeyManager::clearKeybind(const KeySpec& spec, bool any_focus, std::strin
 }
 
 bool HotkeyManager::clearKeybind(std::string keyspec, bool any_focus, std::string cmdline) {
-    std::optional<KeySpec> spec_opt = parseKeySpec(keyspec);
+    std::optional<KeySpec> spec_opt = Hotkey::parseKeySpec(keyspec);
     if (!spec_opt.has_value())
         return false;
     return this->clearKeybind(spec_opt.value(), any_focus, cmdline);
@@ -226,7 +231,7 @@ std::vector<std::string> HotkeyManager::listKeybinds(const KeySpec& spec) {
 }
 
 std::vector<std::string> HotkeyManager::listKeybinds(std::string keyspec) {
-    std::optional<KeySpec> spec_opt = parseKeySpec(keyspec);
+    std::optional<KeySpec> spec_opt = Hotkey::parseKeySpec(keyspec);
     if (!spec_opt.has_value())
         return {};
     return this->listKeybinds(spec_opt.value());
@@ -352,27 +357,42 @@ std::string HotkeyManager::readKeybindInput() {
 }
 
 void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vector<std::string>& parts) {
+    std::string parse_error;
     if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add")) {
         std::string keystr = parts[1];
         if (parts[0] == "set")
             clearKeybind(keystr);
         for (const auto& part : parts | std::views::drop(2) | std::views::reverse) {
-            if (!addKeybind(keystr, part)) {
-                con.printerr("Invalid key spec: %s\n", keystr.c_str());
+            auto spec = Hotkey::parseKeySpec(keystr, &parse_error);
+            if (!spec.has_value()) {
+                con.printerr("%s\n", parse_error.c_str());
+                break;
+            }
+            if (!addKeybind(spec.value(), part)) {
+                con.printerr("Invalid command: '%s'\n", part.c_str());
                 break;
             }
         }
     }
     else if (parts.size() >= 2 && parts[0] == "clear") {
         for (const auto& part : parts | std::views::drop(1)) {
-            if (!clearKeybind(part)) {
-                con.printerr("Invalid key spec: %s\n", part.c_str());
+            auto spec = Hotkey::parseKeySpec(part, &parse_error);
+            if (!spec.has_value()) {
+                con.printerr("%s\n", parse_error.c_str());
+            }
+            if (!clearKeybind(spec.value())) {
+                con.printerr("No matching keybinds to remove\n");
                 break;
             }
         }
     }
     else if (parts.size() == 2 && parts[0] == "list") {
-        std::vector<std::string> list = listKeybinds(parts[1]);
+        auto spec = Hotkey::parseKeySpec(parts[1], &parse_error);
+        if (!spec.has_value()) {
+            con.printerr("%s\n", parse_error.c_str());
+            return;
+        }
+        std::vector<std::string> list = listKeybinds(spec.value());
         if (list.empty())
             con << "No bindings." << std::endl;
         for (const auto& kb : list)

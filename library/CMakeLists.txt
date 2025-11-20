@@ -156,6 +156,7 @@ set(MODULE_HEADERS
     include/modules/Graphic.h
     include/modules/Gui.h
     include/modules/GuiHooks.h
+    include/modules/Hotkey.h
     include/modules/Items.h
     include/modules/Job.h
     include/modules/Kitchen.h
@@ -186,6 +187,7 @@ set(MODULE_SOURCES
     modules/Filesystem.cpp
     modules/Graphic.cpp
     modules/Gui.cpp
+    modules/Hotkey.cpp
     modules/Items.cpp
     modules/Job.cpp
     modules/Kitchen.cpp

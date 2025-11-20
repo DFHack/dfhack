@@ -4,12 +4,14 @@
 #include "ColorText.h"
 
 #include <vector>
+#include <cstdint>
 
 struct SDL_Surface;
 struct SDL_Rect;
 struct SDL_PixelFormat;
 struct SDL_Window;
 union SDL_Event;
+typedef int32_t SDL_Keycode;
 
 namespace DFHack
 {
@@ -63,6 +65,8 @@ namespace DFHack::DFSDL
     DFHACK_EXPORT char* DFSDL_GetPrefPath(const char* org, const char* app);
     DFHACK_EXPORT char* DFSDL_GetBasePath();
 
+    DFHACK_EXPORT SDL_Keycode DFSDL_GetKeyFromName(const char* name);
+    DFHACK_EXPORT const char* DFSDL_GetKeyName(SDL_Keycode key);
 }
 
 namespace DFHack

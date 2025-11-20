@@ -2,8 +2,10 @@
 #include <string>
 #include <vector>
 
+#include "modules/DFSDL.h"
 #include "modules/Gui.h"
 #include "modules/Screen.h"
+#include "modules/Hotkey.h"
 
 #include "Debug.h"
 #include "LuaTools.h"
@@ -44,7 +46,7 @@ static int cleanupHotkeys(lua_State *) {
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym) {
         string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
         DEBUG(log).print("clearing keybinding: %s\n", keyspec.c_str());
-        Core::getInstance().ClearKeyBindings(keyspec);
+        Core::getInstance().getHotkeyManager()->clearKeybind(keyspec);
     });
     valid = false;
     sorted_keys.clear();
@@ -83,60 +85,30 @@ static void add_binding_if_valid(color_ostream &out, const string &sym, const st
     string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
     string binding = "hotkeys invoke " + int_to_string(sorted_keys.size() - 1);
     DEBUG(log).print("adding keybinding: %s -> %s\n", keyspec.c_str(), binding.c_str());
-    Core::getInstance().AddKeyBinding(keyspec, binding);
+    Core::getInstance().getHotkeyManager()->addKeybind(keyspec, binding);
 }
 
 static void find_active_keybindings(color_ostream &out, df::viewscreen *screen, bool filtermenu) {
-    DEBUG(log).print("scanning for active keybindings\n");
     if (valid)
         cleanupHotkeys(NULL);
 
-    vector<string> valid_keys;
+    auto active_binds = Core::getInstance().getHotkeyManager()->listActiveKeybinds();
+    for (const auto& bind : active_binds) {
+        string sym;
+        if (bind.spec.modifiers & DFH_MOD_CTRL) sym += "Ctrl-";
+        if (bind.spec.modifiers & DFH_MOD_ALT) sym += "Alt-";
+        if (bind.spec.modifiers & DFH_MOD_SHIFT) sym += "Shift-";
 
-    for (char c = '0'; c <= '9'; c++) {
-        valid_keys.push_back(string(&c, 1));
-    }
-
-    for (char c = 'A'; c <= 'Z'; c++) {
-        valid_keys.push_back(string(&c, 1));
-    }
-
-    for (int i = 1; i <= 12; i++) {
-        valid_keys.push_back('F' + int_to_string(i));
-    }
-
-    valid_keys.push_back("`");
-
-    for (int shifted = 0; shifted < 2; shifted++) {
-        for (int alt = 0; alt < 2; alt++) {
-            for (int ctrl = 0; ctrl < 2; ctrl++) {
-                for (auto it = valid_keys.begin(); it != valid_keys.end(); it++) {
-                    string sym;
-                    if (ctrl) sym += "Ctrl-";
-                    if (alt) sym += "Alt-";
-                    if (shifted) sym += "Shift-";
-                    sym += *it;
-
-                    auto list = Core::getInstance().ListKeyBindings(sym);
-                    for (auto invoke_cmd = list.begin(); invoke_cmd != list.end(); invoke_cmd++) {
-                        string::size_type colon_pos = invoke_cmd->find(":");
-                        // colons at location 0 are for commands like ":lua"
-                        if (colon_pos == string::npos || colon_pos == 0) {
-                            add_binding_if_valid(out, sym, *invoke_cmd, screen, filtermenu);
-                        }
-                        else {
-                            vector<string> tokens;
-                            split_string(&tokens, *invoke_cmd, ":");
-                            string focus = tokens[0].substr(1);
-                            if(Gui::matchFocusString(focus)) {
-                                auto cmdline = trim(tokens[1]);
-                                add_binding_if_valid(out, sym, cmdline, screen, filtermenu);
-                            }
-                        }
-                    }
-                }
-            }
+        std::string key_name;
+        if (bind.spec.sym < 0) {
+            key_name = "MOUSE" + std::to_string(-bind.spec.sym);
+        } else {
+            key_name = DFSDL::DFSDL_GetKeyName(bind.spec.sym);
         }
+        if (key_name.empty()) continue;
+        sym += key_name;
+
+        add_binding_if_valid(out, sym, bind.cmdline, screen, filtermenu);
     }
 
     valid = true;

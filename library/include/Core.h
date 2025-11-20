@@ -68,6 +68,7 @@ namespace DFHack
     class Core;
     class ServerMain;
     class CoreSuspender;
+    class HotkeyManager;
 
     namespace Lua { namespace Core {
         DFHACK_EXPORT void Reset(color_ostream &out, const char *where);
@@ -164,10 +165,6 @@ namespace DFHack
         Materials * getMaterials();
         /// get the graphic module
         Graphic * getGraphic();
-        /// sets the current hotkey command
-        bool setHotkeyCmd( std::string cmd );
-        /// removes the hotkey command and gives it to the caller thread
-        std::string getHotkeyCmd( bool &keep_going );
 
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
         command_result runCommand(color_ostream &out, const std::string &command);
@@ -182,11 +179,10 @@ namespace DFHack
         bool getSuppressDuplicateKeyboardEvents() const;
         void setSuppressDuplicateKeyboardEvents(bool suppress);
         void setMortalMode(bool value);
+        bool getMortalMode();
         void setArmokTools(const std::vector<std::string> &tool_names);
+        bool isArmokTool(const std::string& name);
 
-        bool ClearKeyBindings(std::string keyspec);
-        bool AddKeyBinding(std::string keyspec, std::string cmdline);
-        std::vector<std::string> ListKeyBindings(std::string keyspec);
         int8_t getModstate() { return modstate; }
 
         bool AddAlias(const std::string &name, const std::vector<std::string> &command, bool replace = false);
@@ -213,6 +209,7 @@ namespace DFHack
         static void printerr(const char *format, ...) Wformat(printf,1,2);
 
         PluginManager *getPluginManager() { return plug_mgr; }
+        HotkeyManager *getHotkeyManager() { return hotkey_mgr; }
 
         static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
@@ -267,38 +264,24 @@ namespace DFHack
             Graphic * pGraphic;
         } s_mods;
         std::vector<std::unique_ptr<Module>> allModules;
-        DFHack::PluginManager * plug_mgr;
+        DFHack::PluginManager *plug_mgr;
 
+        // Hotkey Manager
+        DFHack::HotkeyManager *hotkey_mgr;
+
+        // FIXME: remove all this junk (hotkey related)
         std::vector<std::filesystem::path> script_paths[3];
         std::mutex script_path_mutex;
 
-        // hotkey-related stuff
-        struct KeyBinding {
-            int modifiers;
-            std::vector<std::string> command;
-            std::string cmdline;
-            std::string focus;
-        };
         int8_t modstate;
 
         bool suppress_duplicate_keyboard_events;
-        bool mortal_mode;
+        std::atomic<bool> mortal_mode;
         std::unordered_set<std::string> armok_tools;
-        std::map<int, std::vector<KeyBinding> > key_bindings;
-        std::string hotkey_cmd;
-        enum hotkey_set_t {
-            NO,
-            SET,
-            SHUTDOWN,
-        };
-        hotkey_set_t hotkey_set;
-        std::mutex HotkeyMutex;
-        std::condition_variable HotkeyCond;
+        std::mutex armok_mutex;
 
         std::map<std::string, std::vector<std::string>> aliases;
         std::recursive_mutex alias_mutex;
-
-        bool SelectHotkey(int key, int modifiers);
 
         // for state change tracking
         df::world_data *last_world_data_ptr;

@@ -29,6 +29,7 @@ distribution.
 #include <stdlib.h>
 
 #include <algorithm>
+#include <cstring>
 #include <sstream>
 #include <iterator>
 

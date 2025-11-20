@@ -523,7 +523,7 @@ namespace df
 
     protected:
         virtual int item_count(void *ptr, CountMode cnt) const {
-            return cnt == COUNT_LEN ? ((container*)ptr)->size * 8 : -1;
+            return cnt == COUNT_LEN ? ((container*)ptr)->size() * 8 : -1;
         }
         virtual bool get_item(void *ptr, int idx) const {
             return ((container*)ptr)->is_set(idx);

@@ -116,6 +116,8 @@ bool HotkeyManager::addKeybind(KeySpec spec, std::string cmd) {
     KeyBinding binding;
     binding.spec = spec;
     binding.cmdline = cmd;
+    size_t space_idx = cmd.find(' ');
+    binding.command = space_idx == std::string::npos ? cmd : cmd.substr(0, space_idx);
 
     std::lock_guard<std::mutex> l(lock);
     auto& bindings = this->bindings[binding.spec.sym];

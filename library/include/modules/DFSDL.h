@@ -11,7 +11,7 @@ struct SDL_Rect;
 struct SDL_PixelFormat;
 struct SDL_Window;
 union SDL_Event;
-typedef int32_t SDL_Keycode;
+using SDL_Keycode = int32_t;
 
 namespace DFHack
 {

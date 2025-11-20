@@ -16,6 +16,8 @@
 #include <SDL_keycode.h>
 
 using namespace DFHack;
+using Hotkey::KeySpec;
+using Hotkey::KeyBinding;
 
 enum HotkeySignal {
     None = 0,
@@ -23,17 +25,47 @@ enum HotkeySignal {
     Shutdown,
 };
 
-bool operator==(const HotkeyManager::KeySpec& a, const HotkeyManager::KeySpec& b) {
+bool operator==(const KeySpec& a, const KeySpec& b) {
     return a.modifiers == b.modifiers && a.sym == b.sym &&
         a.focus.size() == b.focus.size() &&
         std::equal(a.focus.begin(), a.focus.end(), b.focus.begin());
 }
 
 // Equality operator for key bindings
-bool operator==(const HotkeyManager::KeyBinding& a, const HotkeyManager::KeyBinding& b) {
+bool operator==(const KeyBinding& a, const KeyBinding& b) {
     return a.spec == b.spec &&
         a.command == b.command &&
         a.cmdline == b.cmdline;
+}
+
+std::string Hotkey::keyspec_to_string(const KeySpec &spec, bool include_focus) {
+    std::string sym;
+    if (spec.modifiers & DFH_MOD_CTRL) sym += "Ctrl-";
+    if (spec.modifiers & DFH_MOD_ALT) sym += "Alt-";
+    if (spec.modifiers & DFH_MOD_SHIFT) sym += "Shift-";
+
+    std::string key_name;
+    if (spec.sym < 0) {
+        key_name = "MOUSE" + std::to_string(-spec.sym);
+    } else {
+        key_name = DFSDL::DFSDL_GetKeyName(spec.sym);
+    }
+    sym += key_name;
+
+    if (include_focus && !spec.focus.empty()) {
+        sym += "@";
+        bool first = true;
+        for (const auto& focus : spec.focus) {
+            if (first) {
+                first = false;
+                sym += focus;
+            } else {
+                sym += "|" + focus;
+            }
+        }
+    }
+
+    return sym;
 }
 
 // Hotkeys actions are executed from an external thread to avoid deadlocks
@@ -64,7 +96,7 @@ void HotkeyManager::hotkey_thread_fn() {
     }
 }
 
-std::optional<HotkeyManager::KeySpec> HotkeyManager::parseKeySpec(std::string spec) {
+std::optional<KeySpec> HotkeyManager::parseKeySpec(std::string spec) {
     KeySpec out;
 
     // Determine focus string, if present
@@ -138,16 +170,16 @@ bool HotkeyManager::addKeybind(std::string keyspec, std::string cmd) {
     return this->addKeybind(spec_opt.value(), cmd);
 }
 
-bool HotkeyManager::clearKeybind(const KeySpec& spec, bool any_focus) {
+bool HotkeyManager::clearKeybind(const KeySpec& spec, bool any_focus, std::string cmdline) {
     std::lock_guard<std::mutex> l(lock);
     if (!bindings.contains(spec.sym))
         return false;
     auto& binds = bindings[spec.sym];
 
-    auto new_end = std::remove_if(binds.begin(), binds.end(), [any_focus, spec](const auto& v) {
-            return any_focus
+    auto new_end = std::remove_if(binds.begin(), binds.end(), [any_focus, spec, &cmdline](const auto& v) {
+            return (any_focus
                 ? v.spec.sym == spec.sym && v.spec.modifiers == spec.modifiers
-                : v.spec == spec;
+                : v.spec == spec) && (cmdline.empty() || v.cmdline == cmdline);
     });
     if (new_end == binds.end())
         return false; // No bindings removed
@@ -156,11 +188,11 @@ bool HotkeyManager::clearKeybind(const KeySpec& spec, bool any_focus) {
     return true;
 }
 
-bool HotkeyManager::clearKeybind(std::string keyspec, bool any_focus) {
+bool HotkeyManager::clearKeybind(std::string keyspec, bool any_focus, std::string cmdline) {
     std::optional<KeySpec> spec_opt = parseKeySpec(keyspec);
     if (!spec_opt.has_value())
         return false;
-    return this->clearKeybind(spec_opt.value(), any_focus);
+    return this->clearKeybind(spec_opt.value(), any_focus, cmdline);
 }
 
 std::vector<std::string> HotkeyManager::listKeybinds(const KeySpec& spec) {
@@ -200,7 +232,7 @@ std::vector<std::string> HotkeyManager::listKeybinds(std::string keyspec) {
     return this->listKeybinds(spec_opt.value());
 }
 
-std::vector<HotkeyManager::KeyBinding> HotkeyManager::listActiveKeybinds() {
+std::vector<KeyBinding> HotkeyManager::listActiveKeybinds() {
     std::vector<KeyBinding> out;
 
     for(const auto& [_, bind_set] : bindings) {
@@ -223,6 +255,17 @@ std::vector<HotkeyManager::KeyBinding> HotkeyManager::listActiveKeybinds() {
     return out;
 }
 
+std::vector<KeyBinding> HotkeyManager::listAllKeybinds() {
+    std::vector<KeyBinding> out;
+
+    for (const auto& [_, bind_set] : bindings) {
+        for (const auto& bind : bind_set) {
+            out.emplace_back(bind);
+        }
+    }
+    return out;
+}
+
 bool HotkeyManager::handleKeybind(int sym, int modifiers) {
     // Ensure gamestate is ready
     if (!df::global::gview || !df::global::plotinfo)
@@ -237,6 +280,17 @@ bool HotkeyManager::handleKeybind(int sym, int modifiers) {
         sym = SDLK_RETURN;
 
     std::unique_lock<std::mutex> l(lock);
+
+    // If reading input for a keybinding screen, save the input and exit early
+    if (keybind_save_requested) {
+        KeySpec spec;
+        spec.sym = sym;
+        spec.modifiers = modifiers;
+        requested_keybind = Hotkey::keyspec_to_string(spec);
+        keybind_save_requested = false;
+        return true;
+    }
+
     if (!bindings.contains(sym))
         return false;
     auto& binds = bindings[sym];
@@ -286,6 +340,16 @@ void HotkeyManager::setHotkeyCommand(std::string cmd) {
     cond.notify_all();
 }
 
+void HotkeyManager::requestKeybindInput() {
+    std::lock_guard<std::mutex> l(lock);
+    keybind_save_requested = true;
+    requested_keybind = "";
+}
+
+std::string HotkeyManager::readKeybindInput() {
+    std::lock_guard<std::mutex> l(lock);
+    return requested_keybind;
+}
 
 void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vector<std::string>& parts) {
     if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add")) {

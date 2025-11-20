@@ -94,20 +94,7 @@ static void find_active_keybindings(color_ostream &out, df::viewscreen *screen, 
 
     auto active_binds = Core::getInstance().getHotkeyManager()->listActiveKeybinds();
     for (const auto& bind : active_binds) {
-        string sym;
-        if (bind.spec.modifiers & DFH_MOD_CTRL) sym += "Ctrl-";
-        if (bind.spec.modifiers & DFH_MOD_ALT) sym += "Alt-";
-        if (bind.spec.modifiers & DFH_MOD_SHIFT) sym += "Shift-";
-
-        std::string key_name;
-        if (bind.spec.sym < 0) {
-            key_name = "MOUSE" + std::to_string(-bind.spec.sym);
-        } else {
-            key_name = DFSDL::DFSDL_GetKeyName(bind.spec.sym);
-        }
-        if (key_name.empty()) continue;
-        sym += key_name;
-
+        string sym = Hotkey::keyspec_to_string(bind.spec);
         add_binding_if_valid(out, sym, bind.cmdline, screen, filtermenu);
     }
 

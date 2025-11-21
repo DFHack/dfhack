@@ -33,7 +33,6 @@ distribution.
 #include <iomanip>
 #include <iostream>
 #include <map>
-#include <memory>
 #include <sstream>
 #include <stdint.h>
 #include <vector>
@@ -473,6 +472,19 @@ static inline std::string &rtrim(std::string &s) {
 // trim from both ends
 static inline std::string &trim(std::string &s) {
     return ltrim(rtrim(s));
+}
+
+static inline bool has_backslashes(const std::string_view str)
+{
+    return (str.find('\\') != std::string::npos);
+}
+
+static inline void replace_backslashes_with_forwardslashes(std::string& str)
+{
+    for (auto& c : str) {
+        if (c == '\\')
+            c = '/';
+    }
 }
 
 enum struct NumberFormatType : int32_t {

@@ -1957,6 +1957,8 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, df::report 
     auto alert_type = announcement_alert_type::NONE;
     switch (slot)
     {
+        case unit_report_type::NONE: /* should never happen? */
+            return false;
         case unit_report_type::Combat:
             world->status.flags.bits.combat = true;
             alert_type = announcement_alert_type::COMBAT;
@@ -2684,10 +2686,9 @@ void Gui::MTB_set_width(df::markup_text_boxst *mtb, int32_t n_width)
 df::widget * Gui::getWidget(df::widget_container *container, string name) {
     CHECK_NULL_POINTER(container);
     // ensure the compiler catches the change if we ever fix the template parameters
-    std::map<void *, void *> & orig_field = container->children_by_name;
-    auto children_by_name = reinterpret_cast<std::map<std::string, std::shared_ptr<df::widget>> *>(&orig_field);
-    if (children_by_name->contains(name))
-        return (*children_by_name)[name].get();
+    auto & children_by_name = container->children_by_name;
+    if (children_by_name.contains(name))
+        return (children_by_name)[name].get();
     return NULL;
 }
 

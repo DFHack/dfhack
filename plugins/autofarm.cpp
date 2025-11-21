@@ -22,6 +22,7 @@
 #include "df/unit.h"
 #include "df/world.h"
 
+#include <set>
 #include <queue>
 
 using namespace DFHack;

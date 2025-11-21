@@ -24,11 +24,6 @@ distribution.
 
 #pragma once
 
-#include <string>
-#include <sstream>
-#include <vector>
-#include <map>
-
 #include <lua.h>
 #include <lauxlib.h>
 

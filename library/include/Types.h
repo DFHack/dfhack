@@ -30,12 +30,10 @@ distribution.
 #include <string>
 
 #include "Export.h"
-
 #include "DataDefs.h"
 
 #include "df/general_ref_type.h"
 #include "df/specific_ref_type.h"
-#include "df/language_name_type.h"
 
 namespace df {
     struct building;

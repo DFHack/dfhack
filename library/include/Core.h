@@ -37,7 +37,6 @@ distribution.
 #include <map>
 #include <memory>
 #include <mutex>
-#include <stack>
 #include <thread>
 #include <unordered_map>
 #include <unordered_set>
@@ -181,7 +180,7 @@ namespace DFHack
         std::filesystem::path findScript(std::string name);
         void getScriptPaths(std::vector<std::filesystem::path> *dest);
 
-        bool getSuppressDuplicateKeyboardEvents();
+        bool getSuppressDuplicateKeyboardEvents() const;
         void setSuppressDuplicateKeyboardEvents(bool suppress);
         void setMortalMode(bool value);
         void setArmokTools(const std::vector<std::string> &tool_names);
@@ -201,8 +200,8 @@ namespace DFHack
 
         std::filesystem::path getHackPath();
 
-        bool isWorldLoaded() { return (last_world_data_ptr != NULL); }
-        bool isMapLoaded() { return (last_local_map_ptr != NULL && last_world_data_ptr != NULL); }
+        bool isWorldLoaded() { return (last_world_data_ptr != nullptr); }
+        bool isMapLoaded() { return (last_local_map_ptr != nullptr && last_world_data_ptr != nullptr); }
 
         static df::viewscreen *getTopViewscreen();
 
@@ -256,7 +255,7 @@ namespace DFHack
         void operator=(Core const&);    // Don't implement
 
         // report error to user while failing
-        void fatal (std::string output, const char * title = NULL);
+        void fatal (std::string output, const char * title = nullptr);
 
         // 1 = fatal failure
         bool errorstate;

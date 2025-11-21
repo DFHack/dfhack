@@ -23,14 +23,11 @@ distribution.
 */
 
 #pragma once
-#include "Export.h"
 #include "Error.h"
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
 #include <sstream>
-#include <exception>
-#include <type_traits>
 #include <iterator>
 namespace DFHack
 {

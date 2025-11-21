@@ -25,9 +25,6 @@ distribution.
 #pragma once
 
 #include "Export.h"
-#include "Module.h"
-#include "BitArray.h"
-#include "ColorText.h"
 #include "Types.h"
 #include "DataDefs.h"
 

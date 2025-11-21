@@ -2,6 +2,7 @@
 #include "Console.h"
 #include "Debug.h"
 #include "VTableInterpose.h"
+#include "MemAccess.h"
 
 #include "modules/Buildings.h"
 #include "modules/Constructions.h"

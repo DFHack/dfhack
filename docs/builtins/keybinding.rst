@@ -9,9 +9,9 @@ Like any other command, it can be used at any time from the console, but
 bindings are not remembered between runs of the game unless re-created in
 :file:`dfhack-config/init/dfhack.init`.
 
-Hotkeys can be any combinations of Ctrl/Alt/Shift with A-Z, 0-9, F1-F12, or `
-(the key below the :kbd:`Esc` key on most keyboards). You can also represent
-mouse buttons beyond the first three with ``MOUSE4`` through ``MOUSE15``.
+Hotkeys can be any combinations of Ctrl/Alt/Shift with any key recognized by SDL.
+You can also represent mouse buttons beyond the first three with ``MOUSE4``
+through ``MOUSE15``.
 
 Usage
 -----
@@ -27,7 +27,7 @@ Usage
 ``keybinding set <key> "<cmdline>" ["<cmdline>" ...]``
     Clear, and then add bindings for the specified key.
 
-The ``<key>`` parameter above has the following **case-sensitive** syntax::
+The ``<key>`` parameter above has the following case-insensitive syntax::
 
     [Ctrl-][Alt-][Shift-]KEY[@context[|context...]]
 

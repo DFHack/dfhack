@@ -1430,6 +1430,46 @@ Job module
 
   Returns the job's description, as seen in the Units and Jobs screens.
 
+Hotkey module
+-------------
+
+* ``dfhack.hotkey.addKeybind(keyspec, command)``
+
+  Creates a new keybind with the provided keyspec (see the `keybinding` documentation
+  for details on format).
+  Returns false on failure to create keybind.
+
+* ``dfhack.hotkey.clearKeybind(keyspec, any_focus, command)``
+
+  Removes keybinds matching the provided keyspec.
+  If any_focus is true, the focus portion of the keyspec is ignored.
+  If command is not an empty string, the command is matched against as well.
+  Returns false if no keybinds were removed.
+
+* ``dfhack.hotkey.listActiveKeybinds()``
+
+  Returns a list of keybinds active within the current context.
+  The items are tables with the following attributes:
+  :spec: The keyspec for the hotkey
+  :command: The command the hotkey runs when pressed
+
+* ``dfhack.hotkey.listAllKeybinds()``
+
+  Returns a list of all keybinds currently registered.
+  The items are tables with the following attributes:
+  :spec: The keyspec for the hotkey
+  :command: The command the hotkey runs when pressed
+
+* ``dfhack.hotkey.requestKeybindInput()``
+
+  Requests that the next hotkey-compatible input is saved and not processed,
+  retrievable with ``dfhack.hotkey.readKeybindInput()``.
+
+* ``dfhack.hotkey.readKeybindInput()``
+
+  Reads the latest saved keybind input that was requested.
+  Returns a keyspec string for the input, or nil if no input is saved.
+
 Units module
 ------------
 

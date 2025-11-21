@@ -1885,10 +1885,16 @@ static void hotkey_requestKeybindingInput() {
     if (hotkey_mgr) hotkey_mgr->requestKeybindInput();
 }
 
-static std::string hotkey_readKeybindInput() {
+static int hotkey_readKeybindInput(lua_State *L) {
     auto hotkey_mgr = Core::getInstance().getHotkeyManager();
-    if (!hotkey_mgr) return "";
-    return hotkey_mgr->readKeybindInput();
+    auto input = hotkey_mgr->readKeybindInput();
+
+    if (input.empty()) {
+        lua_pushnil(L);
+    } else {
+        lua_pushlstring(L, input.data(), input.size());
+    }
+    return 1;
 }
 
 void hotkey_pushBindArray(lua_State *L, const std::vector<Hotkey::KeyBinding>& binds) {
@@ -1928,6 +1934,7 @@ static int hotkey_listAllKeybinds(lua_State *L) {
 static const luaL_Reg dfhack_hotkey_funcs[] = {
     { "listActiveKeybinds", hotkey_listActiveKeybinds },
     { "listAllKeybinds", hotkey_listAllKeybinds },
+    { "readKeybindInput", hotkey_readKeybindInput },
     { NULL, NULL }
 };
 
@@ -1935,7 +1942,6 @@ static const LuaWrapper::FunctionReg dfhack_hotkey_module[] = {
     WRAPN(addKeybind, hotkey_addKeybind),
     WRAPN(clearKeybind, hotkey_clearKeybind),
     WRAPN(requestKeybindInput, hotkey_requestKeybindingInput),
-    WRAPN(readKeybindInput, hotkey_readKeybindInput),
     { NULL, NULL }
 };
 

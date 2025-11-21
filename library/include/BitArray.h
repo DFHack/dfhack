@@ -79,7 +79,7 @@ namespace DFHack
 
         void extend(T index)
         {
-            size_type newsize = (index / 8) + 1;
+            size_type newsize = (index + 7 ) / 8;
             if (newsize > _size)
                 resize(newsize);
         }

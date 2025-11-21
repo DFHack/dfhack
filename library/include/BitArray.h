@@ -215,7 +215,7 @@ namespace DFHack
         T *m_data;
         unsigned short m_size;
 
-        void resize(unsigned new_size, const DfArray<T>* replacement)
+        void resize(unsigned short new_size, const DfArray<T>* replacement)
         {
             if (new_size == m_size)
                 return;
@@ -224,11 +224,11 @@ namespace DFHack
 
             m_data = (T*) new T[new_size];
 
-            T* copysrc = replacement ? replacement->m_data : m_data;
+            T* copysrc = replacement ? replacement->m_data : old_data;
             unsigned short copysize = replacement ? replacement->m_size : m_size;
 
             if (copysrc)
-                std::memcpy(m_data, copysrc, sizeof(T) * copysize);
+                std::memcpy(m_data, copysrc, sizeof(T) * std::min(copysize, new_size));
 
             if (new_size > m_size)
                 std::memset(m_data + m_size, 0, sizeof(T) * (new_size - m_size));

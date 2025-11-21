@@ -122,6 +122,9 @@ if(MSVC)
     # Enable C5038 - This is equivalent to gcc's -Werror=reorder, which is enabled by default by gcc -Wall
     add_compile_options("/w15038")
 
+    # Enable C4062 - Warns about missing enum case in switch statement, equivalent to gcc -Wswitch
+    add_compile_options("/w14062")
+
     # MSVC panics if an object file contains more than 65,279 sections. this
     # happens quite frequently with code that uses templates, such as vectors.
     add_compile_options("/bigobj")

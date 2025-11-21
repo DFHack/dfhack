@@ -1897,12 +1897,13 @@ void hotkey_pushBindArray(lua_State *L, const std::vector<Hotkey::KeyBinding>& b
     for (const auto& bind : binds) {
         lua_createtable(L, 0, 2);
 
-        lua_pushstring(L, "spec");
-        lua_pushstring(L, Hotkey::keyspec_to_string(bind.spec, true).c_str());
+        lua_pushlstring(L, "spec", 4);
+        auto spec_str = Hotkey::keyspec_to_string(bind.spec, true);
+        lua_pushlstring(L, spec_str.data(), spec_str.size());
         lua_settable(L, -3);
 
-        lua_pushstring(L, "command");
-        lua_pushstring(L, bind.cmdline.c_str());
+        lua_pushlstring(L, "command", 7);
+        lua_pushlstring(L, bind.cmdline.data(), bind.cmdline.size());
         lua_settable(L, -3);
         lua_rawseti(L, -2, i++);
     }

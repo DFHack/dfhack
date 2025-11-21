@@ -181,7 +181,7 @@ bool HotkeyManager::addKeybind(std::string keyspec, std::string cmd) {
     return this->addKeybind(spec_opt.value(), cmd);
 }
 
-bool HotkeyManager::clearKeybind(const KeySpec& spec, bool any_focus, std::string cmdline) {
+bool HotkeyManager::clearKeybind(const KeySpec& spec, bool any_focus, std::string_view cmdline) {
     std::lock_guard<std::mutex> l(lock);
     if (!bindings.contains(spec.sym))
         return false;
@@ -199,7 +199,7 @@ bool HotkeyManager::clearKeybind(const KeySpec& spec, bool any_focus, std::strin
     return true;
 }
 
-bool HotkeyManager::clearKeybind(std::string keyspec, bool any_focus, std::string cmdline) {
+bool HotkeyManager::clearKeybind(std::string keyspec, bool any_focus, std::string_view cmdline) {
     std::optional<KeySpec> spec_opt = Hotkey::parseKeySpec(keyspec);
     if (!spec_opt.has_value())
         return false;

@@ -2464,8 +2464,9 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
         DEBUG(keybinding).print("mouse button down: button=%d\n", but.button);
         // don't mess with the first three buttons, which are critical elements of DF's control scheme
         if (but.button > 3) {
+            // We represent mouse buttons as a negative number, permitting buttons 4-15
             SDL_Keycode sym = -but.button;
-            if (sym >= -15 && sym <= -1  && hotkey_mgr->handleKeybind(sym, modstate))
+            if (sym >= -15 && sym <= -4  && hotkey_mgr->handleKeybind(sym, modstate))
                 return suppress_duplicate_keyboard_events;
         }
     } else if (ev->type == SDL_TEXTINPUT) {

@@ -37,8 +37,8 @@ namespace DFHack {
             bool addKeybind(std::string keyspec, std::string cmd);
             bool addKeybind(Hotkey::KeySpec spec, std::string cmd);
             // Clear a keybind with the given keyspec, optionally for any focus, or with a specific command
-            bool clearKeybind(std::string keyspec, bool any_focus=false, std::string cmdline="");
-            bool clearKeybind(const Hotkey::KeySpec& spec, bool any_focus=false, std::string cmdline="");
+            bool clearKeybind(std::string keyspec, bool any_focus=false, std::string_view cmdline="");
+            bool clearKeybind(const Hotkey::KeySpec& spec, bool any_focus=false, std::string_view cmdline="");
 
             std::vector<std::string> listKeybinds(std::string keyspec);
             std::vector<std::string> listKeybinds(const Hotkey::KeySpec& spec);

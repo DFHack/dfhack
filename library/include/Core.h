@@ -511,5 +511,3 @@ namespace DFHack
     std::string dfhack_version_desc();
 
 }
-
-

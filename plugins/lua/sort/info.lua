@@ -278,8 +278,8 @@ function InfoOverlay:get_key()
 end
 
 function resize_overlay(self)
-    local sw = dfhack.screen.getWindowSize()
-    local overlay_width = math.min(40, sw-(self.frame_rect.x1 + 30))
+    local iw = gui.get_interface_rect().width
+    local overlay_width = math.min(40, iw - (self.frame_rect.x1 + 30))
     if overlay_width ~= self.frame.w then
         self.frame.w = overlay_width
         return true

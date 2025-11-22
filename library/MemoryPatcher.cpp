@@ -1,6 +1,5 @@
 #include "Core.h"
 #include "MemoryPatcher.h"
-#include "Process.h"
 
 namespace DFHack
 {

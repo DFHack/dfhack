@@ -185,7 +185,7 @@ namespace DFHack
     command_result Commands::plug(color_ostream& con, Core& core, const std::string& first, const std::vector<std::string>& parts)
     {
         constexpr auto header_format = "%30s %10s %4s %8s\n";
-        constexpr auto row_format = "%30s %10s %4llu %8s\n";
+        constexpr auto row_format = "%30s %10s %4zu %8s\n";
 
         con.print(header_format, "Name", "State", "Cmds", "Enabled");
 

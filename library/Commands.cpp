@@ -8,6 +8,9 @@
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
+#include "modules/World.h"
+
+#include "df/viewscreen_new_regionst.h"
 
 #include <string>
 #include <vector>
@@ -367,6 +370,25 @@ namespace DFHack
                 << "  alias list" << std::endl;
         }
 
+        return CR_OK;
+    }
+
+    command_result Commands::fpause(color_ostream& con, Core& core, const std::string& first, const std::vector<std::string>& parts)
+    {
+        if (auto scr = Gui::getViewscreenByType<df::viewscreen_new_regionst>())
+        {
+            if (scr->doing_mods || scr->doing_simple_params || scr->doing_params)
+            {
+                con.printerr("Cannot pause now.\n");
+                return CR_FAILURE;
+            }
+            scr->abort_world_gen_dialogue = true;
+        }
+        else
+        {
+            World::SetPauseState(true);
+        }
+        con.print("The game was forced to pause!\n");
         return CR_OK;
     }
 

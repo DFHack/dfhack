@@ -18,6 +18,6 @@ namespace DFHack
         command_result type(color_ostream& con, Core& core, const std::string& first, const std::vector<std::string>& parts);
         command_result keybinding(color_ostream& con, Core& core, const std::string& first, const std::vector<std::string>& parts);
         command_result alias(color_ostream& con, Core& core, const std::string& first, const std::vector<std::string>& parts);
-
+        command_result fpause(color_ostream& con, Core& core, const std::string& first, const std::vector<std::string>& parts);
     }
 }

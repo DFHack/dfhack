@@ -7,7 +7,7 @@
 #include "LuaTools.h"
 #include "PluginManager.h"
 
-#include "Modules/Gui.h"
+#include "modules/Gui.h"
 
 #include <string>
 #include <vector>

@@ -30,6 +30,7 @@ distribution.
 #include "DataDefs.h"
 #include "Debug.h"
 #include "Console.h"
+#include "MemoryPatcher.h"
 #include "MiscUtils.h"
 #include "Module.h"
 #include "VersionInfoFactory.h"
@@ -302,7 +303,7 @@ static void fHKthread(IODATA * iodata)
     }
 }
 
-static std::string dfhack_version_desc()
+std::string DFHack::dfhack_version_desc()
 {
     std::stringstream s;
     s << Version::dfhack_version() << " ";
@@ -363,13 +364,13 @@ static command_result enableLuaScript(color_ostream &out, const std::string_view
     return ok ? CR_OK : CR_FAILURE;
 }
 
-command_result Core::runCommand(color_ostream &out, const std::string &command)
+command_result Core::runCommand(color_ostream& out, const std::string& command)
 {
     if (!command.empty())
     {
         std::vector <std::string> parts;
-        Core::cheap_tokenise(command,parts);
-        if(parts.size() == 0)
+        Core::cheap_tokenise(command, parts);
+        if (parts.size() == 0)
             return CR_NOT_IMPLEMENTED;
 
         std::string first = parts[0];
@@ -385,20 +386,23 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
         return CR_NOT_IMPLEMENTED;
 }
 
-bool is_builtin(color_ostream &con, const std::string &command) {
+bool is_builtin(color_ostream& con, const std::string& command)
+{
     CoreSuspender suspend;
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
-        !Lua::PushModulePublic(con, L, "helpdb", "is_builtin")) {
+        !Lua::PushModulePublic(con, L, "helpdb", "is_builtin"))
+    {
         con.printerr("Failed to load helpdb Lua code\n");
         return false;
     }
 
     Lua::Push(L, command);
 
-    if (!Lua::SafeCall(con, L, 1, 1)) {
+    if (!Lua::SafeCall(con, L, 1, 1))
+    {
         con.printerr("Failed Lua call to helpdb.is_builtin.\n");
         return false;
     }
@@ -625,7 +629,7 @@ static std::string sc_event_name (state_change_event id) {
     return "SC_UNKNOWN";
 }
 
-void help_helper(color_ostream &con, const std::string &entry_name) {
+void DFHack::help_helper(color_ostream &con, const std::string &entry_name) {
     ConditionalCoreSuspender suspend{};
 
     if (!suspend) {
@@ -743,38 +747,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     command_result res;
     if (first == "help" || first == "man" || first == "?")
     {
-        if(!parts.size())
-        {
-            if (con.is_console())
-            {
-                con.print("This is the DFHack console. You can type commands in and manage DFHack plugins from it.\n"
-                          "Some basic editing capabilities are included (single-line text editing).\n"
-                          "The console also has a command history - you can navigate it with Up and Down keys.\n"
-                          "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
-                          "by clicking on the program icon in the top bar of the window.\n\n");
-            }
-            con.print("Here are some basic commands to get you started:\n"
-                      "  help|?|man         - This text.\n"
-                      "  help <tool>        - Usage help for the given plugin, command, or script.\n"
-                      "  tags               - List the tags that the DFHack tools are grouped by.\n"
-                      "  ls|dir [<filter>]  - List commands, optionally filtered by a tag or substring.\n"
-                      "                       Optional parameters:\n"
-                      "                         --notags: skip printing tags for each command.\n"
-                      "                         --dev:  include commands intended for developers and modders.\n"
-                      "  cls|clear          - Clear the console.\n"
-                      "  fpause             - Force DF to pause.\n"
-                      "  die                - Force DF to close immediately, without saving.\n"
-                      "  keybinding         - Modify bindings of commands to in-game key shortcuts.\n"
-                      "\n"
-                      "See more commands by running 'ls'.\n\n"
-                     );
-
-            con.print("DFHack version %s\n", dfhack_version_desc().c_str());
-        }
-        else
-        {
-            help_helper(con, parts[0]);
-        }
+        Commands::help(con, first, parts);
     }
     else if (first == "tags")
     {
@@ -1278,7 +1251,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         res = plug_mgr->InvokeCommand(con, first, parts);
         if (res == CR_WRONG_USAGE)
         {
-            help_helper(con, first);
+            DFHack::help_helper(con, first);
         }
         else if (res == CR_NOT_IMPLEMENTED)
         {
@@ -2870,127 +2843,6 @@ std::string Core::GetAliasCommand(const std::string &name, bool ignore_params)
     if (ignore_params)
         return aliases[name][0];
     return join_strings(" ", aliases[name]);
-}
-
-/////////////////
-// ClassNameCheck
-/////////////////
-
-// Since there is no Process.cpp, put ClassNameCheck stuff in Core.cpp
-
-static std::set<std::string> known_class_names;
-static std::map<std::string, void*> known_vptrs;
-
-ClassNameCheck::ClassNameCheck(std::string _name) : name(_name), vptr(0)
-{
-    known_class_names.insert(name);
-}
-
-ClassNameCheck &ClassNameCheck::operator= (const ClassNameCheck &b)
-{
-    name = b.name; vptr = b.vptr; return *this;
-}
-
-bool ClassNameCheck::operator() (Process *p, void * ptr) const {
-    if (vptr == 0 && p->readClassName(ptr) == name)
-    {
-        vptr = ptr;
-        known_vptrs[name] = ptr;
-    }
-    return (vptr && vptr == ptr);
-}
-
-void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
-{
-    for(const auto& kcn : known_class_names) {
-        names.push_back(kcn);
-    }
-}
-
-MemoryPatcher::MemoryPatcher(Process *p_) : p(p_)
-{
-    if (!p)
-        p = Core::getInstance().p.get();
-}
-
-MemoryPatcher::~MemoryPatcher()
-{
-    close();
-}
-
-bool MemoryPatcher::verifyAccess(void *target, size_t count, bool write)
-{
-    auto *sptr = (uint8_t*)target;
-    uint8_t *eptr = sptr + count;
-
-    // Find the valid memory ranges
-    if (ranges.empty())
-        p->getMemRanges(ranges);
-
-    // Find the ranges that this area spans
-    unsigned start = 0;
-    while (start < ranges.size() && ranges[start].end <= sptr)
-        start++;
-    if (start >= ranges.size() || ranges[start].start > sptr)
-        return false;
-
-    unsigned end = start+1;
-    while (end < ranges.size() && ranges[end].start < eptr)
-    {
-        if (ranges[end].start != ranges[end-1].end)
-            return false;
-        end++;
-    }
-    if (ranges[end-1].end < eptr)
-        return false;
-
-    // Verify current permissions
-    for (unsigned i = start; i < end; i++)
-        if (!ranges[i].valid || !(ranges[i].read || ranges[i].execute) || ranges[i].shared)
-            return false;
-
-    // Apply writable permissions & update
-    for (unsigned i = start; i < end; i++)
-    {
-        auto &perms = ranges[i];
-        if ((perms.write || !write) && perms.read)
-            continue;
-
-        save.push_back(perms);
-        perms.write = perms.read = true;
-        if (!p->setPermissions(perms, perms))
-            return false;
-    }
-
-    return true;
-}
-
-bool MemoryPatcher::write(void *target, const void *src, size_t size)
-{
-    if (!makeWritable(target, size))
-        return false;
-
-    memmove(target, src, size);
-
-    p->flushCache(target, size);
-    return true;
-}
-
-void MemoryPatcher::close()
-{
-    for (size_t i  = 0; i < save.size(); i++)
-        p->setPermissions(save[i], save[i]);
-
-    save.clear();
-    ranges.clear();
-};
-
-
-bool Process::patchMemory(void *target, const void* src, size_t count)
-{
-    MemoryPatcher patcher(this);
-
-    return patcher.write(target, src, count);
 }
 
 /*******************************************************************************

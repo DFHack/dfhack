@@ -25,6 +25,7 @@ distribution.
 #pragma once
 
 #include "Console.h"
+#include "Commands.h"
 #include "CoreDefs.h"
 #include "Export.h"
 #include "Hooks.h"
@@ -170,7 +171,8 @@ namespace DFHack
         std::string getHotkeyCmd( bool &keep_going );
 
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
-        command_result runCommand(color_ostream &out, const std::string &command);
+        command_result runCommand(color_ostream& out, const std::string& command);
+
         bool loadScriptFile(color_ostream &out, std::filesystem::path fname, bool silent = false);
 
         bool addScriptPath(std::filesystem::path path, bool search_before = false);
@@ -502,4 +504,12 @@ namespace DFHack
         operator bool() const { return owns_lock(); }
     };
 
+    // unclassified functions related to core
+
+    void help_helper(color_ostream& con, const std::string& entry_name);
+
+    std::string dfhack_version_desc();
+
 }
+
+

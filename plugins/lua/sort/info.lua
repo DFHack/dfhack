@@ -299,8 +299,7 @@ function get_panel_offsets()
     if tabs_in_two_rows then
         t_offset = shift_right and 0 or 3
     end
-    if info.current_mode == df.info_interface_mode_type.JOBS or
-    info.current_mode == df.info_interface_mode_type.BUILDINGS then
+    if info.current_mode == df.info_interface_mode_type.JOBS then
         t_offset = t_offset - 1
     end
     return l_offset, t_offset

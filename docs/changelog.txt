@@ -57,9 +57,11 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
 
 ## Fixes
 - `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
+- `sort`: Places search widget moved to account for DF's new "Siege engines" subtab
 
 ## Misc Improvements
 

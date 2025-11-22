@@ -27,60 +27,101 @@ distribution.
 #include <stdint.h>
 #include <string.h>
 #include <stdlib.h>
+
+#include <algorithm>
+#include <cstring>
 #include <sstream>
 #include <iterator>
+
 namespace DFHack
 {
     template <typename T = int>
     class BitArray
     {
-    public:
-        BitArray() : bits(NULL), size(0) {}
-        BitArray(const BitArray<T> &other) : bits(NULL), size(0)
+    private:
+        // note that these are mandated by the implementation of flagarrayst in DF code, and must be exactly as below
+        using buffer_type = unsigned char;
+        using size_type = int32_t;
+
+        buffer_type* _bits;
+        size_type _size;
+
+        void resize(size_type newsize, const BitArray<T>* replacement)
         {
-            *this = other;
+            if (newsize == _size)
+                return;
+
+            if (newsize == 0)
+            {
+                delete[] _bits;
+                _bits = nullptr;
+                _size = 0;
+                return;
+            }
+
+            buffer_type* old_data = _bits;
+
+            _bits = new buffer_type[newsize];
+
+            buffer_type* copysrc = replacement ? replacement->_bits : old_data;
+            size_type copysize = replacement ? replacement->_size : _size;
+
+            if (copysrc)
+                std::memcpy(_bits, copysrc, std::min(copysize, newsize));
+
+            if (newsize > _size)
+                std::memset(_bits + _size, 0, newsize - _size);
+
+            delete[] old_data;
+
+            _size = newsize;
+        }
+
+        void extend(T index)
+        {
+            size_type newsize = (index + 7 ) / 8;
+            if (newsize > _size)
+                resize(newsize);
+        }
+
+    public:
+        BitArray() : _bits(nullptr), _size(0) {}
+        BitArray(const BitArray<T> &other) : _bits(nullptr), _size(0)
+        {
+            resize(other._size, &other);
         }
         ~BitArray()
         {
-            free(bits);
+            delete [] _bits;
         }
 
-        explicit BitArray(T last) : bits(NULL), size(0) {
+        explicit BitArray(T last) : _bits(nullptr), _size(0) {
             extend(last);
         }
-        explicit BitArray(unsigned bytes) : bits(NULL), size(0) {
+        explicit BitArray(unsigned bytes) : _bits(nullptr), _size(0) {
             resize(bytes);
+        }
+
+        size_type size() const { return _size; }
+        buffer_type* bits() const { return _bits; }
+
+        void resize( size_type newsize )
+        {
+            resize(newsize, nullptr);
         }
 
         void clear_all ( void )
         {
-            if(bits)
-                memset(bits, 0, size);
+            if(_bits)
+                memset(_bits, 0, _size);
         }
-        void resize (unsigned newsize)
+
+        BitArray<T>& operator= (const BitArray<T>& other)
         {
-            if (newsize == size)
-                return;
-            uint8_t* mem = (uint8_t *) realloc(bits, newsize);
-            if(!mem && newsize != 0)
-                throw std::bad_alloc();
-            bits = mem;
-            if (newsize > size)
-                memset(bits+size, 0, newsize-size);
-            size = newsize;
-        }
-        BitArray<T> &operator= (const BitArray<T> &other)
-        {
-            resize(other.size);
-            memcpy(bits, other.bits, size);
+            resize(other._size, &other);
             return *this;
         }
-        void extend (T index)
-        {
-            unsigned newsize = (index / 8) + 1;
-            if (newsize > size)
-                resize(newsize);
-        }
+
         void set (T index, bool value = true)
         {
             if(!value)
@@ -88,71 +129,74 @@ namespace DFHack
                 clear(index);
                 return;
             }
-            uint32_t byte = index / 8;
+            size_type byte = index / 8;
             extend(index);
-            //if(byte < size)
-            {
-                uint8_t bit = 1 << (index % 8);
-                bits[byte] |= bit;
-            }
+            uint8_t bit = 1 << (index % 8);
+            _bits[byte] |= bit;
         }
+
         void clear (T index)
         {
-            uint32_t byte = index / 8;
-            if(byte < size)
+            size_type byte = index / 8;
+            if(byte < _size)
             {
                 uint8_t bit = 1 << (index % 8);
-                bits[byte] &= ~bit;
+                _bits[byte] &= ~bit;
             }
         }
+
         void toggle (T index)
         {
-            uint32_t byte = index / 8;
+            size_type byte = index / 8;
             extend(index);
-            //if(byte < size)
-            {
-                uint8_t bit = 1 << (index % 8);
-                bits[byte] ^= bit;
-            }
+            uint8_t bit = 1 << (index % 8);
+            _bits[byte] ^= bit;
         }
+
         bool is_set (T index) const
         {
-            uint32_t byte = index / 8;
-            if(byte < size)
+            size_type byte = index / 8;
+            if(byte < _size)
             {
                 uint8_t bit = 1 << (index % 8);
-                return bit & bits[byte];
+                return bit & _bits[byte];
             }
             else return false;
         }
+
         /// WARNING: this can truncate long bit arrays
-        uint32_t as_int ()
+        template <typename I = uint32_t>
+        I as_int () const
         {
-            if(!bits)
+            if(!_bits)
                 return 0;
-            if(size >= 4)
-                return  *(uint32_t *)bits;
-            uint32_t target = 0;
-            memcpy (&target, bits,size);
+            if (_size >= sizeof(I))
+                // FIXME (C++23): should be std::start_lifetime_as
+                return *reinterpret_cast<I*>(_bits);
+            I target = 0;
+            std::memcpy(&target, _bits, _size);
             return target;
         }
+
         /// WARNING: this can be truncated / only overwrite part of the data
-        bool operator =(uint32_t data)
+        template <typename I = uint32_t>
+        bool operator =(I data)
         {
-            if(!bits)
+            if(!_bits)
                 return false;
-            if (size >= 4)
+            if (_size >= sizeof(I))
             {
-                (*(uint32_t *)bits) = data;
+                *reinterpret_cast<I*>(_bits) = data;
                 return true;
             }
-            memcpy(bits, &data, size);
+            std::memcpy(_bits, &data, _size);
             return true;
         }
+
         friend std::ostream& operator<< (std::ostream &out, BitArray <T> &ba)
         {
             std::stringstream sstr;
-            for (int i = 0; i < ba.size * 8; i++)
+            for (int i = 0; i < ba._size * 8; i++)
             {
                 if(ba.is_set((T)i))
                     sstr << "1 ";
@@ -162,23 +206,44 @@ namespace DFHack
             out << sstr.str();
             return out;
         }
-        uint8_t * bits;
-        uint32_t size;
     };
 
     template <typename T = int>
     class DfArray
     {
+    private:
         T *m_data;
         unsigned short m_size;
-    public:
-        DfArray() : m_data(NULL), m_size(0) {}
-        ~DfArray() { free(m_data); }
 
-        DfArray(const DfArray<T> &other) : m_data(NULL), m_size(0)
+        void resize(unsigned short new_size, const DfArray<T>* replacement)
         {
-            resize(other.m_size);
-            memcpy(m_data, other.m_data,m_size*sizeof(T));
+            if (new_size == m_size)
+                return;
+
+            T* old_data = m_data;
+
+            m_data = (T*) new T[new_size];
+
+            T* copysrc = replacement ? replacement->m_data : old_data;
+            unsigned short copysize = replacement ? replacement->m_size : m_size;
+
+            if (copysrc)
+                std::memcpy(m_data, copysrc, sizeof(T) * std::min(copysize, new_size));
+
+            if (new_size > m_size)
+                std::memset(m_data + m_size, 0, sizeof(T) * (new_size - m_size));
+
+            delete[] old_data;
+
+            m_size = new_size;
+        }
+    public:
+        DfArray() : m_data(nullptr), m_size(0) {}
+        ~DfArray() { delete[] m_data; }
+
+        DfArray(const DfArray<T> &other) : m_data(nullptr), m_size(0)
+        {
+            resize(other.m_size, &other);
         }
 
         typedef T value_type;
@@ -195,28 +260,12 @@ namespace DFHack
 
         void resize(unsigned new_size)
         {
-            if (new_size == m_size)
-                return;
-            if(!m_data)
-            {
-                m_data = (T*) malloc(sizeof(T)*new_size);
-            }
-            else
-            {
-                T* mem = (T*) realloc(m_data, sizeof(T)*new_size);
-                if(!mem && new_size != 0)
-                    throw std::bad_alloc();
-                m_data = mem;
-            }
-            if (new_size > m_size)
-                memset(m_data+sizeof(T)*m_size, 0, sizeof(T)*(new_size - m_size));
-            m_size = new_size;
+            resize(new_size, nullptr);
         }
 
         DfArray &operator= (const DfArray<T> &other)
         {
-            resize(other.size());
-            memcpy(data(), other.data(), sizeof(T)*size());
+            resize(other.size(), &other);
             return *this;
         }
 

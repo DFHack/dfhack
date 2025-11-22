@@ -25,7 +25,6 @@ distribution.
 #pragma once
 
 #include "Console.h"
-#include "Commands.h"
 #include "CoreDefs.h"
 #include "Export.h"
 #include "Hooks.h"
@@ -214,7 +213,7 @@ namespace DFHack
         static void print(const char *format, ...) Wformat(printf,1,2);
         static void printerr(const char *format, ...) Wformat(printf,1,2);
 
-        PluginManager *getPluginManager() { return plug_mgr; }
+        PluginManager* getPluginManager() const { return plug_mgr; }
 
         static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
@@ -225,6 +224,8 @@ namespace DFHack
             assert(bypass_assertion || isSuspended());
             return State;
         }
+
+        static command_result enableLuaScript(color_ostream& out, const std::string_view name, bool enabled);
 
     private:
         DFHack::Console con;
@@ -249,8 +250,8 @@ namespace DFHack
         void onStateChange(color_ostream &out, state_change_event event);
         void handleLoadAndUnloadScripts(color_ostream &out, state_change_event event);
 
-        Core(Core const&);              // Don't Implement
-        void operator=(Core const&);    // Don't implement
+        Core(Core const&) = delete;
+        void operator=(Core const&) = delete;
 
         // report error to user while failing
         void fatal (std::string output, const char * title = nullptr);
@@ -507,7 +508,6 @@ namespace DFHack
     // unclassified functions related to core
 
     void help_helper(color_ostream& con, const std::string& entry_name);
-
     std::string dfhack_version_desc();
-
+    bool is_builtin(color_ostream& con, const std::string& command);
 }

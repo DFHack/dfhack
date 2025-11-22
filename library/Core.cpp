@@ -22,11 +22,12 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "Core.h"
+
 #include "Internal.h"
 
 #include "Error.h"
 #include "MemAccess.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "Debug.h"
 #include "Console.h"
@@ -42,6 +43,8 @@ distribution.
 #include "LuaTools.h"
 #include "DFHackVersion.h"
 #include "md5wrapper.h"
+
+#include "Commands.h"
 
 #include "modules/DFSDL.h"
 #include "modules/DFSteam.h"
@@ -353,7 +356,7 @@ static bool init_enable_script(color_ostream &out, lua_State *state, const std::
     return true;
 }
 
-static command_result enableLuaScript(color_ostream &out, const std::string_view name, bool enabled)
+command_result Core::enableLuaScript(color_ostream &out, const std::string_view name, bool enabled)
 {
     auto init_fn = [name, enabled](color_ostream& out, lua_State* state) -> bool {
         return init_enable_script(out, state, name, enabled);
@@ -386,7 +389,7 @@ command_result Core::runCommand(color_ostream& out, const std::string& command)
         return CR_NOT_IMPLEMENTED;
 }
 
-bool is_builtin(color_ostream& con, const std::string& command)
+bool DFHack::is_builtin(color_ostream& con, const std::string& command)
 {
     CoreSuspender suspend;
     auto L = DFHack::Core::getInstance().getLuaState();
@@ -747,7 +750,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     command_result res;
     if (first == "help" || first == "man" || first == "?")
     {
-        Commands::help(con, first, parts);
+        return Commands::help(con, *this, first, parts);
     }
     else if (first == "tags")
     {
@@ -755,119 +758,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "load" || first == "unload" || first == "reload")
     {
-        bool all = false;
-        bool load = (first == "load");
-        bool unload = (first == "unload");
-        bool reload = (first == "reload");
-        if (parts.size())
-        {
-            for (const auto& p : parts)
-            {
-                if (p.size() && p[0] == '-')
-                {
-                    if (p.find('a') != std::string::npos)
-                        all = true;
-                }
-            }
-            auto ret = CR_OK;
-            if (all)
-            {
-                if (load && !plug_mgr->loadAll())
-                    ret = CR_FAILURE;
-                else if (unload && !plug_mgr->unloadAll())
-                    ret = CR_FAILURE;
-                else if (reload && !plug_mgr->reloadAll())
-                    ret = CR_FAILURE;
-            }
-            else
-            {
-               for (auto& p : parts)
-                {
-                    if (p.empty() || p[0] == '-')
-                        continue;
-                    if (load && !plug_mgr->load(p))
-                        ret = CR_FAILURE;
-                    else if (unload && !plug_mgr->unload(p))
-                        ret = CR_FAILURE;
-                    else if (reload && !plug_mgr->reload(p))
-                        ret = CR_FAILURE;
-                }
-            }
-            if (ret != CR_OK)
-                con.printerr("%s failed\n", first.c_str());
-            return ret;
-        }
-        else {
-            con.printerr("%s: no arguments\n", first.c_str());
-            return CR_FAILURE;
-        }
+        return Commands::load(con, *this, first, parts);
     }
     else if( first == "enable" || first == "disable" )
     {
-        CoreSuspender suspend;
-        bool enable = (first == "enable");
-
-        if(parts.size())
-        {
-            for (auto& part : parts)
-            {
-                if (has_backslashes(part))
-                {
-                    con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", part.c_str());
-                    replace_backslashes_with_forwardslashes(part);
-                }
-
-                part = GetAliasCommand(part, true);
-
-                Plugin * plug = (*plug_mgr)[part];
-
-                if(!plug)
-                {
-                    std::filesystem::path lua = findScript(part + ".lua");
-                    if (!lua.empty())
-                    {
-                        res = enableLuaScript(con, part, enable);
-                    }
-                    else
-                    {
-                        res = CR_NOT_FOUND;
-                        con.printerr("No such plugin or Lua script: %s\n", part.c_str());
-                    }
-                }
-                else if (!plug->can_set_enabled())
-                {
-                    res = CR_NOT_IMPLEMENTED;
-                    con.printerr("Cannot %s plugin: %s\n", first.c_str(), part.c_str());
-                }
-                else
-                {
-                    res = plug->set_enabled(con, enable);
-
-                    if (res != CR_OK || plug->is_enabled() != enable)
-                        con.printerr("Could not %s plugin: %s\n", first.c_str(), part.c_str());
-                }
-            }
-
-            return res;
-        }
-        else
-        {
-           for (auto& [key, plug] : *plug_mgr)
-            {
-                if (!plug)
-                    continue;
-                if (!plug->can_be_enabled()) continue;
-
-                con.print(
-                    "%21s  %-3s%s\n",
-                    (key+":").c_str(),
-                    plug->is_enabled() ? "on" : "off",
-                    plug->can_set_enabled() ? "" : " (controlled internally)"
-                );
-            }
-
-            Lua::CallLuaModuleFunction(con, "script-manager", "list");
-        }
+        return Commands::enable(con, *this, first, parts);
     }
     else if (first == "ls" || first == "dir")
     {
@@ -875,173 +770,19 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "plug")
     {
-        constexpr auto header_format = "%30s %10s %4s %8s\n";
-        constexpr auto row_format =    "%30s %10s %4zu %8s\n";
-        con.print(header_format, "Name", "State", "Cmds", "Enabled");
-
-        plug_mgr->refresh();
-        for (auto& [key, plug] : *plug_mgr)
-        {
-            if (!plug)
-                continue;
-
-            if (parts.size() && std::ranges::find(parts, key) == parts.end())
-                continue;
-
-            color_value color;
-            switch (plug->getState())
-            {
-                case Plugin::PS_LOADED:
-                    color = COLOR_RESET;
-                    break;
-                case Plugin::PS_UNLOADED:
-                case Plugin::PS_UNLOADING:
-                    color = COLOR_YELLOW;
-                    break;
-                case Plugin::PS_LOADING:
-                    color = COLOR_LIGHTBLUE;
-                    break;
-                case Plugin::PS_BROKEN:
-                    color = COLOR_LIGHTRED;
-                    break;
-                default:
-                    color = COLOR_LIGHTMAGENTA;
-                    break;
-            }
-            con.color(color);
-            con.print(row_format,
-                plug->getName().c_str(),
-                Plugin::getStateDescription(plug->getState()),
-                plug->size(),
-                (plug->can_be_enabled()
-                    ? (plug->is_enabled() ? "enabled" : "disabled")
-                    : "n/a")
-            );
-            con.color(COLOR_RESET);
-        }
+        return Commands::plug(con, *this, first, parts);
     }
     else if (first == "type")
     {
-        if (!parts.size())
-        {
-            con.printerr("type: no argument\n");
-            return CR_WRONG_USAGE;
-        }
-        con << parts[0];
-        bool builtin = is_builtin(con, parts[0]);
-        std::filesystem::path lua_path = findScript(parts[0] + ".lua");
-        Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
-        if (builtin)
-        {
-            con << " is a built-in command";
-            con << std::endl;
-        }
-        else if (IsAlias(parts[0]))
-        {
-            con << " is an alias: " << GetAliasCommand(parts[0]) << std::endl;
-        }
-        else if (plug)
-        {
-            con << " is a command implemented by the plugin " << plug->getName() << std::endl;
-        }
-        else if (!lua_path.empty())
-        {
-            con << " is a Lua script: " << lua_path << std::endl;
-        }
-        else
-        {
-            con << " is not a recognized command." << std::endl;
-            plug = plug_mgr->getPluginByName(parts[0]);
-            if (plug)
-                con << "Plugin " << parts[0] << " exists and implements " << plug->size() << " commands." << std::endl;
-            return CR_FAILURE;
-        }
+        return Commands::type(con, *this, first, parts);
     }
     else if (first == "keybinding")
     {
-        if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add"))
-        {
-            std::string keystr = parts[1];
-            if (parts[0] == "set")
-                ClearKeyBindings(keystr);
-            // for (int i = parts.size()-1; i >= 2; i--)
-            for (const auto& part : parts | std::views::drop(2) | std::views::reverse)
-            {
-                if (!AddKeyBinding(keystr, part)) {
-                    con.printerr("Invalid key spec: %s\n", keystr.c_str());
-                    break;
-                }
-            }
-        }
-        else if (parts.size() >= 2 && parts[0] == "clear")
-        {
-            // for (size_t i = 1; i < parts.size(); i++)
-            for (const auto& part : parts | std::views::drop(1))
-            {
-                if (!ClearKeyBindings(part)) {
-                    con.printerr("Invalid key spec: %s\n", part.c_str());
-                    break;
-                }
-            }
-        }
-        else if (parts.size() == 2 && parts[0] == "list")
-        {
-            std::vector<std::string> list = ListKeyBindings(parts[1]);
-            if (list.empty())
-                con << "No bindings." << std::endl;
-            for (const auto& kb : list)
-                con << "  " << kb << std::endl;
-        }
-        else
-        {
-            con << "Usage:" << std::endl
-                << "  keybinding list <key>" << std::endl
-                << "  keybinding clear <key>[@context]..." << std::endl
-                << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-                << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-                << "Later adds, and earlier items within one command have priority." << std::endl
-                << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, 0-9, F1-F12, `, or Enter)." << std::endl
-                << "Context may be used to limit the scope of the binding, by" << std::endl
-                << "requiring the current context to have a certain prefix." << std::endl
-                << "Current UI context is: " << std::endl
-                << join_strings("\n", Gui::getCurFocus(true)) << std::endl;
-        }
+        return Commands::keybinding(con, *this, first, parts);
     }
     else if (first == "alias")
     {
-        if (parts.size() >= 3 && (parts[0] == "add" || parts[0] == "replace"))
-        {
-            const std::string &name = parts[1];
-            std::vector<std::string> cmd(parts.begin() + 2, parts.end());
-            if (!AddAlias(name, cmd, parts[0] == "replace"))
-            {
-                con.printerr("Could not add alias %s - already exists\n", name.c_str());
-                return CR_FAILURE;
-            }
-        }
-        else if (parts.size() >= 2 && (parts[0] == "delete" || parts[0] == "clear"))
-        {
-            if (!RemoveAlias(parts[1]))
-            {
-                con.printerr("Could not remove alias %s\n", parts[1].c_str());
-                return CR_FAILURE;
-            }
-        }
-        else if (parts.size() >= 1 && (parts[0] == "list"))
-        {
-            auto aliases = ListAliases();
-            for (auto p : aliases)
-            {
-                con << p.first << ": " << join_strings(" ", p.second) << std::endl;
-            }
-        }
-        else
-        {
-            con << "Usage: " << std::endl
-                << "  alias add|replace <name> <command...>" << std::endl
-                << "  alias delete|clear <name> <command...>" << std::endl
-                << "  alias list" << std::endl;
-        }
+        return Commands::alias(con, *this, first, parts);
     }
     else if (first == "fpause")
     {

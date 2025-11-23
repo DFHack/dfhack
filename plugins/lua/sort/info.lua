@@ -292,8 +292,7 @@ end
 
 function get_panel_offsets()
     local tabs_in_two_rows = is_tabs_in_two_rows()
-    local shift_right = info.current_mode == df.info_interface_mode_type.ARTIFACTS or
-        info.current_mode == df.info_interface_mode_type.LABOR
+    local shift_right = info.current_mode == df.info_interface_mode_type.ARTIFACTS
     local l_offset = (not tabs_in_two_rows and shift_right) and 4 or 0
     local t_offset = 1
     if tabs_in_two_rows then

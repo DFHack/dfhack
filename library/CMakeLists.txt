@@ -391,7 +391,7 @@ else()
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "-include Export.h" )
     add_library(dfhooks_dfhack SHARED Hooks.cpp)
-    target_link_libraries(dfhooks_dfhack dfhack)
+    target_link_libraries(dfhooks_dfhack dfhack fmt)
 endif()
 
 # effectively disables debug builds...

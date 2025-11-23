@@ -227,6 +227,27 @@ namespace DFHack
 
         static command_result enableLuaScript(color_ostream& out, const std::string_view name, bool enabled);
 
+        const std::vector<StateChangeScript> getStateChangeScripts() const
+        {
+            return state_change_scripts;
+        }
+
+        void addStateChangeScript(const StateChangeScript& script)
+        {
+            state_change_scripts.push_back(script);
+        }
+
+        bool removeStateChangeScript(const StateChangeScript& script)
+        {
+            auto it = std::find(state_change_scripts.begin(), state_change_scripts.end(), script);
+            if (it != state_change_scripts.end())
+            {
+                state_change_scripts.erase(it);
+                return true;
+            }
+            return false;
+        }
+
     private:
         DFHack::Console con;
 
@@ -510,4 +531,7 @@ namespace DFHack
     void help_helper(color_ostream& con, const std::string& entry_name);
     std::string dfhack_version_desc();
     bool is_builtin(color_ostream& con, const std::string& command);
+    std::string sc_event_name(state_change_event id);
+    state_change_event sc_event_id(std::string name);
+
 }

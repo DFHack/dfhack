@@ -612,7 +612,7 @@ static void sc_event_map_init() {
     }
 }
 
-static state_change_event sc_event_id (std::string name) {
+state_change_event DFHack::sc_event_id (std::string name) {
     sc_event_map_init();
     auto it = state_change_event_map.find(name);
     if (it != state_change_event_map.end())
@@ -622,7 +622,7 @@ static state_change_event sc_event_id (std::string name) {
     return SC_UNKNOWN;
 }
 
-static std::string sc_event_name (state_change_event id) {
+std::string DFHack::sc_event_name (state_change_event id) {
     sc_event_map_init();
     for (auto it = state_change_event_map.begin(); it != state_change_event_map.end(); ++it)
     {
@@ -790,13 +790,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "cls" || first == "clear")
     {
-        if (con.is_console())
-            ((Console&)con).clear();
-        else
-        {
-            con.printerr("No console to clear.\n");
-            return CR_NEEDS_CONSOLE;
-        }
+        return Commands::clear(con, *this, first, parts);
     }
     else if (first == "die")
     {
@@ -808,173 +802,27 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "kill-lua")
     {
-        bool force = false;
-        for (const auto& part : parts)
-        {
-            if (part == "force")
-                force = true;
-        }
-        if (!Lua::Interrupt(force))
-        {
-            con.printerr(
-                "Failed to register hook. This can happen if you have"
-                " lua profiling or coverage monitoring enabled. Use"
-                " 'kill-lua force' to force, but this may disable"
-                " profiling and coverage monitoring.\n");
-        }
+        return Commands::kill_lua(con, *this, first, parts);
     }
     else if (first == "script")
     {
-        if(parts.size() == 1)
-        {
-            loadScriptFile(con, std::filesystem::weakly_canonical(std::filesystem::path{parts[0]}), false);
-        }
-        else
-        {
-            con << "Usage:" << std::endl
-                << "  script <filename>" << std::endl;
-            return CR_WRONG_USAGE;
-        }
+        return Commands::script(con, *this, first, parts);
     }
     else if (first == "hide")
     {
-        if (!getConsole().hide())
-        {
-            con.printerr("Could not hide console\n");
-            return CR_FAILURE;
-        }
-        return CR_OK;
+        return Commands::hide(con, *this, first, parts);
     }
     else if (first == "show")
     {
-        if (!getConsole().show())
-        {
-            con.printerr("Could not show console\n");
-            return CR_FAILURE;
-        }
-        return CR_OK;
+        return Commands::show(con, *this, first, parts);
     }
     else if (first == "sc-script")
     {
-        if (parts.empty() || parts[0] == "help" || parts[0] == "?")
-        {
-            con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << std::endl;
-            con << "Valid event names (SC_ prefix is optional):" << std::endl;
-            for (int i = SC_WORLD_LOADED; i <= SC_UNPAUSED; i++)
-            {
-                std::string name = sc_event_name((state_change_event)i);
-                if (name != "SC_UNKNOWN")
-                    con << "  " << name << std::endl;
-            }
-            return CR_OK;
-        }
-        else if (parts[0] == "list")
-        {
-            if(parts.size() < 2)
-                parts.push_back("");
-            if (parts[1].size() && sc_event_id(parts[1]) == SC_UNKNOWN)
-            {
-                con << "Unrecognized event name: " << parts[1] << std::endl;
-                return CR_WRONG_USAGE;
-            }
-            for (const auto& state_script : state_change_scripts)
-            {
-                if (!parts[1].size() || (state_script.event == sc_event_id(parts[1])))
-                {
-                    con.print("%s (%s): %s%s\n", sc_event_name(state_script.event).c_str(),
-                        state_script.save_specific ? "save-specific" : "global",
-                        state_script.save_specific ? "<save folder>/raw/" : "<DF folder>/",
-                        state_script.path.c_str());
-                }
-            }
-            return CR_OK;
-        }
-        else if (parts[0] == "add")
-        {
-            if (parts.size() < 3 || (parts.size() >= 4 && parts[3] != "-save"))
-            {
-                con << "Usage: sc-script add EVENT path-to-script [-save]" << std::endl;
-                return CR_WRONG_USAGE;
-            }
-            state_change_event evt = sc_event_id(parts[1]);
-            if (evt == SC_UNKNOWN)
-            {
-                con << "Unrecognized event: " << parts[1] << std::endl;
-                return CR_FAILURE;
-            }
-            bool save_specific = (parts.size() >= 4 && parts[3] == "-save");
-            StateChangeScript script(evt, parts[2], save_specific);
-            for (const auto& state_script : state_change_scripts)
-            {
-                if (script == state_script)
-                {
-                    con << "Script already registered" << std::endl;
-                    return CR_FAILURE;
-                }
-            }
-            state_change_scripts.push_back(script);
-            return CR_OK;
-        }
-        else if (parts[0] == "remove")
-        {
-            if (parts.size() < 3 || (parts.size() >= 4 && parts[3] != "-save"))
-            {
-                con << "Usage: sc-script remove EVENT path-to-script [-save]" << std::endl;
-                return CR_WRONG_USAGE;
-            }
-            state_change_event evt = sc_event_id(parts[1]);
-            if (evt == SC_UNKNOWN)
-            {
-                con << "Unrecognized event: " << parts[1] << std::endl;
-                return CR_FAILURE;
-            }
-            bool save_specific = (parts.size() >= 4 && parts[3] == "-save");
-            StateChangeScript tmp(evt, parts[2], save_specific);
-            auto it = std::find(state_change_scripts.begin(), state_change_scripts.end(), tmp);
-            if (it != state_change_scripts.end())
-            {
-                state_change_scripts.erase(it);
-                return CR_OK;
-            }
-            else
-            {
-                con << "Unrecognized script" << std::endl;
-                return CR_FAILURE;
-            }
-        }
-        else
-        {
-            con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << std::endl;
-            return CR_WRONG_USAGE;
-        }
+        return Commands::sc_script(con, *this, first, parts);
     }
     else if (first == "devel/dump-rpc")
     {
-        if (parts.size() == 1)
-        {
-            std::ofstream file(parts[0]);
-            CoreService core;
-            core.dumpMethods(file);
-
-            for (auto & it : *plug_mgr)
-            {
-                Plugin * plug = it.second;
-                if (!plug)
-                    continue;
-
-                std::unique_ptr<RPCService> svc(plug->rpc_connect(con));
-                if (!svc)
-                    continue;
-
-                file << "// Plugin: " << plug->getName() << std::endl;
-                svc->dumpMethods(file);
-            }
-        }
-        else
-        {
-            con << "Usage: devel/dump-rpc \"filename\"" << std::endl;
-            return CR_WRONG_USAGE;
-        }
+        return Commands::dump_rpc(con, *this, first, parts);
     }
     else if (RunAlias(con, first, parts, res))
     {

@@ -124,7 +124,7 @@ macro(dfhack_plugin)
             target_include_directories(${PLUGIN_NAME} PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/proto")
             target_link_libraries(${PLUGIN_NAME} protobuf-lite)
         endif()
-        target_link_libraries(${PLUGIN_NAME} dfhack dfhack-version ${PLUGIN_LINK_LIBRARIES})
+        target_link_libraries(${PLUGIN_NAME} dfhack dfhack-version fmt ${PLUGIN_LINK_LIBRARIES})
 
         if(UNIX)
             set(PLUGIN_COMPILE_FLAGS "${PLUGIN_COMPILE_FLAGS} ${PLUGIN_COMPILE_FLAGS_GCC}")

@@ -420,7 +420,7 @@ endif()
 target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version ${PROJECT_LIBS})
 set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
-target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static)
+target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static fmt)
 if(WIN32)
     target_link_libraries(dfhack-client dbghelp)
 endif()

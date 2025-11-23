@@ -4073,6 +4073,9 @@ static int internal_getModifiers(lua_State *L)
     lua_pushstring(L, "alt");
     lua_pushboolean(L, modstate & DFH_MOD_ALT);
     lua_settable(L, -3);
+    lua_pushstring(L, "super");
+    lua_pushboolean(L, modstate & DFH_MOD_SUPER);
+    lua_settable(L, -3);
     return 1;
 }
 

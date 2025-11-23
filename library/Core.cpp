@@ -2439,6 +2439,8 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
         else if (sym == SDLK_LALT || sym == SDLK_RALT)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
+        else if (sym == SDLK_LGUI || sym == SDLK_RGUI) // Renamed to LMETA/RMETA in SDL3
+            modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_SUPER : modstate & ~DFH_MOD_SUPER;
         else if (ke.state == SDL_PRESSED && !hotkey_states[sym])
         {
             // the check against hotkey_states[sym] ensures we only process keybindings once per keypress

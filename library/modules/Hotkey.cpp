@@ -42,6 +42,7 @@ std::string Hotkey::keyspec_to_string(const KeySpec &spec, bool include_focus) {
     std::string sym;
     if (spec.modifiers & DFH_MOD_CTRL) sym += "Ctrl-";
     if (spec.modifiers & DFH_MOD_ALT) sym += "Alt-";
+    if (spec.modifiers & DFH_MOD_SUPER) sym += "Super-";
     if (spec.modifiers & DFH_MOD_SHIFT) sym += "Shift-";
 
     std::string key_name;
@@ -91,7 +92,10 @@ std::optional<KeySpec> Hotkey::parseKeySpec(std::string spec, std::string* err) 
         }
         return found;
     };
-    while (match_modifier("shift-", DFH_MOD_SHIFT) || match_modifier("ctrl-", DFH_MOD_CTRL) || match_modifier("alt-", DFH_MOD_ALT)) {}
+    while (match_modifier("shift-", DFH_MOD_SHIFT)
+            || match_modifier("ctrl-", DFH_MOD_CTRL)
+            || match_modifier("alt-", DFH_MOD_ALT)
+            || match_modifier("super-", DFH_MOD_SUPER)) {}
 
     out.sym = DFSDL::DFSDL_GetKeyFromName(spec.c_str());
     if (out.sym != SDLK_UNKNOWN)

@@ -3535,7 +3535,7 @@ and are only documented here for completeness:
 * ``dfhack.internal.getModifiers()``
 
   Returns the state of the keyboard modifier keys in a table of string ->
-  boolean. The keys are ``ctrl``, ``shift``, and ``alt``.
+  boolean. The keys are ``ctrl``, ``shift``, ``super``, and ``alt``.
 
 * ``dfhack.internal.getSuppressDuplicateKeyboardEvents()``
 * ``dfhack.internal.setSuppressDuplicateKeyboardEvents(suppress)``

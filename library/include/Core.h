@@ -58,6 +58,7 @@ namespace DFHack
     constexpr auto DFH_MOD_SHIFT = 1;
     constexpr auto DFH_MOD_CTRL = 2;
     constexpr auto DFH_MOD_ALT = 4;
+    constexpr auto DFH_MOD_SUPER = 8;
 
     class Process;
     class Module;

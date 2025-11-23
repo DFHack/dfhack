@@ -38,39 +38,38 @@ bool operator==(const KeyBinding& a, const KeyBinding& b) {
         a.cmdline == b.cmdline;
 }
 
-std::string Hotkey::keyspec_to_string(const KeySpec &spec, bool include_focus) {
-    std::string sym;
-    if (spec.modifiers & DFH_MOD_CTRL) sym += "Ctrl-";
-    if (spec.modifiers & DFH_MOD_ALT) sym += "Alt-";
-    if (spec.modifiers & DFH_MOD_SUPER) sym += "Super-";
-    if (spec.modifiers & DFH_MOD_SHIFT) sym += "Shift-";
+std::string KeySpec::toString(bool include_focus) const {
+    std::string out;
+    if (modifiers & DFH_MOD_CTRL) out += "Ctrl-";
+    if (modifiers & DFH_MOD_ALT) out += "Alt-";
+    if (modifiers & DFH_MOD_SUPER) out += "Super-";
+    if (modifiers & DFH_MOD_SHIFT) out += "Shift-";
 
     std::string key_name;
-    if (spec.sym < 0) {
-        key_name = "MOUSE" + std::to_string(-spec.sym);
+    if (this->sym < 0) {
+        key_name = "MOUSE" + std::to_string(-this->sym);
     } else {
-        key_name = DFSDL::DFSDL_GetKeyName(spec.sym);
+        key_name = DFSDL::DFSDL_GetKeyName(this->sym);
     }
-    sym += key_name;
+    out += key_name;
 
-    if (include_focus && !spec.focus.empty()) {
-        sym += "@";
+    if (include_focus && !this->focus.empty()) {
+        out += "@";
         bool first = true;
-        for (const auto& focus : spec.focus) {
+        for (const auto& fc : this->focus) {
             if (first) {
                 first = false;
-                sym += focus;
+                out += fc;
             } else {
-                sym += "|" + focus;
+                out += "|" + fc;
             }
         }
     }
 
-    return sym;
+    return out;
 }
 
-
-std::optional<KeySpec> Hotkey::parseKeySpec(std::string spec, std::string* err) {
+std::optional<KeySpec> KeySpec::parse(std::string spec, std::string* err) {
     KeySpec out;
 
     // Determine focus string, if present
@@ -126,6 +125,23 @@ std::optional<KeySpec> Hotkey::parseKeySpec(std::string spec, std::string* err) 
     return std::nullopt;
 }
 
+bool KeySpec::isDisruptive() const {
+    // Miscellaneous essential keys
+    const std::string essential_key_set = "\r\x1B\b\t -=[]\\;',./";
+
+    // Letters A-Z, 0-9, and other special keys such as return/escape, and other general typing keys
+    bool is_essential_key = (this->sym >= SDLK_a && this->sym <= SDLK_z)
+        || (this->sym >= SDLK_0 && this->sym <= SDLK_9)
+        || essential_key_set.find(this->sym) != std::string::npos
+        || (this->sym >= SDLK_LEFT && this->sym <= SDLK_UP);
+
+    // Essential keys are safe, so long as they have a modifier that isn't Shift
+    if (is_essential_key && !(this->modifiers & ~DFH_MOD_SHIFT))
+        return true;
+
+    return false;
+}
+
 // Hotkeys actions are executed from an external thread to avoid deadlocks
 // that may occur if running commands from the render or simulation threads.
 void HotkeyManager::hotkey_thread_fn() {
@@ -179,7 +195,7 @@ bool HotkeyManager::addKeybind(KeySpec spec, std::string cmd) {
 }
 
 bool HotkeyManager::addKeybind(std::string keyspec, std::string cmd) {
-    std::optional<KeySpec> spec_opt = Hotkey::parseKeySpec(keyspec);
+    std::optional<KeySpec> spec_opt = KeySpec::parse(keyspec);
     if (!spec_opt.has_value())
         return false;
     return this->addKeybind(spec_opt.value(), cmd);
@@ -205,7 +221,7 @@ bool HotkeyManager::removeKeybind(const KeySpec& spec, bool match_focus, std::st
 }
 
 bool HotkeyManager::removeKeybind(std::string keyspec, bool match_focus, std::string_view cmdline) {
-    std::optional<KeySpec> spec_opt = Hotkey::parseKeySpec(keyspec);
+    std::optional<KeySpec> spec_opt = KeySpec::parse(keyspec);
     if (!spec_opt.has_value())
         return false;
     return this->removeKeybind(spec_opt.value(), match_focus, cmdline);
@@ -243,7 +259,7 @@ std::vector<std::string> HotkeyManager::listKeybinds(const KeySpec& spec) {
 
 std::vector<std::string> HotkeyManager::listKeybinds(std::string keyspec) {
     std::lock_guard<std::mutex> l(lock);
-    std::optional<KeySpec> spec_opt = Hotkey::parseKeySpec(keyspec);
+    std::optional<KeySpec> spec_opt = KeySpec::parse(keyspec);
     if (!spec_opt.has_value())
         return {};
     return this->listKeybinds(spec_opt.value());
@@ -305,7 +321,7 @@ bool HotkeyManager::handleKeybind(int sym, int modifiers) {
         KeySpec spec;
         spec.sym = sym;
         spec.modifiers = modifiers;
-        requested_keybind = Hotkey::keyspec_to_string(spec);
+        requested_keybind = spec.toString(false);
         keybind_save_requested = false;
         return true;
     }
@@ -377,7 +393,7 @@ void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vecto
         if (parts[0] == "set")
             removeKeybind(keystr);
         for (const auto& part : parts | std::views::drop(2) | std::views::reverse) {
-            auto spec = Hotkey::parseKeySpec(keystr, &parse_error);
+            auto spec = KeySpec::parse(keystr, &parse_error);
             if (!spec.has_value()) {
                 con.printerr("%s\n", parse_error.c_str());
                 break;
@@ -390,7 +406,7 @@ void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vecto
     }
     else if (parts.size() >= 2 && parts[0] == "clear") {
         for (const auto& part : parts | std::views::drop(1)) {
-            auto spec = Hotkey::parseKeySpec(part, &parse_error);
+            auto spec = KeySpec::parse(part, &parse_error);
             if (!spec.has_value()) {
                 con.printerr("%s\n", parse_error.c_str());
             }
@@ -401,7 +417,7 @@ void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vecto
         }
     }
     else if (parts.size() == 2 && parts[0] == "list") {
-        auto spec = Hotkey::parseKeySpec(parts[1], &parse_error);
+        auto spec = KeySpec::parse(parts[1], &parse_error);
         if (!spec.has_value()) {
             con.printerr("%s\n", parse_error.c_str());
             return;
@@ -419,7 +435,7 @@ void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vecto
             << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
             << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
             << "Later adds, and earlier items within one command have priority." << std::endl
-            << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, 0-9, F1-F12, `, or Enter)." << std::endl
+            << "Supported keys: [Ctrl-][Alt-][Super-][Shift-](A-Z, 0-9, F1-F12, `, etc.)." << std::endl
             << "Context may be used to limit the scope of the binding, by" << std::endl
             << "requiring the current context to have a certain prefix." << std::endl
             << "Current UI context is: " << std::endl

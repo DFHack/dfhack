@@ -1874,6 +1874,13 @@ static bool hotkey_addKeybind(const std::string spec, const std::string cmd) {
     return hotkey_mgr->addKeybind(spec, cmd);
 }
 
+static bool hotkey_isDisruptiveKeybind(const std::string spec) {
+    auto key = Hotkey::KeySpec::parse(spec);
+    if (!key.has_value())
+        return true;
+    return key.value().isDisruptive();
+}
+
 static int hotkey_requestKeybindingInput(lua_State *L) {
     auto hotkey_mgr = Core::getInstance().getHotkeyManager();
     if (!hotkey_mgr) return 0;
@@ -1935,7 +1942,7 @@ void hotkey_pushBindArray(lua_State *L, const std::vector<Hotkey::KeyBinding>& b
         lua_createtable(L, 0, 2);
 
         lua_pushlstring(L, "spec", 4);
-        auto spec_str = Hotkey::keyspec_to_string(bind.spec, true);
+        auto spec_str = bind.spec.toString(true);
         lua_pushlstring(L, spec_str.data(), spec_str.size());
         lua_settable(L, -3);
 
@@ -1973,6 +1980,7 @@ static const luaL_Reg dfhack_hotkey_funcs[] = {
 
 static const LuaWrapper::FunctionReg dfhack_hotkey_module[] = {
     WRAPN(addKeybind, hotkey_addKeybind),
+    WRAPN(isDisruptiveKeybind, hotkey_isDisruptiveKeybind),
     { NULL, NULL }
 };
 

@@ -1471,6 +1471,12 @@ Hotkey module
   Reads the latest saved keybind input that was requested.
   Returns a keyspec string for the input, or nil if no input has been saved.
 
+* ``dfhack.hotkey.isDisruptiveKeybind(keyspec)``
+
+  Determines if the provided keyspec could be disruptive to the game experience.
+  This includes the majority of standard characters and special keys such as escape,
+  backspace, and return when lacking modifiers other than Shift.
+
 Units module
 ------------
 

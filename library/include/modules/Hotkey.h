@@ -11,11 +11,19 @@
 
 namespace DFHack {
     namespace Hotkey {
-        struct KeySpec {
-            int modifiers = 0;
-            // Negative numbers denote mouse buttons
-            int sym = 0;
-            std::vector<std::string> focus;
+        class DFHACK_EXPORT KeySpec {
+            public:
+                int modifiers = 0;
+                // Negative numbers denote mouse buttons
+                int sym = 0;
+                std::vector<std::string> focus;
+
+                static std::optional<Hotkey::KeySpec> parse(std::string spec, std::string* err = nullptr);
+                std::string toString(bool include_focus=true) const;
+
+                // Determines if a keybind could be disruptive to normal gameplay,
+                // including typing and navigating the UI.
+                bool isDisruptive() const;
         };
 
         struct KeyBinding {
@@ -23,9 +31,6 @@ namespace DFHack {
             std::string command;
             std::string cmdline;
         };
-
-        DFHACK_EXPORT std::optional<Hotkey::KeySpec> parseKeySpec(std::string spec, std::string* err = nullptr);
-        DFHACK_EXPORT std::string keyspec_to_string(const KeySpec& spec, bool include_focus=false);
     }
     class DFHACK_EXPORT HotkeyManager {
         friend class Core;

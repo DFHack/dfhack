@@ -94,7 +94,7 @@ static void find_active_keybindings(color_ostream &out, df::viewscreen *screen, 
 
     auto active_binds = Core::getInstance().getHotkeyManager()->listActiveKeybinds();
     for (const auto& bind : active_binds) {
-        string sym = Hotkey::keyspec_to_string(bind.spec);
+        string sym = bind.spec.toString(false);
         add_binding_if_valid(out, sym, bind.cmdline, screen, filtermenu);
     }
 

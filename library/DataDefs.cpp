@@ -262,7 +262,7 @@ const std::string bit_container_identity::getFullName(const type_identity *) con
 const std::string df::buffer_container_identity::getFullName(const type_identity *item) const
 {
     return (item ? item->getFullName() : std::string("void")) +
-           (size > 0 ? std::format("[{}]", size) : std::string("[]"));
+           (size > 0 ? fmt::format("[{}]", size) : std::string("[]"));
 }
 
 union_identity::union_identity(size_t size, const TAllocateFn alloc,

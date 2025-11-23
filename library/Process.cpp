@@ -215,7 +215,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         }
         free(wd);
 #else /* WIN32 */
-        cerr << "PE timestamp: " << std::format("{:#0x}", my_pe) << endl;
+        cerr << "PE timestamp: " << fmt::format("{:#0x}", my_pe) << endl;
 #endif /* WIN32 */
     }
 }

@@ -191,4 +191,3 @@ namespace  DFHack
     };
 
 }
-

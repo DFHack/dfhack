@@ -65,8 +65,15 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``Hotkey``: New module for hotkey functionality
 
 ## Lua
+- ``dfhack.hotkey.addKeybind``: Creates new keybindings
+- ``dfhack.hotkey.removeKeybind``: Removes existing keybindings
+- ``dfhack.hotkey.listActiveKeybinds``: Lists all keybinds for the current context
+- ``dfhack.hotkey.listAllKeybinds``: Lists all keybinds for all contexts
+- ``dfhack.hotkey.requestKeybindingInput``: Requests the next keybind-compatible input is saved
+- ``dfhack.hotkey.getKeybindingInput``: Reads the input saved in response to a request.
 
 ## Removed
 

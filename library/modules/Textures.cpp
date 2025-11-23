@@ -204,14 +204,14 @@ std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int til
 
     SDL_Surface* surface = DFIMG_Load(file.c_str());
     if (!surface) {
-        ERR(textures).printerr("unable to load textures from '%s'\n", file.c_str());
+        ERR(textures).printerr("unable to load textures from '{}'\n", file);
         return std::vector<TexposHandle>{};
     }
 
     surface = canonicalize_format(surface);
     auto handles = slice_tileset(surface, tile_px_w, tile_px_h, reserved);
 
-    DEBUG(textures).print("loaded %zd textures from '%s'\n", handles.size(), file.c_str());
+    DEBUG(textures).print("loaded {} textures from '{}'\n", handles.size(), file);
     g_tileset_to_handles[file] = handles;
 
     return handles;
@@ -308,7 +308,7 @@ static void reset_surface() {
 }
 
 static void register_delayed_handles() {
-    DEBUG(textures).print("register delayed handles, size %zd\n", g_delayed_regs.size());
+    DEBUG(textures).print("register delayed handles, size {}\n", g_delayed_regs.size());
     for (auto& handle : g_delayed_regs) {
         auto texpos = add_texture(g_handle_to_surface[handle]);
         g_handle_to_texpos.emplace(handle, texpos);
@@ -322,8 +322,9 @@ struct tracking_stage_new_region : df::viewscreen_new_regionst {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_raw_load_stage != this->raw_load_stage) {
-            TRACE(textures).print("raw_load_stage %d -> %d\n", this->m_raw_load_stage,
-                                  this->raw_load_stage);
+            TRACE(textures).print("raw_load_stage {} -> {}\n",
+                this->m_raw_load_stage,
+                static_cast<int>(this->raw_load_stage));
             bool tmp_state = loading_state;
             loading_state = this->raw_load_stage >= 0 && this->raw_load_stage < 3 ? true : false;
             if (tmp_state != loading_state && !loading_state)
@@ -346,7 +347,9 @@ struct tracking_stage_adopt_region : df::viewscreen_adopt_regionst {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
-            TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
+            TRACE(textures).print("step {} -> {}\n",
+                this->m_cur_step,
+                static_cast<int>(this->cur_step));
             bool tmp_state = loading_state;
             loading_state = this->cur_step >= 0 && this->cur_step < 3 ? true : false;
             if (tmp_state != loading_state && !loading_state)
@@ -369,7 +372,9 @@ struct tracking_stage_load_region : df::viewscreen_loadgamest {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
-            TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
+            TRACE(textures).print("step {} -> {}\n",
+                this->m_cur_step,
+                static_cast<int>(this->cur_step));
             bool tmp_state = loading_state;
             loading_state = this->cur_step >= 0 && this->cur_step < 3 ? true : false;
             if (tmp_state != loading_state && !loading_state)
@@ -392,7 +397,9 @@ struct tracking_stage_new_arena : df::viewscreen_new_arenast {
 
     DEFINE_VMETHOD_INTERPOSE(void, logic, ()) {
         if (this->m_cur_step != this->cur_step) {
-            TRACE(textures).print("step %d -> %d\n", this->m_cur_step, this->cur_step);
+            TRACE(textures).print("step {} -> {}\n",
+                this->m_cur_step,
+                static_cast<int>(this->cur_step));
             bool tmp_state = loading_state;
             loading_state = this->cur_step >= 0 && this->cur_step < 3 ? true : false;
             if (tmp_state != loading_state && !loading_state)
@@ -446,7 +453,7 @@ void Textures::init(color_ostream& out) {
     reserve_static_range();
     install_reset_point();
     DEBUG(textures, out)
-        .print("dynamic texture loading ready, reserved range %d-%d\n", reserved_range.start,
+        .print("dynamic texture loading ready, reserved range {}-{}\n", reserved_range.start,
                reserved_range.end);
 }
 

@@ -98,9 +98,9 @@ command_result df_deramp (color_ostream &out, vector <string> & parameters)
         }
     }
     if (count)
-        out.print("Found and changed %d tiles.\n", count);
+        out.print("Found and changed {} tiles.\n", count);
     if (countbad)
-        out.print("Fixed %d bad down ramps.\n", countbad);
+        out.print("Fixed {} bad down ramps.\n", countbad);
     return CR_OK;
 }
 

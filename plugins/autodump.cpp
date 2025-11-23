@@ -170,7 +170,7 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
                     }
                 }
                 else
-                    out.print("Could not move item: %s\n", Items::getDescription(itm, 0, true).c_str());
+                    out.print("Could not move item: {}\n", Items::getDescription(itm, 0, true));
             }
         }
         else { // Destroy
@@ -184,7 +184,7 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
         dumped_total++;
     }
 
-    out.print("Done. %d items %s.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
+    out.print("Done. {} items {}.\n", dumped_total, destroy ? "marked for destruction" : "quickdumped");
     return CR_OK;
 }
 

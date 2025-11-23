@@ -42,7 +42,7 @@ command_result df_zoom (color_ostream &out, std::vector <std::string> & paramete
         return CR_WRONG_USAGE;
     if (zcmap.find(parameters[0]) == zcmap.end())
     {
-        out.printerr("Unrecognized zoom command: %s\n", parameters[0].c_str());
+        out.printerr("Unrecognized zoom command: {}\n", parameters[0]);
         out.print("Valid commands:");
         for (auto it = zcmap.begin(); it != zcmap.end(); ++it)
         {

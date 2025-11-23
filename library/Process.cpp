@@ -194,7 +194,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         cerr << "1KB hexdump follows:" << endl;
         for(int i = 0; i < 64; i++)
         {
-            fprintf(stderr, "%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x\n",
+            fmt::print(std::cerr, "{:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}\n",
                     first_kb[i*16],
                     first_kb[i*16+1],
                     first_kb[i*16+2],

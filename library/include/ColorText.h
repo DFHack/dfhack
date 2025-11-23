@@ -34,6 +34,7 @@ distribution.
 #include <sstream>
 
 #include <fmt/format.h>
+#include <fmt/std.h>
 
 namespace dfproto
 {
@@ -106,16 +107,16 @@ namespace  DFHack
         color_ostream();
         virtual ~color_ostream();
 
-        template <typename ... Args>
-        void format(const char* format, Args&& ... args)
+        template <typename... Args>
+        void print(fmt::format_string<Args...> format, Args&& ... args)
         {
             auto str = fmt::format(format, std::forward<Args>(args)...);
             flush_buffer(false);
             add_text(cur_color, str);
         }
 
-        template <typename ... Args>
-        void format_err(const char* format, Args&& ... args)
+        template <typename... Args>
+        void printerr(fmt::format_string<Args...> format, Args&& ... args)
         {
             auto str = fmt::format(format, std::forward<Args>(args)...);
             if (log_errors_to_stderr) {
@@ -124,14 +125,6 @@ namespace  DFHack
             flush_buffer(false);
             add_text(COLOR_LIGHTRED, str);
         }
-
-        /// Print a formatted string, like printf
-        void print(const char *format, ...) Wformat(printf,2,3);
-        void vprint(const char *format, va_list args) Wformat(printf,2,0);
-
-        /// Print a formatted string, like printf, in red
-        void printerr(const char *format, ...) Wformat(printf,2,3);
-        void vprinterr(const char *format, va_list args) Wformat(printf,2,0);
 
         /// Get color
         color_value color() { return cur_color; }
@@ -196,4 +189,6 @@ namespace  DFHack
 
         void decode(dfproto::CoreTextNotification *data);
     };
+
 }
+

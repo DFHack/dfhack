@@ -87,6 +87,8 @@ distribution.
 #include <filesystem>
 #include <SDL_events.h>
 
+#include <fmt/std.h>
+
 #ifdef _WIN32
 #define NOMINMAX
 #include <Windows.h>
@@ -297,7 +299,7 @@ static void fHKthread(IODATA * iodata)
             auto rv = core->runCommand(out, stuff);
 
             if (rv == CR_NOT_IMPLEMENTED)
-                out.printerr("Invalid hotkey command: '%s'\n", stuff.c_str());
+                out.printerr("Invalid hotkey command: '{}'\n", stuff);
         }
     }
 }
@@ -444,7 +446,7 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
     {
         completed = possible[0];
         //fprintf(stderr, "Autocompleted %s to %s\n", , );
-        con.printerr("%s is not recognized. Did you mean %s?\n", first.c_str(), completed.c_str());
+        con.printerr("{} is not recognized. Did you mean {}?\n", first, completed);
         return true;
     }
 
@@ -453,7 +455,7 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
         std::string out;
         for (size_t i = 0; i < possible.size(); i++)
             out += " " + possible[i];
-        con.printerr("%s is not recognized. Possible completions:%s\n", first.c_str(), out.c_str());
+        con.printerr("{} is not recognized. Possible completions:{}\n", first, out);
         return true;
     }
 
@@ -529,7 +531,7 @@ std::filesystem::path Core::findScript(std::string name)
         std::filesystem::path path = std::filesystem::weakly_canonical(*it / name, ec);
         if (ec)
         {
-            con.printerr("Error loading '%s' (%s)\n", (*it / name).string().c_str(), ec.message().c_str());
+            con.printerr("Error loading '{}' ({})\n", *it / name, ec.message());
             continue;
         }
 
@@ -546,7 +548,7 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
     if (!file)
     {
         if (!silent)
-            out.printerr("Could not load %s\n", filename.c_str());
+            out.printerr("Could not load {}\n", filename);
         return false;
     }
     std::string raw;
@@ -565,10 +567,10 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
         if (ch == '+' || ch == '-')
         {
             if (!Core::getInstance().addScriptPath(path, ch == '+') && !silent)
-                out.printerr("%s:%i: Failed to add path: %s\n", filename.c_str(), line, path.c_str());
+                out.printerr("{}:{}: Failed to add path: {}\n", filename, line, path);
         }
         else if (!silent)
-            out.printerr("%s:%i: Illegal character: %c\n", filename.c_str(), line, ch);
+            out.printerr("{}:{}: Illegal character: {}\n", filename, line, ch);
     }
     return true;
 }
@@ -583,7 +585,7 @@ static void loadModScriptPaths(color_ostream &out) {
     DEBUG(script,out).print("final mod script paths:\n");
     for (auto& path : mod_script_paths_str)
     {
-        DEBUG(script, out).print("  %s\n", path.c_str());
+        DEBUG(script, out).print("  {}\n", path);
         mod_script_paths.push_back(std::filesystem::weakly_canonical(std::filesystem::path{ path }));
     }
     Core::getInstance().setModScriptPaths(mod_script_paths);
@@ -725,8 +727,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     CommandDepthCounter counter;
     if (!counter.ok())
     {
-        con.printerr("Cannot invoke \"%s\": maximum command depth exceeded (%i)\n",
-            first.c_str(), CommandDepthCounter::MAX_DEPTH);
+        con.printerr("Cannot invoke \"{}\": maximum command depth exceeded ({})\n",
+            first, CommandDepthCounter::MAX_DEPTH);
         return CR_FAILURE;
     }
 
@@ -735,7 +737,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
 
     if (has_backslashes(first))
     {
-        con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", first.c_str());
+        con.printerr("Replacing backslashes with forward slashes in \"{}\"\n", first);
         replace_backslashes_with_forwardslashes(first);
     }
 
@@ -769,7 +771,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                       "See more commands by running 'ls'.\n\n"
                      );
 
-            con.print("DFHack version %s\n", dfhack_version_desc().c_str());
+            con.print("DFHack version {}\n", dfhack_version_desc());
         }
         else
         {
@@ -821,11 +823,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                 }
             }
             if (ret != CR_OK)
-                con.printerr("%s failed\n", first.c_str());
+                con.printerr("{} failed\n", first);
             return ret;
         }
         else {
-            con.printerr("%s: no arguments\n", first.c_str());
+            con.printerr("{}: no arguments\n", first);
             return CR_FAILURE;
         }
     }
@@ -840,7 +842,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             {
                 if (has_backslashes(part))
                 {
-                    con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", part.c_str());
+                    con.printerr("Replacing backslashes with forward slashes in \"{}\"\n", part);
                     replace_backslashes_with_forwardslashes(part);
                 }
 
@@ -858,20 +860,20 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                     else
                     {
                         res = CR_NOT_FOUND;
-                        con.printerr("No such plugin or Lua script: %s\n", part.c_str());
+                        con.printerr("No such plugin or Lua script: {}\n", part);
                     }
                 }
                 else if (!plug->can_set_enabled())
                 {
                     res = CR_NOT_IMPLEMENTED;
-                    con.printerr("Cannot %s plugin: %s\n", first.c_str(), part.c_str());
+                    con.printerr("Cannot {} plugin: {}\n", first, part);
                 }
                 else
                 {
                     res = plug->set_enabled(con, enable);
 
                     if (res != CR_OK || plug->is_enabled() != enable)
-                        con.printerr("Could not %s plugin: %s\n", first.c_str(), part.c_str());
+                        con.printerr("Could not {} plugin: {}\n", first, part);
                 }
             }
 
@@ -886,8 +888,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                 if (!plug->can_be_enabled()) continue;
 
                 con.print(
-                    "%21s  %-3s%s\n",
-                    (key+":").c_str(),
+                    "{:21}  {:<3}{}\n",
+                    (key+":"),
                     plug->is_enabled() ? "on" : "off",
                     plug->can_set_enabled() ? "" : " (controlled internally)"
                 );
@@ -995,7 +997,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             for (const auto& part : parts | std::views::drop(2) | std::views::reverse)
             {
                 if (!AddKeyBinding(keystr, part)) {
-                    con.printerr("Invalid key spec: %s\n", keystr.c_str());
+                    con.printerr("Invalid key spec: {}\n", keystr);
                     break;
                 }
             }
@@ -1006,7 +1008,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             for (const auto& part : parts | std::views::drop(1))
             {
                 if (!ClearKeyBindings(part)) {
-                    con.printerr("Invalid key spec: %s\n", part.c_str());
+                    con.printerr("Invalid key spec: {}\n", part);
                     break;
                 }
             }
@@ -1042,7 +1044,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             std::vector<std::string> cmd(parts.begin() + 2, parts.end());
             if (!AddAlias(name, cmd, parts[0] == "replace"))
             {
-                con.printerr("Could not add alias %s - already exists\n", name.c_str());
+                con.printerr("Could not add alias {} - already exists\n", name);
                 return CR_FAILURE;
             }
         }
@@ -1050,7 +1052,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         {
             if (!RemoveAlias(parts[1]))
             {
-                con.printerr("Could not remove alias %s\n", parts[1].c_str());
+                con.printerr("Could not remove alias {}\n", parts[1]);
                 return CR_FAILURE;
             }
         }
@@ -1174,10 +1176,10 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             {
                 if (!parts[1].size() || (state_script.event == sc_event_id(parts[1])))
                 {
-                    con.print("%s (%s): %s%s\n", sc_event_name(state_script.event).c_str(),
+                    con.print("{} ({}): {}{}\n", sc_event_name(state_script.event),
                         state_script.save_specific ? "save-specific" : "global",
                         state_script.save_specific ? "<save folder>/raw/" : "<DF folder>/",
-                        state_script.path.c_str());
+                        state_script.path);
                 }
             }
             return CR_OK;
@@ -1290,26 +1292,26 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
             else if (!no_autocomplete && try_autocomplete(con, first, completed))
                 res = CR_NOT_IMPLEMENTED;
             else
-                con.printerr("%s is not a recognized command.\n", first.c_str());
+                con.printerr("{} is not a recognized command.\n", first);
             if (res == CR_NOT_IMPLEMENTED)
             {
                 Plugin *p = plug_mgr->getPluginByName(first);
                 if (p)
                 {
-                    con.printerr("%s is a plugin ", first.c_str());
+                    con.printerr("{} is a plugin ", first);
                     if (p->getState() == Plugin::PS_UNLOADED)
-                        con.printerr("that is not loaded - try \"load %s\" or check stderr.log\n",
-                            first.c_str());
+                        con.printerr("that is not loaded - try \"load {}\" or check stderr.log\n",
+                            first);
                     else if (p->size())
-                        con.printerr("that implements %zi commands - see \"help %s\" for details\n",
-                            p->size(), first.c_str());
+                        con.printerr("that implements {} commands - see \"help {}\" for details\n",
+                            p->size(), first);
                     else
                         con.printerr("but does not implement any commands\n");
                 }
             }
         }
         else if (res == CR_NEEDS_CONSOLE)
-            con.printerr("%s needs an interactive console to work.\n"
+            con.printerr("{} needs an interactive console to work.\n"
                           "Please run this command from the DFHack console.\n\n"
 #ifdef WIN32
                           "You can show the console with the 'show' command."
@@ -1317,7 +1319,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
                           "The console is accessible when you run DF from the commandline\n"
                           "via the './dfhack' script."
 #endif
-                          "\n", first.c_str());
+                          "\n", first);
         return res;
     }
 
@@ -1334,7 +1336,7 @@ bool Core::loadScriptFile(color_ostream &out, std::filesystem::path fname, bool 
     if ( !script )
     {
         if(!silent)
-            out.printerr("Error loading script: %s\n", fname.string().c_str());
+            out.printerr("Error loading script: {}\n", fname);
         return false;
     }
     std::string command;
@@ -1418,9 +1420,9 @@ static void fIOthread(IODATA * iod)
     run_dfhack_init(con, core);
 
     con.print("DFHack is ready. Have a nice day!\n"
-              "DFHack version %s\n"
+              "DFHack version {}\n"
               "Type in '?' or 'help' for general help, 'ls' to see all commands.\n",
-              dfhack_version_desc().c_str());
+              dfhack_version_desc());
 
     int clueless_counter = 0;
 
@@ -1507,11 +1509,11 @@ void Core::fatal (std::string output, const char * title)
     out << "DFHack will now deactivate.\n";
     if(con.isInited())
     {
-        con.printerr("%s", out.str().c_str());
+        con.printerr("{}", out.str());
         con.reset_color();
         con.print("\n");
     }
-    fprintf(stderr, "%s\n", out.str().c_str());
+    fmt::print(stderr, "{}\n", out.str());
     out << "Check file stderr.log for details.\n";
     std::cout << "DFHack fatal error: " << out.str() << std::endl;
     if (!title)
@@ -1771,15 +1773,15 @@ bool Core::InitSimulationThread()
 
     // create config directory if it doesn't already exist
     if (!Filesystem::mkdir_recursive(getConfigPath()))
-        con.printerr("Failed to create config directory: '%s'\n", getConfigPath().c_str());
+        con.printerr("Failed to create config directory: '{}'\n", getConfigPath());
 
     // copy over default config files if necessary
     std::map<std::filesystem::path, bool> config_files;
     std::map<std::filesystem::path, bool> default_config_files;
     if (Filesystem::listdir_recursive(getConfigPath(), config_files, 10, false) != 0)
-        con.printerr("Failed to list directory: '%s'\n", getConfigPath().c_str());
+        con.printerr("Failed to list directory: '{}'\n", getConfigPath());
     else if (Filesystem::listdir_recursive(getConfigDefaultsPath(), default_config_files, 10, false) != 0)
-        con.printerr("Failed to list directory: '%s'\n", getConfigDefaultsPath().c_str());
+        con.printerr("Failed to list directory: '{}'\n", getConfigDefaultsPath());
     else
     {
         // ensure all config file directories exist before we start copying files
@@ -1789,7 +1791,7 @@ bool Core::InitSimulationThread()
                 continue;
             std::filesystem::path dirname = getConfigPath() / entry.first;
             if (!Filesystem::mkdir_recursive(dirname))
-                con.printerr("Failed to create config directory: '%s'\n", dirname.c_str());
+                con.printerr("Failed to create config directory: '{}'\n", dirname);
         }
 
         // copy files from the default tree that don't already exist in the config tree
@@ -1806,7 +1808,7 @@ bool Core::InitSimulationThread()
                 std::ifstream src(src_file, std::ios::binary);
                 std::ofstream dest(dest_file, std::ios::binary);
                 if (!src.good() || !dest.good()) {
-                    con.printerr("Copy failed: '%s'\n", filename.c_str());
+                    con.printerr("Copy failed: '{}'\n", filename);
                     continue;
                 }
                 dest << src.rdbuf();
@@ -1957,26 +1959,6 @@ std::string Core::getHotkeyCmd( bool &keep_going )
     returner = hotkey_cmd;
     hotkey_cmd.clear();
     return returner;
-}
-
-void Core::print(const char *format, ...)
-{
-    color_ostream_proxy proxy(getInstance().con);
-
-    va_list args;
-    va_start(args,format);
-    proxy.vprint(format,args);
-    va_end(args);
-}
-
-void Core::printerr(const char *format, ...)
-{
-    color_ostream_proxy proxy(getInstance().con);
-
-    va_list args;
-    va_start(args,format);
-    proxy.vprinterr(format,args);
-    va_end(args);
 }
 
 Core& Core::getInstance() {
@@ -2323,7 +2305,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
             if (evtlog.fail())
             {
                 if (DFHack::Filesystem::isdir(save_dir))
-                    out.printerr("Could not append to %s\n", evtlogpath.c_str());
+                    out.printerr("Could not append to {}\n", evtlogpath);
             }
             else
             {
@@ -2484,8 +2466,8 @@ bool Core::getSuppressDuplicateKeyboardEvents() const {
 }
 
 void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
-    DEBUG(keybinding).print("setting suppress_duplicate_keyboard_events to %s\n",
-        suppress ? "true" : "false");
+    DEBUG(keybinding).print("setting suppress_duplicate_keyboard_events to {}\n",
+        suppress);
     suppress_duplicate_keyboard_events = suppress;
 }
 
@@ -2539,26 +2521,26 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
         else if (ke.state == SDL_PRESSED && !hotkey_states[sym])
         {
             // the check against hotkey_states[sym] ensures we only process keybindings once per keypress
-            DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
+            DEBUG(keybinding).print("key down: sym={}, char={}\n", sym, static_cast<char>(sym));
             if (SelectHotkey(sym, modstate)) {
                 hotkey_states[sym] = true;
                 if (modstate & (DFH_MOD_CTRL | DFH_MOD_ALT)) {
                     DEBUG(keybinding).print("modifier key detected; not inhibiting SDL key down event\n");
                     return false;
                 }
-                DEBUG(keybinding).print("%sinhibiting SDL key down event\n",
+                DEBUG(keybinding).print("{}inhibiting SDL key down event\n",
                     suppress_duplicate_keyboard_events ? "" : "not ");
                 return suppress_duplicate_keyboard_events;
             }
         }
         else if (ke.state == SDL_RELEASED)
         {
-            DEBUG(keybinding).print("key up: sym=%d (%c)\n", sym, sym);
+            DEBUG(keybinding).print("key up: sym={}, char={}\n", sym, static_cast<char>(sym));
             hotkey_states[sym] = false;
         }
     } else if (ev->type == SDL_MOUSEBUTTONDOWN) {
         auto &but = ev->button;
-        DEBUG(keybinding).print("mouse button down: button=%d\n", but.button);
+        DEBUG(keybinding).print("mouse button down: button={}\n", but.button);
         // don't mess with the first three buttons, which are critical elements of DF's control scheme
         if (but.button > 3) {
             SDL_Keycode sym = SDLK_F13 + but.button - 4;
@@ -2567,13 +2549,13 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
         }
     } else if (ev->type == SDL_TEXTINPUT) {
         auto &te = ev->text;
-        DEBUG(keybinding).print("text input: '%s' (modifiers: %s%s%s)\n",
+        DEBUG(keybinding).print("text input: '{}' (modifiers: {}{}{})\n",
             te.text,
             modstate & DFH_MOD_SHIFT ? "Shift" : "",
             modstate & DFH_MOD_CTRL ? "Ctrl" : "",
             modstate & DFH_MOD_ALT ? "Alt" : "");
         if (strlen(te.text) == 1 && hotkey_states[te.text[0]]) {
-            DEBUG(keybinding).print("%sinhibiting SDL text event\n",
+            DEBUG(keybinding).print("{}inhibiting SDL text event\n",
                 suppress_duplicate_keyboard_events ? "" : "not ");
             return suppress_duplicate_keyboard_events;
         }
@@ -2597,7 +2579,7 @@ bool Core::SelectHotkey(int sym, int modifiers)
 
     std::string cmd;
 
-    DEBUG(keybinding).print("checking hotkeys for sym=%d (%c), modifiers=%x\n", sym, sym, modifiers);
+    DEBUG(keybinding).print("checking hotkeys for sym={}, char={}, modifiers={:x}\n", sym, static_cast<char>(sym), modifiers);
 
     {
         std::lock_guard<std::mutex> lock(HotkeyMutex);
@@ -2606,29 +2588,29 @@ bool Core::SelectHotkey(int sym, int modifiers)
         std::vector<KeyBinding> &bindings = key_bindings[sym];
         //for (int i = bindings.size()-1; i >= 0; --i) {
         for (const auto& binding : bindings | std::views::reverse) {
-            DEBUG(keybinding).print("examining hotkey with commandline: '%s'\n", binding.cmdline.c_str());
+            DEBUG(keybinding).print("examining hotkey with commandline: '{}'\n", binding.cmdline);
 
             if (binding.modifiers != modifiers) {
-                DEBUG(keybinding).print("skipping keybinding due to modifiers mismatch: 0x%x != 0x%x\n",
+                DEBUG(keybinding).print("skipping keybinding due to modifiers mismatch: 0x{:x} != 0x{:x}\n",
                                         binding.modifiers, modifiers);
                 continue;
             }
             if (!binding.focus.empty()) {
                 if (!Gui::matchFocusString(binding.focus)) {
                     std::vector<std::string> focusStrings = Gui::getCurFocus(true);
-                    DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' != '%s'\n",
-                        join_strings(", ", focusStrings).c_str(), binding.focus.c_str());
+                    DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '{}' != '{}'\n",
+                        join_strings(", ", focusStrings), binding.focus);
                     continue;
                 }
             }
             if (!plug_mgr->CanInvokeHotkey(binding.command[0], screen)) {
-                DEBUG(keybinding).print("skipping keybinding due to hotkey guard rejection (command: '%s')\n",
-                                        binding.command[0].c_str());
+                DEBUG(keybinding).print("skipping keybinding due to hotkey guard rejection (command: '{}')\n",
+                                        binding.command[0]);
                 continue;
             }
             if (mortal_mode && armok_tools.contains(binding.command[0])) {
-                DEBUG(keybinding).print("skipping keybinding due to mortal mode (command: '%s')\n",
-                                        binding.command[0].c_str());
+                DEBUG(keybinding).print("skipping keybinding due to mortal mode (command: '{}')\n",
+                                        binding.command[0]);
                 continue;
             }
 

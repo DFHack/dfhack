@@ -39,14 +39,14 @@ struct title_version_hook : df::viewscreen_titlest {
 IMPLEMENT_VMETHOD_INTERPOSE(title_version_hook, render);
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(log,out).print("shutting down %s\n", plugin_name);
+    DEBUG(log,out).print("shutting down {}\n", plugin_name);
     INTERPOSE_HOOK(title_version_hook, render).remove();
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_enable (color_ostream &out, bool enable) {
     if (enable != is_enabled) {
-        DEBUG(log,out).print("%s %s\n", plugin_name,
+        DEBUG(log,out).print("{} {}\n", plugin_name,
                              is_enabled ? "enabled" : "disabled");
         if (!INTERPOSE_HOOK(title_version_hook, render).apply(enable))
             return CR_FAILURE;

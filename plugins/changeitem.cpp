@@ -236,7 +236,7 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
             changeitem_execute(out, item, info, force, change_material, new_material, change_quality, new_quality, change_subtype, new_subtype);
             processed_total++;
         }
-        out.print("Done. %d items processed.\n", processed_total);
+        out.print("Done. {} items processed.\n", processed_total);
     }
     else
     {

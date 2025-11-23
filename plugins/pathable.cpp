@@ -86,20 +86,20 @@ static void paint_screen(const PaintCtx & ctx, const unordered_set<df::coord> & 
                 continue;
             }
 
-            DEBUG(log).print("scanning map tile at offset %d, %d\n", x, y);
+            DEBUG(log).print("scanning map tile at offset {}, {}\n", x, y);
             Screen::Pen cur_tile = Screen::readTile(x, y, true);
-            DEBUG(log).print("tile data: ch=%d, fg=%d, bg=%d, bold=%s\n",
+            DEBUG(log).print("tile data: ch={}, fg={}, bg={}, bold={}\n",
                     cur_tile.ch, cur_tile.fg, cur_tile.bg, cur_tile.bold ? "true" : "false");
-            DEBUG(log).print("tile data: tile=%d, tile_mode=%d, tile_fg=%d, tile_bg=%d\n",
-                    cur_tile.tile, cur_tile.tile_mode, cur_tile.tile_fg, cur_tile.tile_bg);
+            DEBUG(log).print("tile data: tile={}, tile_mode={}, tile_fg={}, tile_bg={}\n",
+                    cur_tile.tile, static_cast<int>(cur_tile.tile_mode), cur_tile.tile_fg, cur_tile.tile_bg);
 
             if (!cur_tile.valid()) {
-                DEBUG(log).print("cannot read tile at offset %d, %d\n", x, y);
+                DEBUG(log).print("cannot read tile at offset {}, {}\n", x, y);
                 continue;
             }
 
             bool can_walk = get_can_walk(map_pos);
-            DEBUG(log).print("tile is %swalkable at offset %d, %d\n",
+            DEBUG(log).print("tile is {}walkable at offset {}, {}\n",
                              can_walk ? "" : "not ", x, y);
 
             if (ctx.use_graphics) {
@@ -148,7 +148,7 @@ static bool get_depot_coords(color_ostream &out, unordered_set<df::coord> * depo
 
     depot_coords->clear();
     for (auto bld : world->buildings.other.TRADE_DEPOT){
-        DEBUG(log,out).print("found depot at (%d, %d, %d)\n", bld->centerx, bld->centery, bld->z);
+        DEBUG(log,out).print("found depot at ({}, {}, {})\n", bld->centerx, bld->centery, bld->z);
         depot_coords->emplace(bld->centerx, bld->centery, bld->z);
     }
 
@@ -163,7 +163,7 @@ static bool get_pathability_groups(color_ostream &out, unordered_set<uint16_t> *
     for (auto pos : depot_coords) {
         auto wgroup = Maps::getWalkableGroup(pos);
         if (wgroup) {
-            DEBUG(log,out).print("walkability group at (%d, %d, %d) is %d\n", pos.x, pos.y, pos.z, wgroup);
+            DEBUG(log,out).print("walkability group at ({}, {}, {}) is {}\n", pos.x, pos.y, pos.z, wgroup);
             depot_pathability_groups->emplace(wgroup);
         }
     }
@@ -386,7 +386,7 @@ static bool wagon_flood(color_ostream &out, unordered_set<df::coord> * wagon_pat
         df::coord pos = ctx.search_edge.top();
         ctx.search_edge.pop();
 
-        TRACE(log,out).print("checking tile: (%d, %d, %d); pathability group: %d\n", pos.x, pos.y, pos.z,
+        TRACE(log,out).print("checking tile: ({}, {}, {}); pathability group: {}\n", pos.x, pos.y, pos.z,
             Maps::getWalkableGroup(pos));
 
         if (entry_tiles.contains(pos)) {

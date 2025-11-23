@@ -155,7 +155,7 @@ string ItemTypeInfo::getToken() {
     if (custom)
         rv += ":" + custom->id;
     else if (subtype != -1 && type != item_type::PLANT_GROWTH)
-        rv += stl_sprintf(":%d", subtype);
+        rv += fmt::format(":{}", subtype);
     return rv;
 }
 
@@ -859,7 +859,7 @@ static bool detachItem(df::item *item)
 
     if (item->flags.bits.on_ground) {
         if (!removeItemOnGround(item))
-            Core::printerr("Item was marked on_ground, but not in block: %d (%d,%d,%d)\n",
+            Core::printerr("Item was marked on_ground, but not in block: {} ({},{},{})\n",
                 item->id, item->pos.x, item->pos.y, item->pos.z);
         item->flags.bits.on_ground = false;
         return true;
@@ -1797,7 +1797,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
         World::isFortressMode() ? df::world_site::find(World::GetCurrentSiteId()) : NULL, NULL);
     delete prod;
 
-    DEBUG(items).print("produced %zd items\n", out_items.size());
+    DEBUG(items).print("produced {} items\n", out_items.size());
 
     for (auto out_item : out_items)
     {   // Plant growths need a valid "growth print", otherwise they behave oddly

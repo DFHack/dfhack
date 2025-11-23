@@ -22,7 +22,7 @@ command_result df_counters (color_ostream &out, vector <string> & parameters)
     for (size_t i = 0; i < counters.size(); i++)
     {
         auto counter = counters[i];
-        out.print("%i (%s): %i\n", (int)counter->id, ENUM_KEY_STR(misc_trait_type, counter->id).c_str(), counter->value);
+        out.print("{} ({}) : {}\n", (int)counter->id, ENUM_KEY_STR(misc_trait_type, counter->id), counter->value);
     }
 
     return CR_OK;

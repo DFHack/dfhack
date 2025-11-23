@@ -179,8 +179,8 @@ static bool findProcess(color_ostream& out, std::string name, pid_t &pid) {
     command += name;
     FILE *cmd_pipe = popen(command.c_str(), "r");
     if (!cmd_pipe) {
-        WARN(dfsteam, out).print("failed to exec '%s' (error: %d)\n",
-            command.c_str(), errno);
+        WARN(dfsteam, out).print("failed to exec '{}' (error: {})\n",
+            command, errno);
         return false;
     }
 
@@ -204,7 +204,7 @@ static bool launchDFHack(color_ostream& out) {
 
     pid = fork();
     if (pid == -1) {
-        WARN(dfsteam, out).print("failed to fork (error: %d)\n", errno);
+        WARN(dfsteam, out).print("failed to fork (error: {})\n", errno);
         return false;
     } else if (pid == 0) {
         // child process
@@ -248,5 +248,5 @@ void DFSteam::launchSteamDFHackIfNecessary(color_ostream& out) {
     }
 
     bool ret = launchDFHack(out);
-    DEBUG(dfsteam, out).print("launching DFHack via Steam: %s\n", ret ? "successful" : "unsuccessful");
+    DEBUG(dfsteam, out).print("launching DFHack via Steam: {}\n", ret ? "successful" : "unsuccessful");
 }

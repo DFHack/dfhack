@@ -3524,7 +3524,7 @@ static void setPreferredNumberFormat(color_ostream & out, int32_t type_int) {
         set_preferred_number_format_type(type);
         break;
     default:
-        WARN(luaapi, out).print("invalid number format enum value: %d\n", type_int);
+        WARN(luaapi, out).print("invalid number format enum value: {}\n", type_int);
     }
 }
 
@@ -3608,7 +3608,7 @@ static int internal_setAddress(lua_State *L)
 
     // Print via printerr, so that it is definitely logged to stderr.log.
     uintptr_t iaddr = addr - Core::getInstance().vinfo->getRebaseDelta();
-    fprintf(stderr, "Setting global '%s' to %p (%p)\n", name.c_str(), (void*)addr, (void*)iaddr);
+    fmt::print(stderr, "Setting global '{}' to {} ({})\n", name, (addr), (void*)iaddr);
     fflush(stderr);
 
     return 1;

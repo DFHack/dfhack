@@ -320,12 +320,12 @@ if(UNIX)
 endif()
 
 if(APPLE)
-    set(PROJECT_LIBS dl dfhack-md5 ${DFHACK_TINYXML})
+    set(PROJECT_LIBS dl dfhack-md5 fmt ${DFHACK_TINYXML})
 elseif(UNIX)
     set(PROJECT_LIBS rt dl dfhack-md5 ${DFHACK_TINYXML})
 else(WIN32)
     # FIXME: do we really need psapi?
-    set(PROJECT_LIBS psapi dbghelp dfhack-md5 ${DFHACK_TINYXML})
+    set(PROJECT_LIBS psapi dbghelp dfhack-md5 fmt ${DFHACK_TINYXML})
 endif()
 
 set(VERSION_SRCS DFHackVersion.cpp)

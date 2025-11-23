@@ -347,6 +347,14 @@ if(BUILD_LIBRARY)
     endif()
 endif()
 
+INCLUDE(FetchContent)
+FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG master
+)
+FetchContent_MakeAvailable(fmt)
+
 if(APPLE)
     # libstdc++ (GCC 4.8.5 for OS X 10.6)
     # fixes crash-on-unwind bug in DF's libstdc++

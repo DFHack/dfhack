@@ -33,6 +33,8 @@ distribution.
 #include <stdarg.h>
 #include <sstream>
 
+#include <fmt/format.h>
+
 namespace dfproto
 {
     class CoreTextNotification;
@@ -103,6 +105,25 @@ namespace  DFHack
     public:
         color_ostream();
         virtual ~color_ostream();
+
+        template <typename ... Args>
+        void format(const char* format, Args&& ... args)
+        {
+            auto str = fmt::format(format, std::forward<Args>(args)...);
+            flush_buffer(false);
+            add_text(cur_color, str);
+        }
+
+        template <typename ... Args>
+        void format_err(const char* format, Args&& ... args)
+        {
+            auto str = fmt::format(format, std::forward<Args>(args)...);
+            if (log_errors_to_stderr) {
+                std::cerr << str;
+            }
+            flush_buffer(false);
+            add_text(COLOR_LIGHTRED, str);
+        }
 
         /// Print a formatted string, like printf
         void print(const char *format, ...) Wformat(printf,2,3);

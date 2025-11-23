@@ -46,7 +46,7 @@ static int cleanupHotkeys(lua_State *) {
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym) {
         string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
         DEBUG(log).print("clearing keybinding: %s\n", keyspec.c_str());
-        Core::getInstance().getHotkeyManager()->clearKeybind(keyspec);
+        Core::getInstance().getHotkeyManager()->removeKeybind(keyspec);
     });
     valid = false;
     sorted_keys.clear();

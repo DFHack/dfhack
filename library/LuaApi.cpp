@@ -1874,26 +1874,57 @@ static bool hotkey_addKeybind(const std::string spec, const std::string cmd) {
     return hotkey_mgr->addKeybind(spec, cmd);
 }
 
-static bool hotkey_clearKeybind(const std::string spec, bool any_focus, std::string cmd) {
+static int hotkey_requestKeybindingInput(lua_State *L) {
     auto hotkey_mgr = Core::getInstance().getHotkeyManager();
-    if (!hotkey_mgr) return false;
-    return hotkey_mgr->clearKeybind(spec, any_focus, cmd);
+    if (!hotkey_mgr) return 0;
+    bool cancel = false;
+    if (lua_gettop(L) == 1)
+        cancel = lua_toboolean(L, -1);
+    hotkey_mgr->requestKeybindingInput(cancel);
+    return 0;
 }
 
-static void hotkey_requestKeybindingInput() {
+static int hotkey_getKeybindingInput(lua_State *L) {
     auto hotkey_mgr = Core::getInstance().getHotkeyManager();
-    if (hotkey_mgr) hotkey_mgr->requestKeybindInput();
-}
-
-static int hotkey_readKeybindInput(lua_State *L) {
-    auto hotkey_mgr = Core::getInstance().getHotkeyManager();
-    auto input = hotkey_mgr->readKeybindInput();
+    auto input = hotkey_mgr->getKeybindingInput();
 
     if (input.empty()) {
         lua_pushnil(L);
     } else {
         lua_pushlstring(L, input.data(), input.size());
     }
+    return 1;
+}
+
+static int hotkey_removeKeybind(lua_State *L) {
+    auto hotkey_mgr = Core::getInstance().getHotkeyManager();
+    if (!hotkey_mgr) {
+        lua_pushboolean(L, false);
+        return 1;
+    }
+
+    bool res = false;
+    switch (lua_gettop(L)) {
+        case 1:
+            luaL_checkstring(L, -1);
+            res = hotkey_mgr->removeKeybind(lua_tostring(L, -1));
+            break;
+        case 2:
+            luaL_checkstring(L, -2);
+            res = hotkey_mgr->removeKeybind(lua_tostring(L, -2), lua_toboolean(L, -1));
+            break;
+        case 3:
+            luaL_checkstring(L, -3);
+            luaL_checkstring(L, -1);
+            res = hotkey_mgr->removeKeybind(
+                    lua_tostring(L, -3),
+                    lua_toboolean(L, -2),
+                    lua_tostring(L, -1)
+                );
+            break;
+    }
+
+    lua_pushboolean(L, res);
     return 1;
 }
 
@@ -1932,16 +1963,16 @@ static int hotkey_listAllKeybinds(lua_State *L) {
 }
 
 static const luaL_Reg dfhack_hotkey_funcs[] = {
+    { "removeKeybind", hotkey_removeKeybind },
     { "listActiveKeybinds", hotkey_listActiveKeybinds },
     { "listAllKeybinds", hotkey_listAllKeybinds },
-    { "readKeybindInput", hotkey_readKeybindInput },
+    { "requestKeybindingInput", hotkey_requestKeybindingInput },
+    { "getKeybindingInput", hotkey_getKeybindingInput },
     { NULL, NULL }
 };
 
 static const LuaWrapper::FunctionReg dfhack_hotkey_module[] = {
     WRAPN(addKeybind, hotkey_addKeybind),
-    WRAPN(clearKeybind, hotkey_clearKeybind),
-    WRAPN(requestKeybindInput, hotkey_requestKeybindingInput),
     { NULL, NULL }
 };
 

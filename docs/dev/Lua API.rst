@@ -1439,11 +1439,11 @@ Hotkey module
   for details on format).
   Returns false on failure to create keybind.
 
-* ``dfhack.hotkey.clearKeybind(keyspec, any_focus, command)``
+* ``dfhack.hotkey.removeKeybind(keyspec, [match_focus=true, command])``
 
   Removes keybinds matching the provided keyspec.
-  If any_focus is true, the focus portion of the keyspec is ignored.
-  If command is not an empty string, the command is matched against as well.
+  If match_focus is set, the focus portion of the keyspec is matched against.
+  If command is provided and not an empty string, the command is matched against.
   Returns false if no keybinds were removed.
 
 * ``dfhack.hotkey.listActiveKeybinds()``
@@ -1460,15 +1460,16 @@ Hotkey module
   :spec: The keyspec for the hotkey
   :command: The command the hotkey runs when pressed
 
-* ``dfhack.hotkey.requestKeybindInput()``
+* ``dfhack.hotkey.requestKeybindingInput([cancel=false])``
 
-  Requests that the next hotkey-compatible input is saved and not processed,
-  retrievable with ``dfhack.hotkey.readKeybindInput()``.
+  Enqueues or cancels a request that the next hotkey-compatible input is saved
+  and not processed, retrievable with ``dfhack.hotkey.getKeybindingInput()``.
+  If cancel is true, any current request is cancelled.
 
-* ``dfhack.hotkey.readKeybindInput()``
+* ``dfhack.hotkey.getKeybindingInput()``
 
   Reads the latest saved keybind input that was requested.
-  Returns a keyspec string for the input, or nil if no input is saved.
+  Returns a keyspec string for the input, or nil if no input has been saved.
 
 Units module
 ------------

@@ -181,16 +181,17 @@ bool HotkeyManager::addKeybind(std::string keyspec, std::string cmd) {
     return this->addKeybind(spec_opt.value(), cmd);
 }
 
-bool HotkeyManager::clearKeybind(const KeySpec& spec, bool any_focus, std::string_view cmdline) {
+bool HotkeyManager::removeKeybind(const KeySpec& spec, bool match_focus, std::string_view cmdline) {
     std::lock_guard<std::mutex> l(lock);
     if (!bindings.contains(spec.sym))
         return false;
     auto& binds = bindings[spec.sym];
 
-    auto new_end = std::remove_if(binds.begin(), binds.end(), [any_focus, spec, &cmdline](const auto& v) {
-            return (any_focus
-                ? v.spec.sym == spec.sym && v.spec.modifiers == spec.modifiers
-                : v.spec == spec) && (cmdline.empty() || v.cmdline == cmdline);
+    auto new_end = std::remove_if(binds.begin(), binds.end(), [match_focus, spec, &cmdline](const auto& v) {
+            return v.spec.sym == spec.sym
+                && v.spec.modifiers == spec.modifiers
+                && (!match_focus || v.spec.focus == spec.focus)
+                && (cmdline.empty() || v.cmdline == cmdline);
     });
     if (new_end == binds.end())
         return false; // No bindings removed
@@ -199,11 +200,11 @@ bool HotkeyManager::clearKeybind(const KeySpec& spec, bool any_focus, std::strin
     return true;
 }
 
-bool HotkeyManager::clearKeybind(std::string keyspec, bool any_focus, std::string_view cmdline) {
+bool HotkeyManager::removeKeybind(std::string keyspec, bool match_focus, std::string_view cmdline) {
     std::optional<KeySpec> spec_opt = Hotkey::parseKeySpec(keyspec);
     if (!spec_opt.has_value())
         return false;
-    return this->clearKeybind(spec_opt.value(), any_focus, cmdline);
+    return this->removeKeybind(spec_opt.value(), match_focus, cmdline);
 }
 
 std::vector<std::string> HotkeyManager::listKeybinds(const KeySpec& spec) {
@@ -237,6 +238,7 @@ std::vector<std::string> HotkeyManager::listKeybinds(const KeySpec& spec) {
 }
 
 std::vector<std::string> HotkeyManager::listKeybinds(std::string keyspec) {
+    std::lock_guard<std::mutex> l(lock);
     std::optional<KeySpec> spec_opt = Hotkey::parseKeySpec(keyspec);
     if (!spec_opt.has_value())
         return {};
@@ -244,6 +246,7 @@ std::vector<std::string> HotkeyManager::listKeybinds(std::string keyspec) {
 }
 
 std::vector<KeyBinding> HotkeyManager::listActiveKeybinds() {
+    std::lock_guard<std::mutex> l(lock);
     std::vector<KeyBinding> out;
 
     for(const auto& [_, bind_set] : bindings) {
@@ -267,6 +270,7 @@ std::vector<KeyBinding> HotkeyManager::listActiveKeybinds() {
 }
 
 std::vector<KeyBinding> HotkeyManager::listAllKeybinds() {
+    std::lock_guard<std::mutex> l(lock);
     std::vector<KeyBinding> out;
 
     for (const auto& [_, bind_set] : bindings) {
@@ -351,13 +355,13 @@ void HotkeyManager::setHotkeyCommand(std::string cmd) {
     cond.notify_all();
 }
 
-void HotkeyManager::requestKeybindInput() {
+void HotkeyManager::requestKeybindingInput(bool cancel) {
     std::lock_guard<std::mutex> l(lock);
-    keybind_save_requested = true;
-    requested_keybind = "";
+    keybind_save_requested = !cancel;
+    requested_keybind.clear();
 }
 
-std::string HotkeyManager::readKeybindInput() {
+std::string HotkeyManager::getKeybindingInput() {
     std::lock_guard<std::mutex> l(lock);
     return requested_keybind;
 }
@@ -367,7 +371,7 @@ void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vecto
     if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add")) {
         std::string keystr = parts[1];
         if (parts[0] == "set")
-            clearKeybind(keystr);
+            removeKeybind(keystr);
         for (const auto& part : parts | std::views::drop(2) | std::views::reverse) {
             auto spec = Hotkey::parseKeySpec(keystr, &parse_error);
             if (!spec.has_value()) {
@@ -386,7 +390,7 @@ void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vecto
             if (!spec.has_value()) {
                 con.printerr("%s\n", parse_error.c_str());
             }
-            if (!clearKeybind(spec.value())) {
+            if (!removeKeybind(spec.value())) {
                 con.printerr("No matching keybinds to remove\n");
                 break;
             }

@@ -37,8 +37,8 @@ namespace DFHack {
             bool addKeybind(std::string keyspec, std::string cmd);
             bool addKeybind(Hotkey::KeySpec spec, std::string cmd);
             // Clear a keybind with the given keyspec, optionally for any focus, or with a specific command
-            bool clearKeybind(std::string keyspec, bool any_focus=false, std::string_view cmdline="");
-            bool clearKeybind(const Hotkey::KeySpec& spec, bool any_focus=false, std::string_view cmdline="");
+            bool removeKeybind(std::string keyspec, bool match_focus=true, std::string_view cmdline="");
+            bool removeKeybind(const Hotkey::KeySpec& spec, bool match_focus=true, std::string_view cmdline="");
 
             std::vector<std::string> listKeybinds(std::string keyspec);
             std::vector<std::string> listKeybinds(const Hotkey::KeySpec& spec);
@@ -49,11 +49,11 @@ namespace DFHack {
             bool handleKeybind(int sym, int modifiers);
             void setHotkeyCommand(std::string cmd);
 
-            // Used to request the next keybind input is saved.
+            // Used to request the next hotkey-compatible input is saved.
             // This is to allow for graphical keybinding menus.
-            void requestKeybindInput();
+            void requestKeybindingInput(bool cancel=false);
             // Returns the latest requested keybind input
-            std::string readKeybindInput();
+            std::string getKeybindingInput();
 
         private:
             std::thread hotkey_thread;
@@ -64,7 +64,7 @@ namespace DFHack {
             std::string requested_keybind;
 
             int hotkey_sig = 0;
-            std::string queued_command = "";
+            std::string queued_command;
 
             std::map<int, std::vector<Hotkey::KeyBinding>> bindings;
 

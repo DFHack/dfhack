@@ -72,7 +72,7 @@ static const int32_t ticksPerYear = 403200;
 
 void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler) {
     DEBUG(log).print("registering handler {} from plugin {} for event {}\n",
-        static_cast<void*>(handler.eventHandler),
+        reinterpret_cast<void*>(handler.eventHandler),
         handler.plugin ? handler.plugin->getName() : "<null>",
         static_cast<int>(e));
     handlers[e].insert(pair<Plugin*, EventHandler>(handler.plugin, handler));
@@ -91,7 +91,7 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, b
     handler.freq = when;
     tickQueue.insert(pair<int32_t, EventHandler>(handler.freq, handler));
     DEBUG(log).print("registering handler {} from plugin {} for event TICK\n",
-        static_cast<void*>(handler.eventHandler),
+        reinterpret_cast<void*>(handler.eventHandler),
         handler.plugin ? handler.plugin->getName() : "<null>");
     handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(handler.plugin,handler));
     return when;

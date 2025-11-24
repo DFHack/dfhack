@@ -36,6 +36,7 @@ distribution.
 #include <filesystem>
 
 #include <fmt/format.h>
+#include <fmt/ostream.h>
 
 #ifndef WIN32
 #include <dirent.h>

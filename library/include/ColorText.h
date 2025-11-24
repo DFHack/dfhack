@@ -24,6 +24,7 @@ distribution.
 
 #pragma once
 #include "Export.h"
+#include "Format.h"
 
 #include <list>
 #include <fstream>
@@ -32,9 +33,6 @@ distribution.
 #include <string>
 #include <stdarg.h>
 #include <sstream>
-
-#include <fmt/format.h>
-#include <fmt/std.h>
 
 namespace dfproto
 {

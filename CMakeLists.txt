@@ -46,8 +46,8 @@ option(REMOVE_SYMBOLS_FROM_DF_STUBS "Remove debug symbols from DF stubs. (Reduce
 macro(CHECK_GCC compiler_path)
     execute_process(COMMAND ${compiler_path} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)
     string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
-    if(${GCC_VERSION_OUT} VERSION_LESS "10")
-        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 10 or later")
+    if(${GCC_VERSION_OUT} VERSION_LESS "11")
+        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 11 or later")
     endif()
 endmacro()
 
@@ -347,6 +347,7 @@ if(BUILD_LIBRARY)
     endif()
 endif()
 
+# this can be made conditional once we get to better platform support for std::format
 INCLUDE(FetchContent)
 FetchContent_Declare(
     fmt
@@ -354,6 +355,8 @@ FetchContent_Declare(
     GIT_TAG 790b9389ae99c4ddebdd2736a8602eca1fec684e # 12.1.0 + bugfix for MSVC warning + build time improvements
 )
 FetchContent_MakeAvailable(fmt)
+set(FMTLIB fmt)
+add_definitions("-DUSE_FMTLIB")
 
 if(APPLE)
     # libstdc++ (GCC 4.8.5 for OS X 10.6)
@@ -436,7 +439,7 @@ macro(dfhack_test name files)
 if(BUILD_LIBRARY AND UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
     add_executable(${name} ${files})
     target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
-    target_link_libraries(${name} dfhack fmt gtest)
+    target_link_libraries(${name} dfhack ${FMTLIB} gtest)
     add_test(NAME ${name} COMMAND ${name})
 endif()
 endmacro()

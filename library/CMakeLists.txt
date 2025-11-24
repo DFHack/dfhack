@@ -58,6 +58,7 @@ set(MAIN_HEADERS
     include/DebugManager.h
     include/Error.h
     include/Export.h
+    include/Format.h
     include/Hooks.h
     include/LuaTools.h
     include/LuaWrapper.h
@@ -320,12 +321,12 @@ if(UNIX)
 endif()
 
 if(APPLE)
-    set(PROJECT_LIBS dl dfhack-md5 fmt ${DFHACK_TINYXML})
+    set(PROJECT_LIBS dl dfhack-md5 ${FMTLIB} ${DFHACK_TINYXML})
 elseif(UNIX)
-    set(PROJECT_LIBS rt dl dfhack-md5 fmt ${DFHACK_TINYXML})
+    set(PROJECT_LIBS rt dl dfhack-md5 ${FMTLIB} ${DFHACK_TINYXML})
 else(WIN32)
     # FIXME: do we really need psapi?
-    set(PROJECT_LIBS psapi dbghelp dfhack-md5 fmt ${DFHACK_TINYXML})
+    set(PROJECT_LIBS psapi dbghelp dfhack-md5 ${FMTLIB} ${DFHACK_TINYXML})
 endif()
 
 set(VERSION_SRCS DFHackVersion.cpp)
@@ -391,7 +392,7 @@ else()
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "-include Export.h" )
     add_library(dfhooks_dfhack SHARED Hooks.cpp)
-    target_link_libraries(dfhooks_dfhack dfhack fmt)
+    target_link_libraries(dfhooks_dfhack dfhack ${FMTLIB})
 endif()
 
 # effectively disables debug builds...
@@ -420,7 +421,7 @@ endif()
 target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version ${PROJECT_LIBS})
 set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
-target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static fmt)
+target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static ${FMTLIB})
 if(WIN32)
     target_link_libraries(dfhack-client dbghelp)
 endif()

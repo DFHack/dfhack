@@ -41,6 +41,7 @@ distribution.
 #include "LuaTools.h"
 #include "DFHackVersion.h"
 #include "md5wrapper.h"
+#include "Format.h"
 
 #include "modules/DFSDL.h"
 #include "modules/DFSteam.h"
@@ -87,7 +88,6 @@ distribution.
 #include <filesystem>
 #include <SDL_events.h>
 
-#include <fmt/std.h>
 
 #ifdef _WIN32
 #define NOMINMAX
@@ -525,18 +525,19 @@ std::filesystem::path Core::findScript(std::string name)
 {
     std::vector<std::filesystem::path> paths;
     getScriptPaths(&paths);
-    for (auto it = paths.begin(); it != paths.end(); ++it)
+    for (auto& path : paths)
     {
         std::error_code ec;
-        std::filesystem::path path = std::filesystem::weakly_canonical(*it / name, ec);
+        auto raw_path = path / name;
+        std::filesystem::path load_path = std::filesystem::weakly_canonical(raw_path, ec);
         if (ec)
         {
-            con.printerr("Error loading '{}' ({})\n", *it / name, ec.message());
+            con.printerr("Error loading '{}' ({})\n", raw_path, ec.message());
             continue;
         }
 
-        if (Filesystem::isfile(path))
-            return path;
+        if (Filesystem::isfile(load_path))
+            return load_path;
     }
     return {};
 }

@@ -249,7 +249,7 @@ static void signal_typeid_error(color_ostream* out, lua_State* state,
                                 int val_index, bool perr, bool signal)
 {
     std::string typestr = type ? type->getFullName() : "any pointer";
-    std::string error = fmt::format(fmt::runtime(msg), typestr);
+    std::string error = fmt::vformat(msg, fmt::make_format_args(typestr)); //FIXME: C++26
 
     if (signal)
     {

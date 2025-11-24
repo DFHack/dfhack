@@ -1,7 +1,7 @@
 #include "Error.h"
+#include "Format.h"
 #include "MiscUtils.h"
 
-#include <fmt/format.h>
 #include <string>
 
 using namespace DFHack::Error;

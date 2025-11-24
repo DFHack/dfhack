@@ -35,8 +35,7 @@ distribution.
 #include <vector>
 #include <filesystem>
 
-#include <fmt/format.h>
-#include <fmt/ostream.h>
+#include "Format.h"
 
 #ifndef WIN32
 #include <dirent.h>

@@ -70,6 +70,7 @@ Template for new versions:
 ## Lua
 
 ## Removed
+- `infiniteSky`: Temporarily disabled due to incompatibility with changes made as part of DF's siege update
 
 # 53.05-r1
 

@@ -351,7 +351,7 @@ INCLUDE(FetchContent)
 FetchContent_Declare(
     fmt
     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG 12.1.0
+    GIT_TAG 790b9389ae99c4ddebdd2736a8602eca1fec684e # 12.1.0 + bugfix for MSVC warning + build time improvements
 )
 FetchContent_MakeAvailable(fmt)
 

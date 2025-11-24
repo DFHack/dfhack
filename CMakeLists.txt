@@ -436,7 +436,7 @@ macro(dfhack_test name files)
 if(BUILD_LIBRARY AND UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
     add_executable(${name} ${files})
     target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
-    target_link_libraries(${name} dfhack gtest)
+    target_link_libraries(${name} dfhack fmt gtest)
     add_test(NAME ${name} COMMAND ${name})
 endif()
 endmacro()

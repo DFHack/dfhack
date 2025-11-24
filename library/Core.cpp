@@ -201,7 +201,7 @@ uint32_t PerfCounters::getUnpausedFps() {
 
 struct CommandDepthCounter
 {
-    static const int MAX_DEPTH = 20;
+    static constexpr int MAX_DEPTH = 20;
     static thread_local int depth;
     CommandDepthCounter() { depth++; }
     ~CommandDepthCounter() { depth--; }
@@ -902,8 +902,8 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "plug")
     {
-        const char *header_format = "%30s %10s %4s %8s\n";
-        const char *row_format =    "%30s %10s %4i %8s\n";
+        constexpr auto header_format = "%30s %10s %4s %8s\n";
+        constexpr auto row_format =    "%30s %10s %4i %8s\n";
         con.print(header_format, "Name", "State", "Cmds", "Enabled");
 
         plug_mgr->refresh();
@@ -1601,7 +1601,7 @@ bool Core::InitMainThread() {
     {
         if (!Version::git_xml_match())
         {
-            const char *msg = (
+            constexpr auto msg = (
                 "*******************************************************\n"
                 "*               BIG, UGLY ERROR MESSAGE               *\n"
                 "*******************************************************\n"
@@ -2166,7 +2166,7 @@ static void getFilesWithPrefixAndSuffix(const std::filesystem::path& folder, con
 }
 
 size_t loadScriptFiles(Core* core, color_ostream& out, const std::span<const std::string> prefix, const std::filesystem::path& folder) {
-    static const std::string suffix = ".init";
+    static constexpr std::string suffix = ".init";
     std::vector<std::filesystem::path> scriptFiles;
     for ( const auto& p : prefix ) {
         getFilesWithPrefixAndSuffix(folder, p, ".init", scriptFiles);

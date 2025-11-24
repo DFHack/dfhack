@@ -119,7 +119,7 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
             continue;
         }
         DEBUG(log).print("unregistering handler {} from plugin {} for event {}\n",
-            static_cast<void*>(handler.eventHandler),
+            reinterpret_cast<void*>(handler.eventHandler),
             handler.plugin ? handler.plugin->getName() : "<null>",
             static_cast<int>(e));
         i = handlers[e].erase(i);

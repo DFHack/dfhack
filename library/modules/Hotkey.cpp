@@ -1,5 +1,8 @@
 #include "modules/Hotkey.h"
 
+#include <ranges>
+#include <SDL_keycode.h>
+
 #include "Core.h"
 #include "ColorText.h"
 #include "MiscUtils.h"
@@ -12,8 +15,6 @@
 #include "df/viewscreen.h"
 #include "df/interfacest.h"
 
-#include <ranges>
-#include <SDL_keycode.h>
 
 using namespace DFHack;
 using Hotkey::KeySpec;
@@ -103,7 +104,7 @@ std::optional<KeySpec> KeySpec::parse(std::string spec, std::string* err) {
     // Attempt to parse as a mouse binding
     if (spec.starts_with("mouse")) {
         spec.erase(0, 5);
-        // Read button number, ensuring between 1 and 15 inclusive
+        // Read button number, ensuring between 4 and 15 inclusive
         try {
             int mbutton = std::stoi(spec);
             if (mbutton >= 4 && mbutton <= 15) {
@@ -126,14 +127,15 @@ std::optional<KeySpec> KeySpec::parse(std::string spec, std::string* err) {
 }
 
 bool KeySpec::isDisruptive() const {
-    // Miscellaneous essential keys
+    // SDLK enum uses the actual characters for a key as its value.
+    // Escaped values included are Return, Escape, Backspace, and Tab
     const std::string essential_key_set = "\r\x1B\b\t -=[]\\;',./";
 
     // Letters A-Z, 0-9, and other special keys such as return/escape, and other general typing keys
-    bool is_essential_key = (this->sym >= SDLK_a && this->sym <= SDLK_z)
-        || (this->sym >= SDLK_0 && this->sym <= SDLK_9)
+    bool is_essential_key = (this->sym >= SDLK_a && this->sym <= SDLK_z) // A-Z
+        || (this->sym >= SDLK_0 && this->sym <= SDLK_9) // 0-9
         || essential_key_set.find(this->sym) != std::string::npos
-        || (this->sym >= SDLK_LEFT && this->sym <= SDLK_UP);
+        || (this->sym >= SDLK_LEFT && this->sym <= SDLK_UP); // Arrow keys
 
     // Essential keys are safe, so long as they have a modifier that isn't Shift
     if (is_essential_key && !(this->modifiers & ~DFH_MOD_SHIFT))
@@ -306,11 +308,12 @@ bool HotkeyManager::handleKeybind(int sym, int modifiers) {
     if (!df::global::gview || !df::global::plotinfo)
         return false;
 
-    // Get bottommost active screen
+    // Get topmost active screen
     df::viewscreen *screen = &df::global::gview->view;
     while (screen->child)
         screen = screen->child;
 
+    // Map keypad return to return
     if (sym == SDLK_KP_ENTER)
         sym = SDLK_RETURN;
 
@@ -333,6 +336,7 @@ bool HotkeyManager::handleKeybind(int sym, int modifiers) {
     auto& core = Core::getInstance();
     bool mortal_mode = core.getMortalMode();
 
+    // Iterate in reverse, prioritizing the last added keybinds
     for (const auto& bind : binds | std::views::reverse) {
         if (bind.spec.modifiers != modifiers)
             continue;
@@ -340,9 +344,7 @@ bool HotkeyManager::handleKeybind(int sym, int modifiers) {
         if (!bind.spec.focus.empty()) {
             bool matched = false;
             for (const auto& focus : bind.spec.focus) {
-                printf("Focus check for: %s", focus.c_str());
                 if (Gui::matchFocusString(focus)) {
-                    printf("Matched\n");
                     matched = true;
                     break;
                 }
@@ -351,7 +353,7 @@ bool HotkeyManager::handleKeybind(int sym, int modifiers) {
                 continue;
         }
 
-        if (!Core::getInstance().getPluginManager()->CanInvokeHotkey(bind.command, screen))
+        if (!core.getPluginManager()->CanInvokeHotkey(bind.command, screen))
             continue;
 
         if (mortal_mode && core.isArmokTool(bind.command))
@@ -435,7 +437,7 @@ void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vecto
             << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
             << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
             << "Later adds, and earlier items within one command have priority." << std::endl
-            << "Supported keys: [Ctrl-][Alt-][Super-][Shift-](A-Z, 0-9, F1-F12, `, etc.)." << std::endl
+            << "Key format: [Ctrl-][Alt-][Super-][Shift-](A-Z, 0-9, F1-F12, `, etc.)." << std::endl
             << "Context may be used to limit the scope of the binding, by" << std::endl
             << "requiring the current context to have a certain prefix." << std::endl
             << "Current UI context is: " << std::endl

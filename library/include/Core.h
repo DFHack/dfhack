@@ -270,7 +270,6 @@ namespace DFHack
         // Hotkey Manager
         DFHack::HotkeyManager *hotkey_mgr;
 
-        // FIXME: remove all this junk (hotkey related)
         std::vector<std::filesystem::path> script_paths[3];
         std::mutex script_path_mutex;
 

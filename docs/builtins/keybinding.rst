@@ -32,7 +32,8 @@ The ``<key>`` parameter above has the following case-insensitive syntax::
     [Ctrl-][Alt-][Super-][Shift-]KEY[@context[|context...]]
 
 where the ``KEY`` part can be any recognized key and :kbd:`[`:kbd:`]` denote
-optional parts.
+optional parts. It is important to note that the key is the non-shifted version
+of the key. For example ``!`` would be defined as ``Shift-0``.
 
 DFHack commands can advertise the contexts in which they can be usefully run.
 For example, a command that acts on a selected unit can tell `keybinding` that

@@ -39,8 +39,8 @@ namespace DFHack {
             ~HotkeyManager();
 
 
-            bool addKeybind(std::string keyspec, std::string cmd);
-            bool addKeybind(Hotkey::KeySpec spec, std::string cmd);
+            bool addKeybind(std::string keyspec, std::string_view cmd);
+            bool addKeybind(Hotkey::KeySpec spec, std::string_view cmd);
             // Clear a keybind with the given keyspec, optionally for any focus, or with a specific command
             bool removeKeybind(std::string keyspec, bool match_focus=true, std::string_view cmdline="");
             bool removeKeybind(const Hotkey::KeySpec& spec, bool match_focus=true, std::string_view cmdline="");
@@ -62,13 +62,13 @@ namespace DFHack {
 
         private:
             std::thread hotkey_thread;
-            std::mutex lock {};
-            std::condition_variable cond {};
+            std::mutex lock;
+            std::condition_variable cond;
 
             bool keybind_save_requested = false;
             std::string requested_keybind;
 
-            int hotkey_sig = 0;
+            uint8_t hotkey_sig = 0;
             std::string queued_command;
 
             std::map<int, std::vector<Hotkey::KeyBinding>> bindings;

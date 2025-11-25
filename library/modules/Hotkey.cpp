@@ -20,20 +20,20 @@ using namespace DFHack;
 using Hotkey::KeySpec;
 using Hotkey::KeyBinding;
 
-enum HotkeySignal {
+enum HotkeySignal : uint8_t {
     None = 0,
     CmdReady,
     Shutdown,
 };
 
-bool operator==(const KeySpec& a, const KeySpec& b) {
+static bool operator==(const KeySpec& a, const KeySpec& b) {
     return a.modifiers == b.modifiers && a.sym == b.sym &&
         a.focus.size() == b.focus.size() &&
         std::equal(a.focus.begin(), a.focus.end(), b.focus.begin());
 }
 
 // Equality operator for key bindings
-bool operator==(const KeyBinding& a, const KeyBinding& b) {
+static bool operator==(const KeyBinding& a, const KeyBinding& b) {
     return a.spec == b.spec &&
         a.command == b.command &&
         a.cmdline == b.cmdline;
@@ -134,7 +134,7 @@ bool KeySpec::isDisruptive() const {
     // Letters A-Z, 0-9, and other special keys such as return/escape, and other general typing keys
     bool is_essential_key = (this->sym >= SDLK_a && this->sym <= SDLK_z) // A-Z
         || (this->sym >= SDLK_0 && this->sym <= SDLK_9) // 0-9
-        || essential_key_set.find(this->sym) != std::string::npos
+        || (this->sym < CHAR_MAX && essential_key_set.find((char)this->sym) != std::string::npos)
         || (this->sym >= SDLK_LEFT && this->sym <= SDLK_UP); // Arrow keys
 
     // Essential keys are safe, so long as they have a modifier that isn't Shift
@@ -173,13 +173,13 @@ void HotkeyManager::hotkey_thread_fn() {
 }
 
 
-bool HotkeyManager::addKeybind(KeySpec spec, std::string cmd) {
+bool HotkeyManager::addKeybind(KeySpec spec, std::string_view cmd) {
     // No point in a hotkey with no action
     if (cmd.empty())
         return false;
 
     KeyBinding binding;
-    binding.spec = spec;
+    binding.spec = std::move(spec);
     binding.cmdline = cmd;
     size_t space_idx = cmd.find(' ');
     binding.command = space_idx == std::string::npos ? cmd : cmd.substr(0, space_idx);
@@ -196,8 +196,8 @@ bool HotkeyManager::addKeybind(KeySpec spec, std::string cmd) {
     return true;
 }
 
-bool HotkeyManager::addKeybind(std::string keyspec, std::string cmd) {
-    std::optional<KeySpec> spec_opt = KeySpec::parse(keyspec);
+bool HotkeyManager::addKeybind(std::string keyspec, std::string_view cmd) {
+    std::optional<KeySpec> spec_opt = KeySpec::parse(std::move(keyspec));
     if (!spec_opt.has_value())
         return false;
     return this->addKeybind(spec_opt.value(), cmd);
@@ -223,7 +223,7 @@ bool HotkeyManager::removeKeybind(const KeySpec& spec, bool match_focus, std::st
 }
 
 bool HotkeyManager::removeKeybind(std::string keyspec, bool match_focus, std::string_view cmdline) {
-    std::optional<KeySpec> spec_opt = KeySpec::parse(keyspec);
+    std::optional<KeySpec> spec_opt = KeySpec::parse(std::move(keyspec));
     if (!spec_opt.has_value())
         return false;
     return this->removeKeybind(spec_opt.value(), match_focus, cmdline);
@@ -261,7 +261,7 @@ std::vector<std::string> HotkeyManager::listKeybinds(const KeySpec& spec) {
 
 std::vector<std::string> HotkeyManager::listKeybinds(std::string keyspec) {
     std::lock_guard<std::mutex> l(lock);
-    std::optional<KeySpec> spec_opt = KeySpec::parse(keyspec);
+    std::optional<KeySpec> spec_opt = KeySpec::parse(std::move(keyspec));
     if (!spec_opt.has_value())
         return {};
     return this->listKeybinds(spec_opt.value());
@@ -371,7 +371,7 @@ bool HotkeyManager::handleKeybind(int sym, int modifiers) {
 
 void HotkeyManager::setHotkeyCommand(std::string cmd) {
     std::unique_lock<std::mutex> l(lock);
-    queued_command = cmd;
+    queued_command = std::move(cmd);
     hotkey_sig = HotkeySignal::CmdReady;
     l.unlock();
     cond.notify_all();
@@ -391,7 +391,7 @@ std::string HotkeyManager::getKeybindingInput() {
 void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vector<std::string>& parts) {
     std::string parse_error;
     if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add")) {
-        std::string keystr = parts[1];
+        const std::string& keystr = parts[1];
         if (parts[0] == "set")
             removeKeybind(keystr);
         for (const auto& part : parts | std::views::drop(2) | std::views::reverse) {
@@ -426,22 +426,22 @@ void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vecto
         }
         std::vector<std::string> list = listKeybinds(spec.value());
         if (list.empty())
-            con << "No bindings." << std::endl;
+            con << "No bindings.\n";
         for (const auto& kb : list)
-            con << "  " << kb << std::endl;
+            con << "  " << kb << "\n";
     }
     else {
-        con << "Usage:" << std::endl
-            << "  keybinding list <key>" << std::endl
-            << "  keybinding clear <key>[@context]..." << std::endl
-            << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-            << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-            << "Later adds, and earlier items within one command have priority." << std::endl
-            << "Key format: [Ctrl-][Alt-][Super-][Shift-](A-Z, 0-9, F1-F12, `, etc.)." << std::endl
-            << "Context may be used to limit the scope of the binding, by" << std::endl
-            << "requiring the current context to have a certain prefix." << std::endl
-            << "Current UI context is: " << std::endl
-            << join_strings("\n", Gui::getCurFocus(true)) << std::endl;
+        con << "Usage:\n"
+            << "  keybinding list <key>\n"
+            << "  keybinding clear <key>[@context]...\n"
+            << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"...\n"
+            << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"...\n"
+            << "Later adds, and earlier items within one command have priority.\n"
+            << "Key format: [Ctrl-][Alt-][Super-][Shift-](A-Z, 0-9, F1-F12, `, etc.).\n"
+            << "Context may be used to limit the scope of the binding, by\n"
+            << "requiring the current context to have a certain prefix.\n"
+            << "Current UI context is: \n"
+            << join_strings("\n", Gui::getCurFocus(true)) << "\n";
     }
 }
 

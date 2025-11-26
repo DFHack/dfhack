@@ -5,6 +5,7 @@
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
+#include "modules/Hotkey.h"
 #include "modules/Screen.h"
 #include "../uicommon.h"
 
@@ -161,7 +162,7 @@ struct start_site_hook : df::viewscreen_choose_start_sitest {
     {
         if (!embark_assist::main::state && input->count(interface_key::CUSTOM_A))
         {
-            Core::getInstance().setHotkeyCmd("embark-assistant");
+            Core::getInstance().getHotkeyManager()->setHotkeyCommand("embark-assistant");
             return;
         }
         INTERPOSE_NEXT(feed)(input);

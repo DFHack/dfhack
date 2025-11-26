@@ -9,9 +9,9 @@ Like any other command, it can be used at any time from the console, but
 bindings are not remembered between runs of the game unless re-created in
 :file:`dfhack-config/init/dfhack.init`.
 
-Hotkeys can be any combinations of Ctrl/Alt/Shift with A-Z, 0-9, F1-F12, or `
-(the key below the :kbd:`Esc` key on most keyboards). You can also represent
-mouse buttons beyond the first three with ``MOUSE4`` through ``MOUSE15``.
+Hotkeys can be any combinations of Ctrl/Alt/Super/Shift with any key recognized by SDL.
+You can also represent mouse buttons beyond the first three with ``MOUSE4``
+through ``MOUSE15``.
 
 Usage
 -----
@@ -27,12 +27,13 @@ Usage
 ``keybinding set <key> "<cmdline>" ["<cmdline>" ...]``
     Clear, and then add bindings for the specified key.
 
-The ``<key>`` parameter above has the following **case-sensitive** syntax::
+The ``<key>`` parameter above has the following case-insensitive syntax::
 
-    [Ctrl-][Alt-][Shift-]KEY[@context[|context...]]
+    [Ctrl-][Alt-][Super-][Shift-]KEY[@context[|context...]]
 
 where the ``KEY`` part can be any recognized key and :kbd:`[`:kbd:`]` denote
-optional parts.
+optional parts. It is important to note that the key is the non-shifted version
+of the key. For example ``!`` would be defined as ``Shift-0``.
 
 DFHack commands can advertise the contexts in which they can be usefully run.
 For example, a command that acts on a selected unit can tell `keybinding` that

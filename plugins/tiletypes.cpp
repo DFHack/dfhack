@@ -1156,7 +1156,7 @@ command_result executePaintJob(color_ostream &out,
     }
 
     if (!opts.quiet)
-        out.print("Cursor coords: (%d, %d, %d)\n",
+        out.print("Cursor coords: ({}, {}, {})\n",
                   cursor.x, cursor.y, cursor.z);
 
     MapExtras::MapCache map;
@@ -1196,9 +1196,9 @@ command_result executePaintJob(color_ostream &out,
     }
 
     if (failures > 0)
-        out.printerr("Could not update %d tiles of %zu.\n", failures, all_tiles.size());
+        out.printerr("Could not update {} tiles of {}.\n", failures, all_tiles.size());
     else if (!opts.quiet)
-        out.print("Processed %zu tiles.\n", all_tiles.size());
+        out.print("Processed {} tiles.\n", all_tiles.size());
 
     if (map.WriteAll())
     {
@@ -1399,57 +1399,57 @@ command_result df_tiletypes_here_point (color_ostream &out, vector <string> & pa
 
 static bool setTile(color_ostream& out, df::coord pos, TileType target) {
     if (!Maps::isValidTilePos(pos)) {
-        out.printerr("Invalid map position: %d, %d, %d\n", pos.x, pos.y, pos.z);
+        out.printerr("Invalid map position: ({}, {}, {})\n", pos.x, pos.y, pos.z);
         return false;
     }
 
     if (!is_valid_enum_item(target.shape)) {
-        out.printerr("Invalid shape type: %d\n", target.shape);
+        out.printerr("Invalid shape type: {}\n", ENUM_AS_STR(target.shape));
         return false;
     }
     if (!is_valid_enum_item(target.material)) {
-        out.printerr("Invalid material type: %d\n", target.material);
+        out.printerr("Invalid material type: {}\n", ENUM_AS_STR(target.material));
         return false;
     }
     if (!is_valid_enum_item(target.special)) {
-        out.printerr("Invalid special type: %d\n", target.special);
+        out.printerr("Invalid special type: {}\n", ENUM_AS_STR(target.special));
         return false;
     }
     if (!is_valid_enum_item(target.variant)) {
-        out.printerr("Invalid variant type: %d\n", target.variant);
+        out.printerr("Invalid variant type: {}\n", ENUM_AS_STR(target.variant));
         return false;
     }
     if (target.hidden < -1 || target.hidden > 1) {
-        out.printerr("Invalid hidden value: %d\n", target.hidden);
+        out.printerr("Invalid hidden value: {}\n", target.hidden);
         return false;
     }
     if (target.light < -1 || target.light > 1) {
-        out.printerr("Invalid light value: %d\n", target.light);
+        out.printerr("Invalid light value: {}\n", target.light);
         return false;
     }
     if (target.subterranean < -1 || target.subterranean > 1) {
-        out.printerr("Invalid subterranean value: %d\n", target.subterranean);
+        out.printerr("Invalid subterranean value: {}\n", target.subterranean);
         return false;
     }
     if (target.skyview < -1 || target.skyview > 1) {
-        out.printerr("Invalid skyview value: %d\n", target.skyview);
+        out.printerr("Invalid skyview value: {}\n", target.skyview);
         return false;
     }
     if (target.aquifer < -1 || target.aquifer > 2) {
-        out.printerr("Invalid aquifer value: %d\n", target.aquifer);
+        out.printerr("Invalid aquifer value: {}\n", target.aquifer);
         return false;
     }
     if (target.autocorrect < 0 || target.autocorrect > 1) {
-        out.printerr("Invalid autocorrect value: %d\n", target.autocorrect);
+        out.printerr("Invalid autocorrect value: {}\n", target.autocorrect);
         return false;
     }
     if (target.material == df::tiletype_material::STONE) {
         if (target.stone_material != -1 && !isStoneInorganic(target.stone_material)) {
-            out.printerr("Invalid stone material: %d\n", target.stone_material);
+            out.printerr("Invalid stone material: {}\n", target.stone_material);
             return false;
         }
         if (!is_valid_enum_item(target.vein_type)) {
-            out.printerr("Invalid vein type: %d\n", target.vein_type);
+            out.printerr("Invalid vein type: {}\n", ENUM_AS_STR(target.vein_type));
             return false;
         }
     }

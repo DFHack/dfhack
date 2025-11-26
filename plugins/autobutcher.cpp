@@ -82,13 +82,13 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector <PluginComma
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         // don't autorun cycle on first frame of fortress so we don't mark animals for butchering before
@@ -96,7 +96,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         if (enable && plotinfo->fortress_age > 0)
             autobutcher_cycle(out);
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -104,7 +104,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
     cleanup_autobutcher(out);
     return CR_OK;
 }
@@ -128,7 +128,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     // all the other state we can directly read/modify from the persistent
     // data structure.
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
 
     // load the persisted watchlist
@@ -140,7 +140,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -209,8 +209,8 @@ static bool isHighPriority(df::unit *unit) {
 }
 
 static void doMarkForSlaughter(df::unit *unit) {
-    DEBUG(cycle).print("marking unit %d for slaughter: %s, %s, high priority: %s, age: %.2f\n",
-        unit->id, Units::getReadableName(unit).c_str(),
+    DEBUG(cycle).print("marking unit {} for slaughter: {}, {}, high priority: {}, age: {:.2f}\n",
+        unit->id, Units::getReadableName(unit),
         Units::isFemale(unit) ? "female" : "male",
         isHighPriority(unit) ? "yes" : "no",
         Units::getAge(unit));
@@ -266,7 +266,7 @@ public:
         fk_prot(0), fa_prot(0), mk_prot(0), ma_prot(0),
         fk_units(compareKids), mk_units(compareKids), fa_units(compareAdults), ma_units(compareAdults)
     {
-        TRACE(control,out).print("creating new WatchedRace: id=%d, watched=%s, fk=%u, mk=%u, fa=%u, ma=%u\n",
+        TRACE(control,out).print("creating new WatchedRace: id={}, watched={}, fk={}, mk={}, fa={}, ma={}\n",
                 id, watch ? "true" : "false", fk, mk, fa, ma);
     }
 
@@ -293,8 +293,8 @@ public:
             rconfig.ival(5) = ma;
         }
         else {
-            ERR(control,out).print("could not create persistent key for race: %s",
-                                  Units::getRaceNameById(raceId).c_str());
+            ERR(control,out).print("could not create persistent key for race: {}",
+                                  Units::getRaceNameById(raceId));
         }
     }
 
@@ -375,14 +375,14 @@ static void init_autobutcher(color_ostream &out) {
     vector<PersistentDataItem> watchlist;
     World::GetPersistentSiteData(&watchlist, WATCHLIST_CONFIG_KEY_PREFIX, true);
     for (auto & p : watchlist) {
-        DEBUG(control,out).print("Reading from save: %s\n", p.key().c_str());
+        DEBUG(control,out).print("Reading from save: {}\n", p.key());
         WatchedRace *w = new WatchedRace(out, p);
         watched_races.emplace(w->raceId, w);
     }
 }
 
 static void cleanup_autobutcher(color_ostream &out) {
-    DEBUG(control,out).print("cleaning %s state\n", plugin_name);
+    DEBUG(control,out).print("cleaning {} state\n", plugin_name);
     race_to_id.clear();
     for (auto w : watched_races)
         delete w.second;
@@ -396,7 +396,7 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
 
 static command_result df_autobutcher(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -508,7 +508,7 @@ static void autobutcher_control(color_ostream &out) {
 
 static void autobutcher_target(color_ostream &out, const autobutcher_options &opts) {
     if (opts.races_new) {
-        DEBUG(control,out).print("setting targets for new races to fk=%u, mk=%u, fa=%u, ma=%u\n",
+        DEBUG(control,out).print("setting targets for new races to fk={}, mk={}, fa={}, ma={}\n",
                                 opts.fk, opts.mk, opts.fa, opts.ma);
         config.set_int(CONFIG_DEFAULT_FK, opts.fk);
         config.set_int(CONFIG_DEFAULT_MK, opts.mk);
@@ -517,7 +517,7 @@ static void autobutcher_target(color_ostream &out, const autobutcher_options &op
     }
 
     if (opts.races_all) {
-        DEBUG(control,out).print("setting targets for all races on watchlist to fk=%u, mk=%u, fa=%u, ma=%u\n",
+        DEBUG(control,out).print("setting targets for all races on watchlist to fk={}, mk={}, fa={}, ma={}\n",
                                 opts.fk, opts.mk, opts.fa, opts.ma);
         for (auto w : watched_races) {
             w.second->fk = opts.fk;
@@ -530,7 +530,7 @@ static void autobutcher_target(color_ostream &out, const autobutcher_options &op
 
     for (auto race : opts.races) {
         if (!race_to_id.count(*race)) {
-            out.printerr("race not found: '%s'", race->c_str());
+            out.printerr("race not found: '{}'", race->c_str());
             continue;
         }
         int id = race_to_id[*race];
@@ -559,7 +559,7 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
 
     for (auto race : opts.races) {
         if (!race_to_id.count(*race)) {
-            out.printerr("race not found: '%s'", race->c_str());
+            out.printerr("race not found: '{}'", race->c_str());
             continue;
         }
         ids.emplace(race_to_id[*race]);
@@ -576,7 +576,7 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
                                     config.get_int(CONFIG_DEFAULT_MA)));
             }
             else if (!watched_races[id]->isWatched) {
-                DEBUG(control,out).print("watching: %s\n", opts.command.c_str());
+                DEBUG(control,out).print("watching: {}\n", opts.command);
                 watched_races[id]->isWatched = true;
             }
         }
@@ -590,13 +590,13 @@ static void autobutcher_modify_watchlist(color_ostream &out, const autobutcher_o
                                     config.get_int(CONFIG_DEFAULT_MA)));
             }
             else if (watched_races[id]->isWatched) {
-                DEBUG(control,out).print("unwatching: %s\n", opts.command.c_str());
+                DEBUG(control,out).print("unwatching: {}\n", opts.command);
                 watched_races[id]->isWatched = false;
             }
         }
         else if (opts.command == "forget") {
             if (watched_races.count(id)) {
-                DEBUG(control,out).print("forgetting: %s\n", opts.command.c_str());
+                DEBUG(control,out).print("forgetting: {}\n", opts.command);
                 watched_races[id]->RemoveConfig(out);
                 delete watched_races[id];
                 watched_races.erase(id);
@@ -680,7 +680,7 @@ static void autobutcher_cycle(color_ostream &out) {
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
 
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    DEBUG(cycle,out).print("running {} cycle\n", plugin_name);
 
     // check if there is anything to watch before walking through units vector
     if (!config.get_bool(CONFIG_AUTOWATCH)) {
@@ -720,8 +720,8 @@ static void autobutcher_cycle(color_ostream &out) {
             w->UpdateConfig(out);
             watched_races.emplace(unit->race, w);
 
-            INFO(cycle,out).print("New race added to autobutcher watchlist: %s\n",
-                Units::getRaceNamePluralById(unit->race).c_str());
+            INFO(cycle,out).print("New race added to autobutcher watchlist: {}\n",
+                Units::getRaceNamePluralById(unit->race));
         }
 
         if (w->isWatched) {
@@ -740,8 +740,8 @@ static void autobutcher_cycle(color_ostream &out) {
         if (slaughter_count) {
             std::stringstream ss;
             ss << slaughter_count;
-            INFO(cycle,out).print("%s marked for slaughter: %s\n",
-                Units::getRaceNamePluralById(w.first).c_str(), ss.str().c_str());
+            INFO(cycle,out).print("{} marked for slaughter: {}\n",
+                Units::getRaceNamePluralById(w.first), ss.str());
         }
     }
 }
@@ -817,7 +817,7 @@ static bool autowatch_isEnabled() {
 }
 
 static void autowatch_setEnabled(color_ostream &out, bool enable) {
-    DEBUG(control,out).print("auto-adding to watchlist %s\n", enable ? "started" : "stopped");
+    DEBUG(control,out).print("auto-adding to watchlist {}\n", enable ? "started" : "stopped");
     config.set_bool(CONFIG_AUTOWATCH, enable);
     if (config.get_bool(CONFIG_IS_ENABLED))
         autobutcher_cycle(out);
@@ -843,7 +843,7 @@ static void autobutcher_setWatchListRace(color_ostream &out, unsigned id, unsign
     WatchedRace * w = new WatchedRace(out, id, watched, fk, mk, fa, ma);
     w->UpdateConfig(out);
     watched_races.emplace(id, w);
-    INFO(control,out).print("New race added to autobutcher watchlist: %s\n",
+    INFO(control,out).print("New race added to autobutcher watchlist: {}\n",
         Units::getRaceNamePluralById(id).c_str());
 }
 

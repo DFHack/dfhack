@@ -284,7 +284,7 @@ static bool apply_hooks(color_ostream &out, bool enabling) {
     }
 
     if (!INTERPOSE_HOOK(stockflow_hook, feed).apply(enabling) || !INTERPOSE_HOOK(stockflow_hook, render).apply(enabling)) {
-        out.printerr("Could not %s stockflow hooks!\n", enabling? "insert": "remove");
+        out.printerr("Could not {} stockflow hooks!\n", enabling? "insert": "remove");
         return false;
     }
 
@@ -336,7 +336,7 @@ static command_result stockflow_cmd(color_ostream &out, vector <string> & parame
         }
     }
 
-    out.print("Stockflow is %s %s%s.\n", (desired == enabled)? "currently": "now", desired? "enabled": "disabled", fast? ", in fast mode": "");
+    out.print("Stockflow is {} {}{}.\n", (desired == enabled)? "currently": "now", desired? "enabled": "disabled", fast? ", in fast mode": "");
     enabled = desired;
     return CR_OK;
 }

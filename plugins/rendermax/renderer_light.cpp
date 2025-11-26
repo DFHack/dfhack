@@ -1185,12 +1185,12 @@ void lightingEngineViewscreen::loadSettings()
         int ret=luaL_loadfile(s,settingsfile.c_str());
         if(ret==LUA_ERRFILE)
         {
-            out.printerr("File not found:%s\n",settingsfile.c_str());
+            out.printerr("File not found:{}\n",settingsfile);
             lua_pop(s,1);
         }
         else if(ret==LUA_ERRSYNTAX)
         {
-            out.printerr("Syntax error:\n\t%s\n",lua_tostring(s,-1));
+            out.printerr("Syntax error:\n\t{}\n",lua_tostring(s,-1));
         }
         else
         {
@@ -1202,38 +1202,38 @@ void lightingEngineViewscreen::loadSettings()
                 lua_pushlightuserdata(s, this);
                 lua_pushvalue(s,env);
                 Lua::SafeCall(out,s,2,0);
-                out.print("%zu materials loaded\n",matDefs.size());
+                out.print("{} materials loaded\n",matDefs.size());
 
                 lua_pushcfunction(s, parseSpecial);
                 lua_pushlightuserdata(s, this);
                 lua_pushvalue(s,env);
                 Lua::SafeCall(out,s,2,0);
-                out.print("%zu day light colors loaded\n",dayColors.size());
+                out.print("{} day light colors loaded\n",dayColors.size());
 
                 lua_pushcfunction(s, parseBuildings);
                 lua_pushlightuserdata(s, this);
                 lua_pushvalue(s,env);
                 Lua::SafeCall(out,s,2,0);
-                out.print("%zu buildings loaded\n",buildingDefs.size());
+                out.print("{} buildings loaded\n",buildingDefs.size());
 
                 lua_pushcfunction(s, parseCreatures);
                 lua_pushlightuserdata(s, this);
                 lua_pushvalue(s,env);
                 Lua::SafeCall(out,s,2,0);
-                out.print("%zu creatures loaded\n",creatureDefs.size());
+                out.print("{} creatures loaded\n",creatureDefs.size());
 
                 lua_pushcfunction(s, parseItems);
                 lua_pushlightuserdata(s, this);
                 lua_pushvalue(s,env);
                 Lua::SafeCall(out,s,2,0);
-                out.print("%zu items loaded\n",itemDefs.size());
+                out.print("{} items loaded\n",itemDefs.size());
             }
 
         }
     }
     catch(std::exception& e)
     {
-        out.printerr("%s",e.what());
+        out.printerr("{}\n",e.what());
     }
     lua_pop(s,1);
 }

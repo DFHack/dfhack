@@ -231,13 +231,13 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
                 break;
             }
             if ( prod == NULL ) {
-                out.print("%s, %d: no valid item.\n", __FILE__, __LINE__);
+                out.print("{}, {}: no valid item.\n", __FILE__, __LINE__);
                 return -1;
             }
 
             DFHack::MaterialInfo material;
             if ( !material.find("OBSIDIAN") ) {
-                out.print("%s, %d: no water.\n", __FILE__, __LINE__);
+                out.print("{}, {}: no water.\n", __FILE__, __LINE__);
                 return -1;
             }
             prod->mat_type = material.type;
@@ -255,7 +255,7 @@ int32_t assignJob(color_ostream& out, Edge firstImportantEdge, unordered_map<df:
                 df::world_site::find(df::global::plotinfo->site_id), NULL);
 
             if ( out_items.size() != 1 ) {
-                out.print("%s, %d: wrong size: %zu.\n", __FILE__, __LINE__, out_items.size());
+                out.print("{}, {}: wrong size: {}.\n", __FILE__, __LINE__, out_items.size());
                 return -1;
             }
             out_items[0]->moveToGround(firstInvader->pos.x, firstInvader->pos.y, firstInvader->pos.z);

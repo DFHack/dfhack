@@ -92,9 +92,9 @@ command_result df_fixveins (color_ostream &out, vector <string> & parameters)
         }
     }
     if (mineral_removed || feature_removed)
-        out.print("Removed invalid references from %i mineral inclusion and %i map feature tiles.\n", mineral_removed, feature_removed);
+        out.print("Removed invalid references from {} mineral inclusion and {} map feature tiles.\n", mineral_removed, feature_removed);
     if (mineral_added || feature_added)
-        out.print("Restored missing references to %i mineral inclusion and %i map feature tiles.\n", mineral_added, feature_added);
+        out.print("Restored missing references to {} mineral inclusion and {}  map feature tiles.\n", mineral_added, feature_added);
     return CR_OK;
 }
 

@@ -116,6 +116,6 @@ command_result tubefill(color_ostream &out, std::vector<std::string> & params)
             }
         }
     }
-    out.print("Found and changed %" PRId64 " tiles.\n", count);
+    out.print("Found and changed {} tiles.\n", count);
     return CR_OK;
 }

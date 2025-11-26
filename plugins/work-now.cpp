@@ -44,13 +44,13 @@ static void cleanup() {
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(log,out).print("%s from the API; persisting\n",
+        DEBUG(log,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
@@ -58,7 +58,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         else
             cleanup();
     } else {
-        DEBUG(log,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(log,out).print("{} from the API, but already {} ; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -81,7 +81,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     }
 
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(log,out).print("loading persisted enabled state: %s\n",
+    DEBUG(log,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
 
     return CR_OK;
@@ -98,7 +98,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         poke_idlers();
     } else if (e == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(log,out).print("world unloaded; disabling %s\n",
+            DEBUG(log,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -109,12 +109,12 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 static command_result work_now(color_ostream& out, vector<string>& parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (parameters.empty() || parameters[0] == "status") {
-        out.print("work_now is %sactively poking idle dwarves.\n", is_enabled ? "" : "not ");
+        out.print("work_now is {}actively poking idle dwarves.\n", is_enabled ? "" : "not ");
         return CR_OK;
     }
 

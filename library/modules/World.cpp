@@ -223,16 +223,16 @@ int32_t World::GetCurrentSiteId() {
         DEBUG(world).print("searching for adventure site\n");
         auto & world_map = world->map;
         auto adv_pos = Units::getPosition(adv);
-        DEBUG(world).print("adv_pos: (%d, %d, %d)\n", adv_pos.x, adv_pos.y, adv_pos.z);
+        DEBUG(world).print("adv_pos: ({}, {}, {})\n", adv_pos.x, adv_pos.y, adv_pos.z);
         df::coord2d rgn_pos(world_map.region_x + adv_pos.x/48, world_map.region_y + adv_pos.y/48);
         for (auto site : world->world_data->sites) {
-            DEBUG(world).print("scanning site %d: %s\n", site->id, Translation::translateName(&site->name, true).c_str());
-            DEBUG(world).print("  rgn_pos: (%d, %d); site bounds: (%d, %d), (%d, %d) \n",
+            DEBUG(world).print("scanning site {}: {}\n", site->id, Translation::translateName(&site->name, true));
+            DEBUG(world).print("  rgn_pos: ({}, {}); site bounds: ({}, {}), ({}, {}) \n",
                 rgn_pos.x, rgn_pos.y, site->global_min_x, site->global_min_y, site->global_max_x, site->global_max_y);
             if (rgn_pos.x >= site->global_min_x && rgn_pos.x <= site->global_max_x
                 && rgn_pos.y >= site->global_min_y && rgn_pos.y <= site->global_max_y)
             {
-                DEBUG(world).print("found site: %d\n", site->id);
+                DEBUG(world).print("found site: {}\n", site->id);
                 return site->id;
             }
         }

@@ -111,7 +111,7 @@ static bool valid_tile(color_ostream &out, regrass_options options, df::map_bloc
     else if (block->occupancy[tx][ty].bits.building >
         (options.buildings ? tile_building_occ::Passable : tile_building_occ::None))
     {   // Avoid stockpiles and planned/passable buildings unless enabled.
-        TRACE(log, out).print("Invalid tile: Building (%s)\n",
+        TRACE(log, out).print("Invalid tile: Building ({})\n",
             ENUM_KEY_STR(tile_building_occ, block->occupancy[tx][ty].bits.building).c_str());
         return false;
     }
@@ -180,7 +180,7 @@ static void grasses_for_tile(color_ostream &out, vector<int32_t> &vec, df::map_b
         for (auto p_raw : world->raws.plants.grasses)
         {   // Sorted by df::plant_raw::index
             if (p_raw->flags.is_set(plant_raw_flags::BIOME_SUBTERRANEAN_WATER)) {
-                TRACE(log, out).print("Cave grass: %s\n", p_raw->id.c_str());
+                TRACE(log, out).print("Cave grass: {}\n", p_raw->id);
                 vec.push_back(p_raw->index);
             }
         }
@@ -209,7 +209,7 @@ static void grasses_for_tile(color_ostream &out, vector<int32_t> &vec, df::map_b
                 (evil || !flags.is_set(plant_raw_flags::EVIL)) &&
                 (savage || !flags.is_set(plant_raw_flags::SAVAGE)))
             {
-                TRACE(log, out).print("Surface grass: %s\n", p_raw->id.c_str());
+                TRACE(log, out).print("Surface grass: {}\n", p_raw->id);
                 vec.push_back(p_raw->index);
             }
         }
@@ -241,7 +241,7 @@ static bool regrass_events(color_ostream &out, const regrass_options &options, d
         }
         else if (gr_ev->amount[tx][ty] > 0)
         {   // Refill first non-zero grass.
-            DEBUG(log, out).print("Refilling existing grass (ID %d).\n", gr_ev->plant_index);
+            DEBUG(log, out).print("Refilling existing grass (ID {}).\n", gr_ev->plant_index);
             gr_ev->amount[tx][ty] = 100;
             return true;
         }
@@ -263,12 +263,12 @@ static bool regrass_events(color_ostream &out, const regrass_options &options, d
         for (auto gr_ev : consider_grev)
         {   // These grass events are already present.
             if (erase_from_vector(new_grasses, gr_ev->plant_index)) {
-                TRACE(log, out).print("Grass (ID %d) already present.\n", gr_ev->plant_index);
+                TRACE(log, out).print("Grass (ID {}) already present.\n", gr_ev->plant_index);
             }
         }
 
         for (auto id : new_grasses) {
-            DEBUG(log, out).print("Allocating new grass event (ID %d).\n", id);
+            DEBUG(log, out).print("Allocating new grass event (ID {}).\n", id);
             auto gr_ev = df::allocate<df::block_square_event_grassst>();
             if (!gr_ev) {
                 out.printerr("Failed to allocate new grass event! Aborting loop.\n");
@@ -297,7 +297,7 @@ static bool regrass_events(color_ostream &out, const regrass_options &options, d
         for (size_t i = consider_grev.size(); i-- > 0;)
         {   // Iterate backwards and remove invalid events from consideration.
             if (!vector_contains(valid_grasses, consider_grev[i]->plant_index)) {
-                TRACE(log, out).print("Removing grass (ID %d) from consideration.\n",
+                TRACE(log, out).print("Removing grass (ID {}) from consideration.\n",
                     consider_grev[i]->plant_index);
                 consider_grev.erase(consider_grev.begin() + i);
             }
@@ -327,14 +327,14 @@ static bool regrass_events(color_ostream &out, const regrass_options &options, d
 
     if (options.max_grass)
     {   // Don't need random choice.
-        DEBUG(log, out).print("Done with max regrass, %s.\n",
+        DEBUG(log, out).print("Done with max regrass, {}.\n",
             success ? "success" : "failure");
         return success;
     }
     TRACE(log, out).print("Selecting random valid grass event...\n");
 
     if (auto rand_grev = vector_get_random(consider_grev)) {
-        DEBUG(log, out).print("Refilling random grass (ID %d).\n", rand_grev->plant_index);
+        DEBUG(log, out).print("Refilling random grass (ID {}).\n", rand_grev->plant_index);
         rand_grev->amount[tx][ty] = 100;
         return true;
     }
@@ -346,11 +346,11 @@ int regrass_tile(color_ostream &out, const regrass_options &options, df::map_blo
 {   // Regrass single tile. Return 1 if tile success, else 0.
     CHECK_NULL_POINTER(block);
     if (!is_valid_tile_coord(df::coord2d(tx, ty))) {
-        out.printerr("(%d, %d) not in range 0-15!\n", tx, ty);
+        out.printerr("({}, {}) not in range 0-15!\n", tx, ty);
         return 0;
     }
 
-    DEBUG(log, out).print("Regrass tile (%d, %d, %d)\n",
+    DEBUG(log, out).print("Regrass tile ({}, {}, {})\n",
         block->map_pos.x + tx, block->map_pos.y + ty, block->map_pos.z);
     if (!regrass_events(out, options, block, tx, ty))
         return 0;
@@ -377,7 +377,7 @@ int regrass_tile(color_ostream &out, const regrass_options &options, df::map_blo
     {   // Ramp or stairs.
         auto new_mat = (rand() & 1) ? tiletype_material::GRASS_LIGHT : tiletype_material::GRASS_DARK;
         auto new_tt = findTileType(shape, new_mat, tiletype_variant::NONE, tiletype_special::NONE, nullptr);
-        DEBUG(log, out).print("Tiletype to %s.\n", ENUM_KEY_STR(tiletype, new_tt).c_str());
+        DEBUG(log, out).print("Tiletype to {}.\n", ENUM_KEY_STR(tiletype, new_tt));
         block->tiletype[tx][ty] = new_tt;
     }
     return 1;
@@ -385,12 +385,12 @@ int regrass_tile(color_ostream &out, const regrass_options &options, df::map_blo
 
 int regrass_cuboid(color_ostream &out, const regrass_options &options, const cuboid &bounds)
 {   // Regrass all tiles in the defined cuboid.
-    DEBUG(log, out).print("Regrassing cuboid (%d:%d, %d:%d, %d:%d), clipped to map.\n",
+    DEBUG(log, out).print("Regrassing cuboid ({}:{}, {}:{}, {}:{})\n",
         bounds.x_min, bounds.x_max, bounds.y_min, bounds.y_max, bounds.z_min, bounds.z_max);
 
     int count = 0;
     bounds.forBlock([&](df::map_block *block, cuboid intersect) {
-        DEBUG(log, out).print("Cuboid regrass block at (%d, %d, %d)\n",
+        DEBUG(log, out).print("Cuboid regrass block at ({}, {}, {})\n",
             block->map_pos.x, block->map_pos.y, block->map_pos.z);
         intersect.forCoord([&](df::coord pos) {
             count += regrass_tile(out, options, block, pos.x&15, pos.y&15);
@@ -404,7 +404,7 @@ int regrass_cuboid(color_ostream &out, const regrass_options &options, const cub
 int regrass_block(color_ostream &out, const regrass_options &options, df::map_block *block)
 {   // Regrass all tiles in a single block.
     CHECK_NULL_POINTER(block);
-    DEBUG(log, out).print("Regrass block at (%d, %d, %d)\n",
+    DEBUG(log, out).print("Regrass block at ({}, {}, {})\n",
         block->map_pos.x, block->map_pos.y, block->map_pos.z);
 
     int count = 0;
@@ -443,11 +443,11 @@ command_result df_regrass(color_ostream &out, vector<string> &parameters)
     else if (options.forced_plant == -2)
     {   // Print all grass raw IDs.
         for (auto p_raw : world->raws.plants.grasses)
-            out.print("%d: %s\n", p_raw->index, p_raw->id.c_str());
+            out.print("{}: {}\n", p_raw->index, p_raw->id);
         return CR_OK;
     }
 
-    DEBUG(log, out).print("pos_1 = (%d, %d, %d)\npos_2 = (%d, %d, %d)\n",
+    DEBUG(log, out).print("pos_1 = ({}, {}, {})\npos_2 = ({}, {}, {})\n",
         pos_1.x, pos_1.y, pos_1.z, pos_2.x, pos_2.y, pos_2.z);
 
     if (options.block && options.zlevel) {
@@ -464,17 +464,17 @@ command_result df_regrass(color_ostream &out, vector<string> &parameters)
     }
 
     if (options.force) {
-        DEBUG(log, out).print("forced_plant = %d\n", options.forced_plant);
+        DEBUG(log, out).print("forced_plant = {}\n", options.forced_plant);
         auto p_raw = vector_get(world->raws.plants.all, options.forced_plant);
         if (p_raw) {
             if (!p_raw->flags.is_set(plant_raw_flags::GRASS)) {
-                out.printerr("Plant raw wasn't grass: %d (%s)\n", options.forced_plant, p_raw->id.c_str());
+                out.printerr("Plant raw wasn't grass: {} ({})\n", options.forced_plant, p_raw->id);
                 return CR_FAILURE;
             }
-            out.print("Forced grass: %s\n", p_raw->id.c_str());
+            out.print("Forced grass: {}\n", p_raw->id);
         }
         else {
-            out.printerr("Plant raw not found for --force: %d\n", options.forced_plant);
+            out.printerr("Plant raw not found for --force: {}\n", options.forced_plant);
             return CR_FAILURE;
         }
     }
@@ -484,7 +484,7 @@ command_result df_regrass(color_ostream &out, vector<string> &parameters)
     {   // Specified z-levels or viewport z.
         auto z1 = pos_1.isValid() ? pos_1.z : Gui::getViewportPos().z;
         auto z2 = pos_2.isValid() ? pos_2.z : z1;
-        DEBUG(log, out).print("Regrassing z-levels %d to %d...\n", z1, z2);
+        DEBUG(log, out).print("Regrassing z-levels {} to {}...\n", z1, z2);
         count = regrass_cuboid(out, options, cuboid(0, 0, z1,
             world->map.x_count-1, world->map.y_count-1, z2));
     }
@@ -519,6 +519,6 @@ command_result df_regrass(color_ostream &out, vector<string> &parameters)
         DEBUG(log, out).print("Regrassing map...\n");
         count = regrass_map(out, options);
     }
-    out.print("Regrew %d tiles of grass.\n", count);
+    out.print("Regrew {} tiles of grass.\n", count);
     return CR_OK;
 }

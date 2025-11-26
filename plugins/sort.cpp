@@ -56,7 +56,7 @@ static bool do_filter(const char *module_name, const char *fn_name, const item_o
             ret = lua_toboolean(L, 1);
         }
     );
-    TRACE(log).print("filter result for %s: %d\n", Units::getReadableName(unit).c_str(), ret);
+    TRACE(log).print("filter result for {}: {}\n", Units::getReadableName(unit), ret);
     return !ret;
 }
 
@@ -85,7 +85,7 @@ static int32_t our_filter_idx(filter_func* filter, df::widget_unit_list* unitlis
         auto t = fn.target<decltype(filter)>();
         if (t && *t == filter)
         {
-            TRACE(log).print("found our filter function at idx %d\n", idx);
+            TRACE(log).print("found our filter function at idx {}\n", idx);
             return idx;
         }
         ++idx;
@@ -172,7 +172,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 static void remove_filter_function(color_ostream &out, filter_func* filter, const char *which, df::widget_unit_list *unitlist) {
     int32_t idx = our_filter_idx(filter, unitlist);
     if (idx >= 0) {
-        DEBUG(log,out).print("removing %s filter function\n", which);
+        DEBUG(log,out).print("removing {} filter function\n", which);
         filter_vec_type *filter_vec = reinterpret_cast<filter_vec_type *>(&unitlist->filter_func);
         vector_erase_at(*filter_vec, idx);
     }
@@ -182,7 +182,7 @@ static void remove_sort_function(color_ostream &out, const char *which, df::widg
     std::vector<sort_entry> *sorting_by = reinterpret_cast<std::vector<sort_entry> *>(&unitlist->sorting_by);
     int32_t idx = our_sort_idx(*sorting_by);
     if (idx >= 0) {
-        DEBUG(log).print("removing %s sort function\n", which);
+        DEBUG(log).print("removing {} sort function\n", which);
         vector_erase_at(*sorting_by, idx);
     }
 }

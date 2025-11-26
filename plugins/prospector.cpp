@@ -230,7 +230,7 @@ void printVeins(color_ostream &con, MatMap &mat_map,
         df::inorganic_raw *gloss = vector_get(inorganics, kv.first);
         if (!gloss)
         {
-            con.printerr("invalid material gloss: %hi\n", kv.first);
+            con.printerr("invalid material gloss: {}\n", kv.first);
             continue;
         }
 
@@ -298,7 +298,7 @@ static df::world_region_details *get_details(df::world_data *data, df::coord2d p
 bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_region_details *details, int x, int y)
 {
     if (x < 0 || y < 0 || x > 15 || y > 15) {
-        out.printerr("Invalid embark coordinates: x=%i, y=%i\n", x, y);
+        out.printerr("Invalid embark coordinates: x={}, y={}\n", x, y);
         return false;
     }
     // Find actual biome
@@ -428,7 +428,7 @@ bool estimate_materials(color_ostream &out, EmbarkTileLayout &tile, MatMap &laye
 
     if (!geo_biome)
     {
-        out.printerr("Region geo-biome not found: (%d,%d)\n",
+        out.printerr("Region geo-biome not found: ({}, {})\n",
                      tile.biome_pos.x, tile.biome_pos.y);
         return false;
     }

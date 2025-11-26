@@ -182,10 +182,10 @@ command_result cursecheck(color_ostream& out, vector <string>& parameters)
                 out << DF2CONSOLE(Units::getReadableName(unit));
 
                 auto death = df::incident::find(unit->counters.death_id);
-                out.print(", born in %d, cursed in %d to be a %s. (%s%s)\n",
+                out.print(", born in {}, cursed in {} to be a {}. ({}{})\n",
                     unit->birth_year,
                     unit->curse_year,
-                    curse_names[cursetype].c_str(),
+                    curse_names[cursetype],
                     // technically most cursed creatures are undead,
                     // therefore output 'active' if they are not completely dead
                     unit->flags2.bits.killed ? "deceased" : "active",
@@ -203,15 +203,15 @@ command_result cursecheck(color_ostream& out, vector <string>& parameters)
 
             if (giveUnitID)
             {
-                out.print("Creature %d, race %d (%x)\n", unit->id, unit->race, unit->race);
+                out.print("Creature {}, race {} (0x{:x})\n", unit->id, unit->race, unit->race);
             }
         }
     }
 
     if (selected_unit && !giveDetails)
-        out.print("Selected unit is %scursed\n", cursecount == 0 ? "not " : "");
+        out.print("Selected unit is {}cursed\n", cursecount == 0 ? "not " : "");
     else if (!selected_unit)
-        out.print("%zd cursed creatures on map\n", cursecount);
+        out.print("{} cursed creatures on map\n", cursecount);
 
     return CR_OK;
 }

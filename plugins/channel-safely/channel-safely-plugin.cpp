@@ -182,7 +182,7 @@ namespace CSP {
                 psetting.ival(IGNORE_THRESH) = config.ignore_threshold;
                 psetting.ival(FALL_THRESH) = config.fall_threshold;
             } catch (std::exception &e) {
-                ERR(plugin).print("%s\n", e.what());
+                ERR(plugin).print("{}\n", e.what());
             }
         }
     }
@@ -208,7 +208,7 @@ namespace CSP {
                 config.refresh_freq = psetting.ival(REFRESH_RATE);
                 config.monitor_freq = psetting.ival(MONITOR_RATE);
             } catch (std::exception &e) {
-                ERR(plugin).print("%s\n", e.what());
+                ERR(plugin).print("{}\n", e.what());
             }
         }
         active_workers.clear();
@@ -320,14 +320,14 @@ namespace CSP {
 
                         dignow_queue.emplace(report->pos);
                     }
-                    DEBUG(plugin).print("%d, pos: " COORD ", pos2: " COORD "\n%s\n", report_id, COORDARGS(report->pos),
-                                        COORDARGS(report->pos2), report->text.c_str());
+                    DEBUG(plugin).print("{}, pos: {} , pos2: {}\n{}\n", report_id, report->pos,
+                                        report->pos2, report->text.c_str());
                 }
                 break;
             case announcement_type::CAVE_COLLAPSE:
                 if (config.resurrect) {
-                    DEBUG(plugin).print("CAVE IN\n%d, pos: " COORD ", pos2: " COORD "\n%s\n", report_id, COORDARGS(report->pos),
-                                        COORDARGS(report->pos2), report->text.c_str());
+                    DEBUG(plugin).print("CAVE IN\n{}, pos: {} , pos2: {}\n{}\n", report_id, report->pos,
+                                        report->pos2, report->text.c_str());
 
                     df::coord below = report->pos;
                     below.z -= 1;
@@ -344,12 +344,12 @@ namespace CSP {
                     Units::getUnitsInBox(units, COORDARGS(areaMin), COORDARGS(areaMax));
                     for (auto unit: units) {
                         endangered_units[unit] = tick;
-                        DEBUG(plugin).print(" [id %d] was near a cave in.\n", unit->id);
+                        DEBUG(plugin).print(" [id {}] was near a cave in.\n", unit->id);
                     }
                     for (auto unit : world->units.all) {
                         if (last_safe.count(unit->id)) {
                             endangered_units[unit] = tick;
-                            DEBUG(plugin).print(" [id %d] is/was a worker, we'll track them too.\n", unit->id);
+                            DEBUG(plugin).print(" [id {}] is/was a worker, we'll track them too.\n", unit->id);
                         }
                     }
                 }
@@ -472,7 +472,7 @@ namespace CSP {
             // clean up any "endangered" workers that have been tracked 100 ticks or more
             for (auto iter = endangered_units.begin(); iter != endangered_units.end();) {
                 if (tick - iter->second >= 1200) { //keep watch 1 day
-                    DEBUG(plugin).print("It has been one day since [id %d]'s last incident.\n", iter->first->id);
+                    DEBUG(plugin).print("It has been one day since [id {}]'s last incident.\n", iter->first->id);
                     iter = endangered_units.erase(iter);
                     continue;
                 }
@@ -525,7 +525,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        outs without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -582,7 +582,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out, state_change_ev
 
 command_result channel_safely(color_ostream &out, std::vector<std::string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        outs without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -650,23 +650,23 @@ command_result channel_safely(color_ostream &out, std::vector<std::string> &para
                     return DFHack::CR_WRONG_USAGE;
                 }
             } catch (const std::exception &e) {
-                out.printerr("%s\n", e.what());
+                out.printerr("{}\n", e.what());
                 return DFHack::CR_FAILURE;
             }
         }
     } else {
-        out.print("Channel-Safely is %s\n", enabled ? "ENABLED." : "DISABLED.");
+        out.print("Channel-Safely is {}\n", enabled ? "ENABLED." : "DISABLED.");
         out.print(" FEATURES:\n");
-        out.print("  %-20s\t%s\n", "risk-averse: ", config.riskaverse ? "on." : "off.");
-        out.print("  %-20s\t%s\n", "monitoring: ", config.monitoring ? "on." : "off.");
-        out.print("  %-20s\t%s\n", "require-vision: ", config.require_vision ? "on." : "off.");
+        out.print("  {:<20}\t{}\n", "risk-averse: ", config.riskaverse ? "on." : "off.");
+        out.print("  {:<20}\t{}\n", "monitoring: ", config.monitoring ? "on." : "off.");
+        out.print("  {:<20}\t{}\n", "require-vision: ", config.require_vision ? "on." : "off.");
         //out.print("  %-20s\t%s\n", "insta-dig: ", config.insta_dig ? "on." : "off.");
-        out.print("  %-20s\t%s\n", "resurrect: ", config.resurrect ? "on." : "off.");
+        out.print("  {:<20}\t{}\n", "resurrect: ", config.resurrect ? "on." : "off.");
         out.print(" SETTINGS:\n");
-        out.print("  %-20s\t%" PRIi32 "\n", "refresh-freq: ", config.refresh_freq);
-        out.print("  %-20s\t%" PRIi32 "\n", "monitor-freq: ", config.monitor_freq);
-        out.print("  %-20s\t%" PRIu8 "\n", "ignore-threshold: ", config.ignore_threshold);
-        out.print("  %-20s\t%" PRIu8 "\n", "fall-threshold: ", config.fall_threshold);
+        out.print("  {:<20}\t{}\n", "refresh-freq: ", config.refresh_freq);
+        out.print("  {:<20}\t{}\n", "monitor-freq: ", config.monitor_freq);
+        out.print("  {:<20}\t{}\n", "ignore-threshold: ", config.ignore_threshold);
+        out.print("  {:<20}\t{}\n", "fall-threshold: ", config.fall_threshold);
     }
     CSP::SaveSettings();
     return DFHack::CR_OK;

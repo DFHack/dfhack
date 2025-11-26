@@ -119,8 +119,8 @@ int main (int argc, char *argv[])
         if (rv == CR_OK)
         {
             for (int i = 0; i < run_call.out()->value_size(); i++)
-                printf("%s%s", (i>0?"\t":""), run_call.out()->value(i).c_str());
-            printf("\n");
+                fmt::print("{}{}", (i>0?"\t":""), run_call.out()->value(i));
+            fmt::print("\n");
         }
     }
     else

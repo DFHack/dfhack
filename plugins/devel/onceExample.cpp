@@ -25,7 +25,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 command_result onceExample (color_ostream &out, std::vector <std::string> & parameters)
 {
-    out.print("Already done = %d.\n", DFHack::Once::alreadyDone("onceExample_1"));
+    out.print("Already done = {}.\n", DFHack::Once::alreadyDone("onceExample_1"));
     if ( DFHack::Once::doOnce("onceExample_1") ) {
         out.print("Printing this message once!\n");
     }

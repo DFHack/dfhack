@@ -62,13 +62,13 @@ void cleanup() {
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
     if (enable != is_enabled) {
         is_enabled = enable;
         DEBUG(control, out)
-            .print("%s from the API; persisting\n",
+            .print("{} from the API; persisting\n",
                    is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
 
@@ -80,7 +80,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         }
     } else {
         DEBUG(control, out)
-            .print("%s from the API, but already %s; no action\n",
+            .print("{} from the API, but already {}; no action\n",
                    is_enabled ? "enabled" : "disabled",
                    is_enabled ? "enabled" : "disabled");
     }
@@ -103,7 +103,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
         plugin_enable(out, true);
     }
     DEBUG(control, out)
-        .print("loading persisted enabled state: %s\n",
+        .print("loading persisted enabled state: {}\n",
                is_enabled ? "true" : "false");
     return CR_OK;
 }
@@ -113,7 +113,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out,
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
             DEBUG(control, out)
-                .print("world unloaded; disabling %s\n", plugin_name);
+                .print("world unloaded; disabling {}\n", plugin_name);
             is_enabled = false;
             cleanup();
         }
@@ -187,8 +187,7 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
                 world->map.column_index[bpos.x][bpos.y];
             if (!column) {
                 DEBUG(cycle, out)
-                    .print("%s, line %d: column is null (%d, %d).\n", __FILE__,
-                           __LINE__, bpos.x, bpos.y);
+                    .print("{}, line {}: column is null ({}).\n", __FILE__, __LINE__, bpos);
                 continue;
             }
             df::block_column_print_infost *glyphs = new df::block_column_print_infost;
@@ -242,7 +241,7 @@ struct_identity infinitesky_options::_identity{sizeof(infinitesky_options), &df:
 command_result infiniteSky(color_ostream &out,
                            std::vector<std::string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -254,11 +253,11 @@ command_result infiniteSky(color_ostream &out,
         return CR_WRONG_USAGE;
 
     if (opts.n > 0) {
-        out.print("Infinite-sky: creating %d new z-level%s of sky.\n", opts.n,
+        out.print("Infinite-sky: creating {} new z-level{} of sky.\n", opts.n,
                   opts.n == 1 ? "" : "s");
         doInfiniteSky(out, opts.n);
     } else {
-        out.print("Construction monitoring is %s.\n",
+        out.print("Construction monitoring is {}.\n",
                   is_enabled ? "enabled" : "disabled");
     }
     return CR_OK;

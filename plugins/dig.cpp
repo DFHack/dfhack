@@ -108,7 +108,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 static void do_enable(bool enable) {
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(log).print("%s\n", is_enabled ? "enabled" : "disabled");
+        DEBUG(log).print("{}\n", is_enabled ? "enabled" : "disabled");
         if (enable) {
             EventManager::registerListener(EventManager::EventType::JOB_STARTED,
                 EventManager::EventHandler(plugin_self, unhide_surrounding_tagged_tiles, 0));
@@ -117,7 +117,7 @@ static void do_enable(bool enable) {
         }
     }
     else {
-        DEBUG(log).print("%s, but already %s; no action\n",
+        DEBUG(log).print("{}, but already {}; no action\n",
             is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
     }
 }
@@ -214,7 +214,7 @@ static void do_cycle(color_ostream &out) {
         }
     }
 
-    DEBUG(log,out).print("scrubbed %u tagged tiles\n", scrubbed);
+    DEBUG(log,out).print("scrubbed {} tagged tiles\n", scrubbed);
 
     if (!has_assignment){
         DEBUG(log,out).print("no more active tagged tiles; disabling\n");
@@ -322,7 +322,7 @@ static void propagate_if_material_match(color_ostream& out, MapExtras::MapCache 
     if (!block)
         return;
 
-    INFO(log,out).print("testing adjacent tile at (%d,%d,%d), mat:%d",
+    INFO(log,out).print("testing adjacent tile at ({},{},{}), mat:{}",
         pos.x, pos.y, pos.z, mc.veinMaterialAt(pos));
 
     if (mat != mc.veinMaterialAt(pos))
@@ -354,7 +354,7 @@ static void do_autodig(color_ostream& out, bool warm, bool damp, const df::coord
     if (mat == -1)
         return;
 
-    DEBUG(log,out).print("processing autodig tile at (%d,%d,%d), warm:%d, damp:%d, mat:%d\n",
+    DEBUG(log,out).print("processing autodig tile at ({},{},{}), warm:{}, damp:{}, mat:{}\n",
         pos.x, pos.y, pos.z, warm, damp, mat);
 
     propagate_if_material_match(out, mc, mat, warm, damp, pos + df::coord(-1, -1, 0));
@@ -394,18 +394,18 @@ static void unhide_tagged(color_ostream& out, const df::coord & pos) {
     if (!block)
         return;
     if (auto warm_mask = World::getPersistentTilemask(warm_config, block)) {
-        TRACE(log,out).print("testing tile at (%d,%d,%d); mask:%d, warm:%d\n", pos.x, pos.y, pos.z,
+        TRACE(log,out).print("testing tile at ({},{},{}); mask:{}, warm:{}\n", pos.x, pos.y, pos.z,
             warm_mask->getassignment(pos), is_warm(pos));
         if (warm_mask->getassignment(pos) && is_warm(pos)) {
-            DEBUG(log,out).print("revealing warm dig tile at (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+            DEBUG(log,out).print("revealing warm dig tile at ({},{},{})\n", pos.x, pos.y, pos.z);
             block->designation[pos.x&15][pos.y&15].bits.hidden = false;
         }
     }
     if (auto damp_mask = World::getPersistentTilemask(damp_config, block)) {
-        TRACE(log,out).print("testing tile at (%d,%d,%d); mask:%d, damp:%d\n", pos.x, pos.y, pos.z,
+        TRACE(log,out).print("testing tile at ({},{},{}); mask:{}, damp:{}\n", pos.x, pos.y, pos.z,
             damp_mask->getassignment(pos), is_damp(pos));
         if (damp_mask->getassignment(pos) && is_damp(pos)) {
-            DEBUG(log,out).print("revealing damp dig tile at (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+            DEBUG(log,out).print("revealing damp dig tile at ({},{},{})\n", pos.x, pos.y, pos.z);
             block->designation[pos.x&15][pos.y&15].bits.hidden = false;
         }
     }
@@ -418,7 +418,7 @@ static void unhide_surrounding_tagged_tiles(color_ostream& out, void* job_ptr) {
         return;
 
     const auto & pos = job->pos;
-    TRACE(log,out).print("handing dig job at (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+    TRACE(log,out).print("handing dig job at ({},{},{})\n", pos.x, pos.y, pos.z);
 
     process_taken_dig_job(out, pos);
 
@@ -626,7 +626,7 @@ int32_t parse_priority(color_ostream &out, vector<string> &parameters)
             }
             else
             {
-                out.printerr("invalid priority specified; reverting to %i\n", default_priority);
+                out.printerr("invalid priority specified; reverting to {}\n", default_priority);
                 break;
             }
         }
@@ -1470,7 +1470,7 @@ command_result digv (color_ostream &out, vector <string> & parameters)
         con.printerr("This tile is not a vein.\n");
         return CR_FAILURE;
     }
-    con.print("%d/%d/%d tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, des.whole);
+    con.print("{} tiletype: {}, veinmat: {}, designation: 0x{:x} ... DIGGING!\n", xy, ENUM_AS_STR(tt), veinmat, des.whole);
     stack <DFHack::DFCoord> flood;
     flood.push(xy);
 
@@ -1654,7 +1654,7 @@ command_result digl (color_ostream &out, vector <string> & parameters)
         con.printerr("This is a vein. Use digv instead!\n");
         return CR_FAILURE;
     }
-    con.print("%d/%d/%d tiletype: %d, basemat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, basemat, des.whole);
+    con.print("{}/{}/{}/ tiletype: {}, basemat: {}, designation: 0x{:x} ... DIGGING!\n", cx,cy,cz, ENUM_AS_STR(tt), basemat, des.whole);
     stack <DFHack::DFCoord> flood;
     flood.push(xy);
 
@@ -1841,7 +1841,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
             automine = false;
         else
         {
-            out.printerr("Invalid parameter: '%s'.\n", parameter.c_str());
+            out.printerr("Invalid parameter: '{}'.\n", parameter);
             return CR_FAILURE;
         }
     }
@@ -1873,7 +1873,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
         out.printerr("This tile is not a vein.\n");
         return CR_FAILURE;
     }
-    out.print("(%d,%d,%d) tiletype: %d, veinmat: %d, designation: 0x%x ... DIGGING!\n", cx,cy,cz, tt, veinmat, baseDes.whole);
+    out.print("({},{},{}) tiletype: {}, veinmat: {}, designation: 0x{:x} ... DIGGING!\n", cx,cy,cz, ENUM_AS_STR(tt), veinmat, baseDes.whole);
 
     if ( targetDigType != -1 )
     {
@@ -1910,7 +1910,7 @@ command_result digtype (color_ostream &out, vector <string> & parameters)
                 //designate it for digging
                 if ( !mCache->testCoord(current) )
                 {
-                    out.printerr("testCoord failed at (%d,%d,%d)\n", x, y, z);
+                    out.printerr("testCoord failed at ({},{},{})\n", x, y, z);
                     return CR_FAILURE;
                 }
 
@@ -2158,7 +2158,7 @@ static bool blink(int delay) {
 }
 
 static void paintScreenWarmDamp(bool aquifer_mode = false, bool show_damp = false) {
-    TRACE(log).print("entering paintScreenDampWarm aquifer_mode=%d, show_damp=%d\n", aquifer_mode, show_damp);
+    TRACE(log).print("entering paintScreenDampWarm aquifer_mode={}, show_damp={}\n", aquifer_mode, show_damp);
 
     static Screen::Pen empty_pen;
 
@@ -2220,7 +2220,7 @@ static void paintScreenWarmDamp(bool aquifer_mode = false, bool show_damp = fals
                     bump_layers(*pen, x, y);
                 }
             } else {
-                TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
+                TRACE(log).print("scanning map tile at ({},{},{}) screen offset ({},{})\n",
                     pos.x, pos.y, pos.z, x, y);
 
                 auto des = Maps::getTileDesignation(pos);
@@ -2231,7 +2231,7 @@ static void paintScreenWarmDamp(bool aquifer_mode = false, bool show_damp = fals
 
                 Screen::Pen cur_tile = Screen::readTile(x, y, true);
                 if (!cur_tile.valid()) {
-                    DEBUG(log).print("cannot read tile at offset %d, %d\n", x, y);
+                    DEBUG(log).print("cannot read tile at offset {}, {}\n", x, y);
                     continue;
                 }
 
@@ -2465,7 +2465,7 @@ static void paintScreenDesignated() {
             if (!Maps::isValidTilePos(map_pos))
                 continue;
 
-            TRACE(log).print("scanning map tile at (%d, %d, %d) screen offset (%d, %d)\n",
+            TRACE(log).print("scanning map tile at ({},{},{}) screen offset ({},{})\n",
                 map_pos.x, map_pos.y, map_pos.z, x, y);
 
             Screen::Pen cur_tile;

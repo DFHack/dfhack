@@ -77,7 +77,7 @@ static bool isAccessible(color_ostream& out, df::item* item) {
     df::coord item_pos = Items::getPosition(item);
     uint16_t walkability_group = Maps::getWalkableGroup(item_pos);
     bool is_walkable = accessible_walkability_groups.contains(walkability_group);
-    TRACE(cycle, out).print("item %d in walkability_group %u at (%d,%d,%d) is %saccessible from job site\n",
+    TRACE(cycle, out).print("item {} in walkability_group {} at ({},{},{}) is {}accessible from job site\n",
         item->id, walkability_group, item_pos.x, item_pos.y, item_pos.z, is_walkable ? "(probably) " : "not ");
     return is_walkable;
 }
@@ -192,7 +192,7 @@ bool isJobReady(color_ostream &out, const std::vector<df::job_item *> &jitems) {
     int needed_items = 0;
     for (auto job_item : jitems) { needed_items += job_item->quantity; }
     if (needed_items) {
-        DEBUG(cycle,out).print("building needs %d more item(s)\n", needed_items);
+        DEBUG(cycle,out).print("building needs {} more item(s)\n", needed_items);
         return false;
     }
     return true;
@@ -208,7 +208,7 @@ static bool job_item_idx_lt(df::job_item_ref *a, df::job_item_ref *b) {
 // remove them to keep the "finalize with buildingplan active" path as similar
 // as possible to the "finalize with buildingplan disabled" path.
 void finalizeBuilding(color_ostream &out, df::building *bld, bool unsuspend_on_finalize) {
-    DEBUG(cycle,out).print("finalizing building %d\n", bld->id);
+    DEBUG(cycle,out).print("finalizing building {}\n", bld->id);
     auto job = bld->jobs[0];
 
     // sort the items so they get added to the structure in the correct order
@@ -255,7 +255,7 @@ static df::building * popInvalidTasks(color_ostream &out, Bucket &task_queue,
             if (bld && bld->jobs[0]->job_items.elements[task.second]->quantity)
                 return bld;
         }
-        DEBUG(cycle,out).print("discarding invalid task: bld=%d, job_item_idx=%d\n", id, task.second);
+        DEBUG(cycle,out).print("discarding invalid task: bld={}, job_item_idx={}\n", id, task.second);
         task_queue.pop_front();
     }
     return NULL;
@@ -273,9 +273,9 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
     auto other_id = ENUM_ATTR(job_item_vector_id, other, vector_id);
     const auto item_vector = df::global::world->items.other[other_id];
 
-    DEBUG(cycle,out).print("matching %zu item(s) in vector %s against %zu filter bucket(s)\n",
+    DEBUG(cycle,out).print("matching {} item(s) in vector {} against {} filter bucket(s)\n",
           item_vector.size(),
-          ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+          ENUM_KEY_STR(job_item_vector_id, vector_id),
           buckets.size());
 
     //  items we might want to attach (and their positions)
@@ -287,12 +287,12 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
     std::vector<std::pair<df::coord, df::item*>> matching;
     size_t num_matching = 0;
 
-    DEBUG(cycle,out).print("%zu items available for assignment\n", available.size());
+    DEBUG(cycle,out).print("{} items available for assignment\n", available.size());
 
     for (auto bucket_it = buckets.begin(); bucket_it != buckets.end(); ) {
 
-        TRACE(cycle,out).print("scanning bucket: %s/%s\n",
-              ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(), bucket_it->first.c_str());
+        TRACE(cycle,out).print("scanning bucket: {}/{}\n",
+              ENUM_KEY_STR(job_item_vector_id, vector_id), bucket_it->first);
 
         auto & task_queue = bucket_it->second;
         bool first_task = true;
@@ -322,7 +322,7 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
 
                 num_matching = matching.size();
                 first_task = false;
-                TRACE(cycle,out).print("first task in bucket: found %zu matching items\n",
+                TRACE(cycle,out).print("first task in bucket: found {} matching items\n",
                                         num_matching);
             }
             // every task: find and attach closest matching item (if any)
@@ -342,15 +342,15 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
                 material.decode(item);
                 ItemTypeInfo item_type;
                 item_type.decode(item);
-                DEBUG(cycle,out).print("attached %s %s (distance %d) to filter %d for %s(%d): %s/%s\n",
-                      material.toString().c_str(),
-                      item_type.toString().c_str(),
+                DEBUG(cycle,out).print("attached {} {} (distance {}) to filter {} for {}({}): {}/{}\n",
+                      material.toString(),
+                      item_type.toString(),
                       distance(closest->first, jpos),
                       filter_idx,
-                      ENUM_KEY_STR(building_type, bld->getType()).c_str(),
+                      ENUM_KEY_STR(building_type, bld->getType()),
                       id,
-                      ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
-                      bucket_it->first.c_str());
+                      ENUM_KEY_STR(job_item_vector_id, vector_id),
+                      bucket_it->first);
                 // clean up fulfilled task
                 task_queue.pop_front();
                 // keep quantity aligned with the actual number of remaining
@@ -373,10 +373,10 @@ static void doVector(color_ostream &out, df::job_item_vector_id vector_id,
 
         if (task_queue.empty()) {
             DEBUG(cycle,out).print(
-                "removing empty item bucket: %s/%s; %zu left\n",
-                ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
-                                   bucket_it->first.c_str(),
-                                   buckets.size() - 1);
+                "removing empty item bucket: {}/{}; {} left\n",
+                ENUM_KEY_STR(job_item_vector_id, vector_id),
+                bucket_it->first,
+                buckets.size() - 1);
             bucket_it = buckets.erase(bucket_it);
         } else {
             ++bucket_it;
@@ -420,8 +420,8 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
         auto & buckets = it->second;
         doVector(out, vector_id, buckets, planned_buildings, unsuspend_on_finalize);
         if (buckets.empty()) {
-            DEBUG(cycle,out).print("removing empty vector: %s; %zu vector(s) left\n",
-                  ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+            DEBUG(cycle,out).print("removing empty vector: {}; {} vector(s) left\n",
+                  ENUM_KEY_STR(job_item_vector_id, vector_id),
                   tasks.size() - 1);
             it = tasks.erase(it);
         }
@@ -434,12 +434,12 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
         auto & buckets = tasks[vector_id];
         doVector(out, vector_id, buckets, planned_buildings, unsuspend_on_finalize);
         if (buckets.empty()) {
-            DEBUG(cycle,out).print("removing empty vector: %s; %zu vector(s) left\n",
-                  ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
+            DEBUG(cycle,out).print("removing empty vector: {}; {} vector(s) left\n",
+                  ENUM_KEY_STR(job_item_vector_id, vector_id),
                   tasks.size() - 1);
             tasks.erase(vector_id);
         }
     }
-    DEBUG(cycle,out).print("cycle done; %zu registered building(s) left\n",
+    DEBUG(cycle,out).print("cycle done; {} registered building(s) left\n",
           planned_buildings.size());
 }

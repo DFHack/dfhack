@@ -1842,7 +1842,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         return -1;
     else if (message.empty())
     {
-        Core::printerr("Empty announcement %u\n", type); // DF would print this to errorlog.txt
+        Core::printerr("Empty announcement {}\n", ENUM_AS_STR(type)); // DF would print this to errorlog.txt
         return -1;
     }
 
@@ -2070,17 +2070,17 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
 {   // Based on reverse-engineering of "make_announcement" FUN_1400574e0 (v50.11 win64 Steam)
     if (!world->allow_announcements)
     {
-        DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n%s\n", message.c_str());
+        DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n{}\n", message);
         return false;
     }
     else if (!is_valid_enum_item(info.type) || info.type == df::announcement_type::NONE)
     {
-        WARN(gui).print("Invalid announcement type:\n%s\n", message.c_str());
+        WARN(gui).print("Invalid announcement type:\n{}\n", message);
         return false;
     }
     else if (message.empty())
     {
-        Core::printerr("Empty announcement %u\n", info.type); // DF would print this to errorlog.txt
+        Core::printerr("Empty announcement {}\n", ENUM_AS_STR(info.type)); // DF would print this to errorlog.txt
         return false;
     }
 
@@ -2091,7 +2091,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if (!a_flags.bits.A_DISPLAY && !a_flags.bits.DO_MEGA)
         {
-            DEBUG(gui).print("Skipped announcement not enabled at all for adventure mode:\n%s\n", message.c_str());
+            DEBUG(gui).print("Skipped announcement not enabled at all for adventure mode:\n{}\n", message);
             return false;
         }
 
@@ -2105,7 +2105,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             {   // Adventure mode reuses a dwarf mode digging designation bit to determine current visibility
                 if (!Maps::isValidTilePos(info.pos) || (Maps::getTileDesignation(info.pos)->whole & 0x10) == 0x0)
                 {
-                    DEBUG(gui).print("Adventure mode announcement not detected:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Adventure mode announcement not detected:\n{}\n", message);
                     return false;
                 }
             }
@@ -2115,7 +2115,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if ((info.unit_a || info.unit_d) && (!info.unit_a || Units::isHidden(info.unit_a)) && (!info.unit_d || Units::isHidden(info.unit_d)))
         {
-            DEBUG(gui).print("Dwarf mode announcement not detected:\n%s\n", message.c_str());
+            DEBUG(gui).print("Dwarf mode announcement not detected:\n{}\n", message);
             return false;
         }
 
@@ -2125,7 +2125,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             {
                 if (!info.unit_a && !info.unit_d)
                 {
-                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT because it has no units:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT because it has no units:\n{}\n", message);
                     return false;
                 }
             }
@@ -2133,12 +2133,12 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             {
                 if (!a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
                 {
-                    DEBUG(gui).print("Skipped announcement not enabled at all for dwarf mode:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped announcement not enabled at all for dwarf mode:\n{}\n", message);
                     return false;
                 }
                 else if (!recent_report_any(info.unit_a) && !recent_report_any(info.unit_d))
                 {
-                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT_ALL_ACTIVE because there's no active report:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT_ALL_ACTIVE because there's no active report:\n{}\n", message);
                     return false;
                 }
             }
@@ -2171,7 +2171,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
 
         if (samp_index >= 0)
         {
-            DEBUG(gui).print("Playing sound #%d for announcement.\n", samp_index);
+            DEBUG(gui).print("Playing sound #{} for announcement.\n", samp_index);
             //play_sound(musicsound_info, samp_index, 255, true); // g_src/music_and_sound_g.h // TODO: implement sounds
         }
     }
@@ -2198,7 +2198,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
                     if (a_flags.bits.D_DISPLAY)
                         world->status.display_timer = info.display_timer;
 
-                    DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Announcement succeeded as repeat:\n{}\n", message);
                     return true;
                 }
             }
@@ -2284,10 +2284,10 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         (*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || // Did adventure announcement
         (a_flags.bits.DO_MEGA && !adv_unconscious)) // Did popup
     {
-        DEBUG(gui).print("Announcement succeeded and displayed:\n%s\n", message.c_str());
+        DEBUG(gui).print("Announcement succeeded and displayed:\n{}\n", message);
     }
     else
-        DEBUG(gui).print("Announcement added internally and to gamelog.txt but didn't qualify to be displayed anywhere:\n%s\n", message.c_str());
+        DEBUG(gui).print("Announcement added internally and to gamelog.txt but didn't qualify to be displayed anywhere:\n{}\n", message);
 
     return true;
 }
@@ -2493,8 +2493,8 @@ void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
 
                     if (buff1 == "VAR") // Color from dipscript var
                     {
-                        DEBUG(gui).print("MTB_parse received:\n[C:VAR:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
-                            buff2.c_str(), buff3.c_str(), mtb->environment ? "Active" : "NULL");
+                        DEBUG(gui).print("MTB_parse received:\n[C:VAR:{}:{}]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: {}\n",
+                            buff2, buff3, mtb->environment ? "Active" : "NULL");
                         //MTB_set_color_on_var(mtb, buff2, buff3);
                     }
                     else
@@ -2548,8 +2548,8 @@ void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
                     string buff_var_name = grab_token_string_pos(parse_text, i, ':');
                     i += buff_var_name.size();
 
-                    DEBUG(gui).print("MTB_parse received:\n[VAR:%s:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
-                        buff_format.c_str(), buff_var_type.c_str(), buff_var_name.c_str(), mtb->environment ? "Active" : "NULL");
+                    DEBUG(gui).print("MTB_parse received:\n[VAR:{}:{}:{}]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: {}\n",
+                        buff_format, buff_var_type, buff_var_name, mtb->environment ? "Active" : "NULL");
                     //MTB_append_variable(mtb, str, buff_format, buff_var_type, buff_var_name);
                 }
                 else if (token_buffer == "R" || token_buffer == "B" || token_buffer == "P")

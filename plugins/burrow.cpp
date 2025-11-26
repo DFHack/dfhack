@@ -47,7 +47,7 @@ static void jobStartedHandler(color_ostream& out, void* ptr);
 static void jobCompletedHandler(color_ostream& out, void* ptr);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
-    DEBUG(status, out).print("initializing %s\n", plugin_name);
+    DEBUG(status, out).print("initializing {}\n", plugin_name);
     commands.push_back(
         PluginCommand("burrow",
                       "Quickly adjust burrow tiles and units.",
@@ -62,7 +62,7 @@ static void reset() {
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(status, out).print("%s from the API\n", is_enabled ? "enabled" : "disabled");
+        DEBUG(status, out).print("{} from the API\n", is_enabled ? "enabled" : "disabled");
         reset();
         if (enable) {
             init_diggers(out);
@@ -73,13 +73,13 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         }
     }
     else {
-        DEBUG(status, out).print("%s from the API, but already %s; no action\n", is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
+        DEBUG(status, out).print("{} from the API, but already {}; no action\n", is_enabled ? "enabled" : "disabled", is_enabled ? "enabled" : "disabled");
     }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
-    DEBUG(status, out).print("shutting down %s\n", plugin_name);
+    DEBUG(status, out).print("shutting down {}\n", plugin_name);
     reset();
     return CR_OK;
 }
@@ -92,7 +92,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -136,8 +136,8 @@ static void jobStartedHandler(color_ostream& out, void* ptr) {
         return;
 
     const df::coord &pos = job->pos;
-    DEBUG(event, out).print("dig job started: id=%d, pos=(%d,%d,%d), type=%s\n",
-            job->id, pos.x, pos.y, pos.z, ENUM_KEY_STR(job_type, job->job_type).c_str());
+    DEBUG(event, out).print("dig job started: id={}, pos=({}, {}, {}), type={}\n",
+            job->id, pos.x, pos.y, pos.z, ENUM_KEY_STR(job_type, job->job_type));
     df::tiletype *tt = Maps::getTileType(pos);
     if (tt)
         active_dig_jobs[pos] = *tt;
@@ -199,8 +199,8 @@ static void jobCompletedHandler(color_ostream& out, void* ptr) {
         return;
 
     const df::coord &pos = job->pos;
-    DEBUG(event, out).print("dig job completed: id=%d, pos=(%d,%d,%d), type=%s\n",
-            job->id, pos.x, pos.y, pos.z, ENUM_KEY_STR(job_type, job->job_type).c_str());
+    DEBUG(event, out).print("dig job completed: id={}, pos=({}, {}, {}), type={}\n",
+            job->id, pos.x, pos.y, pos.z, ENUM_KEY_STR(job_type, job->job_type));
 
     df::tiletype prev_tt = active_dig_jobs[pos];
     df::tiletype *tt = Maps::getTileType(pos);
@@ -544,7 +544,7 @@ static void flood_fill(lua_State *L, bool enable) {
     bool start_outside = is_outside(start_pos, start_des);
     bool start_hidden = start_des->bits.hidden;
     uint16_t start_walk = Maps::getWalkableGroup(start_pos);
-    DEBUG(status).print("starting pos: (%d,%d,%d); outside: %d; hidden: %d\n",
+    DEBUG(status).print("starting pos: ({},{},{}); outside: {}; hidden: {}\n",
         start_pos.x, start_pos.y, start_pos.z, start_outside, start_hidden);
 
     std::stack<df::coord> flood;
@@ -554,7 +554,7 @@ static void flood_fill(lua_State *L, bool enable) {
         const df::coord pos = flood.top();
         flood.pop();
 
-        TRACE(status).print("pos: (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+        TRACE(status).print("pos: ({},{},{})\n", pos.x, pos.y, pos.z);
 
         df::tile_designation *des = Maps::getTileDesignation(pos);
         if (!des ||

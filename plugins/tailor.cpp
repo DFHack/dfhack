@@ -228,8 +228,8 @@ public:
                 df::item_type t;
                 int size;
                 std::tie(t, size) = i.first;
-                DEBUG(cycle).print("tailor: %d %s of size %d found\n",
-                    i.second, ENUM_KEY_STR(item_type, t).c_str(), size);
+                DEBUG(cycle).print("tailor: {} {} of size {} found\n",
+                    i.second, ENUM_KEY_STR(item_type, t), size);
             }
         }
     }
@@ -248,7 +248,7 @@ public:
                 // only count dyed
                 std::string d;
                 i->getItemDescription(&d, 0);
-                TRACE(cycle).print("tailor: skipping undyed %s\n", DF2CONSOLE(d).c_str());
+                TRACE(cycle).print("tailor: skipping undyed {}\n", DF2CONSOLE(d));
                 continue;
             }
             MaterialInfo mat(i);
@@ -268,7 +268,7 @@ public:
                 {
                     std::string d;
                     i->getItemDescription(&d, 0);
-                    DEBUG(cycle).print("tailor: weird cloth item found: %s (%d)\n", DF2CONSOLE(d).c_str(), i->id);
+                    DEBUG(cycle).print("tailor: weird cloth item found: {} ({})\n", DF2CONSOLE(d), i->id);
                 }
             }
         }
@@ -280,7 +280,7 @@ public:
             supply[M_LEATHER] += i->getStackSize();
         }
 
-        DEBUG(cycle).print("tailor: available silk %d yarn %d cloth %d leather %d adamantine %d\n",
+        DEBUG(cycle).print("tailor: available silk {} yarn {} cloth {} leather {} adamantine {}\n",
             supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER], supply[M_ADAMANTINE]);
     }
 
@@ -331,9 +331,9 @@ public:
                 {
                     if (ordered.count(ty) == 0)
                     {
-                        DEBUG(cycle).print ("tailor: %s (size %d) worn by %s (size %d) needs replacement\n",
-                                            DF2CONSOLE(description).c_str(), isize,
-                                            DF2CONSOLE(Units::getReadableName(u)).c_str(), usize);
+                        DEBUG(cycle).print ("tailor: {} (size {}) worn by {} (size {}) needs replacement\n",
+                                            DF2CONSOLE(description), isize,
+                                            DF2CONSOLE(Units::getReadableName(u)), usize);
                         needed[std::make_pair(ty, usize)] += 1;
                         ordered.insert(ty);
                     }
@@ -346,10 +346,10 @@ public:
                         bool confiscated = Items::setOwner(w, NULL);
 
                         INFO(cycle).print(
-                            "tailor: %s %s from %s.\n",
+                            "tailor: {} {} from {}.\n",
                             (confiscated ? "confiscated" : "could not confiscate"),
-                            DF2CONSOLE(description).c_str(),
-                            DF2CONSOLE(Units::getReadableName(u)).c_str()
+                            DF2CONSOLE(description),
+                            DF2CONSOLE(Units::getReadableName(u))
                         );
                     }
 
@@ -363,10 +363,10 @@ public:
             {
                 if (equipped.count(ty) == 0 && ordered.count(ty) == 0)
                 {
-                    TRACE(cycle).print("tailor: one %s of size %d needed to cover %s\n",
-                        ENUM_KEY_STR(item_type, ty).c_str(),
+                    TRACE(cycle).print("tailor: one {} of size {} needed to cover {}\n",
+                        ENUM_KEY_STR(item_type, ty),
                         usize,
-                        DF2CONSOLE(Units::getReadableName(u)).c_str());
+                        DF2CONSOLE(Units::getReadableName(u)));
                     needed[std::make_pair(ty, usize)] += 1;
                 }
             }
@@ -423,7 +423,7 @@ public:
             {
                 const df::job_type j = jj->second;
                 orders[std::make_tuple(j, sub, size)] += count;
-                DEBUG(cycle).print("tailor: %s times %d of size %d ordered\n", ENUM_KEY_STR(job_type, j).c_str(), count, size);
+                DEBUG(cycle).print("tailor: {} times {} of size {} ordered\n", ENUM_KEY_STR(job_type, j), count, size);
             }
         }
     }
@@ -441,8 +441,8 @@ public:
                 if (o->material_category.whole == m.job_material.whole)
                 {
                     supply[m] -= o->amount_left;
-                    TRACE(cycle).print("tailor: supply of %s reduced by %d due to being required for an existing order\n",
-                        DF2CONSOLE(m.name).c_str(), o->amount_left);
+                    TRACE(cycle).print("tailor: supply of {} reduced by {} due to being required for an existing order\n",
+                        DF2CONSOLE(m.name), o->amount_left);
                 }
             }
         }
@@ -574,7 +574,7 @@ public:
         auto [_, n] = get_or_create_order(c, df::job_type::CustomReaction, -1, -1, 0, r->code);
         if (n > 0)
         {
-            INFO(cycle).print("tailor: ordered %d %s\n", c, DF2CONSOLE(descr).c_str());
+            INFO(cycle).print("tailor: ordered {} {}\n", c, DF2CONSOLE(descr));
         }
         return n;
     }
@@ -687,7 +687,7 @@ public:
 
             if (sizes.count(size) == 0)
             {
-                WARN(cycle).print("tailor: cannot determine race for clothing of size %d, skipped\n",
+                WARN(cycle).print("tailor: cannot determine race for clothing of size {}, skipped\n",
                     size);
                 continue;
             }
@@ -738,11 +738,11 @@ public:
 
                 if (!can_make)
                 {
-                    INFO(cycle).print("tailor: civilization cannot make %s, skipped\n", DF2CONSOLE(name_p).c_str());
+                    INFO(cycle).print("tailor: civilization cannot make {}, skipped\n", DF2CONSOLE(name_p));
                     continue;
                 }
 
-                DEBUG(cycle).print("tailor: ordering %d %s\n", count, DF2CONSOLE(name_p).c_str());
+                DEBUG(cycle).print("tailor: ordering {} {}\n", count, DF2CONSOLE(name_p));
 
                 for (auto& m : material_order)
                 {
@@ -757,8 +757,8 @@ public:
                         if (supply[m] < count + res)
                         {
                             c = supply[m] - res;
-                            TRACE(cycle).print("tailor: order reduced from %d to %d to protect reserves of %s\n",
-                                count, c, DF2CONSOLE(m.name).c_str());
+                            TRACE(cycle).print("tailor: order reduced from {} to {} to protect reserves of {}\n",
+                                count, c, DF2CONSOLE(m.name));
                             skipped += (count - c);
                         }
                         supply[m] -= c;
@@ -767,13 +767,12 @@ public:
 
                         if (n > 0)
                         {
-                            INFO(cycle).print("tailor: added order #%d for %d %s %s, sized for %s\n",
+                            INFO(cycle).print("tailor: added order #{} for {} {} {}, sized for {}\n",
                                 order->id,
                                 n,
-                                bitfield_to_string(order->material_category).c_str(),
-                                DF2CONSOLE((c > 1) ? name_p : name_s).c_str(),
-                                DF2CONSOLE(world->raws.creatures.all[order->specdata.hist_figure_id]->name[1]).c_str()
-                            );
+                                bitfield_to_string(order->material_category),
+                                DF2CONSOLE((c > 1) ? name_p : name_s),
+                                DF2CONSOLE(world->raws.creatures.all[order->specdata.hist_figure_id]->name[1]));
 
                             count -= n;
                             ordered += n;
@@ -782,7 +781,7 @@ public:
                     else
                     {
                         skipped += count;
-                        DEBUG(cycle).print("tailor: material %s skipped due to lack of reserves, %d available\n", DF2CONSOLE(m.name).c_str(), supply[m]);
+                        DEBUG(cycle).print("tailor: material {} skipped due to lack of reserves, {} available\n", DF2CONSOLE(m.name), supply[m]);
                     }
 
                 }
@@ -791,7 +790,7 @@ public:
 
         if (skipped > 0)
         {
-            INFO(cycle).print("tailor: %d item%s not ordered due to a lack of materials\n", skipped, skipped != 1 ? "s" : "");
+            INFO(cycle).print("tailor: {} item{} not ordered due to a lack of materials\n", skipped, skipped != 1 ? "s" : "");
 
             if (automate_dye)
             {
@@ -799,23 +798,23 @@ public:
                 int available_dyeable_cloth = count_dyeables(df::item_type::CLOTH);
                 int dye_cloth_orders = count_dye_cloth_orders();
 
-                DEBUG(cycle).print("tailor: available dyes = %d, available dyeable cloth = %d, dye cloth orders = %d\n",
+                DEBUG(cycle).print("tailor: available dyes = {}, available dyeable cloth = {}, dye cloth orders = {}\n",
                     available_dyes, available_dyeable_cloth, dye_cloth_orders);
                 int to_dye = std::min(skipped, std::min(available_dyes, available_dyeable_cloth) - dye_cloth_orders);
-                DEBUG(cycle).print("tailor: to dye = %d\n", to_dye);
+                DEBUG(cycle).print("tailor: to dye = {}\n", to_dye);
                 if (to_dye > 0)
                 {
                     int dyed = order_dye_cloth(to_dye);
                     if (dyed > 0)
                     {
-                        INFO(cycle).print("tailor: dyeing %d cloth\n", to_dye);
+                        INFO(cycle).print("tailor: dyeing {} cloth\n", to_dye);
                     }
                 }
 
                 int dyes_to_make = available_dyes - to_dye;
                 if (dyes_to_make > 0)
                 {
-                    INFO(cycle).print("tailor: ordering up to %d dyes\n", dyes_to_make);
+                    INFO(cycle).print("tailor: ordering up to {} dyes\n", dyes_to_make);
                     make_dyes(dyes_to_make);
                 }
             }
@@ -843,7 +842,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 static int do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
 
     tailor_instance = std::make_unique<Tailor>();
 
@@ -858,19 +857,19 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             do_cycle(out);
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {} ; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -878,7 +877,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
 
     tailor_instance.release();
 
@@ -916,13 +915,13 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     }
 
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
     tailor_instance->set_confiscate(config.get_bool(CONFIG_CONFISCATE));
-    DEBUG(control,out).print("loading persisted confiscation state: %s\n",
+    DEBUG(control,out).print("loading persisted confiscation state: {}\n",
                             tailor_instance->get_confiscate() ? "true" : "false");
     tailor_instance->set_automate_dye(config2.get_bool(CONFIG_AUTOMATE_DYE));
-    DEBUG(control, out).print("loading persisted dye automation state: %s\n",
+    DEBUG(control, out).print("loading persisted dye automation state: {}\n",
                             tailor_instance->get_automate_dye() ? "true" : "false");
 
     tailor_instance->sync_material_order();
@@ -933,7 +932,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -945,14 +944,14 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
         int ordered = do_cycle(out);
         if (0 < ordered)
-            out.print("tailor: ordered %d items of clothing\n", ordered);
+            out.print("tailor: ordered {} items of clothing\n", ordered);
     }
     return CR_OK;
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -975,7 +974,7 @@ static int do_cycle(color_ostream &out) {
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
 
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    DEBUG(cycle,out).print("running {} cycle\n", plugin_name);
 
     return tailor_instance->do_cycle();
 }
@@ -986,7 +985,7 @@ static int do_cycle(color_ostream &out) {
 
 static void tailor_doCycle(color_ostream &out) {
     DEBUG(control,out).print("entering tailor_doCycle\n");
-    out.print("ordered %d items of clothing\n", do_cycle(out));
+    out.print("ordered {} items of clothing\n", do_cycle(out));
 }
 
 // remember, these are ONE-based indices from Lua
@@ -1008,7 +1007,7 @@ static void tailor_setMaterialPreferences(color_ostream &out, int32_t silkIdx,
 
 static void tailor_setConfiscate(color_ostream& out, bool enable)
 {
-    DEBUG(control,out).print("%s confiscation of tattered clothing \n", enable ? "enabling" : "disabling");
+    DEBUG(control,out).print("{} confiscation of tattered clothing \n", enable ? "enabling" : "disabling");
     config.set_bool(CONFIG_CONFISCATE, enable);
     tailor_instance->set_confiscate(enable);
 }
@@ -1020,7 +1019,7 @@ static bool tailor_getConfiscate(color_ostream& out)
 
 static void tailor_setAutomateDye(color_ostream& out, bool enable)
 {
-    DEBUG(control, out).print("%s automation of dye\n", enable ? "enabling" : "disabling");
+    DEBUG(control, out).print("{} automation of dye\n", enable ? "enabling" : "disabling");
     config2.set_bool(CONFIG_AUTOMATE_DYE, enable);
     tailor_instance->set_automate_dye(enable);
 }

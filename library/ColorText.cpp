@@ -91,54 +91,6 @@ color_ostream::~color_ostream()
     delete buf();
 }
 
-void color_ostream::print(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    vprint(format, args);
-    va_end(args);
-}
-
-void color_ostream::vprint(const char *format, va_list args)
-{
-    std::string str = stl_vsprintf(format, args);
-
-    if (!str.empty()) {
-        flush_buffer(false);
-        add_text(cur_color, str);
-        if (str[str.size()-1] == '\n')
-            flush_proxy();
-    }
-}
-
-void color_ostream::printerr(const char * format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    vprinterr(format, args);
-    va_end(args);
-}
-
-void color_ostream::vprinterr(const char *format, va_list args)
-{
-    color_value save = cur_color;
-
-    if (log_errors_to_stderr)
-    {
-        va_list args1;
-        va_copy(args1, args);
-        vfprintf(stderr, format, args1);
-        va_end(args1);
-    }
-
-    color(COLOR_LIGHTRED);
-    va_list args2;
-    va_copy(args2, args);
-    vprint(format, args2);
-    va_end(args2);
-    color(save);
-}
-
 void color_ostream::color(color_value c)
 {
     if (c == cur_color)

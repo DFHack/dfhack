@@ -1009,7 +1009,8 @@ static int meta_type_tostring(lua_State *state)
     lua_getfield(state, -1, "__metatable");
     const char *cname = lua_tostring(state, -1);
 
-    lua_pushstring(state, stl_sprintf("<type: %s>", cname).c_str());
+    auto str = fmt::format("<type: {}>", cname);
+    lua_pushlstring(state, str.data(), str.size());
     return 1;
 }
 
@@ -1033,10 +1034,12 @@ static int meta_ptr_tostring(lua_State *state)
     lua_getfield(state, UPVAL_METATABLE, "__metatable");
     const char *cname = lua_tostring(state, -1);
 
-    if (has_length)
-        lua_pushstring(state, stl_sprintf("<%s[%" PRIu64 "]: %p>", cname, length, (void*)ptr).c_str());
-    else
-        lua_pushstring(state, stl_sprintf("<%s: %p>", cname, (void*)ptr).c_str());
+    auto str = has_length ?
+        fmt::format("<{}[{}]: {}>", cname, length, static_cast<void*>(ptr)) :
+        fmt::format("<{}: {}>", cname, static_cast<void*>(ptr));
+
+    lua_pushlstring(state, str.data(), str.size());
+
     return 1;
 }
 

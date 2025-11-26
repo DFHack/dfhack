@@ -115,14 +115,14 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         uint64_t time2 = GetTimeMs64();
         uint64_t delta = time2-timeLast;
         timeLast = time2;
-        out.print("Time delta = %d ms\n", int(delta));
+        out.print("Time delta = {} ms\n", int(delta));
     }
     if(trackmenu_flg)
     {
         if (last_menu != plotinfo->main.mode)
         {
             last_menu = plotinfo->main.mode;
-            out.print("Menu: %d\n",last_menu);
+            out.print("Menu: {}\n", ENUM_AS_STR(last_menu));
         }
     }
     if(trackpos_flg)
@@ -134,14 +134,14 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             last_designation[0] = desig_x;
             last_designation[1] = desig_y;
             last_designation[2] = desig_z;
-            out.print("Designation: %d %d %d\n",desig_x, desig_y, desig_z);
+            out.print("Designation: {} {} {}\n", desig_x, desig_y, desig_z);
         }
         df::coord mousePos = Gui::getMousePos();
         if(mousePos.x != last_mouse[0] || mousePos.y != last_mouse[1])
         {
             last_mouse[0] = mousePos.x;
             last_mouse[1] = mousePos.y;
-            out.print("Mouse: %d %d\n",mousePos.x, mousePos.y);
+            out.print("Mouse: {} {}\n", mousePos.x, mousePos.y);
         }
     }
     return CR_OK;
@@ -158,7 +158,7 @@ command_result trackmenu (color_ostream &out, vector <string> & parameters)
     {
         is_enabled = true;
         last_menu = plotinfo->main.mode;
-        out.print("Menu: %d\n",last_menu);
+        out.print("Menu: {}\n", ENUM_AS_STR(last_menu));
         trackmenu_flg = true;
         return CR_OK;
     }
@@ -182,10 +182,10 @@ command_result colormods (color_ostream &out, vector <string> & parameters)
     for(df::creature_raw* rawlion : vec)
     {
         df::caste_raw * caste = rawlion->caste[0];
-        out.print("%s\nCaste addr %p\n",rawlion->creature_id.c_str(), &caste->color_modifiers);
+        out.print("{}\nCaste addr {}\n",rawlion->creature_id, static_cast<void*>(&caste->color_modifiers));
         for(size_t j = 0; j < caste->color_modifiers.size();j++)
         {
-            out.print("mod %zd: %p\n", j, caste->color_modifiers[j]);
+            out.print("mod {}: {}\n", j, static_cast<void*>(caste->color_modifiers[j]));
         }
     }
     return CR_OK;
@@ -203,7 +203,7 @@ command_result ktimer (color_ostream &out, vector <string> & parameters)
         uint64_t timeend = GetTimeMs64();
         timeLast = timeend;
         timering = true;
-        out.print("Time to suspend = %d ms\n", int(timeend - timestart));
+        out.print("Time to suspend = {} ms\n", int(timeend - timestart));
     }
     is_enabled = true;
     return CR_OK;
@@ -300,9 +300,9 @@ struct Connected : public ClearMem<Connected> {
         return this;
     }
     ~Connected() {
-        INFO(command,*out).print("Connected %d had %d count. "
-                "It was caller %d times. "
-                "It was callee %d times.\n",
+        INFO(command,*out).print("Connected {} had {} count. "
+                "It was caller {} times. "
+                "It was callee {} times.\n",
                 id, count, caller, callee.load());
     }
 };

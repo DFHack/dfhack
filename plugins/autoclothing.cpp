@@ -237,7 +237,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     }
 
     is_enabled = enabled.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control, out).print("loading persisted enabled state: %s\n",
+    DEBUG(control, out).print("loading persisted enabled state: {}\n",
         is_enabled ? "true" : "false");
 
     // Parse constraints
@@ -282,21 +282,21 @@ DFhackCExport command_result plugin_save_site_data(color_ostream &out) {
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         auto enabled = World::GetPersistentSiteData(CONFIG_KEY);
         is_enabled = enable;
-        DEBUG(control, out).print("%s from the API; persisting\n",
+        DEBUG(control, out).print("{} from the API; persisting\n",
             is_enabled ? "enabled" : "disabled");
         enabled.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             do_autoclothing();
     }
     else {
-        DEBUG(control, out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control, out).print("{} from the API, but already {}; no action\n",
             is_enabled ? "enabled" : "disabled",
             is_enabled ? "enabled" : "disabled");
     }
@@ -410,7 +410,7 @@ static bool validateMaterialCategory(ClothingRequirement *requirement) {
 command_result autoclothing(color_ostream &out, vector<string> &parameters)
 {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -527,7 +527,7 @@ static void find_needed_clothing_items() {
             {
                 auto item = Items::findItemByID(ownedItem);
                 if (!item) {
-                    DEBUG(cycle).print("autoclothing: Invalid inventory item ID: %d\n", ownedItem);
+                    DEBUG(cycle).print("autoclothing: Invalid inventory item ID: {}\n", ownedItem);
                     continue;
                 }
 
@@ -683,7 +683,7 @@ static void generate_control(color_ostream &out) {
         {
             auto item = Items::findItemByID(itemId);
             if (!item) {
-                DEBUG(cycle, out).print("autoclothing: Invalid inventory item ID: %d\n", itemId);
+                DEBUG(cycle, out).print("autoclothing: Invalid inventory item ID: {}\n", itemId);
                 continue;
             }
             else if (item->getWear() >= 1)

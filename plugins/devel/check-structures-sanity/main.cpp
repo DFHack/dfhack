@@ -77,7 +77,7 @@ static command_result command(color_ostream & out, std::vector<std::string> & pa
         } \
         catch (std::exception & ex) \
         { \
-            out.printerr("check-structures-sanity: argument to -%s: %s\n", #name, ex.what()); \
+            out.printerr("check-structures-sanity: argument to -{}: {}\n", #name, ex.what()); \
             return CR_WRONG_USAGE; \
         } \
     }

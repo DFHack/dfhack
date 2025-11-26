@@ -17,6 +17,17 @@ struct BuildingTypeKey : public std::tuple<df::building_type, int16_t, int32_t> 
     std::string serialize() const;
 };
 
+template <>
+struct fmt::formatter<BuildingTypeKey> : fmt::formatter<std::string_view>
+{
+    template <typename FormatContext>
+    auto format(const BuildingTypeKey& key, FormatContext& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(
+            fmt::format("({}, {}, {})", ENUM_AS_STR(std::get<0>(key)), std::get<1>(key), std::get<2>(key)), ctx);
+    }
+};
+
 struct BuildingTypeKeyHash {
     std::size_t operator() (const BuildingTypeKey & key) const;
 };

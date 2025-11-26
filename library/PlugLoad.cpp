@@ -77,7 +77,7 @@ namespace DFHack
         DFLibrary* ret = (DFLibrary*)load_library(filename);
         if (!ret) {
             auto error = get_error();
-            WARN(plugins).print("OpenPlugin on %s failed: %s\n", filename.string().c_str(), error.c_str());
+            WARN(plugins).print("OpenPlugin on {} failed: {}\n", filename.string(), error);
         }
         return ret;
     }
@@ -91,7 +91,7 @@ namespace DFHack
         if (res != 0)
         {
             auto error = get_error();
-            WARN(plugins).print("ClosePlugin failed: %s\n", error.c_str());
+            WARN(plugins).print("ClosePlugin failed: {}\n", error);
         }
         return (res == 0);
 

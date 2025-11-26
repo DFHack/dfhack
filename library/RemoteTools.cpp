@@ -696,16 +696,16 @@ command_result CoreService::BindMethod(color_ostream &stream,
 
     if (!fn)
     {
-        stream.printerr("RPC method not found: %s::%s\n",
-                        in->plugin().c_str(), in->method().c_str());
+        stream.printerr("RPC method not found: {}::{}\n",
+                        in->plugin(), in->method());
         return CR_FAILURE;
     }
 
     if (fn->p_in_template->GetTypeName() != in->input_msg() ||
         fn->p_out_template->GetTypeName() != in->output_msg())
     {
-        stream.printerr("Requested wrong signature for RPC method: %s::%s\n",
-                        in->plugin().c_str(), in->method().c_str());
+        stream.printerr("Requested wrong signature for RPC method: {}::{}\n",
+                        in->plugin(), in->method());
         return CR_FAILURE;
     }
 

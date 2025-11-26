@@ -119,22 +119,22 @@ void impregnateMany(color_ostream &out, bool verbose = false) {
     }
 
     if (pregnancies || verbose) {
-        INFO(cycle, out).print("%d pet pregnanc%s initiated\n",
+        INFO(cycle, out).print("{} pet pregnanc{} initiated\n",
             pregnancies, pregnancies == 1 ? "y" : "ies");
     }
 }
 
 command_result do_command(color_ostream &out, vector<string> & parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (parameters.size() == 0 || parameters[0] == "status") {
-        out.print("%s is %s\n\n", plugin_name, is_enabled ? "enabled" : "not enabled");
-        out.print("population cap per species: %d\n", config.get_int(CONFIG_POP_CAP));
-        out.print("updating pregnancies every %d ticks\n", config.get_int(CONFIG_FREQ));
-        out.print("pregancies last %d ticks\n", config.get_int(CONFIG_PREG_TIME));
+        out.print("{} is {}\n\n", plugin_name, is_enabled ? "enabled" : "not enabled");
+        out.print("population cap per species: {}\n", config.get_int(CONFIG_POP_CAP));
+        out.print("updating pregnancies every {} ticks\n", config.get_int(CONFIG_FREQ));
+        out.print("pregancies last {} ticks\n", config.get_int(CONFIG_PREG_TIME));
     } else if (parameters[0] == "now") {
         impregnateMany(out, true);
     } else {
@@ -165,19 +165,19 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             impregnateMany(out);
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -199,7 +199,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     }
 
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
     return CR_OK;
 }
@@ -207,7 +207,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }

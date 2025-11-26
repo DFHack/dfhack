@@ -33,14 +33,14 @@ void Kitchen::debug_print(color_ostream &out)
     out.print("Kitchen Exclusions\n");
     for(std::size_t i = 0; i < size(); ++i)
     {
-        out.print("%2zu: IT:%2i IS:%i MT:%3i MI:%2i ET:%i %s\n",
+        out.print("{:2}: IT:{:2} IS:{:} MT:{:3} MI:{:2} ET:{:} {}\n",
                        i,
-                       plotinfo->kitchen.item_types[i],
+                       ENUM_KEY_STR(item_type,plotinfo->kitchen.item_types[i]),
                        plotinfo->kitchen.item_subtypes[i],
                        plotinfo->kitchen.mat_types[i],
                        plotinfo->kitchen.mat_indices[i],
                        plotinfo->kitchen.exc_types[i].whole,
-                       (plotinfo->kitchen.mat_types[i] >= 419 && plotinfo->kitchen.mat_types[i] <= 618) ? world->raws.plants.all[plotinfo->kitchen.mat_indices[i]]->id.c_str() : "n/a"
+                       (plotinfo->kitchen.mat_types[i] >= 419 && plotinfo->kitchen.mat_types[i] <= 618) ? world->raws.plants.all[plotinfo->kitchen.mat_indices[i]]->id : "n/a"
         );
     }
     out.print("\n");

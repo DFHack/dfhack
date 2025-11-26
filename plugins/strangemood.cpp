@@ -149,7 +149,7 @@ int getCreatedMetalBars (int32_t idx)
 command_result df_strangemood (color_ostream &out, vector <string> & parameters)
 {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -202,7 +202,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 type = mood_type::Macabre;
             else
             {
-                out.printerr("Mood type '%s' not recognized!\n", parameters[i].c_str());
+                out.printerr("Mood type '{}' not recognized!\n", parameters[i]);
                 return CR_WRONG_USAGE;
             }
         }
@@ -260,13 +260,13 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 skill = job_skill::MECHANICS;
             else
             {
-                out.printerr("Mood skill '%s' not recognized!\n", parameters[i].c_str());
+                out.printerr("Mood skill '{}' not recognized!\n", parameters[i]);
                 return CR_WRONG_USAGE;
             }
         }
         else
         {
-            out.printerr("Unrecognized parameter: %s\n", parameters[i].c_str());
+            out.printerr("Unrecognized parameter: {}\n", parameters[i]);
             return CR_WRONG_USAGE;
         }
     }
@@ -428,7 +428,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     if (unit->job.current_job)
     {
         // TODO: cancel job
-        out.printerr("Chosen unit '%s' has active job, cannot start mood!\n",
+        out.printerr("Chosen unit '{}' has active job, cannot start mood!\n",
             DF2CONSOLE(Units::getReadableName(unit)).c_str());
         return CR_FAILURE;
     }

@@ -442,3 +442,14 @@ a command starting with ``cmake .. -G Ninja`` on Linux and macOS, following the
 instructions in the sections above. CMake should automatically locate files that
 you placed in ``CMake/downloads``, and use them instead of attempting to
 download them.
+
+In addition, some packages used by DFHack are managed using CMake's ``FetchContent``
+feature, which requires an online connection during builds. The simplest way to address
+this is to have a connection during the first build (during which CMake will download the
+dependencies), and then to use CMake's ``FETCHCONTENT_FULLY_DISCONNECTED`` or
+``FETCHCONTENT_UPDATES_DISCONNECTED`` defines to control how CMake manages cached
+dependencies. If you need even the first-time build be an offline build, you will need
+to provide a CMake dependency provider. We do not provide one, but CMake's own documentation
+includes a simple provider. For more information about CMake's ``FetchContent`` feature
+and how to use it in offline builds, see the
+`CMake documentation <https://cmake.org/cmake/help/latest/module/FetchContent.html>`_.

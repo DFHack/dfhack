@@ -96,9 +96,9 @@ public:
 
     //! Get the singleton object
     static DebugManager& getInstance() {
-	// Plugins may still hold pointers to DebugManager's instance during shutdown.
-	// If DebugManager's dtor runs first, use-after-free may ensue.
-	// Intentionally leak to avoid this issue.
+    // Plugins may still hold pointers to DebugManager's instance during shutdown.
+    // If DebugManager's dtor runs first, use-after-free may ensue.
+    // Intentionally leak to avoid this issue.
         static DebugManager* instance = new DebugManager();
         return *instance;
     }

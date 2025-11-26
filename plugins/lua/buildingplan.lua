@@ -13,6 +13,7 @@ local _ENV = mkmodule('plugins.buildingplan')
 --]]
 
 local argparse = require('argparse')
+local copybuilding = require('plugins.buildingplan.copybuilding')
 local inspector = require('plugins.buildingplan.inspectoroverlay')
 local mechanisms = require('plugins.buildingplan.mechanisms')
 local pens = require('plugins.buildingplan.pens')
@@ -137,6 +138,7 @@ function reload_modules()
     reload('plugins.buildingplan.itemselection')
     reload('plugins.buildingplan.planneroverlay')
     reload('plugins.buildingplan.inspectoroverlay')
+    reload('plugins.buildingplan.copybuilding')
     reload('plugins.buildingplan.mechanisms')
     reload('plugins.buildingplan.unlink_mechanisms')
     reload('plugins.buildingplan')
@@ -145,6 +147,7 @@ end
 OVERLAY_WIDGETS = {
     planner=planner.PlannerOverlay,
     inspector=inspector.InspectorOverlay,
+    copybuilding=copybuilding.CopyBuildingOverlay,
     mechanisms=mechanisms.MechanismOverlay,
     mechanism_free=unlink_mechanisms.MechItemOverlay,
     mechanism_unlink=unlink_mechanisms.MechLinkOverlay,

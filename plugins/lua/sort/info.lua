@@ -278,8 +278,8 @@ function InfoOverlay:get_key()
 end
 
 function resize_overlay(self)
-    local sw = dfhack.screen.getWindowSize()
-    local overlay_width = math.min(40, sw-(self.frame_rect.x1 + 30))
+    local iw = gui.get_interface_rect().width
+    local overlay_width = math.min(40, iw - (self.frame_rect.x1 + 30))
     if overlay_width ~= self.frame.w then
         self.frame.w = overlay_width
         return true
@@ -292,15 +292,13 @@ end
 
 function get_panel_offsets()
     local tabs_in_two_rows = is_tabs_in_two_rows()
-    local shift_right = info.current_mode == df.info_interface_mode_type.ARTIFACTS or
-        info.current_mode == df.info_interface_mode_type.LABOR
+    local shift_right = info.current_mode == df.info_interface_mode_type.ARTIFACTS
     local l_offset = (not tabs_in_two_rows and shift_right) and 4 or 0
     local t_offset = 1
     if tabs_in_two_rows then
         t_offset = shift_right and 0 or 3
     end
-    if info.current_mode == df.info_interface_mode_type.JOBS or
-    info.current_mode == df.info_interface_mode_type.BUILDINGS then
+    if info.current_mode == df.info_interface_mode_type.JOBS then
         t_offset = t_offset - 1
     end
     return l_offset, t_offset

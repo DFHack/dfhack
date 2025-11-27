@@ -31,6 +31,7 @@ distribution.
 
 #include "modules/Graphic.h"
 
+#include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -170,7 +171,8 @@ namespace DFHack
         std::string getHotkeyCmd( bool &keep_going );
 
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
-        command_result runCommand(color_ostream &out, const std::string &command);
+        command_result runCommand(color_ostream& out, const std::string& command);
+
         bool loadScriptFile(color_ostream &out, std::filesystem::path fname, bool silent = false);
 
         bool addScriptPath(std::filesystem::path path, bool search_before = false);
@@ -212,7 +214,7 @@ namespace DFHack
         static void print(const char *format, ...) Wformat(printf,1,2);
         static void printerr(const char *format, ...) Wformat(printf,1,2);
 
-        PluginManager *getPluginManager() { return plug_mgr; }
+        PluginManager* getPluginManager() const { return plug_mgr; }
 
         static void cheap_tokenise(std::string const& input, std::vector<std::string> &output);
 
@@ -222,6 +224,29 @@ namespace DFHack
         lua_State* getLuaState(bool bypass_assertion = false) {
             assert(bypass_assertion || isSuspended());
             return State;
+        }
+
+        static command_result enableLuaScript(color_ostream& out, const std::string_view name, bool enabled);
+
+        const std::vector<StateChangeScript> getStateChangeScripts() const
+        {
+            return state_change_scripts;
+        }
+
+        void addStateChangeScript(const StateChangeScript& script)
+        {
+            state_change_scripts.push_back(script);
+        }
+
+        bool removeStateChangeScript(const StateChangeScript& script)
+        {
+            auto it = std::find(state_change_scripts.begin(), state_change_scripts.end(), script);
+            if (it != state_change_scripts.end())
+            {
+                state_change_scripts.erase(it);
+                return true;
+            }
+            return false;
         }
 
     private:
@@ -247,8 +272,8 @@ namespace DFHack
         void onStateChange(color_ostream &out, state_change_event event);
         void handleLoadAndUnloadScripts(color_ostream &out, state_change_event event);
 
-        Core(Core const&);              // Don't Implement
-        void operator=(Core const&);    // Don't implement
+        Core(Core const&) = delete;
+        void operator=(Core const&) = delete;
 
         // report error to user while failing
         void fatal (std::string output, const char * title = nullptr);
@@ -501,5 +526,13 @@ namespace DFHack
 
         operator bool() const { return owns_lock(); }
     };
+
+    // unclassified functions related to core
+
+    void help_helper(color_ostream& con, const std::string& entry_name);
+    std::string dfhack_version_desc();
+    bool is_builtin(color_ostream& con, const std::string& command);
+    std::string sc_event_name(state_change_event id);
+    state_change_event sc_event_id(std::string name);
 
 }

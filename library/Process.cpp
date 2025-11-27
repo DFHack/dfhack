@@ -57,6 +57,7 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "Memory.h"
+#include "MemoryPatcher.h"
 #include "MiscUtils.h"
 #include "VersionInfo.h"
 #include "VersionInfoFactory.h"
@@ -795,4 +796,11 @@ int Process::memProtect(void *ptr, const int length, const int prot)
     DWORD old_prot = 0;
     return !VirtualProtect(ptr, length, prot_native, &old_prot);
 #endif /* WIN32 */
+}
+
+bool Process::patchMemory(void* target, const void* src, size_t count)
+{
+    MemoryPatcher patcher(this);
+
+    return patcher.write(target, src, count);
 }

@@ -36,6 +36,7 @@ distribution.
 #include "LuaTools.h"
 #include "LuaWrapper.h"
 #include "md5wrapper.h"
+#include "MemoryPatcher.h"
 #include "MiscUtils.h"
 #include "PluginManager.h"
 

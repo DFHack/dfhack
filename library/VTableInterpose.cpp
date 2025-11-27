@@ -32,6 +32,7 @@ distribution.
 #include "Core.h"
 #include "DataFuncs.h"
 #include "MemAccess.h"
+#include "MemoryPatcher.h"
 #include "VersionInfo.h"
 #include "VTableInterpose.h"
 

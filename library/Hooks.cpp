@@ -1,5 +1,6 @@
 #include "Core.h"
 #include "Export.h"
+#include "SDLConsoleDriver.h"
 
 #include "df/gamest.h"
 
@@ -65,9 +66,22 @@ DFhackCExport bool dfhooks_sdl_event(SDL_Event* event) {
 // called from the main thread just after setting mouse state in gps and just
 // before rendering the screen buffer to the screen.
 DFhackCExport void dfhooks_sdl_loop() {
+    // Caching might save some cycles and some memory accesses.
+    // But we don't *have* to cache this. It's already cheap either way.
+    static bool tried { false };
+    static DFHack::SDLConsoleDriver* sdl_con { nullptr };
+
     if (disabled)
         return;
-    // TODO: wire this up to the new SDL-based console once it is merged
+
+    if (!tried) {
+        auto& con = DFHack::Core::getInstance().getConsole();
+        sdl_con = con.try_as<DFHack::SDLConsoleDriver>();
+        tried = true;
+    }
+
+    if (sdl_con)
+        sdl_con->update();
 }
 
 // called from the main thread for each utf-8 char read from the ncurses input

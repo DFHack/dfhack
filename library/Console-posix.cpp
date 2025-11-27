@@ -75,7 +75,8 @@ OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
         _res; })
 #endif
 
-#include "Console.h"
+#include "PosixConsole.h"
+
 #include "Hooks.h"
 using namespace DFHack;
 
@@ -90,51 +91,6 @@ static int isUnsupportedTerm(void)
         if (!strcasecmp(term,unsupported_term[j])) return 1;
     return 0;
 }
-
-const char * ANSI_CLS = "\033[2J";
-const char * ANSI_BLACK = "\033[22;30m";
-const char * ANSI_RED = "\033[22;31m";
-const char * ANSI_GREEN = "\033[22;32m";
-const char * ANSI_BROWN = "\033[22;33m";
-const char * ANSI_BLUE = "\033[22;34m";
-const char * ANSI_MAGENTA = "\033[22;35m";
-const char * ANSI_CYAN = "\033[22;36m";
-const char * ANSI_GREY = "\033[22;37m";
-const char * ANSI_DARKGREY = "\033[01;30m";
-const char * ANSI_LIGHTRED = "\033[01;31m";
-const char * ANSI_LIGHTGREEN = "\033[01;32m";
-const char * ANSI_YELLOW = "\033[01;33m";
-const char * ANSI_LIGHTBLUE = "\033[01;34m";
-const char * ANSI_LIGHTMAGENTA = "\033[01;35m";
-const char * ANSI_LIGHTCYAN = "\033[01;36m";
-const char * ANSI_WHITE = "\033[01;37m";
-const char * RESETCOLOR = "\033[0m";
-
-const char * getANSIColor(const int c)
-{
-    switch (c)
-    {
-        case -1: return RESETCOLOR; // HACK! :P
-        case 0 : return ANSI_BLACK;
-        case 1 : return ANSI_BLUE; // non-ANSI
-        case 2 : return ANSI_GREEN;
-        case 3 : return ANSI_CYAN; // non-ANSI
-        case 4 : return ANSI_RED; // non-ANSI
-        case 5 : return ANSI_MAGENTA;
-        case 6 : return ANSI_BROWN;
-        case 7 : return ANSI_GREY;
-        case 8 : return ANSI_DARKGREY;
-        case 9 : return ANSI_LIGHTBLUE; // non-ANSI
-        case 10: return ANSI_LIGHTGREEN;
-        case 11: return ANSI_LIGHTCYAN; // non-ANSI;
-        case 12: return ANSI_LIGHTRED; // non-ANSI;
-        case 13: return ANSI_LIGHTMAGENTA;
-        case 14: return ANSI_YELLOW; // non-ANSI
-        case 15: return ANSI_WHITE;
-        default: return "";
-    }
-}
-
 
 #ifdef HAVE_CUCHAR
 // Use u32string for GCC 6 and later and msvc to allow potable implementation
@@ -330,10 +286,10 @@ namespace DFHack
         void color(Console::color_value index)
         {
             if(!rawmode)
-                fprintf(dfout_C, "%s", getANSIColor(index));
+                fprintf(dfout_C, "%s", Console::getANSIColor(index));
             else
             {
-                const char * colstr = getANSIColor(index);
+                const char * colstr = Console::getANSIColor(index);
                 int lstr = strlen(colstr);
                 if (::write(STDIN_FILENO,colstr,lstr) == -1)
                     ;
@@ -833,14 +789,14 @@ namespace DFHack
     };
 }
 
-Console::Console()
+PosixConsole::PosixConsole() : Console(this)
 {
-    d = 0;
+    d = nullptr;
     inited = false;
     // we can't create the mutex at this time. the SDL functions aren't hooked yet.
     wlock = new std::recursive_mutex();
 }
-Console::~Console()
+PosixConsole::~PosixConsole()
 {
     assert(!inited);
     if(wlock)
@@ -849,7 +805,7 @@ Console::~Console()
         delete d;
 }
 
-bool Console::init(bool dont_redirect)
+bool PosixConsole::init(bool dont_redirect)
 {
     d = new Private();
     // make our own weird streams so our IO isn't redirected
@@ -882,7 +838,12 @@ bool Console::init(bool dont_redirect)
     return true;
 }
 
-bool Console::shutdown(void)
+bool PosixConsole::is_enabled()
+{
+    return !isUnsupportedTerm() && isatty(STDIN_FILENO);
+}
+
+bool PosixConsole::shutdown(void)
 {
     if(!d)
         return true;
@@ -894,7 +855,7 @@ bool Console::shutdown(void)
     return true;
 }
 
-void Console::begin_batch()
+void PosixConsole::begin_batch()
 {
     //color_ostream::begin_batch();
 
@@ -904,7 +865,7 @@ void Console::begin_batch()
         d->begin_batch();
 }
 
-void Console::end_batch()
+void PosixConsole::end_batch()
 {
     if (inited)
         d->end_batch();
@@ -912,14 +873,14 @@ void Console::end_batch()
     wlock->unlock();
 }
 
-void Console::flush_proxy()
+void PosixConsole::flush_proxy()
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
         d->flush();
 }
 
-void Console::add_text(color_value color, const std::string &text)
+void PosixConsole::add_text(color_value color, const std::string &text)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if (inited)
@@ -928,7 +889,7 @@ void Console::add_text(color_value color, const std::string &text)
         fwrite(text.data(), 1, text.size(), stderr);
 }
 
-int Console::get_columns(void)
+int PosixConsole::get_columns(void)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = Console::FAILURE;
@@ -937,7 +898,7 @@ int Console::get_columns(void)
     return ret;
 }
 
-int Console::get_rows(void)
+int PosixConsole::get_rows(void)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = Console::FAILURE;
@@ -946,28 +907,28 @@ int Console::get_rows(void)
     return ret;
 }
 
-void Console::clear()
+void PosixConsole::clear()
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->clear();
 }
 
-void Console::gotoxy(int x, int y)
+void PosixConsole::gotoxy(int x, int y)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->gotoxy(x,y);
 }
 
-void Console::cursor(bool enable)
+void PosixConsole::cursor(bool enable)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     if(inited)
         d->cursor(enable);
 }
 
-int Console::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
+int PosixConsole::lineedit(const std::string & prompt, std::string & output, CommandHistory & ch)
 {
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     int ret = Console::SHUTDOWN;
@@ -984,19 +945,13 @@ int Console::lineedit(const std::string & prompt, std::string & output, CommandH
     return ret;
 }
 
-void Console::msleep (unsigned int msec)
-{
-    if (msec > 1000) sleep(msec/1000000);
-    usleep((msec % 1000000) * 1000);
-}
-
-bool Console::hide()
+bool PosixConsole::hide()
 {
     //Warmist: don't know if it's possible...
     return false;
 }
 
-bool Console::show()
+bool PosixConsole::show()
 {
     //Warmist: don't know if it's possible...
     return false;

@@ -23,16 +23,16 @@ distribution.
 */
 
 #pragma once
+
 #include "Export.h"
 #include "ColorText.h"
-#include <atomic>
 #include <deque>
 #include <fstream>
 #include <assert.h>
 #include <iostream>
-#include <mutex>
 #include <string>
 #include <vector>
+#include <memory>
 #include <filesystem>
 
 namespace  DFHack
@@ -106,7 +106,7 @@ namespace  DFHack
             assert(index < history.size());
             return history[index];
         }
-        void remove( void )
+        void remove()
         {
             history.pop_front();
         }
@@ -121,57 +121,84 @@ namespace  DFHack
         std::deque <std::string> history;
     };
 
-    class Private;
+    // Base Console has print only capabilities.
+    // Used by dfhack-run.
     class DFHACK_EXPORT Console : public color_ostream
     {
-    protected:
-        virtual void begin_batch();
-        virtual void add_text(color_value color, const std::string &text);
-        virtual void end_batch();
+    private:
+        bool use_ansi_colors_{false};
 
-        virtual void flush_proxy();
+    protected:
+        using type_tag_t = const void*;
+        const type_tag_t instance_tag{};
+
+        virtual void begin_batch() {};
+        virtual void add_text(color_value color, const std::string &text);
+        virtual void end_batch() {};
+        virtual void flush_proxy() { std::cout << std::flush; }
 
     public:
-        ///ctor, NOT thread-safe
-        Console();
-        ///dtor, NOT thread-safe
-        ~Console();
-        /// initialize the console. NOT thread-safe
-        bool init( bool dont_redirect );
-        /// shutdown the console. NOT thread-safe
-        bool shutdown( void );
+        static const char * getANSIColor(int c) noexcept;
 
-        /// Clear the console, along with its scrollback
-        void clear();
-        /// Position cursor at x,y. 1,1 = top left corner
-        void gotoxy(int x, int y);
-        /// Enable or disable the caret/cursor
-        void cursor(bool enable = true);
-        /// Waits given number of milliseconds before continuing.
-        void msleep(unsigned int msec);
-        /// get the current number of columns
-        int  get_columns(void);
-        /// get the current number of rows
-        int  get_rows(void);
-        /// beep. maybe?
-        //void beep (void);
         //! \defgroup lineedit_return_values Possible errors from lineedit
         //! \{
         static constexpr int FAILURE = -1;
         static constexpr int SHUTDOWN = -2;
         static constexpr int RETRY = -3;
         //! \}
+
+        ///ctor, NOT thread-safe
+        Console() = default;
+        template <typename T>
+        explicit Console(T*) : instance_tag(T::type_tag) {}
+        ///dtor, NOT thread-safe
+        virtual ~Console() = default;
+
+        /// initialize the console. NOT thread-safe
+        virtual bool init( bool dont_redirect ) { return true; };
+        /// shutdown the console. NOT thread-safe
+        /// however, it is thread safe for SDL console.
+        virtual bool shutdown( void ) { return true; };
+
+        /// Clear the console, along with its scrollback
+        virtual void clear() {};
+        /// Position cursor at x,y. 1,1 = top left corner
+        virtual void gotoxy(int x, int y) {};
+        /// Enable or disable the caret/cursor
+        virtual void cursor(bool enable = true) {};
+        /// get the current number of columns
+        virtual int  get_columns() { return -1; };
+        /// get the current number of rows
+        virtual int  get_rows() { return -1; };
+        /// beep. maybe?
+        //void beep (void);
         /// A simple line edit (raw mode)
-        int lineedit(const std::string& prompt, std::string& output, CommandHistory & history );
-        bool isInited (void) { return inited; };
+        virtual int lineedit(const std::string& prompt, std::string& output, CommandHistory & history ) { return FAILURE; };
+        virtual bool isInited () { return true; };
 
-        bool is_console() { return true; }
+        virtual bool hide() { return false; };
+        virtual bool show() { return false; };
 
-        bool hide();
-        bool show();
-    private:
-        Private * d;
-        std::recursive_mutex * wlock;
-        std::atomic<bool> inited;
+        // Used by SDL console. However calling shutdown() has the same effect, so
+        // this can be probably be removed.
+        virtual void cleanup() {};
+
+        /// Platform independent. Waits given number of milliseconds before continuing.
+        static void msleep(unsigned int msec);
+        bool is_console() noexcept override { return true; }
+
+        // Used by dfhack-run, and any other that just wants a basic dumb console with ansi color support.
+        void use_ansi_colors(bool choice) noexcept { use_ansi_colors_ = choice; };
+
+        template <typename T>
+        T* try_as() noexcept {
+            return (instance_tag == T::type_tag) ? static_cast<T*>(this) : nullptr;
+        }
+
+        static constexpr type_tag_t type_tag = (const void*)&Console::type_tag;
+
+        static std::unique_ptr<Console> makeConsole();
+        template <typename T>
+        static std::unique_ptr<Console> makeConsole();
     };
 }

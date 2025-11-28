@@ -2508,6 +2508,10 @@ bool Core::DFH_SDL_Event(SDL_Event* ev) {
     return ret;
 }
 
+void Core::DFH_SDL_Loop() {
+    DFHack::runRenderThreadCallbacks();
+}
+
 bool Core::doSdlInputEvent(SDL_Event* ev)
 {
     // this should only ever be called from the render thread

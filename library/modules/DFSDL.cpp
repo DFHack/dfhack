@@ -8,6 +8,8 @@
 
 #include <SDL_stdinc.h>
 
+#include <vector>
+
 #ifdef WIN32
 # include <regex>
 #endif
@@ -61,6 +63,9 @@ SDL_Surface* (*g_SDL_CreateRGBSurfaceWithFormat)(uint32_t flags, int width, int 
 int (*g_SDL_ShowSimpleMessageBox)(uint32_t flags, const char *title, const char *message, SDL_Window *window) = nullptr;
 char* (*g_SDL_GetPrefPath)(const char* org, const char* app) = nullptr;
 char* (*g_SDL_GetBasePath)() = nullptr;
+uint32_t (*g_SDL_GetMouseState)(int* x, int* y) = nullptr;
+void (*g_SDL_RenderWindowToLogical)(SDL_Renderer* renderer, int windowX, int windowY, float* logicalX, float* logicalY);
+void (*g_SDL_RenderLogicalToWindow)(SDL_Renderer* renderer, float logicalX, float logicalY, int* windowX, int* windowY);
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -106,6 +111,9 @@ bool DFSDL::init(color_ostream &out) {
     bind(g_sdl_handle, SDL_ShowSimpleMessageBox);
     bind(g_sdl_handle, SDL_GetPrefPath);
     bind(g_sdl_handle, SDL_GetBasePath);
+    bind(g_sdl_handle, SDL_GetMouseState);
+    bind(g_sdl_handle, SDL_RenderWindowToLogical);
+    bind(g_sdl_handle, SDL_RenderLogicalToWindow);
 #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
@@ -190,6 +198,18 @@ char* DFSDL::DFSDL_GetBasePath()
     return g_SDL_GetBasePath();
 }
 
+uint32_t DFSDL::DFSDL_GetMouseState(int* x, int* y) {
+    return g_SDL_GetMouseState(x, y);
+}
+
+void DFSDL::DFSDL_RenderWindowToLogical(SDL_Renderer *renderer, int windowX, int windowY, float *logicalX, float *logicalY) {
+    g_SDL_RenderWindowToLogical(renderer, windowX, windowY, logicalX, logicalY);
+}
+
+void DFSDL::DFSDL_RenderLogicalToWindow(SDL_Renderer *renderer, float logicalX, float logicalY, int *windowX, int *windowY) {
+    g_SDL_RenderLogicalToWindow(renderer, logicalX, logicalY, windowX, windowY);
+}
+
 int DFSDL::DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const char *message, SDL_Window *window) {
     if (!g_SDL_ShowSimpleMessageBox)
         return -1;
@@ -265,4 +285,20 @@ DFHACK_EXPORT bool DFHack::setClipboardTextCp437Multiline(string text) {
         }
     }
     return 0 == DFHack::DFSDL::DFSDL_SetClipboardText(str.str().c_str());
+}
+
+static std::recursive_mutex render_cb_lock;
+static std::vector<std::pair<std::function<void(void*)>, void*>> render_cb_queue;
+
+DFHACK_EXPORT void DFHack::runOnRenderThread(std::function<void (void *)> cb, void *userdata) {
+    std::lock_guard<std::recursive_mutex> l(render_cb_lock);
+    render_cb_queue.push_back({cb, userdata});
+}
+
+DFHACK_EXPORT void DFHack::runRenderThreadCallbacks() {
+    std::lock_guard<std::recursive_mutex> l(render_cb_lock);
+    for (auto& cb : render_cb_queue) {
+        std::get<0>(cb)(std::get<1>(cb));
+    }
+    render_cb_queue.clear();
 }

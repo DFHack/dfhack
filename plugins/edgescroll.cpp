@@ -4,6 +4,7 @@
 
 #include "df/world_generatorst.h"
 #include "modules/Gui.h"
+#include "modules/DFSDL.h"
 
 #include "df/enabler.h"
 #include "df/gamest.h"
@@ -52,6 +53,62 @@ DFhackCExport command_result plugin_shutdown([[maybe_unused]] color_ostream &out
     return CR_OK;
 }
 
+static std::atomic_bool request_queued = false;
+
+struct scroll_state {
+    int8_t xdiff;
+    int8_t ydiff;
+};
+
+static const scroll_state state_default(0, 0);
+
+static scroll_state state = state_default;
+static scroll_state queued = state_default;
+
+static void render_thread_cb([[maybe_unused]] void* _) {
+    queued = state_default;
+    // Ignore the mouse if outside the window
+    if (!enabler->mouse_focus) {
+        request_queued.store(false);
+        return;
+    }
+
+    // Determine window border location in window coordinates
+    auto* renderer = virtual_cast<df::renderer_2d>(enabler->renderer);
+    int origin_x, origin_y = 0;
+    int end_x, end_y;
+    DFSDL::DFSDL_RenderLogicalToWindow((SDL_Renderer*)renderer->sdl_renderer, renderer->origin_x, renderer->origin_y, &origin_x, &origin_y);
+    DFSDL::DFSDL_RenderLogicalToWindow((SDL_Renderer*)renderer->sdl_renderer, renderer->cur_w - renderer->origin_x, renderer->cur_h - renderer->origin_y, &end_x, &end_y);
+
+    int mx, my;
+    DFSDL::DFSDL_GetMouseState(&mx, &my);
+
+    if (mx <= origin_x + border_range) {
+        queued.xdiff--;
+    } else if (mx >= end_x - border_range) {
+        queued.xdiff++;
+    }
+    if (my <= origin_y + border_range) {
+        queued.ydiff--;
+    } else if (my >= end_y - border_range) {
+        queued.ydiff++;
+    }
+
+    request_queued.store(false);
+}
+
+static bool update_mouse_pos() {
+    if (request_queued.load())
+        return false; // No new inputs, and a request for more is already placed
+
+    state = queued;
+    queued = state_default;
+    DFHack::runOnRenderThread(render_thread_cb, nullptr);
+    request_queued.store(true);
+    return true;
+}
+
+// Scrolling behavior
 template<typename T>
 static void apply_scroll(T* out, T diff, T min, T max) {
     *out = std::min(std::max(*out + diff, min), max);
@@ -134,32 +191,6 @@ static void scroll_world(world_map screen, int xdiff, int ydiff) {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-
-    // Ensure either a map viewscreen or the main viewport are visible
-    auto worldmap = get_map();
-    if (!worldmap.has_value() && (!gps->main_viewport || !gps->main_viewport->flag.bits.active))
-        return CR_OK;
-
-    // FIXME: Once dfhooks_sdl_loop is hooked up in Core, use SDL_GetMouseState
-    // to determine the correct mouse position without forcing the screen to
-    // render slightly un-centered.
-    // origin_x/y are already zero if not fitting the interface to the grid
-
-    // Force the origin_x/y values to zero to workaround df marking any
-    // mouse position within the margin register as invalid
-    auto renderer = virtual_cast<df::renderer_2d>(enabler->renderer);
-    if (renderer && (renderer->origin_x != 0 || renderer->origin_y != 0)) {
-        renderer->origin_x = 0;
-        renderer->origin_y = 0;
-    }
-
-    auto dim_x = gps->screen_pixel_x;
-    auto dim_y = gps->screen_pixel_y;
-    auto x = gps->precise_mouse_x;
-    auto y = gps->precise_mouse_y;
-    if (x == -1 || y == -1)
-        return CR_OK; // Invalid mouse position
-
     // Apply a cooldown to any potential edgescrolls
     auto& core = Core::getInstance();
     static uint32_t last_action = 0;
@@ -167,28 +198,23 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (now < last_action + cooldown_ms)
         return CR_OK;
 
+    // Update mouse_x/y to values from the render thread
+    if (!update_mouse_pos())
+        return CR_OK;
 
-    int xdiff = 0;
-    int ydiff = 0;
-    if (x <= border_range) {
-        xdiff--;
-    } else if (x >= dim_x - border_range) {
-        xdiff++;
-    }
-    if (y <= border_range) {
-        ydiff--;
-    } else if (y >= dim_y - border_range) {
-        ydiff++;
-    }
+    // Ensure either a map viewscreen or the main viewport are visible
+    auto worldmap = get_map();
+    if (!worldmap.has_value() && (!gps->main_viewport || !gps->main_viewport->flag.bits.active))
+        return CR_OK;
 
-    if (xdiff == 0 && ydiff == 0)
+    if (state.xdiff == 0 && state.ydiff == 0)
         return CR_OK; // No work to do
 
     // Dispatch scrolling to active scrollables
     if (worldmap.has_value())
-        scroll_world(worldmap.value(), xdiff, ydiff);
+        scroll_world(worldmap.value(), state.xdiff, state.ydiff);
     else if (gps->main_viewport->flag.bits.active)
-        scroll_dwarfmode(xdiff, ydiff);
+        scroll_dwarfmode(state.xdiff, state.ydiff);
 
     // Update cooldown
     last_action = now;

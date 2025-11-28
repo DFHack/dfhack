@@ -30,7 +30,8 @@ namespace DFHack
         SC_CORE_INITIALIZED = 5,
         SC_BEGIN_UNLOAD = 6,
         SC_PAUSED = 7,
-        SC_UNPAUSED = 8
+        SC_UNPAUSED = 8,
+        SC_NEW_MAP_AVAILABLE = 9
     };
 
 }

@@ -83,7 +83,7 @@ namespace DFHack
     DFHACK_EXPORT bool getClipboardTextCp437Multiline(std::vector<std::string> * lines);
     DFHACK_EXPORT bool setClipboardTextCp437Multiline(std::string text);
 
-    // Queue a cb to be run on the render thread, with optional userdata
-    DFHACK_EXPORT void runOnRenderThread(std::function<void(void*)> cb, void* userdata);
+    // Queue a cb to be run on the render thread
+    DFHACK_EXPORT void runOnRenderThread(std::function<void()> cb);
     DFHACK_EXPORT void runRenderThreadCallbacks();
 }

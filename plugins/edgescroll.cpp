@@ -1,8 +1,7 @@
 #include "ColorText.h"
-#include "PluginManager.h"
 #include "MemAccess.h"
+#include "PluginManager.h"
 
-#include "df/world_generatorst.h"
 #include "modules/Gui.h"
 #include "modules/DFSDL.h"
 
@@ -16,6 +15,7 @@
 #include "df/viewscreen_new_regionst.h"
 #include "df/world.h"
 #include "df/world_data.h"
+#include "df/world_generatorst.h"
 
 #include <cstdint>
 #include <optional>
@@ -53,33 +53,37 @@ DFhackCExport command_result plugin_shutdown([[maybe_unused]] color_ostream &out
     return CR_OK;
 }
 
-static std::atomic_bool request_queued = false;
+static std::atomic_bool callback_queued = false;
 
 struct scroll_state {
     int8_t xdiff;
     int8_t ydiff;
 };
 
-static const scroll_state state_default(0, 0);
+static scroll_state state;
+static scroll_state queued;
 
-static scroll_state state = state_default;
-static scroll_state queued = state_default;
-
-static void render_thread_cb([[maybe_unused]] void* _) {
-    queued = state_default;
+static void render_thread_cb() {
+    queued = {0};
     // Ignore the mouse if outside the window
     if (!enabler->mouse_focus) {
-        request_queued.store(false);
+        callback_queued.store(false);
         return;
     }
 
-    // Determine window border location in window coordinates
+    // Calculate the render rect in window coordinates
     auto* renderer = virtual_cast<df::renderer_2d>(enabler->renderer);
-    int origin_x, origin_y = 0;
+    int origin_x, origin_y;
     int end_x, end_y;
-    DFSDL::DFSDL_RenderLogicalToWindow((SDL_Renderer*)renderer->sdl_renderer, renderer->origin_x, renderer->origin_y, &origin_x, &origin_y);
-    DFSDL::DFSDL_RenderLogicalToWindow((SDL_Renderer*)renderer->sdl_renderer, renderer->cur_w - renderer->origin_x, renderer->cur_h - renderer->origin_y, &end_x, &end_y);
+    DFSDL::DFSDL_RenderLogicalToWindow(
+        (SDL_Renderer*)renderer->sdl_renderer, (float)renderer->origin_x,
+        (float)renderer->origin_y, &origin_x, &origin_y);
+    DFSDL::DFSDL_RenderLogicalToWindow(
+        (SDL_Renderer*)renderer->sdl_renderer,
+        (float)renderer->cur_w - (float)renderer->origin_x,
+        (float)(renderer->cur_h - renderer->origin_y), &end_x, &end_y);
 
+    // Get the mouse location in window coordinates
     int mx, my;
     DFSDL::DFSDL_GetMouseState(&mx, &my);
 
@@ -94,26 +98,28 @@ static void render_thread_cb([[maybe_unused]] void* _) {
         queued.ydiff++;
     }
 
-    request_queued.store(false);
+    callback_queued.store(false);
 }
 
 static bool update_mouse_pos() {
-    if (request_queued.load())
-        return false; // No new inputs, and a request for more is already placed
+    if (callback_queued.load())
+        return false; // Queued callback not complete, check back later
 
+    // Queued callback complete, save the results and enqueue again
     state = queued;
-    queued = state_default;
-    DFHack::runOnRenderThread(render_thread_cb, nullptr);
-    request_queued.store(true);
+    queued = {0};
+    DFHack::runOnRenderThread(render_thread_cb);
+    callback_queued.store(true);
     return true;
 }
 
-// Scrolling behavior
+// Apply scroll whilst maintaining boundaries
 template<typename T>
 static void apply_scroll(T* out, T diff, T min, T max) {
     *out = std::min(std::max(*out + diff, min), max);
 }
 
+// Scroll main fortress/adventure world views
 static void scroll_dwarfmode(int xdiff, int ydiff) {
     using df::global::window_x;
     using df::global::window_y;
@@ -137,7 +143,7 @@ static void scroll_dwarfmode(int xdiff, int ydiff) {
 }
 
 template<typename T>
-static void scroll_world(T* screen, int xdiff, int ydiff) {
+static void scroll_world_internal(T* screen, int xdiff, int ydiff) {
     if constexpr(std::is_same_v<T, df::viewscreen_choose_start_sitest>) {
         if (screen->zoomed_in) {
             int max_x = (world->world_data->world_width * 16)-1;
@@ -169,6 +175,9 @@ using world_map = std::variant<df::viewscreen_choose_start_sitest*, df::viewscre
 static std::optional<world_map> get_map() {
     df::viewscreen* screen = Gui::getCurViewscreen(true);
     screen = Gui::getDFViewscreen(true, screen); // Get the first non-dfhack viewscreen
+    if(!screen)
+        return {};
+
     if (auto start_site = virtual_cast<df::viewscreen_choose_start_sitest>(screen))
             return start_site;
     if (auto world_map = virtual_cast<df::viewscreen_worldst>(screen))
@@ -183,9 +192,9 @@ static std::optional<world_map> get_map() {
 
 static void scroll_world(world_map screen, int xdiff, int ydiff) {
     const auto visitor = overloads {
-        [xdiff, ydiff](df::viewscreen_choose_start_sitest* s) {scroll_world(s, xdiff, ydiff);},
-        [xdiff, ydiff](df::viewscreen_worldst* s) {scroll_world(s, xdiff, ydiff);},
-        [xdiff, ydiff](df::viewscreen_new_regionst* s) {scroll_world(s, xdiff, ydiff);},
+        [xdiff, ydiff](df::viewscreen_choose_start_sitest* s) {scroll_world_internal(s, xdiff, ydiff);},
+        [xdiff, ydiff](df::viewscreen_worldst* s) {scroll_world_internal(s, xdiff, ydiff);},
+        [xdiff, ydiff](df::viewscreen_new_regionst* s) {scroll_world_internal(s, xdiff, ydiff);},
     };
     std::visit(visitor, screen);
 }
@@ -198,17 +207,17 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (now < last_action + cooldown_ms)
         return CR_OK;
 
-    // Update mouse_x/y to values from the render thread
+    // Update mouse_x/y from values read in render thread callback
     if (!update_mouse_pos())
-        return CR_OK;
+        return CR_OK; // No new input to process
+
+    if (state.xdiff == 0 && state.ydiff == 0)
+        return CR_OK; // No work to do
 
     // Ensure either a map viewscreen or the main viewport are visible
     auto worldmap = get_map();
     if (!worldmap.has_value() && (!gps->main_viewport || !gps->main_viewport->flag.bits.active))
         return CR_OK;
-
-    if (state.xdiff == 0 && state.ydiff == 0)
-        return CR_OK; // No work to do
 
     // Dispatch scrolling to active scrollables
     if (worldmap.has_value())

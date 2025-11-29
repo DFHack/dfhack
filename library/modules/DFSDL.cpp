@@ -290,11 +290,11 @@ DFHACK_EXPORT bool DFHack::setClipboardTextCp437Multiline(string text) {
 // Queue to run callbacks on the render thread.
 // Semantics loosely based on SDL3's SDL_RunOnMainThread
 static std::recursive_mutex render_cb_lock;
-static std::vector<std::pair<std::function<void(void*)>, void*>> render_cb_queue;
+static std::vector<std::function<void()>> render_cb_queue;
 
-DFHACK_EXPORT void DFHack::runOnRenderThread(std::function<void (void *)> cb, void *userdata) {
+DFHACK_EXPORT void DFHack::runOnRenderThread(std::function<void()> cb) {
     std::lock_guard<std::recursive_mutex> l(render_cb_lock);
-    render_cb_queue.push_back({std::move(cb), userdata});
+    render_cb_queue.push_back(std::move(cb));
 }
 
 DFHACK_EXPORT void DFHack::runRenderThreadCallbacks() {
@@ -304,7 +304,7 @@ DFHACK_EXPORT void DFHack::runRenderThreadCallbacks() {
         std::swap(local_queue, render_cb_queue);
     }
     for (auto& cb : local_queue) {
-        std::get<0>(cb)(std::get<1>(cb));
+        cb();
     }
     local_queue.clear();
 }

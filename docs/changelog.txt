@@ -55,6 +55,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- ``edgescroll``: Introduced plugin to pan the view automatically when the mouse reaches the screen border.
 
 ## New Features
 

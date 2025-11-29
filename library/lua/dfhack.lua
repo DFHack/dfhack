@@ -855,6 +855,8 @@ function dfhack.interpreter(prompt,hfile,env)
               " '^ foo' => 'printall_recurse(foo)'\n"..
               " '@ foo' => 'printall_ipairs(foo)'\n"..
               "All of these save the first result as '_'.")
+        print("These keywords refer to the currently-selected object in the game:")
+        print(" unit item plant building bld job workshop_job wsjob screen scr")
         print_banner = false
     end
 

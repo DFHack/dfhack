@@ -845,18 +845,26 @@ function dfhack.interpreter(prompt,hfile,env)
         return nil, 'not interactive'
     end
 
-    print("Type quit to exit interactive lua interpreter.")
+    local function print_keyword(pre, keyword, post)
+        dfhack.color(COLOR_RESET)
+        if pre ~= nil then dfhack.print(pre) end
+        dfhack.color(COLOR_YELLOW)
+        dfhack.print(keyword)
+        dfhack.color(COLOR_RESET)
+        if post ~= nil then print(post) end
+    end
+    print_keyword("Type ", "quit", " to exit interactive lua interpreter.")
 
     if print_banner then
-        print("Shortcuts:\n"..
-              " '= foo' => '_1,_2,... = foo'\n"..
-              " '! foo' => 'print(foo)'\n"..
-              " '~ foo' => 'printall(foo)'\n"..
-              " '^ foo' => 'printall_recurse(foo)'\n"..
-              " '@ foo' => 'printall_ipairs(foo)'\n"..
-              "All of these save the first result as '_'.")
+        print("Shortcuts:")
+        print_keyword(" '", "= foo", "' => '_1,_2,... = foo'")
+        print_keyword(" '", "! foo", "' => 'print(foo)'")
+        print_keyword(" '", "~ foo", "' => 'printall(foo)'")
+        print_keyword(" '", "^ foo", "' => 'printall_recurse(foo)'")
+        print_keyword(" '", "@ foo", "' => 'printall_ipairs(foo)'")
+        print_keyword("All of these save the first result as '", "_", "'.")
         print("These keywords refer to the currently-selected object in the game:")
-        print(" unit item plant building bld job workshop_job wsjob screen scr")
+        print_keyword(" ", "unit item plant building bld job workshop_job wsjob screen scr", "")
         print_banner = false
     end
 

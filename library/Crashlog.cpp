@@ -1,4 +1,5 @@
 #include "DFHackVersion.h"
+
 #include <csignal>
 #include <iomanip>
 #include <filesystem>
@@ -42,7 +43,8 @@ void signal_crashlog_complete() {
 
 std::thread crashlog_thread;
 
-extern "C" void dfhack_crashlog_handle_signal(int sig) {
+// Force this method to be inlined so that it doesn't create a stack frame
+[[gnu::always_inline]] inline void handle_signal_internal(int sig) {
     if (shutdown.load() || crashed.exchange(true) || crashlog_ready.load()) {
         // Ensure the signal handler doesn't try to write a crashlog
         // whilst the crashlog thread is unavailable.
@@ -61,8 +63,12 @@ extern "C" void dfhack_crashlog_handle_signal(int sig) {
     std::quick_exit(1);
 }
 
+extern "C" void dfhack_crashlog_handle_signal(int sig) {
+    handle_signal_internal(sig);
+}
+
 void dfhack_crashlog_handle_terminate() {
-    dfhack_crashlog_handle_signal(0);
+    handle_signal_internal(0);
 }
 
 std::string signal_name(int sig) {
@@ -122,8 +128,9 @@ void dfhack_save_crashlog() {
             crashlog << "Signal " << signal << "\n";
         }
 
-        for (int i = 0; i < crash_info.backtrace_entries; i++) {
-            crashlog << i << "> " << backtrace_strings[i] << "\n";
+        // Skip the first backtrace entry as it will always be dfhack_crashlog_handle_(signal|terminate)
+        for (int i = 1; i < crash_info.backtrace_entries; i++) {
+            crashlog << i - 1 << "> " << backtrace_strings[i] << "\n";
         }
     } catch (...) {}
 

@@ -67,6 +67,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- The ``Lua interactive interpreter`` banner now documents keywords such as ``unit`` and ``item`` which reference the currently-selected object in the DF UI.
 
 ## Removed
 

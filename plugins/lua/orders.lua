@@ -1056,7 +1056,7 @@ function OrderHighlightOverlay:calculateSelectedOrderY()
 
     local viewport_start = scroll_pos
     local viewport_end = scroll_pos + viewport_size - 1
-    
+
     -- Selected order tries to be at the top unless we're at the end of the list
     if viewport_end >= #orders then
         viewport_end = #orders - 1
@@ -1117,4 +1117,3 @@ OVERLAY_WIDGETS = {
 }
 
 return _ENV
-

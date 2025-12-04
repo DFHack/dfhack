@@ -122,6 +122,9 @@ namespace  DFHack
         virtual bool is_console() { return false; }
         virtual color_ostream *proxy_target() { return NULL; }
 
+        virtual bool can_clear() const { return false; }
+        virtual void clear() {}
+
         static bool log_errors_to_stderr;
     };
 

@@ -60,6 +60,25 @@ Template for new versions:
 - `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
 
 ## Fixes
+
+## Misc Improvements
+- The ``fpause`` console command can now be used to force world generation to pause (as it did prior to version 50).
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.06-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
 - `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
 - `sort`: Places search widget moved to account for DF's new "Siege engines" subtab
 

@@ -211,6 +211,7 @@ namespace  DFHack
             functions.push_back(new VoidServerMethod<Svc,In>(this, name, flags, fptr));
         }
 
+    public:
         void dumpMethods(std::ostream & out) const;
     };
 

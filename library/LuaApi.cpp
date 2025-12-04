@@ -36,6 +36,7 @@ distribution.
 #include "LuaTools.h"
 #include "LuaWrapper.h"
 #include "md5wrapper.h"
+#include "MemoryPatcher.h"
 #include "MiscUtils.h"
 #include "PluginManager.h"
 
@@ -2755,6 +2756,7 @@ static int maps_setTileAquifer(lua_State* L)
     case 1:
         Lua::CheckDFAssign(L, &p, 1);
         rv = Maps::setTileAquifer(p);
+        break;
     case 2:
         Lua::CheckDFAssign(L, &p, 1);
         rv = Maps::setTileAquifer(p, lua_toboolean(L, 2));

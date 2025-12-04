@@ -948,7 +948,7 @@ namespace DFHack {
     inline void flagarray_to_string(std::vector<std::string> *pvec, const BitArray<T> &val) {
         typedef df::enum_traits<T> traits;
         int size = traits::last_item_value-traits::first_item_value+1;
-        flagarrayToString(pvec, val.bits, val.size,
+        flagarrayToString(pvec, val.bits(), val.size(),
                           (int)traits::first_item_value, size, traits::key_table);
     }
 

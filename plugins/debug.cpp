@@ -254,10 +254,10 @@ struct Filter {
 private:
     std::regex category_;
     std::regex plugin_;
-    DebugCategory::level level_;
-    size_t matches_;
-    bool persistent_;
-    bool enabled_;
+    DebugCategory::level level_{DebugCategory::level::LTRACE};
+    size_t matches_{0};
+    bool persistent_{false};
+    bool enabled_{false};
     std::string categoryText_;
     std::string pluginText_;
 };

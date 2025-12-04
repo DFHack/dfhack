@@ -7515,6 +7515,15 @@ Importing scripts
 
       --@ module = true
 
+     In order to be recognized, this line **must** begin with ``--@`` with no
+     whitespace characters before it::
+
+      --@ module = true   OK
+      --@module = true    OK
+      -- @module = true   NOT OK (no --@ found due to space after --)
+       --@module = true   NOT OK (leading space, --@ is not at the beginning of the line)
+      ---@module = true   NOT OK (leading dash, --@ is not at the beginning of the line)
+
   2. Include a check for ``dfhack_flags.module``, and avoid running any code
      that has side-effects if this flag is true. For instance::
 

@@ -111,10 +111,6 @@ std::filesystem::path get_crashlog_path() {
 
 void dfhack_save_crashlog() {
     char** backtrace_strings = backtrace_symbols(crash_info.backtrace, crash_info.backtrace_entries);
-    if (!backtrace_strings) {
-        // Allocation failed, give up
-        return;
-    }
     try {
         std::filesystem::path crashlog_path = get_crashlog_path();
         std::ofstream crashlog(crashlog_path);
@@ -128,9 +124,14 @@ void dfhack_save_crashlog() {
             crashlog << "Signal " << signal << "\n";
         }
 
-        // Skip the first backtrace entry as it will always be dfhack_crashlog_handle_(signal|terminate)
-        for (int i = 1; i < crash_info.backtrace_entries; i++) {
-            crashlog << i - 1 << "> " << backtrace_strings[i] << "\n";
+        if (crash_info.backtrace_entries >= 2 && backtrace_strings != nullptr) {
+            // Skip the first backtrace entry as it will always be dfhack_crashlog_handle_(signal|terminate)
+            for (int i = 1; i < crash_info.backtrace_entries; i++) {
+                crashlog << i - 1 << "> " << backtrace_strings[i] << "\n";
+            }
+        } else {
+            // Make it clear if no relevant backtrace was able to be obtained
+            crashlog << "Failed to obtain relevant backtrace\n";
         }
     } catch (...) {}
 

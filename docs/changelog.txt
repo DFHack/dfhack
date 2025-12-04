@@ -61,6 +61,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- The ``fpause`` console command can now be used to force world generation to pause (as it did prior to version 50).
 
 ## Documentation
 

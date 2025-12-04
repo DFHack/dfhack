@@ -115,11 +115,13 @@ jobs:
         run: |
           mkdir output
           mkdir pdb
+      - name: Get sccache path
+        run: echo ("SCCACHE_DIR=" + $env:LOCALAPPDATA + "\Mozilla\sccache\cache") >> $env:GITHUB_ENV
       - name: Fetch ccache
         if: inputs.platform-files
         uses: actions/cache/restore@v4
         with:
-          path: C:\\Users\\runneradmin\\AppData\\Local\\Mozilla\\sccache\\cache
+          path: ${{ env.SCCACHE_DIR }}
           key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
           restore-keys: |
             win-msvc-${{ inputs.cache-id }}
@@ -137,7 +139,7 @@ jobs:
             -DCMAKE_C_COMPILER_LAUNCHER=sccache `
             -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
             -DBUILD_PDBS:BOOL=${{ inputs.cache-id == 'release' }} `
-            -DDFHACK_RUN_URL='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id}}' `
+            -DDFHACK_RUN_URL='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' `
             -DBUILD_LIBRARY=${{ inputs.platform-files }} `
             -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files && inputs.plugins }} `
             -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} `
@@ -148,7 +150,7 @@ jobs:
             -DBUILD_TESTS:BOOL=${{ inputs.tests }} `
             -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} `
             ${{ inputs.xml-dump-type-sizes && '-DINSTALL_XMLDUMP:BOOL=1' || '' }}
-      - name: Cross-compile
+      - name: Build DFHack
         env:
           SCCACHE_CACHE_SIZE: 500M
         run: |
@@ -162,7 +164,7 @@ jobs:
         if: inputs.platform-files && !inputs.cache-readonly
         uses: actions/cache/save@v4
         with:
-          path: C:\\Users\\runneradmin\\AppData\\Local\\Mozilla\\sccache\\cache
+          path: ${{ env.SCCACHE_DIR }}
           key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
       - name: Format artifact name
         if: inputs.artifact-name

@@ -62,6 +62,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `createitem`: created items can now be placed onto/into tables, nests, bookcases, display cases, and altars
+- The ``fpause`` console command can now be used to force world generation to pause (as it did prior to version 50).
 
 ## Documentation
 
@@ -78,7 +79,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
 
 ## Misc Improvements
 
@@ -99,6 +99,7 @@ Template for new versions:
 - compatibility with 53.05
 
 ## Fixes
+- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
 
 ## Misc Improvements
 

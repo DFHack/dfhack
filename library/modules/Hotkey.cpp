@@ -387,63 +387,6 @@ std::string HotkeyManager::getKeybindingInput() {
     return requested_keybind;
 }
 
-void HotkeyManager::handleKeybindingCommand(color_ostream &con, const std::vector<std::string>& parts) {
-    std::string parse_error;
-    if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add")) {
-        const std::string& keystr = parts[1];
-        if (parts[0] == "set")
-            removeKeybind(keystr);
-        for (const auto& part : parts | std::views::drop(2) | std::views::reverse) {
-            auto spec = KeySpec::parse(keystr, &parse_error);
-            if (!spec.has_value()) {
-                con.printerr("%s\n", parse_error.c_str());
-                break;
-            }
-            if (!addKeybind(spec.value(), part)) {
-                con.printerr("Invalid command: '%s'\n", part.c_str());
-                break;
-            }
-        }
-    }
-    else if (parts.size() >= 2 && parts[0] == "clear") {
-        for (const auto& part : parts | std::views::drop(1)) {
-            auto spec = KeySpec::parse(part, &parse_error);
-            if (!spec.has_value()) {
-                con.printerr("%s\n", parse_error.c_str());
-            }
-            if (!removeKeybind(spec.value())) {
-                con.printerr("No matching keybinds to remove\n");
-                break;
-            }
-        }
-    }
-    else if (parts.size() == 2 && parts[0] == "list") {
-        auto spec = KeySpec::parse(parts[1], &parse_error);
-        if (!spec.has_value()) {
-            con.printerr("%s\n", parse_error.c_str());
-            return;
-        }
-        std::vector<std::string> list = listKeybinds(spec.value());
-        if (list.empty())
-            con << "No bindings.\n";
-        for (const auto& kb : list)
-            con << "  " << kb << "\n";
-    }
-    else {
-        con << "Usage:\n"
-            << "  keybinding list <key>\n"
-            << "  keybinding clear <key>[@context]...\n"
-            << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"...\n"
-            << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"...\n"
-            << "Later adds, and earlier items within one command have priority.\n"
-            << "Key format: [Ctrl-][Alt-][Super-][Shift-](A-Z, 0-9, F1-F12, `, etc.).\n"
-            << "Context may be used to limit the scope of the binding, by\n"
-            << "requiring the current context to have a certain prefix.\n"
-            << "Current UI context is: \n"
-            << join_strings("\n", Gui::getCurFocus(true)) << "\n";
-    }
-}
-
 HotkeyManager::HotkeyManager() {
     this->hotkey_thread = std::thread(&HotkeyManager::hotkey_thread_fn, this);
 }

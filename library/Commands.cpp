@@ -9,6 +9,7 @@
 #include "RemoteTools.h"
 
 #include "modules/Gui.h"
+#include "modules/Hotkey.h"
 #include "modules/World.h"
 
 #include "df/viewscreen_new_regionst.h"
@@ -282,56 +283,62 @@ namespace DFHack
 
     command_result Commands::keybinding(color_ostream& con, Core& core, const std::string& first, const std::vector<std::string>& parts)
     {
-        if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add"))
-        {
-            std::string keystr = parts[1];
+        using Hotkey::KeySpec;
+        auto hotkey_mgr = core.getHotkeyManager();
+        std::string parse_error;
+        if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add")) {
+            const std::string& keystr = parts[1];
             if (parts[0] == "set")
-                core.ClearKeyBindings(keystr);
-            // for (int i = parts.size()-1; i >= 2; i--)
-            for (const auto& part : parts | std::views::drop(2) | std::views::reverse)
-            {
-                if (!core.AddKeyBinding(keystr, part))
-                {
-                    con.printerr("Invalid key spec: %s\n", keystr.c_str());
-                    return CR_FAILURE;
+                hotkey_mgr->removeKeybind(keystr);
+            for (const auto& part : parts | std::views::drop(2) | std::views::reverse) {
+                auto spec = KeySpec::parse(keystr, &parse_error);
+                if (!spec.has_value()) {
+                    con.printerr("%s\n", parse_error.c_str());
+                    break;
+                }
+                if (!hotkey_mgr->addKeybind(spec.value(), part)) {
+                    con.printerr("Invalid command: '%s'\n", part.c_str());
+                    break;
                 }
             }
         }
-        else if (parts.size() >= 2 && parts[0] == "clear")
-        {
-            // for (size_t i = 1; i < parts.size(); i++)
-            for (const auto& part : parts | std::views::drop(1))
-            {
-                if (!core.ClearKeyBindings(part))
-                {
-                    con.printerr("Invalid key spec: %s\n", part.c_str());
-                    return CR_FAILURE;
+        else if (parts.size() >= 2 && parts[0] == "clear") {
+            for (const auto& part : parts | std::views::drop(1)) {
+                auto spec = KeySpec::parse(part, &parse_error);
+                if (!spec.has_value()) {
+                    con.printerr("%s\n", parse_error.c_str());
+                }
+                if (!hotkey_mgr->removeKeybind(spec.value())) {
+                    con.printerr("No matching keybinds to remove\n");
+                    break;
                 }
             }
         }
-        else if (parts.size() == 2 && parts[0] == "list")
-        {
-            std::vector<std::string> list = core.ListKeyBindings(parts[1]);
+        else if (parts.size() == 2 && parts[0] == "list") {
+            auto spec = KeySpec::parse(parts[1], &parse_error);
+            if (!spec.has_value()) {
+                con.printerr("%s\n", parse_error.c_str());
+                return CR_FAILURE;
+            }
+            std::vector<std::string> list = hotkey_mgr->listKeybinds(spec.value());
             if (list.empty())
                 con << "No bindings." << std::endl;
             for (const auto& kb : list)
                 con << "  " << kb << std::endl;
         }
-        else
-        {
-            con << "Usage:" << std::endl
-                << "  keybinding list <key>" << std::endl
-                << "  keybinding clear <key>[@context]..." << std::endl
-                << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-                << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-                << "Later adds, and earlier items within one command have priority." << std::endl
-                << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, 0-9, F1-F12, `, or Enter)." << std::endl
-                << "Context may be used to limit the scope of the binding, by" << std::endl
-                << "requiring the current context to have a certain prefix." << std::endl
-                << "Current UI context is: " << std::endl
+        else {
+            con << "Usage:\n"
+                << "  keybinding list <key>\n"
+                << "  keybinding clear <key>[@context]...\n"
+                << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"...\n"
+                << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"...\n"
+                << "Later adds, and earlier items within one command have priority.\n"
+                << "Key format: [Ctrl-][Alt-][Super-][Shift-](A-Z, 0-9, F1-F12, `, etc.).\n"
+                << "Context may be used to limit the scope of the binding, by\n"
+                << "requiring the current context to have a certain prefix.\n"
+                << "Current UI context is: \n"
                 << join_strings("\n", Gui::getCurFocus(true)) << std::endl;
         }
-
         return CR_OK;
     }
 

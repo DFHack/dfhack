@@ -56,15 +56,15 @@ DFhackCExport command_result plugin_shutdown([[maybe_unused]] color_ostream &out
 static std::atomic_bool callback_queued = false;
 
 struct scroll_state {
-    int8_t xdiff;
-    int8_t ydiff;
+    int8_t xdiff = 0;
+    int8_t ydiff = 0;
 };
 
 static scroll_state state;
 static scroll_state queued;
 
 static void render_thread_cb() {
-    queued = {0};
+    queued = {};
     // Ignore the mouse if outside the window
     if (!enabler->mouse_focus) {
         callback_queued.store(false);
@@ -107,7 +107,7 @@ static bool update_mouse_pos() {
 
     // Queued callback complete, save the results and enqueue again
     state = queued;
-    queued = {0};
+    queued = {};
     DFHack::runOnRenderThread(render_thread_cb);
     callback_queued.store(true);
     return true;

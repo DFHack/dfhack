@@ -260,7 +260,6 @@ std::vector<std::string> HotkeyManager::listKeybinds(const KeySpec& spec) {
 }
 
 std::vector<std::string> HotkeyManager::listKeybinds(std::string keyspec) {
-    std::lock_guard<std::mutex> l(lock);
     std::optional<KeySpec> spec_opt = KeySpec::parse(std::move(keyspec));
     if (!spec_opt.has_value())
         return {};

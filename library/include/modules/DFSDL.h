@@ -3,10 +3,13 @@
 #include "Export.h"
 #include "ColorText.h"
 
+#include <cstdint>
+#include <functional>
 #include <vector>
 
 struct SDL_Surface;
 struct SDL_Rect;
+struct SDL_Renderer;
 struct SDL_PixelFormat;
 struct SDL_Window;
 union SDL_Event;
@@ -55,6 +58,10 @@ namespace DFHack::DFSDL
     DFHACK_EXPORT SDL_Surface* DFSDL_CreateRGBSurfaceWithFormat(uint32_t flags, int width, int height, int depth, uint32_t format);
     DFHACK_EXPORT int DFSDL_ShowSimpleMessageBox(uint32_t flags, const char* title, const char* message, SDL_Window* window);
 
+    DFHACK_EXPORT uint32_t DFSDL_GetMouseState(int* x, int* y);
+    DFHACK_EXPORT void DFSDL_RenderWindowToLogical(SDL_Renderer* renderer, int windowX, int windowY, float* logicalX, float* logicalY);
+    DFHACK_EXPORT void DFSDL_RenderLogicalToWindow(SDL_Renderer* renderer, float logicalX, float logicalY, int* windowX, int* windowY);
+
     // submitted and returned text is UTF-8
     // see wrapper functions below for cp-437 variants
     DFHACK_EXPORT char* DFSDL_GetClipboardText();
@@ -76,4 +83,7 @@ namespace DFHack
     DFHACK_EXPORT bool getClipboardTextCp437Multiline(std::vector<std::string> * lines);
     DFHACK_EXPORT bool setClipboardTextCp437Multiline(std::string text);
 
+    // Queue a cb to be run on the render thread
+    DFHACK_EXPORT void runOnRenderThread(std::function<void()> cb);
+    DFHACK_EXPORT void runRenderThreadCallbacks();
 }

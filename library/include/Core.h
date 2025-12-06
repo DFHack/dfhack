@@ -152,6 +152,7 @@ namespace DFHack
         friend void ::dfhooks_update();
         friend void ::dfhooks_prerender();
         friend bool ::dfhooks_sdl_event(SDL_Event* event);
+        friend void ::dfhooks_sdl_loop();
         friend bool ::dfhooks_ncurses_key(int key);
     public:
         /// Get the single Core instance or make one.
@@ -263,6 +264,7 @@ namespace DFHack
         int Update (void);
         int Shutdown (void);
         bool DFH_SDL_Event(SDL_Event* event);
+        void DFH_SDL_Loop();
         bool ncurses_wgetch(int in, int & out);
         bool DFH_ncurses_key(int key);
 

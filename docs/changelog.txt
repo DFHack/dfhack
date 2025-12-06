@@ -58,8 +58,11 @@ Template for new versions:
 - ``edgescroll``: Introduced plugin to pan the view automatically when the mouse reaches the screen border.
 
 ## New Features
+- `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
 
 ## Fixes
+- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
+- `sort`: Places search widget moved to account for DF's new "Siege engines" subtab
 
 ## Misc Improvements
 - `createitem`: created items can now be placed onto/into tables, nests, bookcases, display cases, and altars

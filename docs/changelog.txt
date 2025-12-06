@@ -58,6 +58,7 @@ Template for new versions:
 - ``edgescroll``: Introduced plugin to pan the view automatically when the mouse reaches the screen border.
 
 ## New Features
+- `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
 - `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
 
 ## Fixes

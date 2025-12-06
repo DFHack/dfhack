@@ -11,6 +11,7 @@ local stockflow = reqscript('internal/quickfort/stockflow')
 -- Shared state for search cursor visibility
 local search_cursor_visible = false
 local search_last_scroll_position = -1
+local order_count_at_highlight = 0
 
 --
 -- OrdersOverlay
@@ -938,6 +939,7 @@ function OrdersSearchOverlay:cycle_match(direction)
     mi.info.work_orders.scroll_position_work_orders = order_idx
     search_last_scroll_position = order_idx
     search_cursor_visible = true
+    order_count_at_highlight = #df.global.world.manager_orders.all
 
     self.subviews.main_panel.frame_title = 'Search: ' .. self:get_match_text()
 end
@@ -1077,12 +1079,18 @@ end
 function OrderHighlightOverlay:render(dc)
     if search_cursor_visible then
         local current_scroll = mi.info.work_orders.scroll_position_work_orders
+        local current_order_count = #df.global.world.manager_orders.all
 
         -- Hide cursor when user manually scrolls
         if search_last_scroll_position ~= -1 and current_scroll ~= search_last_scroll_position then
             search_cursor_visible = false
         end
         search_last_scroll_position = current_scroll
+
+        -- Hide cursor when order list changes (orders added or removed)
+        if order_count_at_highlight ~= current_order_count then
+            search_cursor_visible = false
+        end
     end
 
     OrderHighlightOverlay.super.render(self, dc)

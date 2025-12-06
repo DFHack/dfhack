@@ -170,6 +170,117 @@ local function get_farmplot_search_key(farmplot)
     return table.concat(result, ' ')
 end
 
+---@param siege_engine df.building_siegeenginest
+---@return string
+local function siege_engine_type(siege_engine)
+    if siege_engine.type == df.siegeengine_type.BoltThrower then
+        return 'Bolt Thrower'
+    end
+    return df.siegeengine_type[siege_engine.type]
+end
+
+---@param siege_engine df.building_siegeenginest
+---@return string
+local function siege_engine_status(siege_engine)
+    -- portions of return value with with underscores are to allow easier
+    -- word-anchored matching even when the DFHack full-text search mode is
+    -- enabled; e.g.
+    -- - "loaded" would match "Loaded" and "Unloaded",
+    --   - but "_loaded" would only match "_Loaded"
+    local count = 0
+    local count_all = siege_engine.type == df.siegeengine_type.BoltThrower
+    for _, building_item in ipairs(siege_engine.contained_items) do
+        if building_item.use_mode == df.building_item_role_type.TEMP then
+            if not count_all then
+                return 'Loaded _Loaded'
+            end
+            count = count + building_item.item:getStackSize()
+        end
+    end
+    if count_all and count > 0 then
+        return ('%d bolts _%d_bolts'):format(count, count)
+    end
+    return 'Unloaded'
+end
+
+---@param siege_engine df.building_siegeenginest
+---@return string
+local function siege_engine_job_status(siege_engine)
+    for _, job in ipairs(siege_engine.jobs) do
+        if job.job_type == df.job_type.LoadCatapult
+            or job.job_type == df.job_type.LoadBallista
+            or job.job_type == df.job_type.LoadBoltThrower
+        then
+            if dfhack.job.getWorker(job) ~= nil then
+                return 'Loading'
+            else
+                return 'Inactive load task'
+            end
+        end
+        local firing_bolt_thrower = job.job_type == df.job_type.FireBoltThrower
+        local firing = job.job_type == df.job_type.FireCatapult
+            or job.job_type == df.job_type.FireBallista
+            or firing_bolt_thrower
+        if firing then
+            local unit = dfhack.job.getWorker(job)
+            if unit == nil then
+                return 'No operator'
+            else
+                ---@type integer?, integer?, integer?
+                local x, y, z = dfhack.units.getPosition(unit)
+                -- DF shows "present" when the unit is inside the building's
+                -- footprint (or, for bolt throwers, next to it); the unit does
+                -- not need to be at the exact firing position tile (which
+                -- varies based on siege engine type and direction)
+                if x ~= nil and z == siege_engine.z then
+                    ---@cast y integer
+                    if firing_bolt_thrower then
+                        if siege_engine.x1 - 1 <= x and x <= siege_engine.x2 + 1
+                            and siege_engine.y1 - 1 <= y and y <= siege_engine.y2 + 1
+                        then
+                            return 'Operator present'
+                        end
+                    elseif dfhack.buildings.containsTile(siege_engine, x, y) then
+                        return 'Operator present'
+                    end
+                end
+                return 'Operator assigned'
+            end
+        end
+    end
+    return ''
+end
+
+---@param siege_engine df.building_siegeenginest
+---@return string
+local function get_siege_engine_search_key(siege_engine)
+    -- DF 53.05 Info window, Places tab, Siege Engines subtab shows this info:
+    --       name: assigned name or siege engine type name
+    --     status: "Unloaded", "Loaded", "<N> bolts"
+    -- job status:
+    --             - "Inactive load task" (load job unassigned),
+    --             - "Loading" (load job assigned),
+    --             - "No operator" (fire job unassigned),
+    --             - "Operator present" (fire job assigned),
+    --             - "Operator assigned" (fire job assigned, but not in position),
+    --             - blank
+    --     action: (icons) fire-at-will, practice, prepare-to-fire, keep-loaded, not-in-use
+    --             These have associated text blurbs that are shown in the
+    --             building info window, but those texts are not discoverable
+    --             from the Info > Places > Siege engine list view.
+    local result = {}
+
+    if #siege_engine.name ~= 0 then table.insert(result, siege_engine.name) end
+
+    table.insert(result, siege_engine_type(siege_engine))
+
+    table.insert(result, siege_engine_status(siege_engine))
+
+    table.insert(result, siege_engine_job_status(siege_engine))
+
+    return table.concat(result, ' ')
+end
+
 -- ----------------------
 -- PlacesOverlay
 --
@@ -177,7 +288,8 @@ end
 PlacesOverlay = defclass(PlacesOverlay, sortoverlay.SortOverlay)
 PlacesOverlay.ATTRS{
     desc='Adds search functionality to the places overview screens.',
-    default_pos={x=71, y=9},
+    default_pos={x=52, y=9},
+    version=2,
     viewscreens='dwarfmode/Info',
     frame={w=40, h=6}
 }
@@ -205,6 +317,7 @@ function PlacesOverlay:init()
     self:register_handler('STOCKPILES', buildings.list[df.buildings_mode_type.STOCKPILES], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_stockpile_search_key}))
     self:register_handler('WORKSHOPS', buildings.list[df.buildings_mode_type.WORKSHOPS], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_workshop_search_key}))
     self:register_handler('FARMPLOTS', buildings.list[df.buildings_mode_type.FARMPLOTS], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_farmplot_search_key}))
+    self:register_handler('SIEGE_ENGINES', buildings.list[df.buildings_mode_type.SIEGE_ENGINES], curry(sortoverlay.single_vector_search, {get_search_key_fn=get_siege_engine_search_key}))
 end
 
 function PlacesOverlay:get_key()

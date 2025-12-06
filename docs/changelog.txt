@@ -55,10 +55,14 @@ Template for new versions:
 # Future
 
 ## New Tools
+- ``edgescroll``: Introduced plugin to pan the view automatically when the mouse reaches the screen border.
 
 ## New Features
+- `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
 
 ## Fixes
+- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
+- `sort`: Places search widget moved to account for DF's new "Siege engines" subtab
 
 ## Misc Improvements
 - `createitem`: created items can now be placed onto/into tables, nests, bookcases, display cases, and altars
@@ -71,6 +75,7 @@ Template for new versions:
 - ``Hotkey``: New module for hotkey functionality
 
 ## Lua
+- The ``Lua interactive interpreter`` banner now documents keywords such as ``unit`` and ``item`` which reference the currently-selected object in the DF UI.
 - ``dfhack.hotkey.addKeybind``: Creates new keybindings
 - ``dfhack.hotkey.removeKeybind``: Removes existing keybindings
 - ``dfhack.hotkey.listActiveKeybinds``: Lists all keybinds for the current context

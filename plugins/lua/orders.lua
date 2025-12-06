@@ -1085,33 +1085,25 @@ function OrderHighlightOverlay:render(dc)
         if search_last_scroll_position ~= -1 and current_scroll ~= search_last_scroll_position then
             search_cursor_visible = false
         end
-        search_last_scroll_position = current_scroll
 
         -- Hide cursor when order list changes (orders added or removed)
         if order_count_at_highlight ~= current_order_count then
             search_cursor_visible = false
         end
+
+        -- Draw highlight arrows
+        local selected_y = self:calculateSelectedOrderY()
+        if selected_y then
+            local highlight_pen = dfhack.pen.parse{
+                fg=COLOR_LIGHTGREEN,
+                bold=true,
+            }
+
+            local y = selected_y + 1  -- Middle line of the 3-line order
+            dc:seek(self.ARROW_X_FIRST, y):string(self.ARROW_CHAR, highlight_pen)
+            dc:seek(self.ARROW_X_SECOND, y):string(self.ARROW_CHAR, highlight_pen)
+        end
     end
-
-    OrderHighlightOverlay.super.render(self, dc)
-end
-
-function OrderHighlightOverlay:onRenderFrame(dc, rect)
-    OrderHighlightOverlay.super.onRenderFrame(self, dc, rect)
-
-    if not search_cursor_visible then return end
-
-    local selected_y = self:calculateSelectedOrderY()
-    if not selected_y then return end
-
-    local highlight_pen = dfhack.pen.parse{
-        fg=COLOR_LIGHTGREEN,
-        bold=true,
-    }
-
-    local y = selected_y + 1  -- Middle line of the 3-line order
-    dc:seek(self.ARROW_X_FIRST, y):string(self.ARROW_CHAR, highlight_pen)
-    dc:seek(self.ARROW_X_SECOND, y):string(self.ARROW_CHAR, highlight_pen)
 end
 
 -- -------------------

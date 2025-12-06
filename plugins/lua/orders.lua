@@ -1010,7 +1010,7 @@ OrderHighlightOverlay.ATTRS{
     desc='Shows arrows next to the work order found by orders.search',
     default_enabled=false,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
-    frame={w=80, h=3},
+    full_interface=true,
 }
 
 function OrderHighlightOverlay:init()

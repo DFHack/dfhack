@@ -68,6 +68,7 @@ DFhackCExport void dfhooks_sdl_loop() {
     if (disabled)
         return;
     // TODO: wire this up to the new SDL-based console once it is merged
+    DFHack::Core::getInstance().DFH_SDL_Loop();
 }
 
 // called from the main thread for each utf-8 char read from the ncurses input

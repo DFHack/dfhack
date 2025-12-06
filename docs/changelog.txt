@@ -55,19 +55,34 @@ Template for new versions:
 # Future
 
 ## New Tools
+- ``edgescroll``: Introduced plugin to pan the view automatically when the mouse reaches the screen border.
 
 ## New Features
 - `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
+- `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
 
 ## Fixes
+- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
+- `sort`: Places search widget moved to account for DF's new "Siege engines" subtab
 
 ## Misc Improvements
+- `createitem`: created items can now be placed onto/into tables, nests, bookcases, display cases, and altars
+- `keybinding`: keybinds may now include the super key, and are no longer limited to particular keys ranges of keys, allowing any recognized by SDL.
+- The ``fpause`` console command can now be used to force world generation to pause (as it did prior to version 50).
 
 ## Documentation
 
 ## API
+- ``Hotkey``: New module for hotkey functionality
 
 ## Lua
+- The ``Lua interactive interpreter`` banner now documents keywords such as ``unit`` and ``item`` which reference the currently-selected object in the DF UI.
+- ``dfhack.hotkey.addKeybind``: Creates new keybindings
+- ``dfhack.hotkey.removeKeybind``: Removes existing keybindings
+- ``dfhack.hotkey.listActiveKeybinds``: Lists all keybinds for the current context
+- ``dfhack.hotkey.listAllKeybinds``: Lists all keybinds for all contexts
+- ``dfhack.hotkey.requestKeybindingInput``: Requests the next keybind-compatible input is saved
+- ``dfhack.hotkey.getKeybindingInput``: Reads the input saved in response to a request.
 
 ## Removed
 
@@ -78,7 +93,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
 
 ## Misc Improvements
 
@@ -99,6 +113,7 @@ Template for new versions:
 - compatibility with 53.05
 
 ## Fixes
+- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
 
 ## Misc Improvements
 

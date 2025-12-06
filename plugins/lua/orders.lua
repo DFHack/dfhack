@@ -832,23 +832,23 @@ function OrdersSearchOverlay:init()
                 frame={t=0, l=0},
                 key='CUSTOM_ALT_S',
                 on_change=self:callback('update_filter'),
+                on_submit=self:callback('on_submit'),
+                on_submit2=self:callback('on_submit2'),
             },
             widgets.HotkeyLabel{
-                view_id='prev_match',
                 frame={t=1, l=0},
                 label='prev',
                 key='CUSTOM_ALT_P',
                 auto_width=true,
-                on_activate=self:callback('jump_to_previous_match'),
+                on_activate=self:callback('cycle_match', -1),
                 enabled=function() return self:has_matches() end,
             },
             widgets.HotkeyLabel{
-                view_id='next_match',
                 frame={t=1, l=17},
                 label='next',
                 key='CUSTOM_ALT_N',
                 auto_width=true,
-                on_activate=self:callback('jump_to_next_match'),
+                on_activate=self:callback('cycle_match', 1),
                 enabled=function() return self:has_matches() end,
             },
         },
@@ -913,27 +913,23 @@ function OrdersSearchOverlay:update_filter(text)
     self.subviews.main_panel.frame_title = 'Search: ' .. self:get_match_text()
 end
 
-function OrdersSearchOverlay:jump_to_next_match()
-    if #self.matched_indices == 0 then return end
-
-    self.current_match_idx = self.current_match_idx + 1
-    if self.current_match_idx > #self.matched_indices then
-        self.current_match_idx = 1
-    end
-
-    local order_idx = self.matched_indices[self.current_match_idx]
-    mi.info.work_orders.scroll_position_work_orders = order_idx
-    search_last_scroll_position = order_idx
-    search_cursor_visible = true
-
-    self.subviews.main_panel.frame_title = 'Search: ' .. self:get_match_text()
+function OrdersSearchOverlay:on_submit()
+    self:cycle_match(1)
+    self.subviews.filter:setFocus(true)
 end
 
-function OrdersSearchOverlay:jump_to_previous_match()
+function OrdersSearchOverlay:on_submit2()
+    self:cycle_match(-1)
+    self.subviews.filter:setFocus(true)
+end
+
+function OrdersSearchOverlay:cycle_match(direction)
     if #self.matched_indices == 0 then return end
 
-    self.current_match_idx = self.current_match_idx - 1
-    if self.current_match_idx < 1 then
+    self.current_match_idx = self.current_match_idx + direction
+    if direction > 0 and self.current_match_idx > #self.matched_indices then
+        self.current_match_idx = 1
+    elseif direction < 0 and self.current_match_idx < 1 then
         self.current_match_idx = #self.matched_indices
     end
 

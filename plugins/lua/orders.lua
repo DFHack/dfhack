@@ -793,21 +793,6 @@ local function get_order_search_key(order)
     return ""
 end
 
-local function matches_all_search_words(search_key, filter_text)
-    local search_words = {}
-    for word in filter_text:gmatch('%S+') do
-        table.insert(search_words, word)
-    end
-
-    -- Check if all search words are found in search_key (order-independent)
-    for _, search_word in ipairs(search_words) do
-        if not search_key:find(search_word, 1, true) then
-            return false
-        end
-    end
-    return true
-end
-
 OrdersSearchOverlay = defclass(OrdersSearchOverlay, overlay.OverlayWidget)
 OrdersSearchOverlay.ATTRS{
     desc='Adds a search box to find and navigate to matching manager orders.',
@@ -886,19 +871,17 @@ function OrdersSearchOverlay:init()
     }
 
     -- Initialize search state
-    self.filter_text = ''
     self.matched_indices = {}
     self.current_match_idx = 0
     self.minimized = false
 end
 
 function OrdersSearchOverlay:update_filter(text)
-    self.filter_text = text:lower()
     self.matched_indices = {}
     self.current_match_idx = 0
     search_cursor_visible = false
 
-    if self.filter_text == '' then
+    if text == '' then
         self.subviews.main_panel.frame_title = 'Search'
         return
     end
@@ -907,7 +890,7 @@ function OrdersSearchOverlay:update_filter(text)
     for i = 0, #orders - 1 do
         local order = orders[i]
         local search_key = get_order_search_key(order)
-        if matches_all_search_words(search_key, self.filter_text) then
+        if search_key and utils.search_text(search_key, text) then
             table.insert(self.matched_indices, i)
         end
     end
@@ -945,11 +928,11 @@ function OrdersSearchOverlay:cycle_match(direction)
 end
 
 function OrdersSearchOverlay:get_match_text()
-    if self.filter_text == '' then
+    local total_matches = #self.matched_indices
+
+    if total_matches == 0 then
         return ''
     end
-
-    local total_matches = #self.matched_indices
 
     if self.current_match_idx == 0 then
         return string.format('%d matches', total_matches)

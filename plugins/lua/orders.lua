@@ -1005,9 +1005,9 @@ function OrderHighlightOverlay:init()
     self.LIST_START_Y_ONE_TABS_ROW = 8
     self.LIST_START_Y_TWO_TABS_ROWS = 10
     self.BOTTOM_MARGIN = 9
-    self.ARROW_X_FIRST = 5
-    self.ARROW_X_SECOND = 6
-    self.ARROW_CHAR = '>'
+    self.ARROW_X = 10
+    self.ARROW_FG = COLOR_BLACK
+    self.ARROW_BG = COLOR_WHITE
 
     self.cached_list_start_y = nil
     self.cached_viewport_size = nil
@@ -1079,13 +1079,14 @@ function OrderHighlightOverlay:render(dc)
         local selected_y = self:calculateSelectedOrderY()
         if selected_y then
             local highlight_pen = dfhack.pen.parse{
-                fg=COLOR_LIGHTGREEN,
+                fg=self.ARROW_FG,
+                bg=self.ARROW_BG,
                 bold=true,
             }
 
-            local y = selected_y + 1  -- Middle line of the 3-line order
-            dc:seek(self.ARROW_X_FIRST, y):string(self.ARROW_CHAR, highlight_pen)
-            dc:seek(self.ARROW_X_SECOND, y):string(self.ARROW_CHAR, highlight_pen)
+            dc:seek(self.ARROW_X, selected_y):string('|', highlight_pen)
+            dc:seek(self.ARROW_X, selected_y + 1):string('>', highlight_pen)
+            dc:seek(self.ARROW_X, selected_y + 2):string('|', highlight_pen)
         end
     end
 end

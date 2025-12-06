@@ -758,6 +758,11 @@ local function make_order_key(order)
 end
 
 local function build_reaction_map()
+    local can_read_stockflow = dfhack.isWorldLoaded() and dfhack.isMapLoaded()
+    if not can_read_stockflow then
+        return nil
+    end
+
     local map = {}
     local reactions = stockflow.collect_reactions()
 
@@ -812,6 +817,8 @@ OrdersSearchOverlay.ATTRS{
 }
 
 function OrdersSearchOverlay:init()
+    get_cached_reaction_map()
+
     local main_panel = widgets.Panel{
         view_id='main_panel',
         frame={t=0, l=0, r=0, h=4},

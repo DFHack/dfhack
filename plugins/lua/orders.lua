@@ -84,6 +84,7 @@ OrdersOverlay.ATTRS{
     default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
     frame={w=43, h=4},
+    version=1,
 }
 
 function OrdersOverlay:init()

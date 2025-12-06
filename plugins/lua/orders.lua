@@ -800,7 +800,7 @@ OrdersSearchOverlay.ATTRS{
     default_pos={x=85, y=-6},
     default_enabled=false,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
-    frame={w=34, h=4},
+    frame={w=26, h=4},
 }
 
 function OrdersSearchOverlay:init()
@@ -831,7 +831,7 @@ function OrdersSearchOverlay:init()
                 enabled=function() return self:has_matches() end,
             },
             widgets.HotkeyLabel{
-                frame={t=1, l=17},
+                frame={t=1, l=12},
                 label='next',
                 key='CUSTOM_ALT_N',
                 auto_width=true,

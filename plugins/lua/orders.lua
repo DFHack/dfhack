@@ -895,6 +895,7 @@ function OrdersSearchOverlay:update_filter(text)
     self.filter_text = text:lower()
     self.matched_indices = {}
     self.current_match_idx = 0
+    search_cursor_visible = false
 
     if self.filter_text == '' then
         self.subviews.main_panel.frame_title = 'Search'

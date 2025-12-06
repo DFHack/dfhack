@@ -61,6 +61,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `createitem`: created items can now be placed onto/into tables, nests, bookcases, display cases, and altars
 - `keybinding`: keybinds may now include the super key, and are no longer limited to particular keys ranges of keys, allowing any recognized by SDL.
 - The ``fpause`` console command can now be used to force world generation to pause (as it did prior to version 50).
 

@@ -48,6 +48,7 @@ distribution.
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/Hotkey.h"
 #include "modules/Items.h"
 #include "modules/Job.h"
 #include "modules/Kitchen.h"
@@ -1864,6 +1865,123 @@ static const luaL_Reg dfhack_gui_funcs[] = {
     { "getCurFocus", gui_getCurFocus },
     { "getWidget", gui_getWidget },
     { "getWidgetChildren", gui_getWidgetChildren },
+    { NULL, NULL }
+};
+
+/***** Hotkey module *****/
+static bool hotkey_addKeybind(const std::string spec, const std::string cmd) {
+    auto hotkey_mgr = Core::getInstance().getHotkeyManager();
+    if (!hotkey_mgr) return false;
+    return hotkey_mgr->addKeybind(spec, cmd);
+}
+
+static bool hotkey_isDisruptiveKeybind(const std::string spec) {
+    auto key = Hotkey::KeySpec::parse(spec);
+    if (!key.has_value())
+        return true;
+    return key.value().isDisruptive();
+}
+
+static int hotkey_requestKeybindingInput(lua_State *L) {
+    auto hotkey_mgr = Core::getInstance().getHotkeyManager();
+    if (!hotkey_mgr) return 0;
+    bool cancel = false;
+    if (lua_gettop(L) == 1)
+        cancel = lua_toboolean(L, -1);
+    hotkey_mgr->requestKeybindingInput(cancel);
+    return 0;
+}
+
+static int hotkey_getKeybindingInput(lua_State *L) {
+    auto hotkey_mgr = Core::getInstance().getHotkeyManager();
+    auto input = hotkey_mgr->getKeybindingInput();
+
+    if (input.empty()) {
+        lua_pushnil(L);
+    } else {
+        lua_pushlstring(L, input.data(), input.size());
+    }
+    return 1;
+}
+
+static int hotkey_removeKeybind(lua_State *L) {
+    auto hotkey_mgr = Core::getInstance().getHotkeyManager();
+    if (!hotkey_mgr) {
+        lua_pushboolean(L, false);
+        return 1;
+    }
+
+    bool res = false;
+    switch (lua_gettop(L)) {
+        case 1:
+            luaL_checkstring(L, -1);
+            res = hotkey_mgr->removeKeybind(lua_tostring(L, -1));
+            break;
+        case 2:
+            luaL_checkstring(L, -2);
+            res = hotkey_mgr->removeKeybind(lua_tostring(L, -2), lua_toboolean(L, -1));
+            break;
+        case 3:
+            luaL_checkstring(L, -3);
+            luaL_checkstring(L, -1);
+            res = hotkey_mgr->removeKeybind(
+                    lua_tostring(L, -3),
+                    lua_toboolean(L, -2),
+                    lua_tostring(L, -1)
+                );
+            break;
+    }
+
+    lua_pushboolean(L, res);
+    return 1;
+}
+
+void hotkey_pushBindArray(lua_State *L, const std::vector<Hotkey::KeyBinding>& binds) {
+    lua_createtable(L, binds.size(), 0);
+    int i = 1;
+    for (const auto& bind : binds) {
+        lua_createtable(L, 0, 2);
+
+        lua_pushlstring(L, "spec", 4);
+        auto spec_str = bind.spec.toString(true);
+        lua_pushlstring(L, spec_str.data(), spec_str.size());
+        lua_settable(L, -3);
+
+        lua_pushlstring(L, "command", 7);
+        lua_pushlstring(L, bind.cmdline.data(), bind.cmdline.size());
+        lua_settable(L, -3);
+        lua_rawseti(L, -2, i++);
+    }
+}
+
+static int hotkey_listActiveKeybinds(lua_State *L) {
+    auto hotkey_mgr = Core::getInstance().getHotkeyManager();
+    auto binds = hotkey_mgr->listActiveKeybinds();
+
+    hotkey_pushBindArray(L, binds);
+    return 1;
+}
+
+static int hotkey_listAllKeybinds(lua_State *L) {
+    auto hotkey_mgr = Core::getInstance().getHotkeyManager();
+    auto binds = hotkey_mgr->listAllKeybinds();
+
+    hotkey_pushBindArray(L, binds);
+    return 1;
+}
+
+static const luaL_Reg dfhack_hotkey_funcs[] = {
+    { "removeKeybind", hotkey_removeKeybind },
+    { "listActiveKeybinds", hotkey_listActiveKeybinds },
+    { "listAllKeybinds", hotkey_listAllKeybinds },
+    { "requestKeybindingInput", hotkey_requestKeybindingInput },
+    { "getKeybindingInput", hotkey_getKeybindingInput },
+    { NULL, NULL }
+};
+
+static const LuaWrapper::FunctionReg dfhack_hotkey_module[] = {
+    WRAPN(addKeybind, hotkey_addKeybind),
+    WRAPN(isDisruptiveKeybind, hotkey_isDisruptiveKeybind),
     { NULL, NULL }
 };
 
@@ -3965,6 +4083,9 @@ static int internal_getModifiers(lua_State *L)
     lua_pushstring(L, "alt");
     lua_pushboolean(L, modstate & DFH_MOD_ALT);
     lua_settable(L, -3);
+    lua_pushstring(L, "super");
+    lua_pushboolean(L, modstate & DFH_MOD_SUPER);
+    lua_settable(L, -3);
     return 1;
 }
 
@@ -4306,6 +4427,7 @@ void OpenDFHackApi(lua_State *state)
     luaL_setfuncs(state, dfhack_funcs, 0);
     OpenModule(state, "translation", dfhack_translation_module);
     OpenModule(state, "gui", dfhack_gui_module, dfhack_gui_funcs);
+    OpenModule(state, "hotkey", dfhack_hotkey_module, dfhack_hotkey_funcs);
     OpenModule(state, "job", dfhack_job_module, dfhack_job_funcs);
     OpenModule(state, "textures", dfhack_textures_funcs);
     OpenModule(state, "units", dfhack_units_module, dfhack_units_funcs);

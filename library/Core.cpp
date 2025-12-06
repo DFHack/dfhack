@@ -51,6 +51,7 @@ distribution.
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/Hotkey.h"
 #include "modules/Textures.h"
 #include "modules/World.h"
 #include "modules/Persistence.h"
@@ -108,11 +109,9 @@ using std::string;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = nullptr);
 static size_t loadScriptFiles(Core* core, color_ostream& out, std::span<const std::string> prefix, const std::filesystem::path& folder);
 
 namespace DFHack {
-
     DBG_DECLARE(core, keybinding, DebugCategory::LINFO);
     DBG_DECLARE(core, script, DebugCategory::LINFO);
 
@@ -277,34 +276,6 @@ struct IODATA
     Core * core;
     PluginManager * plug_mgr;
 };
-
-// A thread function... for handling hotkeys. This is needed because
-// all the plugin commands are expected to be run from foreign threads.
-// Running them from one of the main DF threads will result in deadlock!
-static void fHKthread(IODATA * iodata)
-{
-    Core * core = iodata->core;
-    PluginManager * plug_mgr = iodata->plug_mgr;
-    if(!plug_mgr || !core)
-    {
-        std::cerr << "Hotkey thread has croaked." << std::endl;
-        return;
-    }
-    bool keep_going = true;
-    while(keep_going)
-    {
-        std::string stuff = core->getHotkeyCmd(keep_going); // waits on mutex!
-        if(!stuff.empty())
-        {
-            color_ostream_proxy out(core->getConsole());
-
-            auto rv = core->runCommand(out, stuff);
-
-            if (rv == CR_NOT_IMPLEMENTED)
-                out.printerr("Invalid hotkey command: '%s'\n", stuff.c_str());
-        }
-    }
-}
 
 std::string DFHack::dfhack_version_desc()
 {
@@ -1026,8 +997,7 @@ Core::~Core()
 Core::Core() :
     d(std::make_unique<Private>()),
     script_path_mutex{},
-    HotkeyMutex{},
-    HotkeyCond{},
+    armok_mutex{},
     alias_mutex{},
     started{false},
     CoreSuspendMutex{},
@@ -1043,7 +1013,6 @@ Core::Core() :
 
     // set up hotkey capture
     suppress_duplicate_keyboard_events = true;
-    hotkey_set = NO;
     last_world_data_ptr = nullptr;
     last_local_map_ptr = nullptr;
     last_pause_state = false;
@@ -1396,6 +1365,8 @@ bool Core::InitSimulationThread()
     plug_mgr->init();
     std::cerr << "Starting the TCP listener.\n";
     auto listen = ServerMain::listen(RemoteClient::GetDefaultPort());
+    this->hotkey_mgr = new HotkeyManager();
+
     auto *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
@@ -1413,8 +1384,6 @@ bool Core::InitSimulationThread()
     }
 
     std::cerr << "Starting DF input capture thread.\n";
-    // set up hotkey capture
-    d->hotkeythread = std::thread(fHKthread, temp);
     started = true;
     modstate = 0;
 
@@ -1487,31 +1456,6 @@ bool Core::InitSimulationThread()
     onStateChange(con, SC_CORE_INITIALIZED);
 
     return true;
-}
-/// sets the current hotkey command
-bool Core::setHotkeyCmd( std::string cmd )
-{
-    // access command
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-    hotkey_set = SET;
-    hotkey_cmd = std::move(cmd);
-    HotkeyCond.notify_all();
-    return true;
-}
-/// removes the hotkey command and gives it to the caller thread
-std::string Core::getHotkeyCmd( bool &keep_going )
-{
-    std::string returner;
-    std::unique_lock<std::mutex> lock(HotkeyMutex);
-    HotkeyCond.wait(lock, [this]() -> bool {return this->hotkey_set;});
-    if (hotkey_set == SHUTDOWN) {
-        keep_going = false;
-        return returner;
-    }
-    hotkey_set = NO;
-    returner = hotkey_cmd;
-    hotkey_cmd.clear();
-    return returner;
 }
 
 void Core::print(const char *format, ...)
@@ -1960,16 +1904,13 @@ int Core::Shutdown ( void )
         con.shutdown();
     }
 
-    if (d->hotkeythread.joinable()) {
-        std::unique_lock<std::mutex> hot_lock(HotkeyMutex);
-        hotkey_set = SHUTDOWN;
-        HotkeyCond.notify_one();
-    }
-
     ServerMain::block();
 
-    d->hotkeythread.join();
     d->iothread.join();
+
+    if (hotkey_mgr) {
+        delete hotkey_mgr;
+    }
 
     if(plug_mgr)
     {
@@ -2045,14 +1986,22 @@ void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
 }
 
 void Core::setMortalMode(bool value) {
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-    mortal_mode = value;
+    mortal_mode.exchange(value);
+}
+
+bool Core::getMortalMode() {
+    return mortal_mode.load();
 }
 
 void Core::setArmokTools(const std::vector<std::string> &tool_names) {
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
+    std::lock_guard<std::mutex> lock(armok_mutex);
     armok_tools.clear();
     armok_tools.insert(tool_names.begin(), tool_names.end());
+}
+
+bool Core::isArmokTool(const std::string& tool) {
+    std::lock_guard<std::mutex> lock(armok_mutex);
+    return armok_tools.contains(tool);
 }
 
 // returns true if the event is handled
@@ -2095,11 +2044,13 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
         else if (sym == SDLK_LALT || sym == SDLK_RALT)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
+        else if (sym == SDLK_LGUI || sym == SDLK_RGUI) // Renamed to LMETA/RMETA in SDL3
+            modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_SUPER : modstate & ~DFH_MOD_SUPER;
         else if (ke.state == SDL_PRESSED && !hotkey_states[sym])
         {
             // the check against hotkey_states[sym] ensures we only process keybindings once per keypress
             DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
-            if (SelectHotkey(sym, modstate)) {
+            if (hotkey_mgr->handleKeybind(sym, modstate)) {
                 hotkey_states[sym] = true;
                 if (modstate & (DFH_MOD_CTRL | DFH_MOD_ALT)) {
                     DEBUG(keybinding).print("modifier key detected; not inhibiting SDL key down event\n");
@@ -2120,8 +2071,9 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
         DEBUG(keybinding).print("mouse button down: button=%d\n", but.button);
         // don't mess with the first three buttons, which are critical elements of DF's control scheme
         if (but.button > 3) {
-            SDL_Keycode sym = SDLK_F13 + but.button - 4;
-            if (sym <= SDLK_F24 && SelectHotkey(sym, modstate))
+            // We represent mouse buttons as a negative number, permitting buttons 4-15
+            SDL_Keycode sym = -but.button;
+            if (sym >= -15 && sym <= -4  && hotkey_mgr->handleKeybind(sym, modstate))
                 return suppress_duplicate_keyboard_events;
         }
     } else if (ev->type == SDL_TEXTINPUT) {
@@ -2139,236 +2091,6 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
     }
 
     return false;
-}
-
-bool Core::SelectHotkey(int sym, int modifiers)
-{
-    // Find the topmost viewscreen
-    if (!df::global::gview || !df::global::plotinfo)
-        return false;
-
-    df::viewscreen *screen = &df::global::gview->view;
-    while (screen->child)
-        screen = screen->child;
-
-    if (sym == SDLK_KP_ENTER)
-        sym = SDLK_RETURN;
-
-    std::string cmd;
-
-    DEBUG(keybinding).print("checking hotkeys for sym=%d (%c), modifiers=%x\n", sym, sym, modifiers);
-
-    {
-        std::lock_guard<std::mutex> lock(HotkeyMutex);
-
-        // Check the internal keybindings
-        std::vector<KeyBinding> &bindings = key_bindings[sym];
-        //for (int i = bindings.size()-1; i >= 0; --i) {
-        for (const auto& binding : bindings | std::views::reverse) {
-            DEBUG(keybinding).print("examining hotkey with commandline: '%s'\n", binding.cmdline.c_str());
-
-            if (binding.modifiers != modifiers) {
-                DEBUG(keybinding).print("skipping keybinding due to modifiers mismatch: 0x%x != 0x%x\n",
-                                        binding.modifiers, modifiers);
-                continue;
-            }
-            if (!binding.focus.empty()) {
-                if (!Gui::matchFocusString(binding.focus)) {
-                    std::vector<std::string> focusStrings = Gui::getCurFocus(true);
-                    DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' != '%s'\n",
-                        join_strings(", ", focusStrings).c_str(), binding.focus.c_str());
-                    continue;
-                }
-            }
-            if (!plug_mgr->CanInvokeHotkey(binding.command[0], screen)) {
-                DEBUG(keybinding).print("skipping keybinding due to hotkey guard rejection (command: '%s')\n",
-                                        binding.command[0].c_str());
-                continue;
-            }
-            if (mortal_mode && armok_tools.contains(binding.command[0])) {
-                DEBUG(keybinding).print("skipping keybinding due to mortal mode (command: '%s')\n",
-                                        binding.command[0].c_str());
-                continue;
-            }
-
-            cmd = binding.cmdline;
-            DEBUG(keybinding).print("matched hotkey\n");
-            break;
-        }
-
-        if (cmd.empty()) {
-            // Check the hotkey keybindings
-            int idx = sym - SDLK_F1;
-            if(idx >= 0 && idx < 8)
-            {
-/* TODO: understand how this changes for v50
-                if (modifiers & 1)
-                    idx += 8;
-
-                if (strict_virtual_cast<df::viewscreen_dwarfmodest>(screen) &&
-                    df::global::plotinfo->main.mode != ui_sidebar_mode::Hotkeys &&
-                    df::global::plotinfo->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
-                {
-                    cmd = df::global::plotinfo->main.hotkeys[idx].name;
-                }
-*/
-            }
-        }
-    }
-
-    if (!cmd.empty()) {
-        setHotkeyCmd(cmd);
-        return true;
-    }
-
-    return false;
-}
-
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus)
-{
-    *pmod = 0;
-
-    if (pfocus)
-    {
-        *pfocus = "";
-
-        size_t idx = keyspec.find('@');
-        if (idx != std::string::npos)
-        {
-            *pfocus = keyspec.substr(idx+1);
-            keyspec = keyspec.substr(0, idx);
-        }
-    }
-
-    // ugh, ugly
-    for (;;) {
-        if (keyspec.size() > 6 && keyspec.starts_with("Shift-")) {
-            *pmod |= 1;
-            keyspec = keyspec.substr(6);
-        } else if (keyspec.size() > 5 && keyspec.starts_with("Ctrl-")) {
-            *pmod |= 2;
-            keyspec = keyspec.substr(5);
-        } else if (keyspec.size() > 4 && keyspec.starts_with("Alt-")) {
-            *pmod |= 4;
-            keyspec = keyspec.substr(4);
-        } else
-            break;
-    }
-
-    if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
-        *psym = SDLK_a + (keyspec[0]-'A');
-        return true;
-    } else if (keyspec.size() == 1 && keyspec[0] == '`') {
-        *psym = SDLK_BACKQUOTE;
-        return true;
-    } else if (keyspec.size() == 1 && keyspec[0] >= '0' && keyspec[0] <= '9') {
-        *psym = SDLK_0 + (keyspec[0]-'0');
-        return true;
-    } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
-        *psym = SDLK_F1 + (keyspec[1]-'1');
-        return true;
-    } else if (keyspec.size() == 3 && keyspec.starts_with("F1") && keyspec[2] >= '0' && keyspec[2] <= '2') {
-        *psym = SDLK_F10 + (keyspec[2]-'0');
-        return true;
-    } else if (keyspec.size() == 6 && keyspec.starts_with("MOUSE") && keyspec[5] >= '4' && keyspec[5] <= '9') {
-        *psym = SDLK_F13 + (keyspec[5]-'4');
-        return true;
-    } else if (keyspec.size() == 7 && keyspec.starts_with("MOUSE1") && keyspec[5] >= '0' && keyspec[5] <= '5') {
-        *psym = SDLK_F19 + (keyspec[5]-'0');
-        return true;
-    } else if (keyspec == "Enter") {
-        *psym = SDLK_RETURN;
-        return true;
-    } else
-        return false;
-}
-
-bool Core::ClearKeyBindings(std::string keyspec)
-{
-    int sym, mod;
-    std::string focus;
-    if (!parseKeySpec(keyspec, &sym, &mod, &focus))
-        return false;
-
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-
-    std::vector<KeyBinding> &bindings = key_bindings[sym];
-    for (int i = bindings.size()-1; i >= 0; --i) {
-        if (bindings[i].modifiers == mod && prefix_matches(focus, bindings[i].focus))
-            bindings.erase(bindings.begin()+i);
-    }
-
-    return true;
-}
-
-bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
-{
-    size_t at_pos = keyspec.find('@');
-    if (at_pos != std::string::npos)
-    {
-        std::string raw_spec = keyspec.substr(0, at_pos);
-        std::string raw_focus = keyspec.substr(at_pos + 1);
-        if (raw_focus.find('|') != std::string::npos)
-        {
-            std::vector<std::string> focus_strings;
-            split_string(&focus_strings, raw_focus, "|");
-            for (const auto& fs : focus_strings)
-            {
-                if (!AddKeyBinding(raw_spec + "@" + fs, cmdline))
-                    return false;
-            }
-            return true;
-        }
-    }
-    int sym;
-    KeyBinding binding;
-    if (!parseKeySpec(keyspec, &sym, &binding.modifiers, &binding.focus))
-        return false;
-
-    cheap_tokenise(cmdline, binding.command);
-    if (binding.command.empty())
-        return false;
-
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-
-    // Don't add duplicates
-    std::vector<KeyBinding> &bindings = key_bindings[sym];
-    for (int i = bindings.size()-1; i >= 0; --i) {
-        if (bindings[i].modifiers == binding.modifiers &&
-            bindings[i].cmdline == cmdline &&
-            bindings[i].focus == binding.focus)
-            return true;
-    }
-
-    binding.cmdline = cmdline;
-    bindings.push_back(binding);
-    return true;
-}
-
-std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
-{
-    int sym, mod;
-    std::vector<std::string> rv;
-    std::string focus;
-    if (!parseKeySpec(keyspec, &sym, &mod, &focus))
-        return rv;
-
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-
-    std::vector<KeyBinding> &bindings = key_bindings[sym];
-    for (int i = bindings.size()-1; i >= 0; --i) {
-        if (focus.size() && focus != bindings[i].focus)
-            continue;
-        if (bindings[i].modifiers == mod)
-        {
-            std::string cmd = bindings[i].cmdline;
-            if (!bindings[i].focus.empty())
-                cmd = "@" + bindings[i].focus + ": " + cmd;
-            rv.push_back(cmd);
-        }
-    }
-
-    return rv;
 }
 
 bool Core::AddAlias(const std::string &name, const std::vector<std::string> &command, bool replace)

@@ -19,6 +19,7 @@
 #include "modules/Constructions.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/Hotkey.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
 
@@ -1668,7 +1669,7 @@ static command_result do_blueprint(color_ostream &out,
         string command_str = command.str();
         out.print("launching %s\n", command_str.c_str());
 
-        Core::getInstance().setHotkeyCmd(command_str);
+        Core::getInstance().getHotkeyManager()->setHotkeyCommand(command_str);
         return CR_OK;
     }
 

@@ -7,6 +7,7 @@
 #include "PluginManager.h"
 
 #include <SDL_stdinc.h>
+#include <SDL_keycode.h>
 
 #include <vector>
 
@@ -67,6 +68,9 @@ uint32_t (*g_SDL_GetMouseState)(int* x, int* y) = nullptr;
 void (*g_SDL_RenderWindowToLogical)(SDL_Renderer* renderer, int windowX, int windowY, float* logicalX, float* logicalY);
 void (*g_SDL_RenderLogicalToWindow)(SDL_Renderer* renderer, float logicalX, float logicalY, int* windowX, int* windowY);
 
+SDL_Keycode (*g_SDL_GetKeyFromName)(const char* name) = nullptr;
+const char* (*g_SDL_GetKeyName)(SDL_Keycode key) = nullptr;
+
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
         if ((g_sdl_handle = OpenPlugin(lib_str.c_str())))
@@ -111,6 +115,8 @@ bool DFSDL::init(color_ostream &out) {
     bind(g_sdl_handle, SDL_ShowSimpleMessageBox);
     bind(g_sdl_handle, SDL_GetPrefPath);
     bind(g_sdl_handle, SDL_GetBasePath);
+    bind(g_sdl_handle, SDL_GetKeyFromName);
+    bind(g_sdl_handle, SDL_GetKeyName);
     bind(g_sdl_handle, SDL_GetMouseState);
     bind(g_sdl_handle, SDL_RenderWindowToLogical);
     bind(g_sdl_handle, SDL_RenderLogicalToWindow);
@@ -214,6 +220,18 @@ int DFSDL::DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const c
     if (!g_SDL_ShowSimpleMessageBox)
         return -1;
     return g_SDL_ShowSimpleMessageBox(flags, title, message, window);
+}
+
+SDL_Keycode DFSDL::DFSDL_GetKeyFromName(const char* name) {
+    if (!g_SDL_GetKeyFromName)
+        return SDLK_UNKNOWN;
+    return g_SDL_GetKeyFromName(name);
+}
+
+const char* DFSDL::DFSDL_GetKeyName(SDL_Keycode key) {
+    if (!g_SDL_GetKeyName)
+        return "";
+    return g_SDL_GetKeyName(key);
 }
 
 // convert tabs to spaces so they don't get converted to '?'

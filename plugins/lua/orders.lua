@@ -958,7 +958,7 @@ end
 
 function OrdersSearchOverlay:onInput(keys)
     if mi.job_details.open then return end
-    
+
     local filter_field = self.subviews.filter
     if not filter_field then return false end
 

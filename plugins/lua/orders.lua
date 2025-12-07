@@ -957,6 +957,8 @@ local function is_mouse_key(keys)
 end
 
 function OrdersSearchOverlay:onInput(keys)
+    if mi.job_details.open then return end
+    
     local filter_field = self.subviews.filter
     if not filter_field then return false end
 
@@ -985,6 +987,11 @@ function OrdersSearchOverlay:onInput(keys)
     end
 
     return false
+end
+
+function OrdersSearchOverlay:render(dc)
+    if mi.job_details.open then return end
+    OrdersSearchOverlay.super.render(self, dc)
 end
 
 -- -------------------
@@ -1061,6 +1068,8 @@ function OrderHighlightOverlay:calculateSelectedOrderY()
 end
 
 function OrderHighlightOverlay:render(dc)
+    if mi.job_details.open then return end
+
     if search_cursor_visible then
         local current_scroll = mi.info.work_orders.scroll_position_work_orders
         local current_order_count = #df.global.world.manager_orders.all

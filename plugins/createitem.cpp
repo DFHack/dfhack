@@ -280,6 +280,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
             }
             switch (building->getType())
             {   using namespace df::enums::building_type;
+                case Table:
                 case Coffin:
                 case Furnace:
                 case TradeDepot:
@@ -294,8 +295,12 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
                 case AnimalTrap:
                 case Cage:
                 case Wagon:
+                case Nest:
                 case NestBox:
                 case Hive:
+                case Bookcase:
+                case DisplayFurniture:
+                case OfferingPlace:
                     break;
                 default:
                     out.printerr("The selected building cannot be used for item storage!\n");

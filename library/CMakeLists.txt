@@ -48,6 +48,7 @@ set(MAIN_HEADERS
     include/DFHackVersion.h
     include/BitArray.h
     include/ColorText.h
+    include/Commands.h
     include/Console.h
     include/Core.h
     include/CoreDefs.h
@@ -67,6 +68,7 @@ set(MAIN_HEADERS
     include/MiscUtils.h
     include/Module.h
     include/MemAccess.h
+    include/MemoryPatcher.h
     include/ModuleFactory.h
     include/PluginLua.h
     include/PluginManager.h
@@ -89,6 +91,7 @@ set(MAIN_HEADERS_WINDOWS
 set(MAIN_SOURCES
     Core.cpp
     ColorText.cpp
+    Commands.cpp
     CompilerWorkAround.cpp
     DataDefs.cpp
     DataIdentity.cpp
@@ -101,6 +104,7 @@ set(MAIN_SOURCES
     LuaApi.cpp
     DataStatics.cpp
     DataStaticsCtor.cpp
+    MemoryPatcher.cpp
     MiscUtils.cpp
     Types.cpp
     PluginManager.cpp
@@ -157,6 +161,7 @@ set(MODULE_HEADERS
     include/modules/Graphic.h
     include/modules/Gui.h
     include/modules/GuiHooks.h
+    include/modules/Hotkey.h
     include/modules/Items.h
     include/modules/Job.h
     include/modules/Kitchen.h
@@ -187,6 +192,7 @@ set(MODULE_SOURCES
     modules/Filesystem.cpp
     modules/Graphic.cpp
     modules/Gui.cpp
+    modules/Hotkey.cpp
     modules/Items.cpp
     modules/Job.cpp
     modules/Kitchen.cpp

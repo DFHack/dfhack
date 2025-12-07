@@ -7,6 +7,9 @@
 #include "PluginManager.h"
 
 #include <SDL_stdinc.h>
+#include <SDL_keycode.h>
+
+#include <vector>
 
 #ifdef WIN32
 # include <regex>
@@ -61,6 +64,12 @@ SDL_Surface* (*g_SDL_CreateRGBSurfaceWithFormat)(uint32_t flags, int width, int 
 int (*g_SDL_ShowSimpleMessageBox)(uint32_t flags, const char *title, const char *message, SDL_Window *window) = nullptr;
 char* (*g_SDL_GetPrefPath)(const char* org, const char* app) = nullptr;
 char* (*g_SDL_GetBasePath)() = nullptr;
+uint32_t (*g_SDL_GetMouseState)(int* x, int* y) = nullptr;
+void (*g_SDL_RenderWindowToLogical)(SDL_Renderer* renderer, int windowX, int windowY, float* logicalX, float* logicalY);
+void (*g_SDL_RenderLogicalToWindow)(SDL_Renderer* renderer, float logicalX, float logicalY, int* windowX, int* windowY);
+
+SDL_Keycode (*g_SDL_GetKeyFromName)(const char* name) = nullptr;
+const char* (*g_SDL_GetKeyName)(SDL_Keycode key) = nullptr;
 
 bool DFSDL::init(color_ostream &out) {
     for (auto &lib_str : SDL_LIBS) {
@@ -106,6 +115,11 @@ bool DFSDL::init(color_ostream &out) {
     bind(g_sdl_handle, SDL_ShowSimpleMessageBox);
     bind(g_sdl_handle, SDL_GetPrefPath);
     bind(g_sdl_handle, SDL_GetBasePath);
+    bind(g_sdl_handle, SDL_GetKeyFromName);
+    bind(g_sdl_handle, SDL_GetKeyName);
+    bind(g_sdl_handle, SDL_GetMouseState);
+    bind(g_sdl_handle, SDL_RenderWindowToLogical);
+    bind(g_sdl_handle, SDL_RenderLogicalToWindow);
 #undef bind
 
     DEBUG(dfsdl,out).print("sdl successfully loaded\n");
@@ -190,10 +204,34 @@ char* DFSDL::DFSDL_GetBasePath()
     return g_SDL_GetBasePath();
 }
 
+uint32_t DFSDL::DFSDL_GetMouseState(int* x, int* y) {
+    return g_SDL_GetMouseState(x, y);
+}
+
+void DFSDL::DFSDL_RenderWindowToLogical(SDL_Renderer *renderer, int windowX, int windowY, float *logicalX, float *logicalY) {
+    g_SDL_RenderWindowToLogical(renderer, windowX, windowY, logicalX, logicalY);
+}
+
+void DFSDL::DFSDL_RenderLogicalToWindow(SDL_Renderer *renderer, float logicalX, float logicalY, int *windowX, int *windowY) {
+    g_SDL_RenderLogicalToWindow(renderer, logicalX, logicalY, windowX, windowY);
+}
+
 int DFSDL::DFSDL_ShowSimpleMessageBox(uint32_t flags, const char *title, const char *message, SDL_Window *window) {
     if (!g_SDL_ShowSimpleMessageBox)
         return -1;
     return g_SDL_ShowSimpleMessageBox(flags, title, message, window);
+}
+
+SDL_Keycode DFSDL::DFSDL_GetKeyFromName(const char* name) {
+    if (!g_SDL_GetKeyFromName)
+        return SDLK_UNKNOWN;
+    return g_SDL_GetKeyFromName(name);
+}
+
+const char* DFSDL::DFSDL_GetKeyName(SDL_Keycode key) {
+    if (!g_SDL_GetKeyName)
+        return "";
+    return g_SDL_GetKeyName(key);
 }
 
 // convert tabs to spaces so they don't get converted to '?'
@@ -265,4 +303,26 @@ DFHACK_EXPORT bool DFHack::setClipboardTextCp437Multiline(string text) {
         }
     }
     return 0 == DFHack::DFSDL::DFSDL_SetClipboardText(str.str().c_str());
+}
+
+// Queue to run callbacks on the render thread.
+// Semantics loosely based on SDL3's SDL_RunOnMainThread
+static std::recursive_mutex render_cb_lock;
+static std::vector<std::function<void()>> render_cb_queue;
+
+DFHACK_EXPORT void DFHack::runOnRenderThread(std::function<void()> cb) {
+    std::lock_guard<std::recursive_mutex> l(render_cb_lock);
+    render_cb_queue.push_back(std::move(cb));
+}
+
+DFHACK_EXPORT void DFHack::runRenderThreadCallbacks() {
+    static decltype(render_cb_queue) local_queue;
+    {
+        std::lock_guard<std::recursive_mutex> l(render_cb_lock);
+        std::swap(local_queue, render_cb_queue);
+    }
+    for (auto& cb : local_queue) {
+        cb();
+    }
+    local_queue.clear();
 }

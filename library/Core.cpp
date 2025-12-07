@@ -22,14 +22,16 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "Core.h"
+
 #include "Internal.h"
 
 #include "Error.h"
 #include "MemAccess.h"
-#include "Core.h"
 #include "DataDefs.h"
 #include "Debug.h"
 #include "Console.h"
+#include "MemoryPatcher.h"
 #include "MiscUtils.h"
 #include "Module.h"
 #include "VersionInfoFactory.h"
@@ -42,11 +44,14 @@ distribution.
 #include "DFHackVersion.h"
 #include "md5wrapper.h"
 
+#include "Commands.h"
+
 #include "modules/DFSDL.h"
 #include "modules/DFSteam.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/Hotkey.h"
 #include "modules/Textures.h"
 #include "modules/World.h"
 #include "modules/Persistence.h"
@@ -104,11 +109,9 @@ using std::string;
 
 // FIXME: A lot of code in one file, all doing different things... there's something fishy about it.
 
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus = nullptr);
 static size_t loadScriptFiles(Core* core, color_ostream& out, std::span<const std::string> prefix, const std::filesystem::path& folder);
 
 namespace DFHack {
-
     DBG_DECLARE(core, keybinding, DebugCategory::LINFO);
     DBG_DECLARE(core, script, DebugCategory::LINFO);
 
@@ -274,35 +277,7 @@ struct IODATA
     PluginManager * plug_mgr;
 };
 
-// A thread function... for handling hotkeys. This is needed because
-// all the plugin commands are expected to be run from foreign threads.
-// Running them from one of the main DF threads will result in deadlock!
-static void fHKthread(IODATA * iodata)
-{
-    Core * core = iodata->core;
-    PluginManager * plug_mgr = iodata->plug_mgr;
-    if(!plug_mgr || !core)
-    {
-        std::cerr << "Hotkey thread has croaked." << std::endl;
-        return;
-    }
-    bool keep_going = true;
-    while(keep_going)
-    {
-        std::string stuff = core->getHotkeyCmd(keep_going); // waits on mutex!
-        if(!stuff.empty())
-        {
-            color_ostream_proxy out(core->getConsole());
-
-            auto rv = core->runCommand(out, stuff);
-
-            if (rv == CR_NOT_IMPLEMENTED)
-                out.printerr("Invalid hotkey command: '%s'\n", stuff.c_str());
-        }
-    }
-}
-
-static std::string dfhack_version_desc()
+std::string DFHack::dfhack_version_desc()
 {
     std::stringstream s;
     s << Version::dfhack_version() << " ";
@@ -352,7 +327,7 @@ static bool init_enable_script(color_ostream &out, lua_State *state, const std::
     return true;
 }
 
-static command_result enableLuaScript(color_ostream &out, const std::string_view name, bool enabled)
+command_result Core::enableLuaScript(color_ostream &out, const std::string_view name, bool enabled)
 {
     auto init_fn = [name, enabled](color_ostream& out, lua_State* state) -> bool {
         return init_enable_script(out, state, name, enabled);
@@ -363,13 +338,13 @@ static command_result enableLuaScript(color_ostream &out, const std::string_view
     return ok ? CR_OK : CR_FAILURE;
 }
 
-command_result Core::runCommand(color_ostream &out, const std::string &command)
+command_result Core::runCommand(color_ostream& out, const std::string& command)
 {
     if (!command.empty())
     {
         std::vector <std::string> parts;
-        Core::cheap_tokenise(command,parts);
-        if(parts.size() == 0)
+        Core::cheap_tokenise(command, parts);
+        if (parts.size() == 0)
             return CR_NOT_IMPLEMENTED;
 
         std::string first = parts[0];
@@ -385,20 +360,23 @@ command_result Core::runCommand(color_ostream &out, const std::string &command)
         return CR_NOT_IMPLEMENTED;
 }
 
-bool is_builtin(color_ostream &con, const std::string &command) {
+bool DFHack::is_builtin(color_ostream& con, const std::string& command)
+{
     CoreSuspender suspend;
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::StackUnwinder top(L);
 
     if (!lua_checkstack(L, 1) ||
-        !Lua::PushModulePublic(con, L, "helpdb", "is_builtin")) {
+        !Lua::PushModulePublic(con, L, "helpdb", "is_builtin"))
+    {
         con.printerr("Failed to load helpdb Lua code\n");
         return false;
     }
 
     Lua::Push(L, command);
 
-    if (!Lua::SafeCall(con, L, 1, 1)) {
+    if (!Lua::SafeCall(con, L, 1, 1))
+    {
         con.printerr("Failed Lua call to helpdb.is_builtin.\n");
         return false;
     }
@@ -605,7 +583,7 @@ static void sc_event_map_init() {
     }
 }
 
-static state_change_event sc_event_id (std::string name) {
+state_change_event DFHack::sc_event_id (std::string name) {
     sc_event_map_init();
     auto it = state_change_event_map.find(name);
     if (it != state_change_event_map.end())
@@ -615,7 +593,7 @@ static state_change_event sc_event_id (std::string name) {
     return SC_UNKNOWN;
 }
 
-static std::string sc_event_name (state_change_event id) {
+std::string DFHack::sc_event_name (state_change_event id) {
     sc_event_map_init();
     for (auto it = state_change_event_map.begin(); it != state_change_event_map.end(); ++it)
     {
@@ -625,7 +603,7 @@ static std::string sc_event_name (state_change_event id) {
     return "SC_UNKNOWN";
 }
 
-void help_helper(color_ostream &con, const std::string &entry_name) {
+void DFHack::help_helper(color_ostream &con, const std::string &entry_name) {
     ConditionalCoreSuspender suspend{};
 
     if (!suspend) {
@@ -743,38 +721,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     command_result res;
     if (first == "help" || first == "man" || first == "?")
     {
-        if(!parts.size())
-        {
-            if (con.is_console())
-            {
-                con.print("This is the DFHack console. You can type commands in and manage DFHack plugins from it.\n"
-                          "Some basic editing capabilities are included (single-line text editing).\n"
-                          "The console also has a command history - you can navigate it with Up and Down keys.\n"
-                          "On Windows, you may have to resize your console window. The appropriate menu is accessible\n"
-                          "by clicking on the program icon in the top bar of the window.\n\n");
-            }
-            con.print("Here are some basic commands to get you started:\n"
-                      "  help|?|man         - This text.\n"
-                      "  help <tool>        - Usage help for the given plugin, command, or script.\n"
-                      "  tags               - List the tags that the DFHack tools are grouped by.\n"
-                      "  ls|dir [<filter>]  - List commands, optionally filtered by a tag or substring.\n"
-                      "                       Optional parameters:\n"
-                      "                         --notags: skip printing tags for each command.\n"
-                      "                         --dev:  include commands intended for developers and modders.\n"
-                      "  cls|clear          - Clear the console.\n"
-                      "  fpause             - Force DF to pause.\n"
-                      "  die                - Force DF to close immediately, without saving.\n"
-                      "  keybinding         - Modify bindings of commands to in-game key shortcuts.\n"
-                      "\n"
-                      "See more commands by running 'ls'.\n\n"
-                     );
-
-            con.print("DFHack version %s\n", dfhack_version_desc().c_str());
-        }
-        else
-        {
-            help_helper(con, parts[0]);
-        }
+        return Commands::help(con, *this, first, parts);
     }
     else if (first == "tags")
     {
@@ -782,119 +729,11 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "load" || first == "unload" || first == "reload")
     {
-        bool all = false;
-        bool load = (first == "load");
-        bool unload = (first == "unload");
-        bool reload = (first == "reload");
-        if (parts.size())
-        {
-            for (const auto& p : parts)
-            {
-                if (p.size() && p[0] == '-')
-                {
-                    if (p.find('a') != std::string::npos)
-                        all = true;
-                }
-            }
-            auto ret = CR_OK;
-            if (all)
-            {
-                if (load && !plug_mgr->loadAll())
-                    ret = CR_FAILURE;
-                else if (unload && !plug_mgr->unloadAll())
-                    ret = CR_FAILURE;
-                else if (reload && !plug_mgr->reloadAll())
-                    ret = CR_FAILURE;
-            }
-            else
-            {
-               for (auto& p : parts)
-                {
-                    if (p.empty() || p[0] == '-')
-                        continue;
-                    if (load && !plug_mgr->load(p))
-                        ret = CR_FAILURE;
-                    else if (unload && !plug_mgr->unload(p))
-                        ret = CR_FAILURE;
-                    else if (reload && !plug_mgr->reload(p))
-                        ret = CR_FAILURE;
-                }
-            }
-            if (ret != CR_OK)
-                con.printerr("%s failed\n", first.c_str());
-            return ret;
-        }
-        else {
-            con.printerr("%s: no arguments\n", first.c_str());
-            return CR_FAILURE;
-        }
+        return Commands::load(con, *this, first, parts);
     }
     else if( first == "enable" || first == "disable" )
     {
-        CoreSuspender suspend;
-        bool enable = (first == "enable");
-
-        if(parts.size())
-        {
-            for (auto& part : parts)
-            {
-                if (has_backslashes(part))
-                {
-                    con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", part.c_str());
-                    replace_backslashes_with_forwardslashes(part);
-                }
-
-                part = GetAliasCommand(part, true);
-
-                Plugin * plug = (*plug_mgr)[part];
-
-                if(!plug)
-                {
-                    std::filesystem::path lua = findScript(part + ".lua");
-                    if (!lua.empty())
-                    {
-                        res = enableLuaScript(con, part, enable);
-                    }
-                    else
-                    {
-                        res = CR_NOT_FOUND;
-                        con.printerr("No such plugin or Lua script: %s\n", part.c_str());
-                    }
-                }
-                else if (!plug->can_set_enabled())
-                {
-                    res = CR_NOT_IMPLEMENTED;
-                    con.printerr("Cannot %s plugin: %s\n", first.c_str(), part.c_str());
-                }
-                else
-                {
-                    res = plug->set_enabled(con, enable);
-
-                    if (res != CR_OK || plug->is_enabled() != enable)
-                        con.printerr("Could not %s plugin: %s\n", first.c_str(), part.c_str());
-                }
-            }
-
-            return res;
-        }
-        else
-        {
-           for (auto& [key, plug] : *plug_mgr)
-            {
-                if (!plug)
-                    continue;
-                if (!plug->can_be_enabled()) continue;
-
-                con.print(
-                    "%21s  %-3s%s\n",
-                    (key+":").c_str(),
-                    plug->is_enabled() ? "on" : "off",
-                    plug->can_set_enabled() ? "" : " (controlled internally)"
-                );
-            }
-
-            Lua::CallLuaModuleFunction(con, "script-manager", "list");
-        }
+        return Commands::enable(con, *this, first, parts);
     }
     else if (first == "ls" || first == "dir")
     {
@@ -902,194 +741,27 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "plug")
     {
-        constexpr auto header_format = "%30s %10s %4s %8s\n";
-        constexpr auto row_format =    "%30s %10s %4zu %8s\n";
-        con.print(header_format, "Name", "State", "Cmds", "Enabled");
-
-        plug_mgr->refresh();
-        for (auto& [key, plug] : *plug_mgr)
-        {
-            if (!plug)
-                continue;
-
-            if (parts.size() && std::ranges::find(parts, key) == parts.end())
-                continue;
-
-            color_value color;
-            switch (plug->getState())
-            {
-                case Plugin::PS_LOADED:
-                    color = COLOR_RESET;
-                    break;
-                case Plugin::PS_UNLOADED:
-                case Plugin::PS_UNLOADING:
-                    color = COLOR_YELLOW;
-                    break;
-                case Plugin::PS_LOADING:
-                    color = COLOR_LIGHTBLUE;
-                    break;
-                case Plugin::PS_BROKEN:
-                    color = COLOR_LIGHTRED;
-                    break;
-                default:
-                    color = COLOR_LIGHTMAGENTA;
-                    break;
-            }
-            con.color(color);
-            con.print(row_format,
-                plug->getName().c_str(),
-                Plugin::getStateDescription(plug->getState()),
-                plug->size(),
-                (plug->can_be_enabled()
-                    ? (plug->is_enabled() ? "enabled" : "disabled")
-                    : "n/a")
-            );
-            con.color(COLOR_RESET);
-        }
+        return Commands::plug(con, *this, first, parts);
     }
     else if (first == "type")
     {
-        if (!parts.size())
-        {
-            con.printerr("type: no argument\n");
-            return CR_WRONG_USAGE;
-        }
-        con << parts[0];
-        bool builtin = is_builtin(con, parts[0]);
-        std::filesystem::path lua_path = findScript(parts[0] + ".lua");
-        Plugin *plug = plug_mgr->getPluginByCommand(parts[0]);
-        if (builtin)
-        {
-            con << " is a built-in command";
-            con << std::endl;
-        }
-        else if (IsAlias(parts[0]))
-        {
-            con << " is an alias: " << GetAliasCommand(parts[0]) << std::endl;
-        }
-        else if (plug)
-        {
-            con << " is a command implemented by the plugin " << plug->getName() << std::endl;
-        }
-        else if (!lua_path.empty())
-        {
-            con << " is a Lua script: " << lua_path << std::endl;
-        }
-        else
-        {
-            con << " is not a recognized command." << std::endl;
-            plug = plug_mgr->getPluginByName(parts[0]);
-            if (plug)
-                con << "Plugin " << parts[0] << " exists and implements " << plug->size() << " commands." << std::endl;
-            return CR_FAILURE;
-        }
+        return Commands::type(con, *this, first, parts);
     }
     else if (first == "keybinding")
     {
-        if (parts.size() >= 3 && (parts[0] == "set" || parts[0] == "add"))
-        {
-            std::string keystr = parts[1];
-            if (parts[0] == "set")
-                ClearKeyBindings(keystr);
-            // for (int i = parts.size()-1; i >= 2; i--)
-            for (const auto& part : parts | std::views::drop(2) | std::views::reverse)
-            {
-                if (!AddKeyBinding(keystr, part)) {
-                    con.printerr("Invalid key spec: %s\n", keystr.c_str());
-                    break;
-                }
-            }
-        }
-        else if (parts.size() >= 2 && parts[0] == "clear")
-        {
-            // for (size_t i = 1; i < parts.size(); i++)
-            for (const auto& part : parts | std::views::drop(1))
-            {
-                if (!ClearKeyBindings(part)) {
-                    con.printerr("Invalid key spec: %s\n", part.c_str());
-                    break;
-                }
-            }
-        }
-        else if (parts.size() == 2 && parts[0] == "list")
-        {
-            std::vector<std::string> list = ListKeyBindings(parts[1]);
-            if (list.empty())
-                con << "No bindings." << std::endl;
-            for (const auto& kb : list)
-                con << "  " << kb << std::endl;
-        }
-        else
-        {
-            con << "Usage:" << std::endl
-                << "  keybinding list <key>" << std::endl
-                << "  keybinding clear <key>[@context]..." << std::endl
-                << "  keybinding set <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-                << "  keybinding add <key>[@context] \"cmdline\" \"cmdline\"..." << std::endl
-                << "Later adds, and earlier items within one command have priority." << std::endl
-                << "Supported keys: [Ctrl-][Alt-][Shift-](A-Z, 0-9, F1-F12, `, or Enter)." << std::endl
-                << "Context may be used to limit the scope of the binding, by" << std::endl
-                << "requiring the current context to have a certain prefix." << std::endl
-                << "Current UI context is: " << std::endl
-                << join_strings("\n", Gui::getCurFocus(true)) << std::endl;
-        }
+        return Commands::keybinding(con, *this, first, parts);
     }
     else if (first == "alias")
     {
-        if (parts.size() >= 3 && (parts[0] == "add" || parts[0] == "replace"))
-        {
-            const std::string &name = parts[1];
-            std::vector<std::string> cmd(parts.begin() + 2, parts.end());
-            if (!AddAlias(name, cmd, parts[0] == "replace"))
-            {
-                con.printerr("Could not add alias %s - already exists\n", name.c_str());
-                return CR_FAILURE;
-            }
-        }
-        else if (parts.size() >= 2 && (parts[0] == "delete" || parts[0] == "clear"))
-        {
-            if (!RemoveAlias(parts[1]))
-            {
-                con.printerr("Could not remove alias %s\n", parts[1].c_str());
-                return CR_FAILURE;
-            }
-        }
-        else if (parts.size() >= 1 && (parts[0] == "list"))
-        {
-            auto aliases = ListAliases();
-            for (auto p : aliases)
-            {
-                con << p.first << ": " << join_strings(" ", p.second) << std::endl;
-            }
-        }
-        else
-        {
-            con << "Usage: " << std::endl
-                << "  alias add|replace <name> <command...>" << std::endl
-                << "  alias delete|clear <name> <command...>" << std::endl
-                << "  alias list" << std::endl;
-        }
+        return Commands::alias(con, *this, first, parts);
     }
     else if (first == "fpause")
     {
-        World::SetPauseState(true);
-/* TODO: understand how this changes for v50
-        if (auto scr = Gui::getViewscreenByType<df::viewscreen_new_regionst>())
-        {
-            scr->worldgen_paused = true;
-        }
-*/
-        con.print("The game was forced to pause!\n");
+        return Commands::fpause(con, *this, first, parts);
     }
     else if (first == "cls" || first == "clear")
     {
-        if (con.is_console())
-            ((Console&)con).clear();
-        else
-        {
-            con.printerr("No console to clear.\n");
-            return CR_NEEDS_CONSOLE;
-        }
+        return Commands::clear(con, *this, first, parts);
     }
     else if (first == "die")
     {
@@ -1101,173 +773,27 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
     }
     else if (first == "kill-lua")
     {
-        bool force = false;
-        for (const auto& part : parts)
-        {
-            if (part == "force")
-                force = true;
-        }
-        if (!Lua::Interrupt(force))
-        {
-            con.printerr(
-                "Failed to register hook. This can happen if you have"
-                " lua profiling or coverage monitoring enabled. Use"
-                " 'kill-lua force' to force, but this may disable"
-                " profiling and coverage monitoring.\n");
-        }
+        return Commands::kill_lua(con, *this, first, parts);
     }
     else if (first == "script")
     {
-        if(parts.size() == 1)
-        {
-            loadScriptFile(con, std::filesystem::weakly_canonical(std::filesystem::path{parts[0]}), false);
-        }
-        else
-        {
-            con << "Usage:" << std::endl
-                << "  script <filename>" << std::endl;
-            return CR_WRONG_USAGE;
-        }
+        return Commands::script(con, *this, first, parts);
     }
     else if (first == "hide")
     {
-        if (!getConsole().hide())
-        {
-            con.printerr("Could not hide console\n");
-            return CR_FAILURE;
-        }
-        return CR_OK;
+        return Commands::hide(con, *this, first, parts);
     }
     else if (first == "show")
     {
-        if (!getConsole().show())
-        {
-            con.printerr("Could not show console\n");
-            return CR_FAILURE;
-        }
-        return CR_OK;
+        return Commands::show(con, *this, first, parts);
     }
     else if (first == "sc-script")
     {
-        if (parts.empty() || parts[0] == "help" || parts[0] == "?")
-        {
-            con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << std::endl;
-            con << "Valid event names (SC_ prefix is optional):" << std::endl;
-            for (int i = SC_WORLD_LOADED; i <= SC_UNPAUSED; i++)
-            {
-                std::string name = sc_event_name((state_change_event)i);
-                if (name != "SC_UNKNOWN")
-                    con << "  " << name << std::endl;
-            }
-            return CR_OK;
-        }
-        else if (parts[0] == "list")
-        {
-            if(parts.size() < 2)
-                parts.push_back("");
-            if (parts[1].size() && sc_event_id(parts[1]) == SC_UNKNOWN)
-            {
-                con << "Unrecognized event name: " << parts[1] << std::endl;
-                return CR_WRONG_USAGE;
-            }
-            for (const auto& state_script : state_change_scripts)
-            {
-                if (!parts[1].size() || (state_script.event == sc_event_id(parts[1])))
-                {
-                    con.print("%s (%s): %s%s\n", sc_event_name(state_script.event).c_str(),
-                        state_script.save_specific ? "save-specific" : "global",
-                        state_script.save_specific ? "<save folder>/raw/" : "<DF folder>/",
-                        state_script.path.c_str());
-                }
-            }
-            return CR_OK;
-        }
-        else if (parts[0] == "add")
-        {
-            if (parts.size() < 3 || (parts.size() >= 4 && parts[3] != "-save"))
-            {
-                con << "Usage: sc-script add EVENT path-to-script [-save]" << std::endl;
-                return CR_WRONG_USAGE;
-            }
-            state_change_event evt = sc_event_id(parts[1]);
-            if (evt == SC_UNKNOWN)
-            {
-                con << "Unrecognized event: " << parts[1] << std::endl;
-                return CR_FAILURE;
-            }
-            bool save_specific = (parts.size() >= 4 && parts[3] == "-save");
-            StateChangeScript script(evt, parts[2], save_specific);
-            for (const auto& state_script : state_change_scripts)
-            {
-                if (script == state_script)
-                {
-                    con << "Script already registered" << std::endl;
-                    return CR_FAILURE;
-                }
-            }
-            state_change_scripts.push_back(script);
-            return CR_OK;
-        }
-        else if (parts[0] == "remove")
-        {
-            if (parts.size() < 3 || (parts.size() >= 4 && parts[3] != "-save"))
-            {
-                con << "Usage: sc-script remove EVENT path-to-script [-save]" << std::endl;
-                return CR_WRONG_USAGE;
-            }
-            state_change_event evt = sc_event_id(parts[1]);
-            if (evt == SC_UNKNOWN)
-            {
-                con << "Unrecognized event: " << parts[1] << std::endl;
-                return CR_FAILURE;
-            }
-            bool save_specific = (parts.size() >= 4 && parts[3] == "-save");
-            StateChangeScript tmp(evt, parts[2], save_specific);
-            auto it = std::find(state_change_scripts.begin(), state_change_scripts.end(), tmp);
-            if (it != state_change_scripts.end())
-            {
-                state_change_scripts.erase(it);
-                return CR_OK;
-            }
-            else
-            {
-                con << "Unrecognized script" << std::endl;
-                return CR_FAILURE;
-            }
-        }
-        else
-        {
-            con << "Usage: sc-script add|remove|list|help SC_EVENT [path-to-script] [...]" << std::endl;
-            return CR_WRONG_USAGE;
-        }
+        return Commands::sc_script(con, *this, first, parts);
     }
     else if (first == "devel/dump-rpc")
     {
-        if (parts.size() == 1)
-        {
-            std::ofstream file(parts[0]);
-            CoreService core;
-            core.dumpMethods(file);
-
-            for (auto & it : *plug_mgr)
-            {
-                Plugin * plug = it.second;
-                if (!plug)
-                    continue;
-
-                std::unique_ptr<RPCService> svc(plug->rpc_connect(con));
-                if (!svc)
-                    continue;
-
-                file << "// Plugin: " << plug->getName() << std::endl;
-                svc->dumpMethods(file);
-            }
-        }
-        else
-        {
-            con << "Usage: devel/dump-rpc \"filename\"" << std::endl;
-            return CR_WRONG_USAGE;
-        }
+        return Commands::dump_rpc(con, *this, first, parts);
     }
     else if (RunAlias(con, first, parts, res))
     {
@@ -1278,7 +804,7 @@ command_result Core::runCommand(color_ostream &con, const std::string &first_, s
         res = plug_mgr->InvokeCommand(con, first, parts);
         if (res == CR_WRONG_USAGE)
         {
-            help_helper(con, first);
+            DFHack::help_helper(con, first);
         }
         else if (res == CR_NOT_IMPLEMENTED)
         {
@@ -1471,8 +997,7 @@ Core::~Core()
 Core::Core() :
     d(std::make_unique<Private>()),
     script_path_mutex{},
-    HotkeyMutex{},
-    HotkeyCond{},
+    armok_mutex{},
     alias_mutex{},
     started{false},
     CoreSuspendMutex{},
@@ -1488,7 +1013,6 @@ Core::Core() :
 
     // set up hotkey capture
     suppress_duplicate_keyboard_events = true;
-    hotkey_set = NO;
     last_world_data_ptr = nullptr;
     last_local_map_ptr = nullptr;
     last_pause_state = false;
@@ -1841,6 +1365,8 @@ bool Core::InitSimulationThread()
     plug_mgr->init();
     std::cerr << "Starting the TCP listener.\n";
     auto listen = ServerMain::listen(RemoteClient::GetDefaultPort());
+    this->hotkey_mgr = new HotkeyManager();
+
     auto *temp = new IODATA;
     temp->core = this;
     temp->plug_mgr = plug_mgr;
@@ -1858,8 +1384,6 @@ bool Core::InitSimulationThread()
     }
 
     std::cerr << "Starting DF input capture thread.\n";
-    // set up hotkey capture
-    d->hotkeythread = std::thread(fHKthread, temp);
     started = true;
     modstate = 0;
 
@@ -1932,31 +1456,6 @@ bool Core::InitSimulationThread()
     onStateChange(con, SC_CORE_INITIALIZED);
 
     return true;
-}
-/// sets the current hotkey command
-bool Core::setHotkeyCmd( std::string cmd )
-{
-    // access command
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-    hotkey_set = SET;
-    hotkey_cmd = std::move(cmd);
-    HotkeyCond.notify_all();
-    return true;
-}
-/// removes the hotkey command and gives it to the caller thread
-std::string Core::getHotkeyCmd( bool &keep_going )
-{
-    std::string returner;
-    std::unique_lock<std::mutex> lock(HotkeyMutex);
-    HotkeyCond.wait(lock, [this]() -> bool {return this->hotkey_set;});
-    if (hotkey_set == SHUTDOWN) {
-        keep_going = false;
-        return returner;
-    }
-    hotkey_set = NO;
-    returner = hotkey_cmd;
-    hotkey_cmd.clear();
-    return returner;
 }
 
 void Core::print(const char *format, ...)
@@ -2405,16 +1904,13 @@ int Core::Shutdown ( void )
         con.shutdown();
     }
 
-    if (d->hotkeythread.joinable()) {
-        std::unique_lock<std::mutex> hot_lock(HotkeyMutex);
-        hotkey_set = SHUTDOWN;
-        HotkeyCond.notify_one();
-    }
-
     ServerMain::block();
 
-    d->hotkeythread.join();
     d->iothread.join();
+
+    if (hotkey_mgr) {
+        delete hotkey_mgr;
+    }
 
     if(plug_mgr)
     {
@@ -2490,14 +1986,22 @@ void Core::setSuppressDuplicateKeyboardEvents(bool suppress) {
 }
 
 void Core::setMortalMode(bool value) {
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-    mortal_mode = value;
+    mortal_mode.exchange(value);
+}
+
+bool Core::getMortalMode() {
+    return mortal_mode.load();
 }
 
 void Core::setArmokTools(const std::vector<std::string> &tool_names) {
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
+    std::lock_guard<std::mutex> lock(armok_mutex);
     armok_tools.clear();
     armok_tools.insert(tool_names.begin(), tool_names.end());
+}
+
+bool Core::isArmokTool(const std::string& tool) {
+    std::lock_guard<std::mutex> lock(armok_mutex);
+    return armok_tools.contains(tool);
 }
 
 // returns true if the event is handled
@@ -2506,6 +2010,10 @@ bool Core::DFH_SDL_Event(SDL_Event* ev) {
     bool ret = doSdlInputEvent(ev);
     perf_counters.incCounter(perf_counters.total_keybinding_ms, start_ms);
     return ret;
+}
+
+void Core::DFH_SDL_Loop() {
+    DFHack::runRenderThreadCallbacks();
 }
 
 bool Core::doSdlInputEvent(SDL_Event* ev)
@@ -2536,11 +2044,13 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_CTRL : modstate & ~DFH_MOD_CTRL;
         else if (sym == SDLK_LALT || sym == SDLK_RALT)
             modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_ALT : modstate & ~DFH_MOD_ALT;
+        else if (sym == SDLK_LGUI || sym == SDLK_RGUI) // Renamed to LMETA/RMETA in SDL3
+            modstate = (ev->type == SDL_KEYDOWN) ? modstate | DFH_MOD_SUPER : modstate & ~DFH_MOD_SUPER;
         else if (ke.state == SDL_PRESSED && !hotkey_states[sym])
         {
             // the check against hotkey_states[sym] ensures we only process keybindings once per keypress
             DEBUG(keybinding).print("key down: sym=%d (%c)\n", sym, sym);
-            if (SelectHotkey(sym, modstate)) {
+            if (hotkey_mgr->handleKeybind(sym, modstate)) {
                 hotkey_states[sym] = true;
                 if (modstate & (DFH_MOD_CTRL | DFH_MOD_ALT)) {
                     DEBUG(keybinding).print("modifier key detected; not inhibiting SDL key down event\n");
@@ -2561,8 +2071,9 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
         DEBUG(keybinding).print("mouse button down: button=%d\n", but.button);
         // don't mess with the first three buttons, which are critical elements of DF's control scheme
         if (but.button > 3) {
-            SDL_Keycode sym = SDLK_F13 + but.button - 4;
-            if (sym <= SDLK_F24 && SelectHotkey(sym, modstate))
+            // We represent mouse buttons as a negative number, permitting buttons 4-15
+            SDL_Keycode sym = -but.button;
+            if (sym >= -15 && sym <= -4  && hotkey_mgr->handleKeybind(sym, modstate))
                 return suppress_duplicate_keyboard_events;
         }
     } else if (ev->type == SDL_TEXTINPUT) {
@@ -2580,236 +2091,6 @@ bool Core::doSdlInputEvent(SDL_Event* ev)
     }
 
     return false;
-}
-
-bool Core::SelectHotkey(int sym, int modifiers)
-{
-    // Find the topmost viewscreen
-    if (!df::global::gview || !df::global::plotinfo)
-        return false;
-
-    df::viewscreen *screen = &df::global::gview->view;
-    while (screen->child)
-        screen = screen->child;
-
-    if (sym == SDLK_KP_ENTER)
-        sym = SDLK_RETURN;
-
-    std::string cmd;
-
-    DEBUG(keybinding).print("checking hotkeys for sym=%d (%c), modifiers=%x\n", sym, sym, modifiers);
-
-    {
-        std::lock_guard<std::mutex> lock(HotkeyMutex);
-
-        // Check the internal keybindings
-        std::vector<KeyBinding> &bindings = key_bindings[sym];
-        //for (int i = bindings.size()-1; i >= 0; --i) {
-        for (const auto& binding : bindings | std::views::reverse) {
-            DEBUG(keybinding).print("examining hotkey with commandline: '%s'\n", binding.cmdline.c_str());
-
-            if (binding.modifiers != modifiers) {
-                DEBUG(keybinding).print("skipping keybinding due to modifiers mismatch: 0x%x != 0x%x\n",
-                                        binding.modifiers, modifiers);
-                continue;
-            }
-            if (!binding.focus.empty()) {
-                if (!Gui::matchFocusString(binding.focus)) {
-                    std::vector<std::string> focusStrings = Gui::getCurFocus(true);
-                    DEBUG(keybinding).print("skipping keybinding due to focus string mismatch: '%s' != '%s'\n",
-                        join_strings(", ", focusStrings).c_str(), binding.focus.c_str());
-                    continue;
-                }
-            }
-            if (!plug_mgr->CanInvokeHotkey(binding.command[0], screen)) {
-                DEBUG(keybinding).print("skipping keybinding due to hotkey guard rejection (command: '%s')\n",
-                                        binding.command[0].c_str());
-                continue;
-            }
-            if (mortal_mode && armok_tools.contains(binding.command[0])) {
-                DEBUG(keybinding).print("skipping keybinding due to mortal mode (command: '%s')\n",
-                                        binding.command[0].c_str());
-                continue;
-            }
-
-            cmd = binding.cmdline;
-            DEBUG(keybinding).print("matched hotkey\n");
-            break;
-        }
-
-        if (cmd.empty()) {
-            // Check the hotkey keybindings
-            int idx = sym - SDLK_F1;
-            if(idx >= 0 && idx < 8)
-            {
-/* TODO: understand how this changes for v50
-                if (modifiers & 1)
-                    idx += 8;
-
-                if (strict_virtual_cast<df::viewscreen_dwarfmodest>(screen) &&
-                    df::global::plotinfo->main.mode != ui_sidebar_mode::Hotkeys &&
-                    df::global::plotinfo->main.hotkeys[idx].cmd == df::ui_hotkey::T_cmd::None)
-                {
-                    cmd = df::global::plotinfo->main.hotkeys[idx].name;
-                }
-*/
-            }
-        }
-    }
-
-    if (!cmd.empty()) {
-        setHotkeyCmd(cmd);
-        return true;
-    }
-
-    return false;
-}
-
-static bool parseKeySpec(std::string keyspec, int *psym, int *pmod, std::string *pfocus)
-{
-    *pmod = 0;
-
-    if (pfocus)
-    {
-        *pfocus = "";
-
-        size_t idx = keyspec.find('@');
-        if (idx != std::string::npos)
-        {
-            *pfocus = keyspec.substr(idx+1);
-            keyspec = keyspec.substr(0, idx);
-        }
-    }
-
-    // ugh, ugly
-    for (;;) {
-        if (keyspec.size() > 6 && keyspec.starts_with("Shift-")) {
-            *pmod |= 1;
-            keyspec = keyspec.substr(6);
-        } else if (keyspec.size() > 5 && keyspec.starts_with("Ctrl-")) {
-            *pmod |= 2;
-            keyspec = keyspec.substr(5);
-        } else if (keyspec.size() > 4 && keyspec.starts_with("Alt-")) {
-            *pmod |= 4;
-            keyspec = keyspec.substr(4);
-        } else
-            break;
-    }
-
-    if (keyspec.size() == 1 && keyspec[0] >= 'A' && keyspec[0] <= 'Z') {
-        *psym = SDLK_a + (keyspec[0]-'A');
-        return true;
-    } else if (keyspec.size() == 1 && keyspec[0] == '`') {
-        *psym = SDLK_BACKQUOTE;
-        return true;
-    } else if (keyspec.size() == 1 && keyspec[0] >= '0' && keyspec[0] <= '9') {
-        *psym = SDLK_0 + (keyspec[0]-'0');
-        return true;
-    } else if (keyspec.size() == 2 && keyspec[0] == 'F' && keyspec[1] >= '1' && keyspec[1] <= '9') {
-        *psym = SDLK_F1 + (keyspec[1]-'1');
-        return true;
-    } else if (keyspec.size() == 3 && keyspec.starts_with("F1") && keyspec[2] >= '0' && keyspec[2] <= '2') {
-        *psym = SDLK_F10 + (keyspec[2]-'0');
-        return true;
-    } else if (keyspec.size() == 6 && keyspec.starts_with("MOUSE") && keyspec[5] >= '4' && keyspec[5] <= '9') {
-        *psym = SDLK_F13 + (keyspec[5]-'4');
-        return true;
-    } else if (keyspec.size() == 7 && keyspec.starts_with("MOUSE1") && keyspec[5] >= '0' && keyspec[5] <= '5') {
-        *psym = SDLK_F19 + (keyspec[5]-'0');
-        return true;
-    } else if (keyspec == "Enter") {
-        *psym = SDLK_RETURN;
-        return true;
-    } else
-        return false;
-}
-
-bool Core::ClearKeyBindings(std::string keyspec)
-{
-    int sym, mod;
-    std::string focus;
-    if (!parseKeySpec(keyspec, &sym, &mod, &focus))
-        return false;
-
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-
-    std::vector<KeyBinding> &bindings = key_bindings[sym];
-    for (int i = bindings.size()-1; i >= 0; --i) {
-        if (bindings[i].modifiers == mod && prefix_matches(focus, bindings[i].focus))
-            bindings.erase(bindings.begin()+i);
-    }
-
-    return true;
-}
-
-bool Core::AddKeyBinding(std::string keyspec, std::string cmdline)
-{
-    size_t at_pos = keyspec.find('@');
-    if (at_pos != std::string::npos)
-    {
-        std::string raw_spec = keyspec.substr(0, at_pos);
-        std::string raw_focus = keyspec.substr(at_pos + 1);
-        if (raw_focus.find('|') != std::string::npos)
-        {
-            std::vector<std::string> focus_strings;
-            split_string(&focus_strings, raw_focus, "|");
-            for (const auto& fs : focus_strings)
-            {
-                if (!AddKeyBinding(raw_spec + "@" + fs, cmdline))
-                    return false;
-            }
-            return true;
-        }
-    }
-    int sym;
-    KeyBinding binding;
-    if (!parseKeySpec(keyspec, &sym, &binding.modifiers, &binding.focus))
-        return false;
-
-    cheap_tokenise(cmdline, binding.command);
-    if (binding.command.empty())
-        return false;
-
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-
-    // Don't add duplicates
-    std::vector<KeyBinding> &bindings = key_bindings[sym];
-    for (int i = bindings.size()-1; i >= 0; --i) {
-        if (bindings[i].modifiers == binding.modifiers &&
-            bindings[i].cmdline == cmdline &&
-            bindings[i].focus == binding.focus)
-            return true;
-    }
-
-    binding.cmdline = cmdline;
-    bindings.push_back(binding);
-    return true;
-}
-
-std::vector<std::string> Core::ListKeyBindings(std::string keyspec)
-{
-    int sym, mod;
-    std::vector<std::string> rv;
-    std::string focus;
-    if (!parseKeySpec(keyspec, &sym, &mod, &focus))
-        return rv;
-
-    std::lock_guard<std::mutex> lock(HotkeyMutex);
-
-    std::vector<KeyBinding> &bindings = key_bindings[sym];
-    for (int i = bindings.size()-1; i >= 0; --i) {
-        if (focus.size() && focus != bindings[i].focus)
-            continue;
-        if (bindings[i].modifiers == mod)
-        {
-            std::string cmd = bindings[i].cmdline;
-            if (!bindings[i].focus.empty())
-                cmd = "@" + bindings[i].focus + ": " + cmd;
-            rv.push_back(cmd);
-        }
-    }
-
-    return rv;
 }
 
 bool Core::AddAlias(const std::string &name, const std::vector<std::string> &command, bool replace)
@@ -2870,127 +2151,6 @@ std::string Core::GetAliasCommand(const std::string &name, bool ignore_params)
     if (ignore_params)
         return aliases[name][0];
     return join_strings(" ", aliases[name]);
-}
-
-/////////////////
-// ClassNameCheck
-/////////////////
-
-// Since there is no Process.cpp, put ClassNameCheck stuff in Core.cpp
-
-static std::set<std::string> known_class_names;
-static std::map<std::string, void*> known_vptrs;
-
-ClassNameCheck::ClassNameCheck(std::string _name) : name(_name), vptr(0)
-{
-    known_class_names.insert(name);
-}
-
-ClassNameCheck &ClassNameCheck::operator= (const ClassNameCheck &b)
-{
-    name = b.name; vptr = b.vptr; return *this;
-}
-
-bool ClassNameCheck::operator() (Process *p, void * ptr) const {
-    if (vptr == 0 && p->readClassName(ptr) == name)
-    {
-        vptr = ptr;
-        known_vptrs[name] = ptr;
-    }
-    return (vptr && vptr == ptr);
-}
-
-void ClassNameCheck::getKnownClassNames(std::vector<std::string> &names)
-{
-    for(const auto& kcn : known_class_names) {
-        names.push_back(kcn);
-    }
-}
-
-MemoryPatcher::MemoryPatcher(Process *p_) : p(p_)
-{
-    if (!p)
-        p = Core::getInstance().p.get();
-}
-
-MemoryPatcher::~MemoryPatcher()
-{
-    close();
-}
-
-bool MemoryPatcher::verifyAccess(void *target, size_t count, bool write)
-{
-    auto *sptr = (uint8_t*)target;
-    uint8_t *eptr = sptr + count;
-
-    // Find the valid memory ranges
-    if (ranges.empty())
-        p->getMemRanges(ranges);
-
-    // Find the ranges that this area spans
-    unsigned start = 0;
-    while (start < ranges.size() && ranges[start].end <= sptr)
-        start++;
-    if (start >= ranges.size() || ranges[start].start > sptr)
-        return false;
-
-    unsigned end = start+1;
-    while (end < ranges.size() && ranges[end].start < eptr)
-    {
-        if (ranges[end].start != ranges[end-1].end)
-            return false;
-        end++;
-    }
-    if (ranges[end-1].end < eptr)
-        return false;
-
-    // Verify current permissions
-    for (unsigned i = start; i < end; i++)
-        if (!ranges[i].valid || !(ranges[i].read || ranges[i].execute) || ranges[i].shared)
-            return false;
-
-    // Apply writable permissions & update
-    for (unsigned i = start; i < end; i++)
-    {
-        auto &perms = ranges[i];
-        if ((perms.write || !write) && perms.read)
-            continue;
-
-        save.push_back(perms);
-        perms.write = perms.read = true;
-        if (!p->setPermissions(perms, perms))
-            return false;
-    }
-
-    return true;
-}
-
-bool MemoryPatcher::write(void *target, const void *src, size_t size)
-{
-    if (!makeWritable(target, size))
-        return false;
-
-    memmove(target, src, size);
-
-    p->flushCache(target, size);
-    return true;
-}
-
-void MemoryPatcher::close()
-{
-    for (size_t i  = 0; i < save.size(); i++)
-        p->setPermissions(save[i], save[i]);
-
-    save.clear();
-    ranges.clear();
-};
-
-
-bool Process::patchMemory(void *target, const void* src, size_t count)
-{
-    MemoryPatcher patcher(this);
-
-    return patcher.write(target, src, count);
 }
 
 /*******************************************************************************

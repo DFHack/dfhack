@@ -176,9 +176,12 @@ namespace DFHack
 
         bool addScriptPath(std::filesystem::path path, bool search_before = false);
         bool setModScriptPaths(const std::vector<std::filesystem::path> & mod_script_paths);
-        bool removeScriptPath(std::filesystem::path path);
+        bool removeScriptPath(std::filesystem::path& path);
         std::filesystem::path findScript(std::string name);
-        void getScriptPaths(std::vector<std::filesystem::path> *dest);
+
+        using filelist = std::vector<std::filesystem::path>;
+
+        filelist getScriptPaths();
 
         bool getSuppressDuplicateKeyboardEvents() const;
         void setSuppressDuplicateKeyboardEvents(bool suppress);
@@ -308,7 +311,10 @@ namespace DFHack
         // Hotkey Manager
         DFHack::HotkeyManager *hotkey_mgr;
 
-        std::vector<std::filesystem::path> script_paths[3];
+        filelist script_paths_first;
+        filelist script_paths_mod;
+        filelist script_paths_last;
+
         std::mutex script_path_mutex;
 
         int8_t modstate;

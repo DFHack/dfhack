@@ -866,13 +866,15 @@ bool Core::loadScriptFile(color_ostream &out, std::filesystem::path fname, bool 
         INFO(script,out) << "Running script: " << fname << std::endl;
         std::cerr << "Running script: " << fname << std::endl;
     }
-    std::ifstream script{ fname.c_str() };
+
+    auto script = openFile(fname);
     if ( !script )
     {
         if(!silent)
             out.printerr("Error loading script: {}\n", fname);
         return false;
     }
+
     std::string command;
     while(script.good()) {
         std::string temp;

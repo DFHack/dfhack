@@ -52,7 +52,7 @@ namespace DFHack
         return getInstallPath() / "hack" / "data" / "dfhack-config-defaults";
     }
 
-    const std::vector<fs::path> getPossiblePaths(fs::path filename) noexcept
+    const std::vector<fs::path> getPossiblePaths(const fs::path filename) noexcept
     {
         bool portable = isPortableMode();
         return {getBasePath(portable) / filename, getBasePath(!portable) / filename};
@@ -63,18 +63,32 @@ namespace DFHack
         return openFile("dfhack-config" / filename);
     }
 
-    std::ifstream openFile(fs::path filename)
+    const fs::path findConfigFile(fs::path filename)
     {
-        std::ifstream file;
-        fmt::print(stderr, "Trying to open file: {}\n", filename.string());
-        for (const auto& path : getPossiblePaths(filename))
-        {
-            file.open(path);
-            fmt::print(stderr, "Trying {}: {}\n", path.string(), file.is_open());
-            if (file)
-                break;
-        }
-        return file;
+        return findFile("dfhack-config" / filename);
     }
 
+    std::ifstream openFile(const fs::path filename)
+    {
+        auto path = findFile(filename);
+        if (path.empty())
+            return std::ifstream();
+        return std::ifstream(path);
+    }
+
+    const fs::path findFile(const fs::path filename)
+    {
+        if (filename.is_absolute())
+            return filename;
+
+        fmt::print(stderr, "Trying to locate file: {}\n", filename.string());
+
+        for (const auto& path : getPossiblePaths(filename))
+        {
+            if (fs::exists(path))
+                return path;
+        }
+        return fs::path();
+    }
 }
+

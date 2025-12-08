@@ -528,8 +528,9 @@ std::filesystem::path Core::findScript(std::string name)
 
 bool loadScriptPaths(color_ostream &out, bool silent = false)
 {
-    std::filesystem::path filename{ getConfigPath() / "script-paths.txt" };
-    std::ifstream file(filename);
+    constexpr auto filename = "script-paths.txt";
+    auto file = openConfigFile(filename);
+
     if (!file)
     {
         if (!silent)

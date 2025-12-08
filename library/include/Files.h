@@ -1,4 +1,5 @@
 #include <filesystem>
+#include <fstream>
 #include <vector>
 
 namespace DFHack {
@@ -17,5 +18,11 @@ namespace DFHack {
     const std::vector<std::filesystem::path> getPossiblePaths(std::filesystem::path file) noexcept;
 
     const std::filesystem::path getConfigDefaultsPath() noexcept;
+
+    std::ifstream openConfigFile(std::filesystem::path filename);
+
+    std::ifstream openFile(std::filesystem::path filename);
+
+
 
 }

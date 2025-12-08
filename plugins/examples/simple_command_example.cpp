@@ -21,7 +21,7 @@ namespace DFHack {
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(log,out).print("initializing %s\n", plugin_name);
+    DEBUG(log,out).print("initializing {}\n", plugin_name);
 
     commands.push_back(PluginCommand(
         plugin_name,

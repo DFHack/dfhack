@@ -107,14 +107,14 @@ static void enable_hook(color_ostream &out, VMethodInterposeLinkBase &hook, vect
     if (disable) {
         hook.remove();
         if (!quiet)
-            out.print("Disabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+            out.print("Disabled tweak {} ({})\n", parameters[0], hook.name());
     } else {
         if (hook.apply()) {
             if (!quiet)
-                out.print("Enabled tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+                out.print("Enabled tweak {} ({})\n", parameters[0], hook.name());
         }
         else
-            out.printerr("Could not activate tweak %s (%s)\n", parameters[0].c_str(), hook.name());
+            out.printerr("Could not activate tweak {} ({})\n", parameters[0], hook.name());
     }
 }
 
@@ -134,13 +134,13 @@ static command_result enable_tweak(string tweak, color_ostream &out, vector<stri
             bool state = (vector_get(parameters, 1) != "disable");
             recognized = true;
             hook.enabled = state;
-            out.print("%s tweak %s (%s)\n", state ? "Enabled" : "Disabled", cmd.c_str(), hook.name.c_str());
+            out.print("{} tweak {} ({})\n", state ? "Enabled" : "Disabled", cmd, hook.name);
         }
         if (hook.enabled)
             is_enabled = true;
     }
     if (!recognized) {
-        out.printerr("Unrecognized tweak: %s\n", cmd.c_str());
+        out.printerr("Unrecognized tweak: {}\n", cmd);
         out.print("Run 'help tweak' to display a full list\n");
         return CR_FAILURE; // Avoid dumping usage information
     }
@@ -161,7 +161,7 @@ static command_result tweak(color_ostream &out, vector <string> &parameters) {
     if (parameters.empty() || parameters[0] == "list") {
         out.print("tweaks:\n");
         for (auto & entry : get_status())
-            out.print("  %25s: %s\n", entry.first.c_str(), entry.second ? "enabled" : "disabled");
+            out.print("  {:25}: {}\n", entry.first, entry.second ? "enabled" : "disabled");
         return CR_OK;
     }
 

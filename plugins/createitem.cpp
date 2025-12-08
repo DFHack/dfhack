@@ -144,7 +144,7 @@ static inline bool select_caste_mat(color_ostream &out, vector<string> &tokens,
                     out.printerr("You must also specify a caste.\n");
                 else
                     out.printerr("The creature you specified has no such caste!\n");
-                out.printerr("Valid castes:%s\n", castes.c_str());
+                out.printerr("Valid castes:{}\n", castes);
                 return false;
             }
         }
@@ -198,7 +198,7 @@ static inline bool select_plant_growth(color_ostream &out, vector<string> &token
                 out.printerr("You must also specify a growth ID.\n");
             else
                 out.printerr("The plant you specified has no such growth!\n");
-            out.printerr("Valid growths:%s\n", growths.c_str());
+            out.printerr("Valid growths:{}\n", growths);
             return false;
         }
     }
@@ -226,7 +226,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
 
             ItemTypeInfo iinfo(item->getType(), item->getSubtype());
             MaterialInfo minfo(item->getMaterial(), item->getMaterialIndex());
-            out.print("%s %s\n", iinfo.getToken().c_str(), minfo.getToken().c_str());
+            out.print("{} {}\n", iinfo.getToken(), minfo.getToken());
             return CR_OK;
         }
         else if (parameters[0] == "floor") {
@@ -268,7 +268,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
             dest_container = item->id;
             string name;
             item->getItemDescription(&name, 0);
-            out.print("Items created will be placed inside %s.\n", name.c_str());
+            out.print("Items created will be placed inside {}.\n", name);
             return CR_OK;
         }
         else if (parameters[0] == "building") {
@@ -313,7 +313,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
             dest_building = building->id;
             string name;
             building->getName(&name);
-            out.print("Items created will be placed inside %s.\n", name.c_str());
+            out.print("Items created will be placed inside {}.\n", name);
             return CR_OK;
         }
         else

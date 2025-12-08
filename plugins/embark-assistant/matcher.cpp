@@ -1450,21 +1450,21 @@ namespace embark_assist {
 
                     case embark_assist::defs::evil_savagery_values::All:
                         if (tile->savagery_count[i] < embark_size) {
-                            if (trace) out.print("matcher::world_tile_match: Savagery All (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Savagery All ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Present:
                         if (tile->savagery_count[i] == 0 && !tile->neighboring_savagery[i]) {
-                            if (trace) out.print("matcher::world_tile_match: Savagery Present (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Savagery Present ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Absent:
                         if (tile->savagery_count[i] > 256 - embark_size) {
-                            if (trace) out.print("matcher::world_tile_match: Savagery Absent (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Savagery Absent ({}, {})\n", x, y);
                             return false;
                         }
                         break;
@@ -1480,21 +1480,21 @@ namespace embark_assist {
 
                     case embark_assist::defs::evil_savagery_values::All:
                         if (tile->evilness_count[i] < embark_size) {
-                            if (trace) out.print("matcher::world_tile_match: Evil All (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Evil All ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Present:
                         if (tile->evilness_count[i] == 0 && !tile->neighboring_evilness[i]) {
-                            if (trace) out.print("matcher::world_tile_match: Evil Present (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Evil Present ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Absent:
                         if (tile->evilness_count[i] > 256 - embark_size) {
-                            if (trace) out.print("matcher::world_tile_match: Evil Absent (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Evil Absent ({}, {})\n", x, y);
                             return false;
                         }
                         break;
@@ -1511,14 +1511,14 @@ namespace embark_assist {
 
                 case embark_assist::defs::aquifer_ranges::None:
                     if (!(tile->aquifer & embark_assist::defs::None_Aquifer_Bit)) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer None (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer None ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::At_Most_Light:
                     if (tile->aquifer == embark_assist::defs::Heavy_Aquifer_Bit) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer At_Most_Light (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer At_Most_Light ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1526,7 +1526,7 @@ namespace embark_assist {
                 case embark_assist::defs::aquifer_ranges::None_Plus_Light:
                     if (!(tile->aquifer & embark_assist::defs::None_Aquifer_Bit) ||
                         !(tile->aquifer & embark_assist::defs::Light_Aquifer_Bit)) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_Light (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_Light ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1534,21 +1534,21 @@ namespace embark_assist {
                 case embark_assist::defs::aquifer_ranges::None_Plus_At_Least_Light:
                     if (!(tile->aquifer & embark_assist::defs::None_Aquifer_Bit) ||
                         (tile->aquifer == embark_assist::defs::None_Aquifer_Bit)) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_At_Least_Light (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_At_Least_Light ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::Light:
                     if (!(tile->aquifer & embark_assist::defs::Light_Aquifer_Bit)) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer Light (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer Light ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::At_Least_Light:
                     if (tile->aquifer == embark_assist::defs::None_Aquifer_Bit) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer At_Least_Light (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer At_Least_Light ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1556,7 +1556,7 @@ namespace embark_assist {
                 case embark_assist::defs::aquifer_ranges::None_Plus_Heavy:
                     if (!(tile->aquifer & embark_assist::defs::None_Aquifer_Bit) ||
                         !(tile->aquifer & embark_assist::defs::Heavy_Aquifer_Bit)) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_Heavy (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer None_Plus_Heavy ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1564,7 +1564,7 @@ namespace embark_assist {
                 case embark_assist::defs::aquifer_ranges::At_Most_Light_Plus_Heavy:
                     if (tile->aquifer == embark_assist::defs::Heavy_Aquifer_Bit ||
                         !(tile->aquifer & embark_assist::defs::Heavy_Aquifer_Bit)) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer At_Most_Light_Plus_Heavy (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer At_Most_Light_Plus_Heavy ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1572,7 +1572,7 @@ namespace embark_assist {
                 case embark_assist::defs::aquifer_ranges::Light_Plus_Heavy:
                     if (!(tile->aquifer & embark_assist::defs::Light_Aquifer_Bit) ||
                         !(tile->aquifer & embark_assist::defs::Heavy_Aquifer_Bit)) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer Light_Plus_Heavy (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer Light_Plus_Heavy ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1580,14 +1580,14 @@ namespace embark_assist {
                 case embark_assist::defs::aquifer_ranges::None_Light_Heavy:
                     if (tile->aquifer !=
                         (embark_assist::defs::None_Aquifer_Bit | embark_assist::defs::Light_Aquifer_Bit | embark_assist::defs::Heavy_Aquifer_Bit)) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer None_Light_Heavy (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer None_Light_Heavy ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::aquifer_ranges::Heavy:
                     if (!(tile->aquifer & embark_assist::defs::Heavy_Aquifer_Bit)) {
-                        if (trace) out.print("matcher::world_tile_match: Aquifer Heavy (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Aquifer Heavy ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1597,42 +1597,42 @@ namespace embark_assist {
                 switch (tile->max_river_size) {
                 case embark_assist::defs::river_sizes::None:
                     if (finder->min_river > embark_assist::defs::river_ranges::None) {
-                        if (trace) out.print("matcher::world_tile_match: River_Size None (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: River_Size None ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::river_sizes::Brook:
                     if (finder->min_river > embark_assist::defs::river_ranges::Brook) {
-                        if (trace) out.print("matcher::world_tile_match: River_Size Brook (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: River_Size Brook ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::river_sizes::Stream:
                     if (finder->min_river > embark_assist::defs::river_ranges::Stream) {
-                        if (trace) out.print("matcher::world_tile_match: River_Size Stream (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: River_Size Stream ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::river_sizes::Minor:
                     if (finder->min_river > embark_assist::defs::river_ranges::Minor) {
-                        if (trace) out.print("matcher::world_tile_match: River_Size Mino (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: River_Size Mino ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::river_sizes::Medium:
                     if (finder->min_river > embark_assist::defs::river_ranges::Medium) {
-                        if (trace) out.print("matcher::world_tile_match: River_Size Medium (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: River_Size Medium ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::river_sizes::Major:
                     if (finder->max_river != embark_assist::defs::river_ranges::NA) {
-                        if (trace) out.print("matcher::world_tile_match: River_Size Major (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: River_Size Major ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1640,13 +1640,13 @@ namespace embark_assist {
 
                 //  Waterfall
                 if (finder->min_waterfall > tile->max_waterfall) {  //  N/A = -1 is always smaller
-                    if (trace) out.print("matcher::world_tile_match: Waterfall (%i, %i), finder: %i, tile: %i\n", x, y, finder->min_waterfall, tile->max_waterfall);
+                    if (trace) out.print("matcher::world_tile_match: Waterfall ({}, {}), finder: {}, tile: {}\n", x, y, finder->min_waterfall, tile->max_waterfall);
                     return false;
                 }
                 if (finder->min_waterfall == 0 &&  // Absent
                     embark_size == 256 &&
                     tile->max_waterfall > 0) {
-                    if (trace) out.print("matcher::world_tile_match: Waterfall 2 (%i, %i)\n", x, y);
+                    if (trace) out.print("matcher::world_tile_match: Waterfall 2 ({}, {})\n", x, y);
                     return false;
                 }
 
@@ -1660,14 +1660,14 @@ namespace embark_assist {
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->clay_count == 0 &&
                         !tile->neighboring_clay) {
-                        if (trace) out.print("matcher::world_tile_match: Clay Present (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Clay Present ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->clay_count > 256 - embark_size) {
-                        if (trace) out.print("matcher::world_tile_match: Clay Absent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Clay Absent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1681,14 +1681,14 @@ namespace embark_assist {
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->sand_count == 0 &&
                         !tile->neighboring_sand) {
-                        if (trace) out.print("matcher::world_tile_match: Sand Present (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Sand Present ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->sand_count > 256 - embark_size) {
-                        if (trace) out.print("matcher::world_tile_match: Sand Absent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Sand Absent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1701,14 +1701,14 @@ namespace embark_assist {
 
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->flux_count == 0) {
-                        if (trace) out.print("matcher::world_tile_match: Flux Present (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Flux Present ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->flux_count > 256 - embark_size) {
-                        if (trace) out.print("matcher::world_tile_match: Flux Absent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Flux Absent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1721,14 +1721,14 @@ namespace embark_assist {
 
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->coal_count == 0) {
-                        if (trace) out.print("matcher::world_tile_match: Coal Present (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Coal Present ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->coal_count > 256 - embark_size) {
-                        if (trace) out.print("matcher::world_tile_match: Coal Absent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Coal Absent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1742,28 +1742,28 @@ namespace embark_assist {
 
                 case embark_assist::defs::soil_ranges::Very_Shallow:
                     if (tile->max_region_soil < 1) {
-                        if (trace) out.print("matcher::world_tile_match: Soil Min Very Shallow (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Soil Min Very Shallow ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::soil_ranges::Shallow:
                     if (tile->max_region_soil < 2) {
-                        if (trace) out.print("matcher::world_tile_match: Soil Min Shallow (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Soil Min Shallow ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::soil_ranges::Deep:
                     if (tile->max_region_soil < 3) {
-                        if (trace) out.print("matcher::world_tile_match: Soil Min Deep (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Soil Min Deep ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::soil_ranges::Very_Deep:
                     if (tile->max_region_soil < 4) {
-                        if (trace) out.print("matcher::world_tile_match: Soil Min Very Deep (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Soil Min Very Deep ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1779,28 +1779,28 @@ namespace embark_assist {
 
                 case embark_assist::defs::soil_ranges::None:
                     if (tile->min_region_soil > 0) {
-                        if (trace) out.print("matcher::world_tile_match: Soil_Max None (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Soil_Max None ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::soil_ranges::Very_Shallow:
                     if (tile->min_region_soil > 1) {
-                        if (trace) out.print("matcher::world_tile_match: Soil_Max Very_Shallow (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Soil_Max Very_Shallow ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::soil_ranges::Shallow:
                     if (tile->min_region_soil > 2) {
-                        if (trace) out.print("matcher::world_tile_match: Soil_Max Shallow (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Soil_Max Shallow ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::soil_ranges::Deep:
                     if (tile->min_region_soil > 3) {
-                        if (trace) out.print("matcher::world_tile_match: Soil_Max Deep (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Soil_Max Deep ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1840,14 +1840,14 @@ namespace embark_assist {
 
                     case embark_assist::defs::freezing_ranges::Permanent:
                         if (min_max_temperature > 0) {
-                            if (trace) out.print("matcher::world_tile_match: Freezing Permanent (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Freezing Permanent ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::freezing_ranges::At_Least_Partial:
                         if (min_min_temperature > 0) {
-                            if (trace) out.print("matcher::world_tile_match: Freezing At_Lest_Partial (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Freezing At_Lest_Partial ({}, {})\n", x, y);
                             return false;
                         }
                         break;
@@ -1855,21 +1855,21 @@ namespace embark_assist {
                     case embark_assist::defs::freezing_ranges::Partial:
                         if (min_min_temperature > 0 ||
                             max_max_temperature <= 0) {
-                            if (trace) out.print("matcher::world_tile_match: Freezing Partial (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Freezing Partial ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::freezing_ranges::At_Most_Partial:
                         if (max_max_temperature <= 0) {
-                            if (trace) out.print("matcher::world_tile_match: Freezing At Most_Partial (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Freezing At Most_Partial ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::freezing_ranges::Never:
                         if (max_min_temperature <= 0) {
-                            if (trace) out.print("matcher::world_tile_match: Freezing Never (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Freezing Never ({}, {})\n", x, y);
                             return false;
                         }
                         break;
@@ -1884,28 +1884,28 @@ namespace embark_assist {
 
                 case embark_assist::defs::tree_ranges::Very_Scarce:
                     if (tile->max_tree_level < embark_assist::defs::tree_levels::Very_Scarce) {
-                        if (trace) out.print("matcher::world_tile_match: Min_Trees Very_Scarce (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Min_Trees Very_Scarce ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::tree_ranges::Scarce:
                     if (tile->max_tree_level < embark_assist::defs::tree_levels::Scarce) {
-                        if (trace) out.print("matcher::world_tile_match: Min_Trees Scarce (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Min_Trees Scarce ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::tree_ranges::Woodland:
                     if (tile->max_tree_level < embark_assist::defs::tree_levels::Woodland) {
-                        if (trace) out.print("matcher::world_tile_match: Min_Trees Woodland (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Min_Trees Woodland ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::tree_ranges::Heavily_Forested:
                     if (tile->max_tree_level < embark_assist::defs::tree_levels::Heavily_Forested) {
-                        if (trace) out.print("matcher::world_tile_match: Min_Trees Heavily_Forested (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Min_Trees Heavily_Forested ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1918,7 +1918,7 @@ namespace embark_assist {
 
                 case embark_assist::defs::tree_ranges::None:
                     if (tile->min_tree_level > embark_assist::defs::tree_levels::None) {
-                        if (trace) out.print("matcher::world_tile_match: Max_Trees None (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Max_Trees None ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1926,21 +1926,21 @@ namespace embark_assist {
 
                 case embark_assist::defs::tree_ranges::Very_Scarce:
                     if (tile->min_tree_level > embark_assist::defs::tree_levels::Very_Scarce) {
-                        if (trace) out.print("matcher::world_tile_match: Max_Trees Very_Scarce (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Max_Trees Very_Scarce ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::tree_ranges::Scarce:
                     if (tile->min_tree_level > embark_assist::defs::tree_levels::Scarce) {
-                        if (trace) out.print("matcher::world_tile_match: Max_Trees Scarce (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Max_Trees Scarce ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::tree_ranges::Woodland:
                     if (tile->min_tree_level > embark_assist::defs::tree_levels::Woodland) {
-                        if (trace) out.print("matcher::world_tile_match: Max_Trees Woodland (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Max_Trees Woodland ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1953,14 +1953,14 @@ namespace embark_assist {
 
                 case embark_assist::defs::yes_no_ranges::Yes:
                     if (!tile->blood_rain_possible) {
-                        if (trace) out.print("matcher::world_tile_match: Blood_Rain Yes (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Blood_Rain Yes ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::yes_no_ranges::No:
                     if (tile->blood_rain_full) {
-                        if (trace) out.print("matcher::world_tile_match: Blood_Rain No (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Blood_Rain No ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -1973,35 +1973,35 @@ namespace embark_assist {
 
                 case embark_assist::defs::syndrome_rain_ranges::Any:
                     if (!tile->permanent_syndrome_rain_possible && !tile->temporary_syndrome_rain_possible) {
-                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain Any (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain Any ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::syndrome_rain_ranges::Permanent:
                     if (!tile->permanent_syndrome_rain_possible) {
-                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain Permanent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain Permanent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::syndrome_rain_ranges::Temporary:
                     if (!tile->temporary_syndrome_rain_possible) {
-                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain Temporary (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain Temporary ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::syndrome_rain_ranges::Not_Permanent:
                     if (tile->permanent_syndrome_rain_full) {
-                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain Not_Permanent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain Not_Permanent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::syndrome_rain_ranges::None:
                     if (tile->permanent_syndrome_rain_full || tile->temporary_syndrome_rain_full) {
-                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain None (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Syndrome_Rain None ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -2014,42 +2014,42 @@ namespace embark_assist {
 
                 case embark_assist::defs::reanimation_ranges::Both:
                     if (!tile->reanimating_possible || !tile->thralling_possible) {
-                        if (trace) out.print("matcher::world_tile_match: Reanimation Both (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Reanimation Both ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::Any:
                     if (!tile->reanimating_possible && !tile->thralling_possible) {
-                        if (trace) out.print("matcher::world_tile_match: Reanimation Any (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Reanimation Any ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::Thralling:
                     if (!tile->thralling_possible) {
-                        if (trace) out.print("matcher::world_tile_match: Reanimation Thralling (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Reanimation Thralling ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::Reanimation:
                     if (!tile->reanimating_possible) {
-                        if (trace) out.print("matcher::world_tile_match: Reanimation Reanimation (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Reanimation Reanimation ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::Not_Thralling:
                     if (tile->thralling_full) {
-                        if (trace) out.print("matcher::world_tile_match: Reanimation Not_Thralling (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Reanimation Not_Thralling ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::None:
                     if (tile->reanimating_full || tile->thralling_full) {
-                        if (trace) out.print("matcher::world_tile_match: Reanimation None (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Reanimation None ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -2063,7 +2063,7 @@ namespace embark_assist {
                 //  Region Type 1
                 if (finder->region_type_1 != -1) {
                     if (!tile->neighboring_region_types[finder->region_type_1]) {
-                        if (trace) out.print("matcher::world_tile_match: Region_Type_1 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Region_Type_1 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2071,7 +2071,7 @@ namespace embark_assist {
                 //  Region Type 2
                 if (finder->region_type_2 != -1) {
                     if (!tile->neighboring_region_types[finder->region_type_2]) {
-                        if (trace) out.print("matcher::world_tile_match: Region_Type_2 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Region_Type_2 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2079,7 +2079,7 @@ namespace embark_assist {
                 //  Region Type 3
                 if (finder->region_type_3 != -1) {
                     if (!tile->neighboring_region_types[finder->region_type_3]) {
-                        if (trace) out.print("matcher::world_tile_match: Region_Type_3 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Region_Type_3 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2087,7 +2087,7 @@ namespace embark_assist {
                 //  Biome 1
                 if (finder->biome_1 != -1) {
                     if (!tile->neighboring_biomes[finder->biome_1]) {
-                        if (trace) out.print("matcher::world_tile_match: Biome_1 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Biome_1 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2095,7 +2095,7 @@ namespace embark_assist {
                 //  Biome 2
                 if (finder->biome_2 != -1) {
                     if (!tile->neighboring_biomes[finder->biome_2]) {
-                        if (trace) out.print("matcher::world_tile_match: Biome_2 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Biome_2 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2103,7 +2103,7 @@ namespace embark_assist {
                 //  Biome 3
                 if (finder->biome_3 != -1) {
                     if (!tile->neighboring_biomes[finder->biome_3]) {
-                        if (trace) out.print("matcher::world_tile_match: Biome_3 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Biome_3 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2146,30 +2146,30 @@ namespace embark_assist {
                         !mineral_1 ||
                         !mineral_2 ||
                         !mineral_3) {
-                        if (trace) out.print("matcher::world_tile_match: Metal/Economic/Mineral (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: Metal/Economic/Mineral ({}, {})\n", x, y);
                         return false;
                     }
                 }
 
                 //  Necro Neighbors
                 if (finder->min_necro_neighbors > tile->necro_neighbors) {
-                    if (trace) out.print("matcher::world_tile_match: Necro_Neighbors 1 (%i, %i)\n", x, y);
+                    if (trace) out.print("matcher::world_tile_match: Necro_Neighbors 1 ({}, {})\n", x, y);
                     return false;
                 }
                 if (finder->max_necro_neighbors < tile->necro_neighbors &&
                     finder->max_necro_neighbors != -1) {
-                    if (trace) out.print("matcher::world_tile_match: Necro_Neighbors 2 (%i, %i)\n", x, y);
+                    if (trace) out.print("matcher::world_tile_match: Necro_Neighbors 2 ({}, {})\n", x, y);
                     return false;
                 }
 
                 //  Civ Neighbors
                 if (finder->min_civ_neighbors > (int16_t)tile->neighbors.size()) {
-                    if (trace) out.print("matcher::world_tile_match: Civ_Neighbors 1 (%i, %i), %i, %i\n", x, y, finder->min_civ_neighbors, (int)tile->neighbors.size());
+                    if (trace) out.print("matcher::world_tile_match: Civ_Neighbors 1 ({}, {}), {}, {}\n", x, y, finder->min_civ_neighbors, (int)tile->neighbors.size());
                     return false;
                 }
                 if (finder->max_civ_neighbors < (int8_t)tile->neighbors.size() &&
                     finder->max_civ_neighbors != -1) {
-                    if (trace) out.print("matcher::world_tile_match: Civ_Neighbors 2 (%i, %i)\n", x, y);
+                    if (trace) out.print("matcher::world_tile_match: Civ_Neighbors 2 ({}, {})\n", x, y);
                     return false;
                 }
 
@@ -2191,7 +2191,7 @@ namespace embark_assist {
                         }
 
                         if (!found) {
-                            if (trace) out.print("matcher::world_tile_match: Specific Neighbors Present (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: Specific Neighbors Present ({}, {})\n", x, y);
                             return false;
                         }
 
@@ -2201,7 +2201,7 @@ namespace embark_assist {
                     case embark_assist::defs::present_absent_ranges::Absent:
                         for (uint16_t k = 0; k < tile->neighbors.size(); k++) {
                             if (finder->neighbors[i].entity_raw == tile->neighbors[k]) {
-                                if (trace) out.print("matcher::world_tile_match: Specific Neighbors Absent (%i, %i)\n", x, y);
+                                if (trace) out.print("matcher::world_tile_match: Specific Neighbors Absent ({}, {})\n", x, y);
                                 return false;
                             }
                         }
@@ -2223,21 +2223,21 @@ namespace embark_assist {
 
                     case embark_assist::defs::evil_savagery_values::All:
                         if (tile->savagery_count[i] == 0) {
-                            if (trace) out.print("matcher::world_tile_match: NS Savagery All (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: NS Savagery All ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Present:
                         if (tile->savagery_count[i] == 0) {
-                            if (trace) out.print("matcher::world_tile_match: NS Savagery Present (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: NS Savagery Present ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Absent:
                         if (tile->savagery_count[i] == 256) {
-                            if (trace) out.print("matcher::world_tile_match: NS Savagery Absent (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: NS Savagery Absent ({}, {})\n", x, y);
                             return false;
                         }
                         break;
@@ -2253,21 +2253,21 @@ namespace embark_assist {
 
                     case embark_assist::defs::evil_savagery_values::All:
                         if (tile->evilness_count[i] == 0) {
-                            if (trace) out.print("matcher::world_tile_match: NS Evil All (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: NS Evil All ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Present:
                         if (tile->evilness_count[i] == 0) {
-                            if (trace) out.print("matcher::world_tile_match: NS Evil Present (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: NS Evil Present ({}, {})\n", x, y);
                             return false;
                         }
                         break;
 
                     case embark_assist::defs::evil_savagery_values::Absent:
                         if (tile->evilness_count[i] == 256) {
-                            if (trace) out.print("matcher::world_tile_match: NS Evil Absent (%i, %i)\n", x, y);
+                            if (trace) out.print("matcher::world_tile_match: NS Evil Absent ({}, {})\n", x, y);
                             return false;
                         }
                         break;
@@ -2295,14 +2295,14 @@ namespace embark_assist {
 
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->flux_count == 0) {
-                        if (trace) out.print("matcher::world_tile_match: NS Flux Present (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Flux Present ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->flux_count == 256) {
-                        if (trace) out.print("matcher::world_tile_match: NS Flux Absent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Flux Absent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -2315,14 +2315,14 @@ namespace embark_assist {
 
                 case embark_assist::defs::present_absent_ranges::Present:
                     if (tile->coal_count == 0) {
-                        if (trace) out.print("matcher::world_tile_match: NS Coal Present (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Coal Present ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::present_absent_ranges::Absent:
                     if (tile->coal_count == 256) {
-                        if (trace) out.print("matcher::world_tile_match: NS Coal Absent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Coal Absent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -2336,28 +2336,28 @@ namespace embark_assist {
 
                 case embark_assist::defs::soil_ranges::Very_Shallow:
                     if (tile->max_region_soil < 1) {
-                        if (trace) out.print("matcher::world_tile_match: NS Soil_Min Very_Shallow (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Soil_Min Very_Shallow ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::soil_ranges::Shallow:
                     if (tile->max_region_soil < 2) {
-                        if (trace) out.print("matcher::world_tile_match: NS Soil_Min Shallow (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Soil_Min Shallow ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::soil_ranges::Deep:
                     if (tile->max_region_soil < 3) {
-                        if (trace) out.print("matcher::world_tile_match: NS Soil_Min Deep (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Soil_Min Deep ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::soil_ranges::Very_Deep:
                     if (tile->max_region_soil < 4) {
-                        if (trace) out.print("matcher::world_tile_match: NS Soil_Min Very_Deep (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Soil_Min Very_Deep ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -2375,14 +2375,14 @@ namespace embark_assist {
 
                 case embark_assist::defs::yes_no_ranges::Yes:
                     if (!tile->blood_rain_possible) {
-                        if (trace) out.print("matcher::world_tile_match: NS Blood_Rain Yes (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Blood_Rain Yes ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::yes_no_ranges::No:
                     if (tile->blood_rain_full) {
-                        if (trace) out.print("matcher::world_tile_match: NS Blood_Rain No (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Blood_Rain No ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -2397,35 +2397,35 @@ namespace embark_assist {
 
                 case embark_assist::defs::syndrome_rain_ranges::Any:
                     if (!tile->permanent_syndrome_rain_possible && !tile->temporary_syndrome_rain_possible) {
-                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain Any (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain Any ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::syndrome_rain_ranges::Permanent:
                     if (!tile->permanent_syndrome_rain_possible) {
-                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain Permanent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain Permanent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::syndrome_rain_ranges::Temporary:
                     if (!tile->temporary_syndrome_rain_possible) {
-                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain Temporary (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain Temporary ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::syndrome_rain_ranges::Not_Permanent:
                     if (tile->permanent_syndrome_rain_full) {
-                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain Not_Permanent (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain Not_Permanent ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::syndrome_rain_ranges::None:
                     if (tile->permanent_syndrome_rain_full || tile->temporary_syndrome_rain_full) {
-                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain None (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Syndrome_Rain None ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -2438,42 +2438,42 @@ namespace embark_assist {
 
                 case embark_assist::defs::reanimation_ranges::Both:
                     if (!tile->reanimating_possible || !tile->thralling_possible) {
-                        if (trace) out.print("matcher::world_tile_match: NS Reanimating Both (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Reanimating Both ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::Any:
                     if (!tile->reanimating_possible && !tile->thralling_possible) {
-                        if (trace) out.print("matcher::world_tile_match: NS Reanimating Any (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Reanimating Any ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::Thralling:
                     if (!tile->thralling_possible) {
-                        if (trace) out.print("matcher::world_tile_match: NS Reanimating Thralling (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Reanimating Thralling ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::Reanimation:
                     if (!tile->reanimating_possible) {
-                        if (trace) out.print("matcher::world_tile_match:NS Reanimating Reanimating (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match:NS Reanimating Reanimating ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::Not_Thralling:
                     if (tile->thralling_full) {
-                        if (trace) out.print("matcher::world_tile_match: NS Reanimating Not_Thralling (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Reanimating Not_Thralling ({}, {})\n", x, y);
                         return false;
                     }
                     break;
 
                 case embark_assist::defs::reanimation_ranges::None:
                     if (tile->reanimating_full || tile->thralling_full) {
-                        if (trace) out.print("matcher::world_tile_match: NS Reanimating None (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Reanimating None ({}, {})\n", x, y);
                         return false;
                     }
                     break;
@@ -2483,7 +2483,7 @@ namespace embark_assist {
                 //  Magma Min/Max
                 //  Biome Count Min (Can't do anything with Max at this level)
                 if (finder->biome_count_min > tile->biome_count) {
-                    if (trace) out.print("matcher::world_tile_match: NS Biome_Count (%i, %i)\n", x, y);
+                    if (trace) out.print("matcher::world_tile_match: NS Biome_Count ({}, {})\n", x, y);
                     return false;
                 }
 
@@ -2503,7 +2503,7 @@ namespace embark_assist {
                     }
 
                     if (!found) {
-                        if (trace) out.print("matcher::world_tile_match: NS Region_Type_1 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Region_Type_1 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2524,7 +2524,7 @@ namespace embark_assist {
                     }
 
                     if (!found) {
-                        if (trace) out.print("matcher::world_tile_match: NS Region_Type_2 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Region_Type_2 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2545,7 +2545,7 @@ namespace embark_assist {
                     }
 
                     if (!found) {
-                        if (trace) out.print("matcher::world_tile_match: NS Region_Type_3 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Region_Type_3 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2562,7 +2562,7 @@ namespace embark_assist {
                     }
 
                     if (!found) {
-                        if (trace) out.print("matcher::world_tile_match: NS Biome_1 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Biome_1 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2579,7 +2579,7 @@ namespace embark_assist {
                     }
 
                     if (!found) {
-                        if (trace) out.print("matcher::world_tile_match: NS Biome_2 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Biome_2 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2596,7 +2596,7 @@ namespace embark_assist {
                     }
 
                     if (!found) {
-                        if (trace) out.print("matcher::world_tile_match: NS Biome_3 (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Biome_3 ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2639,7 +2639,7 @@ namespace embark_assist {
                         !mineral_1 ||
                         !mineral_2 ||
                         !mineral_3) {
-                        if (trace) out.print("matcher::world_tile_match: NS Metal/Economic/Mineral (%i, %i)\n", x, y);
+                        if (trace) out.print("matcher::world_tile_match: NS Metal/Economic/Mineral ({}, {})\n", x, y);
                         return false;
                     }
                 }
@@ -2948,11 +2948,11 @@ uint16_t embark_assist::matcher::find(embark_assist::defs::match_iterators *iter
         preliminary_matches = preliminary_world_match(survey_results, &iterator->finder, match_results);
 
         if (preliminary_matches == 0) {
-            out.printerr("matcher::find: Preliminarily matching World Tiles: %i\n", preliminary_matches);
+            out.printerr("matcher::find: Preliminarily matching World Tiles: {}\n", preliminary_matches);
             return 0;
         }
         else {
-            out.print("matcher::find: Preliminarily matching World Tiles: %i\n", preliminary_matches);
+            out.print("matcher::find: Preliminarily matching World Tiles: {}\n", preliminary_matches);
         }
 
         while (screen->location.region_pos.x != 0 || screen->location.region_pos.y != 0) {

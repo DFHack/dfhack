@@ -1503,7 +1503,7 @@ static void releaseTiredWorker(EngineInfo *engine, df::job *job, df::unit *worke
             if (Job::removeWorker(job))
             {
                 color_ostream_proxy out(Core::getInstance().getConsole());
-                out.print("Released tired operator %d from siege engine.\n", worker->id);
+                out.print("Released tired operator {} from siege engine.\n", worker->id);
 
                 if (process_jobs)
                     *process_jobs = true;

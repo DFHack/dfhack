@@ -178,12 +178,12 @@ public:
 
     void add_to_history(color_ostream &out, int32_t unit_id) {
         if (offset > 0) {
-            DEBUG(cycle,out).print("trimming history forward of offset %zd\n", offset);
+            DEBUG(cycle,out).print("trimming history forward of offset {}\n", offset);
             history.resize(history.size() - offset);
             offset = 0;
         }
         if (history.size() && history.back() == unit_id) {
-            DEBUG(cycle,out).print("unit %d is already current unit; not adding to history\n", unit_id);
+            DEBUG(cycle,out).print("unit {} is already current unit; not adding to history\n", unit_id);
         } else {
             history.push_back(unit_id);
             if (history.size() > MAX_HISTORY) {
@@ -191,19 +191,19 @@ public:
                 history.pop_front();
             }
         }
-        DEBUG(cycle,out).print("history now has %zd entries\n", history.size());
+        DEBUG(cycle,out).print("history now has {} entries\n", history.size());
     }
 
     void add_and_follow(color_ostream &out, df::unit *unit) {
         // if we're currently following a unit, add it to the history if it's not already there
         if (plotinfo->follow_unit > -1 && plotinfo->follow_unit != get_cur_unit_id()) {
-            DEBUG(cycle,out).print("currently following unit %d that is not in history; adding\n", plotinfo->follow_unit);
+            DEBUG(cycle,out).print("currently following unit {} that is not in history; adding\n", plotinfo->follow_unit);
             add_to_history(out, plotinfo->follow_unit);
         }
 
         int32_t id = unit->id;
         add_to_history(out, id);
-        DEBUG(cycle,out).print("now following unit %d: %s\n", id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
+        DEBUG(cycle,out).print("now following unit {}: {}\n", id, DF2CONSOLE(Units::getReadableName(unit)));
         Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
         plotinfo->follow_item = -1;
         plotinfo->follow_unit = id;
@@ -216,7 +216,7 @@ public:
         }
         ++offset;
         int unit_id = get_cur_unit_id();
-        DEBUG(cycle,out).print("scanning back to unit %d at offset %zd\n", unit_id, offset);
+        DEBUG(cycle,out).print("scanning back to unit {} at offset {}\n", unit_id, offset);
         if (auto unit = df::unit::find(unit_id))
             Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
         plotinfo->follow_item = -1;
@@ -232,7 +232,7 @@ public:
 
         --offset;
         int unit_id = get_cur_unit_id();
-        DEBUG(cycle,out).print("scanning forward to unit %d at offset %zd\n", unit_id, offset);
+        DEBUG(cycle,out).print("scanning forward to unit {} at offset {}\n", unit_id, offset);
         if (auto unit = df::unit::find(unit_id))
             Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
         plotinfo->follow_item = -1;
@@ -281,7 +281,7 @@ public:
 
 static void on_new_active_unit(color_ostream& out, void* data) {
     int32_t unit_id = reinterpret_cast<std::intptr_t>(data);
-    DEBUG(event,out).print("unit %d has arrived on map\n", unit_id);
+    DEBUG(event,out).print("unit {} has arrived on map\n", unit_id);
     recent_units.add(unit_id);
 }
 
@@ -294,7 +294,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 static void follow_a_dwarf(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
 
     commands.push_back(PluginCommand(
         plugin_name,
@@ -320,19 +320,19 @@ static void set_next_cycle_unpaused_ms(color_ostream &out, bool has_active_comba
         delay_ms = distribution(rng);
         delay_ms = std::min(config.follow_ms, std::max(1, delay_ms));
     }
-    DEBUG(cycle,out).print("next cycle in %d ms\n", delay_ms);
+    DEBUG(cycle,out).print("next cycle in {} ms\n", delay_ms);
     next_cycle_unpaused_ms = Core::getInstance().getUnpausedMs() + delay_ms;
 }
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         if (enable) {
             config.reset();
@@ -340,7 +340,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                 WARN(control,out).print("Failed to refresh config\n");
             }
             if (is_squads_open()) {
-                out.printerr("Cannot enable %s while the squads screen is open.\n", plugin_name);
+                out.printerr("Cannot enable {} while the squads screen is open.\n", plugin_name);
                 Lua::CallLuaModuleFunction(out, "plugins.spectate", "show_squads_warning");
                 is_enabled = false;
                 return CR_FAILURE;
@@ -358,7 +358,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             // don't reset the unit history since we may want to re-enable
         }
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -366,7 +366,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
     on_disable(out);
     return CR_OK;
 }
@@ -378,7 +378,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         break;
     case SC_WORLD_UNLOADED:
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
             on_disable(out, true);
@@ -456,7 +456,7 @@ static void get_dwarf_buckets(color_ostream &out,
             continue;
 
         if (is_in_combat(unit)) {
-            TRACE(cycle, out).print("unit %d is in combat: %s\n", unit->id, DF2CONSOLE(Units::getReadableName(unit)).c_str());
+            TRACE(cycle, out).print("unit {} is in combat: {}\n", unit->id, DF2CONSOLE(Units::getReadableName(unit)));
             if (Units::isCitizen(unit, true) || Units::isResident(unit, true))
                 citizen_combat_units.push_back(unit);
             else
@@ -498,17 +498,17 @@ static void add_bucket(const vector<df::unit*> &bucket, vector<df::unit*> &units
 }
 
 #define DUMP_BUCKET(name) \
-    DEBUG(cycle,out).print("bucket: " #name ", size: %zd\n", name.size()); \
+    DEBUG(cycle,out).print("bucket: " #name ", size: {}\n", name.size()); \
     if (debug_cycle.isEnabled(DebugCategory::LTRACE)) { \
         for (auto u : name) { \
-            DEBUG(cycle,out).print("  unit %d: %s\n", u->id, DF2CONSOLE(Units::getReadableName(u)).c_str()); \
+            DEBUG(cycle,out).print("  unit {}: {}\n", u->id, DF2CONSOLE(Units::getReadableName(u))); \
         } \
     }
 
 #define DUMP_FLOAT_VECTOR(name) \
     DEBUG(cycle,out).print(#name ":\n"); \
     for (float f : name) { \
-        DEBUG(cycle,out).print("  %d\n", (int)f); \
+        DEBUG(cycle,out).print("  {}\n", (int)f); \
     }
 
 static void follow_a_dwarf(color_ostream &out) {
@@ -551,7 +551,7 @@ static void follow_a_dwarf(color_ostream &out) {
         DUMP_BUCKET(other_units);
         DUMP_FLOAT_VECTOR(intervals);
         DUMP_FLOAT_VECTOR(weights);
-        DEBUG(cycle,out).print("selected unit idx %d\n", unit_idx);
+        DEBUG(cycle,out).print("selected unit idx {}\n", unit_idx);
     }
 
     unit_history.add_and_follow(out, unit);
@@ -561,7 +561,7 @@ static void follow_a_dwarf(color_ostream &out) {
 // Lua API
 
 static void spectate_setSetting(color_ostream &out, string name, int val) {
-    DEBUG(control,out).print("entering spectate_setSetting %s = %d\n", name.c_str(), val);
+    DEBUG(control,out).print("entering spectate_setSetting {} = {}\n", name, val);
 
     if (name == "auto-unpause") {
         if (val && !config.auto_unpause) {
@@ -593,7 +593,7 @@ static void spectate_setSetting(color_ostream &out, string name, int val) {
         }
         config.follow_ms = val * 1000;
     } else {
-        WARN(control,out).print("Unknown setting: %s\n", name.c_str());
+        WARN(control,out).print("Unknown setting: {}\n", name);
     }
 }
 
@@ -610,9 +610,9 @@ static void spectate_followNext(color_ostream &out) {
 };
 
 static void spectate_addToHistory(color_ostream &out, int32_t unit_id) {
-    DEBUG(control,out).print("entering spectate_addToHistory; unit_id=%d\n", unit_id);
+    DEBUG(control,out).print("entering spectate_addToHistory; unit_id={}\n", unit_id);
     if (!df::unit::find(unit_id)) {
-        WARN(control,out).print("unit with id %d not found; not adding to history\n", unit_id);
+        WARN(control,out).print("unit with id {} not found; not adding to history\n", unit_id);
         return;
     }
     unit_history.add_to_history(out, unit_id);

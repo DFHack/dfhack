@@ -1,5 +1,8 @@
 #include "Error.h"
+#include "Format.h"
 #include "MiscUtils.h"
+
+#include <string>
 
 using namespace DFHack::Error;
 
@@ -24,7 +27,7 @@ VTableMissing::VTableMissing(const char *name)
 {}
 
 SymbolsXmlParse::SymbolsXmlParse(const char* desc, int id, int row, int col)
-    :AllSymbols(stl_sprintf("error %d: %s, at row %d col %d", id, desc, row, col)),
+    :AllSymbols(fmt::format("error {}: {}, at row {} col {}", id, desc, row, col)),
     desc(safe_str(desc)), id(id), row(row), col(col)
 {}
 

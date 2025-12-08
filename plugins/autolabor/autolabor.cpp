@@ -697,8 +697,8 @@ static void assign_labor(unit_labor::unit_labor labor,
                 dwarfs[dwarf]->uniform.pickup_flags.bits.update = 1;
             }
 
-            TRACE(cycle, out).print("Dwarf % i \"%s\" assigned %s: value %i %s %s\n",
-                dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str(), values[dwarf],
+            TRACE(cycle, out).print("Dwarf {} \"{}\" assigned {}: value {} {} {}\n",
+                dwarf, dwarfs[dwarf]->name.first_name, ENUM_KEY_STR(unit_labor, labor), values[dwarf],
                 dwarf_info[dwarf].trader ? "(trader)" : "",
                 dwarf_info[dwarf].diplomacy ? "(diplomacy)" : "");
 
@@ -766,7 +766,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         {
             df::building_tradedepotst* depot = (df::building_tradedepotst*) build;
             trader_requested = trader_requested || depot->trade_flags.bits.trader_requested;
-            TRACE(cycle,out).print(trader_requested
+            TRACE(cycle,out).print("{}", trader_requested
                 ? "Trade depot found and trader requested, trader will be excluded from all labors.\n"
                 : "Trade depot found but trader is not requested.\n"
                 );
@@ -846,8 +846,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (p1 || p2)
             {
                 dwarf_info[dwarf].diplomacy = true;
-                DEBUG(cycle, out).print("Dwarf %i \"%s\" has a meeting, will be cleared of all labors\n",
-                    dwarf, dwarfs[dwarf]->name.first_name.c_str());
+                DEBUG(cycle, out).print("Dwarf {} \"{}\" has a meeting, will be cleared of all labors\n",
+                    dwarf, dwarfs[dwarf]->name.first_name);
                 break;
             }
         }
@@ -919,15 +919,15 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
                 dwarf_info[dwarf].state = dwarf_states[job];
             else
             {
-                WARN(cycle, out).print("Dwarf %i \"%s\" has unknown job %i\n", dwarf, dwarfs[dwarf]->name.first_name.c_str(), job);
+                WARN(cycle, out).print("Dwarf {} \"{}\" has unknown job {}\n", dwarf, dwarfs[dwarf]->name.first_name, job);
                 dwarf_info[dwarf].state = OTHER;
             }
         }
 
         state_count[dwarf_info[dwarf].state]++;
 
-        TRACE(cycle, out).print("Dwarf %i \"%s\": penalty %i, state %s\n",
-            dwarf, dwarfs[dwarf]->name.first_name.c_str(), dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
+        TRACE(cycle, out).print("Dwarf {} \"{}\": penalty {}, state {}\n",
+            dwarf, dwarfs[dwarf]->name.first_name, dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
     }
 
     std::vector<df::unit_labor> labors;
@@ -1034,8 +1034,8 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
             if (dwarf_info[dwarf].state == IDLE || dwarf_info[dwarf].state == BUSY || dwarf_info[dwarf].state == EXCLUSIVE)
                 labor_infos[labor].active_dwarfs++;
 
-            TRACE(cycle, out).print("Dwarf %i \"%s\" assigned %s: hauler\n",
-                dwarf, dwarfs[dwarf]->name.first_name.c_str(), ENUM_KEY_STR(unit_labor, labor).c_str());
+            TRACE(cycle, out).print("Dwarf {} \"{}\" assigned {}: hauler\n",
+                dwarf, dwarfs[dwarf]->name.first_name, ENUM_KEY_STR(unit_labor, labor));
         }
 
         for (size_t i = num_haulers; i < hauler_ids.size(); i++)
@@ -1076,7 +1076,7 @@ void print_labor (df::unit_labor labor, color_ostream &out)
 DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
 {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -1095,7 +1095,7 @@ DFhackCExport command_result plugin_enable ( color_ostream &out, bool enable )
 command_result autolabor (color_ostream &out, std::vector <std::string> & parameters)
 {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -1137,7 +1137,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
         if (labor == unit_labor::NONE)
         {
-            out.printerr("Could not find labor %s.\n", parameters[0].c_str());
+            out.printerr("Could not find labor {}.\n", parameters[0]);
             return CR_WRONG_USAGE;
         }
 
@@ -1171,7 +1171,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
 
         if (maximum < minimum || maximum < 0 || minimum < 0)
         {
-            out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>] [<talent pool>], %d > %d\n", maximum, minimum);
+            out.printerr("Syntax: autolabor <labor> <minimum> [<maximum>] [<talent pool>], {} > {}\n", maximum, minimum);
             return CR_WRONG_USAGE;
         }
 
@@ -1235,7 +1235,7 @@ command_result autolabor (color_ostream &out, std::vector <std::string> & parame
     {
         out.print("Automatically assigns labors to dwarves.\n"
             "Activate with 'enable autolabor', deactivate with 'disable autolabor'.\n"
-            "Current state: %d.\n", enable_autolabor);
+            "Current state: {}.\n", enable_autolabor);
 
         return CR_OK;
     }

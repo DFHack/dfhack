@@ -303,7 +303,7 @@ void Persistence::Internal::load(color_ostream& out) {
     std::filesystem::path save_path = getSavePath(world_name);
     std::vector<std::filesystem::path> files;
     if (0 != Filesystem::listdir(save_path, files)) {
-        DEBUG(persistence,out).print("not loading state; save directory doesn't exist: '%s'\n", save_path.c_str());
+        DEBUG(persistence,out).print("not loading state; save directory doesn't exist: '{}'\n", save_path);
         return;
     }
 
@@ -316,7 +316,7 @@ void Persistence::Internal::load(color_ostream& out) {
         found = true;
         std::filesystem::path path = save_path / fname;
         if (!load_file(path, entity_id))
-            out.printerr("Cannot load data from: '%s'\n", path.c_str());
+            out.printerr("Cannot load data from: '{}'\n", path);
     }
 
     if (found)

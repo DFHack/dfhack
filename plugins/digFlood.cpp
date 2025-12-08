@@ -181,7 +181,7 @@ command_result digFlood (color_ostream &out, std::vector <std::string> & paramet
             }
         }
 
-        out.print("Could not find material \"%s\".\n", parameters[a].c_str());
+        out.print("Could not find material \"{}\".\n", parameters[a]);
         return CR_WRONG_USAGE;
 
         loop: continue;

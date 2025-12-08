@@ -134,7 +134,7 @@ static void printVec(color_ostream &con, const char* msg, t_vecTriplet *vec,
     uintptr_t length = (intptr_t)vec->end - (intptr_t)vec->start;
     uintptr_t offset = pos - start;
 
-    con.print("%8s offset 0x%06zx, addr 0x%01zx, start 0x%01zx, length %zi",
+    con.print("{:8} offset 0x{:06x}, addr 0x{:01x}, start 0x{:01x}, length {:}",
               msg, offset, pos, intptr_t(vec->start), length);
     if (length >= 4 && length % 4 == 0)
     {
@@ -146,7 +146,7 @@ static void printVec(color_ostream &con, const char* msg, t_vecTriplet *vec,
         }
         std::string classname;
         if (Core::getInstance().vinfo->getVTableName(ptr, classname))
-            con.print(", 1st item: %s", classname.c_str());
+            con.print(", 1st item: {}", classname);
     }
     con.print("\n");
 }
@@ -197,10 +197,10 @@ command_result df_vectors (color_ostream &con, vector <string> & parameters)
         // Found the range containing the start
         if (!range.isInRange((void *)end))
         {
-            con.print("Scanning %zi bytes would read past end of memory "
+            con.print("Scanning {} bytes would read past end of memory "
                       "range.\n", bytes);
             size_t diff = end - (intptr_t)range.end;
-            con.print("Cutting bytes down by %zi.\n", diff);
+            con.print("Cutting bytes down by {}.\n", diff);
 
             end = (uintptr_t) range.end;
         }

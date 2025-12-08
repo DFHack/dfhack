@@ -209,8 +209,19 @@ namespace DFHack
         std::unique_ptr<DFHack::Process> p;
         std::shared_ptr<DFHack::VersionInfo> vinfo;
 
-        static void print(const char *format, ...) Wformat(printf,1,2);
-        static void printerr(const char *format, ...) Wformat(printf,1,2);
+        template <typename... Args>
+        static void print(fmt::format_string<Args...> format, Args&& ... args)
+        {
+            color_ostream_proxy proxy(getInstance().con);
+            proxy.print(format, std::forward<Args>(args)...);
+        }
+
+        template <typename... Args>
+        static void printerr(fmt::format_string<Args...> format, Args&& ... args)
+        {
+            color_ostream_proxy proxy(getInstance().con);
+            proxy.printerr(format, std::forward<Args>(args)...);
+        }
 
         PluginManager* getPluginManager() const { return plug_mgr; }
         HotkeyManager* getHotkeyManager() { return hotkey_mgr; }

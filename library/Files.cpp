@@ -91,4 +91,3 @@ namespace DFHack
         return fs::path();
     }
 }
-

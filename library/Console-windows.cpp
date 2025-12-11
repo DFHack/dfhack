@@ -512,6 +512,7 @@ bool Console::init(bool)
 // FIXME: looks awfully empty, doesn't it?
 bool Console::shutdown(void)
 {
+    assert(inited);
     std::lock_guard<std::recursive_mutex> lock{*wlock};
     FreeConsole();
     inited = false;

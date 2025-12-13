@@ -80,7 +80,7 @@ static bool moveToInventory(df::item *item, df::unit *unit, df::body_part_raw * 
     }
     else if(!item->isClothing() && !item->isArmorNotClothing())
     {
-        if (verbose) { WARN(log).print("Item %d is not clothing or armor; it cannot be equipped.  Please choose a different item (or use the Ignore option if you really want to equip an inappropriate item).\n", item->id); }
+        if (verbose) { WARN(log).print("Item {} is not clothing or armor; it cannot be equipped.  Please choose a different item (or use the Ignore option if you really want to equip an inappropriate item).\n", item->id); }
         return false;
     }
     else if (item->getType() != df::enums::item_type::GLOVES &&
@@ -90,22 +90,22 @@ static bool moveToInventory(df::item *item, df::unit *unit, df::body_part_raw * 
         item->getType() != df::enums::item_type::SHOES &&
         !targetBodyPart)
     {
-        if (verbose) { WARN(log).print("Item %d is of an unrecognized type; it cannot be equipped (because the module wouldn't know where to put it).\n", item->id); }
+        if (verbose) { WARN(log).print("Item {} is of an unrecognized type; it cannot be equipped (because the module wouldn't know where to put it).\n", item->id); }
         return false;
     }
     else if (itemOwner && itemOwner->id != unit->id)
     {
-        if (verbose) { WARN(log).print("Item %d is owned by someone else.  Equipping it on this unit is not recommended.  Please use DFHack's Confiscate plugin, choose a different item, or use the Ignore option to proceed in spite of this warning.\n", item->id); }
+        if (verbose) { WARN(log).print("Item {} is owned by someone else.  Equipping it on this unit is not recommended.  Please use DFHack's Confiscate plugin, choose a different item, or use the Ignore option to proceed in spite of this warning.\n", item->id); }
         return false;
     }
     else if (item->flags.bits.in_inventory)
     {
-        if (verbose) { WARN(log).print("Item %d is already in a unit's inventory.  Direct inventory transfers are not recommended; please move the item to the ground first (or use the Ignore option).\n", item->id); }
+        if (verbose) { WARN(log).print("Item {} is already in a unit's inventory.  Direct inventory transfers are not recommended; please move the item to the ground first (or use the Ignore option).\n", item->id); }
         return false;
     }
     else if (item->flags.bits.in_job)
     {
-        if (verbose) { WARN(log).print("Item %d is reserved for use in a queued job.  Equipping it is not recommended, as this might interfere with the completion of vital jobs.  Use the Ignore option to ignore this warning.\n", item->id); }
+        if (verbose) { WARN(log).print("Item {} is reserved for use in a queued job.  Equipping it is not recommended, as this might interfere with the completion of vital jobs.  Use the Ignore option to ignore this warning.\n", item->id); }
         return false;
     }
 
@@ -132,45 +132,45 @@ static bool moveToInventory(df::item *item, df::unit *unit, df::body_part_raw * 
         else if (bpIndex < unit->body.body_plan->body_parts.size())
         {
             // The current body part is not the one that was specified in the function call, but we can keep searching
-            if (verbose) { WARN(log).print("Found bodypart %s; not a match; continuing search.\n", currPart->token.c_str()); }
+            if (verbose) { WARN(log).print("Found bodypart {}; not a match; continuing search.\n", currPart->token); }
             continue;
         }
         else
         {
             // The specified body part has not been found, and we've reached the end of the list.  Report failure.
-            if (verbose) { WARN(log).print("The specified body part (%s) does not belong to the chosen unit.  Please double-check to ensure that your spelling is correct, and that you have not chosen a dismembered bodypart.\n",targetBodyPart->token.c_str()); }
+            if (verbose) { WARN(log).print("The specified body part ({}) does not belong to the chosen unit.  Please double-check to ensure that your spelling is correct, and that you have not chosen a dismembered bodypart.\n",targetBodyPart->token); }
             return false;
         }
 
-        if (verbose) { DEBUG(log).print("Inspecting bodypart %s.\n", currPart->token.c_str()); }
+        if (verbose) { DEBUG(log).print("Inspecting bodypart {}.\n", currPart->token); }
 
         // Inspect the current bodypart
         if (item->getType() == df::enums::item_type::GLOVES && currPart->flags.is_set(df::body_part_raw_flags::GRASP) &&
             ((item->getGloveHandedness() == const_GloveLeftHandedness && currPart->flags.is_set(df::body_part_raw_flags::LEFT)) ||
             (item->getGloveHandedness() == const_GloveRightHandedness && currPart->flags.is_set(df::body_part_raw_flags::RIGHT))))
         {
-            if (verbose) { DEBUG(log).print("Hand found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Hand found ({}).", currPart->token); }
         }
         else if (item->getType() == df::enums::item_type::HELM && currPart->flags.is_set(df::body_part_raw_flags::HEAD))
         {
-            if (verbose) { DEBUG(log).print("Head found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Head found ({}).", currPart->token); }
         }
         else if (item->getType() == df::enums::item_type::ARMOR && currPart->flags.is_set(df::body_part_raw_flags::UPPERBODY))
         {
-            if (verbose) { DEBUG(log).print("Upper body found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Upper body found ({}).", currPart->token); }
         }
         else if (item->getType() == df::enums::item_type::PANTS && currPart->flags.is_set(df::body_part_raw_flags::LOWERBODY))
         {
-            if (verbose) { DEBUG(log).print("Lower body found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Lower body found ({}).", currPart->token); }
         }
         else if (item->getType() == df::enums::item_type::SHOES && currPart->flags.is_set(df::body_part_raw_flags::STANCE))
         {
-            if (verbose) { DEBUG(log).print("Foot found (%s)...", currPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Foot found ({}).", currPart->token); }
         }
         else if (targetBodyPart && ignoreRestrictions)
         {
             // The BP in question would normally be considered ineligible for equipment.  But since it was deliberately specified by the user, we'll proceed anyways.
-            if (verbose) { DEBUG(log).print("Non-standard bodypart found (%s)...", targetBodyPart->token.c_str()); }
+            if (verbose) { DEBUG(log).print("Non-standard bodypart found ({}).", targetBodyPart->token); }
         }
         else if (targetBodyPart)
         {
@@ -205,7 +205,7 @@ static bool moveToInventory(df::item *item, df::unit *unit, df::body_part_raw * 
                     // Collision detected; have we reached the limit?
                     if (++collisions >= multiEquipLimit)
                     {
-                        if (verbose) { WARN(log).print(" but it already carries %d piece(s) of equipment.  Either remove the existing equipment or use the Multi option.\n", multiEquipLimit); }
+                        if (verbose) { WARN(log).print(" but it already carries {} piece(s) of equipment.  Either remove the existing equipment or use the Multi option.\n", multiEquipLimit); }
                         confirmedBodyPart = NULL;
                         break;
                     }
@@ -382,13 +382,13 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
             if (targetBodyPart->token.compare(targetBodyPartCode) == 0)
             {
                 // It is indeed a match; exit the loop (while leaving the variable populated)
-                if (verbose) { INFO(log).print("Matching bodypart (%s) found.\n", targetBodyPart->token.c_str()); }
+                if (verbose) { INFO(log).print("Matching bodypart ({}) found.\n", targetBodyPart->token); }
                 break;
             }
             else
             {
                 // Not a match; nullify the variable (it will get re-populated on the next pass through the loop)
-                if (verbose) { WARN(log).print("Bodypart \"%s\" does not match \"%s\".\n", targetBodyPart->token.c_str(), targetBodyPartCode.c_str()); }
+                if (verbose) { WARN(log).print("Bodypart ({}) does not match ({}).\n", targetBodyPart->token, targetBodyPartCode); }
                 targetBodyPart = NULL;
             }
         }
@@ -396,7 +396,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
         if (!targetBodyPart)
         {
             // Loop iteration is complete but no match was found.
-            WARN(log).print("The unit does not possess a bodypart of type \"%s\".  Please check the spelling or choose a different unit.\n", targetBodyPartCode.c_str());
+            WARN(log).print("The unit does not possess a bodypart of type ({}).  Please check the spelling or choose a different unit.\n", targetBodyPartCode);
             return CR_FAILURE;
         }
     }
@@ -466,7 +466,7 @@ command_result df_forceequip(color_ostream &out, vector <string> & parameters)
 
 
     if (itemsEquipped == 0 && !verbose) { WARN(log).print("Some items were found but no equipment changes could be made.  Use the /verbose switch to display the reasons for failure.\n"); }
-    if (itemsEquipped > 0) { INFO(log).print("%d items equipped.\n", itemsEquipped); }
+    if (itemsEquipped > 0) { INFO(log).print("{} items equipped.\n", itemsEquipped); }
 
     // Note: we might expect to recalculate the unit's weight at this point, in order to account for the
     // added items.  In fact, this recalculation occurs automatically during each dwarf's "turn".

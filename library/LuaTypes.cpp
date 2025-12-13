@@ -1253,7 +1253,7 @@ int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id
         field_error(state, UPVAL_METHOD_NAME, e.what(), "invoke");
     }
     catch (std::exception &e) {
-        std::string tmp = stl_sprintf("C++ exception: %s", e.what());
+        std::string tmp = fmt::format("C++ exception: {}", e.what());
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
     }
 

@@ -35,6 +35,8 @@ distribution.
 #include <vector>
 #include <filesystem>
 
+#include "Format.h"
+
 #ifndef WIN32
 #include <dirent.h>
 #include <errno.h>
@@ -195,7 +197,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         cerr << "1KB hexdump follows:" << endl;
         for(int i = 0; i < 64; i++)
         {
-            fprintf(stderr, "%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x\n",
+            fmt::print(std::cerr, "{:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}\n",
                     first_kb[i*16],
                     first_kb[i*16+1],
                     first_kb[i*16+2],
@@ -216,7 +218,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         }
         free(wd);
 #else /* WIN32 */
-        cerr << "PE timestamp: " << std::format("{:#0x}", my_pe) << endl;
+        cerr << "PE timestamp: " << fmt::format("{:#0x}", my_pe) << endl;
 #endif /* WIN32 */
     }
 }

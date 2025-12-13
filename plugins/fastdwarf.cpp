@@ -37,7 +37,7 @@ enum ConfigValues {
 static command_result do_command(color_ostream &out, vector<string> & parameters);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> & commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
 
     commands.push_back(PluginCommand(
         "fastdwarf",
@@ -48,7 +48,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
 }
 
 static void set_state(color_ostream &out, int fast, int tele) {
-    DEBUG(control,out).print("setting state: fast=%d, tele=%d\n", fast, tele);
+    DEBUG(control,out).print("setting state: fast={}, tele={}\n", fast, tele);
     is_enabled = fast || tele;
     config.set_int(CONFIG_FAST, fast);
     config.set_int(CONFIG_TELE, tele);
@@ -61,14 +61,14 @@ static void set_state(color_ostream &out, int fast, int tele) {
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         set_state(out, enable ? 1 : 0, 0);
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -76,7 +76,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
 
     // make sure the debug flag doesn't get left on
     if (debug_turbospeed)
@@ -94,7 +94,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         set_state(out, false, false);
     } else {
         is_enabled = config.get_int(CONFIG_FAST) || config.get_int(CONFIG_TELE);
-        DEBUG(control,out).print("loading persisted state: fast=%d, tele=%d\n",
+        DEBUG(control,out).print("loading persisted state: fast={}, tele={}\n",
             config.get_int(CONFIG_FAST),
             config.get_int(CONFIG_TELE));
     }
@@ -105,7 +105,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -141,7 +141,7 @@ static void do_tele(color_ostream &out, df::unit * unit) {
     if (!Maps::isTileVisible(unit->path.dest))
         return;
 
-    DEBUG(cycle,out).print("teleporting unit %d\n", unit->id);
+    DEBUG(cycle,out).print("teleporting unit {}\n", unit->id);
 
     if (!Units::teleport(unit, unit->path.dest))
         return;
@@ -150,7 +150,7 @@ static void do_tele(color_ostream &out, df::unit * unit) {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    DEBUG(cycle,out).print("running {} cycle\n", plugin_name);
 
     // fast mode 2 is handled by DF itself
     bool is_fast = config.get_int(CONFIG_FAST) == 1;
@@ -161,7 +161,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
             do_tele(out, unit);
 
         if (is_fast) {
-            DEBUG(cycle,out).print("fastifying unit %d\n", unit->id);
+            DEBUG(cycle,out).print("fastifying unit {}\n", unit->id);
             Units::setGroupActionTimers(out, unit, 1, df::unit_action_type_group::All);
         }
     });
@@ -176,7 +176,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 static command_result do_command(color_ostream &out, vector <string> & parameters)
 {
     if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -186,7 +186,7 @@ static command_result do_command(color_ostream &out, vector <string> & parameter
         return CR_WRONG_USAGE;
 
     if (num_params == 0 || parameters[0] == "status") {
-        out.print("Current state: fast = %d, teleport = %d.\n",
+        out.print("Current state: fast = {}, teleport = {}.\n",
             config.get_int(CONFIG_FAST),
             config.get_int(CONFIG_TELE));
         return CR_OK;
@@ -196,11 +196,11 @@ static command_result do_command(color_ostream &out, vector <string> & parameter
     int tele = num_params >= 2 ? string_to_int(parameters[1]) : 0;
 
     if (fast < 0 || fast > 2) {
-        out.printerr("Invalid value for fast: '%s'", parameters[0].c_str());
+        out.printerr("Invalid value for fast: '{}'", parameters[0]);
         return CR_WRONG_USAGE;
     }
     if (tele < 0 || tele > 1) {
-        out.printerr("Invalid value for tele: '%s'", parameters[1].c_str());
+        out.printerr("Invalid value for tele: '{}'", parameters[1]);
         return CR_WRONG_USAGE;
     }
 

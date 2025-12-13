@@ -114,7 +114,7 @@ command_result color(color_ostream &out, std::vector<std::string> &params)
         }
         else if (p != "enable")
         {
-            out.printerr("Unrecognized option: %s\n", p.c_str());
+            out.printerr("Unrecognized option: {}\n", p);
             return CR_WRONG_USAGE;
         }
     }

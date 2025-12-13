@@ -309,7 +309,7 @@ std::string MaterialInfo::getToken() const
         return "NONE";
 
     if (!material)
-        return stl_sprintf("INVALID:%d:%d", type, index);
+        return fmt::format("INVALID:{}:{}", type, index);
 
     switch (mode) {
     case Builtin:
@@ -327,7 +327,7 @@ std::string MaterialInfo::getToken() const
     case Plant:
         return "PLANT:" + plant->id + ":" + material->id;
     default:
-        return stl_sprintf("INVALID_MODE:%d:%d", type, index);
+        return fmt::format("INVALID_MODE:{}:{}", type, index);
     }
 }
 
@@ -337,7 +337,7 @@ std::string MaterialInfo::toString(uint16_t temp, bool named) const
         return "any";
 
     if (!material)
-        return stl_sprintf("INVALID:%d:%d", type, index);
+        return fmt::format("INVALID:{}:{}", type, index);
 
     df::matter_state state = matter_state::Solid;
     if (temp >= material->heat.melting_point)
@@ -350,7 +350,7 @@ std::string MaterialInfo::toString(uint16_t temp, bool named) const
         name = material->prefix + " " + name;
 
     if (named && figure)
-        name += stl_sprintf(" of HF %d", index);
+        name += fmt::format(" of HF {}", index);
     return name;
 }
 

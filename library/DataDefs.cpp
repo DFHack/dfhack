@@ -262,7 +262,7 @@ const std::string bit_container_identity::getFullName(const type_identity *) con
 const std::string df::buffer_container_identity::getFullName(const type_identity *item) const
 {
     return (item ? item->getFullName() : std::string("void")) +
-           (size > 0 ? stl_sprintf("[%d]", size) : std::string("[]"));
+           (size > 0 ? fmt::format("[{}]", size) : std::string("[]"));
 }
 
 union_identity::union_identity(size_t size, const TAllocateFn alloc,
@@ -482,7 +482,7 @@ void DFHack::bitfieldToString(std::vector<std::string> *pvec, const void *p,
             std::string name = format_key(items[i].name, i);
 
             if (items[i].size > 1)
-                name += stl_sprintf("=%u", value);
+                name += fmt::format("={}", value);
 
             pvec->push_back(name);
         }

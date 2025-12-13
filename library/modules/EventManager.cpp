@@ -71,7 +71,10 @@ static int32_t eventLastTick[EventType::EVENT_MAX];
 static const int32_t ticksPerYear = 403200;
 
 void DFHack::EventManager::registerListener(EventType::EventType e, EventHandler handler) {
-    DEBUG(log).print("registering handler %p from plugin %s for event %d\n", handler.eventHandler, !handler.plugin ? "<null>" : handler.plugin->getName().c_str(), e);
+    DEBUG(log).print("registering handler {} from plugin {} for event {}\n",
+        reinterpret_cast<void*>(handler.eventHandler),
+        handler.plugin ? handler.plugin->getName() : "<null>",
+        static_cast<int>(e));
     handlers[e].insert(pair<Plugin*, EventHandler>(handler.plugin, handler));
 }
 
@@ -87,7 +90,9 @@ int32_t DFHack::EventManager::registerTick(EventHandler handler, int32_t when, b
     }
     handler.freq = when;
     tickQueue.insert(pair<int32_t, EventHandler>(handler.freq, handler));
-    DEBUG(log).print("registering handler %p from plugin %s for event TICK\n", handler.eventHandler, !handler.plugin ? "<null>" : handler.plugin->getName().c_str());
+    DEBUG(log).print("registering handler {} from plugin {} for event TICK\n",
+        reinterpret_cast<void*>(handler.eventHandler),
+        handler.plugin ? handler.plugin->getName() : "<null>");
     handlers[EventType::TICK].insert(pair<Plugin*,EventHandler>(handler.plugin,handler));
     return when;
 }
@@ -113,7 +118,10 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
             i++;
             continue;
         }
-        DEBUG(log).print("unregistering handler %p from plugin %s for event %d\n", handler.eventHandler, !handler.plugin ? "<null>" : handler.plugin->getName().c_str(), e);
+        DEBUG(log).print("unregistering handler {} from plugin {} for event {}\n",
+            reinterpret_cast<void*>(handler.eventHandler),
+            handler.plugin ? handler.plugin->getName() : "<null>",
+            static_cast<int>(e));
         i = handlers[e].erase(i);
         if ( e == EventType::TICK )
             removeFromTickQueue(handler);
@@ -121,7 +129,8 @@ void DFHack::EventManager::unregister(EventType::EventType e, EventHandler handl
 }
 
 void DFHack::EventManager::unregisterAll(Plugin* plugin) {
-    DEBUG(log).print("unregistering all handlers for plugin %s\n", !plugin ? "<null>" : plugin->getName().c_str());
+    DEBUG(log).print("unregistering all handlers for plugin {}\n",
+        plugin ? plugin->getName() : "<null>");
     for ( auto i = handlers[EventType::TICK].find(plugin); i != handlers[EventType::TICK].end(); i++ ) {
         if ( (*i).first != plugin )
             break;
@@ -408,7 +417,7 @@ void DFHack::EventManager::manageEvents(color_ostream& out) {
     CoreSuspender suspender;
 
     int32_t tick = df::global::world->frame_counter;
-    TRACE(log,out).print("processing events at tick %d\n", tick);
+    TRACE(log,out).print("processing events at tick {}\n", tick);
 
     auto &core = Core::getInstance();
     auto &counters = core.perf_counters;
@@ -599,13 +608,13 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
         df::job& job1 = *(*j).second;
         out.print("new job\n"
-            "  location         : 0x%X\n"
-            "  id               : %d\n"
-            "  type             : %d %s\n"
-            "  working          : %d\n"
-            "  completion_timer : %d\n"
-            "  workerID         : %d\n"
-            "  time             : %d -> %d\n"
+            "  location         : {:#X}\n"
+            "  id               : {}\n"
+            "  type             : {} {}\n"
+            "  working          : {}\n"
+            "  completion_timer : {}\n"
+            "  workerID         : {}\n"
+            "  time             : {} -> {}\n"
             "\n", job1.list_link->item, job1.id, job1.job_type, ENUM_ATTR(job_type, caption, job1.job_type), job1.flags.bits.working, job1.completion_timer, getWorkerID(&job1), tick0, tick1);
     }
     for ( auto i = prevJobs.begin(); i != prevJobs.end(); i++ ) {
@@ -613,13 +622,13 @@ static void manageJobCompletedEvent(color_ostream& out) {
         auto j = nowJobs.find((*i).first);
         if ( j == nowJobs.end() ) {
             out.print("job deallocated\n"
-                "  location         : 0x%X\n"
-                "  id               : %d\n"
-                "  type             : %d %s\n"
-                "  working          : %d\n"
-                "  completion_timer : %d\n"
-                "  workerID         : %d\n"
-                "  time             : %d -> %d\n"
+                "  location         : {:#X}\n"
+                "  id               : {}\n"
+                "  type             : {} {}\n"
+                "  working          : {}\n"
+                "  completion_timer : {}\n"
+                "  workerID         : {}\n"
+                "  time             : {} -> {}\n"
                 ,job0.list_link == NULL ? 0 : job0.list_link->item, job0.id, job0.job_type, ENUM_ATTR(job_type, caption, job0.job_type), job0.flags.bits.working, job0.completion_timer, getWorkerID(&job0), tick0, tick1);
             continue;
         }
@@ -631,14 +640,14 @@ static void manageJobCompletedEvent(color_ostream& out) {
             continue;
 
         out.print("job change\n"
-            "  location         : 0x%X -> 0x%X\n"
-            "  id               : %d -> %d\n"
-            "  type             : %d -> %d\n"
-            "  type             : %s -> %s\n"
-            "  working          : %d -> %d\n"
-            "  completion timer : %d -> %d\n"
-            "  workerID         : %d -> %d\n"
-            "  time             : %d -> %d\n"
+            "  location         : {:#X} -> {:#X}\n"
+            "  id               : {} -> {}\n"
+            "  type             : {} -> {}\n"
+            "  type             : {} -> {}\n"
+            "  working          : {} -> {}\n"
+            "  completion timer : {} -> {}\n"
+            "  workerID         : {} -> {}\n"
+            "  time             : {} -> {}\n"
             "\n",
             job0.list_link->item, job1.list_link->item,
             job0.id, job1.id,
@@ -1229,7 +1238,7 @@ static void manageUnitAttackEvent(color_ostream& out) {
             if ( reportStr.find("severed part") )
                 continue;
             if ( Once::doOnce("EventManager neither wound") ) {
-                out.print("%s, %d: neither wound: %s\n", __FILE__, __LINE__, reportStr.c_str());
+                out.print("{}, {}: neither wound: {}\n", __FILE__, __LINE__, reportStr.c_str());
             }
         }
     }
@@ -1352,9 +1361,8 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
     //if trying attack-defend pair and it fails to find attacker, try defend only
     InteractionData result = /*(InteractionData)*/ { std::string(), std::string(), -1, -1, -1, -1 };
     if ( attackers.size() > 1 ) {
-//out.print("%s,%d\n",__FILE__,__LINE__);
         if ( Once::doOnce("EventManager interaction ambiguous attacker") ) {
-            out.print("%s,%d: ambiguous attacker on report\n \'%s\'\n '%s'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text.c_str() : "", defendEvent ? defendEvent->text.c_str() : "");
+            out.print("{},{}: ambiguous attacker on report\n \'{}\'\n \'{}\'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text : "", defendEvent ? defendEvent->text : "");
         }
     } else if ( attackers.empty() ) {
 //out.print("%s,%d\n",__FILE__,__LINE__);
@@ -1368,7 +1376,7 @@ static InteractionData getAttacker(color_ostream& out, df::report* attackEvent, 
             result.defender = defenders[0]->id;
         if ( defenders.size() > 1 ) {
             if ( Once::doOnce("EventManager interaction ambiguous defender") ) {
-                out.print("%s,%d: ambiguous defender: shouldn't happen. On report\n \'%s\'\n '%s'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text.c_str() : "", defendEvent ? defendEvent->text.c_str() : "");
+                out.print("{}, {}: ambiguous defender: shouldn't happen. On report\n \'{}\'\n \'{}\'\n", __FILE__, __LINE__, attackEvent ? attackEvent->text : "", defendEvent ? defendEvent->text : "");
             }
         }
         result.attackVerb = attackVerb;
@@ -1395,7 +1403,7 @@ static vector<df::unit*> gatherRelevantUnits(color_ostream& out, df::report* r1,
         vector<int32_t>& units = reportToRelevantUnits[report->id];
         if ( units.size() > 2 ) {
             if ( Once::doOnce("EventManager interaction too many relevant units") ) {
-                out.print("%s,%d: too many relevant units. On report\n \'%s\'\n", __FILE__, __LINE__, report->text.c_str());
+                out.print("{},{}: too many relevant units. On report\n \'{}\'\n", __FILE__, __LINE__, report->text);
             }
         }
         for (int & unit_id : units)

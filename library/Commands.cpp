@@ -49,7 +49,7 @@ namespace DFHack
                 "See more commands by running 'ls'.\n\n"
             );
 
-            con.print("DFHack version %s\n", dfhack_version_desc().c_str());
+            con.print("DFHack version {}\n", dfhack_version_desc());
         }
         else
         {
@@ -100,12 +100,12 @@ namespace DFHack
                 }
             }
             if (ret != CR_OK)
-                con.printerr("%s failed\n", first.c_str());
+                con.printerr("{} failed\n", first.c_str());
             return ret;
         }
         else
         {
-            con.printerr("%s: no arguments\n", first.c_str());
+            con.printerr("{}: no arguments\n", first.c_str());
             return CR_FAILURE;
         }
 
@@ -128,7 +128,7 @@ namespace DFHack
 
                 if (has_backslashes(part))
                 {
-                    con.printerr("Replacing backslashes with forward slashes in \"%s\"\n", part.c_str());
+                    con.printerr("Replacing backslashes with forward slashes in \"{}\"\n", part);
                     replace_backslashes_with_forwardslashes(part);
                 }
 
@@ -146,20 +146,20 @@ namespace DFHack
                     else
                     {
                         res = CR_NOT_FOUND;
-                        con.printerr("No such plugin or Lua script: %s\n", part.c_str());
+                        con.printerr("No such plugin or Lua script: {}\n", part);
                     }
                 }
                 else if (!plug->can_set_enabled())
                 {
                     res = CR_NOT_IMPLEMENTED;
-                    con.printerr("Cannot %s plugin: %s\n", first.c_str(), part.c_str());
+                    con.printerr("Cannot {} plugin: {}\n", first, part);
                 }
                 else
                 {
                     res = plug->set_enabled(con, enable);
 
                     if (res != CR_OK || plug->is_enabled() != enable)
-                        con.printerr("Could not %s plugin: %s\n", first.c_str(), part.c_str());
+                        con.printerr("Could not {} plugin: {}\n", first, part);
                 }
             }
 
@@ -174,7 +174,7 @@ namespace DFHack
                 if (!plug->can_be_enabled()) continue;
 
                 con.print(
-                    "%21s  %-3s%s\n",
+                    "{:>21}  {:<3}{}\n",
                     (key + ":").c_str(),
                     plug->is_enabled() ? "on" : "off",
                     plug->can_set_enabled() ? "" : " (controlled internally)"
@@ -189,8 +189,8 @@ namespace DFHack
 
     command_result Commands::plug(color_ostream& con, Core& core, const std::string& first, const std::vector<std::string>& parts)
     {
-        constexpr auto header_format = "%30s %10s %4s %8s\n";
-        constexpr auto row_format = "%30s %10s %4zu %8s\n";
+        constexpr auto header_format = "{:30} {:10} {:4} {:8}\n";
+        constexpr auto row_format = header_format;
 
         con.print(header_format, "Name", "State", "Cmds", "Enabled");
 
@@ -227,7 +227,7 @@ namespace DFHack
             }
             con.color(color);
             con.print(row_format,
-                plug->getName().c_str(),
+                plug->getName(),
                 Plugin::getStateDescription(plug->getState()),
                 plug->size(),
                 (plug->can_be_enabled()
@@ -293,11 +293,11 @@ namespace DFHack
             for (const auto& part : parts | std::views::drop(2) | std::views::reverse) {
                 auto spec = KeySpec::parse(keystr, &parse_error);
                 if (!spec.has_value()) {
-                    con.printerr("%s\n", parse_error.c_str());
+                    con.printerr("{}\n", parse_error);
                     break;
                 }
                 if (!hotkey_mgr->addKeybind(spec.value(), part)) {
-                    con.printerr("Invalid command: '%s'\n", part.c_str());
+                    con.printerr("Invalid command: '{}'\n", part);
                     break;
                 }
             }
@@ -306,7 +306,7 @@ namespace DFHack
             for (const auto& part : parts | std::views::drop(1)) {
                 auto spec = KeySpec::parse(part, &parse_error);
                 if (!spec.has_value()) {
-                    con.printerr("%s\n", parse_error.c_str());
+                    con.printerr("{}\n", parse_error);
                 }
                 if (!hotkey_mgr->removeKeybind(spec.value())) {
                     con.printerr("No matching keybinds to remove\n");
@@ -317,7 +317,7 @@ namespace DFHack
         else if (parts.size() == 2 && parts[0] == "list") {
             auto spec = KeySpec::parse(parts[1], &parse_error);
             if (!spec.has_value()) {
-                con.printerr("%s\n", parse_error.c_str());
+                con.printerr("{}\n", parse_error);
                 return CR_FAILURE;
             }
             std::vector<std::string> list = hotkey_mgr->listKeybinds(spec.value());
@@ -326,7 +326,8 @@ namespace DFHack
             for (const auto& kb : list)
                 con << "  " << kb << std::endl;
         }
-        else {
+        else
+        {
             con << "Usage:\n"
                 << "  keybinding list <key>\n"
                 << "  keybinding clear <key>[@context]...\n"
@@ -350,7 +351,7 @@ namespace DFHack
             std::vector<std::string> cmd(parts.begin() + 2, parts.end());
             if (!core.AddAlias(name, cmd, parts[0] == "replace"))
             {
-                con.printerr("Could not add alias %s - already exists\n", name.c_str());
+                con.printerr("Could not add alias {} - already exists\n", name);
                 return CR_FAILURE;
             }
         }
@@ -358,7 +359,7 @@ namespace DFHack
         {
             if (!core.RemoveAlias(parts[1]))
             {
-                con.printerr("Could not remove alias %s\n", parts[1].c_str());
+                con.printerr("Could not remove alias {}\n", parts[1]);
                 return CR_FAILURE;
             }
         }
@@ -490,10 +491,10 @@ namespace DFHack
             {
                 if (!parts[1].size() || (state_script.event == sc_event_id(parts[1])))
                 {
-                    con.print("%s (%s): %s%s\n", sc_event_name(state_script.event).c_str(),
+                    con.print("{} ({}): {}{}\n", sc_event_name(state_script.event),
                         state_script.save_specific ? "save-specific" : "global",
                         state_script.save_specific ? "<save folder>/raw/" : "<DF folder>/",
-                        state_script.path.c_str());
+                        state_script.path);
                 }
             }
             return CR_OK;

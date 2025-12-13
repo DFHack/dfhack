@@ -1376,8 +1376,8 @@ static bool create_output_dir(color_ostream &out,
 
     // create output directory if it doesn't already exist
     if (!Filesystem::mkdir_recursive(parent_path)) {
-        out.printerr("could not create output directory: '%s'\n",
-                     parent_path.c_str());
+        out.printerr("could not create output directory: '{}'\n",
+                     parent_path);
         return false;
     }
     return true;
@@ -1667,7 +1667,7 @@ static command_result do_blueprint(color_ostream &out,
             command << " " << parameters[i];
         }
         string command_str = command.str();
-        out.print("launching %s\n", command_str.c_str());
+        out.print("launching {}\n", command_str);
 
         Core::getInstance().getHotkeyManager()->setHotkeyCommand(command_str);
         return CR_OK;
@@ -1695,7 +1695,7 @@ static command_result do_blueprint(color_ostream &out,
         }
     }
     if (!Maps::isValidTilePos(start)) {
-        out.printerr("Invalid start position: %d,%d,%d\n",
+        out.printerr("Invalid start position: {},{},{},\n",
                      start.x, start.y, start.z);
         return CR_FAILURE;
     }
@@ -1758,7 +1758,7 @@ command_result blueprint(color_ostream &out, vector<string> &parameters) {
         else {
             out.print("Generated blueprint file(s):\n");
             for (string &fname : files)
-                out.print("  %s\n", fname.c_str());
+                out.print("  {}\n", fname);
         }
     }
     return cr;

@@ -73,7 +73,7 @@ command_result tilesieve(color_ostream &out, std::vector<std::string> & params)
             if(seen.count(tt))
                 continue;
             seen.insert(tt);
-            out.print("Found tile %x @ %d %d %d\n", tt, block->map_pos.x + x, block->map_pos.y + y, block->map_pos.z);
+            out.print("Found tile {} @ {} {} {}\n", ENUM_AS_STR(tt), block->map_pos.x + x, block->map_pos.y + y, block->map_pos.z);
         }
     }
     return CR_OK;

@@ -42,10 +42,10 @@ static bool can_invoke(const string &cmdline, df::viewscreen *screen) {
 }
 
 static int cleanupHotkeys(lua_State *) {
-    DEBUG(log).print("cleaning up old stub keybindings for: %s\n", join_strings(", ", Gui::getCurFocus(true)).c_str());
+    DEBUG(log).print("cleaning up old stub keybindings for: {}\n", join_strings(", ", Gui::getCurFocus(true)));
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym) {
         string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
-        DEBUG(log).print("clearing keybinding: %s\n", keyspec.c_str());
+        DEBUG(log).print("clearing keybinding: {}\n", keyspec);
         Core::getInstance().getHotkeyManager()->removeKeybind(keyspec);
     });
     valid = false;
@@ -84,7 +84,7 @@ static void add_binding_if_valid(color_ostream &out, const string &sym, const st
     sorted_keys.push_back(sym);
     string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
     string binding = "hotkeys invoke " + int_to_string(sorted_keys.size() - 1);
-    DEBUG(log).print("adding keybinding: %s -> %s\n", keyspec.c_str(), binding.c_str());
+    DEBUG(log).print("adding keybinding: {} -> {}\n", keyspec, binding);
     Core::getInstance().getHotkeyManager()->addKeybind(keyspec, binding);
 }
 
@@ -123,10 +123,10 @@ static void list(color_ostream &out) {
     if (!valid)
         find_active_keybindings(out, Gui::getCurViewscreen(true), false);
 
-    out.print("Valid keybindings for the current focus:\n %s\n",
-              join_strings("\n", Gui::getCurFocus(true)).c_str());
+    out.print("Valid keybindings for the current focus:\n {}\n",
+              join_strings("\n", Gui::getCurFocus(true)));
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [&](const string &sym) {
-        out.print("%s: %s\n", sym.c_str(), current_bindings[sym].c_str());
+        out.print("{}: {}\n", sym, current_bindings[sym]);
     });
 
     if (!was_valid)
@@ -140,7 +140,7 @@ static bool invoke_command(color_ostream &out, const size_t index) {
         return false;
 
     auto cmd = current_bindings[sorted_keys[index]];
-    DEBUG(log).print("invoking command: '%s'\n", cmd.c_str());
+    DEBUG(log).print("invoking command: '{}'\n", cmd);
 
     {
         Screen::Hide hideGuard(screen, Screen::Hide::RESTORE_AT_TOP);
@@ -153,11 +153,11 @@ static bool invoke_command(color_ostream &out, const size_t index) {
 
 static command_result hotkeys_cmd(color_ostream &out, vector <string> & parameters) {
     if (!parameters.size()) {
-        DEBUG(log).print("invoking command: '%s'\n", INVOKE_MENU_DEFAULT_COMMAND.c_str());
+        DEBUG(log).print("invoking command: '{}'\n", INVOKE_MENU_DEFAULT_COMMAND);
         return Core::getInstance().runCommand(out, INVOKE_MENU_DEFAULT_COMMAND);
     } else if (parameters.size() == 2 && parameters[0] == "menu") {
         string cmd = INVOKE_MENU_BASE_COMMAND + parameters[1];
-        DEBUG(log).print("invoking command: '%s'\n", cmd.c_str());
+        DEBUG(log).print("invoking command: '{}'\n", cmd);
         return Core::getInstance().runCommand(out, cmd);
     }
 

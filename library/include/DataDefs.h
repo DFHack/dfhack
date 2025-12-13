@@ -35,6 +35,7 @@ distribution.
 
 #include "BitArray.h"
 #include "Export.h"
+#include "Format.h"
 
 struct lua_State;
 
@@ -981,7 +982,7 @@ namespace DFHack {
 #define ENUM_KEY_STR(enum,val) (DFHack::enum_item_key<df::enum>(val))
 #define ENUM_FIRST_ITEM(enum) (df::enum_traits<df::enum>::first_item)
 #define ENUM_LAST_ITEM(enum) (df::enum_traits<df::enum>::last_item)
-
+#define ENUM_AS_STR(val) (DFHack::enum_item_key(val))
 #define ENUM_NEXT_ITEM(enum,val) \
     (DFHack::next_enum_item<df::enum>(val))
 #define FOR_ENUM_ITEMS(enum,iter) \
@@ -1009,3 +1010,25 @@ namespace std {
         }
     };
 }
+
+template <>
+struct fmt::formatter<df::coord> : fmt::formatter<std::string_view>
+{
+    template <typename FormatContext>
+    auto format(const df::coord& c, FormatContext& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(
+            fmt::format("({}, {}, {})", c.x, c.y, c.z), ctx);
+    }
+};
+
+template <>
+struct fmt::formatter<df::coord2d> : fmt::formatter<std::string_view>
+{
+    template <typename FormatContext>
+    auto format(const df::coord2d& c, FormatContext& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(
+            fmt::format("({}, {})", c.x, c.y), ctx);
+    }
+};

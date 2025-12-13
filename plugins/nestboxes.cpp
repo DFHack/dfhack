@@ -46,7 +46,7 @@ static void do_cycle(color_ostream &out);
 
 static command_result do_command(color_ostream &out, std::vector<string> &parameters);
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -59,19 +59,19 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             do_cycle(out);
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -79,7 +79,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
 
     return CR_OK;
 }
@@ -95,7 +95,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     }
 
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
 
     return CR_OK;
@@ -104,7 +104,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -142,13 +142,13 @@ static df::burrow* getBurrow(color_ostream &out){
 
 static void printStatus(color_ostream &out){
     if (!is_enabled)
-        out.print("%s is disabled\n", plugin_name);
+        out.print("{} is disabled\n", plugin_name);
     else {
-        out.print("%s is enabled\n", plugin_name);
+        out.print("{} is enabled\n", plugin_name);
         auto burrow = getBurrow(out);
         if (burrow)
         {
-            out.print("only protecting eggs inside burrow: %s\n", burrow->name.c_str());
+            out.print("only protecting eggs inside burrow: {}\n", burrow->name);
         }
         else
         {
@@ -159,7 +159,7 @@ static void printStatus(color_ostream &out){
 
 static command_result do_command(color_ostream &out, std::vector<string> &parameters){
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -182,7 +182,7 @@ static command_result do_command(color_ostream &out, std::vector<string> &parame
 //
 
 static void do_cycle(color_ostream &out) {
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    DEBUG(cycle,out).print("running {} cycle\n", plugin_name);
 
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
@@ -209,7 +209,7 @@ static void do_cycle(color_ostream &out) {
                     if (sref && sref->data.job)
                         Job::removeJob(sref->data.job);
                 }
-                out.print("nestboxes: %d eggs %s\n", item->getStackSize(), fertile ? "forbidden" : "unforbidden");
+                out.print("nestboxes: {} eggs {}\n", item->getStackSize(), fertile ? "forbidden" : "unforbidden");
             }
         }
     }

@@ -773,7 +773,9 @@ local function get_cached_reaction_map()
     for _, reaction in ipairs(reactions) do
         local key = make_order_key(reaction.order)
         map[key] = reaction.name:lower()
+        df.delete(reaction.order)
     end
+    reactions = nil
 
     reaction_map_cache = map
     return reaction_map_cache

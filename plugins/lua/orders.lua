@@ -783,11 +783,11 @@ end
 
 local function get_order_search_key(order)
     local reaction_map = get_cached_reaction_map()
-    local key = make_order_key(order)
-    if reaction_map[key] then
-        return reaction_map[key]
+    if not reaction_map then
+        return nil
     end
-    return ""
+    local key = make_order_key(order)
+    return reaction_map[key]
 end
 
 OrdersSearchOverlay = defclass(OrdersSearchOverlay, overlay.OverlayWidget)

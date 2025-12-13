@@ -877,14 +877,11 @@ function OrdersSearchOverlay:init()
     self.minimized = false
 end
 
-function OrdersSearchOverlay:update_filter(text)
-    self.matched_indices = {}
-    self.current_match_idx = 0
-    search_cursor_visible = false
+function OrdersSearchOverlay:perform_search(text)
+    local matches = {}
 
     if text == '' then
-        self.subviews.main_panel.frame_title = 'Search'
-        return
+        return matches
     end
 
     local orders = df.global.world.manager_orders.all
@@ -892,11 +889,23 @@ function OrdersSearchOverlay:update_filter(text)
         local order = orders[i]
         local search_key = get_order_search_key(order)
         if search_key and utils.search_text(search_key, text) then
-            table.insert(self.matched_indices, i)
+            table.insert(matches, i)
         end
     end
 
-    self.subviews.main_panel.frame_title = 'Search: ' .. self:get_match_text()
+    return matches
+end
+
+function OrdersSearchOverlay:update_filter(text)
+    self.matched_indices = self:perform_search(text)
+    self.current_match_idx = 0
+    search_cursor_visible = false
+
+    if text == '' then
+        self.subviews.main_panel.frame_title = 'Search'
+    else
+        self.subviews.main_panel.frame_title = 'Search' .. self:get_match_text()
+    end
 end
 
 function OrdersSearchOverlay:on_submit()
@@ -910,22 +919,37 @@ function OrdersSearchOverlay:on_submit2()
 end
 
 function OrdersSearchOverlay:cycle_match(direction)
-    if #self.matched_indices == 0 then return end
+    local search_text = self.subviews.filter.text
 
-    self.current_match_idx = self.current_match_idx + direction
-    if direction > 0 and self.current_match_idx > #self.matched_indices then
-        self.current_match_idx = 1
-    elseif direction < 0 and self.current_match_idx < 1 then
-        self.current_match_idx = #self.matched_indices
+    local new_matches = self:perform_search(search_text)
+
+    if #new_matches == 0 then
+        self.matched_indices = {}
+        self.current_match_idx = 0
+        search_cursor_visible = false
+        self.subviews.main_panel.frame_title = 'Search'
+        return
     end
 
+    local new_match_idx = self.current_match_idx + direction
+
+    if new_match_idx > #new_matches then
+        new_match_idx = 1
+    elseif new_match_idx < 1 then
+        new_match_idx = #new_matches
+    end
+
+    self.matched_indices = new_matches
+    self.current_match_idx = new_match_idx
+
+    -- Scroll to the selected match
     local order_idx = self.matched_indices[self.current_match_idx]
     mi.info.work_orders.scroll_position_work_orders = order_idx
     search_last_scroll_position = order_idx
     search_cursor_visible = true
     order_count_at_highlight = #df.global.world.manager_orders.all
 
-    self.subviews.main_panel.frame_title = 'Search: ' .. self:get_match_text()
+    self.subviews.main_panel.frame_title = 'Search' .. self:get_match_text()
 end
 
 function OrdersSearchOverlay:get_match_text()
@@ -936,10 +960,10 @@ function OrdersSearchOverlay:get_match_text()
     end
 
     if self.current_match_idx == 0 then
-        return string.format('%d matches', total_matches)
+        return string.format(': %d matches', total_matches)
     end
 
-    return string.format('%d of %d', self.current_match_idx, total_matches)
+    return string.format(': %d of %d', self.current_match_idx, total_matches)
 end
 
 function OrdersSearchOverlay:has_matches()

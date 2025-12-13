@@ -1079,6 +1079,8 @@ function OrderHighlightOverlay:calculateSelectedOrderY()
 end
 
 function OrderHighlightOverlay:render(dc)
+    OrderHighlightOverlay.super.render(self, dc)
+
     if mi.job_details.open or not search_cursor_visible then return end
 
     local current_scroll = mi.info.work_orders.scroll_position_work_orders

@@ -8,11 +8,6 @@ local utils = require('utils')
 local widgets = require('gui.widgets')
 local stockflow = reqscript('internal/quickfort/stockflow')
 
--- Shared state for search cursor visibility
-local search_cursor_visible = false
-local search_last_scroll_position = -1
-local order_count_at_highlight = 0
-
 --
 -- OrdersOverlay
 --
@@ -722,6 +717,7 @@ end
 
 local search_cursor_visible = false
 local search_last_scroll_position = -1
+local order_count_at_highlight = 0
 
 local function make_order_key(order)
     local mat_cat_str = ''

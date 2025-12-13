@@ -1079,35 +1079,35 @@ function OrderHighlightOverlay:calculateSelectedOrderY()
 end
 
 function OrderHighlightOverlay:render(dc)
-    if mi.job_details.open then return end
+    if mi.job_details.open or not search_cursor_visible then return end
 
-    if search_cursor_visible then
-        local current_scroll = mi.info.work_orders.scroll_position_work_orders
-        local current_order_count = #df.global.world.manager_orders.all
+    local current_scroll = mi.info.work_orders.scroll_position_work_orders
+    local current_order_count = #df.global.world.manager_orders.all
 
-        -- Hide cursor when user manually scrolls
-        if search_last_scroll_position ~= -1 and current_scroll ~= search_last_scroll_position then
-            search_cursor_visible = false
-        end
+    -- Hide cursor when user manually scrolls
+    if search_last_scroll_position ~= -1 and current_scroll ~= search_last_scroll_position then
+        search_cursor_visible = false
+        return
+    end
 
-        -- Hide cursor when order list changes (orders added or removed)
-        if order_count_at_highlight ~= current_order_count then
-            search_cursor_visible = false
-        end
+    -- Hide cursor when order list changes (orders added or removed)
+    if order_count_at_highlight ~= current_order_count then
+        search_cursor_visible = false
+        return
+    end
 
-        -- Draw highlight arrows
-        local selected_y = self:calculateSelectedOrderY()
-        if selected_y then
-            local highlight_pen = dfhack.pen.parse{
-                fg=COLOR_BLACK,
-                bg=COLOR_WHITE,
-                bold=true,
-            }
+    -- Draw highlight arrows
+    local selected_y = self:calculateSelectedOrderY()
+    if selected_y then
+        local highlight_pen = dfhack.pen.parse{
+            fg=COLOR_BLACK,
+            bg=COLOR_WHITE,
+            bold=true,
+        }
 
-            dc:seek(ARROW_X, selected_y):string('|', highlight_pen)
-            dc:seek(ARROW_X, selected_y + 1):string('>', highlight_pen)
-            dc:seek(ARROW_X, selected_y + 2):string('|', highlight_pen)
-        end
+        dc:seek(ARROW_X, selected_y):string('|', highlight_pen)
+        dc:seek(ARROW_X, selected_y + 1):string('>', highlight_pen)
+        dc:seek(ARROW_X, selected_y + 2):string('|', highlight_pen)
     end
 end
 

@@ -1018,6 +1018,13 @@ end
 -- OrderHighlightOverlay
 -- -------------------
 
+local ORDER_HEIGHT = 3
+local TABS_WIDTH_THRESHOLD = 155
+local LIST_START_Y_ONE_TABS_ROW = 8
+local LIST_START_Y_TWO_TABS_ROWS = 10
+local BOTTOM_MARGIN = 9
+local ARROW_X = 10
+
 OrderHighlightOverlay = defclass(OrderHighlightOverlay, overlay.OverlayWidget)
 OrderHighlightOverlay.ATTRS{
     desc='Shows arrows next to the work order found by orders.search',
@@ -1026,24 +1033,13 @@ OrderHighlightOverlay.ATTRS{
     full_interface=true,
 }
 
-function OrderHighlightOverlay:init()
-    self.ORDER_HEIGHT = 3
-    self.TABS_WIDTH_THRESHOLD = 155
-    self.LIST_START_Y_ONE_TABS_ROW = 8
-    self.LIST_START_Y_TWO_TABS_ROWS = 10
-    self.BOTTOM_MARGIN = 9
-    self.ARROW_X = 10
-    self.ARROW_FG = COLOR_BLACK
-    self.ARROW_BG = COLOR_WHITE
-end
-
 function OrderHighlightOverlay:getListStartY()
     local rect = gui.get_interface_rect()
 
-    if rect.width >= self.TABS_WIDTH_THRESHOLD then
-        return self.LIST_START_Y_ONE_TABS_ROW
+    if rect.width >= TABS_WIDTH_THRESHOLD then
+        return LIST_START_Y_ONE_TABS_ROW
     else
-        return self.LIST_START_Y_TWO_TABS_ROWS
+        return LIST_START_Y_TWO_TABS_ROWS
     end
 end
 
@@ -1051,8 +1047,8 @@ function OrderHighlightOverlay:getViewportSize()
     local rect = gui.get_interface_rect()
     local list_start_y = self:getListStartY()
 
-    local available_height = rect.height - list_start_y - self.BOTTOM_MARGIN
-    return math.floor(available_height / self.ORDER_HEIGHT)
+    local available_height = rect.height - list_start_y - BOTTOM_MARGIN
+    return math.floor(available_height / ORDER_HEIGHT)
 end
 
 function OrderHighlightOverlay:calculateSelectedOrderY()
@@ -1077,7 +1073,7 @@ function OrderHighlightOverlay:calculateSelectedOrderY()
 
     local pos_in_viewport = scroll_pos - viewport_start
 
-    local selected_y = list_start_y + (pos_in_viewport * self.ORDER_HEIGHT)
+    local selected_y = list_start_y + (pos_in_viewport * ORDER_HEIGHT)
 
     return selected_y
 end
@@ -1103,14 +1099,14 @@ function OrderHighlightOverlay:render(dc)
         local selected_y = self:calculateSelectedOrderY()
         if selected_y then
             local highlight_pen = dfhack.pen.parse{
-                fg=self.ARROW_FG,
-                bg=self.ARROW_BG,
+                fg=COLOR_BLACK,
+                bg=COLOR_WHITE,
                 bold=true,
             }
 
-            dc:seek(self.ARROW_X, selected_y):string('|', highlight_pen)
-            dc:seek(self.ARROW_X, selected_y + 1):string('>', highlight_pen)
-            dc:seek(self.ARROW_X, selected_y + 2):string('|', highlight_pen)
+            dc:seek(ARROW_X, selected_y):string('|', highlight_pen)
+            dc:seek(ARROW_X, selected_y + 1):string('>', highlight_pen)
+            dc:seek(ARROW_X, selected_y + 2):string('|', highlight_pen)
         end
     end
 end

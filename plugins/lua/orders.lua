@@ -755,7 +755,13 @@ local function make_order_key(order)
         encrust_str)
 end
 
-local function build_reaction_map()
+local reaction_map_cache = nil
+
+local function get_cached_reaction_map()
+    if reaction_map_cache then
+        return reaction_map_cache
+    end
+
     local can_read_stockflow = dfhack.isWorldLoaded() and dfhack.isMapLoaded()
     if not can_read_stockflow then
         return nil
@@ -769,15 +775,7 @@ local function build_reaction_map()
         map[key] = reaction.name:lower()
     end
 
-    return map
-end
-
-local reaction_map_cache = nil
-
-local function get_cached_reaction_map()
-    if not reaction_map_cache then
-        reaction_map_cache = build_reaction_map()
-    end
+    reaction_map_cache = map
     return reaction_map_cache
 end
 

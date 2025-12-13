@@ -1035,11 +1035,6 @@ function OrderHighlightOverlay:init()
     self.ARROW_X = 10
     self.ARROW_FG = COLOR_BLACK
     self.ARROW_BG = COLOR_WHITE
-
-    self.cached_list_start_y = nil
-    self.cached_viewport_size = nil
-    self.cached_screen_width = nil
-    self.cached_screen_height = nil
 end
 
 function OrderHighlightOverlay:getListStartY()

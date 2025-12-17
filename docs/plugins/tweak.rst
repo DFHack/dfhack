@@ -45,6 +45,9 @@ Commands
     Fixes crafted items not wearing out over time (:bug:`6003`). With this
     tweak, items made from cloth and leather will gain a level of wear every 20
     in-game years.
+``drawbridge-tiles``
+    Makes raising bridges in ASCII mode render with different tiles when they
+    are raised.
 ``eggs-fertile``
     Displays an indicator on fertile eggs.
 ``fast-heat``

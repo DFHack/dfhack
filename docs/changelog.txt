@@ -60,6 +60,7 @@ Template for new versions:
 
 ## New Features
 - `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
+- `tweak`: ``drawbridge-tiles``: Make it so raised bridges render with different tiles in ASCII mode to make it more obvious that they ARE raised (and to indicate their direction)
 
 ## Fixes
 - `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit

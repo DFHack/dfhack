@@ -790,6 +790,25 @@ local function get_order_search_key(order)
     return reaction_map[key]
 end
 
+local function perform_search(text)
+    local matches = {}
+
+    if text == '' then
+        return matches
+    end
+
+    local orders = df.global.world.manager_orders.all
+    for i = 0, #orders - 1 do
+        local order = orders[i]
+        local search_key = get_order_search_key(order)
+        if search_key and utils.search_text(search_key, text) then
+            table.insert(matches, i)
+        end
+    end
+
+    return matches
+end
+
 OrdersSearchOverlay = defclass(OrdersSearchOverlay, overlay.OverlayWidget)
 OrdersSearchOverlay.ATTRS{
     desc='Adds a search box to find and navigate to matching manager orders.',
@@ -873,27 +892,8 @@ function OrdersSearchOverlay:init()
     self.minimized = false
 end
 
-function OrdersSearchOverlay:perform_search(text)
-    local matches = {}
-
-    if text == '' then
-        return matches
-    end
-
-    local orders = df.global.world.manager_orders.all
-    for i = 0, #orders - 1 do
-        local order = orders[i]
-        local search_key = get_order_search_key(order)
-        if search_key and utils.search_text(search_key, text) then
-            table.insert(matches, i)
-        end
-    end
-
-    return matches
-end
-
 function OrdersSearchOverlay:update_filter(text)
-    self.matched_indices = self:perform_search(text)
+    self.matched_indices = perform_search(text)
     self.current_match_idx = 0
     search_cursor_visible = false
 
@@ -917,7 +917,7 @@ end
 function OrdersSearchOverlay:cycle_match(direction)
     local search_text = self.subviews.filter.text
 
-    local new_matches = self:perform_search(search_text)
+    local new_matches = perform_search(search_text)
 
     if #new_matches == 0 then
         self.matched_indices = {}
@@ -1025,15 +1025,7 @@ local LIST_START_Y_TWO_TABS_ROWS = 10
 local BOTTOM_MARGIN = 9
 local ARROW_X = 10
 
-OrderHighlightOverlay = defclass(OrderHighlightOverlay, overlay.OverlayWidget)
-OrderHighlightOverlay.ATTRS{
-    desc='Shows arrows next to the work order found by orders.search',
-    default_enabled=false,
-    viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
-    full_interface=true,
-}
-
-function OrderHighlightOverlay:getListStartY()
+local function getListStartY()
     local rect = gui.get_interface_rect()
 
     if rect.width >= TABS_WIDTH_THRESHOLD then
@@ -1043,15 +1035,15 @@ function OrderHighlightOverlay:getListStartY()
     end
 end
 
-function OrderHighlightOverlay:getViewportSize()
+local function getViewportSize()
     local rect = gui.get_interface_rect()
-    local list_start_y = self:getListStartY()
+    local list_start_y = getListStartY()
 
     local available_height = rect.height - list_start_y - BOTTOM_MARGIN
     return math.floor(available_height / ORDER_HEIGHT)
 end
 
-function OrderHighlightOverlay:calculateSelectedOrderY()
+local function calculateSelectedOrderY()
     local orders = df.global.world.manager_orders.all
     local scroll_pos = mi.info.work_orders.scroll_position_work_orders
 
@@ -1059,8 +1051,8 @@ function OrderHighlightOverlay:calculateSelectedOrderY()
         return nil
     end
 
-    local list_start_y = self:getListStartY()
-    local viewport_size = self:getViewportSize()
+    local list_start_y = getListStartY()
+    local viewport_size = getViewportSize()
 
     local viewport_start = scroll_pos
     local viewport_end = scroll_pos + viewport_size - 1
@@ -1077,6 +1069,14 @@ function OrderHighlightOverlay:calculateSelectedOrderY()
 
     return selected_y
 end
+
+OrderHighlightOverlay = defclass(OrderHighlightOverlay, overlay.OverlayWidget)
+OrderHighlightOverlay.ATTRS{
+    desc='Shows arrows next to the work order found by orders.search',
+    default_enabled=false,
+    viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
+    full_interface=true,
+}
 
 function OrderHighlightOverlay:render(dc)
     OrderHighlightOverlay.super.render(self, dc)
@@ -1099,7 +1099,7 @@ function OrderHighlightOverlay:render(dc)
     end
 
     -- Draw highlight arrows
-    local selected_y = self:calculateSelectedOrderY()
+    local selected_y = calculateSelectedOrderY()
     if selected_y then
         local highlight_pen = dfhack.pen.parse{
             fg=COLOR_BLACK,

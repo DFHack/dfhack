@@ -55,6 +55,24 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.07-r1
+
+## New Tools
 - ``edgescroll``: Introduced plugin to pan the view automatically when the mouse reaches the screen border.
 - `infinite-sky`: Re-enabled with compatibility with new siege map data.
 
@@ -67,8 +85,8 @@ Template for new versions:
 
 ## Misc Improvements
 - `createitem`: created items can now be placed onto/into tables, nests, bookcases, display cases, and altars
-- `keybinding`: keybinds may now include the super key, and are no longer limited to particular keys ranges of keys, allowing any recognized by SDL.
 - The ``fpause`` console command can now be used to force world generation to pause (as it did prior to version 50).
+- `keybinding`: keybinds may now include the super key, and are no longer limited to particular keys ranges of keys, allowing any recognized by SDL.
 
 ## Documentation
 

@@ -70,6 +70,25 @@ Template for new versions:
 
 ## Removed
 
+# 53.08-r1
+
+## New Tools
+
+## New Features
+- compatibility with DF 53.08
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
 # 53.07-r1
 
 ## New Tools

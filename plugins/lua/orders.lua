@@ -6,6 +6,7 @@ local overlay = require('plugins.overlay')
 local textures = require('gui.textures')
 local utils = require('utils')
 local widgets = require('gui.widgets')
+local stockflow = reqscript('internal/quickfort/stockflow')
 
 --
 -- OrdersOverlay
@@ -74,10 +75,11 @@ local mi = df.global.game.main_interface
 OrdersOverlay = defclass(OrdersOverlay, overlay.OverlayWidget)
 OrdersOverlay.ATTRS{
     desc='Adds import, export, and other functions to the manager orders screen.',
-    default_pos={x=53,y=-6},
+    default_pos={x=41,y=-6},
     default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
     frame={w=43, h=4},
+    version=1,
 }
 
 function OrdersOverlay:init()
@@ -709,11 +711,415 @@ function QuantityRightClickOverlay:onInput(keys)
     end
 end
 
+--
+-- OrdersSearchOverlay
+--
+
+local search_cursor_visible = false
+local search_last_scroll_position = -1
+local order_count_at_highlight = 0
+
+local function make_order_key(order)
+    local mat_cat_str = ''
+    if order.material_category then
+        local keys = {}
+        for k in pairs(order.material_category) do
+            if type(k) == 'string' then
+                table.insert(keys, k)
+            end
+        end
+        table.sort(keys)
+        for _, k in ipairs(keys) do
+            mat_cat_str = mat_cat_str .. k .. '=' .. tostring(order.material_category[k]) .. ';'
+        end
+    end
+
+    local encrust_str = ''
+    if order.specflag and order.specflag.encrust_flags then
+        local flags = {'finished_goods', 'furniture', 'ammo'}
+        for _, flag in ipairs(flags) do
+            if order.specflag.encrust_flags[flag] then
+                encrust_str = encrust_str .. flag .. ';'
+            end
+        end
+    end
+
+    return string.format('%d:%d:%d:%d:%d:%s:%s:%s',
+        order.job_type,
+        order.item_type,
+        order.item_subtype,
+        order.mat_type,
+        order.mat_index,
+        order.reaction_name or '',
+        mat_cat_str,
+        encrust_str)
+end
+
+local reaction_map_cache = nil
+
+local function get_cached_reaction_map()
+    if reaction_map_cache then
+        return reaction_map_cache
+    end
+
+    local can_read_stockflow = dfhack.isWorldLoaded() and dfhack.isMapLoaded()
+    if not can_read_stockflow then
+        return nil
+    end
+
+    local map = {}
+    local reactions = stockflow.collect_reactions()
+
+    for _, reaction in ipairs(reactions) do
+        local key = make_order_key(reaction.order)
+        map[key] = reaction.name:lower()
+        df.delete(reaction.order)
+    end
+    reactions = nil
+
+    reaction_map_cache = map
+    return reaction_map_cache
+end
+
+local function get_order_search_key(order)
+    local reaction_map = get_cached_reaction_map()
+    if not reaction_map then
+        return nil
+    end
+    local key = make_order_key(order)
+    return reaction_map[key]
+end
+
+OrdersSearchOverlay = defclass(OrdersSearchOverlay, overlay.OverlayWidget)
+OrdersSearchOverlay.ATTRS{
+    desc='Adds a search box to find and navigate to matching manager orders.',
+    default_pos={x=85, y=-6},
+    default_enabled=false,
+    viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
+    frame={w=26, h=4},
+}
+
+function OrdersSearchOverlay:init()
+    get_cached_reaction_map()
+
+    local main_panel = widgets.Panel{
+        view_id='main_panel',
+        frame={t=0, l=0, r=0, h=4},
+        frame_style=gui.MEDIUM_FRAME,
+        frame_background=gui.CLEAR_PEN,
+        frame_title='Search',
+        visible=function() return not self.minimized end,
+        subviews={
+            widgets.EditField{
+                view_id='filter',
+                frame={t=0, l=0},
+                key='CUSTOM_ALT_S',
+                on_change=self:callback('update_filter'),
+                on_submit=self:callback('on_submit'),
+                on_submit2=self:callback('on_submit2'),
+            },
+            widgets.HotkeyLabel{
+                frame={t=1, l=0},
+                label='prev',
+                key='CUSTOM_ALT_P',
+                auto_width=true,
+                on_activate=self:callback('cycle_match', -1),
+                enabled=function() return self:has_matches() end,
+            },
+            widgets.HotkeyLabel{
+                frame={t=1, l=12},
+                label='next',
+                key='CUSTOM_ALT_N',
+                auto_width=true,
+                on_activate=self:callback('cycle_match', 1),
+                enabled=function() return self:has_matches() end,
+            },
+        },
+    }
+
+    local minimized_panel = widgets.Panel{
+        frame={t=0, r=0, w=3, h=1},
+        subviews={
+            widgets.Label{
+                frame={t=0, l=0, w=1, h=1},
+                text='[',
+                text_pen=COLOR_RED,
+                visible=function() return self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, l=1, w=1, h=1},
+                text={{text=function() return self.minimized and string.char(31) or string.char(30) end}},
+                text_pen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_GREY},
+                text_hpen=dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE},
+                on_click=function() self.minimized = not self.minimized end,
+            },
+            widgets.Label{
+                frame={t=0, r=0, w=1, h=1},
+                text=']',
+                text_pen=COLOR_RED,
+                visible=function() return self.minimized end,
+            },
+        },
+    }
+
+    self:addviews{
+        main_panel,
+        minimized_panel,
+    }
+
+    -- Initialize search state
+    self.matched_indices = {}
+    self.current_match_idx = 0
+    self.minimized = false
+end
+
+function OrdersSearchOverlay:perform_search(text)
+    local matches = {}
+
+    if text == '' then
+        return matches
+    end
+
+    local orders = df.global.world.manager_orders.all
+    for i = 0, #orders - 1 do
+        local order = orders[i]
+        local search_key = get_order_search_key(order)
+        if search_key and utils.search_text(search_key, text) then
+            table.insert(matches, i)
+        end
+    end
+
+    return matches
+end
+
+function OrdersSearchOverlay:update_filter(text)
+    self.matched_indices = self:perform_search(text)
+    self.current_match_idx = 0
+    search_cursor_visible = false
+
+    if text == '' then
+        self.subviews.main_panel.frame_title = 'Search'
+    else
+        self.subviews.main_panel.frame_title = 'Search' .. self:get_match_text()
+    end
+end
+
+function OrdersSearchOverlay:on_submit()
+    self:cycle_match(1)
+    self.subviews.filter:setFocus(true)
+end
+
+function OrdersSearchOverlay:on_submit2()
+    self:cycle_match(-1)
+    self.subviews.filter:setFocus(true)
+end
+
+function OrdersSearchOverlay:cycle_match(direction)
+    local search_text = self.subviews.filter.text
+
+    local new_matches = self:perform_search(search_text)
+
+    if #new_matches == 0 then
+        self.matched_indices = {}
+        self.current_match_idx = 0
+        search_cursor_visible = false
+        self.subviews.main_panel.frame_title = 'Search'
+        return
+    end
+
+    local new_match_idx = self.current_match_idx + direction
+
+    if new_match_idx > #new_matches then
+        new_match_idx = 1
+    elseif new_match_idx < 1 then
+        new_match_idx = #new_matches
+    end
+
+    self.matched_indices = new_matches
+    self.current_match_idx = new_match_idx
+
+    -- Scroll to the selected match
+    local order_idx = self.matched_indices[self.current_match_idx]
+    mi.info.work_orders.scroll_position_work_orders = order_idx
+    search_last_scroll_position = order_idx
+    search_cursor_visible = true
+    order_count_at_highlight = #df.global.world.manager_orders.all
+
+    self.subviews.main_panel.frame_title = 'Search' .. self:get_match_text()
+end
+
+function OrdersSearchOverlay:get_match_text()
+    local total_matches = #self.matched_indices
+
+    if total_matches == 0 then
+        return ''
+    end
+
+    if self.current_match_idx == 0 then
+        return string.format(': %d matches', total_matches)
+    end
+
+    return string.format(': %d of %d', self.current_match_idx, total_matches)
+end
+
+function OrdersSearchOverlay:has_matches()
+    return #self.matched_indices > 0
+end
+
+local function is_mouse_key(keys)
+    return keys._MOUSE_L
+        or keys._MOUSE_R
+        or keys._MOUSE_M
+        or keys.CONTEXT_SCROLL_UP
+        or keys.CONTEXT_SCROLL_DOWN
+        or keys.CONTEXT_SCROLL_PAGEUP
+        or keys.CONTEXT_SCROLL_PAGEDOWN
+end
+
+function OrdersSearchOverlay:onInput(keys)
+    if mi.job_details.open then return end
+
+    local filter_field = self.subviews.filter
+    if not filter_field then return false end
+
+    -- Unfocus search on right-click
+    if keys._MOUSE_R and filter_field.focus then
+        filter_field:setFocus(false)
+        return true
+    end
+
+    -- Let parent handle input first (for HotkeyLabel clicks and widget interactions)
+    if OrdersSearchOverlay.super.onInput(self, keys) then
+        return true
+    end
+
+    -- Unfocus search on left-click when focused (for workshop and number of times changes)
+    -- And let the click pass through
+    if keys._MOUSE_L and filter_field.focus then
+        filter_field:setFocus(false)
+        return false
+    end
+
+    -- Only consume input if search field has focus and it's not a mouse key
+    -- This allows scrolling, navigation, and mouse interaction in the orders list
+    if filter_field.focus and not is_mouse_key(keys) then
+        return true
+    end
+
+    return false
+end
+
+function OrdersSearchOverlay:render(dc)
+    if mi.job_details.open then return end
+    OrdersSearchOverlay.super.render(self, dc)
+end
+
+-- -------------------
+-- OrderHighlightOverlay
+-- -------------------
+
+local ORDER_HEIGHT = 3
+local TABS_WIDTH_THRESHOLD = 155
+local LIST_START_Y_ONE_TABS_ROW = 8
+local LIST_START_Y_TWO_TABS_ROWS = 10
+local BOTTOM_MARGIN = 9
+local ARROW_X = 10
+
+OrderHighlightOverlay = defclass(OrderHighlightOverlay, overlay.OverlayWidget)
+OrderHighlightOverlay.ATTRS{
+    desc='Shows arrows next to the work order found by orders.search',
+    default_enabled=false,
+    viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
+    full_interface=true,
+}
+
+function OrderHighlightOverlay:getListStartY()
+    local rect = gui.get_interface_rect()
+
+    if rect.width >= TABS_WIDTH_THRESHOLD then
+        return LIST_START_Y_ONE_TABS_ROW
+    else
+        return LIST_START_Y_TWO_TABS_ROWS
+    end
+end
+
+function OrderHighlightOverlay:getViewportSize()
+    local rect = gui.get_interface_rect()
+    local list_start_y = self:getListStartY()
+
+    local available_height = rect.height - list_start_y - BOTTOM_MARGIN
+    return math.floor(available_height / ORDER_HEIGHT)
+end
+
+function OrderHighlightOverlay:calculateSelectedOrderY()
+    local orders = df.global.world.manager_orders.all
+    local scroll_pos = mi.info.work_orders.scroll_position_work_orders
+
+    if #orders == 0 or scroll_pos < 0 or scroll_pos >= #orders then
+        return nil
+    end
+
+    local list_start_y = self:getListStartY()
+    local viewport_size = self:getViewportSize()
+
+    local viewport_start = scroll_pos
+    local viewport_end = scroll_pos + viewport_size - 1
+
+    -- Selected order tries to be at the top unless we're at the end of the list
+    if viewport_end >= #orders then
+        viewport_end = #orders - 1
+        viewport_start = math.max(0, viewport_end - viewport_size + 1)
+    end
+
+    local pos_in_viewport = scroll_pos - viewport_start
+
+    local selected_y = list_start_y + (pos_in_viewport * ORDER_HEIGHT)
+
+    return selected_y
+end
+
+function OrderHighlightOverlay:render(dc)
+    OrderHighlightOverlay.super.render(self, dc)
+
+    if mi.job_details.open or not search_cursor_visible then return end
+
+    local current_scroll = mi.info.work_orders.scroll_position_work_orders
+    local current_order_count = #df.global.world.manager_orders.all
+
+    -- Hide cursor when user manually scrolls
+    if search_last_scroll_position ~= -1 and current_scroll ~= search_last_scroll_position then
+        search_cursor_visible = false
+        return
+    end
+
+    -- Hide cursor when order list changes (orders added or removed)
+    if order_count_at_highlight ~= current_order_count then
+        search_cursor_visible = false
+        return
+    end
+
+    -- Draw highlight arrows
+    local selected_y = self:calculateSelectedOrderY()
+    if selected_y then
+        local highlight_pen = dfhack.pen.parse{
+            fg=COLOR_BLACK,
+            bg=COLOR_WHITE,
+            bold=true,
+        }
+
+        dc:seek(ARROW_X, selected_y):string('|', highlight_pen)
+        dc:seek(ARROW_X, selected_y + 1):string('>', highlight_pen)
+        dc:seek(ARROW_X, selected_y + 2):string('|', highlight_pen)
+    end
+end
+
 -- -------------------
 
 OVERLAY_WIDGETS = {
     recheck=RecheckOverlay,
     importexport=OrdersOverlay,
+    search=OrdersSearchOverlay,
+    highlight=OrderHighlightOverlay,
     skillrestrictions=SkillRestrictionOverlay,
     laborrestrictions=LaborRestrictionsOverlay,
     conditionsrightclick=ConditionsRightClickOverlay,

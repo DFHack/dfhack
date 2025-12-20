@@ -16,6 +16,7 @@ using namespace DFHack;
 #include "tweaks/adamantine-cloth-wear.h"
 #include "tweaks/animaltrap-reuse.h"
 #include "tweaks/craft-age-wear.h"
+#include "tweaks/drawbridge-tiles.h"
 #include "tweaks/eggs-fertile.h"
 #include "tweaks/fast-heat.h"
 #include "tweaks/flask-contents.h"
@@ -57,6 +58,8 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
     TWEAK_HOOK("animaltrap-reuse", animaltrap_reuse_hook, updateAction);
 
     TWEAK_HOOK("craft-age-wear", craft_age_wear_hook, ageItem);
+
+    TWEAK_HOOK("drawbridge-tiles", drawbridge_tiles_hook, drawBuilding);
 
     TWEAK_HOOK("eggs-fertile", eggs_fertile_hook, getItemDescription);
 

@@ -41,6 +41,7 @@ distribution.
 #include <json/json.h>
 
 #include <unordered_map>
+#include <ranges>
 
 namespace DFHack {
     DBG_DECLARE(core, persistence, DebugCategory::LINFO);
@@ -388,29 +389,25 @@ static bool load_persist_files(const std::filesystem::path& path)
 
     size_t max_idx = 0;
 
+    using std::ranges::views::filter;
+
     if (json.isArray())
     {
-        for (auto& entity : json)
+        for (auto& entity : filter(json, [](auto& x) { return x.isMember("e");}))
         {
-            if (entity.isMember("e"))
+            auto pair = file_storage.try_emplace(entity["e"].asInt());
+            if (entity.isMember("arr"))
             {
-                auto pair = file_storage.try_emplace(entity["e"].asInt());
-                if (entity.isMember("arr"))
+                auto arr = entity["arr"];
+                if (arr.isArray())
                 {
-                    auto arr = entity["arr"];
-                    if (arr.isArray())
+                    for (auto& k_v : filter(arr, [](auto& x) { return x.isMember("k") && x.isMember("v"); }))
                     {
-                        for (auto& k_v : arr)
-                        {
-                            if (k_v.isMember("k") && k_v.isMember("v"))
-                            {
-                                const size_t this_idx = k_v["v"].asUInt64();
-                                max_idx = std::max(max_idx, this_idx);
+                        const size_t this_idx = k_v["v"].asUInt64();
+                        max_idx = std::max(max_idx, this_idx);
 
-                                pair.first->second[k_v["k"].asString()] = FileEntry{this_idx, false};
-                                //file_storage[e][k] = v
-                            }
-                        }
+                        pair.first->second[k_v["k"].asString()] = FileEntry{this_idx, false};
+                        //file_storage[e][k] = v
                     }
                 }
             }
@@ -438,7 +435,7 @@ void Persistence::Internal::load(color_ostream& out) {
 
     bool found = false;
     for (auto & fname : files) {
-        if (fname == "dfhack-extra-files")
+        if (fname == "dfhack-extra-files.dat")
         {
             std::filesystem::path path = save_path / fname;
             if (!load_persist_files(path))
@@ -595,9 +592,19 @@ static FileEntry& create_or_get_file(int entity_id, const std::string& key, bool
     }
 }
 
+static bool check_validity_for_file(int entity_id)
+{
+    return is_good_entity_id(entity_id) && Core::getInstance().isWorldLoaded();
+}
+
+static bool check_validity_for_file(int entity_id, const std::string & key)
+{
+    return is_good_entity_id(entity_id) && !key.empty() && Core::getInstance().isWorldLoaded();
+}
+
 std::filesystem::path Persistence::addFile(int entity_id, const std::string& key)
 {
-    if (!is_good_entity_id(entity_id) || key.empty() || !Core::getInstance().isWorldLoaded())
+    if (!check_validity_for_file(entity_id, key))
     {
         return {};
     }
@@ -609,7 +616,7 @@ std::filesystem::path Persistence::addFile(int entity_id, const std::string& key
 
 std::filesystem::path Persistence::getFile(int entity_id, const std::string& key, bool* added, bool just_for_reading)
 {
-    if (!is_good_entity_id(entity_id) || key.empty() || !Core::getInstance().isWorldLoaded())
+    if (!check_validity_for_file(entity_id, key))
     {
         return {};
     }
@@ -642,7 +649,7 @@ void Persistence::getAllFiles(std::vector<std::pair<std::string, std::filesystem
 {
     vec.clear();
 
-    if (!is_good_entity_id(entity_id) || !Core::getInstance().isWorldLoaded())
+    if (!check_validity_for_file(entity_id))
     {
         return;
     }
@@ -670,7 +677,7 @@ void Persistence::getAllFilesByKeyRange(std::vector<std::pair<std::string, std::
 {
     vec.clear();
 
-    if (!is_good_entity_id(entity_id) || !Core::getInstance().isWorldLoaded())
+    if (!check_validity_for_file(entity_id))
     {
         return;
     }
@@ -696,7 +703,7 @@ void Persistence::getAllFilesByKeyRange(std::vector<std::pair<std::string, std::
 
 bool Persistence::deleteFile(int entity_id, const std::string& key)
 {
-    if (!is_good_entity_id(entity_id) || key.empty() || !Core::getInstance().isWorldLoaded())
+    if (!check_validity_for_file(entity_id, key))
     {
         return false;
     }

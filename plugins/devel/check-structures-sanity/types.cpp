@@ -10,7 +10,7 @@ QueueItem::QueueItem(const QueueItem & parent, const std::string & member, const
 {
 }
 QueueItem::QueueItem(const QueueItem & parent, size_t index, const void *ptr) :
-    QueueItem(parent.path + stl_sprintf("[%zu]", index), ptr)
+    QueueItem(parent.path + fmt::format("[{}]", index), ptr)
 {
 }
 

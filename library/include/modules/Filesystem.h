@@ -75,7 +75,7 @@ namespace DFHack {
         DFHACK_EXPORT int listdir_recursive(std::filesystem::path dir, std::map<std::filesystem::path, bool>& files,
             int depth = 10, bool include_prefix = true) noexcept;
         DFHACK_EXPORT std::filesystem::path canonicalize(std::filesystem::path p) noexcept;
-        inline std::string as_string(std::filesystem::path path) noexcept
+        inline std::string as_string(const std::filesystem::path path) noexcept
         {
             auto pStr = path.string();
             if constexpr (std::filesystem::path::preferred_separator != '/')
@@ -84,5 +84,8 @@ namespace DFHack {
             }
             return pStr;
         }
+        DFHACK_EXPORT std::filesystem::path getInstallDir() noexcept;
+        DFHACK_EXPORT std::filesystem::path getBaseDir() noexcept;
+
     }
 }

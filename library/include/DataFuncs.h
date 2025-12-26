@@ -24,10 +24,6 @@ distribution.
 
 #pragma once
 
-#include <string>
-#include <sstream>
-#include <vector>
-#include <map>
 #include <type_traits>
 
 #include "ColorText.h"

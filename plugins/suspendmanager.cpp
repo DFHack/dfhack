@@ -113,11 +113,13 @@ using df::coord;
 // impassible constructions
 static const std::bitset<64> construction_impassible = std::bitset<64>()
     .set(construction_type::Wall)
+    .set(construction_type::ReinforcedWall)
     .set(construction_type::Fortification);
 
 // constructions requiring same support as walls
 static const std::bitset<64> construction_wall_support = std::bitset<64>()
     .set(construction_type::Wall)
+    .set(construction_type::ReinforcedWall)
     .set(construction_type::Fortification)
     .set(construction_type::UpStair)
     .set(construction_type::UpDownStair);
@@ -395,7 +397,8 @@ private:
         // other tiles can become suitable if a wall is being constructed below
         auto below = Buildings::findAtTile(coord(pos.x,pos.y,pos.z-1));
         if (below && below->getType() == df::building_type::Construction &&
-            below->getSubtype() == construction_type::Wall)
+            (below->getSubtype() == construction_type::Wall ||
+             below->getSubtype() == construction_type::ReinforcedWall))
             return true;
 
         return false;
@@ -468,7 +471,7 @@ private:
     static bool riskBlocking(color_ostream &out, df::job* job) {
         if (job->job_type != job_type::ConstructBuilding)
             return false;
-        TRACE(cycle,out).print("risk blocking: check construction job %d\n", job->id);
+        TRACE(cycle,out).print("risk blocking: check construction job {}\n", job->id);
 
         auto building = Job::getHolder(job);
         if (!building || !isImpassable(building))
@@ -481,7 +484,7 @@ private:
             return false;
 
         auto risk = riskOfStuckConstructionAt(pos);
-        TRACE(cycle,out).print("  risk is %d\n", risk);
+        TRACE(cycle,out).print("  risk is {}\n", risk);
 
         // TOTHINK: on a large grid, this will compute the same risk up to 5 times
         for (auto npos : neighbors | transform(around(pos))) {
@@ -501,7 +504,7 @@ private:
         if (!building || building->getType() != df::building_type::Construction)
             return false;
 
-        TRACE(cycle,out).print("check (construction) construction job %d for support\n", job->id);
+        TRACE(cycle,out).print("check (construction) construction job {} for support\n", job->id);
 
         coord pos(building->centerx,building->centery,building->z);
 
@@ -644,7 +647,7 @@ public:
 
     void refresh(color_ostream &out)
     {
-        DEBUG(cycle,out).print("starting refresh, prevent blocking is %s\n",
+        DEBUG(cycle,out).print("starting refresh, prevent blocking is {}\n",
                                prevent_blocking ? "true" : "false");
         suspensions.clear();
         leadsToDeadend.clear();
@@ -690,7 +693,7 @@ public:
             if (building && buildingOnDesignation(building))
                 suspensions[job->id]=Reason::ERASE_DESIGNATION;
         }
-        DEBUG(cycle,out).print("finished refresh: found %zu reasons for suspension\n",suspensions.size());
+        DEBUG(cycle,out).print("finished refresh: found {} reasons for suspension\n",suspensions.size());
     }
 
     void do_cycle (color_ostream &out, bool unsuspend_everything = false)
@@ -717,7 +720,7 @@ public:
                 }
             }
         }
-        DEBUG(cycle,out).print("suspended %zu constructions and unsuspended %zu constructions\n",
+        DEBUG(cycle,out).print("suspended {} constructions and unsuspended {} constructions\n",
                               num_suspend, num_unsuspend);
     }
 
@@ -769,7 +772,7 @@ static void do_cycle(color_ostream &out);
 static void jobCompletedHandler(color_ostream& out, void* ptr);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
 
     suspendmanager_instance = std::make_unique<SuspendManager>();
     eventhandler_instance = std::make_unique<EventManager::EventHandler>(plugin_self,jobCompletedHandler,1);
@@ -790,13 +793,13 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable) {
@@ -808,7 +811,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         }
 
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -816,7 +819,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
     suspendmanager_instance.release();
     eventhandler_instance.release();
     return CR_OK;
@@ -835,7 +838,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
     suspendmanager_instance->prevent_blocking = config.get_bool(CONFIG_PREVENT_BLOCKING);
-    DEBUG(control,out).print("loading persisted state: enabled is %s / prevent_blocking is %s\n",
+    DEBUG(control,out).print("loading persisted state: enabled is {} / prevent_blocking is {}\n",
                             is_enabled ? "true" : "false",
                             suspendmanager_instance->prevent_blocking ? "true" : "false");
     if(is_enabled) {
@@ -851,7 +854,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -867,16 +870,16 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (parameters.size() == 0) {
         if (!is_enabled) {
-            out.print("%s is disabled\n", plugin_name);
+            out.print("{} is disabled\n", plugin_name);
         } else {
             out.print(
-                "%s is enabled %s supending blocking jobs\n", plugin_name,
+                "{} is enabled {} suspending blocking jobs\n", plugin_name,
                 suspendmanager_instance->prevent_blocking ? "and" : "but not");
         }
         return CR_OK;
@@ -893,7 +896,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
             config.set_bool(CONFIG_PREVENT_BLOCKING, true);
             if (is_enabled) {
                 do_cycle(out);
-                out.print("%s", suspendmanager_instance->getStatus(out).c_str());
+                out.print("{}", suspendmanager_instance->getStatus(out));
             }
             return CR_OK;
         } else if (parameters[2] == "false") {
@@ -901,7 +904,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
             config.set_bool(CONFIG_PREVENT_BLOCKING, false);
             if (is_enabled) {
                 do_cycle(out);
-                out.print("%s", suspendmanager_instance->getStatus(out).c_str());
+                out.print("{}", suspendmanager_instance->getStatus(out));
             }
             return CR_OK;
         } else
@@ -920,7 +923,7 @@ static void jobCompletedHandler(color_ostream& out, void* ptr) {
     TRACE(cycle,out).print("job completed/initiated handler called\n");
     df::job* job = static_cast<df::job*>(ptr);
     if (SuspendManager::isConstructionJob(job)) {
-        DEBUG(cycle,out).print("construction job initiated/completed (tick: %d)\n", world->frame_counter);
+        DEBUG(cycle,out).print("construction job initiated/completed (tick: {})\n", world->frame_counter);
         cycle_needed = true;
     }
 
@@ -935,7 +938,7 @@ static void do_cycle(color_ostream &out) {
     cycle_timestamp = world->frame_counter;
     cycle_needed = false;
 
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    DEBUG(cycle,out).print("running {} cycle\n", plugin_name);
 
     suspendmanager_instance->do_cycle(out);
 }

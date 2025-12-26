@@ -35,7 +35,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded()) {
-        out.printerr("Cannot run %s without a loaded map.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded map.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -142,7 +142,7 @@ static int get_max_aq_z(color_ostream &out, const df::coord &pos1, const df::coo
 static void get_z_range(color_ostream &out, int & minz, int & maxz, const df::coord & pos1,
     const df::coord & pos2, int levels, bool top_is_aq = false, int skip_top = 0)
 {
-    DEBUG(log,out).print("get_z_range: top_is_aq=%d, skip_top=%d\n", top_is_aq, skip_top);
+    DEBUG(log,out).print("get_z_range: top_is_aq={}, skip_top={}\n", top_is_aq, skip_top);
 
     if (!top_is_aq)
         maxz = get_max_ground_z(out, pos1, pos2) - skip_top;
@@ -151,12 +151,12 @@ static void get_z_range(color_ostream &out, int & minz, int & maxz, const df::co
 
     minz = std::max((int)pos1.z, maxz - levels + 1);
 
-    DEBUG(log,out).print("calculated z range: minz=%d, maxz=%d\n", minz, maxz);
+    DEBUG(log,out).print("calculated z range: minz={}, maxz={}\n", minz, maxz);
 }
 
 static void aquifer_list(color_ostream &out, df::coord pos1, df::coord pos2, int levels, bool leaky) {
-    DEBUG(log,out).print("entering aquifer_list: pos1=%d,%d,%d, pos2=%d,%d,%d, levels=%d, leaky=%d\n",
-        pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z, levels, leaky);
+    DEBUG(log,out).print("entering aquifer_list: pos1={}, pos2={}, levels={}, leaky={}\n",
+        pos1, pos2, levels, leaky);
 
     std::map<int, int, std::greater<int>> light_tiles, heavy_tiles;
 
@@ -173,14 +173,14 @@ static void aquifer_list(color_ostream &out, df::coord pos1, df::coord pos2, int
     });
 
     if (light_tiles.empty() && heavy_tiles.empty()) {
-        out.print("No %saquifer tiles in the specified range.\n", leaky ? "leaking " : "");
+        out.print("No {}aquifer tiles in the specified range.\n", leaky ? "leaking " : "");
     } else {
         int elev_off = world->map.region_z - 100;
         for (int z = maxz; z >= minz; --z) {
             int lcount = light_tiles.contains(z) ? light_tiles[z] : 0;
             int hcount = heavy_tiles.contains(z) ? heavy_tiles[z] : 0;
             if (lcount || hcount)
-                out.print("z-level %3d (elevation %4d) has %6d %slight aquifer tile(s) and %6d %sheavy aquifer tile(s)\n",
+                out.print("z-level {} (elevation {}) has {} {}light aquifer tile(s) and {} {}heavy aquifer tile(s)\n",
                     z, z+elev_off, lcount, leaky ? "leaking " : "", hcount, leaky ? "leaking " : "");
         }
     }
@@ -189,22 +189,21 @@ static void aquifer_list(color_ostream &out, df::coord pos1, df::coord pos2, int
 static int aquifer_drain(color_ostream &out, string aq_type,
     df::coord pos1, df::coord pos2, int skip_top, int levels, bool leaky)
 {
-    DEBUG(log,out).print("entering aquifer_drain: aq_type=%s, pos1=%d,%d,%d, pos2=%d,%d,%d,"
-        " skip_top=%d, levels=%d, leaky=%d\n", aq_type.c_str(),
-        pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z, skip_top, levels, leaky);
+    DEBUG(log,out).print("entering aquifer_drain: aq_type={}, pos1={}, pos2={}, skip_top={}, levels={}, leaky={}\n",
+        aq_type, pos1, pos2, skip_top, levels, leaky);
 
     const bool all = aq_type == "all";
     const bool heavy_state = aq_type == "heavy";
 
     int modified = Maps::removeAreaAquifer(pos1, pos2, [&](df::coord pos, df::map_block* block) -> bool {
-        TRACE(log, out).print("examining tile: pos=%d,%d,%d\n", pos.x, pos.y, pos.z);
+        TRACE(log, out).print("examining tile: pos={}\n", pos);
         return Maps::isTileAquifer(pos)
             && (all || Maps::isTileHeavyAquifer(pos) == heavy_state)
             && (!leaky || is_leaky(pos));
         });
 
-    DEBUG(log, out).print("drained aquifer tiles in area: pos1=%d,%d,%d, pos2=%d,%d,%d, heavy_state=%d, all=%d, count=%d\n",
-        pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z, heavy_state, all, modified);
+    DEBUG(log, out).print("drained aquifer tiles in area: pos1={}, pos2={}, heavy_state={}, all={}, count={}\n",
+        pos1, pos2, heavy_state, all, modified);
 
     return modified;
 }
@@ -212,21 +211,20 @@ static int aquifer_drain(color_ostream &out, string aq_type,
 static int aquifer_convert(color_ostream &out, string aq_type,
     df::coord pos1, df::coord pos2, int skip_top, int levels, bool leaky)
 {
-    DEBUG(log,out).print("entering aquifer_convert: aq_type=%s, pos1=%d,%d,%d, pos2=%d,%d,%d,"
-        " skip_top=%d, levels=%d, leaky=%d\n", aq_type.c_str(),
-        pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z, skip_top, levels, leaky);
+    DEBUG(log,out).print("entering aquifer_convert: aq_type={}, pos1={}, pos2={}, skip_top={}, levels={}, leaky={}\n",
+        aq_type, pos1, pos2, skip_top, levels, leaky);
 
     const bool heavy_state = aq_type == "heavy";
 
     int modified = Maps::setAreaAquifer(pos1, pos2, heavy_state, [&](df::coord pos, df::map_block* block) -> bool {
-        TRACE(log, out).print("examining tile: pos=%d,%d,%d\n", pos.x, pos.y, pos.z);
+        TRACE(log, out).print("examining tile: pos={}\n", pos);
         return Maps::isTileAquifer(pos)
             && Maps::isTileHeavyAquifer(pos) != heavy_state
             && (!leaky || is_leaky(pos));
     });
 
-    DEBUG(log, out).print("converted aquifer tiles in area: pos1=%d,%d,%d, pos2=%d,%d,%d, heavy_state=%d, count=%d\n",
-        pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z, heavy_state, modified);
+    DEBUG(log, out).print("converted aquifer tiles in area: pos1={}, pos2={}, heavy_state={}, count={}\n",
+        pos1, pos2, heavy_state, modified);
 
     return modified;
 }
@@ -234,20 +232,19 @@ static int aquifer_convert(color_ostream &out, string aq_type,
 static int aquifer_add(color_ostream &out, string aq_type,
     df::coord pos1, df::coord pos2, int skip_top, int levels, bool leaky)
 {
-    DEBUG(log,out).print("entering aquifer_add: aq_type=%s, pos1=%d,%d,%d, pos2=%d,%d,%d,"
-        " skip_top=%d, levels=%d, leaky=%d\n", aq_type.c_str(),
-        pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z, skip_top, levels, leaky);
+    DEBUG(log,out).print("entering aquifer_add: aq_type={}, pos1={}, pos2={}, skip_top={}, levels={}, leaky={}\n",
+        aq_type, pos1, pos2, skip_top, levels, leaky);
 
     const bool heavy_state = aq_type == "heavy";
 
     int modified = Maps::setAreaAquifer(pos1, pos2, heavy_state, [&](df::coord pos, df::map_block* block) -> bool {
-        TRACE(log, out).print("examining tile: pos=%d,%d,%d\n", pos.x, pos.y, pos.z);
+        TRACE(log, out).print("examining tile: pos={}\n", pos);
         return (leaky || !is_leaky(pos))
             && (!Maps::isTileAquifer(pos) || Maps::isTileHeavyAquifer(pos) != heavy_state);
         });
 
-    DEBUG(log, out).print("added aquifer tiles in area: pos1=%d,%d,%d, pos2=%d,%d,%d, heavy_state=%d, count=%d\n",
-        pos1.x, pos1.y, pos1.z, pos2.x, pos2.y, pos2.z, heavy_state, modified);
+    DEBUG(log, out).print("added aquifer tiles in area: pos1={}, pos2={}, heavy_state={}, count={}\n",
+        pos1, pos2, heavy_state, modified);
 
     return modified;
 }

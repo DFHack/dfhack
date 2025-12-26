@@ -132,7 +132,7 @@ bool LuaWrapper::LookupTypeInfo(lua_State *state, bool in_method)
         return true;
 }
 
-void LuaWrapper::LookupInTable(lua_State *state, void *id, LuaToken *tname)
+void LuaWrapper::LookupInTable(lua_State *state, const void *id, LuaToken *tname)
 {
     lua_rawgetp(state, LUA_REGISTRYINDEX, tname);
     lua_rawgetp(state, -1, id);
@@ -168,12 +168,15 @@ static void BuildTypeMetatable(lua_State *state, const type_identity *type);
 void LuaWrapper::push_object_ref(lua_State *state, void *ptr)
 {
     // stack: [metatable]
-    auto ref = (DFRefHeader*)lua_newuserdata(state, sizeof(DFRefHeader));
-    ref->ptr = ptr;
-    ref->field_info = NULL;
-    ref->tag_ptr = NULL;
-    ref->tag_identity = NULL;
-    ref->tag_attr = NULL;
+    void* stg = lua_newuserdata(state, sizeof(DFRefHeader));
+    new (stg) DFRefHeader
+    {
+        .ptr = ptr,
+        .field_info = NULL,
+        .tag_ptr = NULL,
+        .tag_identity = NULL,
+        .tag_attr = NULL,
+    };
 
     lua_swap(state);
     lua_setmetatable(state, -2);
@@ -218,7 +221,7 @@ void LuaWrapper::push_object_internal(lua_State *state, const type_identity *typ
 
     if (type->type() == IDTYPE_CLASS)
     {
-        virtual_identity *class_vid = virtual_identity::get(virtual_ptr(ptr));
+        const virtual_identity *class_vid = virtual_identity::get(virtual_ptr(ptr));
         if (class_vid)
             type = class_vid;
     }
@@ -1006,7 +1009,8 @@ static int meta_type_tostring(lua_State *state)
     lua_getfield(state, -1, "__metatable");
     const char *cname = lua_tostring(state, -1);
 
-    lua_pushstring(state, stl_sprintf("<type: %s>", cname).c_str());
+    auto str = fmt::format("<type: {}>", cname);
+    lua_pushlstring(state, str.data(), str.size());
     return 1;
 }
 
@@ -1030,10 +1034,12 @@ static int meta_ptr_tostring(lua_State *state)
     lua_getfield(state, UPVAL_METATABLE, "__metatable");
     const char *cname = lua_tostring(state, -1);
 
-    if (has_length)
-        lua_pushstring(state, stl_sprintf("<%s[%" PRIu64 "]: %p>", cname, length, (void*)ptr).c_str());
-    else
-        lua_pushstring(state, stl_sprintf("<%s: %p>", cname, (void*)ptr).c_str());
+    auto str = has_length ?
+        fmt::format("<{}[{}]: {}>", cname, length, static_cast<void*>(ptr)) :
+        fmt::format("<{}: {}>", cname, static_cast<void*>(ptr));
+
+    lua_pushlstring(state, str.data(), str.size());
+
     return 1;
 }
 

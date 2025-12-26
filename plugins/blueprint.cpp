@@ -16,8 +16,10 @@
 #include "TileTypes.h"
 
 #include "modules/Buildings.h"
+#include "modules/Constructions.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/Hotkey.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
 
@@ -33,6 +35,7 @@
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_workshopst.h"
+#include "df/construction.h"
 #include "df/engraving.h"
 #include "df/entity_position.h"
 #include "df/tile_bitmask.h"
@@ -610,6 +613,7 @@ static const char * get_construction_str(df::building *b) {
     case construction_type::TrackRampNEW:  return "trackrampNEW";
     case construction_type::TrackRampSEW:  return "trackrampSEW";
     case construction_type::TrackRampNSEW: return "trackrampNSEW";
+    case construction_type::ReinforcedWall: return "CW";
     case construction_type::NONE:
     default:
         return "~";
@@ -630,6 +634,13 @@ static const char * get_constructed_track_str(df::tiletype *tt,
     if (dir.west) str << "W";
 
     return cache(str);
+}
+
+static const char * get_constructed_wall_str(df::coord pos) {
+    df::construction *c = Constructions::findAtTile(pos);
+    if (!c || !(c->flags.bits.reinforced))
+        return "Cw";
+    return "CW";
 }
 
 static const char * get_constructed_floor_str(df::tiletype *tt) {
@@ -653,7 +664,7 @@ static const char * get_tile_construct(color_ostream &out, const df::coord &pos,
         return NULL;
 
     switch (tileShape(*tt)) {
-    case tiletype_shape::WALL:          return "Cw";
+    case tiletype_shape::WALL:          return get_constructed_wall_str(pos);
     case tiletype_shape::FLOOR:         return get_constructed_floor_str(tt);
     case tiletype_shape::RAMP:          return get_constructed_ramp_str(tt);
     case tiletype_shape::FORTIFICATION: return "CF";
@@ -732,7 +743,17 @@ static const char * get_bridge_str(df::building *b) {
 static const char * get_siege_str(df::building *b) {
     df::building_siegeenginest *se =
             virtual_cast<df::building_siegeenginest>(b);
-    return !se || se->type == df::siegeengine_type::Catapult ? "ic" : "ib";
+    if (!se)
+        return "ic";
+
+    switch(se->type) {
+    case df::siegeengine_type::Catapult:    return "ic";
+    case df::siegeengine_type::Ballista:    return "ib";
+    case df::siegeengine_type::BoltThrower: return "it";
+    default:
+        return "ic";
+    }
+
 }
 
 static const char * get_workshop_str(df::building *b) {
@@ -1355,8 +1376,8 @@ static bool create_output_dir(color_ostream &out,
 
     // create output directory if it doesn't already exist
     if (!Filesystem::mkdir_recursive(parent_path)) {
-        out.printerr("could not create output directory: '%s'\n",
-                     parent_path.c_str());
+        out.printerr("could not create output directory: '{}'\n",
+                     parent_path);
         return false;
     }
     return true;
@@ -1646,9 +1667,9 @@ static command_result do_blueprint(color_ostream &out,
             command << " " << parameters[i];
         }
         string command_str = command.str();
-        out.print("launching %s\n", command_str.c_str());
+        out.print("launching {}\n", command_str);
 
-        Core::getInstance().setHotkeyCmd(command_str);
+        Core::getInstance().getHotkeyManager()->setHotkeyCommand(command_str);
         return CR_OK;
     }
 
@@ -1674,7 +1695,7 @@ static command_result do_blueprint(color_ostream &out,
         }
     }
     if (!Maps::isValidTilePos(start)) {
-        out.printerr("Invalid start position: %d,%d,%d\n",
+        out.printerr("Invalid start position: {},{},{},\n",
                      start.x, start.y, start.z);
         return CR_FAILURE;
     }
@@ -1737,7 +1758,7 @@ command_result blueprint(color_ostream &out, vector<string> &parameters) {
         else {
             out.print("Generated blueprint file(s):\n");
             for (string &fname : files)
-                out.print("  %s\n", fname.c_str());
+                out.print("  {}\n", fname);
         }
     }
     return cr;

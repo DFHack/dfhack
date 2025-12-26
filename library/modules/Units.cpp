@@ -64,12 +64,15 @@ distribution.
 #include "df/interaction_profilest.h"
 #include "df/item.h"
 #include "df/job.h"
+#include "df/need_type.h"
 #include "df/nemesis_record.h"
 #include "df/personality_goalst.h"
+#include "df/personality_needst.h"
 #include "df/plotinfost.h"
 #include "df/proj_unitst.h"
 #include "df/reputation_profilest.h"
 #include "df/syndrome.h"
+#include "df/squad.h"
 #include "df/tile_occupancy.h"
 #include "df/training_assignment.h"
 #include "df/unit.h"
@@ -89,6 +92,7 @@ distribution.
 #include "df/world_site.h"
 
 #include <algorithm>
+#include <bitset>
 #include <cstring>
 #include <functional>
 #include <map>
@@ -108,8 +112,8 @@ using df::global::gametype;
 using df::global::plotinfo;
 using df::global::world;
 
-#define IS_ACTIVE_CASTE_FLAG(cf) !unit->curse.rem_tags1.bits.cf && \
-(unit->curse.add_tags1.bits.cf || casteFlagSet(unit->race, unit->caste, caste_raw_flags::cf))
+#define IS_ACTIVE_CASTE_FLAG(cf) !unit->uwss_remove_caste_flag.bits.cf && \
+(unit->uwss_add_caste_flag.bits.cf || casteFlagSet(unit->race, unit->caste, caste_raw_flags::cf))
 
 // Common flags to exclude for fort members
 constexpr uint32_t exclude_flags1 = (
@@ -208,7 +212,7 @@ bool Units::isOwnRace(df::unit *unit) {
 
 bool Units::isAlive(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
-    return !isDead(unit) && !unit->curse.add_tags1.bits.NOT_LIVING;
+    return !isDead(unit) && !unit->uwss_add_caste_flag.bits.NOT_LIVING;
 }
 
 bool Units::isDead(df::unit *unit) {
@@ -606,7 +610,7 @@ bool Units::isInvader(df::unit *unit) {
 
 bool Units::isUndead(df::unit *unit, bool hiding_curse) {
     CHECK_NULL_POINTER(unit);
-    const auto &cb = unit->curse.add_tags1.bits;
+    const auto &cb = unit->uwss_add_caste_flag.bits;
     return unit->flags3.bits.ghostly ||
         ((cb.OPPOSED_TO_LIFE || cb.NOT_LIVING) && (hiding_curse || !isHidingCurse(unit)));
 }
@@ -1014,7 +1018,7 @@ int Units::getPhysicalAttrValue(df::unit *unit, df::physical_attribute_type attr
     auto &aobj = unit->body.physical_attrs[attr];
     int value = max(0, aobj.value - aobj.soft_demotion);
 
-    if (auto mod = unit->curse.attr_change)
+    if (auto mod = unit->uwss_att_change)
     {
         int mvalue = (value * mod->phys_att_perc[attr] / 100) + mod->phys_att_add[attr];
         if (isHidingCurse(unit))
@@ -1033,7 +1037,7 @@ int Units::getMentalAttrValue(df::unit *unit, df::mental_attribute_type attr) {
     auto &aobj = soul->mental_attrs[attr];
     int value = max(0, aobj.value - aobj.soft_demotion);
 
-    if (auto mod = unit->curse.attr_change)
+    if (auto mod = unit->uwss_att_change)
     {
         int mvalue = (value * mod->ment_att_perc[attr] / 100) + mod->ment_att_add[attr];
         if (isHidingCurse(unit))
@@ -1161,14 +1165,16 @@ static string formatReadableName(T *unit_or_hf, const string &prof_name, bool sk
     if (native_name.empty())
         return prof_name;
 
+    std::string prof_suffix{ (prof_name.size() > 0) ? (", " + prof_name) : "" };
+
     if (skip_english)
-        return native_name + ", " + prof_name;
+        return native_name + prof_suffix;
 
     string english_name = Translation::translateName(visible_name, true, true);
     if (english_name.empty())
-        return native_name + ", " + prof_name;
+        return native_name + prof_suffix;
 
-    return native_name + " \"" + english_name + "\", " + prof_name;
+    return native_name + " \"" + english_name + "\"" + prof_suffix;
 }
 
 string Units::getReadableName(df::historical_figure *hf, bool skip_english) {
@@ -1192,8 +1198,8 @@ string Units::getReadableName(df::unit *unit, bool skip_english) {
     CHECK_NULL_POINTER(unit);
     string prof_name = getProfessionName(unit, false, false, true);
 
-    if (unit->curse.name_visible) // Necromancer, etc.
-        prof_name += " " + unit->curse.name;
+    if (unit->uwss_use_display_name) // Necromancer, etc.
+        prof_name += " " + unit->uwss_display_name_sing;
     else if (isGhost(unit)) // TODO: Should be "Ghost" instead of "Ghostly Peasant"
         prof_name = "Ghostly " + prof_name;
     // TODO: impersonating deity/force
@@ -2017,6 +2023,94 @@ df::activity_event *Units::getMainSocialEvent(df::unit *unit) {
     return entry->events[entry->events.size() - 1];
 }
 
+int32_t Units::getFocusPenalty(df::unit* unit, need_type_set need_types) {
+    CHECK_NULL_POINTER(unit);
+
+    int max_penalty = INT_MAX;
+    auto& needs = unit->status.current_soul->personality.needs;
+    for (auto const need : needs) {
+        if (need_types.test(need->id)) {
+            max_penalty = min(max_penalty, need->focus_level);
+        }
+    }
+    return max_penalty;
+}
+
+int32_t Units::getFocusPenalty(df::unit* unit, df::need_type need_type) {
+    auto need_types = need_type_set().set(need_type);
+    return getFocusPenalty(unit, need_types);
+}
+
+// reverse engineered from unitst::have_unbailable_sp_activities (partial implementation)
+bool Units::hasUnbailableSocialActivity(df::unit *unit)
+{
+    // these can become constexpr with C++23
+    static const need_type_set pray_needs = need_type_set()
+        .set(df::need_type::PrayOrMeditate);
+
+    static const need_type_set socialize_needs = need_type_set()
+        .set(df::need_type::Socialize)
+        .set(df::need_type::BeCreative)
+        .set(df::need_type::Excitement)
+        .set(df::need_type::AdmireArt);
+
+    static const need_type_set read_needs = need_type_set()
+        .set(df::need_type::ThinkAbstractly)
+        .set(df::need_type::LearnSomething);
+
+    CHECK_NULL_POINTER(unit);
+
+    if (unit->social_activities.empty()) {
+        return false;
+    } else if (unit->social_activities.size() > 1) {
+        return true; // is this even possible?
+    }
+
+    auto activity = df::activity_entry::find(unit->social_activities[0]);
+    if (activity) {
+        using df::activity_entry_type;
+        switch (activity->type) {
+            case activity_entry_type::Socialize:
+                return getFocusPenalty(unit, socialize_needs) <= -10000;
+            case activity_entry_type::Prayer:
+                return getFocusPenalty(unit, pray_needs) <= -10000;
+            case activity_entry_type::Read:
+                return getFocusPenalty(unit, read_needs) <= -10000;
+            default:
+                // consider unhandled activities as uninterruptible
+                return true;
+        }
+    }
+    // this should never happen
+    return false;
+}
+
+bool Units::isJobAvailable(df::unit *unit, bool preserve_social = false){
+    if (unit->job.current_job)
+        return false;
+    if (unit->flags1.bits.caged || unit->flags1.bits.chained)
+        return false;
+    if (Units::getSpecificRef(unit, df::specific_ref_type::ACTIVITY))
+        return false;
+    if (unit->individual_drills.size() > 0) {
+        if (unit->individual_drills.size() > 1)
+            return false; // this is even possible
+        auto activity = df::activity_entry::find(unit->individual_drills[0]);
+        if (activity && (activity->type == df::activity_entry_type::FillServiceOrder))
+            return false;
+    }
+    if (hasUnbailableSocialActivity(unit))
+        return false;
+    if (preserve_social && unit->social_activities.size() > 0)
+        return false;
+    if (unit->military.squad_id != -1) {
+        auto squad = df::squad::find(unit->military.squad_id);
+        if (squad)
+            return squad->orders.size() == 0 && squad->activity == -1;
+    }
+    return true;
+}
+
 // 50000 and up is level 0, 25000 and up is level 1, etc.
 const vector<int32_t> Units::stress_cutoffs {50000, 25000, 10000, -10000, -25000, -50000, -100000};
 
@@ -2078,6 +2172,14 @@ static int32_t *getActionTimerPointer(df::unit_action *action) {
             return &action->data.dismount.timer;
         case unit_action_type::HoldItem:
             return &action->data.holditem.timer;
+        case unit_action_type::LoadRangedWeapon:
+            return &action->data.loadrangedweapon.movewait;
+        case unit_action_type::ShootRangedWeapon:
+            return &action->data.shootrangedweapon.movewait;
+        case unit_action_type::ThrowItem:
+            return &action->data.throwitem.movewait;
+        case unit_action_type::PostShootRecovery:
+            return &action->data.postshootrecovery.movewait;
         case unit_action_type::LeadAnimal:
         case unit_action_type::StopLeadAnimal:
         case unit_action_type::Jump:

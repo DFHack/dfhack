@@ -53,25 +53,25 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 static command_result do_command(color_ostream& out, std::vector<std::string>& params) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot use %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot use {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
     if (params.size() == 0 || params[0] == "status") {
-        out.print("%s is currently %s\n", plugin_name, is_enabled ? "enabled" : "disabled");
+        out.print("{} is currently {}\n", plugin_name, is_enabled ? "enabled" : "disabled");
         if (is_enabled) {
             out.print("tracked tomb assignments:\n");
             std::for_each(tomb_assignments.begin(), tomb_assignments.end(), [&out](const auto& p){
                 auto& [unit_id, building_id] = p;
                 auto* unit = df::unit::find(unit_id);
                 std::string name = unit ? DF2CONSOLE(Units::getReadableName(unit)) : "UNKNOWN UNIT" ;
-                out.print("%s (id %d) -> building %d\n", name.c_str(), unit_id, building_id);
+                out.print("{} (id {}) -> building {}\n", name, unit_id, building_id);
             });
         }
         return CR_OK;
     }
     if (params[0] == "now") {
         if (!is_enabled) {
-            out.printerr("Cannot update %s when not enabled", plugin_name);
+            out.printerr("Cannot update {} when not enabled", plugin_name);
             return CR_FAILURE;
         }
         update_tomb_assignments(out);
@@ -96,13 +96,13 @@ static void do_disable() {
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
@@ -110,7 +110,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         else
             do_disable();
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -118,7 +118,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
 
     // PluginManager handles unregistering our handler from EventManager,
     // so we don't have to do that here
@@ -136,7 +136,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     }
 
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
     if (is_enabled)
         do_enable(out);
@@ -146,7 +146,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED && is_enabled) {
-        DEBUG(control,out).print("world unloaded; disabling %s\n",
+        DEBUG(control,out).print("world unloaded; disabling {}\n",
                                 plugin_name);
         is_enabled = false;
         do_disable();
@@ -176,16 +176,16 @@ void onUnitDeath(color_ostream& out, void* ptr) {
     int32_t building_id = it->second;
     if (!assign_to_tomb(unit, building_id)) {
         if (unit) {
-            WARN(event, out).print("%s died - but failed to assign them back to their tomb %d\n",
+            WARN(event, out).print("{} died - but failed to assign them back to their tomb {}\n",
                 DF2CONSOLE(Units::getReadableName(unit)).c_str(), building_id);
         } else {
-            WARN(event, out).print("Unit %d died - but failed to assign them back to their tomb %d\n", unit_id, building_id);
+            WARN(event, out).print("Unit {} died - but failed to assign them back to their tomb {}\n", unit_id, building_id);
         }
         return;
     }
 
     // success, print status update and remove assignment from our memo-list
-    INFO(event, out).print("%s died - assigning them back to their tomb\n",
+    INFO(event, out).print("{} died - assigning them back to their tomb\n",
         DF2CONSOLE(Units::getReadableName(unit)).c_str());
     tomb_assignments.erase(it);
 }
@@ -206,10 +206,10 @@ static void update_tomb_assignments(color_ostream &out) {
 
         if (it == tomb_assignments.end()) {
             tomb_assignments.emplace(tomb->assigned_unit_id, tomb->id);
-            DEBUG(cycle, out).print("%s new tomb assignment, unit %d to tomb %d\n",
+            DEBUG(cycle, out).print("{} new tomb assignment, unit {} to tomb {}\n",
                                     plugin_name, tomb->assigned_unit_id, tomb->id);
         } else if (it->second != tomb->id) {
-            DEBUG(cycle, out).print("%s tomb assignment to %d changed, (old: %d, new: %d)\n",
+            DEBUG(cycle, out).print("{} tomb assignment to {} changed, (old: {}, new: {})\n",
                                     plugin_name, tomb->assigned_unit_id, it->second, tomb->id);
             it->second = tomb->id;
         }
@@ -221,17 +221,17 @@ static void update_tomb_assignments(color_ostream &out) {
 
         auto bld = df::building::find(building_id);
         if (!bld) {
-            DEBUG(cycle, out).print("%s tomb missing: %d - removing\n", plugin_name, building_id);
+            DEBUG(cycle, out).print("{} tomb missing: {} - removing\n", plugin_name, building_id);
             return true;
         }
 
         auto tomb = virtual_cast<df::building_civzonest>(bld);
         if (!tomb || !tomb->flags.bits.exists) {
-            DEBUG(cycle, out).print("%s tomb missing: %d - removing\n", plugin_name, building_id);
+            DEBUG(cycle, out).print("{} tomb missing: {} - removing\n", plugin_name, building_id);
             return true;
         }
         if (tomb->assigned_unit_id != unit_id) {
-            DEBUG(cycle, out).print("%s unit %d unassigned from tomb %d - removing\n", plugin_name, unit_id, building_id);
+            DEBUG(cycle, out).print("{} unit {} unassigned from tomb {} - removing\n", plugin_name, unit_id, building_id);
             return true;
         }
 

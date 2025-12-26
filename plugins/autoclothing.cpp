@@ -129,6 +129,19 @@ struct ClothingRequirement {
 
     bool SetFromParameters(color_ostream &out, vector<string> &parameters)
     {
+        if (parameters[0] == "clear") { // handle the clear case
+            if (!set_bitfield_field(&material_category, parameters[1], 1))
+                out << "Unrecognized material type: " << parameters[1] << endl;
+            if (!setItem(parameters[2], this)) {
+                out << "Unrecognized item name or token: " << parameters[2] << endl;
+                return false;
+            }
+            else if (!validateMaterialCategory(this)) {
+                out << parameters[1] << " is not a valid material category for " << parameters[2] << endl;
+                return false;
+            }
+            return true;
+        }
         if (!set_bitfield_field(&material_category, parameters[0], 1))
             out << "Unrecognized material type: " << parameters[0] << endl;
         if (!setItem(parameters[1], this)) {
@@ -224,7 +237,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     }
 
     is_enabled = enabled.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control, out).print("loading persisted enabled state: %s\n",
+    DEBUG(control, out).print("loading persisted enabled state: {}\n",
         is_enabled ? "true" : "false");
 
     // Parse constraints
@@ -269,21 +282,21 @@ DFhackCExport command_result plugin_save_site_data(color_ostream &out) {
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         auto enabled = World::GetPersistentSiteData(CONFIG_KEY);
         is_enabled = enable;
-        DEBUG(control, out).print("%s from the API; persisting\n",
+        DEBUG(control, out).print("{} from the API; persisting\n",
             is_enabled ? "enabled" : "disabled");
         enabled.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             do_autoclothing();
     }
     else {
-        DEBUG(control, out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control, out).print("{} from the API, but already {}; no action\n",
             is_enabled ? "enabled" : "disabled",
             is_enabled ? "enabled" : "disabled");
     }
@@ -397,7 +410,7 @@ static bool validateMaterialCategory(ClothingRequirement *requirement) {
 command_result autoclothing(color_ostream &out, vector<string> &parameters)
 {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -442,14 +455,20 @@ command_result autoclothing(color_ostream &out, vector<string> &parameters)
     bool settingSize = false;
     bool matchedExisting = false;
     if (parameters.size() > 2) {
-        try {
-            newRequirement.needed_per_citizen = std::stoi(parameters[2]);
+        if (parameters[0] == "clear") {
+            newRequirement.needed_per_citizen = 0;
+            settingSize = true;
         }
-        catch (const std::exception&) {
-            out << parameters[2] << " is not a valid number." << endl;
-            return CR_WRONG_USAGE;
+        else {
+            try {
+                newRequirement.needed_per_citizen = std::stoi(parameters[2]);
+            }
+            catch (const std::exception&) {
+                out << parameters[2] << " is not a valid number." << endl;
+                return CR_WRONG_USAGE;
+            }
+            settingSize = true;
         }
-        settingSize = true;
     }
 
     for (size_t i = clothingOrders.size(); i-- > 0;) {
@@ -459,7 +478,10 @@ command_result autoclothing(color_ostream &out, vector<string> &parameters)
         if (settingSize) {
             if (newRequirement.needed_per_citizen == 0) {
                 clothingOrders.erase(clothingOrders.begin() + i);
-                out << "Unset " << parameters[0] << " " << parameters[1] << endl;
+                    if (parameters[0] == "clear")
+                        out << "Unset " << parameters[1] << " " << parameters[2] << endl;
+                    else
+                        out << "Unset " << parameters[0] << " " << parameters[1] << endl;
             }
             else {
                 clothingOrders[i] = newRequirement;
@@ -505,7 +527,7 @@ static void find_needed_clothing_items() {
             {
                 auto item = Items::findItemByID(ownedItem);
                 if (!item) {
-                    DEBUG(cycle).print("autoclothing: Invalid inventory item ID: %d\n", ownedItem);
+                    DEBUG(cycle).print("autoclothing: Invalid inventory item ID: {}\n", ownedItem);
                     continue;
                 }
 
@@ -661,7 +683,7 @@ static void generate_control(color_ostream &out) {
         {
             auto item = Items::findItemByID(itemId);
             if (!item) {
-                DEBUG(cycle, out).print("autoclothing: Invalid inventory item ID: %d\n", itemId);
+                DEBUG(cycle, out).print("autoclothing: Invalid inventory item ID: {}\n", itemId);
                 continue;
             }
             else if (item->getWear() >= 1)

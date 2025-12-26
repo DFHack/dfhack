@@ -35,6 +35,8 @@ distribution.
 #include <vector>
 #include <filesystem>
 
+#include "Format.h"
+
 #ifndef WIN32
 #include <dirent.h>
 #include <errno.h>
@@ -57,6 +59,7 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "Memory.h"
+#include "MemoryPatcher.h"
 #include "MiscUtils.h"
 #include "VersionInfo.h"
 #include "VersionInfoFactory.h"
@@ -194,7 +197,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         cerr << "1KB hexdump follows:" << endl;
         for(int i = 0; i < 64; i++)
         {
-            fprintf(stderr, "%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x\n",
+            fmt::print(std::cerr, "{:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}\n",
                     first_kb[i*16],
                     first_kb[i*16+1],
                     first_kb[i*16+2],
@@ -215,7 +218,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         }
         free(wd);
 #else /* WIN32 */
-        cerr << "PE timestamp: " << std::format("{:#0x}", my_pe) << endl;
+        cerr << "PE timestamp: " << fmt::format("{:#0x}", my_pe) << endl;
 #endif /* WIN32 */
     }
 }
@@ -795,4 +798,11 @@ int Process::memProtect(void *ptr, const int length, const int prot)
     DWORD old_prot = 0;
     return !VirtualProtect(ptr, length, prot_native, &old_prot);
 #endif /* WIN32 */
+}
+
+bool Process::patchMemory(void* target, const void* src, size_t count)
+{
+    MemoryPatcher patcher(this);
+
+    return patcher.write(target, src, count);
 }

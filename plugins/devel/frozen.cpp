@@ -55,7 +55,7 @@ command_result df_frozenlava (color_ostream &out, vector <string> & parameters)
     int tiles = changeLiquid(tile_liquid::Magma);
 
     if (tiles)
-        out.print("Changed %i tiles of ice into frozen lava.\n", tiles);
+        out.print("Changed {} tiles of ice into frozen lava.\n", tiles);
     return CR_OK;
 }
 
@@ -72,7 +72,7 @@ command_result df_frozenwater (color_ostream &out, vector <string> & parameters)
     int tiles = changeLiquid(tile_liquid::Water);
 
     if (tiles)
-        out.print("Changed %i tiles of ice into frozen water.\n", tiles);
+        out.print("Changed {} tiles of ice into frozen water.\n", tiles);
     return CR_OK;
 }
 

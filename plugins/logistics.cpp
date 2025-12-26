@@ -66,14 +66,14 @@ enum StockpileConfigForbidValues {
 };
 
 static PersistentDataItem& ensure_stockpile_config(color_ostream& out, int stockpile_number) {
-    TRACE(control, out).print("ensuring stockpile config stockpile_number=%d\n", stockpile_number);
+    TRACE(control, out).print("ensuring stockpile config stockpile_number={}\n", stockpile_number);
     if (watched_stockpiles.count(stockpile_number)) {
         TRACE(control, out).print("stockpile exists in watched_stockpiles\n");
         return watched_stockpiles[stockpile_number];
     }
 
     string keyname = CONFIG_KEY_PREFIX + int_to_string(stockpile_number);
-    DEBUG(control, out).print("creating new persistent key for stockpile %d\n", stockpile_number);
+    DEBUG(control, out).print("creating new persistent key for stockpile {}\n", stockpile_number);
     watched_stockpiles.emplace(stockpile_number, World::GetPersistentSiteData(keyname, true));
     PersistentDataItem& c = watched_stockpiles[stockpile_number];
     c.set_int(STOCKPILE_CONFIG_STOCKPILE_NUMBER, stockpile_number);
@@ -89,7 +89,7 @@ static PersistentDataItem& ensure_stockpile_config(color_ostream& out, int stock
 static void remove_stockpile_config(color_ostream& out, int stockpile_number) {
     if (!watched_stockpiles.count(stockpile_number))
         return;
-    DEBUG(control, out).print("removing persistent key for stockpile %d\n", stockpile_number);
+    DEBUG(control, out).print("removing persistent key for stockpile {}\n", stockpile_number);
     World::DeletePersistentData(watched_stockpiles[stockpile_number]);
     watched_stockpiles.erase(stockpile_number);
 }
@@ -105,7 +105,7 @@ static void do_cycle(color_ostream& out,
 static void logistics_cycle(color_ostream &out, bool quiet);
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
-    DEBUG(control, out).print("initializing %s\n", plugin_name);
+    DEBUG(control, out).print("initializing {}\n", plugin_name);
 
     commands.push_back(PluginCommand(
         plugin_name,
@@ -117,7 +117,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginComman
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     is_enabled = enable;
-    DEBUG(control, out).print("now %s\n", is_enabled ? "enabled" : "disabled");
+    DEBUG(control, out).print("now {}\n", is_enabled ? "enabled" : "disabled");
     return CR_OK;
 }
 
@@ -205,7 +205,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -445,12 +445,12 @@ private:
 } bad_flags;
 
 static void scan_item(color_ostream &out, df::item *item, StockProcessor &processor) {
-    DEBUG(cycle,out).print("scan_item [%s] item_id=%d\n", processor.name.c_str(), item->id);
+    DEBUG(cycle,out).print("scan_item [{}] item_id={}\n", processor.name, item->id);
 
     if (DBG_NAME(cycle).isEnabled(DebugCategory::LTRACE)) {
         string name = "";
         item->getItemDescription(&name, 0);
-        TRACE(cycle,out).print("item: %s\n", name.c_str());
+        TRACE(cycle,out).print("item: {}\n", name);
     }
 
     if (processor.is_designated(out, item)) {
@@ -539,7 +539,7 @@ static void train_partials(color_ostream& out, int32_t& train_count) {
             continue;
 
         if (Units::assignTrainer(unit)) {
-            DEBUG(cycle,out).print("assigned trainer to unit %d\n", unit->id);
+            DEBUG(cycle,out).print("assigned trainer to unit {}\n", unit->id);
             ++train_count;
         }
     }
@@ -549,7 +549,7 @@ static void do_cycle(color_ostream& out,
         int32_t& melt_count, int32_t& trade_count,
         int32_t& dump_count, int32_t& train_count,
         int32_t& forbid_count, int32_t& claim_count) {
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    DEBUG(cycle,out).print("running {} cycle\n", plugin_name);
     cycle_timestamp = world->frame_counter;
 
     ProcessorStats melt_stats, trade_stats, dump_stats, train_stats, forbid_stats, claim_stats;
@@ -593,7 +593,7 @@ static void do_cycle(color_ostream& out,
         train_partials(out, train_count);
     }
 
-    TRACE(cycle,out).print("exit %s do_cycle\n", plugin_name);
+    TRACE(cycle,out).print("exit {} do_cycle\n", plugin_name);
 }
 
 /////////////////////////////////////////////////////
@@ -673,21 +673,21 @@ static int logistics_getStockpileData(lua_State *L) {
 }
 
 static void logistics_cycle(color_ostream &out, bool quiet = false) {
-    DEBUG(control, out).print("entering logistics_cycle%s\n", quiet ? " (quiet)" : "");
+    DEBUG(control, out).print("entering logistics_cycle{}\n", quiet ? " (quiet)" : "");
     int32_t melt_count = 0, trade_count = 0, dump_count = 0, train_count = 0, forbid_count = 0, claim_count = 0;
     do_cycle(out, melt_count, trade_count, dump_count, train_count, forbid_count, claim_count);
     if (0 < melt_count || !quiet)
-        out.print("logistics: designated %d item%s for melting\n", melt_count, (melt_count == 1) ? "" : "s");
+        out.print("logistics: designated {} item{} for melting\n", melt_count, (melt_count == 1) ? "" : "s");
     if (0 < trade_count || !quiet)
-        out.print("logistics: designated %d item%s for trading\n", trade_count, (trade_count == 1) ? "" : "s");
+        out.print("logistics: designated {} item{} for trading\n", trade_count, (trade_count == 1) ? "" : "s");
     if (0 < dump_count || !quiet)
-        out.print("logistics: designated %d item%s for dumping\n", dump_count, (dump_count == 1) ? "" : "s");
+        out.print("logistics: designated {} item{} for dumping\n", dump_count, (dump_count == 1) ? "" : "s");
     if (0 < train_count || !quiet)
-        out.print("logistics: designated %d animal%s for training\n", train_count, (train_count == 1) ? "" : "s");
+        out.print("logistics: designated {} animal{} for training\n", train_count, (train_count == 1) ? "" : "s");
     if (0 < forbid_count || !quiet)
-        out.print("logistics: designated %d item%s forbidden\n", forbid_count, (forbid_count == 1) ? "" : "s");
+        out.print("logistics: designated {} item{} forbidden\n", forbid_count, (forbid_count == 1) ? "" : "s");
     if (0 < claim_count || !quiet)
-        out.print("logistics: claimed %d forbidden item%s\n", claim_count, (claim_count == 1) ? "" : "s");
+        out.print("logistics: claimed {} forbidden item{} \n", claim_count, (claim_count == 1) ? "" : "s");
 }
 
 static void find_stockpiles(lua_State *L, int idx,
@@ -756,11 +756,11 @@ static void logistics_setStockpileConfig(color_ostream& out, int stockpile_numbe
         bool dump, bool train,
         int forbid, bool melt_masterworks) {
     DEBUG(control, out).print("entering logistics_setStockpileConfig\n");
-    DEBUG(control, out).print("stockpile_number=%d, melt=%d, trade=%d, dump=%d, train=%d, forbid=%d, melt_masterworks=%d\n",
+    DEBUG(control, out).print("stockpile_number={}, melt={}, trade={}, dump={}, train={}, forbid={}, melt_masterworks={}\n",
             stockpile_number, melt, trade, dump, train, forbid, melt_masterworks);
 
     if (!find_stockpile(stockpile_number)) {
-        out.printerr("invalid stockpile number: %d\n", stockpile_number);
+        out.printerr("invalid stockpile number: {}\n", stockpile_number);
         return;
     }
 
@@ -843,8 +843,8 @@ static int logistics_getGlobalCounts(lua_State *L) {
 }
 
 static bool logistics_setFeature(color_ostream &out, bool enabled, string feature) {
-    DEBUG(control, out).print("entering logistics_setFeature (enabled=%d, feature=%s)\n",
-        enabled, feature.c_str());
+    DEBUG(control, out).print("entering logistics_setFeature (enabled={}, feature={})\n",
+        enabled, feature);
     if (feature != "autoretrain")
         return false;
     config.set_bool(CONFIG_TRAIN_PARTIAL, enabled);
@@ -854,7 +854,7 @@ static bool logistics_setFeature(color_ostream &out, bool enabled, string featur
 }
 
 static bool logistics_getFeature(color_ostream &out, string feature) {
-    DEBUG(control, out).print("entering logistics_getFeature (feature=%s)\n", feature.c_str());
+    DEBUG(control, out).print("entering logistics_getFeature (feature={})\n", feature);
     if (feature != "autoretrain")
         return false;
     return config.get_bool(CONFIG_TRAIN_PARTIAL);

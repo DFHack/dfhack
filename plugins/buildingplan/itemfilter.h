@@ -7,6 +7,8 @@
 #include "df/dfhack_material_category.h"
 #include "df/item_quality.h"
 
+#include <set>
+
 class ItemFilter {
 public:
     ItemFilter();

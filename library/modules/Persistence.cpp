@@ -31,12 +31,14 @@ distribution.
 #include "LuaTools.h"
 #include "MemAccess.h"
 
+#include "modules/DFSDL.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Persistence.h"
 #include "modules/World.h"
 
 #include "df/world.h"
+#include "df/init.h"
 
 #include <json/json.h>
 
@@ -187,7 +189,7 @@ static std::string filterSaveFileName(std::string s) {
 }
 
 static std::filesystem::path getSavePath(const std::string &world) {
-    return std::filesystem::path{} / "save" / world;
+    return Filesystem::getBaseDir() / "save" / world;
 }
 
 static std::filesystem::path getSaveFilePath(const std::string &world, const std::string &name) {
@@ -429,7 +431,7 @@ void Persistence::Internal::load(color_ostream& out) {
     std::filesystem::path save_path = getSavePath(world_name);
     std::vector<std::filesystem::path> files;
     if (0 != Filesystem::listdir(save_path, files)) {
-        DEBUG(persistence,out).print("not loading state; save directory doesn't exist: '%s'\n", save_path.c_str());
+        DEBUG(persistence,out).print("not loading state; save directory doesn't exist: '{}'\n", save_path);
         return;
     }
 

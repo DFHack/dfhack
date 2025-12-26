@@ -24,13 +24,6 @@ distribution.
 
 #pragma once
 
-#include <string>
-#include <sstream>
-#include <vector>
-#include <map>
-
-#include "DataDefs.h"
-
 #include <lua.h>
 #include <lauxlib.h>
 
@@ -41,6 +34,9 @@ distribution.
 
 namespace DFHack {
     struct FunctionReg;
+
+    class function_identity_base;
+
 namespace LuaWrapper {
     struct LuaToken;
 
@@ -166,7 +162,7 @@ namespace LuaWrapper {
                                        const char *ctx, bool allow_type = false,
                                        bool keep_metatable = false);
 
-    void LookupInTable(lua_State *state, void *id, LuaToken *tname);
+    void LookupInTable(lua_State *state, const void *id, LuaToken *tname);
     void SaveInTable(lua_State *state, void *node, LuaToken *tname);
     void SaveTypeInfo(lua_State *state, void *node);
 

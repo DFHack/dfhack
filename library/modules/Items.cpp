@@ -155,7 +155,7 @@ string ItemTypeInfo::getToken() {
     if (custom)
         rv += ":" + custom->id;
     else if (subtype != -1 && type != item_type::PLANT_GROWTH)
-        rv += stl_sprintf(":%d", subtype);
+        rv += fmt::format(":{}", subtype);
     return rv;
 }
 
@@ -859,7 +859,7 @@ static bool detachItem(df::item *item)
 
     if (item->flags.bits.on_ground) {
         if (!removeItemOnGround(item))
-            Core::printerr("Item was marked on_ground, but not in block: %d (%d,%d,%d)\n",
+            Core::printerr("Item was marked on_ground, but not in block: {} ({},{},{})\n",
                 item->id, item->pos.x, item->pos.y, item->pos.z);
         item->flags.bits.on_ground = false;
         return true;
@@ -1200,6 +1200,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype,
             break;
         case CATAPULTPARTS:
         case BALLISTAPARTS:
+        case BOLT_THROWER_PARTS:
         case TRAPPARTS:
             value = 30;
             break;
@@ -1752,7 +1753,7 @@ int Items::getValue(df::item *item, df::caravan_state *caravan) {
 }
 
 bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_type item_type,
-    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor)
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor, int32_t count)
 {   // Based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
     auto pos = Units::getPosition(unit);
@@ -1765,7 +1766,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
     prod->mat_type = mat_type;
     prod->mat_index = mat_index;
     prod->probability = 100;
-    prod->count = 1;
+    prod->count = count;
 
     switch(item_type)
     {   using namespace df::enums::item_type;
@@ -1796,7 +1797,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
         World::isFortressMode() ? df::world_site::find(World::GetCurrentSiteId()) : NULL, NULL);
     delete prod;
 
-    DEBUG(items).print("produced %zd items\n", out_items.size());
+    DEBUG(items).print("produced {} items\n", out_items.size());
 
     for (auto out_item : out_items)
     {   // Plant growths need a valid "growth print", otherwise they behave oddly

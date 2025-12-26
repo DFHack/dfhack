@@ -38,6 +38,7 @@ distribution.
 #include "modules/References.h"
 
 #include "df/building.h"
+#include "df/building_workshopst.h"
 #include "df/general_ref.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/general_ref_building_holderst.h"
@@ -517,6 +518,27 @@ bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
     }
 }
 
+df::job* DFHack::Job::createLinked()
+{
+    auto job = new df::job();
+    DFHack::Job::linkIntoWorld(job, true);
+    return job;
+}
+
+bool DFHack::Job::assignToWorkshop(df::job *job, df::building_workshopst *workshop)
+{
+    CHECK_NULL_POINTER(job);
+    CHECK_NULL_POINTER(workshop);
+
+    if (workshop->jobs.size() >= 10) {
+        return false;
+    }
+    job->pos = df::coord(workshop->centerx, workshop->centery, workshop->z);
+    DFHack::Job::addGeneralRef(job, df::general_ref_type::BUILDING_HOLDER, workshop->id);
+    workshop->jobs.push_back(job);
+    return true;
+}
+
 bool DFHack::Job::removePostings(df::job *job, bool remove_all)
 {
     using df::global::world;
@@ -655,6 +677,9 @@ std::string Job::getName(df::job *job)
     button->matgloss = job->mat_index;
     button->specflag = job->specflag;
     button->job_item_flag = job->material_category;
+    button->specdata = job->specdata;
+    button->art_specifier_id1 = job->art_spec.id;
+    button->art_specifier_id2 = job->art_spec.subid;
 
     button->text(&desc);
     delete button;

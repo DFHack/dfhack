@@ -1,6 +1,7 @@
 // Wide-area traffic designation utility.
 // Flood-fill from cursor or fill entire map.
 
+#include <stack>
 #include <ctype.h>      //For toupper().
 #include <algorithm>    //for min().
 #include <map>
@@ -157,7 +158,7 @@ command_result filltraffic(color_ostream &out, std::vector<std::string> & params
         return CR_FAILURE;
     }
 
-    out.print("%d/%d/%d  ... FILLING!\n", cx,cy,cz);
+    out.print("{}/{}/{}  ... FILLING!\n", cx,cy,cz);
 
     //Naive four-way or six-way flood fill with possible tiles on a stack.
     stack <DFCoord> flood;

@@ -6,7 +6,6 @@ local overlay = require('plugins.overlay')
 local textures = require('gui.textures')
 local utils = require('utils')
 local widgets = require('gui.widgets')
-local stockflow = reqscript('internal/quickfort/stockflow')
 
 --
 -- OrdersOverlay
@@ -719,77 +718,6 @@ local search_cursor_visible = false
 local search_last_scroll_position = -1
 local order_count_at_highlight = 0
 
-local function make_order_key(order)
-    local mat_cat_str = ''
-    if order.material_category then
-        local keys = {}
-        for k in pairs(order.material_category) do
-            if type(k) == 'string' then
-                table.insert(keys, k)
-            end
-        end
-        table.sort(keys)
-        for _, k in ipairs(keys) do
-            mat_cat_str = mat_cat_str .. k .. '=' .. tostring(order.material_category[k]) .. ';'
-        end
-    end
-
-    local encrust_str = ''
-    if order.specflag and order.specflag.encrust_flags then
-        local flags = {'finished_goods', 'furniture', 'ammo'}
-        for _, flag in ipairs(flags) do
-            if order.specflag.encrust_flags[flag] then
-                encrust_str = encrust_str .. flag .. ';'
-            end
-        end
-    end
-
-    return string.format('%d:%d:%d:%d:%d:%s:%s:%s',
-        order.job_type,
-        order.item_type,
-        order.item_subtype,
-        order.mat_type,
-        order.mat_index,
-        order.reaction_name or '',
-        mat_cat_str,
-        encrust_str)
-end
-
-local reaction_map_cache = nil
-
-local function get_cached_reaction_map()
-    if reaction_map_cache then
-        return reaction_map_cache
-    end
-
-    local can_read_stockflow = dfhack.isWorldLoaded() and dfhack.isMapLoaded()
-    if not can_read_stockflow then
-        return nil
-    end
-
-    local map = {}
-    local reactions = stockflow.collect_reactions()
-
-    for _, reaction in ipairs(reactions) do
-        local key = make_order_key(reaction.order)
-        map[key] = reaction.name:lower()
-        df.delete(reaction.order)
-    end
-    reactions = nil
-
-    reaction_map_cache = map
-    return reaction_map_cache
-end
-
-local function get_order_search_key(order)
-    local reaction_map = get_cached_reaction_map()
-    if not reaction_map then
-        return nil
-    end
-    local key = make_order_key(order)
-    return reaction_map[key]
-end
-
 local function perform_search(text)
     local matches = {}
 
@@ -800,7 +728,7 @@ local function perform_search(text)
     local orders = df.global.world.manager_orders.all
     for i = 0, #orders - 1 do
         local order = orders[i]
-        local search_key = get_order_search_key(order)
+        local search_key = dfhack.job.getManagerOrderName(order)
         if search_key and utils.search_text(search_key, text) then
             table.insert(matches, i)
         end
@@ -819,8 +747,6 @@ OrdersSearchOverlay.ATTRS{
 }
 
 function OrdersSearchOverlay:init()
-    get_cached_reaction_map()
-
     local main_panel = widgets.Panel{
         view_id='main_panel',
         frame={t=0, l=0, r=0, h=4},

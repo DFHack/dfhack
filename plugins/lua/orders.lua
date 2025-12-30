@@ -741,7 +741,7 @@ OrdersSearchOverlay = defclass(OrdersSearchOverlay, overlay.OverlayWidget)
 OrdersSearchOverlay.ATTRS{
     desc='Adds a search box to find and navigate to matching manager orders.',
     default_pos={x=85, y=-6},
-    default_enabled=false,
+    default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
     frame={w=26, h=4},
 }
@@ -999,7 +999,7 @@ end
 OrderHighlightOverlay = defclass(OrderHighlightOverlay, overlay.OverlayWidget)
 OrderHighlightOverlay.ATTRS{
     desc='Shows arrows next to the work order found by orders.search',
-    default_enabled=false,
+    default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
     full_interface=true,
 }

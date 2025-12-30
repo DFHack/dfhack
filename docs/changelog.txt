@@ -57,6 +57,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
 
 ## Fixes
 
@@ -96,7 +97,6 @@ Template for new versions:
 - `infinite-sky`: Re-enabled with compatibility with new siege map data.
 
 ## New Features
-- `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
 - `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
 
 ## Fixes

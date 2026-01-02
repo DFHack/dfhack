@@ -695,7 +695,6 @@ std::string Job::getManagerOrderName(df::manager_order *order)
     std::string desc;
     auto button = df::allocate<df::interface_button_building_new_jobst>();
     button->mstring = order->reaction_name;
-    button->specdata.hist_figure_id = order->specdata.hist_figure_id;
     button->jobtype = order->job_type;
     button->itemtype = order->item_type;
     button->subtype = order->item_subtype;
@@ -704,7 +703,6 @@ std::string Job::getManagerOrderName(df::manager_order *order)
     button->specflag = order->specflag;
     button->job_item_flag = order->material_category;
     button->specdata = order->specdata;
-    button->art_specifier = order->art_spec.type;
     button->art_specifier_id1 = order->art_spec.id;
     button->art_specifier_id2 = order->art_spec.subid;
 

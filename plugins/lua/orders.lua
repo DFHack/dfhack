@@ -715,7 +715,6 @@ end
 --
 
 local search_cursor_visible = false
-local search_last_scroll_position = -1
 local order_count_at_highlight = 0
 local search_matched_indices = {}
 local search_current_match_idx = 0
@@ -820,7 +819,13 @@ end
 function OrdersSearchOverlay:update_filter(text)
     search_matched_indices = perform_search(text)
     search_current_match_idx = 0
-    search_cursor_visible = false
+
+    if #search_matched_indices > 0 then
+        search_cursor_visible = true
+        order_count_at_highlight = #df.global.world.manager_orders.all
+    else
+        search_cursor_visible = false
+    end
 
     if text == '' then
         self.subviews.main_panel.frame_title = 'Search'
@@ -866,7 +871,6 @@ function OrdersSearchOverlay:cycle_match(direction)
     -- Scroll to the selected match
     local order_idx = search_matched_indices[search_current_match_idx]
     mi.info.work_orders.scroll_position_work_orders = order_idx
-    search_last_scroll_position = order_idx
     search_cursor_visible = true
     order_count_at_highlight = #df.global.world.manager_orders.all
 
@@ -1020,16 +1024,8 @@ function OrderHighlightOverlay:render(dc)
 
     if mi.job_details.open or not search_cursor_visible then return end
 
-    local current_scroll = mi.info.work_orders.scroll_position_work_orders
-    local current_order_count = #df.global.world.manager_orders.all
-
-    -- Hide cursor when user manually scrolls
-    if search_last_scroll_position ~= -1 and current_scroll ~= search_last_scroll_position then
-        search_cursor_visible = false
-        return
-    end
-
     -- Hide cursor when order list changes (orders added or removed)
+    local current_order_count = #df.global.world.manager_orders.all
     if order_count_at_highlight ~= current_order_count then
         search_cursor_visible = false
         return
@@ -1040,13 +1036,13 @@ function OrderHighlightOverlay:render(dc)
 
     local selected_pen = dfhack.pen.parse{
         fg=COLOR_BLACK,
-        bg=COLOR_RED,
+        bg=COLOR_WHITE,
         bold=true,
     }
 
     local match_pen = dfhack.pen.parse{
-        fg=COLOR_BLACK,
-        bg=COLOR_WHITE,
+        fg=COLOR_WHITE,
+        bg=COLOR_BLACK,
         bold=true,
     }
 

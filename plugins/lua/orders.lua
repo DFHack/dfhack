@@ -717,6 +717,8 @@ end
 local search_cursor_visible = false
 local search_last_scroll_position = -1
 local order_count_at_highlight = 0
+local search_matched_indices = {}
+local search_current_match_idx = 0
 
 local function perform_search(text)
     local matches = {}
@@ -812,15 +814,12 @@ function OrdersSearchOverlay:init()
         minimized_panel,
     }
 
-    -- Initialize search state
-    self.matched_indices = {}
-    self.current_match_idx = 0
     self.minimized = false
 end
 
 function OrdersSearchOverlay:update_filter(text)
-    self.matched_indices = perform_search(text)
-    self.current_match_idx = 0
+    search_matched_indices = perform_search(text)
+    search_current_match_idx = 0
     search_cursor_visible = false
 
     if text == '' then
@@ -846,14 +845,14 @@ function OrdersSearchOverlay:cycle_match(direction)
     local new_matches = perform_search(search_text)
 
     if #new_matches == 0 then
-        self.matched_indices = {}
-        self.current_match_idx = 0
+        search_matched_indices = {}
+        search_current_match_idx = 0
         search_cursor_visible = false
         self.subviews.main_panel.frame_title = 'Search'
         return
     end
 
-    local new_match_idx = self.current_match_idx + direction
+    local new_match_idx = search_current_match_idx + direction
 
     if new_match_idx > #new_matches then
         new_match_idx = 1
@@ -861,11 +860,11 @@ function OrdersSearchOverlay:cycle_match(direction)
         new_match_idx = #new_matches
     end
 
-    self.matched_indices = new_matches
-    self.current_match_idx = new_match_idx
+    search_matched_indices = new_matches
+    search_current_match_idx = new_match_idx
 
     -- Scroll to the selected match
-    local order_idx = self.matched_indices[self.current_match_idx]
+    local order_idx = search_matched_indices[search_current_match_idx]
     mi.info.work_orders.scroll_position_work_orders = order_idx
     search_last_scroll_position = order_idx
     search_cursor_visible = true
@@ -875,21 +874,21 @@ function OrdersSearchOverlay:cycle_match(direction)
 end
 
 function OrdersSearchOverlay:get_match_text()
-    local total_matches = #self.matched_indices
+    local total_matches = #search_matched_indices
 
     if total_matches == 0 then
         return ''
     end
 
-    if self.current_match_idx == 0 then
+    if search_current_match_idx == 0 then
         return string.format(': %d matches', total_matches)
     end
 
-    return string.format(': %d of %d', self.current_match_idx, total_matches)
+    return string.format(': %d of %d', search_current_match_idx, total_matches)
 end
 
 function OrdersSearchOverlay:has_matches()
-    return #self.matched_indices > 0
+    return #search_matched_indices > 0
 end
 
 local function is_mouse_key(keys)
@@ -969,31 +968,43 @@ local function getViewportSize()
     return math.floor(available_height / ORDER_HEIGHT)
 end
 
-local function calculateSelectedOrderY()
+local function getVisibleOrderIndices()
     local orders = df.global.world.manager_orders.all
     local scroll_pos = mi.info.work_orders.scroll_position_work_orders
 
-    if #orders == 0 or scroll_pos < 0 or scroll_pos >= #orders then
-        return nil
-    end
+    if #orders == 0 then return 0, -1 end
 
-    local list_start_y = getListStartY()
     local viewport_size = getViewportSize()
-
     local viewport_start = scroll_pos
     local viewport_end = scroll_pos + viewport_size - 1
 
-    -- Selected order tries to be at the top unless we're at the end of the list
+    -- Handle end-of-list case
     if viewport_end >= #orders then
         viewport_end = #orders - 1
         viewport_start = math.max(0, viewport_end - viewport_size + 1)
     end
 
-    local pos_in_viewport = scroll_pos - viewport_start
+    return viewport_start, viewport_end
+end
 
-    local selected_y = list_start_y + (pos_in_viewport * ORDER_HEIGHT)
+local function calculateOrderY(order_idx)
+    local orders = df.global.world.manager_orders.all
 
-    return selected_y
+    if #orders == 0 or order_idx < 0 or order_idx >= #orders then
+        return nil
+    end
+
+    local viewport_start, viewport_end = getVisibleOrderIndices()
+
+    -- Check if order is in viewport
+    if order_idx < viewport_start or order_idx > viewport_end then
+        return nil
+    end
+
+    local list_start_y = getListStartY()
+    local pos_in_viewport = order_idx - viewport_start
+
+    return list_start_y + (pos_in_viewport * ORDER_HEIGHT)
 end
 
 OrderHighlightOverlay = defclass(OrderHighlightOverlay, overlay.OverlayWidget)
@@ -1024,18 +1035,37 @@ function OrderHighlightOverlay:render(dc)
         return
     end
 
-    -- Draw highlight arrows
-    local selected_y = calculateSelectedOrderY()
-    if selected_y then
-        local highlight_pen = dfhack.pen.parse{
-            fg=COLOR_BLACK,
-            bg=COLOR_WHITE,
-            bold=true,
-        }
+    -- Draw highlight arrows for all matches in viewport
+    if #search_matched_indices == 0 then return end
 
-        dc:seek(ARROW_X, selected_y):string('|', highlight_pen)
-        dc:seek(ARROW_X, selected_y + 1):string('>', highlight_pen)
-        dc:seek(ARROW_X, selected_y + 2):string('|', highlight_pen)
+    local selected_pen = dfhack.pen.parse{
+        fg=COLOR_BLACK,
+        bg=COLOR_RED,
+        bold=true,
+    }
+
+    local match_pen = dfhack.pen.parse{
+        fg=COLOR_BLACK,
+        bg=COLOR_WHITE,
+        bold=true,
+    }
+
+    -- Get the order index of the currently selected match
+    local selected_order_idx = search_current_match_idx > 0 and
+                               search_matched_indices[search_current_match_idx] or nil
+
+    -- Draw highlights for all matching orders in viewport
+    for _, match_order_idx in ipairs(search_matched_indices) do
+        local match_y = calculateOrderY(match_order_idx)
+
+        if match_y then
+            -- Use red pen for selected match, white for others
+            local pen = (match_order_idx == selected_order_idx) and selected_pen or match_pen
+
+            dc:seek(ARROW_X, match_y):string('|', pen)
+            dc:seek(ARROW_X, match_y + 1):string('>', pen)
+            dc:seek(ARROW_X, match_y + 2):string('|', pen)
+        end
     end
 end
 

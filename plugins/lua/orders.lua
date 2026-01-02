@@ -715,9 +715,10 @@ end
 --
 
 local search_cursor_visible = false
-local order_count_at_highlight = 0
 local search_matched_indices = {}
 local search_current_match_idx = 0
+local order_names_checksum = nil
+local search_overlay_instance = nil
 
 local function perform_search(text)
     local matches = {}
@@ -736,6 +737,19 @@ local function perform_search(text)
     end
 
     return matches
+end
+
+local function calculate_order_names_checksum()
+    local orders = df.global.world.manager_orders.all
+    if #orders == 0 then return "" end
+
+    local names = {}
+    for i = 0, #orders - 1 do
+        local name = dfhack.job.getManagerOrderName(orders[i])
+        table.insert(names, name or "")
+    end
+
+    return table.concat(names, "|")
 end
 
 OrdersSearchOverlay = defclass(OrdersSearchOverlay, overlay.OverlayWidget)
@@ -814,15 +828,16 @@ function OrdersSearchOverlay:init()
     }
 
     self.minimized = false
+    search_overlay_instance = self
 end
 
-function OrdersSearchOverlay:update_filter(text)
+function OrdersSearchOverlay:update_filter()
+    local text = self.subviews.filter.text
     search_matched_indices = perform_search(text)
     search_current_match_idx = 0
 
     if #search_matched_indices > 0 then
         search_cursor_visible = true
-        order_count_at_highlight = #df.global.world.manager_orders.all
     else
         search_cursor_visible = false
     end
@@ -872,7 +887,6 @@ function OrdersSearchOverlay:cycle_match(direction)
     local order_idx = search_matched_indices[search_current_match_idx]
     mi.info.work_orders.scroll_position_work_orders = order_idx
     search_cursor_visible = true
-    order_count_at_highlight = #df.global.world.manager_orders.all
 
     self.subviews.main_panel.frame_title = 'Search' .. self:get_match_text()
 end
@@ -953,6 +967,8 @@ local LIST_START_Y_ONE_TABS_ROW = 8
 local LIST_START_Y_TWO_TABS_ROWS = 10
 local BOTTOM_MARGIN = 9
 local ARROW_X = 10
+local CHECK_FRAME_INTERVAL = 50
+local check_frame_counter = 0
 
 local function getListStartY()
     local rect = gui.get_interface_rect()
@@ -1024,11 +1040,20 @@ function OrderHighlightOverlay:render(dc)
 
     if mi.job_details.open or not search_cursor_visible then return end
 
-    -- Hide cursor when order list changes (orders added or removed)
-    local current_order_count = #df.global.world.manager_orders.all
-    if order_count_at_highlight ~= current_order_count then
-        search_cursor_visible = false
-        return
+    -- Periodic check for order name changes
+    check_frame_counter = check_frame_counter + 1
+    if check_frame_counter >= CHECK_FRAME_INTERVAL then
+        check_frame_counter = 0
+
+        local new_checksum = calculate_order_names_checksum()
+        if new_checksum ~= order_names_checksum then
+            order_names_checksum = new_checksum
+
+            -- Auto re-run search if active
+            if search_overlay_instance and not search_overlay_instance.minimized then
+                search_overlay_instance:update_filter()
+            end
+        end
     end
 
     -- Draw highlight arrows for all matches in viewport

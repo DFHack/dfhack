@@ -714,7 +714,6 @@ end
 -- OrdersSearchOverlay
 --
 
-local search_cursor_visible = false
 local search_matched_indices = {}
 local search_current_match_idx = 0
 local order_names_checksum = nil
@@ -836,12 +835,6 @@ function OrdersSearchOverlay:update_filter()
     search_matched_indices = perform_search(text)
     search_current_match_idx = 0
 
-    if #search_matched_indices > 0 then
-        search_cursor_visible = true
-    else
-        search_cursor_visible = false
-    end
-
     if text == '' then
         self.subviews.main_panel.frame_title = 'Search'
     else
@@ -867,7 +860,6 @@ function OrdersSearchOverlay:cycle_match(direction)
     if #new_matches == 0 then
         search_matched_indices = {}
         search_current_match_idx = 0
-        search_cursor_visible = false
         self.subviews.main_panel.frame_title = 'Search'
         return
     end
@@ -886,7 +878,6 @@ function OrdersSearchOverlay:cycle_match(direction)
     -- Scroll to the selected match
     local order_idx = search_matched_indices[search_current_match_idx]
     mi.info.work_orders.scroll_position_work_orders = order_idx
-    search_cursor_visible = true
 
     self.subviews.main_panel.frame_title = 'Search' .. self:get_match_text()
 end
@@ -1038,7 +1029,7 @@ OrderHighlightOverlay.ATTRS{
 function OrderHighlightOverlay:render(dc)
     OrderHighlightOverlay.super.render(self, dc)
 
-    if mi.job_details.open or not search_cursor_visible then return end
+    if mi.job_details.open or #search_matched_indices == 0 then return end
 
     -- Periodic check for order name changes
     check_frame_counter = check_frame_counter + 1

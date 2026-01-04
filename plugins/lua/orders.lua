@@ -721,6 +721,9 @@ local LIST_START_Y_TWO_TABS_ROWS = 10
 local BOTTOM_MARGIN = 9
 local ARROW_X = 10
 
+local SELECTED_PEN = dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE, bold=true}
+local MATCH_PEN = dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_BLACK, bold=true}
+
 local function perform_search(text)
     local matches = {}
 
@@ -843,7 +846,7 @@ function OrdersSearchOverlay:init()
                 key='CUSTOM_ALT_P',
                 auto_width=true,
                 on_activate=self:callback('cycle_match', -1),
-                enabled=function() return self:has_matches() end,
+                enabled=function() return #self.matched_indices > 0 end,
             },
             widgets.HotkeyLabel{
                 frame={t=1, l=12},
@@ -851,7 +854,7 @@ function OrdersSearchOverlay:init()
                 key='CUSTOM_ALT_N',
                 auto_width=true,
                 on_activate=self:callback('cycle_match', 1),
-                enabled=function() return self:has_matches() end,
+                enabled=function() return #self.matched_indices > 0 end,
             },
         },
     }
@@ -968,10 +971,6 @@ function OrdersSearchOverlay:get_match_text()
     return string.format(': %d of %d', self.current_match_idx, total_matches)
 end
 
-function OrdersSearchOverlay:has_matches()
-    return #self.matched_indices > 0
-end
-
 local function is_mouse_key(keys)
     return keys._MOUSE_L
         or keys._MOUSE_R
@@ -1024,18 +1023,6 @@ end
 function OrdersSearchOverlay:render_highlights(dc)
     if #self.matched_indices == 0 then return end
 
-    local selected_pen = dfhack.pen.parse{
-        fg=COLOR_BLACK,
-        bg=COLOR_WHITE,
-        bold=true,
-    }
-
-    local match_pen = dfhack.pen.parse{
-        fg=COLOR_WHITE,
-        bg=COLOR_BLACK,
-        bold=true,
-    }
-
     local selected_order_idx = self.current_match_idx > 0 and
                                self.matched_indices[self.current_match_idx] or nil
 
@@ -1043,7 +1030,7 @@ function OrdersSearchOverlay:render_highlights(dc)
         local match_y = calculateOrderY(match_order_idx)
 
         if match_y then
-            local pen = (match_order_idx == selected_order_idx) and selected_pen or match_pen
+            local pen = (match_order_idx == selected_order_idx) and SELECTED_PEN or MATCH_PEN
 
             dc:seek(ARROW_X, match_y):string('|', pen)
             dc:seek(ARROW_X, match_y + 1):string('>', pen)

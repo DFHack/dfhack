@@ -717,7 +717,6 @@ end
 local search_matched_indices = {}
 local search_current_match_idx = 0
 local order_names_checksum = nil
-local search_overlay_instance = nil
 
 local function perform_search(text)
     local matches = {}
@@ -758,6 +757,7 @@ OrdersSearchOverlay.ATTRS{
     default_enabled=true,
     viewscreens='dwarfmode/Info/WORK_ORDERS/Default',
     frame={w=26, h=4},
+    overlay_onupdate_max_freq_seconds=1,
 }
 
 function OrdersSearchOverlay:init()
@@ -827,7 +827,16 @@ function OrdersSearchOverlay:init()
     }
 
     self.minimized = false
-    search_overlay_instance = self
+end
+
+function OrdersSearchOverlay:overlay_onupdate()
+    if self.minimized then return end
+
+    local new_checksum = calculate_order_names_checksum()
+    if new_checksum ~= order_names_checksum then
+        order_names_checksum = new_checksum
+        self:update_filter()
+    end
 end
 
 function OrdersSearchOverlay:update_filter()
@@ -958,8 +967,6 @@ local LIST_START_Y_ONE_TABS_ROW = 8
 local LIST_START_Y_TWO_TABS_ROWS = 10
 local BOTTOM_MARGIN = 9
 local ARROW_X = 10
-local CHECK_FRAME_INTERVAL = 50
-local check_frame_counter = 0
 
 local function getListStartY()
     local rect = gui.get_interface_rect()
@@ -1030,25 +1037,6 @@ function OrderHighlightOverlay:render(dc)
     OrderHighlightOverlay.super.render(self, dc)
 
     if mi.job_details.open or #search_matched_indices == 0 then return end
-
-    -- Periodic check for order name changes
-    check_frame_counter = check_frame_counter + 1
-    if check_frame_counter >= CHECK_FRAME_INTERVAL then
-        check_frame_counter = 0
-
-        local new_checksum = calculate_order_names_checksum()
-        if new_checksum ~= order_names_checksum then
-            order_names_checksum = new_checksum
-
-            -- Auto re-run search if active
-            if search_overlay_instance and not search_overlay_instance.minimized then
-                search_overlay_instance:update_filter()
-            end
-        end
-    end
-
-    -- Draw highlight arrows for all matches in viewport
-    if #search_matched_indices == 0 then return end
 
     local selected_pen = dfhack.pen.parse{
         fg=COLOR_BLACK,

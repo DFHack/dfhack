@@ -740,7 +740,7 @@ local function perform_search(text)
     return matches
 end
 
-local function calculate_order_names_checksum()
+local function concat_order_names()
     local orders = df.global.world.manager_orders.all
     if #orders == 0 then return "" end
 
@@ -889,15 +889,15 @@ function OrdersSearchOverlay:init()
     self.minimized = false
     self.matched_indices = {}
     self.current_match_idx = 0
-    self.order_names_checksum = nil
+    self.cached_order_names = nil
 end
 
 function OrdersSearchOverlay:overlay_onupdate()
     if self.minimized then return end
 
-    local new_checksum = calculate_order_names_checksum()
-    if new_checksum ~= self.order_names_checksum then
-        self.order_names_checksum = new_checksum
+    local current_order_names = concat_order_names()
+    if current_order_names ~= self.cached_order_names then
+        self.cached_order_names = current_order_names
         self:update_filter()
     end
 end

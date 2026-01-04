@@ -950,9 +950,12 @@ function OrdersSearchOverlay:cycle_match(direction)
     self.matched_indices = new_matches
     self.current_match_idx = new_match_idx
 
-    -- Scroll to the selected match
+    -- Scroll to the selected match only if not already visible
     local order_idx = self.matched_indices[self.current_match_idx]
-    mi.info.work_orders.scroll_position_work_orders = order_idx
+    local viewport_start, viewport_end = getVisibleOrderIndices()
+    if order_idx < viewport_start or order_idx > viewport_end then
+        mi.info.work_orders.scroll_position_work_orders = order_idx
+    end
 
     self.subviews.main_panel.frame_title = 'Search' .. self:get_match_text()
 end

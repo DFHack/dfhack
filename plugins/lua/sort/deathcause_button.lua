@@ -31,20 +31,20 @@ function DeathCauseOverlay:init()
         local creatures = df.global.game.main_interface.info.creatures
         local list_widget = dfhack.gui.getWidget(creatures, 'Tabs', 'Dead/Missing')
         if not list_widget then return nil end
-        
+
         local children = dfhack.gui.getWidgetChildren(list_widget)
         local list_container = children[1]
         local grandchildren = dfhack.gui.getWidgetChildren(list_container)
-        
+
         local scrollable_list = grandchildren[2]
         if not scrollable_list then
             return nil
         end
-        
+
         local rows = dfhack.gui.getWidgetChildren(scrollable_list)
-        
+
         local cursor_idx = list_widget.cursor_idx or 0
-        
+
         if cursor_idx >= 0 and cursor_idx < #rows then
             local row = rows[cursor_idx + 1]
 

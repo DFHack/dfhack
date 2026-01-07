@@ -59,6 +59,24 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.09-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
 # ``Filesystem::as_string`` now always uses UTF-8 encoding rather than using the system locale encoding
 
 ## Misc Improvements

@@ -669,9 +669,8 @@ static void autochop_printStatus(color_ostream &out) {
     for (auto &burrow : plotinfo->burrows.list) {
         name_width = std::max(name_width, (int)burrow->name.size());
     }
-    name_width = -name_width; // left justify
 
-    constexpr auto fmt = "{:{}}  {:4}  {:4}  {:8}  {:5}  {:6}  {:7}\n";
+    constexpr auto fmt = "{:<{}}  {:4}  {:4}  {:8}  {:5}  {:6}  {:7}\n";
     out.print(fmt, "burrow name", name_width, " id ", "chop", "clearcut", "trees", "marked", "protect");
     out.print(fmt, "-----------", name_width, "----", "----", "--------", "-----", "------", "-------");
 
@@ -689,7 +688,7 @@ static void autochop_printStatus(color_ostream &out) {
             protect_edible = c.get_bool(BURROW_CONFIG_PROTECT_EDIBLE);
             protect_cookable = c.get_bool(BURROW_CONFIG_PROTECT_COOKABLE);
         }
-        out.print(fmt, burrow->name, name_width, burrow->id,
+        out.print(fmt, Burrows::getName(burrow), name_width, burrow->id,
                 chop ? "[x]" : "[ ]", clearcut ? "[x]" : "[ ]",
                 tree_counts[burrow->id],
                 designated_tree_counts[burrow->id],

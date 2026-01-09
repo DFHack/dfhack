@@ -2489,6 +2489,11 @@ Maps module
 Burrows module
 --------------
 
+* ``dfhack.burrows.getName(burrow)``
+
+  Returns the name of the burrow.
+  If the burrow has no set name, returns the same placeholder name that DF would show in the UI.
+
 * ``dfhack.burrows.findByName(name[, ignore_final_plus])``
 
   Returns the burrow pointer or *nil*. if ``ignore_final_plus`` is ``true``,

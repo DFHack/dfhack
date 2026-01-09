@@ -59,14 +59,17 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autochop`: the report will no longer throw a C++ exception when burrows are defined.
 
 ## Misc Improvements
 
 ## Documentation
 
 ## API
+- Added ``Burrows::getName``: obtains the name of a burrow, or the same placeholder name that DF would show if the burrow is unnamed.
 
 ## Lua
+- Added ``Burrows::getName`` as ``dfhack.burrows.getName``.
 
 ## Removed
 

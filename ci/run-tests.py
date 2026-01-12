@@ -72,6 +72,11 @@ init_contents = change_setting(init_contents, 'WINDOWEDY', '800')
 #if args.headless:
 #    init_contents = change_setting(init_contents, 'PRINT_MODE', 'TEXT')
 
+# force portable mode for testing so that anything in the user prefs doesn't interfere
+portable_txt_path = 'prefs/portable.txt'
+with open(portable_txt_path, 'w') as f:
+    pass  # empty file to enable portable mode
+
 init_path = 'dfhack-config/init'
 if not os.path.isdir('hack/init'):
     # we're on an old branch that still reads init files from the root dir

@@ -45,6 +45,8 @@ namespace DFHack
 {
 namespace Burrows
 {
+    DFHACK_EXPORT std::string getName(df::burrow* burrow);
+
     DFHACK_EXPORT df::burrow *findByName(std::string name, bool ignore_final_plus = false);
 
     // Units

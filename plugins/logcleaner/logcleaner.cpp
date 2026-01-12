@@ -31,7 +31,9 @@ static bool clear_combat = false;
 static bool clear_sparring = true;
 static bool clear_hunting = false;
 
-static void cleanupLogs(color_ostream& out);
+static const int32_t CLEANUP_TICK_INTERVAL = 97;
+
+static void cleanupLogs();
 static command_result do_command(color_ostream& out, std::vector<std::string>& params);
 
 // Getter functions for Lua
@@ -124,7 +126,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream& out, state_chan
     return CR_OK;
 }
 
-static void cleanupLogs(color_ostream& out) {
+static void cleanupLogs() {
     if (!is_enabled || !world)
         return;
 
@@ -170,9 +172,9 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out, state_change_ev
         return CR_OK;
 
     tick_counter++;
-    if (tick_counter >= 100) {
+    if (tick_counter >= CLEANUP_TICK_INTERVAL) {
         tick_counter = 0;
-        cleanupLogs(out);
+        cleanupLogs();
     }
 
     return CR_OK;

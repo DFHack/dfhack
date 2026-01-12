@@ -7,6 +7,8 @@ static bool disabled = false;
 
 DFhackCExport const int32_t dfhooks_priority = 100;
 
+static std::unique_ptr<DFHack::Core> core_instance;
+
 // called from the main thread before the simulation thread is started
 // and the main event loop is initiated
 DFhackCExport void dfhooks_init() {
@@ -16,8 +18,11 @@ DFhackCExport void dfhooks_init() {
         return;
     }
 
+    // construct DFHack core instance
+    core_instance = std::make_unique<DFHack::Core>();
+
     // we need to init DF globals before we can check the commandline
-    if (!DFHack::Core::getInstance().InitMainThread() || !df::global::game) {
+    if (!core_instance->InitMainThread() || !df::global::game) {
         // we don't set disabled to true here so symbol generation can work
         return;
     }
@@ -26,6 +31,8 @@ DFhackCExport void dfhooks_init() {
     if (cmdline.find("--disable-dfhack") != std::string::npos) {
         fprintf(stderr, "dfhack: --disable-dfhack specified on commandline; disabling\n");
         disabled = true;
+        core_instance->Shutdown();
+        core_instance.reset();
         return;
     }
 
@@ -36,14 +43,16 @@ DFhackCExport void dfhooks_init() {
 DFhackCExport void dfhooks_shutdown() {
     if (disabled)
         return;
-    DFHack::Core::getInstance().Shutdown();
+    core_instance->Shutdown();
+    // release DFHack core instance
+    core_instance.reset();
 }
 
 // called from the simulation thread in the main event loop
 DFhackCExport void dfhooks_update() {
     if (disabled)
         return;
-    DFHack::Core::getInstance().Update();
+    core_instance->Update();
 }
 
 // called from the simulation thread just before adding the macro
@@ -59,7 +68,7 @@ DFhackCExport void dfhooks_prerender() {
 DFhackCExport bool dfhooks_sdl_event(SDL_Event* event) {
     if (disabled)
         return false;
-    return DFHack::Core::getInstance().DFH_SDL_Event(event);
+    return core_instance->DFH_SDL_Event(event);
 }
 
 // called from the main thread just after setting mouse state in gps and just
@@ -68,7 +77,7 @@ DFhackCExport void dfhooks_sdl_loop() {
     if (disabled)
         return;
     // TODO: wire this up to the new SDL-based console once it is merged
-    DFHack::Core::getInstance().DFH_SDL_Loop();
+    core_instance->DFH_SDL_Loop();
 }
 
 // called from the main thread for each utf-8 char read from the ncurses input
@@ -78,5 +87,5 @@ DFhackCExport void dfhooks_sdl_loop() {
 DFhackCExport bool dfhooks_ncurses_key(int key) {
     if (disabled)
         return false;
-    return DFHack::Core::getInstance().DFH_ncurses_key(key);
+    return core_instance->DFH_ncurses_key(key);
 }

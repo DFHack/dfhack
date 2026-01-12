@@ -71,6 +71,7 @@ jobs:
       - name: Install build dependencies
         run: |
           choco install sccache
+          pip install Jinja2
       - name: Install doc dependencies
         if: inputs.docs
         run: |

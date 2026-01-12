@@ -55,6 +55,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- ``logcleaner``: New plugin for time-triggered clearing of combat, sparring, and hunting reports with configurable filtering and overlay UI.
 
 ## New Features
 

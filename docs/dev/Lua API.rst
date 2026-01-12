@@ -1430,6 +1430,10 @@ Job module
 
   Returns the job's description, as seen in the Units and Jobs screens.
 
+* ``dfhack.job.getManagerOrderName(manager_order)``
+
+  Returns the manager order's description, as seen in the Work orders screen.
+
 Hotkey module
 -------------
 

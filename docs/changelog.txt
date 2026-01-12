@@ -60,6 +60,7 @@ Template for new versions:
 
 ## Fixes
 - `autochop`: the report will no longer throw a C++ exception when burrows are defined.
+- `suspendmanager`: Fix the overlay appearing where it should not when following a unit
 
 ## Misc Improvements
 

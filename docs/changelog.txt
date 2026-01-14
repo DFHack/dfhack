@@ -65,8 +65,12 @@ Template for new versions:
 ## Documentation
 
 ## API
+- Added ``Maps::addMaterialSpatter``: add a spatter of the specified material + state to the indicated tile, returning whatever amount wouldn't fit in the tile.
+- Added ``Maps::addItemSpatter``: add a spatter of the specified item + material + growth print to the indicated tile, returning whatever amount wouldn't fit in the tile.
 
 ## Lua
+- Added ``Maps::addMaterialSpatter`` as ``dfhack.maps.addMaterialSpatter``.
+- Added ``Maps::addItemSpatter`` as ``dfhack.maps.addItemSpatter``.
 
 ## Removed
 

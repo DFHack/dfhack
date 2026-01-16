@@ -136,13 +136,8 @@ static bool doSetTile_map(const Pen &pen, int x, int y, int32_t * df::graphic_vi
     return true;
 }
 
-static bool doSetTile_default(const Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field)
+static bool doSetTile_char(const Pen &pen, int x, int y, bool use_graphics)
 {
-    bool use_graphics = Screen::inGraphicsMode();
-
-    if (map && use_graphics)
-        return doSetTile_map(pen, x, y, texpos_field);
-
     if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
         return false;
 
@@ -227,6 +222,16 @@ static bool doSetTile_default(const Pen &pen, int x, int y, bool map, int32_t * 
     return true;
 }
 
+static bool doSetTile_default(const Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field)
+{
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (map && use_graphics)
+        return doSetTile_map(pen, x, y, texpos_field);
+
+    return doSetTile_char(pen, x, y, use_graphics);
+}
+
 GUI_HOOK_DEFINE(Screen::Hooks::set_tile, doSetTile_default);
 static bool doSetTile(const Pen &pen, int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
@@ -287,12 +292,7 @@ static uint8_t to_16_bit_color(uint8_t  *rgb) {
     return 0;
 }
 
-static Pen doGetTile_default(int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL) {
-    bool use_graphics = Screen::inGraphicsMode();
-
-    if (map && use_graphics)
-        return doGetTile_map(x, y, texpos_field);
-
+static Pen doGetTile_char(int x, int y, bool use_graphics) {
     if (x < 0 || x >= gps->dimx || y < 0 || y >= gps->dimy)
         return Pen(0, 0, 0, -1);
 
@@ -352,6 +352,14 @@ static Pen doGetTile_default(int x, int y, bool map, int32_t * df::graphic_viewp
     return ret;
 }
 
+static Pen doGetTile_default(int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL) {
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (map && use_graphics)
+        return doGetTile_map(x, y, texpos_field);
+    return doGetTile_char(x, y, use_graphics);
+}
+
 GUI_HOOK_DEFINE(Screen::Hooks::get_tile, doGetTile_default);
 static Pen doGetTile(int x, int y, bool map, int32_t * df::graphic_viewportst::*texpos_field = NULL)
 {
@@ -363,6 +371,117 @@ Pen Screen::readTile(int x, int y, bool map, int32_t * df::graphic_viewportst::*
     if (!gps) return Pen(0,0,0,-1);
 
     return doGetTile(x, y, map, texpos_field);
+}
+
+static bool doSetTile_map_port(const Pen &pen, int x, int y, int32_t * df::graphic_map_portst::*texpos_field) {
+    auto &vp = gps->main_map_port;
+    if (!texpos_field)
+        texpos_field = &df::graphic_map_portst::screentexpos_interface;
+
+    if (x < 0 || x >= vp->dim_x || y < 0 || y >= vp->dim_y)
+        return false;
+
+    size_t max_index = vp->dim_y * vp->dim_x - 1;
+    size_t index = (y * vp->dim_x) + x;
+
+    if (index > max_index)
+        return false;
+
+    long texpos = pen.tile;
+    if (!texpos && pen.ch)
+        texpos = init->font.large_font_texpos[(uint8_t)pen.ch];
+    (vp->*texpos_field)[index] = texpos;
+    return true;
+}
+
+static bool doSetTile_map_port_default(const Pen &pen, int x, int y, int32_t * df::graphic_map_portst::*texpos_field) {
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (use_graphics)
+        return doSetTile_map_port(pen, x, y, texpos_field);
+
+    return doSetTile_char(pen, x, y, use_graphics);
+}
+
+bool Screen::paintTileMapPort(const Pen &pen, int x, int y, int32_t * df::graphic_map_portst::*texpos_field)
+{
+    if (!gps || !pen.valid()) return false;
+
+    doSetTile_map_port_default(pen, x, y, texpos_field);
+    return true;
+}
+
+static Pen doGetTile_map_port(int x, int y, int32_t * df::graphic_map_portst::*texpos_field) {
+    auto &vp = gps->main_map_port;
+
+    if (x < 0 || x >= vp->dim_x || y < 0 || y >= vp->dim_y)
+        return Pen(0, 0, 0, -1);
+
+    size_t max_index = vp->dim_x * vp->dim_y - 1;
+    size_t index = (x * vp->dim_y) + y;
+
+    if (index < 0 || index > max_index)
+        return Pen(0, 0, 0, -1);
+
+    int tile = 0;
+    if (!texpos_field) {
+        if (tile == 0)
+            tile = vp->screentexpos_base[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail[index];
+        if (tile == 0)
+            tile = vp->screentexpos_tunnel[index];
+        if (tile == 0)
+            tile = vp->screentexpos_river[index];
+        if (tile == 0)
+            tile = vp->screentexpos_road[index];
+        if (tile == 0)
+            tile = vp->screentexpos_site[index];
+        if (tile == 0)
+            tile = vp->screentexpos_army[index];
+        if (tile == 0)
+            tile = vp->screentexpos_interface[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_n[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_s[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_w[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_e[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_nw[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_ne[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_sw[index];
+        if (tile == 0)
+            tile = vp->screentexpos_detail_to_se[index];
+        if (tile == 0)
+            tile = vp->screentexpos_site_to_s[index];
+    } else {
+        tile = (vp->*texpos_field)[index];
+    }
+
+    char ch = 0;
+    uint8_t fg = 0;
+    uint8_t bg = 0;
+    return Pen(ch, fg, bg, tile, false);
+}
+
+static Pen doGetTile_map_port_default(int x, int y, int32_t * df::graphic_map_portst::*texpos_field = NULL) {
+    bool use_graphics = Screen::inGraphicsMode();
+
+    if (use_graphics)
+        return doGetTile_map_port(x, y, texpos_field);
+    return doGetTile_char(x, y, use_graphics);
+}
+
+Pen Screen::readTileMapPort(int x, int y, int32_t * df::graphic_map_portst::*texpos_field)
+{
+    if (!gps) return Pen(0,0,0,-1);
+
+    return doGetTile_map_port_default(x, y, texpos_field);
 }
 
 bool Screen::paintString(const Pen &pen, int x, int y, const std::string &text, bool map)

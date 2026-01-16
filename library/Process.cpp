@@ -237,7 +237,7 @@ Process::~Process()
 string Process::doReadClassName (void * vptr)
 {
     if (!checkValidAddress(vptr))
-        throw std::runtime_error(std::format("invalid vtable ptr {}", vptr));
+        throw std::runtime_error(fmt::format("invalid vtable ptr {}", vptr));
 
     char* rtti = Process::readPtr(((char*)vptr - sizeof(void*)));
 #ifndef WIN32

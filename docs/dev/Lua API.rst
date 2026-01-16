@@ -6657,6 +6657,293 @@ Example usage::
   local first_border_texpos = textures.tp_border_thin(1)
 
 
+gui.dflayout
+============
+
+This module provides help with positioning overlay widgets relative to DF UI
+elements that may not always be straightforward to locate across multiple
+interface area sizes (and thus, window sizes).
+
+It currently supports the fortress mode toolbars at the bottom of the screen.
+
+Unless otherwise noted, the dimensions used by this module are in UI tiles and
+are always inside the DF interface area (which, depending on DF settings, may be
+narrower than the DF window).
+
+General Constants
+-----------------
+
+This module provides these convenience constants:
+
+* ``MINIMUM_INTERFACE_SIZE``
+
+  The dimensions (``width`` and ``height``) of the minimum-size DF window:
+  114x46 UI tiles.
+
+* ``TOOLBAR_HEIGHT``
+
+  The height of the primary toolbars at the bottom of the DF window (3 UI rows).
+
+* ``SECONDARY_TOOLBAR_HEIGHT``
+
+  The height of the secondary toolbars that are sometimes placed above the
+  primary toolbars (also 3 UI rows).
+
+Fortress Mode Toolbars
+----------------------
+
+Fortress mode DF draws three primary toolbars and (depending on the DF "mode")
+possibly one of several secondary toolbars at the bottom of the interface area.
+
+Layout Information
+~~~~~~~~~~~~~~~~~~
+
+The "raw" layout description for toolbars gives the width of the toolbar and the
+sizes and (relative) positions of its buttons.
+
+The layouts of the primary toolbars are available through these module fields:
+
+* ``element_layouts.fort.toolbars.left``
+* ``element_layouts.fort.toolbars.center``
+* ``element_layouts.fort.toolbars.right``
+
+The layouts of the secondary toolbars are available through the fields of
+``element_layouts.fort.secondary_toolbars``:
+
+* ``DIG``
+* ``CHOP``
+* ``GATHER``
+* ``SMOOTH``
+* ``ERASE``
+* ``MAIN_STOCKPILE_MODE``
+* ``STOCKPILE_NEW``
+* ``Add new burrow``
+* ``TRAFFIC``
+* ``ITEM_BUILDING``
+
+Except for ``Add new burrow``, these field names are taken from the
+``df.main_hover_instruction`` enum names of the "button" that activates the
+secondary toolbar (except for ``Add new burrow`` and ``STOCKPILE_NEW``, these
+are buttons in the center toolbar).
+
+The DF build menu (which is displayed in mostly the same place and activated in
+the same way as the other secondary toolbars) is not currently supported. It has
+significant differences from the other secondary toolbars.
+
+Each toolbar layout description table provides these fields:
+
+``width``
+  the width of the toolbar
+
+``buttons``
+  a table indexed by "button names" that provides info about individual buttons:
+
+  * ``offset``: the left-offset from left edge of the toolbar
+  * ``width``: the width of the button
+
+  Please consult the module source for each toolbar's button names.
+
+UI Elements
+~~~~~~~~~~~
+
+The ``element_layouts`` toolbar descriptions are combined with custom
+positioning code to form "dynamic UI elements" that can compute where individual
+UI elements will be positioned inside interface areas of various sizes.
+
+The toolbar "UI elements" are available through these module fields:
+
+* ``elements.fort.toolbars.left``
+* ``elements.fort.toolbars.center``
+* ``elements.fort.toolbars.right``
+* ``elements.fort.toolbars_buttons.left[button_name]``
+* ``elements.fort.toolbars_buttons.center[button_name]``
+* ``elements.fort.toolbars_buttons.center_close[button_name]``
+* ``elements.fort.toolbars_buttons.right[button_name]``
+* ``elements.fort.secondary_toolbars.[secondary_name]``
+* ``elements.fort.secondary_toolbar_buttons.[secondary_name][button_name]``
+
+The ``secondary_name`` and ``button_names`` values are the same names as used
+for the layout descriptions.
+
+These "UI element" values should generally be treated as opaque. They can be
+passed to the overlay positioning helper functions described below.
+
+Position based on UI Element
+----------------------------
+
+This module provides several functions to work with the provided UI element
+values:
+
+* ``getUIElementFrame(ui_element, interface_size)``
+
+  Computes the position of the UI element when drawn in a interface of the
+  specified size. The ``interface_size`` should have ``width`` and ``height``
+  fields (e.g., ``gui.get_interface_rect()``, or the ``parent_rect`` parameter
+  from the ``updateLayout`` family of methods).
+
+  Note: Some UI elements may need to query DF state beyond the provided
+  interface size.
+
+  A table with the following fields is returned:
+
+  * ``w``, ``h``: the width and height of the UI element
+  * ``l``, ``r``, ``t``, ``b``: zero-based, inset-style values that give the
+    offsets from the edges of the interface area to the UI element
+
+* ``getUIElementStateChecker(ui_element)``
+
+  Returns a function that can be used to check for changes in (non-size) DF
+  state that may affect the position of the UI element. For example, list UI
+  elements might need a scrollbar depending on how many items there are to
+  display.
+
+  ::
+
+    -- in a widget's init method
+    self.state_changed = layout.getUIElementStateChecker(el)
+
+    -- in the widget's render handler
+    if self.state_changed() then
+        local new_el_frame = layout.getUIElementFrame(el, gui.get_interface_rect())
+        -- adapt to the position described by new_el_frame
+    end
+
+* ``getRelativePlacement(placement_spec, interface_size)``
+
+  Computes a rectangular frame relative to the position of the given UI element.
+
+  Note: See ``getOverlayPlacementInfo`` for special support for DFHack overlays.
+
+  The ``placement_spec`` parameter should be a table with the following fields:
+
+  ``name``
+    an identifying string value that can be used in error messages
+
+  ``size``
+    a table with ``width`` and ``height`` fields that specifies the size
+    of the rectangle that is being placed
+
+  ``ui_element``
+    the placed rectangle will be positioned relative to this UI element; UI
+    element values can be retrieved from this module's ``elements`` field.
+
+  ``h_placement``
+    a string that specifies the rectangle's horizontal placement with respect to
+    the ``ui_element``
+
+      * ``'on left'``: the rectangle's right edge will be just to the left of
+        the ``ui_element``'s left edge
+      * ``'align left edges'``: the rectangle's left edge will be aligned to the
+        ``ui_element``'s left edge
+      * ``'align right edges'``: the rectangle's right edge will be aligned to
+        the ``ui_element``'s right edge
+      * ``'on right'``: the rectangle's left edge will be just to the right of
+        the ``ui_element``'s right edge
+
+  ``v_placement``
+    a string that specifies the rectangle's vertical placement with respect to
+    the ``ui_element``
+
+      * ``'above'``: the rectangle's bottom edge will be just above the
+        reference frame's top edge
+      * ``'align top edges'``: the rectangle's top edge will be aligned to the
+        ``ui_element``'s top edge
+      * ``'align bottom edges'``: the rectangle's bottom edge will be aligned to
+        the ``ui_element``'s bottom edge
+      * ``'below'``: the rectangle's top edge will be just below the
+        ``ui_element``'s bottom edge
+
+  ``offset``
+    an optional table with ``x`` and ``y`` fields that gives an additional
+    position offset that is applied after the rectangle is positioned relative
+    to the ``ui_element``.
+
+  The return value is the same kind of table as returned from
+  ``getUIElementFrame`` (i.e., a "fully placed" frame).
+
+Automatic Overlay Positioning
+-----------------------------
+
+This module provides higher-level functions that use the provided UI element
+values to help automatically position an overlay widget with respect to the
+referenced UI element:
+
+* ``getOverlayPlacementInfo(overlay_placement_spec)``
+
+  The ``overlay_placement_spec`` parameter is a table with the same fields that
+  ``getRelativePlacement`` takes for its placement specification, with the
+  addition of:
+
+  ``default_pos``
+    an optional table with ``x`` and/or ``y`` fields that overrides the returned
+    ``default_pos``. This field should be omitted for new overlays, but may be
+    needed for compatibility with existing "UI element relative" overlay
+    positioning code.
+
+    Alternatively, the interface area edges from which the overlay is positioned
+    by default can be specified by giving ``from_right`` and ``from_top``
+    boolean fields.
+
+  Note: the ``size`` field is the *static* size of the overlay. Overlays with
+  dynamic sizes are not supported.
+
+  A table with the following fields is returned:
+
+  ``default_pos``
+    a table that should be used for the overlay's ``default_pos``
+
+  ``frame``
+    a table that may be used to initialize the overlay's ``frame``
+
+  ``preUpdateLayout_fn``
+    a function that should be used as (or called from) the overlay's
+    ``preUpdateLayout`` method
+
+  ``onRenderBody_fn``
+    a function that should be used as (or called from) the overlay's
+    ``onRenderBody`` method; this checks for non-size state changes that
+    ``ui_element`` is sensitive to and arranges for the widget to have its
+    ``updateLayout`` method called when state changes are noticed.
+
+  This function can be used like this::
+
+    local dflayout = require('gui.dflayout')
+    local PLACEMENT = dflayout.getOverlayPlacementInfo({
+        name = 'TheOverlay',
+        size = { w = 26, h = 11 }, -- whatever the overlay uses
+        -- position the overlay one column to the right of
+        -- the MAIN_STOCKPILE_MODE toolbar
+        -- (the one with the STOCKPILE_NEW button)
+        ui_element = dflayout.elements.fort.secondary_toolbars.MAIN_STOCKPILE_MODE,
+        h_placement = 'on right',
+        v_placement = 'align bottom edges',
+        offset = { x = 1 },
+    })
+    TheOverlay = defclass(TheOverlay, overlay.OverlayWidget)
+    TheOverlay.ATTRS{
+        default_pos=PLACEMENT.default_pos,
+        frame=PLACEMENT.frame,
+        -- ...
+    }
+    function TheOverlay:init()
+        -- ...
+    end
+    TheOverlay.preUpdateLayout = PLACEMENT.preUpdateLayout_fn
+    TheOverlay.onRenderBody = PLACEMENT.onRenderBody_fn
+
+  The ``preUpdateLayout_fn`` function will adjust the overlay widget's
+  ``frame.w``, ``frame.h``, and ``frame_inset`` fields to arrange for the
+  overlay to be positioned as requested. The overlay position remains
+  player-adjustable, but is made relative to the ``ui_element`` position instead
+  of being relative to the edges of the interface area.
+
+* ``getLeftOnlyOverlayPlacementInfo(overlay_placement_spec)``
+
+  This function works like ``getOverlayPlacementInfo``, but it only "pads" the
+  overlay on the left. This is useful for compatibility with existing UI element
+  relative overlay positioning code (e.g., to avoid needing a version bump that
+  would reset a player's custom positioning).
+
 .. _lua-plugins:
 
 =======

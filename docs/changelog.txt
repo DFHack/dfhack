@@ -552,6 +552,7 @@ Template for new versions:
 ## Lua
 - ``script-manager``: new ``get_active_mods()`` function for getting information on active mods
 - ``script-manager``: new ``get_mod_info_metadata()`` function for getting information out of mod ``info.txt`` files
+- ``gui.dflayout``: provide DF fort mode toolbar position information and automatic overlay positioning
 
 ## Removed
 - removed historically unused ``Core::RegisterData``/``Core::GetData`` API and associated internal data structures
@@ -592,6 +593,8 @@ Template for new versions:
 
 ## Lua
 - ``dfhack.military.addToSquad``: expose Military API function
+
+## Removed
 - ``dfhack.buildings.getOwner``: make new Buildings API available to Lua
 
 # 51.10-r1

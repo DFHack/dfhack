@@ -1,10 +1,8 @@
 #pragma once
 
-#include "Core.h"
 #include "Export.h"
 #include "ColorText.h"
 #include "PluginManager.h"
-#include "Console.h"
 #include "DataDefs.h"
 
 #include "df/unit_inventory_item.h"

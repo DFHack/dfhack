@@ -31,9 +31,6 @@ distribution.
  */
 
 #include "Export.h"
-#include "Module.h"
-#include "Types.h"
-
 #include "DataDefs.h"
 
 namespace DFHack
@@ -105,6 +102,37 @@ namespace Random
     extern template void DFHACK_IMPORT MersenneRNG::unitvector<float>(float *p, int size);
     extern template void DFHACK_IMPORT MersenneRNG::unitvector<double>(double *p, int size);
 #endif
+
+    // Standard Splitmix64 RNG, as used by Dwarf Fortress's "hash_rngst" class
+    class SplitmixRNG
+    {
+        uint64_t state;
+
+    public:
+        SplitmixRNG(uint64_t seed) {
+            init(seed);
+        }
+
+        void init(uint64_t seed) {
+            state = seed;
+        }
+
+        uint64_t next() {
+            state += 0x9e3779b97f4a7c15;
+            uint64_t z = state;
+            z ^= z >> 30;
+            z *= 0xbf58476d1ce4e5b9;
+            z ^= z >> 27;
+            z *= 0x94d049bb133111eb;
+            z ^= z >> 31;
+            return z;
+        }
+
+        int32_t df_trandom(uint32_t max) {
+            uint32_t val = next() >> 32;
+            return (int32_t)(val % max);
+        }
+    };
 
     /*
      * Classical Perlin noise function in template form.

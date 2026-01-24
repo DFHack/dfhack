@@ -75,14 +75,18 @@ namespace DFHack {
         DFHACK_EXPORT int listdir_recursive(std::filesystem::path dir, std::map<std::filesystem::path, bool>& files,
             int depth = 10, bool include_prefix = true) noexcept;
         DFHACK_EXPORT std::filesystem::path canonicalize(std::filesystem::path p) noexcept;
-        inline std::string as_string(std::filesystem::path path) noexcept
+        inline std::string as_string(const std::filesystem::path path) noexcept
         {
-            auto pStr = path.string();
-            if constexpr (std::filesystem::path::preferred_separator != '/')
-            {
-                std::ranges::replace(pStr, std::filesystem::path::preferred_separator, '/');
-            }
-            return pStr;
+            // this just mashes the utf-8 into a std::string without any conversion
+            // this is largely because we use utf-8 everywhere internally as much as we can
+            // but we should ultimately convert to using u8strings for strings that are utf-8
+            // and use a different string type for strings encoded in cp437 or in the locale codepage
+            std::u8string pstr = path.generic_u8string();
+            return std::string((char*)pstr.c_str());
+
         }
+        DFHACK_EXPORT std::filesystem::path getInstallDir() noexcept;
+        DFHACK_EXPORT std::filesystem::path getBaseDir() noexcept;
+
     }
 }

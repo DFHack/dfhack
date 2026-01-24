@@ -66,12 +66,16 @@ on:
 jobs:
   build-win64:
     name: Build win64
-    runs-on: ubuntu-22.04
+    runs-on: windows-2022
     steps:
-      - name: Install dependencies
+      - name: Install build dependencies
         run: |
-          sudo apt-get update
-          sudo apt-get install ccache
+          choco install sccache
+          pip install Jinja2
+      - name: Install doc dependencies
+        if: inputs.docs
+        run: |
+          pip install sphinx
       - name: Clone DFHack
         uses: actions/checkout@v4
         with:
@@ -108,49 +112,82 @@ jobs:
           ref: main
           ssh-key: ${{ secrets.DFHACK_3RDPARTY_TOKEN }}
           path: depends/steam
+      - name: Prepare output directories
+        run: |
+          mkdir output
+          mkdir pdb
+      - name: Get sccache path
+        run: echo ("SCCACHE_DIR=" + $env:LOCALAPPDATA + "\Mozilla\sccache\cache") >> $env:GITHUB_ENV
       - name: Fetch ccache
         if: inputs.platform-files
         uses: actions/cache/restore@v4
         with:
-          path: build/win64-cross/ccache
+          path: ${{ env.SCCACHE_DIR }}
           key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
           restore-keys: |
             win-msvc-${{ inputs.cache-id }}
             win-msvc
-      - name: Cross-compile
-        env:
-          CMAKE_EXTRA_ARGS: -DBUILD_PDBS:BOOL=${{ inputs.cache-id == 'release' }} -DDFHACK_RUN_URL='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' -DBUILD_LIBRARY=${{ inputs.platform-files }} -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files && inputs.plugins }} -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} -DBUILD_DOCS:BOOL=${{ inputs.docs }} -DBUILD_DOCS_NO_HTML:BOOL=${{ !inputs.html }} -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} -DINSTALL_SCRIPTS:BOOL=${{ inputs.common-files }} -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} -DBUILD_TESTS:BOOL=${{ inputs.tests }} -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} ${{ inputs.xml-dump-type-sizes && '-DINSTALL_XMLDUMP:BOOL=1' || '' }}
+      - uses: ilammy/msvc-dev-cmd@v1
+      - name: Configure DFHack
         run: |
-          cd build
-          bash -x build-win64-from-linux.sh
+          cmake `
+            -S . `
+            -B build `
+            -GNinja `
+            -DDFHACK_BUILD_ARCH=64 `
+            -DCMAKE_BUILD_TYPE=Release `
+            -DCMAKE_INSTALL_PREFIX=output `
+            -DCMAKE_C_COMPILER_LAUNCHER=sccache `
+            -DCMAKE_CXX_COMPILER_LAUNCHER=sccache `
+            -DBUILD_PDBS:BOOL=${{ inputs.cache-id == 'release' }} `
+            -DDFHACK_RUN_URL='https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}' `
+            -DBUILD_LIBRARY=${{ inputs.platform-files }} `
+            -DBUILD_PLUGINS:BOOL=${{ inputs.platform-files && inputs.plugins }} `
+            -DBUILD_STONESENSE:BOOL=${{ inputs.stonesense }} `
+            -DBUILD_DOCS:BOOL=${{ inputs.docs }} `
+            -DBUILD_DOCS_NO_HTML:BOOL=${{ !inputs.html }} `
+            -DINSTALL_DATA_FILES:BOOL=${{ inputs.common-files }} `
+            -DBUILD_DFLAUNCH:BOOL=${{ inputs.launchdf }} `
+            -DBUILD_TESTS:BOOL=${{ inputs.tests }} `
+            -DBUILD_XMLDUMP:BOOL=${{ inputs.xml-dump-type-sizes }} `
+            ${{ inputs.xml-dump-type-sizes && '-DINSTALL_XMLDUMP:BOOL=1' || '' }}
+      - name: Build DFHack
+        env:
+          SCCACHE_CACHE_SIZE: 500M
+        run: |
+          ninja install -C build
       - name: Finalize cache
         run: |
           cd build
-          ccache -d win64-cross/ccache --show-stats --verbose
-          ccache -d win64-cross/ccache --max-size ${{ inputs.cache-id == 'release' && '500M' || '150M' }}
-          ccache -d win64-cross/ccache --cleanup
-          ccache -d win64-cross/ccache --max-size ${{ inputs.cache-id == 'release' && '2G' || '500M' }}
-          ccache -d win64-cross/ccache --zero-stats
+          sccache --show-stats
+          sccache --zero-stats
       - name: Save ccache
         if: inputs.platform-files && !inputs.cache-readonly
         uses: actions/cache/save@v4
         with:
-          path: build/win64-cross/ccache
+          path: ${{ env.SCCACHE_DIR }}
           key: win-msvc-${{ inputs.cache-id }}-${{ github.sha }}
       - name: Format artifact name
         if: inputs.artifact-name
         id: artifactname
         run: |
-          if test "false" = "${{ inputs.append-date-and-hash }}"; then
-            echo name=${{ inputs.artifact-name }} >> $GITHUB_OUTPUT
-          else
-            echo name=${{ inputs.artifact-name }}-$(date +%Y%m%d)-$(git rev-parse --short HEAD) >> $GITHUB_OUTPUT
-          fi
-      - name: Prep artifact
-        if: inputs.artifact-name
+          if ("${{ inputs.append-date-and-hash }}" -eq "false") {
+            "name=${{ inputs.artifact-name }}" | Out-File -Append $env:GITHUB_OUTPUT
+          } else {
+            $date = Get-Date -Format "yyyMMdd"
+            $hash = git rev-parse --short HEAD
+            "name=${{ inputs.artifact-name}}-$date-$hash" | Out-File -Append $env:GITHUB_OUTPUT
+          }
+      - name: Prep pdbs
+        if: inputs.artifact-name && inputs.cache-id == 'release'
         run: |
-          cd build/win64-cross/output
-          tar cjf ../../../${{ steps.artifactname.outputs.name }}.tar.bz2 .
+          Get-ChildItem -Recurse -File -Path "build" -Filter *.pdb |
+            Copy-Item -Destination "pdb"
+      - name: Prep artifact
+        run: |
+          cd output
+          7z a -ttar -so -an . |
+            7z a -si -tbzip2 ../${{ steps.artifactname.outputs.name }}.tar.bz2
       - name: Upload artifact
         if: inputs.artifact-name
         uses: actions/upload-artifact@v4
@@ -162,4 +199,4 @@ jobs:
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifactname.outputs.name }}_pdb
-          path: build/win64-cross/pdb
+          path: pdb

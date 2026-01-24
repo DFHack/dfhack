@@ -73,7 +73,7 @@ static void on_new_active_unit(color_ostream& out, void* data);
 static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
     commands.push_back(PluginCommand(
         plugin_name,
         "Manage room assignments for off-map units and noble roles.",
@@ -92,12 +92,12 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             EventManager::unregisterAll(plugin_self);
     }
 
-    DEBUG(control, out).print("now %s\n", is_enabled ? "enabled" : "disabled");
+    DEBUG(control, out).print("now {}\n", is_enabled ? "enabled" : "disabled");
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
     return CR_OK;
 }
 
@@ -265,7 +265,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!World::isFortressMode() || !Core::getInstance().isMapLoaded()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -315,13 +315,14 @@ static void assign_nobles(color_ostream &out) {
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
         if (!zone)
             continue;
+        auto owner = Buildings::getOwner(zone);
         bool assigned = false;
         for (auto it = group_codes.rbegin(); it != group_codes.rend(); it++) {
             auto code = *it;
             vector<df::unit *> units;
             Units::getUnitsByNobleRole(units, code);
             // if zone is already assigned to a proper unit (or their spouse), skip
-            if (linear_index(units, zone->assigned_unit) >= 0 ||
+            if (linear_index(units, owner) >= 0 ||
                 linear_index(get_spouse_ids(out, units), zone->assigned_unit_id) >= 0)
             {
                 assigned = true;
@@ -343,17 +344,17 @@ static void assign_nobles(color_ostream &out) {
                 zone->spec_sub_flag.bits.active = true;
                 Buildings::setOwner(zone, unit);
                 assigned = true;
-                INFO(cycle,out).print("preserve-rooms: assigning %s to a %s-associated %s\n",
-                    DF2CONSOLE(Units::getReadableName(unit)).c_str(),
-                    toLower_cp437(code).c_str(),
-                    ENUM_KEY_STR(civzone_type, zone->type).c_str());
+                INFO(cycle,out).print("preserve-rooms: assigning {} to a {}-associated {}\n",
+                    DF2CONSOLE(Units::getReadableName(unit)),
+                    toLower_cp437(code),
+                    ENUM_KEY_STR(civzone_type, zone->type));
                 break;
             }
             if (assigned)
                 break;
         }
-        if (!assigned && (zone->spec_sub_flag.bits.active || zone->assigned_unit)) {
-            DEBUG(cycle,out).print("noble zone now reserved for eventual office holder: %d\n", zone_id);
+        if (!assigned && (zone->spec_sub_flag.bits.active || zone->assigned_unit_id != -1)) {
+            DEBUG(cycle,out).print("noble zone now reserved for eventual office holder: {}\n", zone_id);
             zone->spec_sub_flag.bits.active = false;
             Buildings::setOwner(zone, NULL);
         }
@@ -402,8 +403,8 @@ static void scrub_reservations(color_ostream &out) {
                     continue;
             }
         }
-        DEBUG(cycle,out).print("removed reservation for dead, culled, or non-army hfid %d: %s\n", hfid,
-            hf ? DF2CONSOLE(Units::getReadableName(hf)).c_str() : "culled");
+        DEBUG(cycle,out).print("removed reservation for dead, culled, or non-army hfid {}: {}\n", hfid,
+            hf ? DF2CONSOLE(Units::getReadableName(hf)) : "culled");
         hfids_to_scrub.push_back(hfid);
         for (int32_t zone_id : zone_ids) {
             if (scrub_id_from_entries(hfid, zone_id, reserved_zones)) {
@@ -460,9 +461,9 @@ static void handle_missing_assignments(color_ostream &out,
         if (spouse_hf && share_with_spouse) {
             if (spouse && Units::isActive(spouse) && !Units::isDead(spouse) && active_unit_ids.contains(spouse->id))
             {
-                DEBUG(cycle,out).print("assigning zone %d (%s) to spouse %s\n",
-                    zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(),
-                    DF2CONSOLE(Units::getReadableName(spouse)).c_str());
+                DEBUG(cycle,out).print("assigning zone {} ({}) to spouse {}\n",
+                    zone_id, ENUM_KEY_STR(civzone_type, zone->type),
+                    DF2CONSOLE(Units::getReadableName(spouse)));
                 Buildings::setOwner(zone, spouse);
                 continue;
             }
@@ -470,22 +471,22 @@ static void handle_missing_assignments(color_ostream &out,
         if (hf->died_year > -1)
             continue;
         // register the hf ids for reassignment and reserve the room
-        DEBUG(cycle,out).print("registering primary unit for reassignment to zone %d (%s): %d %s\n",
-            zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), hf->unit_id,
-            DF2CONSOLE(Units::getReadableName(hf)).c_str());
+        DEBUG(cycle,out).print("registering primary unit for reassignment to zone {} ({}): {} {}\n",
+            zone_id, ENUM_KEY_STR(civzone_type, zone->type), hf->unit_id,
+            DF2CONSOLE(Units::getReadableName(hf)));
         pending_reassignment[hfid].push_back(zone_id);
         reserved_zones[zone_id].push_back(hfid);
         if (share_with_spouse && spouse) {
-            DEBUG(cycle,out).print("registering spouse unit for reassignment to zone %d (%s): hfid=%d\n",
-                zone_id, ENUM_KEY_STR(civzone_type, zone->type).c_str(), spouse_hfid);
+            DEBUG(cycle,out).print("registering spouse unit for reassignment to zone {} ({}): hfid={}\n",
+                zone_id, ENUM_KEY_STR(civzone_type, zone->type), spouse_hfid);
             pending_reassignment[spouse_hfid].push_back(zone_id);
             reserved_zones[zone_id].push_back(spouse_hfid);
         }
-        INFO(cycle,out).print("preserve-rooms: reserving %s for the return of %s%s%s\n",
-                    toLower_cp437(ENUM_KEY_STR(civzone_type, zone->type)).c_str(),
-                    DF2CONSOLE(Units::getReadableName(hf)).c_str(),
+        INFO(cycle,out).print("preserve-rooms: reserving {} for the return of {}{}\n",
+                    toLower_cp437(ENUM_KEY_STR(civzone_type, zone->type)),
+                    DF2CONSOLE(Units::getReadableName(hf)),
                     spouse_hf ? " or their spouse, " : "",
-                    spouse_hf ? DF2CONSOLE(Units::getReadableName(spouse_hf)).c_str() : "");
+                    spouse_hf ? DF2CONSOLE(Units::getReadableName(spouse_hf)) : "");
 
         zone->spec_sub_flag.bits.active = false;
     }
@@ -503,14 +504,19 @@ static void process_rooms(color_ostream &out,
     for (auto zone : vec) {
         auto idx = linear_index(df::global::world->buildings.all, (df::building*)(zone));
         if (idx == -1) {
-            WARN(cycle, out).print("invalid building pointer %p in building vector\n", zone);
+            WARN(cycle, out).print("invalid building pointer {} in building vector\n", static_cast<void*>(zone));
             continue;
         }
-        if (!zone->assigned_unit) {
+        if (zone->assigned_unit_id == -1) {
             handle_missing_assignments(out, active_unit_ids, &it, it_end, share_with_spouse, zone->id);
             continue;
         }
-        auto hf = df::historical_figure::find(zone->assigned_unit->hist_figure_id);
+        auto owner = Buildings::getOwner(zone);
+        if (!owner) {
+            DEBUG(cycle, out).print("building {} has owner id {} but no such unit exists\n", zone->id, zone->assigned_unit_id);
+            continue;
+        }
+        auto hf = df::historical_figure::find(owner->hist_figure_id);
         if (!hf)
             continue;
         int32_t spouse_hfid = share_with_spouse ? get_spouse_hfid(out, hf) : -1;
@@ -524,7 +530,7 @@ static void process_rooms(color_ostream &out,
 static void do_cycle(color_ostream &out) {
     cycle_timestamp = world->frame_counter;
 
-    TRACE(cycle,out).print("running %s cycle\n", plugin_name);
+    TRACE(cycle,out).print("running {} cycle\n", plugin_name);
 
     if (config.get_bool(CONFIG_TRACK_MISSIONS)) {
         unordered_set<int32_t> active_unit_ids;
@@ -536,7 +542,7 @@ static void do_cycle(color_ostream &out) {
         process_rooms(out, active_unit_ids, last_known_assignments_dining, world->buildings.other.ZONE_DINING_HALL);
         process_rooms(out, active_unit_ids, last_known_assignments_tomb, world->buildings.other.ZONE_TOMB, false);
 
-        DEBUG(cycle,out).print("tracking zone assignments: bedrooms: %zd, offices: %zd, dining halls: %zd, tombs: %zd\n",
+        DEBUG(cycle,out).print("tracking zone assignments: bedrooms: {}, offices: {}, dining halls: {}, tombs: {}\n",
             last_known_assignments_bedroom.size(), last_known_assignments_office.size(),
             last_known_assignments_dining.size(), last_known_assignments_tomb.size());
 
@@ -578,24 +584,24 @@ static void on_new_active_unit(color_ostream& out, void* data) {
     auto unit = df::unit::find(unit_id);
     if (!unit || unit->hist_figure_id < 0)
         return;
-    TRACE(event,out).print("unit %d (%s) arrived on map (hfid: %d, in pending: %d)\n",
-        unit->id, DF2CONSOLE(Units::getReadableName(unit)).c_str(), unit->hist_figure_id,
+    TRACE(event,out).print("unit {} ({}) arrived on map (hfid: {}, in pending: {})\n",
+        unit->id, DF2CONSOLE(Units::getReadableName(unit)), unit->hist_figure_id,
         pending_reassignment.contains(unit->hist_figure_id));
     auto hfid = unit->hist_figure_id;
     auto it = pending_reassignment.find(hfid);
     if (it == pending_reassignment.end())
         return;
-    INFO(event,out).print("preserve-rooms: restoring room ownership for %s\n",
-        DF2CONSOLE(Units::getReadableName(unit)).c_str());
+    INFO(event,out).print("preserve-rooms: restoring room ownership for {}\n",
+        DF2CONSOLE(Units::getReadableName(unit)));
     for (auto zone_id : it->second) {
         reserved_zones.erase(zone_id);
         auto zone = virtual_cast<df::building_civzonest>(df::building::find(zone_id));
         if (!zone)
             continue;
         zone->spec_sub_flag.bits.active = true;
-        if (zone->assigned_unit || spouse_has_sharable_room(out, hfid, zone->type))
+        if (zone->assigned_unit_id != -1 || spouse_has_sharable_room(out, hfid, zone->type))
             continue;
-        DEBUG(event,out).print("reassigning zone %d\n", zone->id);
+        DEBUG(event,out).print("reassigning zone {}\n", zone->id);
         Buildings::setOwner(zone, unit);
     }
     pending_reassignment.erase(it);
@@ -611,8 +617,8 @@ static void preserve_rooms_cycle(color_ostream &out) {
 }
 
 static bool preserve_rooms_setFeature(color_ostream &out, bool enabled, string feature) {
-    DEBUG(control,out).print("preserve_rooms_setFeature: enabled=%d, feature=%s\n",
-        enabled, feature.c_str());
+    DEBUG(control,out).print("preserve_rooms_setFeature: enabled={}, feature={}\n",
+        enabled, feature);
     if (feature == "track-missions") {
         config.set_bool(CONFIG_TRACK_MISSIONS, enabled);
         if (is_enabled && enabled)
@@ -627,7 +633,7 @@ static bool preserve_rooms_setFeature(color_ostream &out, bool enabled, string f
 }
 
 static bool preserve_rooms_getFeature(color_ostream &out, string feature) {
-    TRACE(control,out).print("preserve_rooms_getFeature: feature=%s\n", feature.c_str());
+    TRACE(control,out).print("preserve_rooms_getFeature: feature={}\n", feature);
     if (feature == "track-missions")
         return config.get_bool(CONFIG_TRACK_MISSIONS);
     if (feature == "track-roles")
@@ -636,7 +642,7 @@ static bool preserve_rooms_getFeature(color_ostream &out, string feature) {
 }
 
 static bool preserve_rooms_resetFeatureState(color_ostream &out, string feature) {
-    DEBUG(control,out).print("preserve_rooms_resetFeatureState: feature=%s\n", feature.c_str());
+    DEBUG(control,out).print("preserve_rooms_resetFeatureState: feature={}\n", feature);
     if (feature == "track-missions") {
         vector<int32_t> zone_ids;
         std::transform(reserved_zones.begin(), reserved_zones.end(), std::back_inserter(zone_ids), [](auto & elem){ return elem.first; });
@@ -661,7 +667,7 @@ static int preserve_rooms_assignToRole(lua_State *L) {
         virtual_cast<df::building_civzonest>(df::building::find(zone_id));
     if (!zone)
         return 0;
-    DEBUG(control,*out).print("preserve_rooms_assignToRole: zone_id=%d\n", zone->id);
+    DEBUG(control,*out).print("preserve_rooms_assignToRole: zone_id={}\n", zone->id);
 
     vector<string> group_codes;
     Lua::GetVector(L, group_codes);
@@ -680,22 +686,30 @@ static int preserve_rooms_assignToRole(lua_State *L) {
     return 0;
 }
 
-static string preserve_rooms_getRoleAssignment(color_ostream &out) {
-    auto zone = Gui::getSelectedCivZone(out, true);
+static string get_role_assignment(color_ostream &out, df::building_civzonest * zone) {
     if (!zone)
         return "";
-    TRACE(control,out).print("preserve_rooms_getRoleAssignment: zone_id=%d\n", zone->id);
+    TRACE(control,out).print("get_role_assignment: zone_id={}\n", zone->id);
     auto it = noble_zones.find(zone->id);
     if (it == noble_zones.end() || it->second.empty())
         return "";
     return it->second[0];
 }
 
+
+static string preserve_rooms_getRoleAssignmentForZone(color_ostream &out, df::building_civzonest * zone) {
+    return get_role_assignment(out, zone);
+}
+
+static string preserve_rooms_getRoleAssignment(color_ostream &out) {
+    return get_role_assignment(out, Gui::getSelectedCivZone(out, true));
+}
+
 static bool preserve_rooms_isReserved(color_ostream &out) {
     auto zone = Gui::getSelectedCivZone(out, true);
     if (!zone)
         return false;
-    TRACE(control,out).print("preserve_rooms_isReserved: zone_id=%d\n", zone->id);
+    TRACE(control,out).print("preserve_rooms_isReserved: zone_id={}\n", zone->id);
     auto it = reserved_zones.find(zone->id);
     return it != reserved_zones.end() && it->second.size() > 0;
 }
@@ -704,7 +718,7 @@ static string preserve_rooms_getReservationName(color_ostream &out) {
     auto zone = Gui::getSelectedCivZone(out, true);
     if (!zone)
         return "";
-    TRACE(control,out).print("preserve_rooms_getReservationName: zone_id=%d\n", zone->id);
+    TRACE(control,out).print("preserve_rooms_getReservationName: zone_id={}\n", zone->id);
     auto it = reserved_zones.find(zone->id);
     if (it != reserved_zones.end() && it->second.size() > 0) {
         if (auto hf = df::historical_figure::find(it->second.front())) {
@@ -718,7 +732,7 @@ static bool preserve_rooms_clearReservation(color_ostream &out) {
     auto zone = Gui::getSelectedCivZone(out, true);
     if (!zone)
         return false;
-    DEBUG(control,out).print("preserve_rooms_clearReservation: zone_id=%d\n", zone->id);
+    DEBUG(control,out).print("preserve_rooms_clearReservation: zone_id={}\n", zone->id);
     clear_reservation(out, zone->id, zone);
     return true;
 }
@@ -768,6 +782,7 @@ DFHACK_PLUGIN_LUA_FUNCTIONS{
     DFHACK_LUA_FUNCTION(preserve_rooms_getFeature),
     DFHACK_LUA_FUNCTION(preserve_rooms_resetFeatureState),
     DFHACK_LUA_FUNCTION(preserve_rooms_getRoleAssignment),
+    DFHACK_LUA_FUNCTION(preserve_rooms_getRoleAssignmentForZone),
     DFHACK_LUA_FUNCTION(preserve_rooms_isReserved),
     DFHACK_LUA_FUNCTION(preserve_rooms_getReservationName),
     DFHACK_LUA_FUNCTION(preserve_rooms_clearReservation),

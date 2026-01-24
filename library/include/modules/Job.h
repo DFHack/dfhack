@@ -27,14 +27,12 @@ distribution.
 #define CL_MOD_JOB
 
 #include "Export.h"
-#include "Module.h"
 #include "Types.h"
 #include "DataDefs.h"
 
+#include "df/building_workshopst.h"
 #include "df/item_type.h"
 #include "df/job_item_ref.h"
-
-#include <ostream>
 
 namespace df
 {
@@ -94,7 +92,13 @@ namespace DFHack
         DFHACK_EXPORT void checkBuildingsNow();
         DFHACK_EXPORT void checkDesignationsNow();
 
+        // link the job into the global job list, passing ownership to DF
         DFHACK_EXPORT bool linkIntoWorld(df::job *job, bool new_id = true);
+        // create a job and immediately link it into the global job list
+        DFHACK_EXPORT df::job* createLinked();
+
+        // assign job to workshop, returns false if workshop already has the maximum of ten jobs
+        DFHACK_EXPORT bool assignToWorkshop(df::job *job, df::building_workshopst *workshop);
 
         // Flag this job's posting as "dead" and set its posting_index to -1
         // If remove_all is true, flag all postings pointing to this job

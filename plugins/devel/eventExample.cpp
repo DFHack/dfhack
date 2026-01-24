@@ -109,7 +109,7 @@ command_result eventExample(color_ostream& out, vector<string>& parameters) {
 //static int timerCount=0;
 //static int timerDenom=0;
 void jobInitiated(color_ostream& out, void* job_) {
-    out.print("Job initiated! %p\n", job_);
+    out.print("Job initiated! {}\n", static_cast<void*>(job_));
 /*
     df::job* job = (df::job*)job_;
     out.print("  completion_timer = %d\n", job->completion_timer);
@@ -120,37 +120,37 @@ void jobInitiated(color_ostream& out, void* job_) {
 }
 
 void jobCompleted(color_ostream& out, void* job) {
-    out.print("Job completed! %p\n", job);
+    out.print("Job completed! {}\n", static_cast<void*>(job));
 }
 
 void timePassed(color_ostream& out, void* ptr) {
-    out.print("Time: %zi\n", (intptr_t)(ptr));
+    out.print("Time: {}\n", (intptr_t)(ptr));
 }
 
 void unitDeath(color_ostream& out, void* ptr) {
-    out.print("Death: %zi\n", (intptr_t)(ptr));
+    out.print("Death: {}\n", (intptr_t)(ptr));
 }
 
 void itemCreate(color_ostream& out, void* ptr) {
     int32_t item_index = df::item::binsearch_index(df::global::world->items.all, (intptr_t)ptr);
     if ( item_index == -1 ) {
-        out.print("%s, %d: Error.\n", __FILE__, __LINE__);
+        out.print("{}: Error.\n", __FILE__, __LINE__);
     }
     df::item* item = df::global::world->items.all[item_index];
     df::item_type type = item->getType();
     df::coord pos = item->pos;
-    out.print("Item created: %zi, %s, at (%d,%d,%d)\n", (intptr_t)(ptr), ENUM_KEY_STR(item_type, type).c_str(), pos.x, pos.y, pos.z);
+    out.print("Item created: {}, {}, at ({},{},{})\n", (intptr_t)(ptr), ENUM_KEY_STR(item_type, type).c_str(), pos.x, pos.y, pos.z);
 }
 
 void building(color_ostream& out, void* ptr) {
-    out.print("Building created/destroyed: %zi\n", (intptr_t)ptr);
+    out.print("Building created/destroyed: {}\n", (intptr_t)ptr);
 }
 
 void construction(color_ostream& out, void* ptr) {
-    out.print("Construction created/destroyed: %p\n", ptr);
+    out.print("Construction created/destroyed: {}\n", ptr);
     df::construction* constr = (df::construction*)ptr;
     df::coord pos = constr->pos;
-    out.print("  (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+    out.print("  ({},{},{})\n", pos.x, pos.y, pos.z);
     if ( df::construction::find(pos) == NULL )
         out.print("  construction destroyed\n");
     else
@@ -160,19 +160,19 @@ void construction(color_ostream& out, void* ptr) {
 
 void syndrome(color_ostream& out, void* ptr) {
     EventManager::SyndromeData* data = (EventManager::SyndromeData*)ptr;
-    out.print("Syndrome started: unit %d, syndrome %d.\n", data->unitId, data->syndromeIndex);
+    out.print("Syndrome started: unit {}, syndrome {}.\n", data->unitId, data->syndromeIndex);
 }
 
 void invasion(color_ostream& out, void* ptr) {
-    out.print("New invasion! %zi\n", (intptr_t)ptr);
+    out.print("New invasion! {}\n", (intptr_t)ptr);
 }
 
 void unitAttack(color_ostream& out, void* ptr) {
     EventManager::UnitAttackData* data = (EventManager::UnitAttackData*)ptr;
-    out.print("unit %d attacks unit %d\n", data->attacker, data->defender);
+    out.print("unit {} attacks unit {}\n", data->attacker, data->defender);
     df::unit* defender = df::unit::find(data->defender);
     if (!defender) {
-        out.printerr("defender %d does not exist\n", data->defender);
+        out.printerr("defender {} does not exist\n", data->defender);
         return;
     }
     int32_t woundIndex = df::unit_wound::binsearch_index(defender->body.wounds, data->wound);
@@ -187,6 +187,6 @@ void unitAttack(color_ostream& out, void* ptr) {
     for ( auto a = parts.begin(); a != parts.end(); a++ ) {
         int32_t body_part_id = (*a);
         df::body_part_raw* part = defender->body.body_plan->body_parts[body_part_id];
-        out.print(" %s\n", part->name_singular[0]->c_str());
+        out.print(" {}\n", *part->name_singular[0]);
     }
 }

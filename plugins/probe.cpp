@@ -41,7 +41,7 @@ static command_result df_cprobe(color_ostream &out, vector<string> & parameters)
     if (!unit)
         return CR_FAILURE;
 
-    out.print("Creature %d, race %d (0x%x), civ %d (0x%x)\n",
+    out.print("Creature {}, race {} (0x{:x}), civ {} (0x{:x})\n",
         unit->id, unit->race, unit->race, unit->civ_id, unit->civ_id);
 
     for (auto inv_item : unit->inventory) {
@@ -62,25 +62,25 @@ static command_result df_cprobe(color_ostream &out, vector<string> & parameters)
 }
 
 static void describeTile(color_ostream &out, df::tiletype tiletype) {
-    out.print("%d", tiletype);
+    out.print("{}", static_cast<int>(tiletype));
     if (tileName(tiletype))
-        out.print(" = %s", tileName(tiletype));
-    out.print(" (%s)", ENUM_KEY_STR(tiletype, tiletype).c_str());
+        out.print(" = {}", tileName(tiletype));
+    out.print(" ({})", ENUM_KEY_STR(tiletype, tiletype).c_str());
     out.print("\n");
 
     df::tiletype_shape shape = tileShape(tiletype);
     df::tiletype_material material = tileMaterial(tiletype);
     df::tiletype_special special = tileSpecial(tiletype);
     df::tiletype_variant variant = tileVariant(tiletype);
-    out.print("%-10s: %4d %s\n","Class"    ,shape,
-              ENUM_KEY_STR(tiletype_shape, shape).c_str());
-    out.print("%-10s: %4d %s\n","Material" ,
-              material, ENUM_KEY_STR(tiletype_material, material).c_str());
-    out.print("%-10s: %4d %s\n","Special"  ,
-              special, ENUM_KEY_STR(tiletype_special, special).c_str());
-    out.print("%-10s: %4d %s\n"   ,"Variant"  ,
-              variant, ENUM_KEY_STR(tiletype_variant, variant).c_str());
-    out.print("%-10s: %s\n"    ,"Direction",
+    out.print("{:>10}: {:4} {}\n","Class"    ,static_cast<int>(shape),
+              ENUM_KEY_STR(tiletype_shape, shape));
+    out.print("{:>10}: {:4} {}\n","Material" , static_cast<int>(material),
+              ENUM_KEY_STR(tiletype_material, material));
+    out.print("{:>10}: {:4} {}\n","Special"  , static_cast<int>(special),
+              ENUM_KEY_STR(tiletype_special, special));
+    out.print("{:>10}: {:4} {}\n","Variant"  , static_cast<int>(variant),
+              ENUM_KEY_STR(tiletype_variant, variant));
+    out.print("{:>10}: {}\n"    ,"Direction",
               tileDirection(tiletype).getStr());
     out.print("\n");
 }
@@ -129,7 +129,7 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     }
 
     auto &block = *b->getRaw();
-    out.print("block addr: %p\n\n", &block);
+    out.print("block addr: {}\n\n", static_cast<void*>(&block));
 
     df::tiletype tiletype = mc.tiletypeAt(cursor);
     df::tile_designation &des = block.designation[tileX][tileY];
@@ -143,8 +143,8 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     out.print("base: ");
     describeTile(out, mc.baseTiletypeAt(cursor));
 
-    out.print("temperature1: %d U\n", mc.temperature1At(cursor));
-    out.print("temperature2: %d U\n", mc.temperature2At(cursor));
+    out.print("temperature1: {} U\n", mc.temperature1At(cursor));
+    out.print("temperature2: {} U\n", mc.temperature2At(cursor));
 
     int offset = block.region_offset[des.bits.biome];
     int bx = clip_range(block.region_pos.x + (offset % 3) - 1, 0, world->world_data->world_width-1);
@@ -223,12 +223,12 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     if (des.bits.water_stagnant)
         out << "stagnant" << std::endl;
 
-    #define PRINT_FLAG( FIELD, BIT )  out.print("%-16s= %c\n", #BIT , ( FIELD.bits.BIT ? 'Y' : ' ' ) )
+    #define PRINT_FLAG( FIELD, BIT )  out.print("{:<16} = {}\n", #BIT , ( FIELD.bits.BIT ? 'Y' : ' ' ) )
 
-    out.print("%-16s= %s\n", "dig", enum_item_key(des.bits.dig).c_str());
+    out.print("{:<16} = {}\n", "dig", enum_item_key(des.bits.dig));
     PRINT_FLAG(occ, dig_marked);
     PRINT_FLAG(occ, dig_auto);
-    out.print("%-16s= %s\n", "traffic", enum_item_key(des.bits.traffic).c_str());
+    out.print("{:<16} = {}\n", "traffic", enum_item_key(des.bits.traffic));
     PRINT_FLAG(occ, carve_track_north);
     PRINT_FLAG(occ, carve_track_south);
     PRINT_FLAG(occ, carve_track_east);
@@ -241,7 +241,7 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     PRINT_FLAG( des, water_table );
     PRINT_FLAG( des, rained );
     PRINT_FLAG( occ, monster_lair);
-    out.print("%-16s= %d\n", "fog_of_war", fog_of_war);
+    out.print("{:<16} = {}\n", "fog_of_war", fog_of_war);
 
     df::coord2d pc(blockX, blockY);
 
@@ -251,19 +251,20 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     PRINT_FLAG( des, feature_local );
     if(local.type != -1)
     {
-        out.print("%-16s", "");
-        out.print("  %4d", block.local_feature);
-        out.print(" (%2d)", local.type);
-        out.print(" addr %p ", local.origin);
-        out.print(" %s\n", sa_feature(local.type));
+        out.print("{:<16}", "");
+        out.print("  {:4}", block.local_feature);
+        out.print(" ({:2})", static_cast<int>(local.type));
+        out.print(" addr {}", static_cast<void*>(local.origin));
+        out.print(" {}", sa_feature(local.type));
     }
     PRINT_FLAG( des, feature_global );
     if(global.type != -1)
     {
-        out.print("%-16s", "");
-        out.print("  %4d", block.global_feature);
-        out.print(" (%2d)", global.type);
-        out.print(" %s\n", sa_feature(global.type));
+        out.print("{:<16}", "");
+        out.print("  {:4}", block.global_feature);
+        out.print(" ({:2})", static_cast<int>(global.type));
+        out.print(" {}", static_cast<void*>(global.origin));
+        out.print(" {}", sa_feature(global.type));
     }
     out << "local feature idx: " << block.local_feature
         << std::endl;
@@ -272,7 +273,7 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     out << std::endl;
 
     out << "Occupancy:" << std::endl;
-    out.print("%-16s= %s\n", "building", enum_item_key(occ.bits.building).c_str());
+    out.print("{:<16} = {}\n", "building", enum_item_key(occ.bits.building));
     PRINT_FLAG(occ, unit);
     PRINT_FLAG(occ, unit_grounded);
     PRINT_FLAG(occ, item);
@@ -331,67 +332,67 @@ static command_result df_bprobe(color_ostream &out, vector<string> & parameters)
     Subtype subtype{bld->getSubtype()};
     int32_t custom = bld->getCustomType();
 
-    out.print("Building %i, \"%s\", type %s (%i)",
+    out.print("Building {:<4}, \"{}\", type {} ({})",
                 bld->id,
-                name.c_str(),
-                ENUM_KEY_STR(building_type, bld_type).c_str(),
-                bld_type);
+                name,
+                ENUM_KEY_STR(building_type, bld_type),
+                static_cast<int>(bld_type));
 
 
     switch (bld_type) {
     case df::building_type::Civzone:
-        out.print(", subtype %s (%i)",
-                    ENUM_KEY_STR(civzone_type, subtype.civzone_type).c_str(),
+        out.print(", subtype {} ({})",
+                    ENUM_KEY_STR(civzone_type, subtype.civzone_type),
                     subtype.subtype);
         break;
     case df::building_type::Furnace:
-        out.print(", subtype %s (%i)",
-                    ENUM_KEY_STR(furnace_type, subtype.furnace_type).c_str(),
+        out.print(", subtype {} ({})",
+                    ENUM_KEY_STR(furnace_type, subtype.furnace_type),
                     subtype.subtype);
         if (subtype.furnace_type == df::furnace_type::Custom)
-            out.print(", custom type %s (%i)",
-                        world->raws.buildings.all[custom]->code.c_str(),
+            out.print(", custom type {} ({})",
+                        world->raws.buildings.all[custom]->code,
                         custom);
         break;
     case df::building_type::Workshop:
-        out.print(", subtype %s (%i)",
-                    ENUM_KEY_STR(workshop_type, subtype.workshop_type).c_str(),
+        out.print(", subtype {} ({})",
+                    ENUM_KEY_STR(workshop_type, subtype.workshop_type),
                     subtype.subtype);
         if (subtype.workshop_type == df::workshop_type::Custom)
-            out.print(", custom type %s (%i)",
-                        world->raws.buildings.all[custom]->code.c_str(),
+            out.print(", custom type {} ({})",
+                        world->raws.buildings.all[custom]->code,
                         custom);
         break;
     case df::building_type::Construction:
-        out.print(", subtype %s (%i)",
-                    ENUM_KEY_STR(construction_type, subtype.construction_type).c_str(),
+        out.print(", subtype {} ({})",
+                    ENUM_KEY_STR(construction_type, subtype.construction_type),
                     subtype.subtype);
         break;
     case df::building_type::Shop:
-        out.print(", subtype %s (%i)",
-                    ENUM_KEY_STR(shop_type, subtype.shop_type).c_str(),
+        out.print(", subtype {} ({})",
+                    ENUM_KEY_STR(shop_type, subtype.shop_type),
                     subtype.subtype);
         break;
     case df::building_type::SiegeEngine:
-        out.print(", subtype %s (%i)",
-                    ENUM_KEY_STR(siegeengine_type, subtype.siegeengine_type).c_str(),
+        out.print(", subtype {} ({})",
+                    ENUM_KEY_STR(siegeengine_type, subtype.siegeengine_type),
                     subtype.subtype);
         break;
     case df::building_type::Trap:
-        out.print(", subtype %s (%i)",
-                    ENUM_KEY_STR(trap_type, subtype.trap_type).c_str(),
+        out.print(", subtype {} ({})",
+                    ENUM_KEY_STR(trap_type, subtype.trap_type),
                     subtype.subtype);
         break;
     case df::building_type::NestBox:
     {
         df::building_nest_boxst* nestbox = virtual_cast<df::building_nest_boxst>(bld);
         if (nestbox)
-            out.print(", claimed:(%i), items:%zu", nestbox->claimed_by, nestbox->contained_items.size());
+            out.print(", claimed:({}), items:({})", nestbox->claimed_by, nestbox->contained_items.size());
         break;
     }
     default:
         if (subtype.subtype != -1)
-            out.print(", subtype %i", subtype.subtype);
+            out.print(", subtype {}", subtype.subtype);
         break;
     }
 

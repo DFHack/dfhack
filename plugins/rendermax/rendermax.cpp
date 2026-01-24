@@ -433,7 +433,7 @@ static command_result rendermax(color_ostream &out, vector <string> & parameters
     else if(cmd=="disable")
     {
         if(current_mode==MODE_DEFAULT)
-            out.print("%s\n","Not installed, doing nothing.");
+            out.print("{}\n","Not installed, doing nothing.");
         else
             removeOld();
         gps->force_full_display_count++;

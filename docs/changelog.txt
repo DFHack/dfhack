@@ -1,26 +1,30 @@
 === Scroll down for changes
 
 ===[[[
-The text below is included in docs/dev/Documentation.rst - see that file for more details on the changelog setup.
-This is kept in this file as a quick syntax reference.
+For information on how to edit/build the changelogs, see `docs/html/docs/dev/Documentation.html` or `docs/dev/Documentation.rst`.
 
-===help
+The text between the `syntax-reference` markers is included in `docs/dev/Documentation.rst`, so it must be valid RST.
+It is kept in this file as a quick syntax reference.
 
-changelog.txt uses a syntax similar to RST, with a few special sequences:
+===syntax-reference-start
+
+The changelogs use a syntax similar to RST, with a few special sequences:
 
 - ``===`` indicates the start of a comment
 - ``#`` indicates the start of a release name (do not include "DFHack")
-- ``##`` indicates the start of a section name (this must be listed in ``gen_changelog.py``)
+- ``##`` indicates the start of a section name (which must be listed in ``docs/sphinx_extensions/dfhack/changelog.py``)
 - ``-`` indicates the start of a changelog entry. **Note:** an entry currently must be only one line.
-- ``:`` (colon followed by space) separates the name of a feature from a description of a change to that feature.
-    Changes made to the same feature are grouped if they end up in the same section.
-- ``:\`` (colon, backslash, space) avoids the above behavior
-- ``- @`` (the space is optional) indicates the start of an entry that should only be displayed in NEWS-dev.rst.
-    Use this sparingly, e.g. for immediate fixes to one development build in another development build that
-    are not of interest to users of stable builds only.
+- ``:`` (followed by space) separates the name of a feature from a description of a change to that feature.
+    - Changes made to the same feature are grouped if they end up in the same section.
+- ``:\`` (followed by space) avoids the above behavior
+- ``- @`` (the space is optional) indicates the start of an entry that should only be displayed in ``NEWS-dev.rst``.
+    - Use this sparingly, e.g. for immediate fixes to one development build in another development build that
+      are not of interest to users of stable builds only.
 - Three ``[`` characters indicate the start of a block (possibly a comment) that
   spans multiple lines. Three ``]`` characters indicate the end of such a block.
-- ``!`` immediately before a phrase set up to be replaced (see gen_changelog.py) stops that occurrence from being replaced.
+- ``!`` immediately before a configured replacement (see ``docs/sphinx_extensions/dfhack/changelog.py``) stops that occurrence from being replaced.
+
+===syntax-reference-end
 
 Template for new versions:
 
@@ -40,7 +44,6 @@ Template for new versions:
 
 ## Removed
 
-===end
 ]]]
 
 ================================================================================
@@ -57,6 +60,517 @@ Template for new versions:
 - `clean`: positional options to limit cleaning to a cuboid area. Options to remove grass or skip blood spatter removal.
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.10-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `autochop`: the report will no longer throw a C++ exception when burrows are defined.
+- `suspendmanager`: Fix the overlay appearing where it should not when following a unit
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- Added ``Burrows::getName``: obtains the name of a burrow, or the same placeholder name that DF would show if the burrow is unnamed.
+
+## Lua
+- Added ``Burrows::getName`` as ``dfhack.burrows.getName``.
+
+## Removed
+
+# 53.09-r1
+
+## New Tools
+
+## New Features
+- `tweak`: ``drawbridge-tiles``: Make it so raised bridges render with different tiles in ASCII mode to make it more obvious that they ARE raised (and to indicate their direction)
+
+## Fixes
+- ``Filesystem::as_string`` now always uses UTF-8 encoding rather than using the system locale encoding
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.08-r1
+
+## New Tools
+
+## New Features
+- compatibility with DF 53.08
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.07-r1
+
+## New Tools
+- ``edgescroll``: Introduced plugin to pan the view automatically when the mouse reaches the screen border.
+- `infinite-sky`: Re-enabled with compatibility with new siege map data.
+
+## New Features
+- `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
+
+## Fixes
+- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
+- `sort`: Places search widget moved to account for DF's new "Siege engines" subtab
+
+## Misc Improvements
+- `createitem`: created items can now be placed onto/into tables, nests, bookcases, display cases, and altars
+- The ``fpause`` console command can now be used to force world generation to pause (as it did prior to version 50).
+- `keybinding`: keybinds may now include the super key, and are no longer limited to particular keys ranges of keys, allowing any recognized by SDL.
+
+## Documentation
+
+## API
+- ``Hotkey``: New module for hotkey functionality
+
+## Lua
+- The ``Lua interactive interpreter`` banner now documents keywords such as ``unit`` and ``item`` which reference the currently-selected object in the DF UI.
+- ``dfhack.hotkey.addKeybind``: Creates new keybindings
+- ``dfhack.hotkey.removeKeybind``: Removes existing keybindings
+- ``dfhack.hotkey.listActiveKeybinds``: Lists all keybinds for the current context
+- ``dfhack.hotkey.listAllKeybinds``: Lists all keybinds for all contexts
+- ``dfhack.hotkey.requestKeybindingInput``: Requests the next keybind-compatible input is saved
+- ``dfhack.hotkey.getKeybindingInput``: Reads the input saved in response to a request.
+
+## Removed
+
+# 53.06-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+- `infiniteSky`: Temporarily disabled due to incompatibility with changes made as part of DF's siege update
+
+# 53.05-r1
+
+## New Tools
+
+## New Features
+- compatibility with 53.05
+
+## Fixes
+- `sort`: Using the squad unit selector will no longer cause Dwarf Fortress to crash on exit
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.04-r1.1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- fixed misalignment in ``widgets::unit_list``
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.04-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `buildingplan`: Bolt throwers will no longer be constructed using populated bins.
+- `RemoteFortressReader`: updated siege engine facing enums for new diagonal directions
+- `suspendmanager`: treat reinforced walls as a blocking construction and buildable platform
+
+## Misc Improvements
+- `autolabor`: support for new dying and siege-related labors
+- `blueprint`: support for reinforced walls and bolt throwers
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.03-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+- Release builds for Linux are now compiled with gcc 11
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.02-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `buildingplan`: Building costs for reinforced walls are now correct.
+- `cleanconst`: do not attempt to clean Reinforced constructions
+
+## Misc Improvements
+- `buildingplan`: Added support for bolt throwers and siege engine rotation.
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.02-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+- Core: added ``gps`` (``graphicst``) to the set of globals whose sizes must agree for DFHack to pass initialization checks
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.01-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+- `stockpiles`: add support for managing the dyed, undyed, and color filter settings.
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.05-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `script-manager`: the ``scripts_modactive`` and ``scripts_modinstalled`` folders of a script-enabled mod will be properly added to the script path search list
+
+## Misc Improvements
+
+## Documentation
+- added a clarification link to DF's Lua API documentation to the DFHack Lua API documentation, as a way to reduce end-user confusion
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.05-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- improved file system handling: gracefully handle errors from operations, preventing crashes.
+- `zone`: animal assignment dialog now tolerates corrupt animal-to-pasture links.
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.04-r1
+
+## New Tools
+
+## New Features
+- Compatibility with DF 52.04
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.03-r2
+
+## New Tools
+
+## New Features
+- `nestboxes`: allow limiting egg protection to nestboxes inside a designated burrow
+- `tailor`: tailor now provides optional dye automation
+
+## Fixes
+- ``Units::getReadableName`` will no longer append a comma to the names of histfigs with no profession
+- `stockpiles`: fixed off-by-one error in exporting furniture stockpiles
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- ``Job``: new functions ``createLinked`` and ``assignToWorkshop``
+- ``Units``: new functions ``getFocusPenalty``, ``unbailableSocialActivity``, ``isJobAvailable``
+
+## Lua
+- New functions: ``dfhack.jobs.createLinked``, ``dfhack.jobs.assignToWorkshop``, ``dfhack.units.getFocusPenalty``, ``dfhack.units.unbailableSocialActivity``, and ``dfhack.units.isJobAvailable``
+
+## Removed
+
+# 52.03-r1.1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- job descriptions of mix dye job will display proper dye names
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.03-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `preserve-rooms` will no longer hang on startup in the presence of a cycle in the replacement relationship of noble positions
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- Adjusted the logic inside ``Military::removeFromSquad`` to more closely match the game's own behavior
+
+## Lua
+
+## Removed
+
+# 52.02-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Several fixes related to changes in file system handling in DF 52.01
+- `dig-now`: don't allow UNDIGGABLE stones to be excavated
+
+## Misc Improvements
+- `autoclothing`: added a ``clear`` option to unset previously set orders
+
+## Documentation
+
+## API
+- Added GUI focus strings for new_arena: ``/Loading`` and ``/Mods``
+- ``Filesystem::getBaseDir`` and ``Filesystem::getInstallDir`` added (and made available in Lua)
+- Expanded the partial implementations of ``Military::addToSquad`` and ``Military::removeFromSquad``
+
+## Lua
+- Inserting values into STL containers containing nonprimitive types is now supported
+
+## Removed
+
+# 52.02-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Honor the "portable mode" preference setting for locating save folders. Fixes DFHack cosaves not working in most cases.
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 52.01-r1
+
+## New Tools
+
+## New Features
+- `tweak`: ``animaltrap-reuse``: make it so built animal traps automatically unload the vermin they catch into stockpiled animal traps, so that they can be automatically re-baited and reused
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+- ``widgets.Slider``: new mouse-controlled single-headed slider widget
+
+## Removed
+
+# 51.13-r1
+
+## New Features
+
+- Compatibility with DF 51.13
+
+# 51.12-r1.1
+
+## New Features
+
+- Compatibility with Itch release of DF 51.12
+
+# 51.12-r1
+
+## Fixes
+- `getplants`: will no longer crash when faced with plants with growths that do not drop seeds when processed
+- `getplants`: use updated formula for calculating whether plant growths are ripe
+- `getplants`: fix logic for determining whether plant growths have been picked
+- `gui/teleport`: adapt to new behavior in DF 51.11 to avoid a crash when teleporting items into mid-air
+- `script-manager`: fix lua scripts in mods not being reloaded properly upon entering a saved world on Windows
+- `preserve-rooms`: don't warn when a room is assigned to a non-existent unit.  this is now common behavior for DF when it keeps a room for an unloaded unit
+- fixed an overly restrictive type constraint that resulted in some object types being glossed as a boolean when passed as an argument from C++ to Lua
+- `plants`: will no longer generate a traceback when a filter is used
+- `createitem`: multiple items should be properly created in stacks again
+
+## Misc Improvements
+- All places where units are listed in DFHack tools now show the translated English name in addition to the native name. In particular, this makes units searchable by English name in `gui/sitemap`.
+- `dig`: ASCII overlay now displays priority of digging designations
+- `spectate`: added prefer nicknamed units
+- `blueprint`: support for recording zones
+- `blueprint`: support for recording stockpile properties like names and stockpile links; does not yet support recording detailed contents configuration
+- `strangemood`: support added for specifying unit id instead of selected unit or random one.
+
+## API
+- ``Random`` module: added ``SplitmixRNG`` class, implements the Splitmix64 RNG used by Dwarf Fortress for "simple" randomness
+- ``Items::getDescription``: fixed display of quality levels, now displays ALL item designations (in correct order) and obeys vanilla SHOW_IMP_QUALITY setting
+- ``cuboid::forCoord``, ``Maps::forCoord``: take additional parameter to control whether iteration goes in column major or row major order
+
+## Lua
+- ``script-manager``: new ``get_active_mods()`` function for getting information on active mods
+- ``script-manager``: new ``get_mod_info_metadata()`` function for getting information out of mod ``info.txt`` files
+
+## Removed
+- removed historically unused ``Core::RegisterData``/``Core::GetData`` API and associated internal data structures
+
+# 51.11-r1.2
+
+## Fixes
+- `preserve-tombs`: will no longer crash when a tomb is assigned to a unit that does not exist
+
+# 51.11-r1.1
+
+## Fixes
+- `preserve-rooms`: will no longer crash when a civzone is assigned to a unit that does not exist
+- `gui/design`: fix misaligned shape icons
+
+# 51.11-r1
+
+## Fixes
 - `spectate`: don't show a hover tooltip for hidden units (e.g. invisible snatchers)
 - `stockpiles`: fix one-off error in item type when importing furniture stockpile settings
 - `dig-now`: fix cases where boulders/rough gems of incorrect material were being generated when digging through walls
@@ -64,22 +578,24 @@ Template for new versions:
 - `gui/teleport`: now properly handles teleporting units that are currently falling or being flung
 - `unload`: fix recent regression where `unload` would immediately `reload` the target
 - ``Buildings`` module: do not crash if a ``map_block`` unexpectedly contains an item that is not on the master item vector
+- `suspendmanager`: fix walls being treated as potential suitable access if another wall is built underneath
+- text widgets no longer lose their cursor when the Ctrl-a (select all) hotkey is pressed when there is no text to select
 
 ## Misc Improvements
 - `spectate`: show dwarves' activities (like prayer)
 
-## Documentation
-
 ## API
 - ``Maps::isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``Military`` module: added ``addToSquad`` function
+- ``Units`` module: added ``get_cached_unit_by_global_id`` to emulate how DF handles unit vector index caching (used in civzones and in general references)
+- ``Buildings`` module: add ``getOwner`` (using the ``Units::get_cached_unit_by_global_id`` mechanic) to reflect changes in 51.11
 - ``Units::teleport``: projectile information is now cleared for teleported units
+- ``Buildings::setOwner``: updated for changes in 51.11
 
 ## Lua
 - ``dfhack.maps.isPlantInBox``: function to determine if a plant is present in a cuboid.
 - ``dfhack.military.addToSquad``: expose Military API function
-
-## Removed
+- ``dfhack.buildings.getOwner``: make new Buildings API available to Lua
 
 # 51.10-r1
 

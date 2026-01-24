@@ -197,7 +197,7 @@ command_result df_createplant(color_ostream &out, const df::coord &pos, const pl
         if ((is_watery && !p_raw->flags.is_set(plant_raw_flags::WET)) ||
             (!is_watery && !p_raw->flags.is_set(plant_raw_flags::DRY)))
         {
-            out.printerr("Can't create plant: Plant type can't grow this %s water feature!\n"
+            out.printerr("Can't create plant: Plant type can't grow this {} water feature!\n"
                 "Override with --force\n", is_watery ? "close to" : "far from");
             return CR_FAILURE;
         }
@@ -252,7 +252,7 @@ command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_opt
 {
     if (!bounds.isValid())
     {
-        out.printerr("Invalid cuboid! (%d:%d, %d:%d, %d:%d)\n",
+        out.printerr("Invalid cuboid! ({}:{}, {}:{}, {}:{})\n",
             bounds.x_min, bounds.x_max, bounds.y_min, bounds.y_max, bounds.z_min, bounds.z_max);
         return CR_FAILURE;
     }
@@ -287,9 +287,9 @@ command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_opt
         auto tt = Maps::getTileType(plant->pos);
         if (!tt || tileShape(*tt) != tiletype_shape::SAPLING)
         {
-            out.printerr("Invalid sapling tiletype at (%d, %d, %d): %s!\n",
+            out.printerr("Invalid sapling tiletype at ({}, {}, {}): {}\n",
                 plant->pos.x, plant->pos.y, plant->pos.z,
-                tt ? ENUM_KEY_STR(tiletype, *tt).c_str() : "No map block!");
+                tt ? ENUM_KEY_STR(tiletype, *tt) : "No map block!");
             continue; // Bad tiletype
         }
         else if (*tt == tiletype::SaplingDead)
@@ -304,9 +304,9 @@ command_result df_grow(color_ostream &out, const cuboid &bounds, const plant_opt
     }
 
     if (do_trees)
-        out.print("%d saplings and %d trees%s set to grow.\n", grown, grown_trees, options.dry_run ? " would be" : "");
+        out.print("{} saplings and {} trees{} set to grow.\n", grown, grown_trees, options.dry_run ? " would be" : "");
     else
-        out.print("%d saplings%s set to grow.\n", grown, options.dry_run ? " would be" : "");
+        out.print("{} saplings{} set to grow.\n", grown, options.dry_run ? " would be" : "");
 
     return CR_OK;
 }
@@ -381,7 +381,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
 {
     if (!bounds.isValid())
     {
-        out.printerr("Invalid cuboid! (%d:%d, %d:%d, %d:%d)\n",
+        out.printerr("Invalid cuboid! ({}:{}, {}:{}, {}:{})\n",
             bounds.x_min, bounds.x_max, bounds.y_min, bounds.y_max, bounds.z_min, bounds.z_max);
         return CR_FAILURE;
     }
@@ -428,9 +428,9 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
             {
                 if (tileShape(*tt) != tiletype_shape::SHRUB)
                 {
-                    out.printerr("Bad shrub tiletype at (%d, %d, %d): %s\n",
+                    out.printerr("Bad shrub tiletype at ({}, {}, {}): {}\n",
                         plant.pos.x, plant.pos.y, plant.pos.z,
-                        ENUM_KEY_STR(tiletype, *tt).c_str());
+                        ENUM_KEY_STR(tiletype, *tt));
                     bad_tt = true;
                 }
             }
@@ -438,9 +438,9 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
             {
                 if (tileShape(*tt) != tiletype_shape::SAPLING)
                 {
-                    out.printerr("Bad sapling tiletype at (%d, %d, %d): %s\n",
+                    out.printerr("Bad sapling tiletype at ({}, {}, {}): {}\n",
                         plant.pos.x, plant.pos.y, plant.pos.z,
-                        ENUM_KEY_STR(tiletype, *tt).c_str());
+                        ENUM_KEY_STR(tiletype, *tt));
                     bad_tt = true;
                 }
             }
@@ -448,7 +448,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
         }
         else
         {
-            out.printerr("Bad plant tiletype at (%d, %d, %d): No map block!\n",
+            out.printerr("Bad plant tiletype at ({}, {}, {}): No map block!\n",
                 plant.pos.x, plant.pos.y, plant.pos.z);
             bad_tt = true;
         }
@@ -463,7 +463,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
         if (!options.dry_run)
         {
             if (!uncat_plant(&plant))
-                out.printerr("Remove plant: No block column at (%d, %d)!\n", plant.pos.x, plant.pos.y);
+                out.printerr("Remove plant: No block column at ({}, {})!\n", plant.pos.x, plant.pos.y);
 
             if (!bad_tt) // TODO: trees
                 set_tt(plant.pos);
@@ -473,7 +473,7 @@ command_result df_removeplant(color_ostream &out, const cuboid &bounds, const pl
         }
     }
 
-    out.print("Plants%s removed: %d (%d bad)\n", options.dry_run ? " that would be" : "", count, count_bad);
+    out.print("Plants{} removed: {} ({} bad)\n", options.dry_run ? " that would be" : "", count, count_bad);
     return CR_OK;
 }
 
@@ -493,11 +493,11 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
     {   // Print all non-grass raw IDs ("plant list")
         out.print("--- Shrubs ---\n");
         for (auto p_raw : world->raws.plants.bushes)
-            out.print("%d: %s\n", p_raw->index, p_raw->id.c_str());
+            out.print("{}: {}\n", p_raw->index, p_raw->id);
 
         out.print("\n--- Saplings ---\n");
         for (auto p_raw : world->raws.plants.trees)
-            out.print("%d: %s\n", p_raw->index, p_raw->id.c_str());
+            out.print("{}: {}\n", p_raw->index, p_raw->id);
 
         return CR_OK;
     }
@@ -529,7 +529,7 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
         return CR_FAILURE;
     }
 
-    DEBUG(log, out).print("pos_1 = (%d, %d, %d)\npos_2 = (%d, %d, %d)\n",
+    DEBUG(log, out).print("pos_1 = ({}, {}, {})\npos_2 = ({}, {}, {})\n",
         pos_1.x, pos_1.y, pos_1.z, pos_2.x, pos_2.y, pos_2.z);
 
     if (!Maps::IsValid())
@@ -554,7 +554,7 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
         if (!pos_1.isValid())
         {   // Attempt to use cursor for pos if active
             Gui::getCursorCoords(pos_1);
-            DEBUG(log, out).print("Try to use cursor (%d, %d, %d) for pos_1.\n",
+            DEBUG(log, out).print("Try to use cursor ({}, {}, {}) for pos_1.\n",
                 pos_1.x, pos_1.y, pos_1.z);
 
             if (!pos_1.isValid())
@@ -564,20 +564,20 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
             }
         }
 
-        DEBUG(log, out).print("plant_idx = %d\n", options.plant_idx);
+        DEBUG(log, out).print("plant_idx = {}\n", options.plant_idx);
         auto p_raw = vector_get(world->raws.plants.all, options.plant_idx);
         if (p_raw)
         {
-            DEBUG(log, out).print("Plant raw: %s\n", p_raw->id.c_str());
+            DEBUG(log, out).print("Plant raw: {}\n", p_raw->id);
             if (p_raw->flags.is_set(plant_raw_flags::GRASS))
             {
-                out.printerr("Plant raw was grass: %d (%s)\n", options.plant_idx, p_raw->id.c_str());
+                out.printerr("Plant raw was grass: {} ({})\n", options.plant_idx, p_raw->id);
                 return CR_FAILURE;
             }
         }
         else
         {
-            out.printerr("Plant raw not found for create: %d\n", options.plant_idx);
+            out.printerr("Plant raw not found for create: {}\n", options.plant_idx);
             return CR_FAILURE;
         }
     }
@@ -593,24 +593,24 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
 
             for (auto idx : filter)
             {
-                DEBUG(log, out).print("Filter/exclude test idx: %d\n", idx);
+                DEBUG(log, out).print("Filter/exclude test idx: {}\n", idx);
                 auto p_raw = vector_get(world->raws.plants.all, idx);
                 if (p_raw)
                 {
-                    DEBUG(log, out).print("Filter/exclude raw: %s\n", p_raw->id.c_str());
+                    DEBUG(log, out).print("Filter/exclude raw: {}\n", p_raw->id);
                     if (p_raw->flags.is_set(plant_raw_flags::GRASS))
                     {
-                        out.printerr("Filter/exclude plant raw was grass: %d (%s)\n", idx, p_raw->id.c_str());
+                        out.printerr("Filter/exclude plant raw was grass: {} ({})\n", idx, p_raw->id);
                         return CR_FAILURE;
                     }
                     else if (options.grow && !p_raw->flags.is_set(plant_raw_flags::TREE))
                     {   // User might copy-paste filters between grow and remove, so just log this
-                        DEBUG(log, out).print("Filter/exclude shrub with grow: %d (%s)\n", idx, p_raw->id.c_str());
+                        DEBUG(log, out).print("Filter/exclude shrub with grow: {} ({})\n", idx, p_raw->id);
                     }
                 }
                 else
                 {
-                    out.printerr("Plant raw not found for filter/exclude: %d\n", idx);
+                    out.printerr("Plant raw not found for filter/exclude: {}\n", idx);
                     return CR_FAILURE;
                 }
             }
@@ -644,12 +644,12 @@ command_result df_plant(color_ostream &out, vector<string> &parameters)
             bounds.addPos(world->map.x_count-1, world->map.y_count-1, 0);
         }
 
-        DEBUG(log, out).print("bounds = (%d:%d, %d:%d, %d:%d)\n",
+        DEBUG(log, out).print("bounds = ({}:{}, {}:{}, {}:{})\n",
             bounds.x_min, bounds.x_max, bounds.y_min, bounds.y_max, bounds.z_min, bounds.z_max);
 
         if (!bounds.isValid())
         {
-            out.printerr("Invalid cuboid! (%d:%d, %d:%d, %d:%d)\n",
+            out.printerr("Invalid cuboid! ({}:{}, {}:{}, {}:{})\n",
                 bounds.x_min, bounds.x_max, bounds.y_min, bounds.y_max, bounds.z_min, bounds.z_max);
             return CR_FAILURE;
         }

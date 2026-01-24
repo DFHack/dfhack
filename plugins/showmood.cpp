@@ -31,7 +31,7 @@ REQUIRE_GLOBAL(world);
 command_result df_showmood (color_ostream &out, vector <string> & parameters)
 {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -65,7 +65,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             out.printerr("Dwarf with strange mood does not have a mood type!\n");
             continue;
         }
-        out.print("%s is currently ", DF2CONSOLE(out, Units::getReadableName(unit)).c_str());
+        out.print("{} is currently ", DF2CONSOLE(out, Units::getReadableName(unit)));
         switch (unit->mood)
         {
         case mood_type::Macabre:
@@ -143,7 +143,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 out.print("do something else...");
                 break;
             }
-            out.print(" and become a legendary %s", ENUM_ATTR_STR(job_skill, caption_noun, unit->job.mood_skill));
+            out.print(" and become a legendary {}", ENUM_ATTR_STR(job_skill, caption_noun, unit->job.mood_skill));
             if (unit->mood == mood_type::Possessed)
                 out.print(" (but not really)");
             break;
@@ -160,7 +160,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         {
             string name;
             building->getName(&name);
-            out.print("claimed a %s and wants", name.c_str());
+            out.print("claimed a {} and wants", name.c_str());
         }
         else
             out.print("not yet claimed a workshop but will want");
@@ -169,7 +169,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
         for (size_t i = 0; i < job->job_items.elements.size(); i++)
         {
             df::job_item *item = job->job_items.elements[i];
-            out.print("Item %zu: ", i + 1);
+            out.print("Item {}: ", i + 1);
 
             MaterialInfo matinfo(item->mat_type, item->mat_index);
 
@@ -178,37 +178,37 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
             switch (item->item_type)
             {
             case item_type::BOULDER:
-                out.print("%s boulder", mat_name.c_str());
+                out.print("{} boulder", mat_name);
                 break;
             case item_type::BLOCKS:
-                out.print("%s blocks", mat_name.c_str());
+                out.print("{} blocks", mat_name);
                 break;
             case item_type::WOOD:
-                out.print("%s logs", mat_name.c_str());
+                out.print("{} logs", mat_name);
                 break;
             case item_type::BAR:
                 if (matinfo.isInorganicWildcard())
                     mat_name = "metal";
                 if (matinfo.inorganic && matinfo.inorganic->flags.is_set(inorganic_flags::WAFERS))
-                    out.print("%s wafers", mat_name.c_str());
+                    out.print("{} wafers", mat_name);
                 else
-                    out.print("%s bars", mat_name.c_str());
+                    out.print("{} bars", mat_name);
                 break;
             case item_type::SMALLGEM:
-                out.print("%s cut gems", mat_name.c_str());
+                out.print("{} cut gems", mat_name);
                 break;
             case item_type::ROUGH:
                 if (matinfo.isAnyInorganic())
                 {
                     if (matinfo.isInorganicWildcard())
                         mat_name = "any";
-                    out.print("%s rough gems", mat_name.c_str());
+                    out.print("{} rough gems", mat_name);
                 }
                 else
-                    out.print("raw %s", mat_name.c_str());
+                    out.print("raw {}", mat_name);
                 break;
             case item_type::SKIN_TANNED:
-                out.print("%s leather", mat_name.c_str());
+                out.print("{} leather", mat_name);
                 break;
             case item_type::CLOTH:
                 if (matinfo.isNone())
@@ -220,50 +220,51 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                     else if (item->flags2.bits.yarn)
                         mat_name = "any yarn";
                 }
-                out.print("%s cloth", mat_name.c_str());
+                out.print("{} cloth", mat_name);
                 break;
             case item_type::REMAINS:
-                out.print("%s remains", mat_name.c_str());
+                out.print("{} remains", mat_name);
                 break;
             case item_type::CORPSE:
-                out.print("%s %scorpse", mat_name.c_str(), (item->flags1.bits.murdered ? "murdered " : ""));
+                out.print("{} {}corpse", mat_name, (item->flags1.bits.murdered ? "murdered " : ""));
                 break;
             case item_type::NONE:
                 if (item->flags2.bits.body_part)
                 {
                     if (item->flags2.bits.bone)
-                        out.print("%s bones", mat_name.c_str());
+                        out.print("{} bones", mat_name);
                     else if (item->flags2.bits.shell)
-                        out.print("%s shells", mat_name.c_str());
+                        out.print("{} shells", mat_name);
                     else if (item->flags2.bits.horn)
-                        out.print("%s horns", mat_name.c_str());
+                        out.print("{} horns", mat_name);
                     else if (item->flags2.bits.pearl)
-                        out.print("%s pearls", mat_name.c_str());
+                        out.print("{} pearls", mat_name);
                     else if (item->flags2.bits.ivory_tooth)
-                        out.print("%s ivory/teeth", mat_name.c_str());
+                        out.print("{} ivory/teeth", mat_name);
                     else
-                        out.print("%s unknown body parts (%s:%s:%s)",
-                                     mat_name.c_str(),
-                                     bitfield_to_string(item->flags1).c_str(),
-                                     bitfield_to_string(item->flags2).c_str(),
-                                     bitfield_to_string(item->flags3).c_str());
+                        out.print("{} unknown body parts ({}:{}:{})",
+                                     mat_name,
+                                     bitfield_to_string(item->flags1),
+                                     bitfield_to_string(item->flags2),
+                                     bitfield_to_string(item->flags3));
                 }
                 else
-                    out.print("indeterminate %s item (%s:%s:%s)",
-                                 mat_name.c_str(),
-                                 bitfield_to_string(item->flags1).c_str(),
-                                 bitfield_to_string(item->flags2).c_str(),
-                                 bitfield_to_string(item->flags3).c_str());
+                    out.print("indeterminate {} item ({}:{}:{})",
+                                 mat_name,
+                                 bitfield_to_string(item->flags1),
+                                 bitfield_to_string(item->flags2),
+                                 bitfield_to_string(item->flags3));
                 break;
             default:
                 {
                     ItemTypeInfo itinfo(item->item_type, item->item_subtype);
 
-                    out.print("item %s material %s flags (%s:%s:%s)",
-                                 itinfo.toString().c_str(), mat_name.c_str(),
-                                 bitfield_to_string(item->flags1).c_str(),
-                                 bitfield_to_string(item->flags2).c_str(),
-                                 bitfield_to_string(item->flags3).c_str());
+                    out.print("item {} material {} flags ({}:{}:{})",
+                                 itinfo.toString(),
+                                 mat_name,
+                                 bitfield_to_string(item->flags1),
+                                 bitfield_to_string(item->flags2),
+                                 bitfield_to_string(item->flags3));
                     break;
                 }
             }
@@ -280,7 +281,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                     if (job->items[j]->job_item_idx == int32_t(i))
                         count_got += 1;
                 }
-                out.print(", got %i of %i\n", count_got,
+                out.print(", got {} of {}\n", count_got,
                     item->quantity < divisor ? item->quantity : item->quantity/divisor);
             }
         }

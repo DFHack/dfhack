@@ -25,6 +25,13 @@ It does not describe all of the utility functions
 implemented by Lua files located in :file:`hack/lua/*`
 (:file:`library/lua/*` in the git repo).
 
+.. admonition:: Is this the DF or DFHack Lua API?
+   :class: warning
+
+    This document describes the Lua API provided by DFHack, not
+    the Lua API provided by Dwarf Fortress. For information about DF's Lua API, see
+    :wiki:`Lua scripting`
+    on the Dwarf Fortress Wiki.
 
 .. contents:: Contents
   :local:
@@ -1313,6 +1320,10 @@ Job module
 
   Creates a deep copy of the given job.
 
+* ``dfhack.job.createLinked()``
+
+  Create a job and immediately link it into the global job list.
+
 * ``dfhack.job.printJobDetails(job)``
 
   Prints info about the job.
@@ -1337,6 +1348,12 @@ Job module
 * ``dfhack.job.getSpecificRef(job, type)``
 
   Searches for a specific_ref with the given type.
+
+* ``dfhack.job.assignToWorkshop(job, workshop)``
+
+  Assign job to workshop (i.e. establish the bidirectional link between the job
+  and the workshop). Does nothing and returns ``false`` if the workshop already
+  has the maximum of ten jobs.
 
 * ``dfhack.job.getHolder(job)``
 
@@ -1412,6 +1429,53 @@ Job module
 * ``dfhack.job.getName(job)``
 
   Returns the job's description, as seen in the Units and Jobs screens.
+
+Hotkey module
+-------------
+
+* ``dfhack.hotkey.addKeybind(keyspec, command)``
+
+  Creates a new keybind with the provided keyspec (see the `keybinding` documentation
+  for details on format).
+  Returns false on failure to create keybind.
+
+* ``dfhack.hotkey.removeKeybind(keyspec, [match_focus=true, command])``
+
+  Removes keybinds matching the provided keyspec.
+  If match_focus is set, the focus portion of the keyspec is matched against.
+  If command is provided and not an empty string, the command is matched against.
+  Returns false if no keybinds were removed.
+
+* ``dfhack.hotkey.listActiveKeybinds()``
+
+  Returns a list of keybinds active within the current context.
+  The items are tables with the following attributes:
+  :spec: The keyspec for the hotkey
+  :command: The command the hotkey runs when pressed
+
+* ``dfhack.hotkey.listAllKeybinds()``
+
+  Returns a list of all keybinds currently registered.
+  The items are tables with the following attributes:
+  :spec: The keyspec for the hotkey
+  :command: The command the hotkey runs when pressed
+
+* ``dfhack.hotkey.requestKeybindingInput([cancel=false])``
+
+  Enqueues or cancels a request that the next hotkey-compatible input is saved
+  and not processed, retrievable with ``dfhack.hotkey.getKeybindingInput()``.
+  If cancel is true, any current request is cancelled.
+
+* ``dfhack.hotkey.getKeybindingInput()``
+
+  Reads the latest saved keybind input that was requested.
+  Returns a keyspec string for the input, or nil if no input has been saved.
+
+* ``dfhack.hotkey.isDisruptiveKeybind(keyspec)``
+
+  Determines if the provided keyspec could be disruptive to the game experience.
+  This includes the majority of standard characters and special keys such as escape,
+  backspace, and return when lacking modifiers other than Shift.
 
 Units module
 ------------
@@ -1628,7 +1692,7 @@ Units module
   Returns true if the unit is within a box defined by the
   specified coordinates.
 
-``dfhack.units.getUnitsInBox(pos1, pos2[, filter])``
+* ``dfhack.units.getUnitsInBox(pos1, pos2[, filter])``
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
   Returns a table of all units within the specified coordinates.
@@ -1773,17 +1837,18 @@ Units module
   Get human-readable baby or child name (e.g., "dwarven baby" or
   "dwarven child").
 
-* ``dfhack.units.getReadableName(unit or historical_figure)``
+* ``dfhack.units.getReadableName(unit or historical_figure[, skip_english])``
 
-  Returns a string that includes the language name of the unit (if any), the
-  race of the unit (if different from fort), whether it is trained for war or
-  hunting, any syndrome-given descriptions (such as "necromancer"), the
-  training level (if tame), and profession or noble role. If a
-  ``historical_figure`` is passed instead of a unit, some information
-  (e.g., agitation status) is not available, and the profession may be
-  different (e.g., "Monk") from what is displayed in fort mode.
+  Returns a string that includes the native and english language name (if
+  ``skip_english`` is not ``true``) of the unit (if any), the race of the unit
+  (if different from fort), whether it is trained for war or hunting, any
+  syndrome-given descriptions (such as "necromancer"), the training level (if
+  tame), and profession or noble role. If a ``historical_figure`` is passed
+  instead of a unit, some information (e.g., agitation status) is not
+  available, and the profession may be different (e.g., "Monk") from what is
+  displayed in fort mode.
 
-* ``dfhack.units.getAge(unit[,true_age])``
+* ``dfhack.units.getAge(unit[, true_age])``
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
@@ -1892,6 +1957,23 @@ Units module
 
   Return the ``df.activity_entry`` or ``df.activity_event`` representing the
   unit's current social activity.
+
+* ``dfhack.units.hasUnbailableSocialActivity(unit)``
+
+  Unit has an uninterruptible social activity (e.g. a purple "Socialize!").
+
+* ``dfhack.units.isJobAvailable(unit [, preserve_social])``
+
+  Check whether a unit can be assigned to (i.e. is looking for) a job. Will
+  return ``true`` if the unit is engaged in "green" social activities, unless
+  the boolean ``preserve_social`` is true. Will never interrupt uninterruptible
+  social activities (e.g. a purple "Socialize!").
+
+* ``dfhack.units.getFocusPenalty(unit, need_type [, need_type, ...])``
+
+  Get largest (i.e. most negative) focus penalty associated to a collection of
+  ``df.need_type`` arguments. Returns a number strictly greater than 400 if the
+  unit does not have any of the requested needs.
 
 * ``dfhack.units.getStressCategory(unit)``
 
@@ -2414,6 +2496,11 @@ Maps module
 Burrows module
 --------------
 
+* ``dfhack.burrows.getName(burrow)``
+
+  Returns the name of the burrow.
+  If the burrow has no set name, returns the same placeholder name that DF would show in the UI.
+
 * ``dfhack.burrows.findByName(name[, ignore_final_plus])``
 
   Returns the burrow pointer or *nil*. if ``ignore_final_plus`` is ``true``,
@@ -2471,6 +2558,10 @@ General
 * ``dfhack.buildings.getSpecificRef(building, type)``
 
   Searches for a specific_ref with the given type.
+
+* ``dfhack.buildings.getOwner(civzone)``
+
+  Returns the owner of the zone or *nil* if there isn't one.
 
 * ``dfhack.buildings.setOwner(civzone,unit)``
 
@@ -3208,6 +3299,16 @@ unless otherwise noted.
   following it for each entry. Set ``include_prefix`` to false if you don't
   want the ``path`` string prepended to the returned filenames.
 
+* ``dfhack.filesystem.getBaseDir()``
+
+  Returns a directory to which DF (and thus DFHack) can save files. This will either
+  be DF's install directory, or the path returned by ``SDLGetPrefDir``, depending on whether
+  DF is in "portable mode" or not.
+
+* ``dfhack.filesystem.getInstallDir()``
+
+  Returns the the directory in which DF is installed.
+
 Console API
 -----------
 
@@ -3341,12 +3442,14 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.findScript(name)``
 
-  Searches `script paths <script-paths>` for the script ``name`` and returns the
-  path of the first file found, or ``nil`` on failure.
+  Searches `script paths <script-paths>` for the script ``name`` (which
+  includes the ``.lua`` extension) and returns the absolute path of the first
+  file found, or ``nil`` on failure. Slashes in the path are canonicalized to
+  forward slashes.
 
   .. note::
-    This requires an extension to be specified (``.lua`` or ``.rb``) - use
-    ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
+    You can use the ``dfhack.findScript()`` wrapper if you want to specify the
+    script name without the ``.lua`` extension.
 
 * ``dfhack.internal.runCommand(command[, use_console])``
 
@@ -3450,7 +3553,7 @@ and are only documented here for completeness:
 * ``dfhack.internal.getModifiers()``
 
   Returns the state of the keyboard modifier keys in a table of string ->
-  boolean. The keys are ``ctrl``, ``shift``, and ``alt``.
+  boolean. The keys are ``ctrl``, ``shift``, ``super``, and ``alt``.
 
 * ``dfhack.internal.getSuppressDuplicateKeyboardEvents()``
 * ``dfhack.internal.setSuppressDuplicateKeyboardEvents(suppress)``
@@ -3785,6 +3888,29 @@ paths will be relative to the top level game directory and will end in a slash
 
   Which would open ``dfhack-config/mods/my_awesome_mod/settings.json``. After
   calling ``getModStatePath``, the returned directory is guaranteed to exist.
+
+* ``get_active_mods()``
+
+  Returns a list of all active mods in the current world. The list elements are
+  tables containing the following fields:
+
+    - id: mod id
+    - name: mod display name
+    - version: mod display version
+    - numeric_version: numeric mod version
+    - path: path to the mod directory
+    - vanilla: true if this is a vanilla mod
+
+* ``get_mod_info_metadata(mod_path, tags)``
+
+  Returns a table with the values of the given tags from the ``info.txt`` file
+  in the given mod directory. The ``mod_path`` argument must be a path to a mod
+  directory (retrieved, say, from ``get_active_mods()``). The ``tags`` argument
+  is a string or a list of strings representing the tags to retrieve. The
+  function will return a table with the tag names as keys and their values as
+  values. If a requested tag includes the string ``NUMERIC_``, it will return
+  the numeric value for that tag (e.g., ``NUMERIC_VERSION`` will return the
+  numeric version of the mod as a number instead of a string).
 
 utils
 =====
@@ -6482,9 +6608,23 @@ change, the ``RangeSlider`` appearance will adjust automatically.
 :get_left_idx_fn: The function used by the RangeSlider to get the notch index on which
                   to display the left handle.
 :get_right_idx_fn: The function used by the RangeSlider to get the notch index on which
-                   to display the right handle.
+                  to display the right handle.
 :on_left_change: Callback executed when moving the left handle.
 :on_right_change: Callback executed when moving the right handle.
+
+Slider class
+-----------------
+
+This widget implements a mouse-interactable slider. The player can move the handle to
+set the value of the slider. The parent widget owns the slider value, and can control
+it independently (e.g., with a ``CycleHotkeyLabel``). If the value changes, the ``Slider``
+appearance will adjust automatically.
+
+:num_stops: Used to specify the number of "notches" in the slider, the places
+            where the handle can stop. (This should match the parents' number of options.)
+:get_idx_fn: The function used by the Slider to get the notch index on which
+                  to display the handle.
+:on_change: Callback executed when moving the handle.
 
 DimensionsTooltip class
 -----------------------
@@ -7386,6 +7526,15 @@ Importing scripts
      not present::
 
       --@ module = true
+
+     In order to be recognized, this line **must** begin with ``--@`` with no
+     whitespace characters before it::
+
+      --@ module = true   OK
+      --@module = true    OK
+      -- @module = true   NOT OK (no --@ found due to space after --)
+       --@module = true   NOT OK (leading space, --@ is not at the beginning of the line)
+      ---@module = true   NOT OK (leading dash, --@ is not at the beginning of the line)
 
   2. Include a check for ``dfhack_flags.module``, and avoid running any code
      that has side-effects if this flag is true. For instance::

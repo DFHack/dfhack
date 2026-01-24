@@ -89,7 +89,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
                 // the tile below is not solid earth
                 // we're counting accessibility then dealing with 0 access
                 DEBUG(manager).print("analysis: cave-in condition found\n");
-                INFO(manager).print("(%d) checking accessibility of (" COORD ") from (" COORD ")\n", cavein_possible,COORDARGS(pos),COORDARGS(miner_pos));
+                INFO(manager).print("({}) checking accessibility of ({}) from ({})\n", cavein_possible,pos,miner_pos);
                 auto access = count_accessibility(miner_pos, pos);
                 if (access == 0) {
                     TRACE(groups).print(" has 0 access\n");
@@ -100,7 +100,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
                         // todo: engage dig management, swap channel designations for dig
                     }
                 } else {
-                    WARN(manager).print(" has %d access\n", access);
+                    WARN(manager).print(" has {} access\n", access);
                     cavein_possible = config.riskaverse;
                     cavein_candidates.emplace(pos, access);
                     least_access = std::min(access, least_access);
@@ -110,13 +110,13 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
                 dig_now(DFHack::Core::getInstance().getConsole(), pos);
             }
         }
-        DEBUG(manager).print("cavein possible(%d)\n"
-                             "%zu candidates\n"
-                             "least access %d\n", cavein_possible, cavein_candidates.size(), least_access);
+        DEBUG(manager).print("cavein possible({})\n"
+                             "{} candidates\n"
+                             "least access {}\n", cavein_possible, cavein_candidates.size(), least_access);
     }
     // managing designations
     if (!group.empty()) {
-        DEBUG(manager).print("managing group #%d\n", groups.debugGIndex(*group.begin()));
+        DEBUG(manager).print("managing group #{}\n", groups.debugGIndex(*group.begin()));
     }
     for (auto &pos: group) {
         // if no cave-in is possible [or we don't check for], we'll just execute normally and move on
@@ -132,7 +132,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
         if (CSP::dignow_queue.count(pos) || (cavein_candidates.count(pos) &&
                                              least_access < MAX && cavein_candidates[pos] <= least_access+OFFSET)) {
 
-            TRACE(manager).print("cave-in evaluated true and either of dignow or (%d <= %d)\n", cavein_candidates[pos], least_access+OFFSET);
+            TRACE(manager).print("cave-in evaluated true and either of dignow or ({} <= {})\n", cavein_candidates[pos], least_access+OFFSET);
             df::coord local(pos);
             local.x %= 16;
             local.y %= 16;
@@ -143,7 +143,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
                     // we want to let the user keep some designations free of being managed
                     auto b = std::max(0, cavein_candidates[pos] - least_access);
                     auto v = 1000 + (b * 1700);
-                    DEBUG(manager).print("(" COORD ") 1000+1000(%d) -> %d {least-access: %d}\n",COORDARGS(pos), b, v, least_access);
+                    DEBUG(manager).print("({}) 1000+1000({}) -> {} {least-access: {}}\n", pos, b, v, least_access);
                     evT->priority[Coord(local)] = v;
                 }
             }
@@ -152,7 +152,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
         }
         // cavein possible, but we failed to meet the criteria for activation
         if (cavein_candidates.count(pos)) {
-            DEBUG(manager).print("cave-in evaluated true and the cavein candidate's accessibility check was made as (%d <= %d)\n", cavein_candidates[pos], least_access+OFFSET);
+            DEBUG(manager).print("cave-in evaluated true and the cavein candidate's accessibility check was made as ({} <= {})\n", cavein_candidates[pos], least_access+OFFSET);
         } else {
             DEBUG(manager).print("cave-in evaluated true and the position was not a candidate, nor was it set for dignow\n");
         }
@@ -163,7 +163,7 @@ void ChannelManager::manage_group(const Group &group, bool set_marker_mode, bool
 
 bool ChannelManager::manage_one(const df::coord &map_pos, bool set_marker_mode, bool marker_mode) const {
     if (Maps::isValidTilePos(map_pos)) {
-        TRACE(manager).print("manage_one((" COORD "), %d, %d)\n", COORDARGS(map_pos), set_marker_mode, marker_mode);
+        TRACE(manager).print("manage_one(({}), {}, {})\n", map_pos, set_marker_mode, marker_mode);
         df::map_block* block = Maps::getTileBlock(map_pos);
         // we calculate the position inside the block*
         df::coord local(map_pos);
@@ -188,7 +188,7 @@ bool ChannelManager::manage_one(const df::coord &map_pos, bool set_marker_mode, 
                 block->flags.bits.designated = true;
             }
             tile_occupancy.bits.dig_marked = marker_mode;
-            TRACE(manager).print("marker mode %s\n", marker_mode ? "ENABLED" : "DISABLED");
+            TRACE(manager).print("marker mode {}\n", marker_mode ? "ENABLED" : "DISABLED");
         } else {
             // if we are though, it should be totally safe to dig
             tile_occupancy.bits.dig_marked = false;

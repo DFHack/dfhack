@@ -105,6 +105,9 @@ Settings
     Toggle whether to prefer following (non-siege) units that have newly
     arrived on the map.
 
+``prefer-nicknamed`` (default: enabled)
+    Toggle whether to prefer following nicknamed units.
+
 ``tooltip-follow`` (default: enabled)
     If the ``spectate.tooltip`` overlay is enabled, toggle whether to show the
     tooltips that follow onscreen dwarves around the map.

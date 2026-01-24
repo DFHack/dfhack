@@ -74,6 +74,11 @@ DFHACK_EXPORT df::general_ref *getGeneralRef(df::building *building, df::general
 DFHACK_EXPORT df::specific_ref *getSpecificRef(df::building *building, df::specific_ref_type type);
 
 /**
+ * Gets the owner unit for the zone. Uses the cached index in the civzone if valid, updates if not
+ */
+DFHACK_EXPORT df::unit* getOwner(df::building_civzonest* building);
+
+/**
  * Sets the owner unit for the zone.
  */
 DFHACK_EXPORT bool setOwner(df::building_civzonest *building, df::unit *owner);

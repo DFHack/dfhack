@@ -49,6 +49,7 @@ distribution.
 #include "df/caravan_state.h"
 #include "df/creature_raw.h"
 #include "df/dfhack_material_category.h"
+#include "df/d_init.h"
 #include "df/entity_buy_prices.h"
 #include "df/entity_buy_requests.h"
 #include "df/entity_raw.h"
@@ -154,7 +155,7 @@ string ItemTypeInfo::getToken() {
     if (custom)
         rv += ":" + custom->id;
     else if (subtype != -1 && type != item_type::PLANT_GROWTH)
-        rv += stl_sprintf(":%d", subtype);
+        rv += fmt::format(":{}", subtype);
     return rv;
 }
 
@@ -678,14 +679,54 @@ string Items::getDescription(df::item *item, int type, bool decorate) {
     item->getItemDescription(&tmp, type);
 
     if (decorate) {
-        addQuality(tmp, item->getQuality());
+        // Special indicators get added in a specific order
+        // Innermost is at the top, and outermost is at the bottom
 
-        if (item->isImproved()) {
+        // First, figure out the quality levels we're going to display
+        int craftquality = item->getQuality();
+        int craftquality_only_imps = item->getImprovementQuality();
+        bool has_displayed_item_improvements = item->isImproved();
+        if (!has_displayed_item_improvements && (craftquality < craftquality_only_imps))
+            craftquality = craftquality_only_imps;
+
+        // First, actual item quality
+        addQuality(tmp, craftquality);
+
+        // Next, magic enchants
+        if (item->getMagic() != NULL)
+            tmp = '\x11' + tmp + '\x10'; // <| |>
+
+        // Next, improvements
+        if (has_displayed_item_improvements) {
             tmp = '\xAE' + tmp + '\xAF'; // («) + tmp + (»)
-            addQuality(tmp, item->getImprovementQuality());
+            if (df::global::d_init->display.flags.is_set(d_init_flags1::SHOW_IMP_QUALITY))
+                addQuality(tmp, craftquality_only_imps);
         }
-        if (item->flags.bits.foreign)
-            tmp = "(" + tmp + ")";
+
+        // Dwarf mode only, forbid/foreign
+        if (*df::global::gamemode == game_mode::DWARF) {
+            if (item->flags.bits.forbid)
+                tmp = '{' + tmp + '}';
+            if (item->flags.bits.foreign)
+                tmp = '(' + tmp + ')';
+        }
+
+        // Wear
+        switch (item->getWear())
+        {
+            case 1: tmp = 'x' + tmp + 'x'; break;
+            case 2: tmp = 'X' + tmp + 'X'; break;
+            case 3: tmp = "XX" + tmp + "XX"; break;
+        }
+
+        // Fire
+        if (item->flags.bits.on_fire)
+            tmp = '\x13' + tmp + '\x13'; // !! !!
+
+        // Finally, Adventure civzone
+        if ((*df::global::gamemode == game_mode::ADVENTURE) &&
+            Items::getGeneralRef(item, general_ref_type::BUILDING_CIVZONE_ASSIGNED) != NULL)
+            tmp = '$' + tmp + '$';
     }
     return tmp;
 }
@@ -720,13 +761,6 @@ static string get_base_desc(df::item *item) {
 string Items::getReadableDescription(df::item *item) {
     CHECK_NULL_POINTER(item);
     auto desc = get_base_desc(item);
-
-    switch (item->getWear())
-    {
-        case 1: desc = "x" + desc + "x"; break; // Worn
-        case 2: desc = "X" + desc + "X"; break; // Threadbare
-        case 3: desc = "XX" + desc + "XX"; break; // Tattered
-    }
 
     if (auto gref = Items::getGeneralRef(item, general_ref_type::CONTAINS_UNIT)) {
         if (auto unit = gref->getUnit())
@@ -816,13 +850,16 @@ static bool detachItem(df::item *item)
         }
     }
 
-    if (auto ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE)))
-        return linked_list_remove(&world->projectiles.all, ref->projectile_id)
-            && removeRef(item->general_refs, general_ref_type::PROJECTILE, ref->getID());
+    if (auto ref = virtual_cast<df::general_ref_projectile>(Items::getGeneralRef(item, general_ref_type::PROJECTILE))) {
+        auto proj_id = ref->projectile_id;
+        bool isRefRemoved = removeRef(item->general_refs, general_ref_type::PROJECTILE, proj_id);
+        bool isLinkRemoved = linked_list_remove(&world->projectiles.all, proj_id);
+        return isRefRemoved && isLinkRemoved;
+    }
 
     if (item->flags.bits.on_ground) {
         if (!removeItemOnGround(item))
-            Core::printerr("Item was marked on_ground, but not in block: %d (%d,%d,%d)\n",
+            Core::printerr("Item was marked on_ground, but not in block: {} ({},{},{})\n",
                 item->id, item->pos.x, item->pos.y, item->pos.z);
         item->flags.bits.on_ground = false;
         return true;
@@ -1163,6 +1200,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype,
             break;
         case CATAPULTPARTS:
         case BALLISTAPARTS:
+        case BOLT_THROWER_PARTS:
         case TRAPPARTS:
             value = 30;
             break;
@@ -1715,7 +1753,7 @@ int Items::getValue(df::item *item, df::caravan_state *caravan) {
 }
 
 bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_type item_type,
-    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor)
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor, int32_t count)
 {   // Based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
     auto pos = Units::getPosition(unit);
@@ -1728,7 +1766,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
     prod->mat_type = mat_type;
     prod->mat_index = mat_index;
     prod->probability = 100;
-    prod->count = 1;
+    prod->count = count;
 
     switch(item_type)
     {   using namespace df::enums::item_type;
@@ -1759,7 +1797,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
         World::isFortressMode() ? df::world_site::find(World::GetCurrentSiteId()) : NULL, NULL);
     delete prod;
 
-    DEBUG(items).print("produced %zd items\n", out_items.size());
+    DEBUG(items).print("produced {} items\n", out_items.size());
 
     for (auto out_item : out_items)
     {   // Plant growths need a valid "growth print", otherwise they behave oddly

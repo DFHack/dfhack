@@ -25,8 +25,6 @@ distribution.
 #pragma once
 
 #include "Export.h"
-#include "Module.h"
-#include "BitArray.h"
 #include "ColorText.h"
 #include "Types.h"
 #include "DataDefs.h"
@@ -34,7 +32,6 @@ distribution.
 #include "modules/GuiHooks.h"
 
 #include "df/announcement_type.h"
-#include "df/report_zoom_type.h"
 #include "df/unit_report_type.h"
 
 namespace df {
@@ -211,7 +208,7 @@ namespace DFHack
         /// Get the current top-level view-screen
         DFHACK_EXPORT df::viewscreen *getCurViewscreen(bool skip_dismissed = false);
 
-        DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(virtual_identity &id, int n = 1);
+        DFHACK_EXPORT df::viewscreen *getViewscreenByIdentity(const virtual_identity &id, int n = 1);
 
         /// Get the top-most underlying DF viewscreen (not owned by DFHack)
         DFHACK_EXPORT df::viewscreen *getDFViewscreen(bool skip_dismissed = false, df::viewscreen *top = NULL);

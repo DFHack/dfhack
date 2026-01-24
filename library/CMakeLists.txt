@@ -48,6 +48,7 @@ set(MAIN_HEADERS
     include/DFHackVersion.h
     include/BitArray.h
     include/ColorText.h
+    include/Commands.h
     include/Console.h
     include/Core.h
     include/CoreDefs.h
@@ -58,6 +59,7 @@ set(MAIN_HEADERS
     include/DebugManager.h
     include/Error.h
     include/Export.h
+    include/Format.h
     include/Hooks.h
     include/LuaTools.h
     include/LuaWrapper.h
@@ -66,6 +68,7 @@ set(MAIN_HEADERS
     include/MiscUtils.h
     include/Module.h
     include/MemAccess.h
+    include/MemoryPatcher.h
     include/ModuleFactory.h
     include/PluginLua.h
     include/PluginManager.h
@@ -88,6 +91,7 @@ set(MAIN_HEADERS_WINDOWS
 set(MAIN_SOURCES
     Core.cpp
     ColorText.cpp
+    Commands.cpp
     CompilerWorkAround.cpp
     DataDefs.cpp
     DataIdentity.cpp
@@ -100,11 +104,13 @@ set(MAIN_SOURCES
     LuaApi.cpp
     DataStatics.cpp
     DataStaticsCtor.cpp
+    MemoryPatcher.cpp
     MiscUtils.cpp
     Types.cpp
     PluginManager.cpp
     PluginStatics.cpp
     PlugLoad.cpp
+    Process.cpp
     TileTypes.cpp
     VersionInfoFactory.cpp
     RemoteClient.cpp
@@ -126,7 +132,6 @@ endif()
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
     Hooks.cpp
-    Process-windows.cpp
 )
 
 if(WIN32)
@@ -136,13 +141,12 @@ endif()
 
 set(MAIN_SOURCES_LINUX
     ${CONSOLE_SOURCES}
-    Process-linux.cpp
+    Crashlog.cpp
 )
 
 set(MAIN_SOURCES_DARWIN
     ${CONSOLE_SOURCES}
     PlugLoad-posix.cpp
-    Process-darwin.cpp
 )
 
 set(MODULE_HEADERS
@@ -157,6 +161,7 @@ set(MODULE_HEADERS
     include/modules/Graphic.h
     include/modules/Gui.h
     include/modules/GuiHooks.h
+    include/modules/Hotkey.h
     include/modules/Items.h
     include/modules/Job.h
     include/modules/Kitchen.h
@@ -187,6 +192,7 @@ set(MODULE_SOURCES
     modules/Filesystem.cpp
     modules/Graphic.cpp
     modules/Gui.cpp
+    modules/Hotkey.cpp
     modules/Items.cpp
     modules/Job.cpp
     modules/Kitchen.cpp
@@ -321,12 +327,12 @@ if(UNIX)
 endif()
 
 if(APPLE)
-    set(PROJECT_LIBS dl dfhack-md5 ${DFHACK_TINYXML})
+    set(PROJECT_LIBS dl dfhack-md5 ${FMTLIB} ${DFHACK_TINYXML})
 elseif(UNIX)
-    set(PROJECT_LIBS rt dl dfhack-md5 ${DFHACK_TINYXML})
+    set(PROJECT_LIBS rt dl dfhack-md5 ${FMTLIB} ${DFHACK_TINYXML})
 else(WIN32)
     # FIXME: do we really need psapi?
-    set(PROJECT_LIBS psapi dbghelp dfhack-md5 ${DFHACK_TINYXML})
+    set(PROJECT_LIBS psapi dbghelp dfhack-md5 ${FMTLIB} ${DFHACK_TINYXML})
 endif()
 
 set(VERSION_SRCS DFHackVersion.cpp)
@@ -392,7 +398,7 @@ else()
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "-include Export.h" )
     add_library(dfhooks_dfhack SHARED Hooks.cpp)
-    target_link_libraries(dfhooks_dfhack dfhack)
+    target_link_libraries(dfhooks_dfhack dfhack ${FMTLIB})
 endif()
 
 # effectively disables debug builds...
@@ -421,7 +427,7 @@ endif()
 target_link_libraries(dfhack protobuf-lite clsocket lua jsoncpp_static dfhack-version ${PROJECT_LIBS})
 set_target_properties(dfhack PROPERTIES INTERFACE_LINK_LIBRARIES "")
 
-target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static)
+target_link_libraries(dfhack-client protobuf-lite clsocket jsoncpp_static ${FMTLIB})
 if(WIN32)
     target_link_libraries(dfhack-client dbghelp)
 endif()

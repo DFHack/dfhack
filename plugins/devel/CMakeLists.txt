@@ -23,7 +23,7 @@ dfhack_plugin(tilesieve tilesieve.cpp)
 # dfhack_plugin(zoom zoom.cpp)
 
 if(UNIX)
-    dfhack_plugin(ref-index ref-index.cpp)
+    dfhack_plugin(ref-index ref-index.cpp LINK_LIBRARIES lua)
 endif()
 
 add_subdirectory(check-structures-sanity)

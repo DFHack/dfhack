@@ -38,11 +38,15 @@ command_result df_cleanconst(color_ostream &out, vector <string> & parameters)
         df::construction *cons = df::construction::find(pos);
         if (!cons)
         {
-            out.printerr("Item at %i,%i,%i marked as construction but no construction is present!\n", pos.x, pos.y, pos.z);
+            out.printerr("Item at {} marked as construction but no construction is present!\n", pos);
             continue;
         }
         // if the construction is already labeled as "no build item", then leave it alone
         if (cons->flags.bits.no_build_item)
+            continue;
+
+        // Skip reinforced constructions as well
+        if (cons->flags.bits.reinforced)
             continue;
 
         // only destroy the item if the construction claims to be made of the exact same thing
@@ -58,7 +62,7 @@ command_result df_cleanconst(color_ostream &out, vector <string> & parameters)
         cleaned_total++;
     }
 
-    out.print("Done. %d construction items cleaned up.\n", cleaned_total);
+    out.print("Done. {} construction items cleaned up.\n", cleaned_total);
     return CR_OK;
 }
 

@@ -6,7 +6,7 @@ cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0074 NEW)
 
 # set up versioning.
-set(DF_VERSION "51.10")
+set(DF_VERSION "53.10")
 set(DFHACK_RELEASE "r1")
 set(DFHACK_PRERELEASE FALSE)
 
@@ -46,8 +46,8 @@ option(REMOVE_SYMBOLS_FROM_DF_STUBS "Remove debug symbols from DF stubs. (Reduce
 macro(CHECK_GCC compiler_path)
     execute_process(COMMAND ${compiler_path} -dumpversion OUTPUT_VARIABLE GCC_VERSION_OUT)
     string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
-    if(${GCC_VERSION_OUT} VERSION_LESS "10")
-        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 10 or later")
+    if(${GCC_VERSION_OUT} VERSION_LESS "11")
+        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 11 or later")
     endif()
 endmacro()
 
@@ -66,7 +66,7 @@ endif()
 
 if(WIN32)
     set(MSVC_MIN_VER 1930)
-    set(MSVC_MAX_VER 1943)
+    set(MSVC_MAX_VER 1944)
     if(NOT MSVC)
         message(SEND_ERROR "No MSVC found! MSVC 2022 version ${MSVC_MIN_VER} to ${MSVC_MAX_VER} is required.")
     elseif((MSVC_VERSION LESS MSVC_MIN_VER) OR (MSVC_VERSION GREATER MSVC_MAX_VER))
@@ -121,6 +121,9 @@ if(MSVC)
 
     # Enable C5038 - This is equivalent to gcc's -Werror=reorder, which is enabled by default by gcc -Wall
     add_compile_options("/w15038")
+
+    # Enable C4062 - Warns about missing enum case in switch statement, equivalent to gcc -Wswitch
+    add_compile_options("/w14062")
 
     # MSVC panics if an object file contains more than 65,279 sections. this
     # happens quite frequently with code that uses templates, such as vectors.
@@ -344,6 +347,17 @@ if(BUILD_LIBRARY)
     endif()
 endif()
 
+# this can be made conditional once we get to better platform support for std::format
+INCLUDE(FetchContent)
+FetchContent_Declare(
+    fmt
+    GIT_REPOSITORY https://github.com/fmtlib/fmt.git
+    GIT_TAG 790b9389ae99c4ddebdd2736a8602eca1fec684e # 12.1.0 + bugfix for MSVC warning + build time improvements
+)
+FetchContent_MakeAvailable(fmt)
+set(FMTLIB fmt)
+add_definitions("-DUSE_FMTLIB")
+
 if(APPLE)
     # libstdc++ (GCC 4.8.5 for OS X 10.6)
     # fixes crash-on-unwind bug in DF's libstdc++
@@ -425,7 +439,7 @@ macro(dfhack_test name files)
 if(BUILD_LIBRARY AND UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
     add_executable(${name} ${files})
     target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
-    target_link_libraries(${name} dfhack gtest)
+    target_link_libraries(${name} dfhack ${FMTLIB} gtest)
     add_test(NAME ${name} COMMAND ${name})
 endif()
 endmacro()
@@ -523,7 +537,7 @@ if(BUILD_DOCS)
 
     add_custom_command(OUTPUT ${SPHINX_OUTPUT}
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/docs/build.py"
-        ${SPHINX_BUILD_TARGETS} --sphinx="${SPHINX_EXECUTABLE}" -- -q -W
+        ${SPHINX_BUILD_TARGETS} --sphinx="${SPHINX_EXECUTABLE}" --quiet -- -W
         DEPENDS ${SPHINX_DEPS}
         COMMENT "Building documentation with Sphinx"
     )

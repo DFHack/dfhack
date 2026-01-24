@@ -244,12 +244,12 @@ static void check_valid_ptr_index(lua_State *state, int val_index)
     }
 }
 
-static void signal_typeid_error(color_ostream *out, lua_State *state,
-    const type_identity *type, const char *msg,
+static void signal_typeid_error(color_ostream* out, lua_State* state,
+    const type_identity* type, std::string_view msg,
                                 int val_index, bool perr, bool signal)
 {
     std::string typestr = type ? type->getFullName() : "any pointer";
-    std::string error = stl_sprintf(msg, typestr.c_str());
+    std::string error = fmt::vformat(msg, fmt::make_format_args(typestr)); //FIXME: C++26
 
     if (signal)
     {
@@ -261,7 +261,7 @@ static void signal_typeid_error(color_ostream *out, lua_State *state,
     else if (perr)
     {
         if (out)
-            out->printerr("%s", error.c_str());
+            out->printerr("{}", error);
         else
             dfhack_printerr(state, error);
     }
@@ -282,7 +282,7 @@ void *DFHack::Lua::CheckDFObject(lua_State *state, const type_identity *type, in
     void *rv = get_object_internal(state, type, val_index, exact_type, false);
 
     if (!rv)
-        signal_typeid_error(NULL, state, type, "invalid pointer type; expected: %s",
+        signal_typeid_error(NULL, state, type, "invalid pointer type; expected: {}",
                             val_index, false, true);
 
     return rv;
@@ -366,9 +366,9 @@ static int lua_dfhack_print(lua_State *S)
 {
     std::string str = lua_print_fmt(S);
     if (color_ostream *out = Lua::GetOutput(S))
-        out->print("%s", str.c_str());//*out << str;
+        out->print("{}", str);
     else
-        Core::print("%s", str.c_str());
+        Core::print("{}", str);
     return 0;
 }
 
@@ -378,16 +378,16 @@ static int lua_dfhack_println(lua_State *S)
     if (color_ostream *out = Lua::GetOutput(S))
         *out << str << std::endl;
     else
-        Core::print("%s\n", str.c_str());
+        Core::print("{}\n", str);
     return 0;
 }
 
 void dfhack_printerr(lua_State *S, const std::string &str)
 {
     if (color_ostream *out = Lua::GetOutput(S))
-        out->printerr("%s\n", str.c_str());
+        out->printerr("{}\n", str);
     else
-        Core::printerr("%s\n", str.c_str());
+        Core::printerr("{}\n", str);
 }
 
 static int lua_dfhack_printerr(lua_State *S)
@@ -563,7 +563,7 @@ static void report_error(lua_State *L, color_ostream *out = NULL, bool pop = fal
     assert(msg);
 
     if (out)
-        out->printerr("%s\n", msg);
+        out->printerr("{}\n", msg);
     else
         dfhack_printerr(L, msg);
 
@@ -842,7 +842,7 @@ bool DFHack::Lua::CallLuaModuleFunction(color_ostream &out, lua_State *L,
     if (!lua_checkstack(L, 1 + nargs) ||
         !Lua::PushModulePublic(out, L, module_name, fn_name)) {
         if (perr)
-            out.printerr("Failed to load %s Lua code\n", module_name);
+            out.printerr("Failed to load {} Lua code\n", module_name);
         return false;
     }
 
@@ -850,7 +850,7 @@ bool DFHack::Lua::CallLuaModuleFunction(color_ostream &out, lua_State *L,
 
     if (!Lua::SafeCall(out, L, nargs, nres, perr)) {
         if (perr)
-            out.printerr("Failed Lua call to '%s.%s'\n", module_name, fn_name);
+            out.printerr("Failed Lua call to '{}.{}'\n", module_name, fn_name);
         return false;
     }
 
@@ -1077,7 +1077,7 @@ bool DFHack::Lua::Require(color_ostream &out, lua_State *state,
 }
 
 static bool doAssignDFObject(color_ostream *out, lua_State *state,
-                             type_identity *type, void *target, int val_index,
+                             const type_identity *type, void *target, int val_index,
                              bool exact, bool perr, bool signal)
 {
     if (signal)
@@ -1100,7 +1100,7 @@ static bool doAssignDFObject(color_ostream *out, lua_State *state,
     }
     else if (!lua_isuserdata(state, val_index))
     {
-        signal_typeid_error(out, state, type, "pointer to %s expected",
+        signal_typeid_error(out, state, type, "pointer to {} expected",
                             val_index, perr, signal);
         return false;
     }
@@ -1109,13 +1109,13 @@ static bool doAssignDFObject(color_ostream *out, lua_State *state,
         void *in_ptr = Lua::GetDFObject(state, type, val_index, exact);
         if (!in_ptr)
         {
-            signal_typeid_error(out, state, type, "incompatible pointer type: %s expected",
+            signal_typeid_error(out, state, type, "incompatible pointer type: {} expected",
                                 val_index, perr, signal);
             return false;
         }
         if (!type->copy(target, in_ptr))
         {
-            signal_typeid_error(out, state, type, "no copy support for %s",
+            signal_typeid_error(out, state, type, "no copy support for {}",
                                 val_index, perr, signal);
             return false;
         }
@@ -1124,13 +1124,13 @@ static bool doAssignDFObject(color_ostream *out, lua_State *state,
 }
 
 bool DFHack::Lua::AssignDFObject(color_ostream &out, lua_State *state,
-                                 type_identity *type, void *target, int val_index,
+                                 const type_identity *type, void *target, int val_index,
                                  bool exact_type, bool perr)
 {
     return doAssignDFObject(&out, state, type, target, val_index, exact_type, perr, false);
 }
 
-void DFHack::Lua::CheckDFAssign(lua_State *state, type_identity *type,
+void DFHack::Lua::CheckDFAssign(lua_State *state, const type_identity *type,
                                 void *target, int val_index, bool exact_type)
 {
     doAssignDFObject(NULL, state, type, target, val_index, exact_type, false, true);
@@ -1193,9 +1193,7 @@ static int resume_query_loop(color_ostream &out,
     return rv;
 }
 
-bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
-                                   bool (*init)(color_ostream&, lua_State*, void*),
-                                   void *arg)
+bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state, DFHack::Lua::init_fn init)
 {
     if (!lua_checkstack(state, 20))
         return false;
@@ -1213,7 +1211,7 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
 
         int base = lua_gettop(state);
 
-        if (!init(out, state, arg))
+        if (!init(out, state))
         {
             lua_settop(state, base);
             return false;
@@ -1283,21 +1281,13 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state,
     return (rv == LUA_OK);
 }
 
-namespace {
-    struct InterpreterArgs {
-        const char *prompt;
-        const char *hfile;
-    };
-}
-
-static bool init_interpreter(color_ostream &out, lua_State *state, void *info)
+static bool init_interpreter(color_ostream &out, lua_State *state, const char* prompt, const char* hfile)
 {
-    auto args = (InterpreterArgs*)info;
     lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
     lua_getfield(state, -1, "interpreter");
     lua_remove(state, -2);
-    lua_pushstring(state, args->prompt);
-    lua_pushstring(state, args->hfile);
+    lua_pushstring(state, prompt);
+    lua_pushstring(state, hfile);
     return true;
 }
 
@@ -1312,11 +1302,10 @@ bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
     if (!prompt)
         prompt = "lua";
 
-    InterpreterArgs args;
-    args.prompt = prompt;
-    args.hfile = hfile;
+    using namespace std::placeholders;
+    auto init_fn = std::bind(init_interpreter, _1, _2, prompt, hfile);
 
-    return RunCoreQueryLoop(out, state, init_interpreter, &args);
+    return RunCoreQueryLoop(out, state, init_fn);
 }
 
 static bool do_invoke_cleanup(lua_State *L, int nargs, int errorfun, bool success)
@@ -2145,7 +2134,7 @@ void DFHack::Lua::Core::Reset(color_ostream &out, const char *where)
 
     if (top != 0)
     {
-        out.printerr("Common lua context stack top left at %d after %s.\n", top, where);
+        out.printerr("Common lua context stack top left at {} after {}.\n", top, where);
         lua_settop(State, 0);
     }
 

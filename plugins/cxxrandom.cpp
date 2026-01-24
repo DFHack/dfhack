@@ -140,7 +140,7 @@ public:
     }
     void Print() {
         for( auto v : m_numbers ) {
-            cout->print( "%" PRId64 " ", v );
+            cout->print("{} ", v);
         }
     }
 };

@@ -311,7 +311,7 @@ inline bool dig_now(color_ostream &out, const df::coord &map_pos) {
 // fully heals the unit specified, resurrecting if need be
 inline void resurrect(color_ostream &out, const int32_t &unit) {
     out.color(DFHack::COLOR_RED);
-    out.print("channel-safely: resurrecting [id: %d]\n", unit);
+    out.print("channel-safely: resurrecting [id: {}]\n", unit);
     std::vector<std::string> params{"-r", "--unit", std::to_string(unit)};
     Core::getInstance().runCommand(out,"full-heal", params);
 }

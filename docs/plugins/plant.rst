@@ -9,7 +9,8 @@ Grow and remove shrubs or trees. Modes are ``list``, ``create``, ``grow``,
 and ``remove``. ``list`` prints a list of all valid shrub and sapling raw IDs.
 ``create`` allows the creation of new shrubs and saplings. ``grow`` adjusts
 the age of saplings and trees, allowing them to grow instantly. ``remove`` can
-remove existing shrubs and saplings.
+remove existing shrubs and saplings. For operating on grasses (such as bamboo)
+use `regrass` instead.
 
 Usage
 -----

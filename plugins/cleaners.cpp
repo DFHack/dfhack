@@ -257,7 +257,7 @@ command_result cleanmap(color_ostream &out, const cuboid &bounds, const clean_op
     });
 
     if(num_blocks > 0)
-        out.print("Cleaned %d of %d selected map blocks.\n", num_blocks, max_blocks);
+        out.print("Cleaned {} of {} selected map blocks.\n", num_blocks, max_blocks);
     return CR_OK;
 }
 
@@ -301,7 +301,7 @@ command_result cleanitems(color_ostream &out, const cuboid &bounds)
         }
     }
     if (cleaned_total > 0)
-        out.print("Removed %d contaminants from %d items.\n", cleaned_total, cleaned_items);
+        out.print("Removed {} contaminants from {} items.\n", cleaned_total, cleaned_items);
     return CR_OK;
 }
 
@@ -334,7 +334,7 @@ command_result cleanunits(color_ostream &out, const cuboid &bounds)
         }
     }
     if (cleaned_total > 0)
-        out.print("Removed %d contaminants from %d creatures.\n", cleaned_total, cleaned_units);
+        out.print("Removed {} contaminants from {} creatures.\n", cleaned_total, cleaned_units);
     return CR_OK;
 }
 

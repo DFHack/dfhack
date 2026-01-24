@@ -67,6 +67,8 @@ with relevant tags. These are used to compile indices and generate cross-links b
 commands, both in the HTML documents and in-game. See the list of available `tag-list` and
 think about which categories your new tool belongs in.
 
+.. _docs-links:
+
 Links
 -----
 
@@ -418,6 +420,8 @@ Once you have pip available, you can install Sphinx with the following command::
 Note that this may require opening a new (admin) command prompt if you just
 installed pip from the same command prompt.
 
+.. _docs-build:
+
 Building the documentation
 ==========================
 
@@ -427,16 +431,18 @@ Sphinx to build the docs:
 Using CMake
 -----------
 
-See our page on `build options <building-documentation>`
+See our page on `build options <building-documentation>`.
 
-Running Sphinx manually
------------------------
+Using the documentation build script
+------------------------------------
 
 You can also build the documentation without running CMake - this is faster if
-you only want to rebuild the documentation regardless of any code changes. The
-``docs/build.py`` script will build the documentation in any specified formats
-(HTML only by default) using the same command that CMake runs when building the
-docs. Run the script with ``--help`` to see additional options.
+you only want to rebuild the documentation regardless of any code changes.
+
+The recommended approach is the ``docs/build.py`` script. This is the same
+script that CMake uses internally, which wraps Sphinx with a few additional
+options to handle common cases and can build multiple documentation formats with
+a single invocation.
 
 Examples:
 
@@ -449,15 +455,43 @@ Examples:
 * ``docs/build.py --clean``
     Build HTML and force a clean build (all source files are re-read)
 
-The resulting documentation will be stored in ``docs/html`` and/or ``docs/text``.
+* ``docs/build.py --help``
+    Display a full list of available options
 
-Alternatively, you can run Sphinx manually with::
+The resulting documentation will be stored in ``docs/html`` and/or ``docs/text``
+(or generally, a subfolder of ``docs/`` named after the requested output format(s)).
 
-    sphinx-build . docs/html
+Building a PDF version
+----------------------
 
-or, to build plain-text output::
+ReadTheDocs automatically builds a PDF version of the documentation (available
+under the "Downloads" section when clicking on the release selector). If you
+want to build a PDF version locally, you will need the ``pdflatex`` command, which is part
+of a TeX distribution. The following command will then build a PDF, located in
+``docs/pdf/latex/DFHack.pdf``, with default options::
 
-    sphinx-build -b text . docs/text
+  docs/build.py pdf
+
+Running Sphinx manually
+-----------------------
+
+If ``docs/build.py`` does not support what you need, you can also run Sphinx
+manually. This is primarily useful for low-level debugging.
+
+For a good starting point, add the ``--debug`` argument to your call to
+``docs/build.py``. This will cause the script to print out the Sphinx command(s)
+that it is running.
+
+Some examples:
+
+* ``sphinx-build . docs/html``
+    Build the HTML docs (equivalent to ``docs/build.py``)
+
+* ``sphinx-build -b text . docs/text``
+    Build the plain text docs (equivalent to ``docs/build.py text``)
+
+* ``sphinx-build -M latexpdf . docs/pdf``
+    Build the PDF docs
 
 Sphinx has many options to enable clean builds, parallel builds, logging, and
 more - run ``sphinx-build --help`` for details. If you specify a different
@@ -466,20 +500,47 @@ folder. Also be aware that when running ``sphinx-build`` directly, the
 ``docs/html`` folder may be polluted with intermediate build files that normally
 get written in the cmake ``build`` directory.
 
-Building a PDF version
-----------------------
+Troubleshooting
+===============
 
-ReadTheDocs automatically builds a PDF version of the documentation (available
-under the "Downloads" section when clicking on the release selector). If you
-want to build a PDF version locally, you will need ``pdflatex``, which is part
-of a TeX distribution. The following command will then build a PDF, located in
-``docs/pdf/latex/DFHack.pdf``, with default options::
+Sphinx errors are typically printed by Sphinx, so ensure that you are not silencing Sphinx output.
 
-  docs/build.py pdf
+When built with ``docs/build.py`` or CMake, errors are also logged to
+``build/docs/<format>/sphinx-warnings.txt`` (for instance, if you are building
+the HTML docs, ``build/docs/html/sphinx-warnings.txt``).
 
-Alternatively, you can run Sphinx manually with::
 
-  sphinx-build -M latexpdf . docs/pdf
+"undefined label"
+-----------------
+
+Typical causes:
+
+* You have used single backticks for an inline code snippet, where double backticks should be used instead (see `docs-links`)::
+
+    `this is an invalid inline code snippet (actually a link)`
+    ``this is a valid inline code snippet``
+
+* You are attempting to link to a section/label, but either it does not have a label defined or you have spelled it incorrectly::
+
+    .. my-label:
+
+    This is where the link should go to.
+
+    ...
+
+    This is `a valid link to the earlier label <my-label>`. So is `my-label`.
+
+"toctree contains reference to document that doesn't have a title"
+------------------------------------------------------------------
+
+Due to the nature of our autogenerated documentation, this can sometimes occur
+when switching between branches that have different autogenerated files, and can
+result in autogenerated documentation (e.g. for individual tools) being missing
+from the table of contents, or links failing to generate.
+
+The quickest resolution is a clean docs build::
+
+    docs/build.py --clean
 
 .. _build-changelog:
 
@@ -515,8 +576,8 @@ Changelog syntax
 ----------------
 
 .. include:: /docs/changelog.txt
-   :start-after: ===help
-   :end-before: ===end
+   :start-after: ===syntax-reference-start
+   :end-before: ===syntax-reference-end
 
 .. _docs-ci:
 

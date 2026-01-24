@@ -90,6 +90,7 @@ distribution.
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_legendsst.h"
+#include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_titlest.h"
@@ -134,7 +135,7 @@ static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int id
 }
 */
 
-static std::string getNameChunk(virtual_identity *id, int start, int end)
+static std::string getNameChunk(const virtual_identity *id, int start, int end)
 {
     if (!id)
         return "UNKNOWN";
@@ -151,9 +152,10 @@ static std::string getNameChunk(virtual_identity *id, int start, int end)
  */
 
 typedef void (*getFocusStringsHandler)(std::string &str, std::vector<std::string> &strList, df::viewscreen *screen);
-static std::map<virtual_identity*, getFocusStringsHandler> getFocusStringsHandlers;
+static std::map<const virtual_identity*, getFocusStringsHandler> getFocusStringsHandlers;
 
 #define VIEWSCREEN(name) df::viewscreen_##name##st
+
 #define DEFINE_GET_FOCUS_STRING_HANDLER(screen_type) \
     static void getFocusStrings_##screen_type(const std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen);\
     DFHACK_STATIC_ADD_TO_MAP(\
@@ -186,6 +188,18 @@ DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
 
     if (focusStrings.empty())
         focusStrings.push_back(baseFocus);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(new_arena)
+{
+    if (screen->raw_load)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->doing_mods)
+        focusStrings.push_back(baseFocus + "/Mods");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus);
+
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(choose_start_site)
@@ -762,11 +776,6 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
         newFocusString += "/CreateSquad";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.squad_supplies.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/SquadSupplies";
-        focusStrings.push_back(newFocusString);
-    }
     if (game->main_interface.squads.open) {
         newFocusString = baseFocus;
         newFocusString += "/Squads";
@@ -961,7 +970,7 @@ std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
         }
     }
 
-    if (virtual_identity *id = virtual_identity::get(top))
+    if (const virtual_identity *id = virtual_identity::get(top))
     {
         std::string name = getNameChunk(id, 11, 2);
 
@@ -1833,7 +1842,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         return -1;
     else if (message.empty())
     {
-        Core::printerr("Empty announcement %u\n", type); // DF would print this to errorlog.txt
+        Core::printerr("Empty announcement {}\n", ENUM_AS_STR(type)); // DF would print this to errorlog.txt
         return -1;
     }
 
@@ -1948,6 +1957,8 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, df::report 
     auto alert_type = announcement_alert_type::NONE;
     switch (slot)
     {
+        case unit_report_type::NONE: /* should never happen? */
+            return false;
         case unit_report_type::Combat:
             world->status.flags.bits.combat = true;
             alert_type = announcement_alert_type::COMBAT;
@@ -2059,17 +2070,17 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
 {   // Based on reverse-engineering of "make_announcement" FUN_1400574e0 (v50.11 win64 Steam)
     if (!world->allow_announcements)
     {
-        DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n%s\n", message.c_str());
+        DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n{}\n", message);
         return false;
     }
     else if (!is_valid_enum_item(info.type) || info.type == df::announcement_type::NONE)
     {
-        WARN(gui).print("Invalid announcement type:\n%s\n", message.c_str());
+        WARN(gui).print("Invalid announcement type:\n{}\n", message);
         return false;
     }
     else if (message.empty())
     {
-        Core::printerr("Empty announcement %u\n", info.type); // DF would print this to errorlog.txt
+        Core::printerr("Empty announcement {}\n", ENUM_AS_STR(info.type)); // DF would print this to errorlog.txt
         return false;
     }
 
@@ -2080,7 +2091,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if (!a_flags.bits.A_DISPLAY && !a_flags.bits.DO_MEGA)
         {
-            DEBUG(gui).print("Skipped announcement not enabled at all for adventure mode:\n%s\n", message.c_str());
+            DEBUG(gui).print("Skipped announcement not enabled at all for adventure mode:\n{}\n", message);
             return false;
         }
 
@@ -2094,7 +2105,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             {   // Adventure mode reuses a dwarf mode digging designation bit to determine current visibility
                 if (!Maps::isValidTilePos(info.pos) || (Maps::getTileDesignation(info.pos)->whole & 0x10) == 0x0)
                 {
-                    DEBUG(gui).print("Adventure mode announcement not detected:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Adventure mode announcement not detected:\n{}\n", message);
                     return false;
                 }
             }
@@ -2104,7 +2115,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if ((info.unit_a || info.unit_d) && (!info.unit_a || Units::isHidden(info.unit_a)) && (!info.unit_d || Units::isHidden(info.unit_d)))
         {
-            DEBUG(gui).print("Dwarf mode announcement not detected:\n%s\n", message.c_str());
+            DEBUG(gui).print("Dwarf mode announcement not detected:\n{}\n", message);
             return false;
         }
 
@@ -2114,7 +2125,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             {
                 if (!info.unit_a && !info.unit_d)
                 {
-                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT because it has no units:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT because it has no units:\n{}\n", message);
                     return false;
                 }
             }
@@ -2122,12 +2133,12 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             {
                 if (!a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
                 {
-                    DEBUG(gui).print("Skipped announcement not enabled at all for dwarf mode:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped announcement not enabled at all for dwarf mode:\n{}\n", message);
                     return false;
                 }
                 else if (!recent_report_any(info.unit_a) && !recent_report_any(info.unit_d))
                 {
-                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT_ALL_ACTIVE because there's no active report:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT_ALL_ACTIVE because there's no active report:\n{}\n", message);
                     return false;
                 }
             }
@@ -2160,7 +2171,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
 
         if (samp_index >= 0)
         {
-            DEBUG(gui).print("Playing sound #%d for announcement.\n", samp_index);
+            DEBUG(gui).print("Playing sound #{} for announcement.\n", samp_index);
             //play_sound(musicsound_info, samp_index, 255, true); // g_src/music_and_sound_g.h // TODO: implement sounds
         }
     }
@@ -2187,7 +2198,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
                     if (a_flags.bits.D_DISPLAY)
                         world->status.display_timer = info.display_timer;
 
-                    DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Announcement succeeded as repeat:\n{}\n", message);
                     return true;
                 }
             }
@@ -2273,10 +2284,10 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         (*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || // Did adventure announcement
         (a_flags.bits.DO_MEGA && !adv_unconscious)) // Did popup
     {
-        DEBUG(gui).print("Announcement succeeded and displayed:\n%s\n", message.c_str());
+        DEBUG(gui).print("Announcement succeeded and displayed:\n{}\n", message);
     }
     else
-        DEBUG(gui).print("Announcement added internally and to gamelog.txt but didn't qualify to be displayed anywhere:\n%s\n", message.c_str());
+        DEBUG(gui).print("Announcement added internally and to gamelog.txt but didn't qualify to be displayed anywhere:\n{}\n", message);
 
     return true;
 }
@@ -2482,8 +2493,8 @@ void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
 
                     if (buff1 == "VAR") // Color from dipscript var
                     {
-                        DEBUG(gui).print("MTB_parse received:\n[C:VAR:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
-                            buff2.c_str(), buff3.c_str(), mtb->environment ? "Active" : "NULL");
+                        DEBUG(gui).print("MTB_parse received:\n[C:VAR:{}:{}]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: {}\n",
+                            buff2, buff3, mtb->environment ? "Active" : "NULL");
                         //MTB_set_color_on_var(mtb, buff2, buff3);
                     }
                     else
@@ -2537,8 +2548,8 @@ void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
                     string buff_var_name = grab_token_string_pos(parse_text, i, ':');
                     i += buff_var_name.size();
 
-                    DEBUG(gui).print("MTB_parse received:\n[VAR:%s:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
-                        buff_format.c_str(), buff_var_type.c_str(), buff_var_name.c_str(), mtb->environment ? "Active" : "NULL");
+                    DEBUG(gui).print("MTB_parse received:\n[VAR:{}:{}:{}]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: {}\n",
+                        buff_format, buff_var_type, buff_var_name, mtb->environment ? "Active" : "NULL");
                     //MTB_append_variable(mtb, str, buff_format, buff_var_type, buff_var_name);
                 }
                 else if (token_buffer == "R" || token_buffer == "B" || token_buffer == "P")
@@ -2675,10 +2686,9 @@ void Gui::MTB_set_width(df::markup_text_boxst *mtb, int32_t n_width)
 df::widget * Gui::getWidget(df::widget_container *container, string name) {
     CHECK_NULL_POINTER(container);
     // ensure the compiler catches the change if we ever fix the template parameters
-    std::map<void *, void *> & orig_field = container->children_by_name;
-    auto children_by_name = reinterpret_cast<std::map<std::string, std::shared_ptr<df::widget>> *>(&orig_field);
-    if (children_by_name->contains(name))
-        return (*children_by_name)[name].get();
+    auto & children_by_name = container->children_by_name;
+    if (children_by_name.contains(name))
+        return (children_by_name)[name].get();
     return NULL;
 }
 
@@ -2710,7 +2720,7 @@ df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
     return ws;
 }
 
-df::viewscreen *Gui::getViewscreenByIdentity (virtual_identity &id, int n)
+df::viewscreen *Gui::getViewscreenByIdentity (const virtual_identity &id, int n)
 {
     bool limit = (n > 0);
     df::viewscreen *screen = Gui::getCurViewscreen();

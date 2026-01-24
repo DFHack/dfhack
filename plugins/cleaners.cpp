@@ -119,7 +119,7 @@ static bool clean_block(color_ostream &out, df::map_block *block, const cuboid &
 {   // Perform cleaning on intersection of map block, return true if any tile cleaned
     if (!block || !inter.isValid())
     {
-        DEBUG(log, out).print("Failed cleaning block <%p>\n", block);
+        DEBUG(log, out).print("Failed cleaning block <{}>\n", (void*)block);
         return false;
     }
     DEBUG(log, out).print("Cleaning block at (%d,%d,%d)\n",

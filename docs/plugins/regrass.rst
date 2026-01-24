@@ -9,6 +9,10 @@ This command can refresh the grass (and subterranean moss) growing on your map.
 Operates on floors, stairs, and ramps. Also works underneath shrubs, saplings,
 and tree trunks. Ignores furrowed soil and wet sand (beaches).
 
+The `cleaners` tool can help remove grass if you messed up and suddenly there
+are staring eyeballs growing all over your fort. `gui/tiletypes` can then be used
+to change the soil back to stone.
+
 Usage
 -----
 
@@ -74,7 +78,10 @@ Options
 ``-n``, ``--new``
     Adds all biome-compatible grass types that were not originally present in
     the map block. Allows regrass to work in blocks that never had any grass to
-    begin with. Will still fail in incompatible biomes.
+    begin with. Will still fail in incompatible biomes. Note: This can add an
+    excessive number of grass events to your map, so it may be desirable to run
+    ``clean --map --grass --only`` (see: `cleaners`) afterwards to clean up any
+    unused events.
 ``-f``, ``--force``
     Force a grass type on tiles with no compatible grass types. Unsets the
     ``no_grow`` flag on all tiles. The ``--new`` option takes precedence for

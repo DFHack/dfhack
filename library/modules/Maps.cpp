@@ -701,7 +701,7 @@ df::coord2d Maps::getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos)
     if (!block || !world->world_data)
         return df::coord2d();
 
-    auto des = index_tile(block->designation,pos);
+    auto &des = index_tile(block->designation,pos);
     unsigned idx = des.bits.biome;
     if (idx < 9)
     {
@@ -911,6 +911,20 @@ bool Maps::canStepBetween(df::coord pos1, df::coord pos2)
 /*
 * Plants
 */
+constexpr uint16_t unblocked_tree = (
+    df::plant_tree_tile::mask_trunk |
+    df::plant_tree_tile::mask_branch_w |
+    df::plant_tree_tile::mask_branch_n |
+    df::plant_tree_tile::mask_branch_e |
+    df::plant_tree_tile::mask_branch_s |
+    df::plant_tree_tile::mask_branches |
+    df::plant_tree_tile::mask_leaves
+);
+constexpr uint8_t unblocked_root = (
+    df::plant_root_tile::mask_regular |
+    df::plant_root_tile::mask_anon_1
+);
+
 df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
 {
     if (x < 0 || x >= world->map.x_count || y < 0 || y >= world->map.y_count || !world->map.column_index)
@@ -939,14 +953,55 @@ df::plant *Maps::getPlantAtTile(int32_t x, int32_t y, int32_t z)
         {
             if (z_dis < -(t.roots_depth))
                 continue;
-            else if ((t.roots[-1 - z_dis][x_index + y_index * t.dim_x].whole & 0x7F) != 0) // Any non-blocked
+            else if ((t.roots[-1 - z_dis][x_index + y_index * t.dim_x].whole & unblocked_root) != 0)
                 return plant;
         }
-        else if ((t.body[z_dis][x_index + y_index * t.dim_x].whole & 0x7F) != 0) // Any non-blocked
+        else if ((t.body[z_dis][x_index + y_index * t.dim_x].whole & unblocked_tree) != 0)
             return plant;
     }
 
     return NULL;
+}
+
+bool Maps::isPlantInBox(df::plant *plant, const cuboid &bounds)
+{
+    if (!bounds.isValid())
+        return false;
+    else if (bounds.containsPos(plant->pos))
+        return true;
+    else if (!plant->tree_info)
+        return false;
+
+    auto &pos = plant->pos;
+    auto &t = *(plant->tree_info);
+    // Northwest x/y pos of tree bounds
+    int x_NW = pos.x - (t.dim_x >> 1);
+    int y_NW = pos.y - (t.dim_y >> 1);
+
+    if (!cuboid(max(0, x_NW), max(0, y_NW), max(0, pos.z - t.roots_depth),
+        x_NW + t.dim_x, y_NW + t.dim_y, pos.z + t.body_height - 1).clamp(bounds).isValid())
+    {   // No intersection of tree bounds with cuboid
+        return false;
+    }
+
+    int xy_size = t.dim_x * t.dim_y;
+    // Iterate tree body
+    for (int z_idx = 0; z_idx < t.body_height; z_idx++)
+        for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
+            if ((t.body[z_idx][xy_idx].whole & unblocked_tree) != 0 &&
+                bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z + z_idx))
+            {
+                return true;
+            }
+    // Iterate tree roots
+    for (int z_idx = 0; z_idx < t.roots_depth; z_idx++)
+        for (int xy_idx = 0; xy_idx < xy_size; xy_idx++)
+            if ((t.roots[z_idx][xy_idx].whole & unblocked_root) != 0 &&
+                bounds.containsPos(x_NW + xy_idx % t.dim_x, y_NW + xy_idx / t.dim_x, pos.z - z_idx - 1))
+            {
+                return true;
+            }
+    return false;
 }
 
 /*

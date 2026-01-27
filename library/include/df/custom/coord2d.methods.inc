@@ -1,4 +1,4 @@
-coord2d(uint16_t _x, uint16_t _y) : x(_x), y(_y) {}
+coord2d(int16_t _x, int16_t _y) : x(_x), y(_y) {}
 
 bool isValid() const { return x >= 0; }
 void clear() { x = y = -30000; }

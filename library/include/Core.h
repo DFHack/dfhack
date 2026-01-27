@@ -157,8 +157,11 @@ namespace DFHack
         friend void ::dfhooks_sdl_loop();
         friend bool ::dfhooks_ncurses_key(int key);
     public:
-        /// Get the single Core instance or make one.
+        /// Get the current active Core instance. will assert if none exists
+        /// Use noInstance() to check first if unsure
         static Core& getInstance();
+        static bool noInstance() { return active_instance == nullptr; }
+
         /// check if the activity lock is owned by this thread
         bool isSuspended(void);
         /// Is everything OK?
@@ -259,11 +262,14 @@ namespace DFHack
             return false;
         }
 
-    private:
-        DFHack::Console con;
-
         Core();
         ~Core();
+
+    private:
+        static Core* active_instance;
+
+        DFHack::Console con;
+
 
         struct Private;
         std::unique_ptr<Private> d;

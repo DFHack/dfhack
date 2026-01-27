@@ -370,7 +370,7 @@ const virtual_identity *virtual_identity::find(void *vtable)
 
     // If using a reader/writer lock, re-grab as write here, and recheck
     Core &core = Core::getInstance();
-    std::string name = core.p->doReadClassName(vtable);
+    std::string name = core.p->readClassName(vtable);
 
     auto name_it = (*name_lookup).find(name);
     if (name_it != (*name_lookup).end()) {

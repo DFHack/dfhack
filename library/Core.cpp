@@ -27,6 +27,7 @@ distribution.
 #include "Internal.h"
 
 #include "Error.h"
+#include "Files.h"
 #include "MemAccess.h"
 #include "DataDefs.h"
 #include "Debug.h"
@@ -116,16 +117,6 @@ static size_t loadScriptFiles(Core* core, color_ostream& out, std::span<const st
 namespace DFHack {
     DBG_DECLARE(core, keybinding, DebugCategory::LINFO);
     DBG_DECLARE(core, script, DebugCategory::LINFO);
-
-    static const std::filesystem::path getConfigPath()
-    {
-        return Filesystem::getInstallDir() / "dfhack-config";
-    };
-
-    static const std::filesystem::path getConfigDefaultsPath()
-    {
-        return Filesystem::getInstallDir() / "hack" / "data" / "dfhack-config-defaults";
-    };
 
 class MainThread {
 public:
@@ -442,8 +433,10 @@ static bool try_autocomplete(color_ostream &con, const std::string &first, std::
 
 bool Core::addScriptPath(std::filesystem::path path, bool search_before)
 {
-    std::lock_guard<std::mutex> lock(script_path_mutex);
-    auto &vec = script_paths[search_before ? 0 : 1];
+    std::lock_guard lock(script_path_mutex);
+
+    auto& vec = search_before ? script_paths_first : script_paths_last;
+
     if (std::find(vec.begin(), vec.end(), path) != vec.end())
         return false;
     if (!Filesystem::isdir(path))
@@ -452,57 +445,70 @@ bool Core::addScriptPath(std::filesystem::path path, bool search_before)
     return true;
 }
 
-bool Core::setModScriptPaths(const std::vector<std::filesystem::path> &mod_script_paths) {
-    std::lock_guard<std::mutex> lock(script_path_mutex);
-    script_paths[2] = mod_script_paths;
+bool Core::setModScriptPaths(const Core::filelist &mod_script_paths) {
+    std::lock_guard lock(script_path_mutex);
+
+    script_paths_mod = mod_script_paths;
     return true;
 }
 
-bool Core::removeScriptPath(std::filesystem::path path)
+bool Core::removeScriptPath(std::filesystem::path& path)
 {
-    std::lock_guard<std::mutex> lock(script_path_mutex);
+    auto pathlists = {&script_paths_first, &script_paths_last, &script_paths_mod};
+
+    std::lock_guard lock(script_path_mutex);
+
     bool found = false;
-    for (int i = 0; i < 2; i++)
+
+    for (auto& vec : pathlists)
     {
-        auto &vec = script_paths[i];
-        while (1)
-        {
-            auto it = std::find(vec.begin(), vec.end(), path);
-            if (it == vec.end())
-                break;
-            vec.erase(it);
+        auto cnt = std::erase(*vec, path);
+        if (cnt > 0)
             found = true;
-        }
     }
+
     return found;
 }
 
-void Core::getScriptPaths(std::vector<std::filesystem::path> *dest)
+Core::filelist Core::getScriptPaths()
 {
-    std::lock_guard<std::mutex> lock(script_path_mutex);
-    dest->clear();
-    std::filesystem::path df_pref_path = Filesystem::getBaseDir();
-    std::filesystem::path df_install_path = Filesystem::getInstallDir();
-    for (auto & path : script_paths[0])
-        dest->emplace_back(path);
-    // should this be df_pref_path? probably
-    dest->push_back(getConfigPath() / "scripts");
-    if (df::global::world && isWorldLoaded()) {
+    using path = std::filesystem::path;
+
+    std::lock_guard lock(script_path_mutex);
+
+    filelist dest;
+    dest.clear();
+
+    for (auto & path : script_paths_first)
+        dest.emplace_back(path);
+
+    filelist candidates{path{"dfhack-config"} / "scripts"};
+
+    if (df::global::world && isWorldLoaded())
+    {
         std::string save = World::ReadWorldFolder();
         if (save.size())
-            dest->emplace_back(df_pref_path / "save" / save / "scripts");
+            candidates.push_back(path{"save"} / save / "scripts");
     }
-    dest->emplace_back(df_install_path / "hack" / "scripts");
-    for (auto & path : script_paths[2])
-        dest->emplace_back(path);
-    for (auto & path : script_paths[1])
-        dest->emplace_back(path);
+
+    for (auto& cand : candidates)
+        for (auto& path : getPossiblePaths(cand))
+            dest.push_back(path);
+
+    dest.emplace_back(getInstallPath() / "hack" / "scripts");
+
+    for (auto & path : script_paths_mod)
+        dest.push_back(path);
+
+    for (auto & path : script_paths_last)
+        dest.push_back(path);
+
+    return dest;
 }
 
 std::filesystem::path Core::findScript(std::string name)
 {
-    std::vector<std::filesystem::path> paths;
-    getScriptPaths(&paths);
+    auto paths = getScriptPaths();
     for (auto& path : paths)
     {
         std::error_code ec;
@@ -522,8 +528,9 @@ std::filesystem::path Core::findScript(std::string name)
 
 bool loadScriptPaths(color_ostream &out, bool silent = false)
 {
-    std::filesystem::path filename{ getConfigPath() / "script-paths.txt" };
-    std::ifstream file(filename);
+    constexpr auto filename = "script-paths.txt";
+    auto file = openConfigFile(filename);
+
     if (!file)
     {
         if (!silent)
@@ -859,13 +866,15 @@ bool Core::loadScriptFile(color_ostream &out, std::filesystem::path fname, bool 
         INFO(script,out) << "Running script: " << fname << std::endl;
         std::cerr << "Running script: " << fname << std::endl;
     }
-    std::ifstream script{ fname.c_str() };
+
+    auto script = openFile(fname);
     if ( !script )
     {
         if(!silent)
             out.printerr("Error loading script: {}\n", fname);
         return false;
     }
+
     std::string command;
     while(script.good()) {
         std::string temp;

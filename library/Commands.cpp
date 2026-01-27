@@ -434,7 +434,7 @@ namespace DFHack
     {
         if (parts.size() == 1)
         {
-            core.loadScriptFile(con, std::filesystem::weakly_canonical(std::filesystem::path{parts[0]}), false);
+            core.loadScriptFile(con, std::filesystem::path{parts[0]}.lexically_normal(), false);
             return CR_OK;
         }
         else

@@ -59,6 +59,7 @@ set(MAIN_HEADERS
     include/DebugManager.h
     include/Error.h
     include/Export.h
+    include/Files.h
     include/Format.h
     include/Hooks.h
     include/LuaTools.h
@@ -89,33 +90,34 @@ set(MAIN_HEADERS_WINDOWS
 )
 
 set(MAIN_SOURCES
-    Core.cpp
     ColorText.cpp
     Commands.cpp
     CompilerWorkAround.cpp
+    Core.cpp
     DataDefs.cpp
     DataIdentity.cpp
-    Debug.cpp
-    Error.cpp
-    VTableInterpose.cpp
-    LuaWrapper.cpp
-    LuaTypes.cpp
-    LuaTools.cpp
-    LuaApi.cpp
     DataStatics.cpp
     DataStaticsCtor.cpp
+    Debug.cpp
+    Error.cpp
+    Files.cpp
+    LuaApi.cpp
+    LuaTools.cpp
+    LuaTypes.cpp
+    LuaWrapper.cpp
     MemoryPatcher.cpp
     MiscUtils.cpp
-    Types.cpp
     PluginManager.cpp
     PluginStatics.cpp
     PlugLoad.cpp
     Process.cpp
-    TileTypes.cpp
-    VersionInfoFactory.cpp
     RemoteClient.cpp
     RemoteServer.cpp
     RemoteTools.cpp
+    TileTypes.cpp
+    Types.cpp
+    VersionInfoFactory.cpp
+    VTableInterpose.cpp
 )
 
 file(GLOB_RECURSE TEST_SOURCES

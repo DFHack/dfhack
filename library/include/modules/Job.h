@@ -41,6 +41,7 @@ namespace df
     struct job_item_filter;
     struct building;
     struct unit;
+    struct manager_order;
 }
 
 namespace DFHack
@@ -117,6 +118,7 @@ namespace DFHack
                                               int mat_index,
                                               df::item_type itype);
         DFHACK_EXPORT std::string getName(df::job *job);
+        DFHACK_EXPORT std::string getManagerOrderName(df::manager_order *order);
 
         struct JobDeleter {
             void operator()(df::job *ptr) const {

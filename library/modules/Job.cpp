@@ -49,6 +49,7 @@ distribution.
 #include "df/job_list_link.h"
 #include "df/job_postingst.h"
 #include "df/job_restrictionst.h"
+#include "df/manager_order.h"
 #include "df/plotinfost.h"
 #include "df/specific_ref.h"
 #include "df/unit.h"
@@ -680,6 +681,30 @@ std::string Job::getName(df::job *job)
     button->specdata = job->specdata;
     button->art_specifier_id1 = job->art_spec.id;
     button->art_specifier_id2 = job->art_spec.subid;
+
+    button->text(&desc);
+    delete button;
+
+    return desc;
+}
+
+std::string Job::getManagerOrderName(df::manager_order *order)
+{
+    CHECK_NULL_POINTER(order);
+
+    std::string desc;
+    auto button = df::allocate<df::interface_button_building_new_jobst>();
+    button->mstring = order->reaction_name;
+    button->jobtype = order->job_type;
+    button->itemtype = order->item_type;
+    button->subtype = order->item_subtype;
+    button->material = order->mat_type;
+    button->matgloss = order->mat_index;
+    button->specflag = order->specflag;
+    button->job_item_flag = order->material_category;
+    button->specdata = order->specdata;
+    button->art_specifier_id1 = order->art_spec.id;
+    button->art_specifier_id2 = order->art_spec.subid;
 
     button->text(&desc);
     delete button;

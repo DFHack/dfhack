@@ -57,6 +57,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `sort`: added ``Uniformed`` filter to squad assignment screen to filter dwarves with mining, woodcutting, or hunting labors
 
 ## Fixes
 

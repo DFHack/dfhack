@@ -61,6 +61,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- Core: DFHack now validates vtable pointers in objects read from memory and will throw an exception instead of crashing when an invalid vtable pointer is encountered. This makes it easier to identify which DF data structure contains corrupted data when this manifests in the form of a bad vtable pointer, and shifts blame for such crashes from DFHack to DF.
 
 ## Documentation
 

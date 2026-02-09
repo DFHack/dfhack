@@ -57,6 +57,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `sort`: Add death cause button to dead/missing tab in the creatures screen
 
 ## Fixes
 

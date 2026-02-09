@@ -1294,6 +1294,7 @@ OVERLAY_WIDGETS = {
     candidates=require('plugins.sort.info').CandidatesOverlay,
     interrogation=require('plugins.sort.info').InterrogationOverlay,
     conviction=require('plugins.sort.info').ConvictionOverlay,
+    deathcause_button=require('plugins.sort.deathcause_button').DeathCauseOverlay,
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
     -- TODO: maybe rewrite for 50.12
     -- burrow_assignment=require('plugins.sort.unitselector').BurrowAssignmentOverlay,

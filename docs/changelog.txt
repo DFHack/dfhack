@@ -116,7 +116,7 @@ Template for new versions:
 ## Documentation
 
 ## API
-- `dfhack.job.getManagerOrderName()`: New function to get the display name of a manager order
+- ``dfhack.job.getManagerOrderName``: New function to get the display name of a manager order
 
 ## Lua
 

@@ -58,16 +58,40 @@ Template for new versions:
 
 ## New Features
 - `sort`: added ``Uniformed`` filter to squad assignment screen to filter dwarves with mining, woodcutting, or hunting labors
+- `sort`: Add death cause button to dead/missing tab in the creatures screen
 
 ## Fixes
 
 ## Misc Improvements
+- Core: DFHack now validates vtable pointers in objects read from memory and will throw an exception instead of crashing when an invalid vtable pointer is encountered. This makes it easier to identify which DF data structure contains corrupted data when this manifests in the form of a bad vtable pointer, and shifts blame for such crashes from DFHack to DF.
 
 ## Documentation
 
 ## API
 
 ## Lua
+
+## Removed
+
+# 53.10-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `autochop`: the report will no longer throw a C++ exception when burrows are defined.
+- `suspendmanager`: Fix the overlay appearing where it should not when following a unit
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- Added ``Burrows::getName``: obtains the name of a burrow, or the same placeholder name that DF would show if the burrow is unnamed.
+
+## Lua
+- Added ``Burrows::getName`` as ``dfhack.burrows.getName``.
 
 ## Removed
 

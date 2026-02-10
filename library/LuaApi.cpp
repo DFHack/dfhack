@@ -92,6 +92,7 @@ distribution.
 #include "df/job_item.h"
 #include "df/job_material_category.h"
 #include "df/language_word_table.h"
+#include "df/manager_order.h"
 #include "df/material.h"
 #include "df/map_block.h"
 #include "df/nemesis_record.h"
@@ -2018,6 +2019,7 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,isSuitableItem),
     WRAPM(Job,isSuitableMaterial),
     WRAPM(Job,getName),
+    WRAPM(Job,getManagerOrderName),
     WRAPM(Job,linkIntoWorld),
     WRAPM(Job,removePostings),
     WRAPM(Job,disconnectJobItem),
@@ -2781,6 +2783,40 @@ static int maps_removeTileAquifer(lua_State* L)
     return 1;
 }
 
+static int maps_addMaterialSpatter(lua_State *L)
+{
+    int32_t rv;
+    df::coord pos;
+
+    Lua::CheckDFAssign(L, &pos, 1);
+    int16_t mat = lua_tointeger(L, 2);
+    int32_t matg = lua_tointeger(L, 3);
+    df::matter_state state = (df::matter_state)lua_tointeger(L, 4);
+    int32_t amount = lua_tointeger(L, 5);
+    rv = Maps::addMaterialSpatter(pos, mat, matg, state, amount);
+
+    lua_pushinteger(L, rv);
+    return 1;
+}
+
+static int maps_addItemSpatter(lua_State *L)
+{
+    int32_t rv;
+    df::coord pos;
+
+    Lua::CheckDFAssign(L, &pos, 1);
+    df::item_type i_type = (df::item_type)lua_tointeger(L, 2);
+    int16_t i_subtype = lua_tointeger(L, 3);
+    int16_t i_subcat1 = lua_tointeger(L, 4);
+    int32_t i_subcat2 = lua_tointeger(L, 5);
+    int32_t print_variant = lua_tointeger(L, 6);
+    int32_t amount = lua_tointeger(L, 7);
+    rv = Maps::addItemSpatter(pos, i_type, i_subtype, i_subcat1, i_subcat2, print_variant, amount);
+
+    lua_pushinteger(L, rv);
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "isTileVisible", maps_isTileVisible },
@@ -2796,6 +2832,8 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "isTileHeavyAquifer", maps_isTileHeavyAquifer },
     { "setTileAquifer", maps_setTileAquifer },
     { "removeTileAquifer", maps_removeTileAquifer },
+    { "addMaterialSpatter", maps_addMaterialSpatter },
+    { "addItemSpatter", maps_addItemSpatter },
     { NULL, NULL }
 };
 

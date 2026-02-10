@@ -92,6 +92,7 @@ distribution.
 #include "df/job_item.h"
 #include "df/job_material_category.h"
 #include "df/language_word_table.h"
+#include "df/manager_order.h"
 #include "df/material.h"
 #include "df/map_block.h"
 #include "df/nemesis_record.h"
@@ -2018,6 +2019,7 @@ static const LuaWrapper::FunctionReg dfhack_job_module[] = {
     WRAPM(Job,isSuitableItem),
     WRAPM(Job,isSuitableMaterial),
     WRAPM(Job,getName),
+    WRAPM(Job,getManagerOrderName),
     WRAPM(Job,linkIntoWorld),
     WRAPM(Job,removePostings),
     WRAPM(Job,disconnectJobItem),

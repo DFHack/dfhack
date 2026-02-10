@@ -58,16 +58,47 @@ Template for new versions:
 - ``logcleaner``: New plugin for time-triggered clearing of combat, sparring, and hunting reports with configurable filtering and overlay UI.
 
 ## New Features
+- `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
+- `sort`: Add death cause button to dead/missing tab in the creatures screen
 
 ## Fixes
+
+## Misc Improvements
+- Core: DFHack now validates vtable pointers in objects read from memory and will throw an exception instead of crashing when an invalid vtable pointer is encountered. This makes it easier to identify which DF data structure contains corrupted data when this manifests in the form of a bad vtable pointer, and shifts blame for such crashes from DFHack to DF.
+
+## Documentation
+
+## API
+- Added ``Maps::addMaterialSpatter``: add a spatter of the specified material + state to the indicated tile, returning whatever amount wouldn't fit in the tile.
+- Added ``Maps::addItemSpatter``: add a spatter of the specified item + material + growth print to the indicated tile, returning whatever amount wouldn't fit in the tile.
+- Added ``Items::pickGrowthPrint``: given a plant material and a growth index, returns the print variant corresponding to the current in-game time.
+- Added ``Items::useStandardMaterial``: given an item type, returns true if the item is made of a specific material and false if it has a race and caste instead.
+
+## Lua
+- Added ``Maps::addMaterialSpatter`` as ``dfhack.maps.addMaterialSpatter``.
+- Added ``Maps::addItemSpatter`` as ``dfhack.maps.addItemSpatter``.
+
+## Removed
+
+# 53.10-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `autochop`: the report will no longer throw a C++ exception when burrows are defined.
+- `suspendmanager`: Fix the overlay appearing where it should not when following a unit
 
 ## Misc Improvements
 
 ## Documentation
 
 ## API
+- Added ``Burrows::getName``: obtains the name of a burrow, or the same placeholder name that DF would show if the burrow is unnamed.
 
 ## Lua
+- Added ``Burrows::getName`` as ``dfhack.burrows.getName``.
 
 ## Removed
 
@@ -86,6 +117,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``dfhack.job.getManagerOrderName``: New function to get the display name of a manager order
 
 ## Lua
 

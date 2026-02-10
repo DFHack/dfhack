@@ -38,6 +38,7 @@ distribution.
 #include "df/block_flags.h"
 #include "df/feature_type.h"
 #include "df/flow_type.h"
+#include "df/matter_state.h"
 #include "df/tile_dig_designation.h"
 #include "df/tiletype.h"
 
@@ -371,6 +372,10 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
     std::vector<df::block_square_event_item_spatterst *> *items = 0,
     std::vector<df::block_square_event_designation_priorityst *> *priorities = 0
 );
+
+// Add spatters at the specified location, returning the amount that couldn't be placed (e.g. due to overflow)
+extern DFHACK_EXPORT int32_t addMaterialSpatter (df::coord pos, int16_t mat, int32_t matg, df::matter_state state, int32_t amount);
+extern DFHACK_EXPORT int32_t addItemSpatter (df::coord pos, df::item_type i_type, int16_t i_subtype, int16_t i_subcat1, int32_t i_subcat2, int32_t print_variant, int32_t amount);
 
 // Remove a block event from the block by address.
 extern DFHACK_EXPORT bool RemoveBlockEvent(int32_t x, int32_t y, int32_t z, df::block_square_event *which );

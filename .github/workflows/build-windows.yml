@@ -68,6 +68,10 @@ jobs:
     name: Build win64
     runs-on: windows-2022
     steps:
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.x'
       - name: Install build dependencies
         run: |
           choco install sccache

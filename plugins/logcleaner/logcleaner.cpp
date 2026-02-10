@@ -31,7 +31,7 @@ static bool clear_combat = false;
 static bool clear_sparring = true;
 static bool clear_hunting = false;
 
-static const int32_t CLEANUP_TICK_INTERVAL = 97;
+static constexpr int32_t CLEANUP_TICK_INTERVAL = 97;
 
 static void cleanupLogs();
 static command_result do_command(color_ostream& out, std::vector<std::string>& params);
@@ -130,6 +130,9 @@ static void cleanupLogs() {
     if (!is_enabled || !world)
         return;
 
+    if (!clear_combat && !clear_sparring && !clear_hunting)
+        return;
+
     // Collect all report IDs from unit combat/sparring/hunting logs
     std::unordered_set<int32_t> report_ids_to_remove;
     bool log_types[] = {clear_combat, clear_sparring, clear_hunting};
@@ -152,17 +155,12 @@ static void cleanupLogs() {
     // Remove collected reports from global buffers
     auto& reports = world->status.reports;
 
-    for (auto report_id : report_ids_to_remove) {
-        df::report* report = df::report::find(report_id);
-        if (!report)
-            continue;
-
-        auto it = std::find(reports.begin(), reports.end(), report);
-        if (it != reports.end()) {
-            delete report;
-            reports.erase(it);
-        }
-    }
+    std::erase_if(reports, [&](df::report* report) {
+        if (!report || !report_ids_to_remove.contains(report->id))
+            return false;
+        delete report;
+        return true;
+    });
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream& out, state_change_event event) {

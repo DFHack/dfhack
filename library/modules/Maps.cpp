@@ -655,6 +655,9 @@ bool Maps::SortBlockEvents(df::map_block *block,
             if (priorities)
                 priorities->push_back((df::block_square_event_designation_priorityst *)evt);
             break;
+        default:
+            assert("Unhandled block event type" && false); // FIXME temporary - replace with NONE case after structure are updated
+            break;
         }
     }
     return true;

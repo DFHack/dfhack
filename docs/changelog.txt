@@ -59,6 +59,7 @@ Template for new versions:
 
 ## New Features
 - `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
+- `orders`: exported orders now include a human-readable ``name`` field
 - `sort`: added ``Uniformed`` filter to squad assignment screen to filter dwarves with mining, woodcutting, or hunting labors
 - `sort`: Add death cause button to dead/missing tab in the creatures screen
 

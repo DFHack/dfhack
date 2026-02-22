@@ -4,6 +4,7 @@
 #include "PluginManager.h"
 
 #include "modules/Filesystem.h"
+#include "modules/Job.h"
 #include "modules/Materials.h"
 #include "modules/World.h"
 
@@ -376,6 +377,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
             order["art"] = art;
         }
 
+        order["name"] = Job::getManagerOrderName(it);
         order["amount_left"] = it->amount_left;
         order["amount_total"] = it->amount_total;
         order["is_validated"] = bool(it->status.bits.validated);

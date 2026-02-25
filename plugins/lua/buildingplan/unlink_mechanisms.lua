@@ -538,6 +538,10 @@ function MechLeverPullOverlay:update_buttons()
     local bci_len = #self.building.contained_items
     local h_offset = #self.links > self.num_buttons and 8 or 6 --account for scrollbar
 
+    -- Check if mechanism_unlink overlay is enabled
+    local unlink_enabled = overlay.isOverlayEnabled('buildingplan.mechanism_unlink')
+    local pull_offset = unlink_enabled and 14 or 6  -- 14 when both enabled, 6 when only pull
+
     for i=1, self.num_buttons do
         local offset = i*3 - 1 - ((scroll_pos + 1) % 3)
         local idx = self:idx_from_offset(offset)
@@ -566,7 +570,7 @@ function MechLeverPullOverlay:update_buttons()
 
                 pull_button = self:get_pull_button(i, label, text_pen)
                 pull_button.frame.t = offset
-                pull_button.frame.r = h_offset + 9
+                pull_button.frame.r = pull_offset
                 pull_button.visible = show_pull
             end
         end

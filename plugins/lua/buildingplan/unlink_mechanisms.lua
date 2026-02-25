@@ -350,7 +350,6 @@ function MechLinkOverlay:update_buttons()
         local idx = self:idx_from_offset(offset)
 
         button.visible = false
-
         if idx > 0 and idx < bci_len then
             button.frame.t = offset
             button.frame.r = h_offset
@@ -479,31 +478,27 @@ function MechLeverPullOverlay:idx_from_offset(offset)
 end
 
 function MechLeverPullOverlay:get_pull_button(n, label, text_pen)
-    local old_pull = self.subviews["pull_"..n]
+    local pull_button = self.subviews["pull_"..n]
 
-    -- Create new pull button with correct label (use unique ID to avoid collision)
-    local unique_id = "pull_"..n.."_"..tostring(label):gsub("[^%w]", "_")
-    self:addviews
-    {
-        widgets.TextButton
+    if not pull_button then
+        self:addviews
         {
-            view_id = unique_id,
-            frame = {t=0, r=17, w=9, h=1},
-            label = label,
-            text_pen = text_pen or COLOR_WHITE,
-            on_activate = function() self:activate_pull_button(n) end,
-            visible = false,
-        },
-    }
-    local pull_button = self.subviews[unique_id]
-    pull_button:updateLayout(self.frame_body)
-
-    -- Update the main reference
-    self.subviews["pull_"..n] = pull_button
-
-    -- Mark old button for cleanup (it will be hidden)
-    if old_pull and old_pull ~= pull_button then
-        old_pull.visible = false
+            widgets.TextButton
+            {
+                view_id = "pull_"..n,
+                frame = {t=0, r=17, w=9, h=1},
+                label = label,
+                text_pen = text_pen or COLOR_WHITE,
+                on_activate = function() self:activate_pull_button(n) end,
+                visible = false,
+            },
+        }
+        pull_button = self.subviews["pull_"..n]
+        pull_button:updateLayout(self.frame_body)
+    else
+        -- Update existing button using setLabel method
+        pull_button:setLabel(label)
+        pull_button.label.text_pen = text_pen or COLOR_WHITE
     end
 
     return pull_button

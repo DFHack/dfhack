@@ -263,6 +263,37 @@ function MechLinkOverlay:get_button(n, ensure)
     return button
 end
 
+function MechLinkOverlay:get_pull_button(n, label, text_pen)
+    local old_pull = self.subviews["pull_"..n]
+
+    -- Create new pull button with correct label (use unique ID to avoid collision)
+    local unique_id = "pull_"..n.."_"..tostring(label):gsub("[^%w]", "_")
+    self:addviews
+    {
+        widgets.TextButton
+        {
+            view_id = unique_id,
+            frame = {t=0, r=17, w=9, h=1},
+            label = label,
+            text_pen = text_pen or COLOR_WHITE,
+            on_activate = function() self:activate_pull_button(n) end,
+            visible = false,
+        },
+    }
+    local pull_button = self.subviews[unique_id]
+    pull_button:updateLayout(self.frame_body)
+
+    -- Update the main reference
+    self.subviews["pull_"..n] = pull_button
+
+    -- Mark old button for cleanup (it will be hidden)
+    if old_pull and old_pull ~= pull_button then
+        old_pull.visible = false
+    end
+
+    return pull_button
+end
+
 function MechLinkOverlay:activate_button(n)
     local button = self:get_button(n)
     local saved_mode = self.subviews.unlink_mode:getOptionValue()
@@ -300,6 +331,72 @@ function MechLinkOverlay:activate_button(n)
         end
     else
         dfhack.printerr(("MechLinkOverlay: Invalid button! Offset %d"):format(button.frame.t))
+    end
+end
+
+function MechLinkOverlay:is_lever(b)
+    return b._type == df.building_trapst and b.trap_type == df.trap_type.Lever
+end
+
+function MechLinkOverlay:has_lever_pull_job(lever)
+    for _, j in ipairs(lever.jobs) do
+        if j.job_type == df.job_type.PullLever then
+            return true
+        end
+    end
+    return false
+end
+
+function MechLinkOverlay:queue_lever_pull_job(lever)
+    local ref = df.general_ref_building_holderst:new()
+    ref.building_id = lever.id
+
+    local job = df.job:new()
+    job.job_type = df.job_type.PullLever
+    job.pos = {
+        x = lever.centerx,
+        y = lever.centery,
+        z = lever.z
+    }
+    job.flags.do_now = false
+    job.general_refs:insert("#", ref)
+    lever.jobs:insert("#", job)
+
+    dfhack.job.linkIntoWorld(job, true)
+    dfhack.job.checkBuildingsNow()
+end
+
+function MechLinkOverlay:remove_lever_pull_job(lever)
+    for i = #lever.jobs, 1, -1 do
+        local job = lever.jobs[i-1]
+        if job.job_type == df.job_type.PullLever then
+            lever.jobs:erase(i-1)
+            dfhack.job.removeJob(job)
+            return true
+        end
+    end
+    return false
+end
+
+function MechLinkOverlay:activate_pull_button(n)
+    local pull_button = self.subviews["pull_"..n]
+
+    local idx = self:idx_from_offset(pull_button.frame.t)
+    if idx > 0 and idx < #self.building.contained_items then
+        local item = self.building.contained_items[idx].item
+        local lever = get_mech_target(item)
+
+        if lever and self:is_lever(lever) then
+            if self:has_lever_pull_job(lever) then
+                self:remove_lever_pull_job(lever)
+            else
+                self:queue_lever_pull_job(lever)
+            end
+        else
+            dfhack.printerr(("MechLinkOverlay: Mechanism is not linked to a lever!"):format(item))
+        end
+    else
+        dfhack.printerr(("MechLinkOverlay: Invalid pull button! Offset %d"):format(pull_button.frame.t))
     end
 end
 
@@ -350,12 +447,44 @@ function MechLinkOverlay:update_buttons()
         local idx = self:idx_from_offset(offset)
 
         button.visible = false
+        local pull_button = self.subviews["pull_"..i]
+        if pull_button then
+            pull_button.visible = false
+        end
+
         if idx > 0 and idx < bci_len then
+            local item = self.building.contained_items[idx].item
+            local lever = get_mech_target(item)
+            local show_pull = lever and self:is_lever(lever) and not self:is_lever(self.building)
+
+            if show_pull then
+                local queued = self:has_lever_pull_job(lever)
+                local label, text_pen
+
+                if queued then
+                    label = lever.state == 0 and "Closing" or "Opening"
+                    text_pen = COLOR_YELLOW
+                else
+                    label = lever.state == 0 and "Close" or "Open"
+                    text_pen = COLOR_WHITE
+                end
+
+                pull_button = self:get_pull_button(i, label, text_pen)
+            end
+
             button.frame.t = offset
             button.frame.r = h_offset
+            if pull_button then
+                pull_button.frame.t = offset
+                pull_button.frame.r = h_offset + 9
+                pull_button.visible = show_pull
+            end
             button.visible = true
         end
         button:updateLayout()
+        if pull_button then
+            pull_button:updateLayout()
+        end
     end
 
     local b = (self.frame.h % 3) == 1 and #self.links >= self.num_buttons and 0 or 1
@@ -370,6 +499,10 @@ function MechLinkOverlay:preUpdateLayout(parent_rect)
         local button = self:get_button(i)
         if button then
             button.visible = false
+        end
+        local pull_button = self.subviews["pull_"..i]
+        if pull_button then
+            pull_button.visible = false
         end
     end
 

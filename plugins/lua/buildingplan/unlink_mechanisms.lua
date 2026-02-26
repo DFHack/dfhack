@@ -486,7 +486,7 @@ function MechLeverPullOverlay:get_button(button_idx, label, text_pen)
             widgets.TextButton
             {
                 view_id = "pull_"..button_idx,
-                frame = {t=0, r=17, w=9, h=1},
+                frame = {t=0, r=17, w=11, h=1},
                 label = label,
                 text_pen = text_pen or COLOR_WHITE,
                 on_activate = function() self:activate_button(button_idx) end,
@@ -551,13 +551,14 @@ function MechLeverPullOverlay:update_buttons()
             if show_pull then
                 local job = self:get_lever_pull_job(lever)
                 local label, text_pen
+                local state_char = lever.state == 0 and "/" or "\\"
 
                 if job then
-                    label = lever.state == 0 and "Closing" or "Opening"
+                    label = "Pulling " .. state_char
                     local worker = dfhack.job.getWorker(job)
                     text_pen = worker and COLOR_GREEN or COLOR_YELLOW
                 else
-                    label = lever.state == 0 and "Close" or "Open"
+                    label = "Pull    " .. state_char
                     text_pen = COLOR_WHITE
                 end
 

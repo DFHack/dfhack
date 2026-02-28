@@ -158,6 +158,8 @@ static void cleanupLogs() {
     std::erase_if(reports, [&](df::report* report) {
         if (!report || !report_ids_to_remove.contains(report->id))
             return false;
+        if (report->flags.bits.announcement)
+            erase_from_vector(world->status.announcements, &df::report::id, report->id);
         delete report;
         return true;
     });

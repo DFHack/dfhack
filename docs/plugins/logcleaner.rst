@@ -5,8 +5,8 @@ logcleaner
     :tags: fort auto units
 
 This plugin prevents spam from cluttering your announcement history and filling
-the 3000-item reports buffer. It runs every 100 ticks and clears selected report
-types from both the global reports buffer and per-unit logs.
+the 3000-item reports buffer. It runs approximately every 100 ticks and clears
+selected report types from both the global reports buffer and per-unit logs.
 
 Usage
 -----

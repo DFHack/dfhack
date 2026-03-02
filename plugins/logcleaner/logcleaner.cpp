@@ -31,7 +31,8 @@ static bool clear_combat = false;
 static bool clear_sparring = true;
 static bool clear_hunting = false;
 
-static constexpr int32_t CLEANUP_TICK_INTERVAL = 97;
+static constexpr int32_t CYCLE_TICKS = 97;
+static int32_t cycle_timestamp = 0;
 
 static void cleanupLogs();
 static command_result do_command(color_ostream& out, std::vector<std::string>& params);
@@ -116,6 +117,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream& out) {
     clear_sparring = config.get_bool(CONFIG_CLEAR_SPARING);
     clear_hunting = config.get_bool(CONFIG_CLEAR_HUNTING);
 
+    cycle_timestamp = 0;
     return CR_OK;
 }
 
@@ -166,16 +168,13 @@ static void cleanupLogs() {
 }
 
 DFhackCExport command_result plugin_onupdate(color_ostream& out, state_change_event event) {
-    static int32_t tick_counter = 0;
-
     if (!is_enabled || !world)
         return CR_OK;
+    else if (world->frame_counter - cycle_timestamp <= CYCLE_TICKS)
+        return CR_OK;
 
-    tick_counter++;
-    if (tick_counter >= CLEANUP_TICK_INTERVAL) {
-        tick_counter = 0;
-        cleanupLogs();
-    }
+    cycle_timestamp = world->frame_counter;
+    cleanupLogs();
 
     return CR_OK;
 }

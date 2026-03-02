@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autolabor`: Fix running 1 tick less frequently than intended.
 
 ## Misc Improvements
 

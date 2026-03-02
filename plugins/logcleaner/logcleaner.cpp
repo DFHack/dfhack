@@ -170,7 +170,7 @@ static void cleanupLogs() {
 DFhackCExport command_result plugin_onupdate(color_ostream& out, state_change_event event) {
     if (!is_enabled || !world)
         return CR_OK;
-    else if (world->frame_counter - cycle_timestamp <= CYCLE_TICKS)
+    else if (world->frame_counter - cycle_timestamp < CYCLE_TICKS)
         return CR_OK;
 
     cycle_timestamp = world->frame_counter;

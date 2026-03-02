@@ -1,4 +1,4 @@
-g#include "laborstatemap.h"
+#include "laborstatemap.h"
 
 #include "Debug.h"
 #include "PluginManager.h"

@@ -1,4 +1,4 @@
-#include "laborstatemap.h"
+g#include "laborstatemap.h"
 
 #include "Debug.h"
 #include "PluginManager.h"
@@ -740,7 +740,7 @@ DFhackCExport command_result plugin_onupdate ( color_ostream &out )
         return CR_OK;
     }
 
-    if (world->frame_counter - cycle_timestamp < CYCLE_TICKS)
+    if (world->frame_counter - cycle_timestamp <= CYCLE_TICKS)
         return CR_OK;
 
     cycle_timestamp = world->frame_counter;

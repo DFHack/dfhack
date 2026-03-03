@@ -33,6 +33,7 @@ namespace df {
     INTEGER_IDENTITY_TRAITS(unsigned long,      "unsigned long");
     INTEGER_IDENTITY_TRAITS(long long,          "int64_t");
     INTEGER_IDENTITY_TRAITS(unsigned long long, "uint64_t");
+    INTEGER_IDENTITY_TRAITS(wchar_t,            "wchar_t");
     FLOAT_IDENTITY_TRAITS(float);
     FLOAT_IDENTITY_TRAITS(double);
 
@@ -57,6 +58,7 @@ namespace df {
     OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::variant<std::string, std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::weak_ptr<df::widget_container>);
+    OPAQUE_IDENTITY_TRAITS(wchar_t*);
 
     const buffer_container_identity buffer_container_identity::base_instance;
 

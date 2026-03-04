@@ -33,7 +33,6 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- `sort`: correct misspelling of ``PERSEVERENCE``; fixes "hates combat" filter in squad selection screen
 
 ## Misc Improvements
 
@@ -60,6 +59,25 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.11-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `sort`: correct misspelling of ``PERSEVERENCE``; fixes "hates combat" filter in squad selection screen
 
 ## Misc Improvements
 

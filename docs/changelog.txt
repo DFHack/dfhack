@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `sort`: correct misspelling of ``PERSEVERENCE``; fixes "hates combat" filter in squad selection screen
 
 ## Misc Improvements
 

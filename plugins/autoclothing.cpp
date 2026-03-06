@@ -613,6 +613,7 @@ static void add_clothing_orders() {
                 newOrder->material_category = clothingOrder.material_category;
                 newOrder->amount_left = amount;
                 newOrder->amount_total = amount;
+                newOrder->frequency = df::workquota_frequency_type::OneTime;
                 world->manager_orders.all.push_back(newOrder);
             }
         }

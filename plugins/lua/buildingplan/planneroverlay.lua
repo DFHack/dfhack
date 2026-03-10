@@ -955,9 +955,10 @@ function PlannerOverlay:init()
                 key='CUSTOM_Y',
                 on_activate=function () self:save_restore_filter(self.selected_favorite) end,
             },
-            widgets.Label {
+            widgets.TooltipLabel {
                 frame={b=0, l=2},
-                text="Shift+click to edit the label of a favorite"
+                show_tooltip=true,
+                text="Shift+click to edit the label of a favorite",
             },
 
         }

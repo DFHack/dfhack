@@ -281,14 +281,267 @@ local function do_import()
     }:show()
 end
 
+--------------------
+-- handle --include 
+--------------------
+
+IncludeOptionScreen = defclass(IncludeOptionScreen, gui.ZScreen)
+IncludeOptionScreen.ATTRS{
+    focus_path='stockpiles/export-options',
+    on_close=DEFAULT_NIL,
+}
+
+function IncludeOptionScreen:init()
+    self.containers = false
+    self.general = true
+    self.categories = true
+    self.types = true
+
+    self:addviews{
+        widgets.Window{
+            frame={w=72, h=20},
+            frame_title='Include option',
+            subviews={
+                widgets.Panel{
+                    frame={l=0, r=0, t=0, b=0},
+                    autoarrange_subviews=true,
+                    autoarrange_gap=1,
+                    subviews={
+                        widgets.WrappedLabel{
+                            view_id='helper_lbl',
+                            text_to_wrap='Select what you wish to export.\n'
+                                .. 'Containers: max barrels / bins / wheelbarrows\n'
+                                .. 'General: take from everywhere and organic/inorganic toggles\n'
+                                .. 'Categories: Ammo, Food, Stone, etc.\n'
+                                .. 'Types: the elements below the categories',
+                        },
+
+                        -- Containers row
+                        widgets.Panel{
+                            frame={l=0, r=0, h=1},
+                            subviews={
+                                widgets.HotkeyLabel{
+                                    view_id='containers_row',
+                                    frame={l=0, t=0},
+                                    key='CUSTOM_C',
+                                    label='Include containers:',
+                                    on_activate=function()
+                                        self.containers = not self.containers
+                                        self:update_labels()
+                                    end,
+                                },
+                                widgets.Label{
+                                    view_id='containers_lbl',
+                                    frame={r=24, t=0, w=10},
+									text_halign=2,
+                                    text='',
+                                },
+                            },
+                        },
+
+                        -- General row
+                        widgets.Panel{
+                            frame={l=0, r=0, h=1},
+                            subviews={
+                                widgets.HotkeyLabel{
+                                    view_id='general_row',
+                                    frame={l=0, t=0},
+                                    key='CUSTOM_G',
+                                    label='Include general:',
+                                    on_activate=function()
+                                        self.general = not self.general
+                                        self:update_labels()
+                                    end,
+                                },
+                                widgets.Label{
+                                    view_id='general_lbl',
+                                    frame={r=24, t=0, w=10},
+									text_halign=2,
+                                    text='',
+                                },
+                            },
+                        },
+
+                        -- Categories row
+                        widgets.Panel{
+                            frame={l=0, r=0, h=1},
+                            subviews={
+                                widgets.HotkeyLabel{
+                                    view_id='categories_row',
+                                    frame={l=0, t=0},
+                                    key='CUSTOM_A',
+                                    label='Include categories:',
+                                    on_activate=function()
+                                        self.categories = not self.categories
+                                        self:update_labels()
+                                    end,
+                                },
+                                widgets.Label{
+                                    view_id='categories_lbl',
+                                    frame={r=24, t=0, w=10},
+									text_halign=2,
+                                    text='',
+                                },
+                            },
+                        },
+
+                        -- Types row
+                        widgets.Panel{
+                            frame={l=0, r=0, h=1},
+                            subviews={
+                                widgets.HotkeyLabel{
+                                    view_id='types_row',
+                                    frame={l=0, t=0},
+                                    key='CUSTOM_T',
+                                    label='Include types:',
+                                    on_activate=function()
+                                        self.types = not self.types
+                                        self:update_labels()
+                                    end,
+                                },
+                                widgets.Label{
+                                    view_id='types_lbl',
+                                    frame={r=24, t=0, w=10},
+									text_halign=2,
+                                    text='',
+                                },
+                            },
+                        },
+
+                        widgets.Label{
+                            text='',
+                        },
+
+                        widgets.Panel{
+                            frame={l=0, r=0, h=1},
+                            subviews={
+                                widgets.HotkeyLabel{
+                                    view_id='confirm_lbl',
+                                    frame={l=0, t=0},
+                                    key='SELECT',
+                                    label='Confirm',
+                                    on_activate=function()
+                                        local opts = {
+                                            containers=self.containers,
+                                            general=self.general,
+                                            categories=self.categories,
+                                            types=self.types,
+                                        }
+                                        self:dismiss()
+                                        if self.on_close then self.on_close(opts) end
+                                    end,
+                                },
+                                widgets.HotkeyLabel{
+                                    view_id='cancel_lbl',
+                                    frame={r=8, l=18, t=0},
+									text_halign=2,
+                                    key='LEAVESCREEN',
+                                    label='Cancel',
+                                    on_activate=function()
+                                        self:dismiss()
+                                        if self.on_close then self.on_close(nil) end
+                                    end,
+                                },
+                            },
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    self:update_labels()
+end
+
+function IncludeOptionScreen:update_labels()
+    self.subviews.containers_lbl:setText{
+        self.containers and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+        ' / ',
+        not self.containers and {text='[No]', pen=COLOR_YELLOW} or 'No',
+    }
+
+    self.subviews.general_lbl:setText{
+        self.general and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+        ' / ',
+        not self.general and {text='[No]', pen=COLOR_YELLOW} or 'No',
+    }
+
+    self.subviews.categories_lbl:setText{
+        self.categories and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+        ' / ',
+        not self.categories and {text='[No]', pen=COLOR_YELLOW} or 'No',
+    }
+
+    self.subviews.types_lbl:setText{
+        self.types and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+        ' / ',
+        not self.types and {text='[No]', pen=COLOR_YELLOW} or 'No',
+    }
+end
+
+function IncludeOptionScreen:onInput(keys)
+    if keys.LEAVESCREEN then
+        self:dismiss()
+        if self.on_close then self.on_close(nil) end
+        return true
+    elseif keys.SELECT then
+        local opts = {
+            containers=self.containers,
+            general=self.general,
+            categories=self.categories,
+            types=self.types,
+        }
+        self:dismiss()
+        if self.on_close then self.on_close(opts) end
+        return true
+    elseif keys.CUSTOM_C then
+        self.containers = not self.containers
+        self:update_labels()
+        return true
+    elseif keys.CUSTOM_G then
+        self.general = not self.general
+        self:update_labels()
+        return true
+    elseif keys.CUSTOM_A then
+        self.categories = not self.categories
+        self:update_labels()
+        return true
+    elseif keys.CUSTOM_T then
+        self.types = not self.types
+        self:update_labels()
+        return true
+    end
+
+    return IncludeOptionScreen.super.onInput(self, keys)
+end
+
 local function do_export()
     local sp = dfhack.gui.getSelectedStockpile(true)
-    dialogs.InputBox{
-        frame_title='Export Stockpile Settings',
-        text='Please enter a filename',
-        on_input=function(text) export_settings(text, {id=sp and sp.id}) end,
+
+    IncludeOptionScreen{
+        on_close=function(opts)
+            if not opts then return end
+
+            local includes = {}
+            if opts.containers then table.insert(includes, 'containers') end
+            if opts.general then table.insert(includes, 'general') end
+            if opts.categories then table.insert(includes, 'categories') end
+            if opts.types then table.insert(includes, 'types') end
+
+            dialogs.InputBox{
+                frame_title='Export Stockpile Settings',
+                text='Please enter a filename',
+                on_input=function(text)
+                    export_settings(text, {
+                        id=sp and sp.id,
+                        includes=includes,
+                    })
+                end,
+            }:show()
+        end,
     }:show()
 end
+
 
 --------------------
 -- ConfigModal

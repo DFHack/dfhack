@@ -903,7 +903,7 @@ function PlannerOverlay:init()
 
     local favorites_panel = widgets.Panel{
         view_id='favorites',
-        frame={t=15, l=0, r=0, h=9},
+        frame={t=15, l=0, r=0, h=11},
         frame_style=gui.FRAME_INTERIOR_MEDIUM,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('show_favorites'),
@@ -940,7 +940,7 @@ function PlannerOverlay:init()
                         is_selected_fn=make_is_selected_filter('0') },
             widgets.CycleHotkeyLabel {
                 view_id='slot_select',
-                frame={b=0, l=2},
+                frame={b=2, l=2},
                 key='CUSTOM_X',
                 key_back='CUSTOM_SHIFT_X',
                 label='next/previous slot',
@@ -950,11 +950,15 @@ function PlannerOverlay:init()
                 on_change=function(val) self.selected_favorite = val end,
             },
             widgets.HotkeyLabel{
-                frame={b=0, l=28},
+                frame={b=2, l=28},
                 label="set/apply selected",
                 key='CUSTOM_Y',
                 on_activate=function () self:save_restore_filter(self.selected_favorite) end,
             },
+			widgets.Label {
+				frame={b=0, l=2},
+				text="Shift+click to edit the label of a favorite"
+			},
 
         }
     }
@@ -974,7 +978,7 @@ function PlannerOverlay:show_favorites()
 end
 
 function PlannerOverlay:show_hide_favorites(new)
-    local errors_frame = {t=15+(new and 9 or 0), l=0, r=0}
+    local errors_frame = {t=15+(new and 11 or 0), l=0, r=0}
     self.subviews.errors.frame = errors_frame
     self:updateLayout()
 end

@@ -148,7 +148,7 @@ local function is_interior(bounds, x, y)
         y ~= bounds.y1 and y ~= bounds.y2
 end
 
--- adjusted from CycleHotkeyLabel on the planner panel
+-- adjusted from CycleHotkeyLabel on the planner panel later
 local weapon_quantity = 1
 
 local function get_quantity(filter, hollow, bounds)
@@ -657,6 +657,31 @@ function PlannerOverlay:init()
     end
 
     local buildingplan = require('plugins.buildingplan')
+    
+    -- WeaponSpikeTrapPanel defined outside of main_panel, otherwise addviews breaks -> addviews expects table
+    local WeaponSpikeTrapPanel = defclass(WeaponSpikeTrapPanel, widgets.Panel)
+    WeaponSpikeTrapPanel.ATTRS{
+        view_id='weapons',
+        visible=is_weapon_or_spike_trap,
+    }
+
+    function WeaponSpikeTrapPanel:init()
+        self.options = utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10)
+        self.selected_idx = weapon_quantity
+        
+        self:addviews{
+            widgets.CycleHotkeyLabel{
+                view_id='weapons_hotkey',
+                frame={b=4, l=1, w=28},
+                key='CUSTOM_T',
+                key_back='CUSTOM_SHIFT_T',
+                label='Number of weapons:',
+                options=self.options,
+                initial_option=self.selected_idx,
+                on_change=function(val) weapon_quantity = val end,
+            },
+        }
+    end
 
     main_panel:addviews{
         widgets.Label{
@@ -716,7 +741,7 @@ function PlannerOverlay:init()
                 {label='Up', value=df.construction_type.UpStair},
             },
         },
-        widgets.CycleHotkeyLabel{
+        widgets.CycleHotkeyLabel {
             view_id='stairs_only_subtype',
             frame={b=7, l=1, w=30},
             key='CUSTOM_R',
@@ -728,16 +753,9 @@ function PlannerOverlay:init()
                 {label='Down', value=df.construction_type.DownStair},
             },
         },
-        widgets.CycleHotkeyLabel {  -- TODO: this thing also needs a slider
-            view_id='weapons',
-            frame={b=4, l=1, w=28},
-            key='CUSTOM_T',
-            key_back='CUSTOM_SHIFT_T',
-            label='Number of weapons:',
-            visible=is_weapon_or_spike_trap,
-            options=utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10),
-            on_change=function(val) weapon_quantity = val end,
-        },
+        
+        WeaponSpikeTrapPanel{},
+        
         widgets.ToggleHotkeyLabel {
             view_id='engraved',
             frame={b=4, l=1, w=22},

@@ -292,7 +292,7 @@ IncludeOptionScreen.ATTRS{
 }
 
 function IncludeOptionScreen:init()
-    self.containers = false --false or true: false makes more sense in most of the use cases?
+    self.containers = false
     self.general = true
     self.categories = true
     self.types = true
@@ -308,7 +308,7 @@ function IncludeOptionScreen:init()
                     autoarrange_gap=1,
                     subviews={
                         widgets.TooltipLabel{
-                            view_id="tooltip"
+                            view_id='tooltip',
                             label="help",
                             show_tooltip=true,
                             text_to_wrap='Select below what you wish to include.\n\n'
@@ -322,6 +322,7 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
+                                    view_id='containers_row',
                                     frame={l=0, t=0},
                                     key='CUSTOM_C',
                                     label='Include containers:',
@@ -343,6 +344,7 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
+                                    view_id='general_row',
                                     frame={l=0, t=0},
                                     key='CUSTOM_G',
                                     label='Include general:',
@@ -364,6 +366,7 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
+                                    view_id='categories_row',
                                     frame={l=0, t=0},
                                     key='CUSTOM_A',
                                     label='Include categories:',
@@ -385,6 +388,7 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
+                                    view_id='types_row',
                                     frame={l=0, t=0},
                                     key='CUSTOM_T',
                                     label='Include types:',
@@ -406,6 +410,7 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
+                                    view_id='confirm_lbl',
                                     frame={l=0, t=0},
                                     key='SELECT',
                                     label='Confirm',
@@ -431,23 +436,34 @@ function IncludeOptionScreen:init()
     self:update_labels()
 end
 
-function IncludeOptionScreen:update_one(label, value)
-    self.subviews[label]:setText{
-        value and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+function IncludeOptionScreen:update_labels()
+    self.subviews.containers_lbl:setText{
+        self.containers and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
         ' / ',
-        not value and {text='[No]', pen=COLOR_YELLOW} or 'No',
+        not self.containers and {text='[No]', pen=COLOR_YELLOW} or 'No',
+    }
+
+    self.subviews.general_lbl:setText{
+        self.general and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+        ' / ',
+        not self.general and {text='[No]', pen=COLOR_YELLOW} or 'No',
+    }
+
+    self.subviews.categories_lbl:setText{
+        self.categories and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+        ' / ',
+        not self.categories and {text='[No]', pen=COLOR_YELLOW} or 'No',
+    }
+
+    self.subviews.types_lbl:setText{
+        self.types and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+        ' / ',
+        not self.types and {text='[No]', pen=COLOR_YELLOW} or 'No',
     }
 end
 
-function IncludeOptionScreen:update_labels()
-    self:update_one('containers_lbl', self.containers)
-    self:update_one('general_lbl', self.general)
-    self:update_one('categories_lbl', self.categories)
-    self:update_one('types_lbl', self.types)
-end
-
 function IncludeOptionScreen:onInput(keys)
-    if keys.LEAVESCREEN then --test if really needed
+    if keys.LEAVESCREEN then
         self:dismiss()
         if self.on_close then self.on_close(nil) end
         return true

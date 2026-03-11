@@ -292,7 +292,7 @@ IncludeOptionScreen.ATTRS{
 }
 
 function IncludeOptionScreen:init()
-    self.containers = false
+    self.containers = false --false or true: false makes more sense in most of the use cases?
     self.general = true
     self.categories = true
     self.types = true
@@ -322,7 +322,6 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
-                                    view_id='containers_row',
                                     frame={l=0, t=0},
                                     key='CUSTOM_C',
                                     label='Include containers:',
@@ -344,7 +343,6 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
-                                    view_id='general_row',
                                     frame={l=0, t=0},
                                     key='CUSTOM_G',
                                     label='Include general:',
@@ -366,7 +364,6 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
-                                    view_id='categories_row',
                                     frame={l=0, t=0},
                                     key='CUSTOM_A',
                                     label='Include categories:',
@@ -388,7 +385,6 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
-                                    view_id='types_row',
                                     frame={l=0, t=0},
                                     key='CUSTOM_T',
                                     label='Include types:',
@@ -410,7 +406,6 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
-                                    view_id='confirm_lbl',
                                     frame={l=0, t=0},
                                     key='SELECT',
                                     label='Confirm',

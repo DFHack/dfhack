@@ -307,16 +307,17 @@ function IncludeOptionScreen:init()
                     autoarrange_subviews=true,
                     autoarrange_gap=1,
                     subviews={
-                        widgets.WrappedLabel{
-                            view_id='helper_lbl',
-                            text_to_wrap='Select what you wish to export.\n'
-                                .. 'Containers: max barrels / bins / wheelbarrows\n'
-                                .. 'General: take from everywhere and organic/inorganic toggles\n'
+                        widgets.TooltipLabel{
+                            view_id='tooltip',
+                            label="help",
+                            show_tooltip=true,
+                            text_to_wrap='Select below what you wish to include.\n\n'
+                                .. 'Containers: Max barrels, max bins, max wheelbarrows\n'
+                                .. 'General: Toggles "take from everywhere" and organic/inorganic\n'
                                 .. 'Categories: Ammo, Food, Stone, etc.\n'
-                                .. 'Types: the elements below the categories',
+                                .. 'Types: The elements below the categories',
                         },
 
-                        -- Containers row
                         widgets.Panel{
                             frame={l=0, r=0, h=1},
                             subviews={
@@ -333,13 +334,12 @@ function IncludeOptionScreen:init()
                                 widgets.Label{
                                     view_id='containers_lbl',
                                     frame={r=24, t=0, w=10},
-									text_halign=2,
+                                    text_halign=2,
                                     text='',
                                 },
                             },
                         },
 
-                        -- General row
                         widgets.Panel{
                             frame={l=0, r=0, h=1},
                             subviews={
@@ -356,13 +356,12 @@ function IncludeOptionScreen:init()
                                 widgets.Label{
                                     view_id='general_lbl',
                                     frame={r=24, t=0, w=10},
-									text_halign=2,
+                                    text_halign=2,
                                     text='',
                                 },
                             },
                         },
 
-                        -- Categories row
                         widgets.Panel{
                             frame={l=0, r=0, h=1},
                             subviews={
@@ -379,13 +378,12 @@ function IncludeOptionScreen:init()
                                 widgets.Label{
                                     view_id='categories_lbl',
                                     frame={r=24, t=0, w=10},
-									text_halign=2,
+                                    text_halign=2,
                                     text='',
                                 },
                             },
                         },
 
-                        -- Types row
                         widgets.Panel{
                             frame={l=0, r=0, h=1},
                             subviews={
@@ -402,14 +400,10 @@ function IncludeOptionScreen:init()
                                 widgets.Label{
                                     view_id='types_lbl',
                                     frame={r=24, t=0, w=10},
-									text_halign=2,
+                                    text_halign=2,
                                     text='',
                                 },
                             },
-                        },
-
-                        widgets.Label{
-                            text='',
                         },
 
                         widgets.Panel{
@@ -429,17 +423,6 @@ function IncludeOptionScreen:init()
                                         }
                                         self:dismiss()
                                         if self.on_close then self.on_close(opts) end
-                                    end,
-                                },
-                                widgets.HotkeyLabel{
-                                    view_id='cancel_lbl',
-                                    frame={r=8, l=18, t=0},
-									text_halign=2,
-                                    key='LEAVESCREEN',
-                                    label='Cancel',
-                                    on_activate=function()
-                                        self:dismiss()
-                                        if self.on_close then self.on_close(nil) end
                                     end,
                                 },
                             },

@@ -1,12 +1,11 @@
 local _ENV = mkmodule('plugins.stockpiles')
 
 local argparse = require('argparse')
-local dialogs = require('gui.dialogs')
 local gui = require('gui')
+local dialogs = require('gui.dialogs')
+local widgets = require('gui.widgets')
 local logistics = require('plugins.logistics')
 local overlay = require('plugins.overlay')
-local widgets = require('gui.widgets')
-
 local STOCKPILES_DIR = 'dfhack-config/stockpiles'
 local STOCKPILES_LIBRARY_DIR = 'hack/data/stockpiles'
 
@@ -242,9 +241,9 @@ function parse_commandline(args)
     return true
 end
 
--------------------------
--- import/export dialogs
--------------------------
+-----------------
+-- import dialog
+-----------------
 
 local function get_import_choices()
     local filenames = {}
@@ -281,18 +280,18 @@ local function do_import()
     }:show()
 end
 
---------------------
--- handle --include 
---------------------
+------------------
+-- export screens
+------------------
 
 IncludeOptionScreen = defclass(IncludeOptionScreen, gui.ZScreen)
 IncludeOptionScreen.ATTRS{
-    focus_path='stockpiles/export-options',
+    focus_path='stockpiles/export-include-option',
     on_close=DEFAULT_NIL,
 }
 
 function IncludeOptionScreen:init()
-    self.containers = false --false or true: false makes more sense in most of the use cases?
+    self.containers = true
     self.general = true
     self.categories = true
     self.types = true
@@ -307,15 +306,8 @@ function IncludeOptionScreen:init()
                     autoarrange_subviews=true,
                     autoarrange_gap=1,
                     subviews={
-                        widgets.TooltipLabel{
-                            view_id='tooltip',
-                            label="help",
-                            show_tooltip=true,
-                            text_to_wrap='Select below what you wish to include.\n\n'
-                                .. 'Containers: Max barrels, max bins, max wheelbarrows\n'
-                                .. 'General: Toggles "take from everywhere" and organic/inorganic\n'
-                                .. 'Categories: Ammo, Food, Stone, etc.\n'
-                                .. 'Types: The elements below the categories',
+                        widgets.Label{
+                            text='Select below what you wish to include.'
                         },
 
                         widgets.Panel{
@@ -402,25 +394,30 @@ function IncludeOptionScreen:init()
                             },
                         },
 
-                        widgets.Panel{
+                        widgets.HotkeyLabel{
                             frame={l=0, r=0, h=1},
-                            subviews={
-                                widgets.HotkeyLabel{
-                                    frame={l=0, t=0},
-                                    key='SELECT',
-                                    label='Confirm',
-                                    on_activate=function()
-                                        local opts = {
-                                            containers=self.containers,
-                                            general=self.general,
-                                            categories=self.categories,
-                                            types=self.types,
-                                        }
-                                        self:dismiss()
-                                        if self.on_close then self.on_close(opts) end
-                                    end,
+                            key='SELECT',
+                            label='Confirm',
+                            on_activate=function()
+                                local opts = {
+                                    containers=self.containers,
+                                    general=self.general,
+                                    categories=self.categories,
+                                    types=self.types,
                                 },
-                            },
+                                self:dismiss()
+                                if self.on_close then self.on_close(opts) end
+                            end,
+                        },
+
+                        widgets.TooltipLabel{ --TODO make it hide/show, link to doc
+                            view_id='tooltip',
+                            label="help",
+                            show_tooltip=true,
+                            text_to_wrap='Containers: Max barrels, max bins, max wheelbarrows\n'
+                                .. 'General: Buttons "Take from everywhere", Organic, Inorganic\n'
+                                .. 'Categories: Ammo, Food, Stone, etc.\n'
+                                .. 'Types: The elements below the categories',
                         },
                     },
                 },
@@ -458,11 +455,7 @@ function IncludeOptionScreen:update_labels()
 end
 
 function IncludeOptionScreen:onInput(keys)
-    if keys.LEAVESCREEN then
-        self:dismiss()
-        if self.on_close then self.on_close(nil) end
-        return true
-    elseif keys.SELECT then
+    if keys.SELECT then
         local opts = {
             containers=self.containers,
             general=self.general,

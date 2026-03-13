@@ -248,7 +248,7 @@ local function has_direction_panel()
             and uibs.building_subtype == df.trap_type.TrackStop)
 end
 
-local pressure_plate_panel_frame = {t=4, h=37, w=46, r=28}
+local pressure_plate_panel_frame = {t=4, h=38, w=50, r=28}
 
 local function has_pressure_plate_panel()
     return is_pressure_plate()

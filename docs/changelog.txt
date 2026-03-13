@@ -60,6 +60,7 @@ Template for new versions:
 
 ## Fixes
 - `autoclothing`, `autoslab`, `tailor`: orders will no longer be created with a repetition frequency of ``NONE``
+- `buildingplan`: fixed non-clickable pressure plates's triggers (issue #5736)
 
 ## Misc Improvements
 - General: DFHack will unconditionally use UTF-8 for the console on Windows, now that DF forces the process effective system code page to 65001 during startup

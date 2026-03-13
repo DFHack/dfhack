@@ -148,7 +148,7 @@ local function is_interior(bounds, x, y)
         y ~= bounds.y1 and y ~= bounds.y2
 end
 
--- adjusted from CycleHotkeyLabel on the planner panel later
+-- adjusted from WeaponSpiketrapPanel (HotKey & Slider) on the planner panel
 local weapon_quantity = 1
 
 local function get_quantity(filter, hollow, bounds)
@@ -658,14 +658,14 @@ function PlannerOverlay:init()
 
     local buildingplan = require('plugins.buildingplan')
     
-    -- WeaponSpikeTrapPanel defined outside of main_panel, otherwise addviews breaks -> addviews expects table
-    local WeaponSpikeTrapPanel = defclass(WeaponSpikeTrapPanel, widgets.Panel)
-    WeaponSpikeTrapPanel.ATTRS{
+    -- WeaponSpiketrapPanel defined outside of main_panel, otherwise addviews breaks -> addviews expects table
+    local WeaponSpiketrapPanel = defclass(WeaponSpiketrapPanel, widgets.Panel)
+    WeaponSpiketrapPanel.ATTRS{
         view_id='weapons',
         visible=is_weapon_or_spike_trap,
     }
 
-    function WeaponSpikeTrapPanel:init()
+    function WeaponSpiketrapPanel:init()
         self.options = utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10)
         self.selected_idx = weapon_quantity
         
@@ -680,7 +680,13 @@ function PlannerOverlay:init()
                 initial_option=self.selected_idx,
                 on_change=function(val) weapon_quantity = val end,
             },
-        }
+            widgets.Slider{
+                view_id='weapons_slider',
+                frame={b=8, l=1, w=28},
+                num_stops=#self.options,
+                
+            },
+        },
     end
 
     main_panel:addviews{
@@ -754,7 +760,7 @@ function PlannerOverlay:init()
             },
         },
         
-        WeaponSpikeTrapPanel{},
+        WeaponSpiketrapPanel{},
         
         widgets.ToggleHotkeyLabel {
             view_id='engraved',

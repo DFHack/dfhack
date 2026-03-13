@@ -290,6 +290,8 @@ IncludeOptionScreen.ATTRS{
     on_close=DEFAULT_NIL,
 }
 
+IncludeOptionScreen.INCLUDE_NAMES = {'containers', 'general', 'categories', 'types'}
+
 function IncludeOptionScreen:init()
     self.containers = true
     self.general = true
@@ -307,7 +309,7 @@ function IncludeOptionScreen:init()
                 widgets.TooltipLabel{
                     view_id='disclaimer',
                     frame={r=0, t=3, w=17},
-                    text_to_wrap='All set to [No] skips "--include" and includes everything!',
+                    text_to_wrap='All set to [No] skips --include and includes everything!',
                     text_pen=COLOR_LIGHTRED,
                     show_tooltip=true,
                 },
@@ -317,9 +319,7 @@ function IncludeOptionScreen:init()
                     frame={r=0, b=1, w=15},
                     key='CUSTOM_H',
                     label='Toggle help',
-                    on_activate=function()
-                        self:toggle_help()
-                    end,
+                    on_activate=function() self:toggle_help() end,
                 },
 
                 widgets.Panel{
@@ -335,17 +335,14 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
-                                    frame={l=0, t=0},
+                                    frame={l=0},
                                     key='CUSTOM_C',
                                     label='Include containers:',
-                                    on_activate=function()
-                                        self.containers = not self.containers
-                                        self:update_labels()
-                                    end,
+                                    on_activate=function() self:toggle_option('containers') end,
                                 },
                                 widgets.Label{
                                     view_id='containers_lbl',
-                                    frame={r=24, t=0, w=10},
+                                    frame={r=24, w=10},
                                     text_halign=2,
                                     text='',
                                 },
@@ -356,17 +353,14 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
-                                    frame={l=0, t=0},
+                                    frame={l=0},
                                     key='CUSTOM_G',
                                     label='Include general:',
-                                    on_activate=function()
-                                        self.general = not self.general
-                                        self:update_labels()
-                                    end,
+                                    on_activate=function() self:toggle_option('general') end,
                                 },
                                 widgets.Label{
                                     view_id='general_lbl',
-                                    frame={r=24, t=0, w=10},
+                                    frame={r=24, w=10},
                                     text_halign=2,
                                     text='',
                                 },
@@ -377,17 +371,14 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
-                                    frame={l=0, t=0},
+                                    frame={l=0},
                                     key='CUSTOM_A',
                                     label='Include categories:',
-                                    on_activate=function()
-                                        self.categories = not self.categories
-                                        self:update_labels()
-                                    end,
+                                    on_activate=function() self:toggle_option('categories') end,
                                 },
                                 widgets.Label{
                                     view_id='categories_lbl',
-                                    frame={r=24, t=0, w=10},
+                                    frame={r=24, w=10},
                                     text_halign=2,
                                     text='',
                                 },
@@ -398,17 +389,14 @@ function IncludeOptionScreen:init()
                             frame={l=0, r=0, h=1},
                             subviews={
                                 widgets.HotkeyLabel{
-                                    frame={l=0, t=0},
+                                    frame={l=0},
                                     key='CUSTOM_T',
                                     label='Include types:',
-                                    on_activate=function()
-                                        self.types = not self.types
-                                        self:update_labels()
-                                    end,
+                                    on_activate=function() self:toggle_option('types') end,
                                 },
                                 widgets.Label{
                                     view_id='types_lbl',
-                                    frame={r=24, t=0, w=10},
+                                    frame={r=24, w=10},
                                     text_halign=2,
                                     text='',
                                 },
@@ -419,19 +407,10 @@ function IncludeOptionScreen:init()
                             frame={l=0, h=1, w=30},
                             key='SELECT',
                             label='Confirm',
-                            on_activate=function()
-                                local opts = {
-                                    containers=self.containers,
-                                    general=self.general,
-                                    categories=self.categories,
-                                    types=self.types,
-                                },
-                                self:dismiss()
-                                if self.on_close then self.on_close(opts) end
-                            end,
+                            on_activate=function() self:confirm() end,
                         },
 
-                        --TODO? link to doc --is present on the left overlay
+                        --TODO: link to doc; but is present on the left overlay
                         widgets.WrappedLabel{
                             view_id='tooltip',
                             visible=false,
@@ -449,8 +428,36 @@ function IncludeOptionScreen:init()
     self:update_labels()
 end
 
+function IncludeOptionScreen:confirm()
+    local opts = {}
+    for _, name in ipairs(self.INCLUDE_NAMES) do
+        opts[name] = self[name]
+    end
+    self:dismiss()
+    if self.on_close then self.on_close(opts) end
+end
+
+function IncludeOptionScreen:toggle_option(name)
+    self[name] = not self[name]
+    self:update_labels()
+end
+
+function IncludeOptionScreen:toggle_help()
+    self.show_help = not self.show_help
+    self.subviews.tooltip.visible = self.show_help
+
+    -- declaring variables is not stricly needed below, but left as is for future improvements
+    local main = self.subviews.main
+    main.frame.h = self.show_help and 21 or 16
+    
+    --TODO : make the text 'Show help'/'Hide help' dynamic
+    local help = self.subviews.help
+    help.frame.b = self.show_help and 6 or 1
+    self:updateLayout()
+end
+
 function IncludeOptionScreen:update_labels()
-    for _, name in ipairs{'containers', 'general', 'categories', 'types'} do
+    for _, name in ipairs(self.INCLUDE_NAMES) do
         local val = self[name]
         self.subviews[name .. '_lbl']:setText{
             val and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
@@ -458,53 +465,26 @@ function IncludeOptionScreen:update_labels()
             not val and {text='[No]', pen=COLOR_YELLOW} or 'No',
         }
     end
-    
+
     local all_false = not (self.containers or self.general or self.categories or self.types)
     self.subviews.disclaimer.visible = all_false
-    
-end
-
-function IncludeOptionScreen:toggle_help()
-    self.show_help = not self.show_help
-    self.subviews.tooltip.visible = self.show_help
-
-    local main = self.subviews.main
-    main.frame.h = self.show_help and 21 or 16
-    
-    local help = self.subviews.help
-    help.frame.b = self.show_help and 6 or 1
-    --trying to make the text 'Show help' dynamic 
-    --help = self.show_help and help:setText{'Hide help'} or help:setText{'Show help'} --nope
-    self:updateLayout()
-
 end
 
 function IncludeOptionScreen:onInput(keys)
     if keys.SELECT then
-        local opts = {
-            containers=self.containers,
-            general=self.general,
-            categories=self.categories,
-            types=self.types,
-        }
-        self:dismiss()
-        if self.on_close then self.on_close(opts) end
+        self:confirm()
         return true
     elseif keys.CUSTOM_C then
-        self.containers = not self.containers
-        self:update_labels()
+        self:toggle_option('containers')
         return true
     elseif keys.CUSTOM_G then
-        self.general = not self.general
-        self:update_labels()
+        self:toggle_option('general')
         return true
     elseif keys.CUSTOM_A then
-        self.categories = not self.categories
-        self:update_labels()
+        self:toggle_option('categories')
         return true
     elseif keys.CUSTOM_T then
-        self.types = not self.types
-        self:update_labels()
+        self:toggle_option('types')
         return true
     end
 
@@ -519,10 +499,11 @@ local function do_export()
             if not opts then return end
 
             local includes = {}
-            if opts.containers then table.insert(includes, 'containers') end
-            if opts.general then table.insert(includes, 'general') end
-            if opts.categories then table.insert(includes, 'categories') end
-            if opts.types then table.insert(includes, 'types') end
+            for _, name in ipairs(IncludeOptionScreen.INCLUDE_NAMES) do
+                if opts[name] then
+                    table.insert(includes, name)
+                end
+            end
 
             dialogs.InputBox{
                 frame_title='Export Stockpile Settings',
@@ -537,7 +518,6 @@ local function do_export()
         end,
     }:show()
 end
-
 
 --------------------
 -- ConfigModal

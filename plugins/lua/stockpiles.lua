@@ -295,12 +295,33 @@ function IncludeOptionScreen:init()
     self.general = true
     self.categories = true
     self.types = true
+    
+    self.show_help = false
 
     self:addviews{
         widgets.Window{
-            frame={w=72, h=20},
+            view_id='main',
+            frame={w=72, h=16},
             frame_title='Include option',
             subviews={
+                widgets.TooltipLabel{
+                    view_id='disclaimer',
+                    frame={r=0, t=3, w=17},
+                    text_to_wrap='All set to [No] skips "--include" and includes everything!',
+                    text_pen=COLOR_LIGHTRED,
+                    show_tooltip=true,
+                },
+
+                widgets.HotkeyLabel{
+                    view_id='help',
+                    frame={r=0, b=1, w=15},
+                    key='CUSTOM_H',
+                    label='Toggle help',
+                    on_activate=function()
+                        self:toggle_help()
+                    end,
+                },
+
                 widgets.Panel{
                     frame={l=0, r=0, t=0, b=0},
                     autoarrange_subviews=true,
@@ -395,7 +416,7 @@ function IncludeOptionScreen:init()
                         },
 
                         widgets.HotkeyLabel{
-                            frame={l=0, r=0, h=1},
+                            frame={l=0, h=1, w=30},
                             key='SELECT',
                             label='Confirm',
                             on_activate=function()
@@ -410,10 +431,10 @@ function IncludeOptionScreen:init()
                             end,
                         },
 
-                        widgets.TooltipLabel{ --TODO make it hide/show, link to doc
+                        --TODO? link to doc --is present on the left overlay
+                        widgets.WrappedLabel{
                             view_id='tooltip',
-                            label="help",
-                            show_tooltip=true,
+                            visible=false,
                             text_to_wrap='Containers: Max barrels, max bins, max wheelbarrows\n'
                                 .. 'General: Buttons "Take from everywhere", Organic, Inorganic\n'
                                 .. 'Categories: Ammo, Food, Stone, etc.\n'
@@ -429,29 +450,33 @@ function IncludeOptionScreen:init()
 end
 
 function IncludeOptionScreen:update_labels()
-    self.subviews.containers_lbl:setText{
-        self.containers and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
-        ' / ',
-        not self.containers and {text='[No]', pen=COLOR_YELLOW} or 'No',
-    }
+    for _, name in ipairs{'containers', 'general', 'categories', 'types'} do
+        local val = self[name]
+        self.subviews[name .. '_lbl']:setText{
+            val and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+            ' / ',
+            not val and {text='[No]', pen=COLOR_YELLOW} or 'No',
+        }
+    end
+    
+    local all_false = not (self.containers or self.general or self.categories or self.types)
+    self.subviews.disclaimer.visible = all_false
+    
+end
 
-    self.subviews.general_lbl:setText{
-        self.general and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
-        ' / ',
-        not self.general and {text='[No]', pen=COLOR_YELLOW} or 'No',
-    }
+function IncludeOptionScreen:toggle_help()
+    self.show_help = not self.show_help
+    self.subviews.tooltip.visible = self.show_help
 
-    self.subviews.categories_lbl:setText{
-        self.categories and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
-        ' / ',
-        not self.categories and {text='[No]', pen=COLOR_YELLOW} or 'No',
-    }
+    local main = self.subviews.main
+    main.frame.h = self.show_help and 21 or 16
+    
+    local help = self.subviews.help
+    help.frame.b = self.show_help and 6 or 1
+    --trying to make the text 'Show help' dynamic 
+    --help = self.show_help and help:setText{'Hide help'} or help:setText{'Show help'} --nope
+    self:updateLayout()
 
-    self.subviews.types_lbl:setText{
-        self.types and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
-        ' / ',
-        not self.types and {text='[No]', pen=COLOR_YELLOW} or 'No',
-    }
 end
 
 function IncludeOptionScreen:onInput(keys)

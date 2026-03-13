@@ -680,13 +680,14 @@ function PlannerOverlay:init()
                 initial_option=self.selected_idx,
                 on_change=function(val) weapon_quantity = val end,
             },
+            --[[
             widgets.Slider{
                 view_id='weapons_slider',
                 frame={b=8, l=1, w=28},
                 num_stops=#self.options,
                 
-            },
-        },
+            --]]
+        }
     end
 
     main_panel:addviews{

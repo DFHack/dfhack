@@ -297,7 +297,7 @@ function IncludeOptionScreen:init()
     self.general = true
     self.categories = true
     self.types = true
-    
+
     self.show_help = false
 
     self:addviews{
@@ -449,7 +449,7 @@ function IncludeOptionScreen:toggle_help()
     -- declaring variables is not stricly needed below, but left as is for future improvements
     local main = self.subviews.main
     main.frame.h = self.show_help and 21 or 16
-    
+
     --TODO : make the text 'Show help'/'Hide help' dynamic
     local help = self.subviews.help
     help.frame.b = self.show_help and 6 or 1

@@ -41,7 +41,7 @@ function Slider:onInput(keys)
     local left_pos = width_per_idx*(left_idx-1)
     local right_pos = width_per_idx*(right_idx-1) + 4
     if x < left_pos then
-        self.on_change(self.get_idx_fn() - 1)
+        self.on_change(math.max(1, self.get_idx_fn() - 1))
     elseif x < left_pos+3 then
         self.is_dragging_target = 'left'
         self.is_dragging_idx = x - left_pos
@@ -52,7 +52,7 @@ function Slider:onInput(keys)
         self.is_dragging_target = 'right'
         self.is_dragging_idx = x - right_pos
     else
-        self.on_change(self.get_idx_fn() + 1)
+        self.on_change(math.min(self.num_stops, self.get_idx_fn() + 1))
     end
     return true
 end

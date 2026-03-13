@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `buildingplan`: fixed non-clickable pressure plates's triggers (issue #5736)
 
 ## Misc Improvements
 

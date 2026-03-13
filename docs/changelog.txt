@@ -57,6 +57,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `stockpiles`: Added an export options window to configure the --include option in the UI
 
 ## Fixes
 - `autoclothing`, `autoslab`, `tailor`: orders will no longer be created with a repetition frequency of ``NONE``

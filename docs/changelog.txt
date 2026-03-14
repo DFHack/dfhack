@@ -59,7 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- GUI: Fix sliders allowing values outside their number of stops (num_stops) when incremented with mouse clicks.
+- GUI: Fix sliders allowing values outside their number of stops (num_stops) when incremented with the mouse.
 
 ## Misc Improvements
 

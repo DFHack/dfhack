@@ -753,7 +753,7 @@ function PlannerOverlay:init()
                 {label='Up', value=df.construction_type.UpStair},
             },
         },
-        widgets.CycleHotkeyLabel {
+        widgets.CycleHotkeyLabel{
             view_id='stairs_only_subtype',
             frame={b=7, l=1, w=30},
             key='CUSTOM_R',

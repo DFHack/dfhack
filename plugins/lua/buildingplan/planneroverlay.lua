@@ -657,7 +657,7 @@ function PlannerOverlay:init()
     end
 
     local buildingplan = require('plugins.buildingplan')
-    
+
     -- WeaponSpiketrapPanel defined outside of main_panel, otherwise addviews breaks -> addviews expects table
     local WeaponSpiketrapPanel = defclass(WeaponSpiketrapPanel, widgets.Panel)
     WeaponSpiketrapPanel.ATTRS{
@@ -667,7 +667,7 @@ function PlannerOverlay:init()
 
     function WeaponSpiketrapPanel:init()
         self.options = utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10)
-        
+
         self:addviews{
             widgets.CycleHotkeyLabel{
                 view_id='weapons_hotkey',
@@ -677,7 +677,7 @@ function PlannerOverlay:init()
                 label='Number of weapons:',
                 options=self.options,
                 initial_option=weapon_quantity,
-                on_change=function(val) 
+                on_change=function(val)
                     weapon_quantity = val
                 end
             },
@@ -765,9 +765,9 @@ function PlannerOverlay:init()
                 {label='Down', value=df.construction_type.DownStair},
             },
         },
-        
+
         WeaponSpiketrapPanel{},
-        
+
         widgets.ToggleHotkeyLabel {
             view_id='engraved',
             frame={b=4, l=1, w=22},

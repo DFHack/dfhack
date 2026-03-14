@@ -667,7 +667,6 @@ function PlannerOverlay:init()
 
     function WeaponSpiketrapPanel:init()
         self.options = utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10)
-        self.selected_idx = weapon_quantity
         
         self:addviews{
             widgets.CycleHotkeyLabel{
@@ -677,16 +676,22 @@ function PlannerOverlay:init()
                 key_back='CUSTOM_SHIFT_T',
                 label='Number of weapons:',
                 options=self.options,
-                initial_option=self.selected_idx,
-                on_change=function(val) weapon_quantity = val end,
+                initial_option=weapon_quantity,
+                on_change=function(val) 
+                    weapon_quantity = val
+                end
             },
-            --[[
+
             widgets.Slider{
                 view_id='weapons_slider',
-                frame={b=8, l=1, w=28},
+                frame={b=6, l=4, w=35},
                 num_stops=#self.options,
-                
-            --]]
+                get_idx_fn=function() return weapon_quantity end,
+                on_change=function(val)
+                    weapon_quantity = val
+                    self.subviews.weapons_hotkey:setOption(val)
+                end
+            }
         }
     end
 

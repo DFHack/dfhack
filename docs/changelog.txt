@@ -57,6 +57,25 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `buildingplan`: added a slider on the weapontrap overlay
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.11-r2
+
+## New Tools
+
+## New Features
 
 ## Fixes
 - `autoclothing`, `autoslab`, `tailor`: orders will no longer be created with a repetition frequency of ``NONE``

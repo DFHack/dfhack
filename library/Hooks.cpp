@@ -25,7 +25,7 @@ DFhackCExport void dfhooks_init() {
     }
 
     // we need to init DF globals before we can check the commandline
-    if (!DFHack::Core::getInstance().InitMainThread(basepath) || !df::global::game) {
+    if (!DFHack::Core::getInstance().InitMainThread(std::filesystem::canonical(basepath)) || !df::global::game) {
         // we don't set disabled to true here so symbol generation can work
         return;
     }

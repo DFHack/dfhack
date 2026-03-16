@@ -1054,16 +1054,17 @@ void Core::fatal (std::string output, const char * title)
 
 std::filesystem::path Core::getHackPath()
 {
-    return Filesystem::get_initial_cwd() / "hack";
+    return hack_path;
 }
 
 df::viewscreen * Core::getTopViewscreen() {
     return getInstance().top_viewscreen;
 }
 
-bool Core::InitMainThread() {
+bool Core::InitMainThread(std::filesystem::path path) {
     // this hook is always called from DF's main (render) thread, so capture this thread id
     df_render_thread = std::this_thread::get_id();
+    hack_path = path;
 
     Filesystem::init();
 

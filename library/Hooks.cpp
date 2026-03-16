@@ -7,6 +7,14 @@ static bool disabled = false;
 
 DFhackCExport const int32_t dfhooks_priority = 100;
 
+static std::filesystem::path basepath{"./hack"};
+
+// called by the chainloader before the main thread is initialized and before any other hooks are called.
+DFhackCExport void dfhooks_preinit(std::filesystem::path dllpath)
+{
+    basepath = dllpath.parent_path();
+}
+
 // called from the main thread before the simulation thread is started
 // and the main event loop is initiated
 DFhackCExport void dfhooks_init() {
@@ -17,7 +25,7 @@ DFhackCExport void dfhooks_init() {
     }
 
     // we need to init DF globals before we can check the commandline
-    if (!DFHack::Core::getInstance().InitMainThread() || !df::global::game) {
+    if (!DFHack::Core::getInstance().InitMainThread(basepath) || !df::global::game) {
         // we don't set disabled to true here so symbol generation can work
         return;
     }

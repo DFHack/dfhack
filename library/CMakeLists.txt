@@ -131,7 +131,6 @@ endif()
 
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
-    Hooks.cpp
 )
 
 if(WIN32)
@@ -453,8 +452,9 @@ if(UNIX)
 endif()
 
 install(TARGETS dfhooks_dfhack
-        LIBRARY DESTINATION .
-        RUNTIME DESTINATION .)
+        LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
+        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+
 
 # install the main lib
 install(TARGETS dfhack
@@ -464,6 +464,12 @@ install(TARGETS dfhack
 install(TARGETS dfhack-run dfhack-client binpatch
     LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
     RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+
+file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/dfhooks_dfhack.ini
+    CONTENT "${DFHACK_DATA_DESTINATION}/$<TARGET_FILE_NAME:dfhooks_dfhack>")
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dfhooks_dfhack.ini
+    DESTINATION .)
 
 endif(BUILD_LIBRARY)
 

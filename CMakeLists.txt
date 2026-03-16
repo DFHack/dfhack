@@ -226,13 +226,10 @@ set(DFHACK_DATA_DESTINATION hack)
 
 ## where to install things (after the build is done, classic 'make install' or package structure)
 # the dfhack libraries will be installed here:
-if(UNIX)
-    # put the lib into DF/hack
-    set(DFHACK_LIBRARY_DESTINATION ${DFHACK_DATA_DESTINATION})
-else()
-    # windows is crap, therefore we can't do nice things with it. leave the libs on a nasty pile...
-    set(DFHACK_LIBRARY_DESTINATION .)
-endif()
+
+# put the lib into DF/hack
+# windows will find it because dfhooks will `AddDllDirectory` the hack folder at runtime
+set(DFHACK_LIBRARY_DESTINATION ${DFHACK_DATA_DESTINATION})
 
 # external tools will be installed here:
 set(DFHACK_BINARY_DESTINATION .)
@@ -267,7 +264,7 @@ if(UNIX)
         set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -m32 -march=i686")
     endif()
     string(REPLACE "-DNDEBUG" "" CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO}")
-    set(CMAKE_INSTALL_RPATH ${DFHACK_LIBRARY_DESTINATION})
+    set(CMAKE_INSTALL_RPATH "$ORIGIN/${DFHACK_LIBRARY_DESTINATION}")
 elseif(MSVC)
     # for msvc, tell it to always use 8-byte pointers to member functions to avoid confusion
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /vmg /vmm /MP")

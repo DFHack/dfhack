@@ -27,7 +27,7 @@ static std::filesystem::path getModulePath()
     return std::filesystem::path(path);
 #else
     Dl_info info;
-    dladdr(getModulePath, &info);
+    dladdr((const void*)getModulePath, &info);
     return std::filesystem::path(info.dli_fname);
 #endif
 }

@@ -68,7 +68,7 @@ static bool is_painting_warm = false;
 static bool is_painting_damp = false;
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands) {
-    textures = Textures::loadTileset("hack/data/art/damp_dig_map.png", 32, 32, true);
+    textures = Textures::loadTileset(Core::getInstance().getHackPath() / "data" / "art" / "damp_dig_map.png", 32, 32, true);
 
     commands.push_back(PluginCommand(
         "digv",

@@ -51,6 +51,7 @@ SOFTWARE.
 #include <chrono>
 #include <iostream>
 
+#include "Files.h"
 #include "modules/DFSDL.h"
 #include "modules/Filesystem.h"
 
@@ -246,17 +247,10 @@ std::filesystem::path Filesystem::canonicalize(std::filesystem::path p) noexcept
 
 std::filesystem::path Filesystem::getInstallDir() noexcept
 {
-    return std::filesystem::path{ DFSDL::DFSDL_GetBasePath() };
+    return DFHack::getInstallPath();
 }
 
 std::filesystem::path Filesystem::getBaseDir() noexcept
 {
-    auto getsavebase = []() {
-        // assume portable mode is _on_ if init is missing
-        if (!df::global::init || df::global::init->media.flag.is_set(df::enums::init_media_flags::PORTABLE_MODE))
-            return DFSDL::DFSDL_GetBasePath();
-        else
-            return DFSDL::DFSDL_GetPrefPath("Bay 12 Games", "Dwarf Fortress");
-        };
-    return std::filesystem::path{ getsavebase() };
+    return DFHack::getBasePath();
 }

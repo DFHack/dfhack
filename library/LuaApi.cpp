@@ -4137,7 +4137,8 @@ static int internal_addScriptPath(lua_State *L)
 
 static int internal_removeScriptPath(lua_State *L)
 {
-    const char *path = luaL_checkstring(L, 1);
+    const char *pathStr = luaL_checkstring(L, 1);
+    std::filesystem::path path = pathStr;
     lua_pushboolean(L, Core::getInstance().removeScriptPath(path));
     return 1;
 }
@@ -4146,8 +4147,7 @@ static int internal_getScriptPaths(lua_State *L)
 {
     int i = 1;
     lua_newtable(L);
-    vector<std::filesystem::path> paths;
-    Core::getInstance().getScriptPaths(&paths);
+    auto paths = Core::getInstance().getScriptPaths();
     for (auto it = paths.begin(); it != paths.end(); ++it)
     {
         lua_pushinteger(L, i++);

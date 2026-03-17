@@ -26,7 +26,7 @@ static std::filesystem::path getModulePath()
     GetModuleFileNameW(module, path, MAX_PATH);
     return std::filesystem::path(path);
 #else
-    DL_info info;
+    Dl_info info;
     dladdr(getModulePath, &info);
     return std::filesystem::path(info.dli_fname);
 #endif

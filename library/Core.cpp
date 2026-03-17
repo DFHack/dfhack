@@ -1092,6 +1092,7 @@ bool Core::InitMainThread(std::filesystem::path path) {
         std::cerr << "Build url: " << Version::dfhack_run_url() << std::endl;
     }
     std::cerr << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
+    std::cerr << "Hack path: " << getHackPath() << std::endl;
 
     std::cerr << "Binding to SDL.\n";
     if (!DFSDL::init(con)) {
@@ -1233,9 +1234,9 @@ bool Core::InitSimulationThread()
 {
     // the update hook is only called from the simulation thread, so capture this thread id
     df_simulation_thread = std::this_thread::get_id();
-    if(started)
+    if (started)
         return true;
-    if(errorstate)
+    if (errorstate)
         return false;
 
     // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
@@ -1277,20 +1278,20 @@ bool Core::InitSimulationThread()
             std::cout << "Console disabled.\n";
         }
     }
-    else if(con.init(false))
+    else if (con.init(false))
         std::cerr << "Console is running.\n";
     else
         std::cerr << "Console has failed to initialize!\n";
-/*
-    // dump offsets to a file
-    std::ofstream dump("offsets.log");
-    if(!dump.fail())
-    {
-        //dump << vinfo->PrintOffsets();
-        dump.close();
-    }
-    */
-    // initialize data defs
+    /*
+        // dump offsets to a file
+        std::ofstream dump("offsets.log");
+        if(!dump.fail())
+        {
+            //dump << vinfo->PrintOffsets();
+            dump.close();
+        }
+        */
+        // initialize data defs
     virtual_identity::Init(this);
 
     // create config directory if it doesn't already exist
@@ -1307,7 +1308,8 @@ bool Core::InitSimulationThread()
     else
     {
         // ensure all config file directories exist before we start copying files
-        for (auto &entry : default_config_files) {
+        for (auto& entry : default_config_files)
+        {
             // skip over files
             if (!entry.second)
                 continue;
@@ -1317,19 +1319,22 @@ bool Core::InitSimulationThread()
         }
 
         // copy files from the default tree that don't already exist in the config tree
-        for (auto &entry : default_config_files) {
+        for (auto& entry : default_config_files)
+        {
             // skip over directories
             if (entry.second)
                 continue;
             std::filesystem::path filename = entry.first;
-            if (!config_files.contains(filename)) {
+            if (!config_files.contains(filename))
+            {
                 std::filesystem::path src_file = getConfigDefaultsPath() / filename;
                 if (!Filesystem::isfile(src_file))
                     continue;
                 std::filesystem::path dest_file = getConfigPath() / filename;
                 std::ifstream src(src_file, std::ios::binary);
                 std::ofstream dest(dest_file, std::ios::binary);
-                if (!src.good() || !dest.good()) {
+                if (!src.good() || !dest.good())
+                {
                     con.printerr("Copy failed: '{}'\n", filename);
                     continue;
                 }
@@ -1338,6 +1343,17 @@ bool Core::InitSimulationThread()
                 dest.close();
             }
         }
+    }
+
+    // set lua default path if not already set
+    if (std::getenv("DFHACK_LUA_PATH") == nullptr)
+    {
+        std::filesystem::path lua_path = getHackPath() / "lua" / "?.lua";
+#ifdef WIN32
+        _putenv_s("DFHACK_LUA_PATH", lua_path.string().c_str());
+#else
+        setenv("DFHACK_LUA_PATH", lua_path.string().c_str(), 1);
+#endif
     }
 
     loadScriptPaths(con);

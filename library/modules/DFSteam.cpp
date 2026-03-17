@@ -157,7 +157,8 @@ static bool launchDFHack(color_ostream& out) {
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    static LPCWSTR procname = L"hack/launchdf.exe";
+    auto procpath = Core.getInstance().getHackPath() / "launchdf.exe";
+    LPCWSTR procname = procpath.wstring().c_str();
     static const char * env = "\0";
 
     // note that the environment must be explicitly zeroed out and not NULL,
@@ -208,7 +209,8 @@ static bool launchDFHack(color_ostream& out) {
         return false;
     } else if (pid == 0) {
         // child process
-        static const char * command = "hack/launchdf";
+        auto procpath = Core.getInstance().getHackPath() / "launchdf.exe";
+        char * command = procpath.string().c_str();
         unsetenv("SteamAppId");
         execl(command, command, NULL);
         _exit(EXIT_FAILURE);

@@ -664,7 +664,7 @@ uint32_t Process::getTickCount()
 #endif /* WIN32 */
 }
 
-std::filesystem::path Process::getPath()
+[[deprecated]] std::filesystem::path Process::getPath()
 {
 #if defined(WIN32) || !defined(_DARWIN)
     return Filesystem::get_initial_cwd();

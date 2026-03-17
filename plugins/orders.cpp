@@ -44,8 +44,8 @@ DFHACK_PLUGIN("orders");
 
 REQUIRE_GLOBAL(world);
 
-static const std::string ORDERS_DIR = "dfhack-config/orders";
-static const std::string ORDERS_LIBRARY_DIR = "hack/data/orders";
+static std::filesystem::path ORDERS_DIR = std::filesystem::path("dfhack-config") / "orders";
+static std::filesystem::path ORDERS_LIBRARY_DIR = Core::getInstance().getHackPath() / "data" / "orders";
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters);
 
@@ -506,7 +506,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
 
     Filesystem::mkdir(ORDERS_DIR);
 
-    std::ofstream file(ORDERS_DIR + "/" + name + ".json");
+    std::ofstream file(ORDERS_DIR / ( name + ".json"));
 
     file << orders << std::endl;
 
@@ -924,8 +924,7 @@ static command_result orders_import_command(color_ostream & out, const std::stri
         return CR_WRONG_USAGE;
     }
 
-    const std::string filename((is_library ? ORDERS_LIBRARY_DIR : ORDERS_DIR) +
-                                    "/" + fname + ".json");
+    auto filename((is_library ? ORDERS_LIBRARY_DIR : ORDERS_DIR) / (fname + ".json"));
     Json::Value orders;
 
     {

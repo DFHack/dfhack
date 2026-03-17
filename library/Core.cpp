@@ -859,7 +859,22 @@ bool Core::loadScriptFile(color_ostream &out, std::filesystem::path fname, bool 
         INFO(script,out) << "Running script: " << fname << std::endl;
         std::cerr << "Running script: " << fname << std::endl;
     }
-    std::ifstream script{ fname.c_str() };
+
+    auto pathlist = {getHackPath(), getHackPath().parent_path(), std::filesystem::current_path()};
+
+    std::filesystem::path path;
+
+    for (auto& p : pathlist)
+    {
+        auto candidate = fname.is_relative() ? p / fname : fname;
+        if (std::filesystem::exists(candidate))
+        {
+            path = candidate;
+            break;
+        }
+    }
+
+    std::ifstream script{ path };
     if ( !script )
     {
         if(!silent)

@@ -3,11 +3,36 @@
 
 #include "df/gamest.h"
 
+#ifdef _WIN32
+#   define WIN32_LEAN_AND_MEAN
+#   include <Windows.h>
+#   include <libloaderapi.h>
+#else
+#   include <dlfcn.h>
+#endif
+
 static bool disabled = false;
 
 DFhackCExport const int32_t dfhooks_priority = 100;
 
-static std::filesystem::path basepath{"./hack"};
+static std::filesystem::path getModulePath()
+{
+#ifdef _WIN32
+    HMODULE module = nullptr;
+    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)getModulePath, &module);
+    if (!module) return std::filesystem::path(); // should never happen, but just in case, return an empty path instead of crashing
+
+    wchar_t path[MAX_PATH];
+    GetModuleFileNameW(module, path, MAX_PATH);
+    return std::filesystem::path(path);
+#else
+    DL_info info;
+    dladdr(getModulePath, &info);
+    return std::filesystem::path(info.dli_fname);
+#endif
+}
+
+static std::filesystem::path basepath{getModulePath()};
 
 // called by the chainloader before the main thread is initialized and before any other hooks are called.
 DFhackCExport void dfhooks_preinit(std::filesystem::path dllpath)

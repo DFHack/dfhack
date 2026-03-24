@@ -208,7 +208,7 @@ static bool launchDFHack(color_ostream& out) {
         return false;
     } else if (pid == 0) {
         // child process
-        auto procpath = Core::getInstance().getHackPath() / "launchdf.exe";
+        auto procpath = Core::getInstance().getHackPath() / "launchdf";
         auto command = procpath.string();
         unsetenv("SteamAppId");
         execl(command.c_str(), command.c_str(), NULL);

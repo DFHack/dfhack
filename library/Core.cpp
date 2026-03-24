@@ -124,7 +124,7 @@ namespace DFHack {
 
     static const std::filesystem::path getConfigDefaultsPath()
     {
-        return Filesystem::getInstallDir() / "hack" / "data" / "dfhack-config-defaults";
+        return Core::getInstance().getHackPath() / "data" / "dfhack-config-defaults";
     };
 
 class MainThread {
@@ -492,7 +492,7 @@ void Core::getScriptPaths(std::vector<std::filesystem::path> *dest)
         if (save.size())
             dest->emplace_back(df_pref_path / "save" / save / "scripts");
     }
-    dest->emplace_back(df_install_path / "hack" / "scripts");
+    dest->emplace_back(getHackPath() / "scripts");
     for (auto & path : script_paths[2])
         dest->emplace_back(path);
     for (auto & path : script_paths[1])
@@ -1054,7 +1054,7 @@ void Core::fatal (std::string output, const char * title)
 
 std::filesystem::path Core::getHackPath()
 {
-    return p->getPath() / "hack";
+    return Filesystem::get_initial_cwd() / "hack";
 }
 
 df::viewscreen * Core::getTopViewscreen() {
@@ -1099,16 +1099,12 @@ bool Core::InitMainThread() {
     }
 
     // find out what we are...
-    #ifdef LINUX_BUILD
-        const char * path = "hack/symbols.xml";
-    #else
-        const char * path = "hack\\symbols.xml";
-    #endif
+    std::filesystem::path symbols_path = getHackPath() / "symbols.xml";
     auto local_vif = std::make_unique<DFHack::VersionInfoFactory>();
     std::cerr << "Identifying DF version.\n";
     try
     {
-        local_vif->loadFile(path);
+        local_vif->loadFile(symbols_path);
     }
     catch(Error::All & err)
     {

@@ -5,8 +5,8 @@ local _ENV = mkmodule('helpdb')
 local argparse = require('argparse')
 
 -- paths
-local RENDERED_PATH = 'hack/docs/docs/tools/'
-local TAG_DEFINITIONS = 'hack/docs/docs/Tags.txt'
+local RENDERED_PATH = dfhack.getHackPath() .. '/docs/docs/tools/'
+local TAG_DEFINITIONS = dfhack.getHackPath() .. '/docs/docs/Tags.txt'
 
 -- used when reading help text embedded in script sources
 local SCRIPT_DOC_BEGIN = '[====['

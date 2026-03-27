@@ -141,6 +141,10 @@ macro(dfhack_plugin)
             set_target_properties(${PLUGIN_NAME} PROPERTIES SUFFIX .plug.dll)
         endif()
 
+        if (UNIX)
+            set_target_properties(${PLUGIN_NAME} PROPERTIES INSTALL_RPATH "$ORIGIN/..")
+        endif()
+
         install(TARGETS ${PLUGIN_NAME}
             LIBRARY DESTINATION ${DFHACK_PLUGIN_DESTINATION}
             RUNTIME DESTINATION ${DFHACK_PLUGIN_DESTINATION})

@@ -10,6 +10,8 @@
 #include "steam_api.h"
 
 #include <string>
+#include <filesystem>
+#include <fstream>
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -245,14 +247,19 @@ int main(int argc, char* argv[]) {
     }
 
     bool nowait = false;
+    bool installmode = false;
 #ifdef WIN32
     std::wstring cmdline(lpCmdLine);
     if (cmdline.find(L"--nowait") != std::wstring::npos)
         nowait = true;
+    if (cmdline.find(L"--install") != std::wstring::npos)
+        installmode = true;
 #else
     for (int idx = 0; idx < argc; ++idx) {
         if (strcmp(argv[idx], "--nowait") == 0)
             nowait = true;
+        if (strcmp(argv[idx], "--install") == 0)
+            installmode = true;
     }
 #endif
 
@@ -294,21 +301,74 @@ int main(int argc, char* argv[]) {
     char buf[2048] = "";
 
     int b1 = SteamApps()->GetAppInstallDir(DFHACK_STEAM_APPID, (char*)&buf, 2048);
-    std::string dfhack_install_folder = (b1 != -1) ? std::string(buf) : "";
+    std::filesystem::path dfhack_install_folder = (b1 != -1) ? std::string(buf) : "";
 
     int b2 = SteamApps()->GetAppInstallDir(DF_STEAM_APPID, (char*)&buf, 2048);
-    std::string df_install_folder = (b2 != -1) ? std::string(buf) : "";
+    std::filesystem::path df_install_folder = (b2 != -1) ? std::string(buf) : "";
 
-
-    if (df_install_folder != dfhack_install_folder) {
-        // DF and DFHack are not installed in the same library
+    if (df_install_folder != dfhack_install_folder)
+    {
 #ifdef WIN32
-        MessageBoxW(NULL, L"DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.", NULL, 0);
+        constexpr auto dfhooks_dll_name = "dfhooks.dll";
+        constexpr auto dfhook_dfhack_dll_name = "dfhooks_dfhack.dll";
 #else
-        notify("DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.");
+        constexpr auto dfhooks_dll_name = "libdfhooks.so";
+        constexpr auto dfhook_dfhack_dll_name = "libdfhooks_dfhack.so";
 #endif
-        exit(1);
+        // DF and DFHack are not co-installed (modern case)
+        // inject dfhooks.dll and dfhooks_dfhack.ini into DF install folder
+        std::filesystem::path dfhooks_dll_src = dfhack_install_folder / dfhooks_dll_name;
+        std::filesystem::path dfhooks_dll_dst = df_install_folder / dfhooks_dll_name;
+        std::filesystem::path dfhooks_ini_dst = df_install_folder / "dfhooks_dfhack.ini";
+        std::filesystem::path dfhooks_dfhack_dll_src = dfhack_install_folder / "hack" / dfhook_dfhack_dll_name;
+
+        std::error_code ec;
+
+        std::filesystem::copy(dfhooks_dll_src, dfhooks_dll_dst, std::filesystem::copy_options::update_existing, ec);
+        if (!ec)
+        {
+            std::string indirection;
+            if (std::filesystem::exists(dfhooks_ini_dst))
+            {
+                std::ifstream ini(dfhooks_ini_dst);
+                std::getline(ini, indirection);
+            }
+
+            if (indirection != dfhooks_dfhack_dll_src.string())
+            {
+                std::ofstream ini(dfhooks_ini_dst);
+                ini << dfhooks_dfhack_dll_src.string() << std::endl;
+            }
+        }
+        else
+        {
+#ifdef WIN32
+            std::wstring message{
+                L"Failed to inject DFHack into Dwarf Fortress\n\n"
+                L"Details:\n" + std::filesystem::relative(dfhooks_dll_src).wstring() +
+                L" -> " + std::filesystem::relative(dfhooks_dll_dst).wstring() +
+                L"\n\nError code: " + std::to_wstring(ec.value()) +
+                L"\nError message: " + std::filesystem::relative(ec.message()).wstring()
+            };
+
+            MessageBoxW(NULL, message.c_str(), NULL, 0);
+#else
+            std::string message{
+                "Failed to inject DFHack into Dwarf Fortress\n\n"
+                "Details:\n" + std::filesystem::relative(dfhooks_dll_src).string() +
+                " -> " + std::filesystem::relative(dfhooks_dll_dst).string() +
+                "\n\nError code: " + std::to_string(ec.value()) +
+                "\nError message: " + std::filesystem::relative(ec.message()).string()
+            };
+
+            notify(message.c_str());
+#endif
+            exit(1);
+        }
     }
+
+    if (installmode)
+        exit(0);
 
     if (!wrap_launch(launch_via_steam))
         exit(1);

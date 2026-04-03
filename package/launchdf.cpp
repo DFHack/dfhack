@@ -12,6 +12,7 @@
 #include <string>
 #include <filesystem>
 #include <fstream>
+#include <optional>
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -275,10 +276,7 @@ bool check_for_old_install(std::filesystem::path df_path)
     for (auto file : old_filelist)
     {
         std::filesystem::path p = df_path / file;
-        bool exists = std::filesystem::exists(p);
-//        std::wstring message = L"Checking for legacy files:\n" + p.wstring() + L": " + (exists ? L"found" : L"not found");
-//        MessageBoxW(NULL, message.c_str(), L"Checking for legacy files", 0);
-        if (exists)
+        if (std::filesystem::exists(p))
             return true;
     }
     return false;
@@ -341,42 +339,38 @@ int main(int argc, char* argv[]) {
     }
 
 #ifdef WIN32
-    if (is_running_on_wine()) {
-        // attempt launch via steam client
-        LPCWSTR err = launch_via_steam_posix();
-
-        if (err != NULL)
-            // steam client launch failed, attempt fallback launch
-            err = launch_direct();
-
-        if (err != NULL)
-        {
-            MessageBoxW(NULL, err, NULL, 0);
-            exit(1);
-        }
-        exit(0);
-    }
+    bool wine_detected = is_running_on_wine();
+#else
+    bool wine_detected = false;
 #endif
 
-    // steam detected and not running in wine
+    bool df_detected = SteamApps()->BIsAppInstalled(DF_STEAM_APPID);
 
-    if (!SteamApps()->BIsAppInstalled(DF_STEAM_APPID)) {
+    if (!df_detected) {
         // Steam DF is not installed. Assume DF is installed in same directory as DFHack and do a fallback launch
         exit(wrap_launch(launch_direct) ? 0 : 1);
     }
 
-    // obtain DF app path
+    // obtain DF and DFHack app paths
 
-    char buf[2048] = "";
+    auto get_app_path_from_steam = [] (AppId_t appid) -> std::optional<std::filesystem::path> {
+        char buf[2048] = "";
+        int bytes = SteamApps()->GetAppInstallDir(appid, (char*)&buf, 2048);
+        if (bytes == -1)
+            return std::nullopt;
+        // steam API counts the null terminator in the byte count returned
+        if (buf[bytes] == '\0') bytes--;
+        return std::string(buf, bytes);
+        };
 
-    int b1 = SteamApps()->GetAppInstallDir(DFHACK_STEAM_APPID, (char*)&buf, 2048);
-    std::filesystem::path dfhack_install_folder = (b1 != -1) ? std::string(buf) : "";
+    auto opt_dfhack_install_folder = get_app_path_from_steam(DFHACK_STEAM_APPID);
+    auto opt_df_install_folder = get_app_path_from_steam(DF_STEAM_APPID);
 
-    int b2 = SteamApps()->GetAppInstallDir(DF_STEAM_APPID, (char*)&buf, 2048);
-    std::filesystem::path df_install_folder = (b2 != -1) ? std::string(buf) : "";
-
-    if (df_install_folder != dfhack_install_folder)
+    if (opt_dfhack_install_folder && opt_df_install_folder && (*opt_df_install_folder != *opt_dfhack_install_folder))
     {
+        auto& dfhack_install_folder = *opt_dfhack_install_folder;
+        auto& df_install_folder = *opt_df_install_folder;
+
 #ifdef WIN32
         constexpr auto dfhooks_dll_name = "dfhooks.dll";
         constexpr auto dfhook_dfhack_dll_name = "dfhooks_dfhack.dll";
@@ -414,8 +408,8 @@ int main(int argc, char* argv[]) {
 #ifdef WIN32
             std::wstring message{
                 L"Failed to inject DFHack into Dwarf Fortress\n\n"
-                L"Details:\n" + std::filesystem::relative(dfhooks_dll_src).wstring() +
-                L" -> " + std::filesystem::relative(dfhooks_dll_dst).wstring() +
+                L"Details:\n" + dfhooks_dll_src.wstring() +
+                L" -> " + dfhooks_dll_dst.wstring() +
                 L"\n\nError code: " + std::to_wstring(ec.value()) +
                 L"\nError message: " + std::filesystem::relative(ec.message()).wstring()
             };
@@ -424,8 +418,8 @@ int main(int argc, char* argv[]) {
 #else
             std::string message{
                 "Failed to inject DFHack into Dwarf Fortress\n\n"
-                "Details:\n" + std::filesystem::relative(dfhooks_dll_src).string() +
-                " -> " + std::filesystem::relative(dfhooks_dll_dst).string() +
+                "Details:\n" + dfhooks_dll_src.string() +
+                " -> " + dfhooks_dll_dst.string() +
                 "\n\nError code: " + std::to_string(ec.value()) +
                 "\nError message: " + std::filesystem::relative(ec.message()).string()
             };
@@ -458,6 +452,25 @@ int main(int argc, char* argv[]) {
 #endif
         }
     }
+
+#ifdef WIN32
+    if (wine_detected)
+    {
+        // attempt launch via steam client
+        LPCWSTR err = launch_via_steam_posix();
+
+        if (err != NULL)
+            // steam client launch failed, attempt fallback launch
+            err = launch_direct();
+
+        if (err != NULL)
+        {
+            MessageBoxW(NULL, err, NULL, 0);
+            exit(1);
+        }
+        exit(0);
+    }
+#endif
 
     if (!wrap_launch(launch_via_steam))
         exit(1);

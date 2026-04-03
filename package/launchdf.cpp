@@ -236,6 +236,80 @@ bool waitForDF(bool nowait) {
 
 #endif
 
+constexpr const char* old_filelist[] {
+    "hack",
+    "stonesense",
+#ifdef WIN32
+    "binpatch.exe",
+    "dfhack-run.exe",
+    "allegro-5.2.dll",
+    "allegro_color-5.2.dll",
+    "allegro_font-5.2.dll",
+    "allegro_image-5.2.dll",
+    "allegro_primitives-5.2.dll",
+    "allegro_ttf-5.2.dll",
+    "allegro-5.2.dll",
+    "dfhack-client.dll",
+    "dfhooks_dfhack.dll",
+    "lua53.dll",
+    "protobuf-lite.dll"
+#else
+    "binpatch",
+    "dfhack-run",
+    "liballegro-5.2.so",
+    "liballegro_color-5.2.so",
+    "liballegro_font-5.2.so",
+    "liballegro_image-5.2.so",
+    "liballegro_primitives-5.2.so",
+    "liballegro_ttf-5.2.so",
+    "liballegro-5.2.so",
+    "libdfhack-client.so",
+    "libdfhooks_dfhack.so",
+    "liblua53.so",
+    "libprotobuf-lite.so"
+#endif
+};
+
+bool check_for_old_install(std::filesystem::path df_path)
+{
+    for (auto file : old_filelist)
+    {
+        std::filesystem::path p = df_path / file;
+        bool exists = std::filesystem::exists(p);
+//        std::wstring message = L"Checking for legacy files:\n" + p.wstring() + L": " + (exists ? L"found" : L"not found");
+//        MessageBoxW(NULL, message.c_str(), L"Checking for legacy files", 0);
+        if (exists)
+            return true;
+    }
+    return false;
+}
+
+void remove_old_install(std::filesystem::path df_path)
+{
+    std::string message{
+        "Removing legacy files:"
+    };
+
+    for (auto file : old_filelist)
+    {
+        std::error_code ec;
+
+        std::filesystem::path p = df_path / file;
+
+        if (std::filesystem::is_directory(p))
+            std::filesystem::remove_all(p, ec);
+        else if (std::filesystem::is_regular_file(p))
+            std::filesystem::remove(p, ec);
+        else
+            continue;
+
+        message += "\n" + p.string() + ": " + (ec ? "failed to remove - " + ec.message() : "removed successfully");
+    }
+#ifdef WIN32
+    MessageBoxW(NULL, std::wstring(message.begin(), message.end()).c_str(), L"Legacy Install Cleanup", 0);
+#endif
+}
+
 #ifdef WIN32
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nShowCmd) {
 #else
@@ -247,19 +321,14 @@ int main(int argc, char* argv[]) {
     }
 
     bool nowait = false;
-    bool installmode = false;
 #ifdef WIN32
     std::wstring cmdline(lpCmdLine);
     if (cmdline.find(L"--nowait") != std::wstring::npos)
         nowait = true;
-    if (cmdline.find(L"--install") != std::wstring::npos)
-        installmode = true;
 #else
     for (int idx = 0; idx < argc; ++idx) {
         if (strcmp(argv[idx], "--nowait") == 0)
             nowait = true;
-        if (strcmp(argv[idx], "--install") == 0)
-            installmode = true;
     }
 #endif
 
@@ -365,10 +434,30 @@ int main(int argc, char* argv[]) {
 #endif
             exit(1);
         }
-    }
+        bool dirty = check_for_old_install(df_install_folder);
+        if (dirty)
+        {
+#ifdef WIN32
+            int ok = MessageBoxW(NULL, L"A legacy install of DFHack has been detected in the Dwarf Fortress folder. This likely means that you have installed DFHack with the old Steam client (or manually). This legacy installation will almost certainly interfere with using DFHack. Do you want to remove the old files now? (recommended)", L"Legacy DFHack Install Detected", MB_OKCANCEL);
 
-    if (installmode)
-        exit(0);
+            if (ok == IDOK)
+                remove_old_install(df_install_folder);
+#else
+            int response = 0;
+            std::string filelist;
+            for (auto file : old_filelist)
+                if (std::filesystem::exists(df_install_folder / file))
+                    filelist += (filelist.empty() ? "" : std::string(",")) + file;
+
+            std::string message{
+                "A legacy install of DFHack has been detected in the Dwarf Fortress directory.This likely means that you have installed DFHack with the old Steam client (or manually).This installation will almost certainly interfere with using DFHack. \n\n"
+                "To remove these files, run the following command: rm -r " + df_install_folder.string() + "/{ " + filelist + "}\n\n"
+            };
+
+            notify(message.c_str());
+#endif
+        }
+    }
 
     if (!wrap_launch(launch_via_steam))
         exit(1);
@@ -389,6 +478,5 @@ int main(int argc, char* argv[]) {
         usleep(1000000);
 #endif
     }
-
     exit(0);
 }

@@ -356,7 +356,7 @@ int main(int argc, char* argv[]) {
     auto get_app_path_from_steam = [] (AppId_t appid) -> std::optional<std::filesystem::path> {
         char buf[2048] = "";
         int bytes = SteamApps()->GetAppInstallDir(appid, (char*)&buf, 2048);
-        if (bytes == -1)
+        if (bytes <= 0)
             return std::nullopt;
         // steam API counts the null terminator in the byte count returned
         if (buf[bytes] == '\0') bytes--;

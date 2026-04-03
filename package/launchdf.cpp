@@ -340,8 +340,6 @@ int main(int argc, char* argv[]) {
 
 #ifdef WIN32
     bool wine_detected = is_running_on_wine();
-#else
-    bool wine_detected = false;
 #endif
 
     bool df_detected = SteamApps()->BIsAppInstalled(DF_STEAM_APPID);
@@ -437,7 +435,6 @@ int main(int argc, char* argv[]) {
             if (ok == IDOK)
                 remove_old_install(df_install_folder);
 #else
-            int response = 0;
             std::string filelist;
             for (auto file : old_filelist)
                 if (std::filesystem::exists(df_install_folder / file))

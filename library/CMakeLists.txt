@@ -131,7 +131,6 @@ endif()
 
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
-    Hooks.cpp
 )
 
 if(WIN32)
@@ -318,8 +317,6 @@ endif()
 
 # Compilation
 
-add_definitions(-DBUILD_DFHACK_LIB)
-
 if(UNIX)
     if(CONSOLE_NO_CATCH)
         add_definitions(-DCONSOLE_NO_CATCH)
@@ -373,6 +370,7 @@ if(EXISTS ${dfhack_SOURCE_DIR}/.git/index AND EXISTS ${dfhack_SOURCE_DIR}/.git/m
 endif()
 
 add_library(dfhack SHARED ${PROJECT_SOURCES})
+target_compile_definitions(dfhack PRIVATE BUILD_DFHACK_LIB)
 target_include_directories(dfhack PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
 
 get_target_property(xlsxio_INCLUDES xlsxio_read_STATIC INTERFACE_INCLUDE_DIRECTORIES)
@@ -381,6 +379,7 @@ add_dependencies(dfhack generate_proto_core)
 add_dependencies(dfhack generate_headers)
 
 add_library(dfhack-client SHARED RemoteClient.cpp ColorText.cpp MiscUtils.cpp Error.cpp ${PROJECT_PROTO_SRCS} ${CONSOLE_SOURCES})
+target_compile_definitions(dfhack-client PRIVATE BUILD_DFHACK_LIB)
 target_include_directories(dfhack-client PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include ${CMAKE_CURRENT_SOURCE_DIR}/proto)
 add_dependencies(dfhack-client dfhack)
 
@@ -391,15 +390,15 @@ add_executable(binpatch binpatch.cpp)
 target_link_libraries(binpatch dfhack-md5)
 
 if(WIN32)
-    set_target_properties(dfhack PROPERTIES OUTPUT_NAME "dfhooks_dfhack" )
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "/FI\"Export.h\"" )
 else()
     set_target_properties(dfhack PROPERTIES COMPILE_FLAGS "-include Export.h" )
     set_target_properties(dfhack-client PROPERTIES COMPILE_FLAGS "-include Export.h" )
-    add_library(dfhooks_dfhack SHARED Hooks.cpp)
-    target_link_libraries(dfhooks_dfhack dfhack ${FMTLIB})
 endif()
+
+add_library(dfhooks_dfhack SHARED Hooks.cpp)
+target_link_libraries(dfhooks_dfhack PUBLIC dfhack ${FMTLIB})
 
 # effectively disables debug builds...
 set_target_properties(dfhack PROPERTIES DEBUG_POSTFIX "-debug" )
@@ -450,10 +449,12 @@ if(UNIX)
         install(PROGRAMS ${dfhack_SOURCE_DIR}/package/linux/dfhack-run
             DESTINATION .)
     endif()
-    install(TARGETS dfhooks_dfhack
-        LIBRARY DESTINATION .
-        RUNTIME DESTINATION .)
 endif()
+
+install(TARGETS dfhooks_dfhack
+        LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
+        RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+
 
 # install the main lib
 install(TARGETS dfhack
@@ -463,6 +464,12 @@ install(TARGETS dfhack
 install(TARGETS dfhack-run dfhack-client binpatch
     LIBRARY DESTINATION ${DFHACK_LIBRARY_DESTINATION}
     RUNTIME DESTINATION ${DFHACK_LIBRARY_DESTINATION})
+
+file(GENERATE OUTPUT ${CMAKE_CURRENT_BINARY_DIR}/dfhooks_dfhack.ini
+    CONTENT "${DFHACK_DATA_DESTINATION}/$<TARGET_FILE_NAME:dfhooks_dfhack>")
+
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/dfhooks_dfhack.ini
+    DESTINATION .)
 
 endif(BUILD_LIBRARY)
 

@@ -33,6 +33,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- Core: Windows console will always use UTF-8 regardless of system code page settings
 
 ## Misc Improvements
 

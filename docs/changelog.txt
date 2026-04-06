@@ -59,8 +59,10 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- Steam launcher: Switch to injection strategy, allowing Dwarf Fortress and DFHack to be installed in disparate locations
 
 ## Misc Improvements
+- Make DFHack relocatable so that it doesn't depend on being fully co-installed with Dwarf Fortress
 
 ## Documentation
 

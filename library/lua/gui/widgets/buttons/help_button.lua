@@ -1,53 +1,35 @@
 local textures = require('gui.textures')
-local Panel = require('gui.widgets.containers.panel')
-local Label = require('gui.widgets.labels.label')
+local GraphicButton = require('gui.widgets.buttons.graphic_button')
 
-local to_pen = dfhack.pen.parse
+local help_pen_center = dfhack.pen.parse{
+    tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
 
 ----------------
 -- HelpButton --
 ----------------
 
----@class widgets.HelpButton.attrs: widgets.Panel.attrs
+---@class widgets.HelpButton.attrs: widgets.GraphicButton.attrs
 ---@field command? string
 
 ---@class widgets.HelpButton.attrs.partial: widgets.HelpButton.attrs
 
----@class widgets.HelpButton: widgets.Panel, widgets.HelpButton.attrs
----@field super widgets.Panel
+---@class widgets.HelpButton: widgets.GraphicButton, widgets.HelpButton.attrs
+---@field super widgets.GraphicButton
 ---@field ATTRS widgets.HelpButton.attrs|fun(attributes: widgets.HelpButton.attrs.partial)
 ---@overload fun(init_table: widgets.HelpButton.attrs.partial): self
-HelpButton = defclass(HelpButton, Panel)
+HelpButton = defclass(HelpButton, GraphicButton)
 
 HelpButton.ATTRS{
     frame={t=0, r=1, w=3, h=1},
     command=DEFAULT_NIL,
+    pen_center=help_pen_center,
 }
 
-local button_pen_left = to_pen{fg=COLOR_CYAN,
-    tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
-local button_pen_right = to_pen{fg=COLOR_CYAN,
-    tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
-local help_pen_center = to_pen{
-    tile=curry(textures.tp_control_panel, 9) or nil, ch=string.byte('?')}
-
 function HelpButton:init()
-    self.frame.w = self.frame.w or 3
-    self.frame.h = self.frame.h or 1
-
     local command = self.command .. ' '
 
-    self:addviews{
-        Label{
-            frame={t=0, l=0, w=3, h=1},
-            text={
-                {tile=button_pen_left},
-                {tile=help_pen_center},
-                {tile=button_pen_right},
-            },
-            on_click=function() dfhack.run_command('gui/launcher', command) end,
-        },
-    }
+    self.on_click = function() dfhack.run_command('gui/launcher', command) end
+    self:refresh()
 end
 
 return HelpButton

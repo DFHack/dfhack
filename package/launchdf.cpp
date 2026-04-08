@@ -313,6 +313,10 @@ int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, 
 #else
 int main(int argc, char* argv[]) {
 #endif
+#ifdef WIN32
+    // force UTF-8
+    std::setlocale(LC_ALL, ".utf8");
+#endif
     // initialize steam context
     if (SteamAPI_RestartAppIfNecessary(DFHACK_STEAM_APPID)) {
         exit(0);
@@ -352,11 +356,12 @@ int main(int argc, char* argv[]) {
     // obtain DF and DFHack app paths
 
     auto get_app_path_from_steam = [] (AppId_t appid) -> std::optional<std::filesystem::path> {
-        char buf[2048] = "";
-        int bytes = SteamApps()->GetAppInstallDir(appid, (char*)&buf, 2048);
+        constexpr auto BUFSIZE = 2048;
+        char buf[BUFSIZE] = "";
+        int bytes = SteamApps()->GetAppInstallDir(appid, (char*)&buf, BUFSIZE);
         if (bytes <= 0)
             return std::nullopt;
-        // steam API counts the null terminator in the byte count returned
+        // steam API includes one or more null terminators after the path, so trim those off
         while (bytes && buf[bytes] == '\0') bytes--;
         return std::string(buf, bytes);
         };

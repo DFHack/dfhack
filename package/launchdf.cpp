@@ -357,7 +357,7 @@ int main(int argc, char* argv[]) {
         if (bytes <= 0)
             return std::nullopt;
         // steam API counts the null terminator in the byte count returned
-        if (buf[bytes] == '\0') bytes--;
+        while (bytes && buf[bytes] == '\0') bytes--;
         return std::string(buf, bytes);
         };
 

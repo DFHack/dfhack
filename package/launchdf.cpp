@@ -362,7 +362,7 @@ int main(int argc, char* argv[]) {
         if (bytes <= 0)
             return std::nullopt;
         // steam API includes one or more null terminators after the path, so trim those off
-        while (bytes && buf[bytes] == '\0') bytes--;
+        for (; bytes > 0 && buf[bytes-1] == '\0'; bytes--);
         return std::string(buf, bytes);
         };
 

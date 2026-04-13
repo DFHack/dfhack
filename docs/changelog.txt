@@ -52,7 +52,23 @@ Template for new versions:
 ======== were in submodules with their own changelogs!                  ========
 ================================================================================
 
-# Future
+# Future## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.11-r3
 
 ## New Tools
 

@@ -52,11 +52,33 @@ Template for new versions:
 ======== were in submodules with their own changelogs!                  ========
 ================================================================================
 
-# Future## New Tools
+# Future
+
+## New Tools
 
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.12-r1
+
+## New Tools
+
+## New Features
+- Compatibility with Dwarf Fortress 53.12
+
+## Fixes
+- Stockpile definitions in the default library will be correctly found and used (fixed missing path separator)
 
 ## Misc Improvements
 

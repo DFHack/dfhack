@@ -65,6 +65,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- add flexible casting to ``enum_field`` to enable explicit casting to more types
 
 ## Lua
 

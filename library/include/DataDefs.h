@@ -632,6 +632,10 @@ namespace df
         enum_field<EnumType,IntType> &operator=(EnumType ev) {
             value = IntType(ev); return *this;
         }
+        explicit operator IntType () const { return IntType(value); }
+        template <typename T>
+        explicit operator T () const { return static_cast<T>(IntType(value)); }
+
     };
 
     template<class ET, class IT>

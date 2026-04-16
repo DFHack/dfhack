@@ -35,24 +35,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
-#include <iostream>
-#include <fstream>
-#include <istream>
 #include <string>
+#include <ostream>
+#include <algorithm>
 
 #include "ColorText.h"
-#include "MiscUtils.h"
 
-#include <algorithm>
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
-
-using namespace std;
 using namespace DFHack;
 
 bool color_ostream::log_errors_to_stderr = false;
@@ -81,7 +69,7 @@ void color_ostream::end_batch()
     flush_proxy();
 }
 
-color_ostream::color_ostream() : ostream(new buffer(this)), cur_color(COLOR_RESET)
+color_ostream::color_ostream() : std::ostream(new buffer(this)), cur_color(COLOR_RESET)
 {
     //
 }

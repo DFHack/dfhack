@@ -24,14 +24,14 @@ distribution.
 
 #pragma once
 #include "Error.h"
-#include <stdint.h>
-#include <string.h>
-#include <stdlib.h>
 
 #include <algorithm>
+#include <cstdint>
 #include <cstring>
-#include <sstream>
 #include <iterator>
+#include <ostream>
+#include <sstream>
+#include <vector>
 
 namespace DFHack
 {

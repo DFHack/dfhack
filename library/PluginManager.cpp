@@ -22,36 +22,48 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "PluginManager.h"
+
+#include "ColorText.h"
+#include "Core.h"
+#include "CoreDefs.h"
+#include "LuaWrapper.h"
+#include "LuaTools.h"
+#include "MemAccess.h"
+#include "MiscUtils.h"
+#include "RemoteServer.h"
+#include "Types.h"
+#include "VersionInfo.h"
+
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
 #include "modules/Screen.h"
 #include "modules/World.h"
-#include "Internal.h"
-#include "Core.h"
-#include "MemAccess.h"
-#include "PluginManager.h"
-#include "RemoteServer.h"
-#include "Console.h"
-#include "Types.h"
-#include "VersionInfo.h"
 
-#include "DataDefs.h"
-#include "MiscUtils.h"
-#include "DFHackVersion.h"
-
-#include "LuaWrapper.h"
-#include "LuaTools.h"
-
-using namespace DFHack;
-
+#include <algorithm>
 #include <condition_variable>
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
+#include <filesystem>
+#include <iostream>
+#include <map>
+#include <mutex>
 #include <string>
 #include <vector>
-#include <map>
 
+#include <fmt/base.h>
+#include <fmt/format.h>
+
+#include "df/viewscreen.h"
+
+#include <lauxlib.h>
+#include <lua.h>
+
+using namespace DFHack;
 using std::string;
-
-#include <assert.h>
 
 #if defined(_LINUX)
     static const string plugin_suffix = ".plug.so";
@@ -871,7 +883,7 @@ void PluginManager::init()
     loadAll();
 
     bool any_loaded = false;
-    for (auto p : all_plugins)
+    for (auto& p : all_plugins)
     {
         if (p.second->getState() == Plugin::PS_LOADED)
         {

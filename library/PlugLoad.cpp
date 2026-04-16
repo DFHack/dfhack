@@ -2,10 +2,7 @@
 #include "PluginManager.h"
 
 #include <iostream>
-#include <map>
 #include <string>
-#include <vector>
-
 
 #ifdef WIN32
 #define NOMINMAX

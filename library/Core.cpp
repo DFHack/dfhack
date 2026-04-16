@@ -26,40 +26,43 @@ distribution.
 
 #include "Internal.h"
 
-#include "Error.h"
-#include "MemAccess.h"
+#include "ColorText.h"
+#include "Commands.h"
+#include "Console.h"
+#include "CoreDefs.h"
 #include "DataDefs.h"
 #include "Debug.h"
-#include "Console.h"
+#include "DFHackVersion.h"
+#include "Error.h"
+#include "Format.h"
+#include "LuaTools.h"
+#include "MemAccess.h"
 #include "MemoryPatcher.h"
 #include "MiscUtils.h"
+#include "MiscUtils.h"
 #include "Module.h"
-#include "VersionInfoFactory.h"
-#include "VersionInfo.h"
-#include "PluginManager.h"
 #include "ModuleFactory.h"
+#include "PluginManager.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
-#include "LuaTools.h"
-#include "DFHackVersion.h"
-#include "md5wrapper.h"
-#include "Format.h"
-
-#include "Commands.h"
+#include "VersionInfo.h"
+#include "VersionInfoFactory.h"
 
 #include "modules/DFSDL.h"
 #include "modules/DFSteam.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
+#include "modules/Graphic.h"
 #include "modules/Gui.h"
 #include "modules/Hotkey.h"
+#include "modules/Persistence.h"
 #include "modules/Textures.h"
 #include "modules/World.h"
-#include "modules/Persistence.h"
 
-#include "df/init.h"
 #include "df/gamest.h"
+#include "df/global_objects.h"
 #include "df/graphic.h"
+#include "df/init.h"
 #include "df/interfacest.h"
 #include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
@@ -68,35 +71,51 @@ distribution.
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
-#include "df/world.h"
 #include "df/world_data.h"
+#include "df/world.h"
 
-#include <stdio.h>
-#include <iomanip>
-#include <stdlib.h>
-#include <fstream>
-#include <thread>
-#include <mutex>
+#include <algorithm>
+#include <cassert>
 #include <condition_variable>
-#include <string>
-#include <vector>
-#include <ranges>
-#include <span>
-#include <map>
-#include <set>
-#include <cstdio>
-#include <cstring>
-#include <sstream>
-#include <forward_list>
-#include <type_traits>
 #include <cstdarg>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <filesystem>
+#include <forward_list>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <istream>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <ostream>
+#include <ranges>
+#include <set>
+#include <span>
+#include <sstream>
+#include <string_view>
+#include <string>
+#include <system_error>
+#include <thread>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+#include "md5wrapper.h"
+
+#include <fmt/base.h>
+
 #include <SDL_events.h>
+#include <SDL_keycode.h>
+#include <SDL_video.h>
 
+#include <lua.h>
 
-#ifdef _WIN32
-#define NOMINMAX
-#include <Windows.h>
+#ifdef WIN32
+#include <processthreadsapi.h>
 #endif
 
 #ifdef LINUX_BUILD
@@ -105,6 +124,7 @@ distribution.
 
 using namespace DFHack;
 using namespace df::enums;
+
 using df::global::init;
 using df::global::world;
 using std::string;

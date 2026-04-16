@@ -34,28 +34,33 @@ CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
 ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
-
-
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <exception>
+#include <future>
+#include <ios>
 #include <iostream>
+#include <mutex>
 #include <fstream>
-#include <istream>
 #include <string>
-#include <stdint.h>
+#include <utility>
+#include <vector>
 
+#include "ColorText.h"
+#include "Core.h"
+#include "CoreDefs.h"
+#include "Debug.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
+
+#include "ActiveSocket.h"
+#include "Host.h"
+#include "RemoteClient.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
-
 #include "PassiveSocket.h"
-#include "PluginManager.h"
-#include "MiscUtils.h"
-#include "Debug.h"
-
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
+#include "SimpleSocket.h"
 
 #include <memory>
 #include <thread>

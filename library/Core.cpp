@@ -1941,9 +1941,7 @@ int Core::Shutdown ( void )
     allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
-
-    // FIXME console has already been shut down at this point, so getConsole is returning a dead object
-    DFSteam::cleanup(getConsole());
+    DFSteam::cleanup();
 
     memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();

@@ -35,17 +35,20 @@ bool (*g_SteamAPI_RestartAppIfNecessary)(uint32_t unOwnAppID) = nullptr;
 void* (*g_SteamInternal_FindOrCreateUserInterface)(int, const char*) = nullptr;
 bool (*g_SteamAPI_ISteamApps_BIsAppInstalled)(void *iSteamApps, uint32_t appID) = nullptr;
 
-static void bind_all(color_ostream& out, DFLibrary* handle) {
-#define bind(name) \
-        if (!handle) { \
-            g_##name = nullptr; \
-        } else { \
-            g_##name = (decltype(g_##name))LookupPlugin(handle, #name); \
-            if (!g_##name) { \
-                WARN(dfsteam, out).print("steam library function not found: " #name "\n"); \
-            } \
+template<typename Ptr>
+static void bind_(color_ostream& out, DFLibrary* handle, const char* name, Ptr& func_ptr) {
+    if (!handle) {
+        func_ptr = nullptr;
+    } else {
+        func_ptr = (Ptr)LookupPlugin(handle, name);
+        if (!func_ptr) {
+            WARN(dfsteam, out).print("steam library function not found: {}\n", name);
         }
+    }
+}
 
+static void bind_all(color_ostream& out, DFLibrary* handle) {
+#define bind(name) bind_(out, handle, #name, g_##name)
     bind(SteamAPI_Init);
     bind(SteamAPI_Shutdown);
     bind(SteamAPI_GetHSteamUser);
@@ -54,6 +57,16 @@ static void bind_all(color_ostream& out, DFLibrary* handle) {
     bind(SteamInternal_FindOrCreateUserInterface);
     bind(SteamAPI_ISteamApps_BIsAppInstalled);
 #undef bind
+}
+
+static void unbind_all()
+{
+    g_SteamAPI_Init = nullptr;
+    g_SteamAPI_Shutdown = nullptr;
+    g_SteamAPI_GetHSteamUser = nullptr;
+    g_SteamInternal_FindOrCreateUserInterface = nullptr;
+    g_SteamAPI_RestartAppIfNecessary = nullptr;
+    g_SteamAPI_ISteamApps_BIsAppInstalled = nullptr;
 }
 
 bool DFSteam::init(color_ostream& out) {
@@ -84,7 +97,7 @@ bool DFSteam::init(color_ostream& out) {
     return true;
 }
 
-void DFSteam::cleanup(color_ostream& out) {
+void DFSteam::cleanup() {
     if (!g_steam_handle)
         return;
 
@@ -94,7 +107,7 @@ void DFSteam::cleanup(color_ostream& out) {
     ClosePlugin(g_steam_handle);
     g_steam_handle = nullptr;
 
-    bind_all(out, nullptr);
+    unbind_all();
     g_steam_initialized = false;
 }
 

@@ -127,6 +127,8 @@ namespace DFHack {
         return Core::getInstance().getHackPath() / "data" / "dfhack-config-defaults";
     };
 
+    Core* Core::active_instance = nullptr;
+
 class MainThread {
 public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
@@ -1077,6 +1079,11 @@ df::viewscreen * Core::getTopViewscreen() {
 }
 
 bool Core::InitMainThread(std::filesystem::path path) {
+    assert(active_instance == nullptr);
+
+    // set this instance as the active instance
+    active_instance = this;
+
     // this hook is always called from DF's main (render) thread, so capture this thread id
     df_render_thread = std::this_thread::get_id();
     hack_path = path;
@@ -1490,8 +1497,8 @@ bool Core::InitSimulationThread()
 }
 
 Core& Core::getInstance() {
-    static Core instance;
-    return instance;
+    assert(Core::active_instance != nullptr);
+    return *Core::active_instance;
 }
 
 bool Core::isSuspended(void)
@@ -1921,6 +1928,7 @@ int Core::Shutdown ( void )
 
     if (hotkey_mgr) {
         delete hotkey_mgr;
+        hotkey_mgr = nullptr;
     }
 
     if(plug_mgr)
@@ -1928,13 +1936,19 @@ int Core::Shutdown ( void )
         delete plug_mgr;
         plug_mgr = nullptr;
     }
+
     // invalidate all modules
     allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
-    DFSteam::cleanup(getConsole());
+    DFSteam::cleanup();
+
     memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
+
+    // clear active instance
+    Core::active_instance = nullptr;
+
     return -1;
 }
 

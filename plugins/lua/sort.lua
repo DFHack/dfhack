@@ -293,7 +293,7 @@ local function get_mental_stability(unit)
     local emotionally_obsessive = unit.status.current_soul.personality.traits.EMOTIONALLY_OBSESSIVE
     local humor = unit.status.current_soul.personality.traits.HUMOR
     local love_propensity = unit.status.current_soul.personality.traits.LOVE_PROPENSITY
-    local perseverence = unit.status.current_soul.personality.traits.PERSEVERENCE
+    local perseverance = unit.status.current_soul.personality.traits.PERSEVERANCE
     local politeness = unit.status.current_soul.personality.traits.POLITENESS
     local privacy = unit.status.current_soul.personality.traits.PRIVACY
     local stress_vulnerability = unit.status.current_soul.personality.traits.STRESS_VULNERABILITY
@@ -315,7 +315,7 @@ local function get_mental_stability(unit)
                  + (anxiety_propensity * -0.06) + (bravery * 0.06)
                  + (cheer_propensity * 0.41) + (curious * -0.06) + (discord * 0.14)
                  + (dutifulness * -0.03) + (emotionally_obsessive * -0.13)
-                 + (humor * -0.05) + (love_propensity * 0.15) + (perseverence * -0.07)
+                 + (humor * -0.05) + (love_propensity * 0.15) + (perseverance * -0.07)
                  + (politeness * -0.14) + (privacy * 0.03) + (stress_vulnerability * -0.20)
                  + (tolerant * -0.11)
 
@@ -1029,12 +1029,29 @@ function SquadFilterOverlay:init()
 
     local left_panel = widgets.Panel{
         view_id='left_panel',
-        frame={t=1, b=0, l=0, w=NARROW_WIDTH-4},
+        frame={t=0, b=0, l=0, w=NARROW_WIDTH-4},
         visible=true,
         subviews={
+            widgets.HotkeyLabel{
+                view_id='toggle_all',
+                frame={t=0, l=0},
+                key='CUSTOM_SHIFT_A',
+                label='Toggle all',
+                on_activate=function()
+                    local target = self.subviews.military:getOptionValue() == 'exclude' and 'include' or 'exclude'
+                    self.subviews.military:setOption(target)
+                    self.subviews.officials:setOption(target)
+                    self.subviews.nobles:setOption(target)
+                    self.subviews.infant:setOption(target)
+                    self.subviews.unstable:setOption(target)
+                    self.subviews.maimed:setOption(target)
+                    self.subviews.labor_conflict:setOption(target)
+                    poke_list()
+                end,
+            },
             widgets.CycleHotkeyLabel{
                 view_id='military',
-                frame={t=0, l=0},
+                frame={t=1, l=0},
                 key='CUSTOM_SHIFT_Q',
                 label='Other squads:',
                 options={
@@ -1047,7 +1064,7 @@ function SquadFilterOverlay:init()
             },
             widgets.CycleHotkeyLabel{
                 view_id='officials',
-                frame={t=1, l=0},
+                frame={t=2, l=0},
                 key='CUSTOM_SHIFT_O',
                 label='   Officials:',
                 options={
@@ -1060,7 +1077,7 @@ function SquadFilterOverlay:init()
             },
             widgets.CycleHotkeyLabel{
                 view_id='nobles',
-                frame={t=2, l=0},
+                frame={t=3, l=0},
                 key='CUSTOM_SHIFT_N',
                 label='    Nobility:',
                 options={
@@ -1076,12 +1093,25 @@ function SquadFilterOverlay:init()
 
     local right_panel = widgets.Panel{
         view_id='right_panel',
-        frame={t=1, b=0, r=2, w=NARROW_WIDTH-4},
+        frame={t=0, b=0, r=2, w=NARROW_WIDTH-4},
         visible=false,
         subviews={
             widgets.CycleHotkeyLabel{
-                view_id='infant',
+                view_id='labor_conflict',
                 frame={t=0, l=0},
+                key='CUSTOM_SHIFT_U',
+                label='   Uniformed:',
+                options={
+                    {label='Include', value='include', pen=COLOR_GREEN},
+                    {label='Only', value='only', pen=COLOR_YELLOW},
+                    {label='Exclude', value='exclude', pen=COLOR_LIGHTRED},
+                },
+                initial_option='include',
+                on_change=poke_list,
+            },
+            widgets.CycleHotkeyLabel{
+                view_id='infant',
+                frame={t=1, l=0},
                 key='CUSTOM_SHIFT_M',
                 label='With infants:',
                 options={
@@ -1094,7 +1124,7 @@ function SquadFilterOverlay:init()
             },
             widgets.CycleHotkeyLabel{
                 view_id='unstable',
-                frame={t=1, l=0},
+                frame={t=2, l=0},
                 key='CUSTOM_SHIFT_D',
                 label='Hates combat:',
                 options={
@@ -1107,7 +1137,7 @@ function SquadFilterOverlay:init()
             },
             widgets.CycleHotkeyLabel{
                 view_id='maimed',
-                frame={t=2, l=0},
+                frame={t=3, l=0},
                 key='CUSTOM_SHIFT_I',
                 label='      Maimed:',
                 options={
@@ -1125,21 +1155,6 @@ function SquadFilterOverlay:init()
         frame_style=gui.FRAME_MEDIUM,
         frame_background=gui.CLEAR_PEN,
         subviews={
-            widgets.HotkeyLabel{
-                frame={t=0, w=NARROW_WIDTH-3},
-                key='CUSTOM_SHIFT_A',
-                label='Toggle all filters',
-                on_activate=function()
-                    local target = self.subviews.military:getOptionValue() == 'exclude' and 'include' or 'exclude'
-                    self.subviews.military:setOption(target)
-                    self.subviews.officials:setOption(target)
-                    self.subviews.nobles:setOption(target)
-                    self.subviews.infant:setOption(target)
-                    self.subviews.unstable:setOption(target)
-                    self.subviews.maimed:setOption(target)
-                    poke_list()
-                end,
-            },
             left_panel,
             widgets.Label{
                 view_id='shifter',
@@ -1167,9 +1182,8 @@ function SquadFilterOverlay:init()
         main_panel,
         widgets.Divider{
             view_id='divider',
-            frame={l=NARROW_WIDTH-1, w=1, t=2},
+            frame={l=NARROW_WIDTH-1, w=1, t=0},
             frame_style=gui.FRAME_MEDIUM,
-            frame_style_t=false,
             visible=false,
         },
         widgets.HelpButton{
@@ -1253,6 +1267,12 @@ local function is_maimed(unit)
         unit.status2.limbs_stand_count == 0
 end
 
+local function has_labor_conflict(unit)
+    return unit.status.labors[df.unit_labor.MINE] or
+           unit.status.labors[df.unit_labor.CUTWOOD] or
+           unit.status.labors[df.unit_labor.HUNT]
+end
+
 local function filter_matches(unit, filter)
     if filter.military == 'only' and not is_in_military(unit) then return false end
     if filter.military == 'exclude' and is_in_military(unit) then return false end
@@ -1266,6 +1286,8 @@ local function filter_matches(unit, filter)
     if filter.unstable == 'exclude' and is_unstable(unit) then return false end
     if filter.maimed == 'only' and not is_maimed(unit) then return false end
     if filter.maimed == 'exclude' and is_maimed(unit) then return false end
+    if filter.labor_conflict == 'only' and not has_labor_conflict(unit) then return false end
+    if filter.labor_conflict == 'exclude' and has_labor_conflict(unit) then return false end
     return true
 end
 
@@ -1281,6 +1303,7 @@ function do_squad_filter(unit)
         infant=self.subviews.infant:getOptionValue(),
         unstable=self.subviews.unstable:getOptionValue(),
         maimed=self.subviews.maimed:getOptionValue(),
+        labor_conflict=self.subviews.labor_conflict:getOptionValue(),
     }
     return filter_matches(unit, filter)
 end
@@ -1294,6 +1317,7 @@ OVERLAY_WIDGETS = {
     candidates=require('plugins.sort.info').CandidatesOverlay,
     interrogation=require('plugins.sort.info').InterrogationOverlay,
     conviction=require('plugins.sort.info').ConvictionOverlay,
+    deathcause_button=require('plugins.sort.deathcause_button').DeathCauseOverlay,
     location_selector=require('plugins.sort.locationselector').LocationSelectorOverlay,
     -- TODO: maybe rewrite for 50.12
     -- burrow_assignment=require('plugins.sort.unitselector').BurrowAssignmentOverlay,

@@ -1430,6 +1430,10 @@ Job module
 
   Returns the job's description, as seen in the Units and Jobs screens.
 
+* ``dfhack.job.getManagerOrderName(manager_order)``
+
+  Returns the manager order's description, as seen in the Work orders screen.
+
 Hotkey module
 -------------
 
@@ -2486,8 +2490,29 @@ Maps module
   Removes an aquifer from the given tile position.
   Returns *true* or *false* depending on success.
 
+* ``dfhack.maps.addMaterialSpatter(pos, mat, matg, state, amount)``
+
+  Adds a material spatter to the specified map tile. If the tile is already
+  full of that spatter, returns the amount left over.
+
+  Specifying a state of -1 (None) will automatically choose either Solid,
+  Liquid, or Gas based on the material properties and the tile temperature.
+
+* ``dfhack.maps.addItemSpatter(pos, i_type, i_subtype, subcat1, subcat2, print_variant, amount)``
+
+  Adds an item spatter to the specified map tile. If the tile is already
+  full of that spatter, returns the amount left over.
+
+  For plant growths, specifying a print_variant of -1 will automatically
+  choose an appropriate value. For other item types, this field is ignored.
+
 Burrows module
 --------------
+
+* ``dfhack.burrows.getName(burrow)``
+
+  Returns the name of the burrow.
+  If the burrow has no set name, returns the same placeholder name that DF would show in the UI.
 
 * ``dfhack.burrows.findByName(name[, ignore_final_plus])``
 

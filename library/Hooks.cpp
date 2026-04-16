@@ -3,9 +3,42 @@
 
 #include "df/gamest.h"
 
+#ifdef _WIN32
+#   define WIN32_LEAN_AND_MEAN
+#   include <Windows.h>
+#   include <libloaderapi.h>
+#else
+#   include <dlfcn.h>
+#endif
+
 static bool disabled = false;
 
 DFhackCExport const int32_t dfhooks_priority = 100;
+
+static std::filesystem::path getModulePath()
+{
+#ifdef _WIN32
+    HMODULE module = nullptr;
+    GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS, (LPCWSTR)getModulePath, &module);
+    if (!module) return std::filesystem::path(); // should never happen, but just in case, return an empty path instead of crashing
+
+    wchar_t path[MAX_PATH];
+    GetModuleFileNameW(module, path, MAX_PATH);
+    return std::filesystem::path(path);
+#else
+    Dl_info info;
+    dladdr((const void*)getModulePath, &info);
+    return std::filesystem::path(info.dli_fname);
+#endif
+}
+
+static std::filesystem::path basepath{getModulePath()};
+
+// called by the chainloader before the main thread is initialized and before any other hooks are called.
+DFhackCExport void dfhooks_preinit(std::filesystem::path dllpath)
+{
+    basepath = dllpath.parent_path();
+}
 
 static std::unique_ptr<DFHack::Core> core_instance;
 
@@ -22,7 +55,7 @@ DFhackCExport void dfhooks_init() {
     core_instance = std::make_unique<DFHack::Core>();
 
     // we need to init DF globals before we can check the commandline
-    if (!core_instance->InitMainThread() || !df::global::game) {
+    if (!core_instance->InitMainThread(std::filesystem::canonical(basepath)) || !df::global::game) {
         // we don't set disabled to true here so symbol generation can work
         return;
     }

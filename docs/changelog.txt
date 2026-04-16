@@ -55,7 +55,198 @@ Template for new versions:
 # Future
 
 ## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- add flexible casting to ``enum_field`` to enable explicit casting to more types
+
+## Lua
+
+## Removed
+
+# 53.12-r1
+
+## New Tools
+
+## New Features
+- Compatibility with Dwarf Fortress 53.12
+
+## Fixes
+- Stockpile definitions in the default library will be correctly found and used (fixed missing path separator)
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.11-r3
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Core: Windows console will always use UTF-8 regardless of system code page settings
+- Steam launcher: Switch to injection strategy, allowing Dwarf Fortress and DFHack to be installed in disparate locations
+
+## Misc Improvements
+- Make DFHack relocatable so that it doesn't depend on being fully co-installed with Dwarf Fortress
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.11-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `autoclothing`, `autoslab`, `tailor`: orders will no longer be created with a repetition frequency of ``NONE``
+
+## Misc Improvements
+- General: DFHack will unconditionally use UTF-8 for the console on Windows, now that DF forces the process effective system code page to 65001 during startup
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.11-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `sort`: correct misspelling of ``PERSEVERENCE``; fixes "hates combat" filter in squad selection screen
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.10-r2
+
+## New Tools
+- ``logcleaner``: New plugin for time-triggered clearing of combat, sparring, and hunting reports with configurable filtering and overlay UI.
+
+## New Features
+- `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
+- `sort`: added ``Uniformed`` filter to squad assignment screen to filter dwarves with mining, woodcutting, or hunting labors
+- `sort`: Add death cause button to dead/missing tab in the creatures screen
+
+## Fixes
+
+## Misc Improvements
+- Core: DFHack now validates vtable pointers in objects read from memory and will throw an exception instead of crashing when an invalid vtable pointer is encountered. This makes it easier to identify which DF data structure contains corrupted data when this manifests in the form of a bad vtable pointer, and shifts blame for such crashes from DFHack to DF.
+
+## Documentation
+
+## API
+- Added ``Items::pickGrowthPrint``: given a plant material and a growth index, returns the print variant corresponding to the current in-game time.
+- Added ``Items::useStandardMaterial``: given an item type, returns true if the item is made of a specific material and false if it has a race and caste instead.
+- Added ``Maps::addItemSpatter``: add a spatter of the specified item + material + growth print to the indicated tile, returning whatever amount wouldn't fit in the tile.
+- Added ``Maps::addMaterialSpatter``: add a spatter of the specified material + state to the indicated tile, returning whatever amount wouldn't fit in the tile.
+
+## Lua
+- Added ``Maps::addItemSpatter`` as ``dfhack.maps.addItemSpatter``.
+- Added ``Maps::addMaterialSpatter`` as ``dfhack.maps.addMaterialSpatter``.
+
+## Removed
+
+# 53.10-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `autochop`: the report will no longer throw a C++ exception when burrows are defined.
+- `suspendmanager`: Fix the overlay appearing where it should not when following a unit
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- Added ``Burrows::getName``: obtains the name of a burrow, or the same placeholder name that DF would show if the burrow is unnamed.
+
+## Lua
+- Added ``Burrows::getName`` as ``dfhack.burrows.getName``.
+
+## Removed
+
+# 53.09-r1
+
+## New Tools
+
+## New Features
+- `tweak`: ``drawbridge-tiles``: Make it so raised bridges render with different tiles in ASCII mode to make it more obvious that they ARE raised (and to indicate their direction)
+
+## Fixes
+- ``Filesystem::as_string`` now always uses UTF-8 encoding rather than using the system locale encoding
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- ``dfhack.job.getManagerOrderName``: New function to get the display name of a manager order
+
+## Lua
+
+## Removed
+
+# 53.08-r1
+
+## New Tools
+
+## New Features
+- compatibility with DF 53.08
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.07-r1
+
+## New Tools
 - ``edgescroll``: Introduced plugin to pan the view automatically when the mouse reaches the screen border.
+- `infinite-sky`: Re-enabled with compatibility with new siege map data.
 
 ## New Features
 - `sort`: Places search widget can search "Siege engines" subtab by name, loaded status, and operator status
@@ -66,8 +257,8 @@ Template for new versions:
 
 ## Misc Improvements
 - `createitem`: created items can now be placed onto/into tables, nests, bookcases, display cases, and altars
-- `keybinding`: keybinds may now include the super key, and are no longer limited to particular keys ranges of keys, allowing any recognized by SDL.
 - The ``fpause`` console command can now be used to force world generation to pause (as it did prior to version 50).
+- `keybinding`: keybinds may now include the super key, and are no longer limited to particular keys ranges of keys, allowing any recognized by SDL.
 
 ## Documentation
 

@@ -653,20 +653,31 @@ std::string UTF2DF(const std::string &in)
         out.resize(pos);
     return out;
 }
-
-DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
+static bool console_is_utf8()
 {
-    bool is_utf = false;
 #ifdef LINUX_BUILD
+    static bool checked = false;
+    static bool is_utf = false;
+    if (checked)
+        return is_utf;
+
     std::string locale = "";
     if (getenv("LANG"))
         locale += getenv("LANG");
     if (getenv("LC_CTYPE"))
         locale += getenv("LC_CTYPE");
     locale = toUpper_cp437(locale);
-    is_utf = (locale.find("UTF-8") != std::string::npos) ||
-             (locale.find("UTF8") != std::string::npos);
+    is_utf = (locale.find("UTF-8") != std::string::npos) || (locale.find("UTF8") != std::string::npos);
+    checked = true;
+    return is_utf;
+#else
+    return true; // Since DF 53.11, Windows console is always UTF-8
 #endif
+}
+
+DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
+{
+    bool is_utf = console_is_utf8();
     return is_utf ? DF2UTF(in) : in;
 }
 

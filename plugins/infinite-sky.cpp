@@ -10,8 +10,13 @@
 
 #include "df/block_column_print_infost.h"
 #include "df/construction.h"
+#include "df/entity_plot_invasion_mapst.h"
+#include "df/historical_entity.h"
+#include "df/invasion_info.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
+#include "df/plotinfost.h"
+#include "df/plot_invasion_mapst.h"
 #include "df/world.h"
 #include "df/z_level_flags.h"
 
@@ -28,6 +33,7 @@ using namespace df::enums;
 DFHACK_PLUGIN("infinite-sky");
 DFHACK_PLUGIN_IS_ENABLED(is_enabled);
 
+REQUIRE_GLOBAL(plotinfo);
 REQUIRE_GLOBAL(world);
 
 namespace DFHack {
@@ -130,7 +136,7 @@ static void constructionEventHandler(color_ostream &out, void *ptr) {
         doInfiniteSky(out, 1);
 }
 
-void doInfiniteSky(color_ostream& out, int32_t howMany) {
+void addBlockColumns(color_ostream& out, int32_t quantity) {
     int32_t z_count_block = world->map.z_count_block;
     df::map_block ****block_index = world->map.block_index;
 
@@ -141,14 +147,14 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
     last_air_layer.forCoord([&](df::coord bpos) {
         // Allocate a new block column and copy over data from the old
         df::map_block **blockColumn =
-            new df::map_block *[z_count_block + howMany];
+            new df::map_block *[z_count_block + quantity];
         memcpy(blockColumn, block_index[bpos.x][bpos.y],
                z_count_block * sizeof(df::map_block *));
         delete[] block_index[bpos.x][bpos.y];
         block_index[bpos.x][bpos.y] = blockColumn;
 
         df::map_block *last_air_block = blockColumn[bpos.z];
-        for (int32_t count = 0; count < howMany; count++) {
+        for (int32_t count = 0; count < quantity; count++) {
             df::map_block *air_block = new df::map_block();
             std::fill(&air_block->tiletype[0][0],
                       &air_block->tiletype[0][0] + (16 * 16),
@@ -209,17 +215,53 @@ void doInfiniteSky(color_ostream& out, int32_t howMany) {
     });
 
     // Update global z level flags
-    df::z_level_flags *flags = new df::z_level_flags[z_count_block + howMany];
+    df::z_level_flags *flags = new df::z_level_flags[z_count_block + quantity];
     memcpy(flags, world->map_extras.z_level_flags,
            z_count_block * sizeof(df::z_level_flags));
-    for (int32_t count = 0; count < howMany; count++) {
+    for (int32_t count = 0; count < quantity; count++) {
         flags[z_count_block + count].whole = 0;
         flags[z_count_block + count].bits.update = 1;
     }
-    world->map.z_count_block += howMany;
-    world->map.z_count += howMany;
+    world->map.z_count_block += quantity;
+    world->map.z_count += quantity;
     delete[] world->map_extras.z_level_flags;
     world->map_extras.z_level_flags = flags;
+}
+
+void updateInvasionMap(color_ostream &out, int32_t new_height, df::plot_invasion_mapst& map) {
+    if (map.blockz == 0)
+        return; // Unused invasion map
+    if (map.blockz >= new_height)
+        return; // No change required
+
+    cuboid blocks(0, 0, 0, map.blockx - 1, map.blocky - 1, 0);
+    blocks.forCoord([&](df::coord bpos) {
+        // Create new vertical block
+        df::pim_blockst **new_block = new df::pim_blockst *[new_height]();
+        memcpy(new_block, map.block_index[bpos.x][bpos.y], map.blockz * sizeof(df::pim_blockst*));
+        // Fill new block with nullptr (no information)
+        std::fill_n(&new_block[map.blockz], new_height - map.blockz, nullptr);
+        delete[] map.block_index[bpos.x][bpos.y];
+        map.block_index[bpos.x][bpos.y] = new_block;
+        return true;
+    });
+
+    map.blockz = new_height;
+}
+
+void doInfiniteSky(color_ostream &out, int32_t quantity) {
+    addBlockColumns(out, quantity);
+
+    for (auto& invasion : plotinfo->invasions.list) {
+        updateInvasionMap(out, world->map.z_count, invasion->map);
+    }
+    for (auto& entity : world->entities.all) {
+        for (auto& map : entity->plot_invasion_map) {
+            if (map->site_id != plotinfo->site_id)
+                continue;
+            updateInvasionMap(out, world->map.z_count, map->map);
+        }
+    }
 }
 
 struct infinitesky_options {

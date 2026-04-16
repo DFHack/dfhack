@@ -274,7 +274,7 @@ namespace DFHack
         struct Private;
         std::unique_ptr<Private> d;
 
-        bool InitMainThread();
+        bool InitMainThread(std::filesystem::path path);
         bool InitSimulationThread();
         int Update (void);
         int Shutdown (void);
@@ -358,6 +358,8 @@ namespace DFHack
         lua_State* State;
 
         uint32_t unpaused_ms; // reset to 0 on map load
+
+        std::filesystem::path hack_path;
 
         friend class CoreService;
         friend class ServerConnection;

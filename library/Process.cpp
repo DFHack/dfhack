@@ -236,6 +236,9 @@ Process::~Process()
 
 string Process::doReadClassName (void * vptr)
 {
+    if (!checkValidAddress(vptr))
+        throw std::runtime_error(fmt::format("invalid vtable ptr {}", vptr));
+
     char* rtti = Process::readPtr(((char*)vptr - sizeof(void*)));
 #ifndef WIN32
     char* typestring = Process::readPtr(rtti + sizeof(void*));
@@ -591,6 +594,20 @@ void Process::getMemRanges(vector<t_memrange>& ranges)
 }
 #endif
 
+bool Process::checkValidAddress(void* ptr)
+{
+    uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
+    auto validate = [&] (t_memrange& r) {
+        uintptr_t lo = reinterpret_cast<uintptr_t>(r.start);
+        uintptr_t hi = reinterpret_cast<uintptr_t>(r.end);
+        return addr >= lo && addr < hi;
+        };
+    std::vector<t_memrange> mr;
+    getMemRanges(mr);
+    bool valid = std::any_of(mr.begin(), mr.end(), validate);
+    return valid;
+}
+
 uintptr_t Process::getBase()
 {
 #if WIN32
@@ -647,7 +664,7 @@ uint32_t Process::getTickCount()
 #endif /* WIN32 */
 }
 
-std::filesystem::path Process::getPath()
+[[deprecated]] std::filesystem::path Process::getPath()
 {
 #if defined(WIN32) || !defined(_DARWIN)
     return Filesystem::get_initial_cwd();

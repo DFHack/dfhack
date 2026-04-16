@@ -10,6 +10,9 @@
 #include "steam_api.h"
 
 #include <string>
+#include <filesystem>
+#include <fstream>
+#include <optional>
 
 #define xstr(s) str(s)
 #define str(s) #s
@@ -234,10 +237,85 @@ bool waitForDF(bool nowait) {
 
 #endif
 
+constexpr const char* old_filelist[] {
+    "hack",
+    "stonesense",
+#ifdef WIN32
+    "binpatch.exe",
+    "dfhack-run.exe",
+    "allegro-5.2.dll",
+    "allegro_color-5.2.dll",
+    "allegro_font-5.2.dll",
+    "allegro_image-5.2.dll",
+    "allegro_primitives-5.2.dll",
+    "allegro_ttf-5.2.dll",
+    "allegro-5.2.dll",
+    "dfhack-client.dll",
+    "dfhooks_dfhack.dll",
+    "lua53.dll",
+    "protobuf-lite.dll"
+#else
+    "binpatch",
+    "dfhack-run",
+    "liballegro-5.2.so",
+    "liballegro_color-5.2.so",
+    "liballegro_font-5.2.so",
+    "liballegro_image-5.2.so",
+    "liballegro_primitives-5.2.so",
+    "liballegro_ttf-5.2.so",
+    "liballegro-5.2.so",
+    "libdfhack-client.so",
+    "libdfhooks_dfhack.so",
+    "liblua53.so",
+    "libprotobuf-lite.so"
+#endif
+};
+
+bool check_for_old_install(std::filesystem::path df_path)
+{
+    for (auto file : old_filelist)
+    {
+        std::filesystem::path p = df_path / file;
+        if (std::filesystem::exists(p))
+            return true;
+    }
+    return false;
+}
+
+void remove_old_install(std::filesystem::path df_path)
+{
+    std::string message{
+        "Removing legacy files:"
+    };
+
+    for (auto file : old_filelist)
+    {
+        std::error_code ec;
+
+        std::filesystem::path p = df_path / file;
+
+        if (std::filesystem::is_directory(p))
+            std::filesystem::remove_all(p, ec);
+        else if (std::filesystem::is_regular_file(p))
+            std::filesystem::remove(p, ec);
+        else
+            continue;
+
+        message += "\n" + p.string() + ": " + (ec ? "failed to remove - " + ec.message() : "removed successfully");
+    }
+#ifdef WIN32
+    MessageBoxW(NULL, std::wstring(message.begin(), message.end()).c_str(), L"Legacy Install Cleanup", 0);
+#endif
+}
+
 #ifdef WIN32
 int WINAPI wWinMain(_In_ HINSTANCE hInstance, _In_opt_ HINSTANCE hPrevInstance, _In_ LPWSTR lpCmdLine, _In_ int nShowCmd) {
 #else
 int main(int argc, char* argv[]) {
+#endif
+#ifdef WIN32
+    // force UTF-8
+    std::setlocale(LC_ALL, ".utf8");
 #endif
     // initialize steam context
     if (SteamAPI_RestartAppIfNecessary(DFHACK_STEAM_APPID)) {
@@ -265,7 +343,121 @@ int main(int argc, char* argv[]) {
     }
 
 #ifdef WIN32
-    if (is_running_on_wine()) {
+    bool wine_detected = is_running_on_wine();
+#endif
+
+    bool df_detected = SteamApps()->BIsAppInstalled(DF_STEAM_APPID);
+
+    if (!df_detected) {
+        // Steam DF is not installed. Assume DF is installed in same directory as DFHack and do a fallback launch
+        exit(wrap_launch(launch_direct) ? 0 : 1);
+    }
+
+    // obtain DF and DFHack app paths
+
+    auto get_app_path_from_steam = [] (AppId_t appid) -> std::optional<std::filesystem::path> {
+        constexpr auto BUFSIZE = 2048;
+        char buf[BUFSIZE] = "";
+        int bytes = SteamApps()->GetAppInstallDir(appid, (char*)&buf, BUFSIZE);
+        if (bytes <= 0)
+            return std::nullopt;
+        // steam API includes one or more null terminators after the path, so trim those off
+        for (; bytes > 0 && buf[bytes-1] == '\0'; bytes--);
+        return std::string(buf, bytes);
+        };
+
+    auto opt_dfhack_install_folder = get_app_path_from_steam(DFHACK_STEAM_APPID);
+    auto opt_df_install_folder = get_app_path_from_steam(DF_STEAM_APPID);
+
+    if (opt_dfhack_install_folder && opt_df_install_folder && (*opt_df_install_folder != *opt_dfhack_install_folder))
+    {
+        auto& dfhack_install_folder = *opt_dfhack_install_folder;
+        auto& df_install_folder = *opt_df_install_folder;
+
+#ifdef WIN32
+        constexpr auto dfhooks_dll_name = "dfhooks.dll";
+        constexpr auto dfhook_dfhack_dll_name = "dfhooks_dfhack.dll";
+#else
+        constexpr auto dfhooks_dll_name = "libdfhooks.so";
+        constexpr auto dfhook_dfhack_dll_name = "libdfhooks_dfhack.so";
+#endif
+        // DF and DFHack are not co-installed (modern case)
+        // inject dfhooks.dll and dfhooks_dfhack.ini into DF install folder
+        std::filesystem::path dfhooks_dll_src = dfhack_install_folder / dfhooks_dll_name;
+        std::filesystem::path dfhooks_dll_dst = df_install_folder / dfhooks_dll_name;
+        std::filesystem::path dfhooks_ini_dst = df_install_folder / "dfhooks_dfhack.ini";
+        std::filesystem::path dfhooks_dfhack_dll_src = dfhack_install_folder / "hack" / dfhook_dfhack_dll_name;
+
+        std::error_code ec;
+
+        std::filesystem::copy(dfhooks_dll_src, dfhooks_dll_dst, std::filesystem::copy_options::update_existing, ec);
+        if (!ec)
+        {
+            std::string indirection;
+            if (std::filesystem::exists(dfhooks_ini_dst))
+            {
+                std::ifstream ini(dfhooks_ini_dst);
+                std::getline(ini, indirection);
+            }
+
+            if (indirection != dfhooks_dfhack_dll_src.string())
+            {
+                std::ofstream ini(dfhooks_ini_dst);
+                ini << dfhooks_dfhack_dll_src.string() << std::endl;
+            }
+        }
+        else
+        {
+#ifdef WIN32
+            std::wstring message{
+                L"Failed to inject DFHack into Dwarf Fortress\n\n"
+                L"Details:\n" + dfhooks_dll_src.wstring() +
+                L" -> " + dfhooks_dll_dst.wstring() +
+                L"\n\nError code: " + std::to_wstring(ec.value()) +
+                L"\nError message: " + std::filesystem::relative(ec.message()).wstring()
+            };
+
+            MessageBoxW(NULL, message.c_str(), NULL, 0);
+#else
+            std::string message{
+                "Failed to inject DFHack into Dwarf Fortress\n\n"
+                "Details:\n" + dfhooks_dll_src.string() +
+                " -> " + dfhooks_dll_dst.string() +
+                "\n\nError code: " + std::to_string(ec.value()) +
+                "\nError message: " + std::filesystem::relative(ec.message()).string()
+            };
+
+            notify(message.c_str());
+#endif
+            exit(1);
+        }
+        bool dirty = check_for_old_install(df_install_folder);
+        if (dirty)
+        {
+#ifdef WIN32
+            int ok = MessageBoxW(NULL, L"A legacy install of DFHack has been detected in the Dwarf Fortress folder. This likely means that you have installed DFHack with the old Steam client (or manually). This legacy installation will almost certainly interfere with using DFHack. Do you want to remove the old files now? (recommended)", L"Legacy DFHack Install Detected", MB_OKCANCEL);
+
+            if (ok == IDOK)
+                remove_old_install(df_install_folder);
+#else
+            std::string filelist;
+            for (auto file : old_filelist)
+                if (std::filesystem::exists(df_install_folder / file))
+                    filelist += (filelist.empty() ? "" : std::string(",")) + file;
+
+            std::string message{
+                "A legacy install of DFHack has been detected in the Dwarf Fortress directory.This likely means that you have installed DFHack with the old Steam client (or manually).This installation will almost certainly interfere with using DFHack. \n\n"
+                "To remove these files, run the following command: rm -r " + df_install_folder.string() + "/{ " + filelist + "}\n\n"
+            };
+
+            notify(message.c_str());
+#endif
+        }
+    }
+
+#ifdef WIN32
+    if (wine_detected)
+    {
         // attempt launch via steam client
         LPCWSTR err = launch_via_steam_posix();
 
@@ -281,34 +473,6 @@ int main(int argc, char* argv[]) {
         exit(0);
     }
 #endif
-
-    // steam detected and not running in wine
-
-    if (!SteamApps()->BIsAppInstalled(DF_STEAM_APPID)) {
-        // Steam DF is not installed. Assume DF is installed in same directory as DFHack and do a fallback launch
-        exit(wrap_launch(launch_direct) ? 0 : 1);
-    }
-
-    // obtain DF app path
-
-    char buf[2048] = "";
-
-    int b1 = SteamApps()->GetAppInstallDir(DFHACK_STEAM_APPID, (char*)&buf, 2048);
-    std::string dfhack_install_folder = (b1 != -1) ? std::string(buf) : "";
-
-    int b2 = SteamApps()->GetAppInstallDir(DF_STEAM_APPID, (char*)&buf, 2048);
-    std::string df_install_folder = (b2 != -1) ? std::string(buf) : "";
-
-
-    if (df_install_folder != dfhack_install_folder) {
-        // DF and DFHack are not installed in the same library
-#ifdef WIN32
-        MessageBoxW(NULL, L"DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.", NULL, 0);
-#else
-        notify("DFHack and Dwarf Fortress must be installed in the same Steam library.\nAborting.");
-#endif
-        exit(1);
-    }
 
     if (!wrap_launch(launch_via_steam))
         exit(1);
@@ -329,6 +493,5 @@ int main(int argc, char* argv[]) {
         usleep(1000000);
 #endif
     }
-
     exit(0);
 }

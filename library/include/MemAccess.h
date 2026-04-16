@@ -221,7 +221,7 @@ namespace DFHack
 
         std::string readClassName(void* vptr)
         {
-            std::map<void*, std::string>::iterator it = classNameCache.find(vptr);
+            auto it = classNameCache.find(vptr);
             if (it != classNameCache.end())
                 return it->second;
             return classNameCache[vptr] = doReadClassName(vptr);
@@ -246,6 +246,9 @@ namespace DFHack
 
         /// get virtual memory ranges of the process (what is mapped where)
         static void getMemRanges(std::vector<t_memrange>& ranges);
+
+        /// check if an address has a mapping
+        bool checkValidAddress(void* ptr);
 
         /// get the symbol table extension of this process
         std::shared_ptr<DFHack::VersionInfo> getDescriptor()

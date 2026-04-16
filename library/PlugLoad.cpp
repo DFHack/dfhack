@@ -15,10 +15,11 @@
 #ifdef WIN32
 #define NOMINMAX
 #include <windows.h>
+#include <libloaderapi.h>
 #define global_search_handle() GetModuleHandle(nullptr)
 #define get_function_address(plugin, function) GetProcAddress((HMODULE)plugin, function)
 #define clear_error()
-#define load_library(fn) LoadLibraryW(fn.c_str())
+#define load_library(fn) LoadLibraryExW(fn.wstring().c_str(), NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 #define close_library(handle) (!(FreeLibrary((HMODULE)handle)))
 #else
 #include <dlfcn.h>

@@ -1,19 +1,15 @@
-#include "Core.h"
 #include "Debug.h"
-#include "Export.h"
 #include "PluginManager.h"
-#include "Hooks.h"
 
 #include <iostream>
 #include <map>
 #include <string>
 #include <vector>
 
-#include <stdio.h>
-#include <stdint.h>
 
 #ifdef WIN32
 #define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <libloaderapi.h>
 #define global_search_handle() GetModuleHandle(nullptr)

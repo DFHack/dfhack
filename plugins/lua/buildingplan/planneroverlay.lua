@@ -148,7 +148,7 @@ local function is_interior(bounds, x, y)
         y ~= bounds.y1 and y ~= bounds.y2
 end
 
--- adjusted from CycleHotkeyLabel on the planner panel
+-- adjusted from WeaponSpiketrapPanel (HotKey & Slider) on the planner panel
 local weapon_quantity = 1
 
 local function get_quantity(filter, hollow, bounds)
@@ -658,6 +658,43 @@ function PlannerOverlay:init()
 
     local buildingplan = require('plugins.buildingplan')
 
+    -- WeaponSpiketrapPanel defined outside of main_panel, otherwise addviews breaks -> addviews expects table
+    local WeaponSpiketrapPanel = defclass(WeaponSpiketrapPanel, widgets.Panel)
+    WeaponSpiketrapPanel.ATTRS{
+        view_id='weapons',
+        visible=is_weapon_or_spike_trap,
+    }
+
+    function WeaponSpiketrapPanel:init()
+        self.options = utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10)
+
+        self:addviews{
+            widgets.CycleHotkeyLabel{
+                view_id='weapons_hotkey',
+                frame={b=4, l=1, w=28},
+                key='CUSTOM_T',
+                key_back='CUSTOM_SHIFT_T',
+                label='Number of weapons:',
+                options=self.options,
+                initial_option=weapon_quantity,
+                on_change=function(val)
+                    weapon_quantity = val
+                end
+            },
+
+            widgets.Slider{
+                view_id='weapons_slider',
+                frame={b=6, l=4, w=35},
+                num_stops=#self.options,
+                get_idx_fn=function() return weapon_quantity end,
+                on_change=function(val)
+                    weapon_quantity = val
+                    self.subviews.weapons_hotkey:setOption(val)
+                end
+            }
+        }
+    end
+
     main_panel:addviews{
         widgets.Label{
             frame={},
@@ -728,16 +765,9 @@ function PlannerOverlay:init()
                 {label='Down', value=df.construction_type.DownStair},
             },
         },
-        widgets.CycleHotkeyLabel {  -- TODO: this thing also needs a slider
-            view_id='weapons',
-            frame={b=4, l=1, w=28},
-            key='CUSTOM_T',
-            key_back='CUSTOM_SHIFT_T',
-            label='Number of weapons:',
-            visible=is_weapon_or_spike_trap,
-            options=utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10),
-            on_change=function(val) weapon_quantity = val end,
-        },
+
+        WeaponSpiketrapPanel{},
+
         widgets.ToggleHotkeyLabel {
             view_id='engraved',
             frame={b=4, l=1, w=22},

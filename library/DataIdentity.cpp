@@ -1,14 +1,21 @@
-#include <stddef.h>
+#include "DataIdentity.h"
+
+#include "BitArray.h"
+#include "DataDefs.h"
 
 #include <condition_variable>
+#include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <functional>
+#include <future>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
-#include <vector>
 #include <variant>
+#include <vector>
 
-#include "DataFuncs.h"
-#include "DataIdentity.h"
 
 // the space after the uses of "type" in OPAQUE_IDENTITY_TRAITS_NAME is _required_
 // without it the macro generates a syntax error when type is a template specification

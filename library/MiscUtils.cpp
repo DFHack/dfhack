@@ -22,39 +22,49 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "Internal.h"
 #include "Export.h"
 #include "MiscUtils.h"
 #include "ColorText.h"
 
-#include "modules/DFSDL.h"
-
-#ifndef LINUX_BUILD
-// We don't want min and max macros
-#define NOMINMAX
-    #include <Windows.h>
-    // Suppress warning which occurs in header on some WinSDK versions
-    // See dfhack/dfhack#5147 for more information
-    #pragma warning(push)
-    #pragma warning(disable:4091)
-    #include <DbgHelp.h>
-    #pragma warning(pop)
-#else
-    #include <sys/time.h>
-    #include <ctime>
-    #include <cxxabi.h>
-#endif
-
-#include <ctype.h>
-#include <stdarg.h>
-#include <string.h>
+#include <array>
+#include <algorithm>
+#include <cctype>
+#include <cstdarg>
 #include <cstdlib>
 #include <cmath>
-
-#include <sstream>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <exception>
+#include <iomanip>
+#include <ios>
+#include <iostream>
+#include <locale>
 #include <map>
-#include <array>
-#include <unordered_map>
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
+#ifdef WIN32
+// Suppress warning which occurs in header on some WinSDK versions
+// See dfhack/dfhack#5147 for more information
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <sysinfoapi.h>
+#pragma warning(push)
+#pragma warning(disable:4091)
+#include <DbgHelp.h>
+#pragma warning(pop)
+#endif
+
+#ifdef LINUX_BUILD
+#include <sys/time.h>
+#include <ctime>
+#include <cxxabi.h>
+#endif
 
 NumberFormatType preferred_number_format_type = NumberFormatType::DEFAULT;
 
@@ -499,8 +509,8 @@ uint64_t GetTimeMs64()
 /* Character decoding */
 
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
-#define UTF8_ACCEPT 0
-#define UTF8_REJECT 12
+constexpr auto UTF8_ACCEPT = 0;
+constexpr auto UTF8_REJECT = 12;
 
 static const uint8_t utf8d[] = {
   // The first part of the table maps bytes to character classes that

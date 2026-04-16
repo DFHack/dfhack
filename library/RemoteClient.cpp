@@ -36,24 +36,25 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <exception>
+#include <ios>
 #include <iostream>
 #include <fstream>
-#include <istream>
 #include <string>
-#include <stdint.h>
+#include <vector>
 
+#include "ColorText.h"
+#include "CoreDefs.h"
 #include "RemoteClient.h"
-#include <ActiveSocket.h>
-#include "MiscUtils.h"
 
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
+#include "ActiveSocket.h"
+#include "Host.h"
+#include "SimpleSocket.h"
 
-#include <memory>
 
 #include "json/json.h"
 

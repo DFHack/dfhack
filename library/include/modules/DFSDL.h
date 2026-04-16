@@ -1,12 +1,12 @@
 #pragma once
 
-#include "Export.h"
 #include "ColorText.h"
+#include "Export.h"
 
 #include <cstdint>
 #include <functional>
+#include <string>
 #include <vector>
-#include <cstdint>
 
 struct SDL_Surface;
 struct SDL_Rect;

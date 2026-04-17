@@ -39,6 +39,7 @@ namespace DFHack {
 
 static std::default_random_engine rng;
 static uint32_t next_cycle_unpaused_ms = 0;  // threshold for the next cycle
+static bool pending_follow_recovery = false;
 
 static const size_t MAX_HISTORY = 200;
 
@@ -166,9 +167,51 @@ public:
 
 static void follow_a_dwarf(color_ostream &out);
 
+static bool is_followable_unit(df::unit *unit) {
+    return unit &&
+           !Units::isDead(unit) &&
+           Units::isActive(unit) &&
+           !unit->flags1.bits.caged &&
+           !unit->flags1.bits.chained &&
+           !Units::isHidden(unit);
+}
+
+static bool has_valid_follow_target() {
+    return is_followable_unit(df::unit::find(plotinfo->follow_unit));
+}
+
+static void focus_on_unit(df::unit *unit) {
+    Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
+    plotinfo->follow_item = -1;
+    plotinfo->follow_unit = unit->id;
+}
+
 static class UnitHistory {
     std::deque<int32_t> history;
     size_t offset = 0;
+
+    bool follow_history_unit(color_ostream &out, size_t new_offset, const char *direction) {
+        int32_t unit_id = history[history.size() - (1 + new_offset)];
+        auto unit = df::unit::find(unit_id);
+        if (!is_followable_unit(unit)) {
+            DEBUG(cycle,out).print("skipping {} history unit {} at offset {}; no longer followable\n",
+                                   direction, unit_id, new_offset);
+            return false;
+        }
+
+        offset = new_offset;
+        DEBUG(cycle,out).print("scanning {} to unit {} at offset {}\n", direction, unit_id, offset);
+        focus_on_unit(unit);
+        return true;
+    }
+
+    void recover_if_target_lost(color_ostream &out) {
+        if (has_valid_follow_target())
+            return;
+
+        DEBUG(cycle,out).print("current history target is gone; following another unit\n");
+        follow_a_dwarf(out);
+    }
 
 public:
     void reset() {
@@ -196,31 +239,35 @@ public:
 
     void add_and_follow(color_ostream &out, df::unit *unit) {
         // if we're currently following a unit, add it to the history if it's not already there
-        if (plotinfo->follow_unit > -1 && plotinfo->follow_unit != get_cur_unit_id()) {
+        auto followed_unit = df::unit::find(plotinfo->follow_unit);
+        if (plotinfo->follow_unit > -1 && plotinfo->follow_unit != get_cur_unit_id() && is_followable_unit(followed_unit)) {
             DEBUG(cycle,out).print("currently following unit {} that is not in history; adding\n", plotinfo->follow_unit);
             add_to_history(out, plotinfo->follow_unit);
+        } else if (plotinfo->follow_unit > -1 && plotinfo->follow_unit != get_cur_unit_id()) {
+            DEBUG(cycle,out).print("currently followed unit {} is no longer followable; not adding to history\n",
+                                   plotinfo->follow_unit);
         }
 
         int32_t id = unit->id;
         add_to_history(out, id);
         DEBUG(cycle,out).print("now following unit {}: {}\n", id, DF2CONSOLE(Units::getReadableName(unit)));
-        Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
-        plotinfo->follow_item = -1;
-        plotinfo->follow_unit = id;
+        focus_on_unit(unit);
     }
 
     void scan_back(color_ostream &out) {
-        if (history.empty() || offset >= history.size()-1) {
+        if (history.empty() || offset >= history.size() - 1) {
             DEBUG(cycle,out).print("already at beginning of history\n");
+            recover_if_target_lost(out);
             return;
         }
-        ++offset;
-        int unit_id = get_cur_unit_id();
-        DEBUG(cycle,out).print("scanning back to unit {} at offset {}\n", unit_id, offset);
-        if (auto unit = df::unit::find(unit_id))
-            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
-        plotinfo->follow_item = -1;
-        plotinfo->follow_unit = unit_id;
+
+        for (size_t new_offset = offset + 1; new_offset < history.size(); ++new_offset) {
+            if (follow_history_unit(out, new_offset, "back"))
+                return;
+        }
+
+        DEBUG(cycle,out).print("no earlier valid history units found\n");
+        recover_if_target_lost(out);
     }
 
     void scan_forward(color_ostream &out) {
@@ -230,13 +277,14 @@ public:
             return;
         }
 
-        --offset;
-        int unit_id = get_cur_unit_id();
-        DEBUG(cycle,out).print("scanning forward to unit {} at offset {}\n", unit_id, offset);
-        if (auto unit = df::unit::find(unit_id))
-            Gui::revealInDwarfmodeMap(Units::getPosition(unit), false, World::ReadPauseState());
-        plotinfo->follow_item = -1;
-        plotinfo->follow_unit = unit_id;
+        for (size_t new_offset = offset; new_offset > 0;) {
+            --new_offset;
+            if (follow_history_unit(out, new_offset, "forward"))
+                return;
+        }
+
+        DEBUG(cycle,out).print("no more recent valid history units found; following new unit\n");
+        follow_a_dwarf(out);
     }
 
     int32_t get_cur_unit_id() {
@@ -307,6 +355,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 static void on_disable(color_ostream &out, bool skip_restore_settings = false) {
     EventManager::unregisterAll(plugin_self);
     announcement_settings.reset(out, skip_restore_settings);
+    pending_follow_recovery = false;
 }
 
 static bool is_squads_open() {
@@ -336,6 +385,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
                                 is_enabled ? "enabled" : "disabled");
         if (enable) {
             config.reset();
+            pending_follow_recovery = false;
             if (!Lua::CallLuaModuleFunction(out, "plugins.spectate", "refresh_cpp_config")) {
                 WARN(control,out).print("Failed to refresh config\n");
             }
@@ -347,7 +397,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             }
             INFO(control,out).print("Spectate mode enabled!\n");
             EventManager::registerListener(EventManager::EventType::UNIT_NEW_ACTIVE, new_unit_handler);
-            if (plotinfo->follow_unit > -1)
+            if (has_valid_follow_target())
                 set_next_cycle_unpaused_ms(out);
             else
                 follow_a_dwarf(out);
@@ -375,6 +425,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
     switch (event) {
     case SC_WORLD_LOADED:
         next_cycle_unpaused_ms = 0;
+        pending_follow_recovery = false;
         break;
     case SC_WORLD_UNLOADED:
         if (is_enabled) {
@@ -395,13 +446,26 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     announcement_settings.on_update(out);
 
-    if (plotinfo->follow_unit < 0 || plotinfo->follow_item > -1 || is_squads_open()) {
+    if (plotinfo->follow_item > -1 || is_squads_open()) {
         DEBUG(cycle,out).print("auto-disengage triggered\n");
         is_enabled = false;
         plotinfo->follow_unit = -1;
         on_disable(out);
         return CR_OK;
     }
+
+    if (!has_valid_follow_target()) {
+        uint32_t unpaused_ms = Core::getInstance().getUnpausedMs();
+        if (!pending_follow_recovery || unpaused_ms >= next_cycle_unpaused_ms) {
+            DEBUG(cycle,out).print("current follow target is no longer available; finding another unit\n");
+            recent_units.trim();
+            follow_a_dwarf(out);
+            pending_follow_recovery = !has_valid_follow_target();
+        }
+        return CR_OK;
+    }
+
+    pending_follow_recovery = false;
 
     if (Core::getInstance().getUnpausedMs() >= next_cycle_unpaused_ms) {
         recent_units.trim();
@@ -444,7 +508,7 @@ static void get_dwarf_buckets(color_ostream &out,
     vector<df::unit*> &other_units)
 {
     for (auto unit : world->units.active) {
-        if (Units::isDead(unit) || !Units::isActive(unit) || unit->flags1.bits.caged || unit->flags1.bits.chained || Units::isHidden(unit))
+        if (!is_followable_unit(unit))
             continue;
         if (!config.include_animals && Units::isAnimal(unit))
             continue;
@@ -611,8 +675,9 @@ static void spectate_followNext(color_ostream &out) {
 
 static void spectate_addToHistory(color_ostream &out, int32_t unit_id) {
     DEBUG(control,out).print("entering spectate_addToHistory; unit_id={}\n", unit_id);
-    if (!df::unit::find(unit_id)) {
-        WARN(control,out).print("unit with id {} not found; not adding to history\n", unit_id);
+    auto unit = df::unit::find(unit_id);
+    if (!is_followable_unit(unit)) {
+        WARN(control,out).print("unit with id {} is not followable; not adding to history\n", unit_id);
         return;
     }
     unit_history.add_to_history(out, unit_id);

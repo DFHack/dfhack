@@ -1,12 +1,11 @@
 local _ENV = mkmodule('plugins.stockpiles')
 
 local argparse = require('argparse')
-local dialogs = require('gui.dialogs')
 local gui = require('gui')
+local dialogs = require('gui.dialogs')
+local widgets = require('gui.widgets')
 local logistics = require('plugins.logistics')
 local overlay = require('plugins.overlay')
-local widgets = require('gui.widgets')
-
 local STOCKPILES_DIR = 'dfhack-config/stockpiles'
 local STOCKPILES_LIBRARY_DIR = dfhack.getHackPath() .. '/data/stockpiles'
 
@@ -242,9 +241,9 @@ function parse_commandline(args)
     return true
 end
 
--------------------------
--- import/export dialogs
--------------------------
+-----------------
+-- import dialog
+-----------------
 
 local function get_import_choices()
     local filenames = {}
@@ -281,12 +280,242 @@ local function do_import()
     }:show()
 end
 
+------------------
+-- export screens
+------------------
+
+IncludeOptionScreen = defclass(IncludeOptionScreen, gui.ZScreen)
+IncludeOptionScreen.ATTRS{
+    focus_path='stockpiles/export-include-option',
+    on_close=DEFAULT_NIL,
+}
+
+IncludeOptionScreen.INCLUDE_NAMES = {'containers', 'general', 'categories', 'types'}
+
+function IncludeOptionScreen:init()
+    self.containers = true
+    self.general = true
+    self.categories = true
+    self.types = true
+
+    self.show_help = false
+
+    self:addviews{
+        widgets.Window{
+            view_id='main',
+            frame={w=72, h=16},
+            frame_title='Include option',
+            subviews={
+                widgets.TooltipLabel{
+                    view_id='disclaimer',
+                    frame={r=0, t=3, w=17},
+                    text_to_wrap='All set to [No] skips --include and includes everything!',
+                    text_pen=COLOR_LIGHTRED,
+                    show_tooltip=true,
+                },
+
+                widgets.HotkeyLabel{
+                    view_id='help',
+                    frame={r=0, b=1, w=15},
+                    key='CUSTOM_H',
+                    label='Toggle help',
+                    on_activate=function() self:toggle_help() end,
+                },
+
+                widgets.Panel{
+                    frame={l=0, r=0, t=0, b=0},
+                    autoarrange_subviews=true,
+                    autoarrange_gap=1,
+                    subviews={
+                        widgets.Label{
+                            text='Select below what you wish to include.'
+                        },
+
+                        widgets.Panel{
+                            frame={l=0, r=0, h=1},
+                            subviews={
+                                widgets.HotkeyLabel{
+                                    frame={l=0},
+                                    key='CUSTOM_C',
+                                    label='Include containers:',
+                                    on_activate=function() self:toggle_option('containers') end,
+                                },
+                                widgets.Label{
+                                    view_id='containers_lbl',
+                                    frame={r=24, w=10},
+                                    text_halign=2,
+                                    text='',
+                                },
+                            },
+                        },
+
+                        widgets.Panel{
+                            frame={l=0, r=0, h=1},
+                            subviews={
+                                widgets.HotkeyLabel{
+                                    frame={l=0},
+                                    key='CUSTOM_G',
+                                    label='Include general:',
+                                    on_activate=function() self:toggle_option('general') end,
+                                },
+                                widgets.Label{
+                                    view_id='general_lbl',
+                                    frame={r=24, w=10},
+                                    text_halign=2,
+                                    text='',
+                                },
+                            },
+                        },
+
+                        widgets.Panel{
+                            frame={l=0, r=0, h=1},
+                            subviews={
+                                widgets.HotkeyLabel{
+                                    frame={l=0},
+                                    key='CUSTOM_A',
+                                    label='Include categories:',
+                                    on_activate=function() self:toggle_option('categories') end,
+                                },
+                                widgets.Label{
+                                    view_id='categories_lbl',
+                                    frame={r=24, w=10},
+                                    text_halign=2,
+                                    text='',
+                                },
+                            },
+                        },
+
+                        widgets.Panel{
+                            frame={l=0, r=0, h=1},
+                            subviews={
+                                widgets.HotkeyLabel{
+                                    frame={l=0},
+                                    key='CUSTOM_T',
+                                    label='Include types:',
+                                    on_activate=function() self:toggle_option('types') end,
+                                },
+                                widgets.Label{
+                                    view_id='types_lbl',
+                                    frame={r=24, w=10},
+                                    text_halign=2,
+                                    text='',
+                                },
+                            },
+                        },
+
+                        widgets.HotkeyLabel{
+                            frame={l=0, h=1, w=30},
+                            key='SELECT',
+                            label='Confirm',
+                            on_activate=function() self:confirm() end,
+                        },
+
+                        --TODO: link to doc; but is present on the left overlay
+                        widgets.WrappedLabel{
+                            view_id='tooltip',
+                            visible=false,
+                            text_to_wrap='Containers: Max barrels, max bins, max wheelbarrows\n'
+                                .. 'General: Buttons "Take from everywhere", Organic, Inorganic\n'
+                                .. 'Categories: Ammo, Food, Stone, etc.\n'
+                                .. 'Types: The elements below the categories',
+                        },
+                    },
+                },
+            },
+        },
+    }
+
+    self:update_labels()
+end
+
+function IncludeOptionScreen:confirm()
+    local opts = {}
+    for _, name in ipairs(self.INCLUDE_NAMES) do
+        opts[name] = self[name]
+    end
+    self:dismiss()
+    if self.on_close then self.on_close(opts) end
+end
+
+function IncludeOptionScreen:toggle_option(name)
+    self[name] = not self[name]
+    self:update_labels()
+end
+
+function IncludeOptionScreen:toggle_help()
+    self.show_help = not self.show_help
+    self.subviews.tooltip.visible = self.show_help
+
+    -- declaring variables is not stricly needed below, but left as is for future improvements
+    local main = self.subviews.main
+    main.frame.h = self.show_help and 21 or 16
+
+    --TODO : make the text 'Show help'/'Hide help' dynamic
+    local help = self.subviews.help
+    help.frame.b = self.show_help and 6 or 1
+    self:updateLayout()
+end
+
+function IncludeOptionScreen:update_labels()
+    for _, name in ipairs(self.INCLUDE_NAMES) do
+        local val = self[name]
+        self.subviews[name .. '_lbl']:setText{
+            val and {text='[Yes]', pen=COLOR_YELLOW} or 'Yes',
+            ' / ',
+            not val and {text='[No]', pen=COLOR_YELLOW} or 'No',
+        }
+    end
+
+    local all_false = not (self.containers or self.general or self.categories or self.types)
+    self.subviews.disclaimer.visible = all_false
+end
+
+function IncludeOptionScreen:onInput(keys)
+    if keys.SELECT then
+        self:confirm()
+        return true
+    elseif keys.CUSTOM_C then
+        self:toggle_option('containers')
+        return true
+    elseif keys.CUSTOM_G then
+        self:toggle_option('general')
+        return true
+    elseif keys.CUSTOM_A then
+        self:toggle_option('categories')
+        return true
+    elseif keys.CUSTOM_T then
+        self:toggle_option('types')
+        return true
+    end
+
+    return IncludeOptionScreen.super.onInput(self, keys)
+end
+
 local function do_export()
     local sp = dfhack.gui.getSelectedStockpile(true)
-    dialogs.InputBox{
-        frame_title='Export Stockpile Settings',
-        text='Please enter a filename',
-        on_input=function(text) export_settings(text, {id=sp and sp.id}) end,
+
+    IncludeOptionScreen{
+        on_close=function(opts)
+            if not opts then return end
+
+            local includes = {}
+            for _, name in ipairs(IncludeOptionScreen.INCLUDE_NAMES) do
+                if opts[name] then
+                    table.insert(includes, name)
+                end
+            end
+
+            dialogs.InputBox{
+                frame_title='Export Stockpile Settings',
+                text='Please enter a filename',
+                on_input=function(text)
+                    export_settings(text, {
+                        id=sp and sp.id,
+                        includes=includes,
+                    })
+                end,
+            }:show()
+        end,
     }:show()
 end
 

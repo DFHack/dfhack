@@ -32,6 +32,7 @@ distribution.
 
 #include "df/viewscreen.h"
 #include "df/graphic_viewportst.h"
+#include "df/graphic_map_portst.h"
 
 #include <set>
 #include <memory>
@@ -199,6 +200,12 @@ namespace DFHack
 
         /// Retrieves one screen tile from the buffer
         DFHACK_EXPORT Pen readTile(int x, int y, bool map = false, int32_t * df::graphic_viewportst::*texpos_field = NULL);
+
+        /// Paint one world map tile with the given pen
+        DFHACK_EXPORT bool paintTileMapPort(const Pen &pen, int x, int y, int32_t * df::graphic_map_portst::*texpos_field = NULL);
+
+        /// Retrieves one world map tile from the buffer
+        DFHACK_EXPORT Pen readTileMapPort(int x, int y, int32_t * df::graphic_map_portst::*texpos_field = NULL);
 
         /// Paint a string onto the screen. Ignores ch and tile of pen.
         DFHACK_EXPORT bool paintString(const Pen &pen, int x, int y, const std::string &text, bool map = false);

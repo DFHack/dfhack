@@ -157,6 +157,7 @@ Template for new versions:
 - ``logcleaner``: New plugin for time-triggered clearing of combat, sparring, and hunting reports with configurable filtering and overlay UI.
 
 ## New Features
+- `buildingplan`: added overlay to queue lever pull jobs from linked building view
 - `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
 - `sort`: added ``Uniformed`` filter to squad assignment screen to filter dwarves with mining, woodcutting, or hunting labors
 - `sort`: Add death cause button to dead/missing tab in the creatures screen

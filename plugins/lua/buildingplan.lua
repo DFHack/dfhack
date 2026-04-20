@@ -148,6 +148,7 @@ OVERLAY_WIDGETS = {
     mechanisms=mechanisms.MechanismOverlay,
     mechanism_free=unlink_mechanisms.MechItemOverlay,
     mechanism_unlink=unlink_mechanisms.MechLinkOverlay,
+    mechanism_leverpull=unlink_mechanisms.MechLeverPullOverlay,
 }
 
 return _ENV

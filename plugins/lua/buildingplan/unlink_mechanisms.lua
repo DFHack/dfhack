@@ -392,6 +392,214 @@ function MechLinkOverlay:onRenderFrame(dc, rect)
 end
 
 -- ----------------------
+-- MechLeverPullOverlay
+--
+
+MechLeverPullOverlay = defclass(MechLeverPullOverlay, overlay.OverlayWidget)
+MechLeverPullOverlay.ATTRS
+{
+    desc = "Allows queueing lever pull jobs from linked building view.",
+    default_enabled = true,
+    default_pos = {x=-41, y=-4},
+    frame = {w=56, h=27},
+    viewscreens = {},
+}
+
+for _,v in ipairs(valid_build) do
+    utils.insert_sorted(MechLeverPullOverlay.ATTRS.viewscreens, "dwarfmode/ViewSheets/BUILDING/"..v.."/LinkedBuildings")
+end
+
+function MechLeverPullOverlay:init()
+    self.num_buttons = 0
+    self.links = {}
+end
+
+function MechLeverPullOverlay:is_lever(building)
+    return building._type == df.building_trapst and building.trap_type == df.trap_type.Lever
+end
+
+function MechLeverPullOverlay:get_lever_pull_job(lever)
+    for _, job in ipairs(lever.jobs) do
+        if job.job_type == df.job_type.PullLever then
+            return job
+        end
+    end
+    return nil
+end
+
+function MechLeverPullOverlay:queue_lever_pull_job(lever)
+    local building_ref = df.general_ref_building_holderst:new()
+    building_ref.building_id = lever.id
+
+    local job = df.job:new()
+    job.job_type = df.job_type.PullLever
+    job.pos = {
+        x = lever.centerx,
+        y = lever.centery,
+        z = lever.z
+    }
+    job.flags.do_now = false
+    job.general_refs:insert("#", building_ref)
+    lever.jobs:insert("#", job)
+
+    dfhack.job.linkIntoWorld(job, true)
+    dfhack.job.checkBuildingsNow()
+end
+
+function MechLeverPullOverlay:remove_lever_pull_job(lever)
+    for i = #lever.jobs, 1, -1 do
+        local job = lever.jobs[i-1]
+        if job.job_type == df.job_type.PullLever then
+            lever.jobs:erase(i-1)
+            dfhack.job.removeJob(job)
+            return true
+        end
+    end
+    return false
+end
+
+function MechLeverPullOverlay:build_links_table()
+    self.links = {}
+    for idx = 1, #self.building.contained_items-1 do --index 0 is always building component
+        local item = self.building.contained_items[idx].item
+        if item._type == df.item_trappartsst and item.flags.in_building and
+            not item.flags.in_job and get_trigger_index(item) then --item is linked mechanism
+                table.insert(self.links, idx)
+        end
+    end
+end
+
+function MechLeverPullOverlay:idx_from_offset(offset)
+    if offset <= 0 or offset >= self.num_buttons*3 - 1 then --linked icons disappear early
+        return 0 --outside of list
+    else
+        return self.links[(offset + sheet.scroll_position_linked_buildings) // 3 + 1] or 0
+    end
+end
+
+function MechLeverPullOverlay:get_button(button_idx, label, text_pen)
+    local pull_button = self.subviews["pull_"..button_idx]
+
+    if not pull_button then
+        self:addviews
+        {
+            widgets.TextButton
+            {
+                view_id = "pull_"..button_idx,
+                frame = {t=0, r=17, w=11, h=1},
+                label = label,
+                text_pen = text_pen or COLOR_WHITE,
+                on_activate = function() self:activate_button(button_idx) end,
+                visible = false,
+            },
+        }
+        pull_button = self.subviews["pull_"..button_idx]
+        pull_button:updateLayout(self.frame_body)
+    else
+        -- Update existing button using setLabel method
+        pull_button:setLabel(label)
+        pull_button.label.text_pen = text_pen or COLOR_WHITE
+    end
+
+    return pull_button
+end
+
+function MechLeverPullOverlay:activate_button(button_idx)
+    local pull_button = self.subviews["pull_"..button_idx]
+
+    local idx = self:idx_from_offset(pull_button.frame.t)
+    if idx > 0 and idx < #self.building.contained_items then
+        local item = self.building.contained_items[idx].item
+        local lever = get_mech_target(item)
+
+        if lever and self:is_lever(lever) then
+            if self:get_lever_pull_job(lever) then
+                self:remove_lever_pull_job(lever)
+            else
+                self:queue_lever_pull_job(lever)
+            end
+        else
+            dfhack.printerr("MechLeverPullOverlay: Mechanism is not linked to a lever")
+        end
+    end
+end
+
+function MechLeverPullOverlay:update_buttons()
+    self:build_links_table()
+    local scroll_pos = sheet.scroll_position_linked_buildings
+
+    local bci_len = #self.building.contained_items
+    local h_offset = #self.links > self.num_buttons and 8 or 6 --account for scrollbar
+
+    local unlink_enabled = overlay.isOverlayEnabled('buildingplan.mechanism_unlink')
+    local pull_offset = unlink_enabled and 14 or 6
+
+    for i=1, self.num_buttons do
+        local offset = i*3 - 1 - ((scroll_pos + 1) % 3)
+        local idx = self:idx_from_offset(offset)
+
+        local pull_button = self.subviews["pull_"..i]
+        if pull_button then
+            pull_button.visible = false
+        end
+
+        if idx > 0 and idx < bci_len then
+            local item = self.building.contained_items[idx].item
+            local lever = get_mech_target(item)
+            local show_pull = lever and self:is_lever(lever) and not self:is_lever(self.building)
+
+            if show_pull then
+                local job = self:get_lever_pull_job(lever)
+                local label, text_pen
+                local state_char = lever.state == 0 and "/" or "\\"
+
+                if job then
+                    label = "Pulling " .. state_char
+                    local worker = dfhack.job.getWorker(job)
+                    text_pen = worker and COLOR_GREEN or COLOR_YELLOW
+                else
+                    label = "Pull    " .. state_char
+                    text_pen = COLOR_WHITE
+                end
+
+                pull_button = self:get_button(i, label, text_pen)
+                pull_button.frame.t = offset
+                pull_button.frame.r = pull_offset
+                pull_button.visible = show_pull
+            end
+        end
+
+        if pull_button then
+            pull_button:updateLayout()
+        end
+    end
+end
+
+function MechLeverPullOverlay:preUpdateLayout(parent_rect)
+    for i=1, self.num_buttons do --hide existing buttons
+        local pull_button = self.subviews["pull_"..i]
+        if pull_button then
+            pull_button.visible = false
+        end
+    end
+
+    local height = parent_rect.height - 49
+    self.frame.h = height + 1 --includes lower border
+    self.num_buttons = height // 3
+end
+
+function MechLeverPullOverlay:onRenderFrame(dc, rect)
+    if self.bld_id ~= sheet.viewing_bldid then
+        self.bld_id = sheet.viewing_bldid
+        self.building = df.building.find(self.bld_id)
+    end
+
+    self:update_buttons()
+
+    MechLeverPullOverlay.super.onRenderFrame(self, dc, rect)
+end
+
+-- ----------------------
 -- MechItemOverlay
 --
 

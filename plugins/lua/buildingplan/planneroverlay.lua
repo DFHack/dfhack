@@ -409,7 +409,7 @@ function ItemLine:get_item_line_text()
         self.note = (' Will link later (need to make %d)'):format(-self.available + quantity)
     end
     self.note = string.char(192) .. self.note -- character 192 is "└"
-    
+
     self.quantity = quantity
 
     return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
@@ -1060,9 +1060,9 @@ function PlannerOverlay:queue_order(idx)
     if not item or not item.available or not item.quantity or item.available >= item.quantity then return end
     local missing = item.quantity - item.available
     if missing <= 0 then return end
-    
+
     local filter = get_cur_filters()[idx]
-    
+
     local item_to_job = {
         [df.item_type.BED] = 'ConstructBed',
         [df.item_type.DOOR] = 'ConstructDoor',
@@ -1091,7 +1091,7 @@ function PlannerOverlay:queue_order(idx)
         [df.item_type.GOBLET] = 'MakeGoblet',
         [df.item_type.BLOCKS] = 'ConstructBlocks',
     }
-    
+
     local job_name = "ConstructBlocks"
     local item_type = nil
     if filter.item_type and filter.item_type ~= -1 then
@@ -1103,16 +1103,16 @@ function PlannerOverlay:queue_order(idx)
         }
         item_type = mapping_vector[filter.vector_id]
     end
-    
+
     if item_type and item_to_job[item_type] then
         job_name = item_to_job[item_type]
     end
-    
+
     local order_json = {
         job = job_name,
         amount_total = missing
     }
-    
+
     local buildingplan = require('plugins.buildingplan')
     local cats_list = {}
     if buildingplan.hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1) then
@@ -1123,7 +1123,7 @@ function PlannerOverlay:queue_order(idx)
             end
         end
     end
-    
+
     if #cats_list == 0 then
         local job_defaults = {
             ConstructBed = {'wood'},
@@ -1157,12 +1157,12 @@ function PlannerOverlay:queue_order(idx)
             cats_list = job_defaults[job_name]
         end
     end
-    
+
     local valid_mat_cats = {
         wood=true, bone=true, shell=true, horn=true, pearl=true, tooth=true,
         leather=true, silk=true, yarn=true, cloth=true, plant=true
     }
-    
+
     local mat_cats = {}
     for _, cat in ipairs(cats_list) do
         if valid_mat_cats[cat] then
@@ -1175,13 +1175,13 @@ function PlannerOverlay:queue_order(idx)
             order_json.material = "IRON"
         end
     end
-    
+
     if #mat_cats > 0 then
         order_json.material_category = mat_cats
     end
-    
+
     dfhack.run_command_silent('workorder', json.encode(order_json))
-    
+
     local desc = item.desc or "item"
     dfhack.gui.showAnnouncement('Work order queued for ' .. tostring(missing) .. ' ' .. desc .. '.', COLOR_YELLOW, true)
 end

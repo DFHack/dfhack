@@ -410,6 +410,8 @@ function ItemLine:get_item_line_text()
     end
     self.note = string.char(192) .. self.note -- character 192 is "└"
 
+    self.quantity = quantity
+
     return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
 end
 
@@ -610,7 +612,7 @@ function PlannerOverlay:init()
 
     local main_panel = widgets.Panel{
         view_id='main',
-        frame={t=1, l=0, r=0, h=14},
+        frame={t=1, l=0, r=0, h=15},
         frame_style=gui.FRAME_INTERIOR_MEDIUM,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('is_not_minimized'),
@@ -762,6 +764,16 @@ function PlannerOverlay:init()
             visible=function() return #get_cur_filters() > 0 end,
             subviews={
                 widgets.HotkeyLabel{
+                    frame={b=3, l=1, w=22},
+                    key='CUSTOM_CTRL_Q',
+                    label='Queue order',
+                    on_activate=function() self:queue_order(self.selected) end,
+                    visible=function()
+                        local item = self.subviews['item'..tostring(self.selected)]
+                        return item and item.available and item.quantity and (item.available < item.quantity)
+                    end
+                },
+                widgets.HotkeyLabel{
                     frame={b=2, l=1, w=22},
                     key='CUSTOM_F',
                     label=function()
@@ -841,7 +853,7 @@ function PlannerOverlay:init()
 
     local error_panel = widgets.ResizingPanel{
         view_id='errors',
-        frame={t=15, l=0, r=0},
+        frame={t=16, l=0, r=0},
         frame_style=gui.BOLD_FRAME,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('is_not_minimized'),
@@ -903,7 +915,7 @@ function PlannerOverlay:init()
 
     local favorites_panel = widgets.Panel{
         view_id='favorites',
-        frame={t=15, l=0, r=0, h=9},
+        frame={t=16, l=0, r=0, h=9},
         frame_style=gui.FRAME_INTERIOR_MEDIUM,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('show_favorites'),
@@ -974,7 +986,7 @@ function PlannerOverlay:show_favorites()
 end
 
 function PlannerOverlay:show_hide_favorites(new)
-    local errors_frame = {t=15+(new and 9 or 0), l=0, r=0}
+    local errors_frame = {t=16+(new and 9 or 0), l=0, r=0}
     self.subviews.errors.frame = errors_frame
     self:updateLayout()
 end
@@ -1041,6 +1053,137 @@ end
 
 function PlannerOverlay:clear_filter(idx)
     desc=require('plugins.buildingplan').clearFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx-1)
+end
+
+function PlannerOverlay:queue_order(idx)
+    local item = self.subviews['item'..tostring(idx)]
+    if not item or not item.available or not item.quantity or item.available >= item.quantity then return end
+    local missing = item.quantity - item.available
+    if missing <= 0 then return end
+
+    local filter = get_cur_filters()[idx]
+
+    local item_to_job = {
+        [df.item_type.BED] = 'ConstructBed',
+        [df.item_type.DOOR] = 'ConstructDoor',
+        [df.item_type.CABINET] = 'ConstructCabinet',
+        [df.item_type.TABLE] = 'ConstructTable',
+        [df.item_type.CHAIR] = 'ConstructThrone',
+        [df.item_type.BOX] = 'ConstructChest',
+        [df.item_type.ARMORSTAND] = 'ConstructArmorStand',
+        [df.item_type.WEAPONRACK] = 'ConstructWeaponRack',
+        [df.item_type.STATUE] = 'ConstructStatue',
+        [df.item_type.COFFIN] = 'ConstructCoffin',
+        [df.item_type.HATCH_COVER] = 'ConstructHatchCover',
+        [df.item_type.GRATE] = 'ConstructGrate',
+        [df.item_type.QUERN] = 'ConstructQuern',
+        [df.item_type.MILLSTONE] = 'ConstructMillstone',
+        [df.item_type.TRACTION_BENCH] = 'ConstructTractionBench',
+        [df.item_type.SLAB] = 'ConstructSlab',
+        [df.item_type.ANVIL] = 'ForgeAnvil',
+        [df.item_type.WINDOW] = 'MakeWindow',
+        [df.item_type.CAGE] = 'MakeCage',
+        [df.item_type.BARREL] = 'MakeBarrel',
+        [df.item_type.BUCKET] = 'MakeBucket',
+        [df.item_type.ANIMALTRAP] = 'MakeAnimalTrap',
+        [df.item_type.CHAIN] = 'MakeChain',
+        [df.item_type.FLASK] = 'MakeFlask',
+        [df.item_type.GOBLET] = 'MakeGoblet',
+        [df.item_type.BLOCKS] = 'ConstructBlocks',
+    }
+
+    local job_name = "ConstructBlocks"
+    local item_type = nil
+    if filter.item_type and filter.item_type ~= -1 then
+        item_type = filter.item_type
+    elseif filter.vector_id and filter.vector_id ~= -1 then
+        local mapping_vector = {
+            [df.job_item_vector_id.ANY_WEAPON] = df.item_type.WEAPON,
+            [df.job_item_vector_id.ANY_ARMOR] = df.item_type.ARMOR,
+        }
+        item_type = mapping_vector[filter.vector_id]
+    end
+
+    if item_type and item_to_job[item_type] then
+        job_name = item_to_job[item_type]
+    end
+
+    local order_json = {
+        job = job_name,
+        amount_total = missing
+    }
+
+    local buildingplan = require('plugins.buildingplan')
+    local cats_list = {}
+    if buildingplan.hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1) then
+        local cats = buildingplan.getMaterialMaskFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1)
+        for cat, enabled in pairs(cats) do
+            if enabled and cat ~= 'unset' then
+                table.insert(cats_list, cat)
+            end
+        end
+    end
+
+    if #cats_list == 0 then
+        local job_defaults = {
+            ConstructBed = {'wood'},
+            ConstructDoor = {'stone'},
+            ConstructCabinet = {'stone'},
+            ConstructTable = {'stone'},
+            ConstructThrone = {'stone'},
+            ConstructChest = {'stone'},
+            ConstructArmorStand = {'stone'},
+            ConstructWeaponRack = {'stone'},
+            ConstructStatue = {'stone'},
+            ConstructCoffin = {'stone'},
+            ConstructHatchCover = {'stone'},
+            ConstructGrate = {'stone'},
+            ConstructQuern = {'stone'},
+            ConstructMillstone = {'stone'},
+            ConstructTractionBench = {'wood'},
+            ConstructSlab = {'stone'},
+            ForgeAnvil = {'iron'},
+            MakeWindow = {'glass'},
+            MakeCage = {'wood'},
+            MakeBarrel = {'wood'},
+            MakeBucket = {'wood'},
+            MakeAnimalTrap = {'wood'},
+            MakeChain = {'iron'},
+            MakeFlask = {'iron'},
+            MakeGoblet = {'stone'},
+            ConstructBlocks = {'stone'},
+        }
+        if job_defaults[job_name] then
+            cats_list = job_defaults[job_name]
+        end
+    end
+
+    local valid_mat_cats = {
+        wood=true, bone=true, shell=true, horn=true, pearl=true, tooth=true,
+        leather=true, silk=true, yarn=true, cloth=true, plant=true
+    }
+
+    local mat_cats = {}
+    for _, cat in ipairs(cats_list) do
+        if valid_mat_cats[cat] then
+            table.insert(mat_cats, cat)
+        elseif cat == 'stone' then
+            order_json.material = "INORGANIC"
+        elseif cat == 'glass' then
+            order_json.material = "GLASS_GREEN"
+        elseif cat == 'metal' or cat == 'iron' then
+            order_json.material = "IRON"
+        end
+    end
+
+    if #mat_cats > 0 then
+        order_json.material_category = mat_cats
+    end
+
+    dfhack.run_command_silent('workorder', json.encode(order_json))
+
+    local desc = item.desc or "item"
+    dfhack.gui.showAnnouncement('Work order queued for ' .. tostring(missing) .. ' ' .. desc .. '.', COLOR_YELLOW, true)
 end
 
 local function get_placement_data()

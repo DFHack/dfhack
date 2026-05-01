@@ -30,7 +30,7 @@ distribution.
 #include "VersionInfo.h"
 #include "VersionInfoFactory.h"
 
-#include "Modules/Filesystem.h"
+#include "modules/Filesystem.h"
 
 #include <algorithm>
 #include <cstdarg>

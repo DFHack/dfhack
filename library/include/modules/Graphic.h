@@ -30,9 +30,9 @@ distribution.
 #ifndef CL_MOD_GRAPHIC
 #define CL_MOD_GRAPHIC
 
-#include <stdint.h>
 #include "Export.h"
 #include "Module.h"
+
 #include <vector>
 
 namespace DFHack

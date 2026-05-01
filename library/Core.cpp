@@ -106,8 +106,6 @@ distribution.
 
 #include "md5wrapper.h"
 
-#include <fmt/base.h>
-
 #include <SDL_events.h>
 #include <SDL_keycode.h>
 #include <SDL_video.h>

@@ -48,12 +48,12 @@ distribution.
 #include <vector>
 
 #ifdef WIN32
-// Suppress warning which occurs in header on some WinSDK versions
-// See dfhack/dfhack#5147 for more information
 #define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
 #include <sysinfoapi.h>
+// Suppress warning which occurs in header on some WinSDK versions
+// See dfhack/dfhack#5147 for more information
 #pragma warning(push)
 #pragma warning(disable:4091)
 #include <DbgHelp.h>

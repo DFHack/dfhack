@@ -27,6 +27,7 @@ distribution.
 #include "ColorText.h"
 #include "Core.h"
 #include "CoreDefs.h"
+#include "Format.h"
 #include "LuaWrapper.h"
 #include "LuaTools.h"
 #include "MemAccess.h"
@@ -54,13 +55,10 @@ distribution.
 #include <string>
 #include <vector>
 
-#include <fmt/base.h>
-#include <fmt/format.h>
-
 #include "df/viewscreen.h"
 
-#include <lauxlib.h>
 #include <lua.h>
+#include <lauxlib.h>
 
 using namespace DFHack;
 using std::string;

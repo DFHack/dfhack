@@ -49,6 +49,7 @@ build/compile_commands.json
 build/dfhack_setarch.txt
 build/ImportExecutables.cmake
 build/Testing
+build/_deps
 
 # Python binding binaries
 *.pyc

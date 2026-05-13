@@ -65,6 +65,25 @@ Template for new versions:
 ## Documentation
 
 ## API
+
+## Lua
+
+## Removed
+
+# 53.13-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+- updated documentation for ``autofarm`` for more clarity
+
+## API
 - add flexible casting to ``enum_field`` to enable explicit casting to more types
 - Handle units without current soul in ``Units::getFocusPenalty``
 

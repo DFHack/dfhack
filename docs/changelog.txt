@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- ``Gui::makeAnnoucement``, ``Gui::showPopupAnnouncement`, and ``Gui::autoDFAnnouncement`` will no longer attempt to cull the DF announcement vector
 
 ## Misc Improvements
 

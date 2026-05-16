@@ -54,6 +54,25 @@ Template for new versions:
 
 # Future
 
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.13-r2
+
 ## New Tools
 
 ## New Features

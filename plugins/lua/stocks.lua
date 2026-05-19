@@ -14,6 +14,14 @@ local function collapse_all()
     stocks.i_height = num_sections * 3
 end
 
+local function expand_all()
+    local num_sections = #stocks.current_type_a_expanded
+    for idx=0,num_sections-1 do
+        stocks.current_type_a_expanded[idx] = true
+    end
+    stocks.i_height = num_sections * 3
+end
+
 local function remove_empty()
     local empties = {}
     for itype,v in ipairs(stocks.storeamount) do
@@ -51,6 +59,12 @@ function StocksOverlay:init()
             label='collapse all',
             key='CUSTOM_CTRL_X',
             on_activate=collapse_all,
+        },
+        widgets.HotkeyLabel{
+            frame={t=1, l=0},
+            label='expand all',
+            key='CUSTOM_CTRL_Z',
+            on_activate=expand_all,
         },
         widgets.HotkeyLabel{
             frame={t=2, l=0},

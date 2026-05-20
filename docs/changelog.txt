@@ -54,10 +54,28 @@ Template for new versions:
 
 # Future
 
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.14-r1
 
 ## New Tools
 
 ## New Features
+- Compatibility with Dwarf Fortress 53.14
 
 ## Fixes
 

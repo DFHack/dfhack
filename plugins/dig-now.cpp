@@ -14,25 +14,32 @@
 #include "modules/Gui.h"
 #include "modules/Job.h"
 #include "modules/Maps.h"
-#include "modules/MapCache.h"
+//-#include "modules/MapCache.h"
 #include "modules/Random.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include <df/block_square_event.h>
+#include <df/block_square_event_type.h>
 #include "df/building.h"
 #include "df/builtin_mats.h"
 #include "df/historical_entity.h"
+#include "df/inorganic_raw.h"   //?
 #include "df/item.h"
 #include "df/map_block.h"
 #include "df/material.h"
 #include "df/plotinfost.h"
 #include "df/reaction_product_itemst.h"
+#include "df/region_map_entry.h"    //?
 #include "df/tile_designation.h"
 #include "df/tile_occupancy.h"
 #include "df/unit.h"
 #include "df/vermin.h"
 #include "df/world.h"
+#include "df/world_data.h"  //?
+#include "df/world_geo_biome.h" //?
 #include "df/world_site.h"
+#include "df/world_region_details.h"    //?
 
 #include <cinttypes>
 #include <unordered_map>
@@ -48,6 +55,7 @@ namespace DFHack {
     DBG_DECLARE(dignow, channels, DebugCategory::LINFO);
 }
 
+using std::vector;
 using namespace DFHack;
 
 struct designation{
@@ -76,12 +84,12 @@ namespace std {
     };
 }
 
-class DesignationJobs {
+class TODODesignationJobs {
 private:
     std::unordered_map<df::coord, designation> designations;
     std::unordered_map<df::coord, df::job*> jobs;
 public:
-    void load(MapExtras::MapCache &map) {
+    void load() {
         designations.clear();
         DEBUG(general).print("DesignationJobs: reading jobs list\n");
         df::job_list_link* node = df::global::world->jobs.list.next;
@@ -92,8 +100,8 @@ public:
             if(!job || !Maps::isValidTilePos(job->pos))
                 continue;
 
-            df::tile_designation td = map.designationAt(job->pos);
-            df::tile_occupancy to = map.occupancyAt(job->pos);
+            df::tile_designation td = *Maps::getTileDesignation(job->pos);
+            df::tile_occupancy to = *Maps::getTileOccupancy(job->pos);
             const auto ctd = td.whole;
             const auto cto = to.whole;
             switch (job->job_type){
@@ -179,20 +187,20 @@ struct_identity boulder_percent_options::_identity(sizeof(boulder_percent_option
 struct dig_now_options {
     bool help; // whether to show the short help
 
-    DFCoord start; // upper-left coordinate, min z-level
-    DFCoord end;   // lower-right coordinate, max z-level
+    df::coord start; // upper-left coordinate, min z-level
+    df::coord end;   // lower-right coordinate, max z-level
 
     boulder_percent_options boulder_percents;
 
     // if set to the pos of a walkable tile (or somewhere above such a tile),
     // will dump generated boulders at this position instead of at their dig
     // locations
-    DFCoord dump_pos;
+    df::coord dump_pos;
 
-    static DFCoord getMapSize() {
+    static df::coord getMapSize() {
         uint32_t endx, endy, endz;
         Maps::getTileSize(endx, endy, endz);
-        return DFCoord(endx - 1, endy - 1, endz - 1);
+        return df::coord(endx - 1, endy - 1, endz - 1);
     }
 
     dig_now_options() : help(false), start(0, 0, 0), end(getMapSize()) { }
@@ -210,11 +218,10 @@ static const struct_field_info dig_now_options_fields[] = {
 struct_identity dig_now_options::_identity(sizeof(dig_now_options), &df::allocator_fn<dig_now_options>, NULL, "dig_now_options", NULL, dig_now_options_fields);
 
 // propagate light, outside, and subterranean flags to open tiles below this one
-static void propagate_vertical_flags(MapExtras::MapCache &map,
-                                     const DFCoord &pos) {
-    df::tile_designation td = map.designationAt(pos);
+static void propagate_vertical_flags(const df::coord &pos) {
+    df::tile_designation td = *Maps::getTileDesignation(pos);
 
-    if (!map.ensureBlockAt(DFCoord(pos.x, pos.y, pos.z+1))) {
+    if (!Maps::ensureTileBlock(df::coord(pos.x, pos.y, pos.z+1))) {
         // only the sky above
         td.bits.light = true;
         td.bits.outside = true;
@@ -223,12 +230,12 @@ static void propagate_vertical_flags(MapExtras::MapCache &map,
 
     int32_t zlevel = pos.z;
     df::tiletype_shape shape =
-            tileShape(map.tiletypeAt(DFCoord(pos.x, pos.y, zlevel)));
+            tileShape(*Maps::getTileType(df::coord(pos.x, pos.y, zlevel)));
     while ((shape == df::tiletype_shape::EMPTY
             || shape == df::tiletype_shape::RAMP_TOP)
-           && map.ensureBlockAt(DFCoord(pos.x, pos.y, --zlevel))) {
-        DFCoord pos_below(pos.x, pos.y, zlevel);
-        df::tile_designation td_below = map.designationAt(pos_below);
+           && Maps::ensureTileBlock(df::coord(pos.x, pos.y, --zlevel))) {
+        df::coord pos_below(pos.x, pos.y, zlevel);
+        df::tile_designation td_below = *Maps::getTileDesignation(pos_below);
         if (td_below.bits.light == td.bits.light
                 && td_below.bits.outside == td.bits.outside
                 && td_below.bits.subterranean == td.bits.subterranean)
@@ -236,8 +243,8 @@ static void propagate_vertical_flags(MapExtras::MapCache &map,
         td_below.bits.light = td.bits.light;
         td_below.bits.outside = td.bits.outside;
         td_below.bits.subterranean = td.bits.subterranean;
-        map.setDesignationAt(pos_below, td_below);
-        shape = tileShape(map.tiletypeAt(pos_below));
+        *Maps::getTileDesignation(pos_below) = td_below;
+        shape = tileShape(*Maps::getTileType(pos_below));
     }
 }
 
@@ -293,17 +300,20 @@ static bool can_dig_ramp(df::tiletype tt) {
         shape == df::tiletype_shape::FORTIFICATION;
 }
 
-static void dig_type(MapExtras::MapCache &map, const DFCoord &pos,
+
+
+
+static void dig_type(const df::coord pos,
                      df::tiletype tt) {
-    auto blk = map.BlockAtTile(pos);
+    auto blk = Maps::getTileBlock(pos);
     if (!blk)
         return;
 
-    map.setTiletypeAt(pos, tt);
+    *Maps::getTileType(pos) = tt;
 
     // digging a tile should revert it to the layer soil/stone material
-    if (!blk->setStoneAt(pos, tt, map.layerMaterialAt(pos)))
-        blk->setSoilAt(pos, tt, map.layerMaterialAt(pos));
+    if (!blk->TODOsetStoneAt(pos, tt, TODOmap.layerMaterialAt(pos)))
+        blk->TODOsetSoilAt(pos, tt, TODOmap.layerMaterialAt(pos));
 }
 
 static df::tiletype get_target_type(df::tiletype tt, df::tiletype_shape shape) {
@@ -316,63 +326,63 @@ static df::tiletype get_target_type(df::tiletype tt, df::tiletype_shape shape) {
     return findRandomVariant(tt);
 }
 
-static void dig_shape(MapExtras::MapCache &map, const DFCoord &pos,
+static void dig_shape(const df::coord pos,
                       df::tiletype tt, df::tiletype_shape shape) {
-    dig_type(map, pos, get_target_type(tt, shape));
+    dig_type(pos, get_target_type(tt, shape));
 }
 
-static void remove_ramp_top(MapExtras::MapCache &map, const DFCoord &pos) {
-    if (!map.ensureBlockAt(pos))
+static void remove_ramp_top(const df::coord pos) {
+    if (!Maps::ensureTileBlock(pos))
         return;
 
-    if (tileShape(map.tiletypeAt(pos)) == df::tiletype_shape::RAMP_TOP)
-        dig_type(map, pos, df::tiletype::OpenSpace);
+    if (tileShape(*Maps::getTileType(pos)) == df::tiletype_shape::RAMP_TOP)
+        dig_type(pos, df::tiletype::OpenSpace);
 }
 
-static bool is_wall(MapExtras::MapCache &map, const DFCoord &pos) {
-    if (!map.ensureBlockAt(pos))
+static bool is_wall(const df::coord pos) {
+    if (!Maps::ensureTileBlock(pos))
         return false;
-    return tileShape(map.tiletypeAt(pos)) == df::tiletype_shape::WALL;
+    return tileShape(*Maps::getTileType(pos)) == df::tiletype_shape::WALL;
 }
 
-static void clean_ramp(MapExtras::MapCache &map, const DFCoord &pos) {
-    if (!map.ensureBlockAt(pos))
+static void clean_ramp(const df::coord pos) {
+    if (!Maps::ensureTileBlock(pos))
         return;
 
-    df::tiletype tt = map.tiletypeAt(pos);
+    df::tiletype tt = *Maps::getTileType(pos);
     if (tileShape(tt) != df::tiletype_shape::RAMP)
         return;
 
-    if (is_wall(map, DFCoord(pos.x-1, pos.y, pos.z)) ||
-            is_wall(map, DFCoord(pos.x+1, pos.y, pos.z)) ||
-            is_wall(map, DFCoord(pos.x, pos.y-1, pos.z)) ||
-            is_wall(map, DFCoord(pos.x, pos.y+1, pos.z)) ||
-            is_wall(map, DFCoord(pos.x-1, pos.y-1, pos.z)) ||
-            is_wall(map, DFCoord(pos.x-1, pos.y+1, pos.z)) ||
-            is_wall(map, DFCoord(pos.x+1, pos.y-1, pos.z)) ||
-            is_wall(map, DFCoord(pos.x+1, pos.y+1, pos.z)))
+    if (    is_wall(df::coord(pos.x-1, pos.y,   pos.z)) ||
+            is_wall(df::coord(pos.x+1, pos.y,   pos.z)) ||
+            is_wall(df::coord(pos.x,   pos.y-1, pos.z)) ||
+            is_wall(df::coord(pos.x,   pos.y+1, pos.z)) ||
+            is_wall(df::coord(pos.x-1, pos.y-1, pos.z)) ||
+            is_wall(df::coord(pos.x-1, pos.y+1, pos.z)) ||
+            is_wall(df::coord(pos.x+1, pos.y-1, pos.z)) ||
+            is_wall(df::coord(pos.x+1, pos.y+1, pos.z)))
         return;
 
-    remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+1));
-    dig_shape(map,pos, tt, df::tiletype_shape::FLOOR);
+    remove_ramp_top(df::coord(pos.x, pos.y, pos.z+1));
+    dig_shape(pos, tt, df::tiletype_shape::FLOOR);
 }
 
 // removes self and/or orthogonally adjacent ramps that are no longer adjacent
 // to a wall
-static void clean_ramps(MapExtras::MapCache &map, const DFCoord &pos) {
-    clean_ramp(map, pos);
-    clean_ramp(map, DFCoord(pos.x-1, pos.y, pos.z));
-    clean_ramp(map, DFCoord(pos.x+1, pos.y, pos.z));
-    clean_ramp(map, DFCoord(pos.x, pos.y-1, pos.z));
-    clean_ramp(map, DFCoord(pos.x, pos.y+1, pos.z));
-    clean_ramp(map, DFCoord(pos.x-1, pos.y-1, pos.z));
-    clean_ramp(map, DFCoord(pos.x-1, pos.y+1, pos.z));
-    clean_ramp(map, DFCoord(pos.x+1, pos.y-1, pos.z));
-    clean_ramp(map, DFCoord(pos.x+1, pos.y+1, pos.z));
+static void clean_ramps(const df::coord pos) {
+    clean_ramp(pos);
+    clean_ramp(df::coord(pos.x-1, pos.y,   pos.z));
+    clean_ramp(df::coord(pos.x+1, pos.y,   pos.z));
+    clean_ramp(df::coord(pos.x,   pos.y-1, pos.z));
+    clean_ramp(df::coord(pos.x,   pos.y+1, pos.z));
+    clean_ramp(df::coord(pos.x-1, pos.y-1, pos.z));
+    clean_ramp(df::coord(pos.x-1, pos.y+1, pos.z));
+    clean_ramp(df::coord(pos.x+1, pos.y-1, pos.z));
+    clean_ramp(df::coord(pos.x+1, pos.y+1, pos.z));
 }
 
 // destroys any colonies located at pos
-static void destroy_colony(const DFCoord &pos) {
+static void destroy_colony(const df::coord pos) {
     auto same_pos = [&](df::vermin *colony){ return colony->pos == pos; };
 
     auto &colonies = world->event.vermin_colonies;
@@ -387,15 +397,15 @@ static void destroy_colony(const DFCoord &pos) {
 }
 
 struct dug_tile_info {
-    DFCoord pos;
+    df::coord pos;
     df::tiletype_material tmat;
     df::item_type itype;
     t_matpair imat; // matpair of boulder/gem potentially generated at this pos
 
-    dug_tile_info(MapExtras::MapCache &map, const DFCoord &pos) {
+    dug_tile_info(const df::coord pos) {
         this->pos = pos;
 
-        df::tiletype tt = map.tiletypeAt(pos);
+        df::tiletype tt = *Maps::getTileType(pos);
         tmat = tileMaterial(tt);
 
         itype = df::item_type::BOULDER;
@@ -410,7 +420,7 @@ struct dug_tile_info {
             case df::tiletype_material::MINERAL:
             case df::tiletype_material::FEATURE:
             case df::tiletype_material::LAVA_STONE:
-                imat = map.baseMaterialAt(pos);
+                imat = TODOmap.baseMaterialAt(pos);
                 break;
             case df::tiletype_material::FROZEN_LIQUID:
                 // assume frozen water
@@ -432,7 +442,7 @@ struct dug_tile_info {
     }
 };
 
-static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
+static bool is_diggable(const df::coord pos,
                         df::tiletype tt) {
     df::tiletype_material mat = tileMaterial(tt);
     switch (mat) {
@@ -448,19 +458,19 @@ static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
     }
 
     MaterialInfo mi;
-    mi.decode(map.baseMaterialAt(pos));
+    mi.decode(TODOmap.baseMaterialAt(pos));
     if (mi.material != nullptr && mi.material->flags.is_set(df::material_flags::UNDIGGABLE))
         return false;
 
     return true;
 }
 
-static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
-                     const DFCoord &pos, df::tile_dig_designation designation,
+static bool dig_tile(color_ostream &out,
+                     const df::coord pos, df::tile_dig_designation designation,
                      std::vector<dug_tile_info> &dug_tiles) {
-    df::tiletype tt = map.tiletypeAt(pos);
+    df::tiletype tt = *Maps::getTileType(pos);
 
-    if (!is_diggable(map, pos, tt)) {
+    if (!is_diggable(pos, tt)) {
         DEBUG(general).print("dig_tile: not diggable\n");
         return false;
     }
@@ -474,29 +484,29 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                 if (shape == df::tiletype_shape::STAIR_UPDOWN)
                     target_shape = df::tiletype_shape::STAIR_DOWN;
                 else if (shape == df::tiletype_shape::RAMP)
-                    remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+1));
+                    remove_ramp_top(df::coord(pos.x, pos.y, pos.z+1));
                 target_type = get_target_type(tt, target_shape);
             }
             break;
         case df::tile_dig_designation::Channel:
         {
-            DFCoord pos_below(pos.x, pos.y, pos.z-1);
-            if (can_dig_channel(tt) && map.ensureBlockAt(pos_below)
-                    && is_diggable(map, pos_below, map.tiletypeAt(pos_below))) {
+            df::coord pos_below(pos.x, pos.y, pos.z-1);
+            if (can_dig_channel(tt) && Maps::ensureTileBlock(pos_below)
+                    && is_diggable(pos_below, *Maps::getTileType(pos_below))) {
                 TRACE(channels).print("dig_tile: channeling at ({}) [can_dig_channel: true]\n", pos_below);
                 target_type = df::tiletype::OpenSpace;
-                DFCoord pos_above(pos.x, pos.y, pos.z+1);
-                if (map.ensureBlockAt(pos_above)) {
-                    remove_ramp_top(map, pos_above);
+                df::coord pos_above(pos.x, pos.y, pos.z+1);
+                if (Maps::ensureTileBlock(pos_above)) {
+                    remove_ramp_top(pos_above);
                 }
-                df::tile_dig_designation td_below = map.designationAt(pos_below).bits.dig;
-                if (dig_tile(out, map, pos_below, df::tile_dig_designation::Ramp, dug_tiles)) {
-                    clean_ramps(map, pos_below);
+                df::tile_dig_designation td_below = (*Maps::getTileDesignation(pos_below)).bits.dig;
+                if (dig_tile(out, pos_below, df::tile_dig_designation::Ramp, dug_tiles)) {
+                    clean_ramps(pos_below);
                     if (td_below == df::tile_dig_designation::Default) {
-                        dig_tile(out, map, pos_below, td_below, dug_tiles);
+                        dig_tile(out, pos_below, td_below, dug_tiles);
                     }
-                    clean_ramps(map, pos);
-                    propagate_vertical_flags(map, pos);
+                    clean_ramps(pos);
+                    propagate_vertical_flags(pos);
                     return true;
                 }
             } else {
@@ -525,21 +535,21 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         {
             if (can_dig_ramp(tt)) {
                 target_type = get_target_type(tt, df::tiletype_shape::RAMP);
-                DFCoord pos_above(pos.x, pos.y, pos.z+1);
-                if (target_type != tt && map.ensureBlockAt(pos_above)
-                        && is_diggable(map, pos, map.tiletypeAt(pos_above))) {
+                df::coord pos_above(pos.x, pos.y, pos.z+1);
+                if (target_type != tt && Maps::ensureTileBlock(pos_above)
+                        && is_diggable(pos, *Maps::getTileType(pos_above))) {
                     // only capture the tile info of pos_above if we didn't get
                     // here via the Channel case above
                     if (dug_tiles.size() == 0)
-                        dug_tiles.push_back(dug_tile_info(map, pos_above));
+                        dug_tiles.push_back(dug_tile_info(pos_above));
                     destroy_colony(pos_above);
                     // set tile type directly instead of calling dig_shape
                     // because we need to use *this* tile's material, not the
                     // material of the tile above
-                    map.setTiletypeAt(pos_above,
-                            get_target_type(tt, df::tiletype_shape::RAMP_TOP));
-                    remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+2));
-                    propagate_vertical_flags(map, DFCoord(pos.x, pos.y, pos.z + 1));
+                    *Maps::getTileType(pos_above) =
+                            get_target_type(tt, df::tiletype_shape::RAMP_TOP);
+                    remove_ramp_top(df::coord(pos.x, pos.y, pos.z+2));
+                    propagate_vertical_flags(df::coord(pos.x, pos.y, pos.z + 1));
                 }
             }
             break;
@@ -555,23 +565,23 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
     if (target_type == df::tiletype::Void || target_type == tt)
         return false;
 
-    dug_tiles.emplace_back(map, pos);
+    dug_tiles.emplace_back(pos);
     TRACE(general).print("dig_tile: digging the designation tile at ({})\n",pos);
-    dig_type(map, pos, target_type);
+    dig_type(pos, target_type);
 
-    clean_ramps(map, pos);
+    clean_ramps(pos);
     return true;
 }
 
-static bool is_smooth_wall(MapExtras::MapCache &map, const DFCoord &pos) {
-    if (!map.ensureBlockAt(pos))
+static bool is_smooth_wall(const df::coord pos) {
+    if (!Maps::ensureTileBlock(pos))
         return false;
-    df::tiletype tt = map.tiletypeAt(pos);
+    df::tiletype tt = *Maps::getTileType(pos);
     return tileSpecial(tt) == df::tiletype_special::SMOOTH
                 && tileShape(tt) == df::tiletype_shape::WALL;
 }
 
-static bool is_connector(MapExtras::MapCache &map, const DFCoord &pos) {
+static bool is_connector(const df::coord pos) {
     df::building *bld = Buildings::findAtTile(pos);
 
     return bld &&
@@ -579,22 +589,20 @@ static bool is_connector(MapExtras::MapCache &map, const DFCoord &pos) {
          bld->getType() == df::building_type::Floodgate);
 }
 
-static bool is_smooth_wall_or_connector(MapExtras::MapCache &map,
-                                        const DFCoord &pos) {
-    return is_smooth_wall(map, pos) || is_connector(map, pos);
+static bool is_smooth_wall_or_connector(const df::coord pos) {
+    return is_smooth_wall(pos) || is_connector(pos);
 }
 
 // adds adjacent smooth walls and doors to the given tdir
-static TileDirection get_adjacent_smooth_walls(MapExtras::MapCache &map,
-                                               const DFCoord &pos,
+static TileDirection get_adjacent_smooth_walls(const df::coord pos,
                                                TileDirection tdir) {
-    if (is_smooth_wall_or_connector(map, DFCoord(pos.x, pos.y-1, pos.z)))
+    if (is_smooth_wall_or_connector(df::coord(pos.x, pos.y-1, pos.z)))
         tdir.north = 1;
-    if (is_smooth_wall_or_connector(map, DFCoord(pos.x, pos.y+1, pos.z)))
+    if (is_smooth_wall_or_connector(df::coord(pos.x, pos.y+1, pos.z)))
         tdir.south = 1;
-    if (is_smooth_wall_or_connector(map, DFCoord(pos.x-1, pos.y, pos.z)))
+    if (is_smooth_wall_or_connector(df::coord(pos.x-1, pos.y, pos.z)))
         tdir.west = 1;
-    if (is_smooth_wall_or_connector(map, DFCoord(pos.x+1, pos.y, pos.z)))
+    if (is_smooth_wall_or_connector(df::coord(pos.x+1, pos.y, pos.z)))
         tdir.east = 1;
     return tdir;
 }
@@ -616,44 +624,42 @@ static TileDirection ensure_valid_tdir(TileDirection tdir) {
 
 // connects adjacent smooth walls to our new smooth wall
 static TileDirection BLANK_TILE_DIRECTION;
-static bool adjust_smooth_wall_dir(MapExtras::MapCache &map,
-                                   const DFCoord &pos,
+static bool adjust_smooth_wall_dir(const df::coord pos,
                                    TileDirection tdir = BLANK_TILE_DIRECTION) {
-    if (!is_smooth_wall(map, pos))
-        return is_connector(map, pos);
+    if (!is_smooth_wall(pos))
+        return is_connector(pos);
 
-    tdir = ensure_valid_tdir(get_adjacent_smooth_walls(map, pos, tdir));
+    tdir = ensure_valid_tdir(get_adjacent_smooth_walls(pos, tdir));
 
-    df::tiletype tt = map.tiletypeAt(pos);
+    df::tiletype tt = *Maps::getTileType(pos);
     tt = findTileType(tileShape(tt), tileMaterial(tt), tileVariant(tt),
                       tileSpecial(tt), tdir);
     if (tt == df::tiletype::Void)
         return false;
 
-    map.setTiletypeAt(pos, tt);
+    *Maps::getTileType(pos) = tt;
     return true;
 }
 
-static void refresh_adjacent_smooth_walls(MapExtras::MapCache &map,
-                                          const DFCoord &pos) {
-    adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y-1, pos.z));
-    adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y+1, pos.z));
-    adjust_smooth_wall_dir(map, DFCoord(pos.x-1, pos.y, pos.z));
-    adjust_smooth_wall_dir(map, DFCoord(pos.x+1, pos.y, pos.z));
+static void refresh_adjacent_smooth_walls(const df::coord pos) {
+    adjust_smooth_wall_dir(df::coord(pos.x,   pos.y-1, pos.z));
+    adjust_smooth_wall_dir(df::coord(pos.x,   pos.y+1, pos.z));
+    adjust_smooth_wall_dir(df::coord(pos.x-1, pos.y,   pos.z));
+    adjust_smooth_wall_dir(df::coord(pos.x+1, pos.y,   pos.z));
 }
 
 // assumes that if the game let you designate a tile for smoothing, it must be
 // valid to do so.
-static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
-                        const DFCoord &pos) {
-    df::tiletype tt = map.tiletypeAt(pos);
+static bool smooth_tile(color_ostream &out,
+                        const df::coord pos) {
+    df::tiletype tt = *Maps::getTileType(pos);
 
     df::tiletype_shape shape = tileShape(tt);
     df::tiletype_variant variant = tileVariant(tt);
     df::tiletype_special special = df::tiletype_special::SMOOTH;
 
     TileDirection tdir;
-    if (is_smooth_wall(map, pos)) {
+    if (is_smooth_wall(pos)) {
         // engraving is filtered out at a higher level, so this is a
         // fortification designation
         shape = tiletype_shape::FORTIFICATION;
@@ -661,16 +667,16 @@ static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
         special = df::tiletype_special::NONE;
     }
     else if (shape == df::tiletype_shape::WALL) {
-        if (adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y-1, pos.z),
+        if (adjust_smooth_wall_dir(df::coord(pos.x, pos.y-1, pos.z),
                                    TileDirection(0, 1, 0, 0)))
             tdir.north = 1;
-        if (adjust_smooth_wall_dir(map, DFCoord(pos.x, pos.y+1, pos.z),
+        if (adjust_smooth_wall_dir(df::coord(pos.x, pos.y+1, pos.z),
                                 TileDirection(1, 0, 0, 0)))
             tdir.south = 1;
-        if (adjust_smooth_wall_dir(map, DFCoord(pos.x-1, pos.y, pos.z),
+        if (adjust_smooth_wall_dir(df::coord(pos.x-1, pos.y, pos.z),
                                 TileDirection(0, 0, 0, 1)))
             tdir.west = 1;
-        if (adjust_smooth_wall_dir(map, DFCoord(pos.x+1, pos.y, pos.z),
+        if (adjust_smooth_wall_dir(df::coord(pos.x+1, pos.y, pos.z),
                                 TileDirection(0, 0, 1, 0)))
             tdir.east = 1;
         tdir = ensure_valid_tdir(tdir);
@@ -680,15 +686,14 @@ static bool smooth_tile(color_ostream &out, MapExtras::MapCache &map,
     if (tt == df::tiletype::Void)
         return false;
 
-    map.setTiletypeAt(pos, tt);
+    *Maps::getTileType(pos) = tt;
     return true;
 }
 
 // assumes that if the game let you designate a tile for track carving, it must
 // be valid to do so.
-static bool carve_tile(MapExtras::MapCache &map,
-                       const DFCoord &pos, df::tile_occupancy &to) {
-    df::tiletype tt = map.tiletypeAt(pos);
+static bool carve_tile(const df::coord pos, df::tile_occupancy &to) {
+    df::tiletype tt = *Maps::getTileType(pos);
     TileDirection tdir = tileDirection(tt);
 
     if (to.bits.carve_track_north)
@@ -705,18 +710,18 @@ static bool carve_tile(MapExtras::MapCache &map,
     if (tt == df::tiletype::Void)
         return false;
 
-    map.setTiletypeAt(pos, tt);
+    *Maps::getTileType(pos) = tt;
     return true;
 }
 
 static bool produces_item(const boulder_percent_options &options,
-                          MapExtras::MapCache &map, Random::MersenneRNG &rng,
+                          Random::MersenneRNG &rng,
                           const dug_tile_info &info) {
     uint32_t probability;
     if (info.tmat == df::tiletype_material::FEATURE)
         probability = options.deep;
     else {
-        switch (map.BlockAtTile(info.pos)->veinTypeAt(info.pos)) {
+        switch (TODOmap.BlockAtTile(info.pos)->TODOveinTypeAt(info.pos)) {
             case df::inclusion_type::CLUSTER:
             case df::inclusion_type::VEIN:
                 probability = options.vein;
@@ -734,17 +739,16 @@ static bool produces_item(const boulder_percent_options &options,
     return rng.random(100) < probability;
 }
 
-typedef std::map<std::pair<df::item_type, t_matpair>, std::vector<DFCoord>>
+typedef std::map<std::pair<df::item_type, t_matpair>, std::vector<df::coord>>
     item_coords_t;
 
-static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
+static void do_dig(color_ostream &out, std::vector<df::coord> &dug_coords,
                    item_coords_t &item_coords, const dig_now_options &options) {
-    MapExtras::MapCache map;
     Random::MersenneRNG rng;
-    DesignationJobs jobs;
+    TODODesignationJobs jobs;
 
     DEBUG(general).print("do_dig(): starting..\n");
-    jobs.load(map);
+    jobs.load();
     rng.init();
 
     DEBUG(general).print("do_dig(): reading map..\n");
@@ -758,9 +762,9 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
                 if (!Maps::getTileBlock(x, y, z))
                     continue;
 
-                DFCoord pos(x, y, z);
-                df::tile_designation td = map.designationAt(pos);
-                df::tile_occupancy to = map.occupancyAt(pos);
+                df::coord pos(x, y, z);
+                df::tile_designation td = *Maps::getTileDesignation(pos);
+                df::tile_occupancy to = *Maps::getTileOccupancy(pos);
                 if (jobs.count(pos)) {
                     buffer.emplace(jobs.get(pos));
                     jobs.remove(pos);
@@ -789,53 +793,50 @@ static void do_dig(color_ostream &out, std::vector<DFCoord> &dug_coords,
         if (td.bits.dig != df::tile_dig_designation::No && !to.bits.dig_marked) {
             std::vector<dug_tile_info> dug_tiles;
 
-            if (dig_tile(out, map, pos, td.bits.dig, dug_tiles)) {
+            if (dig_tile(out, pos, td.bits.dig, dug_tiles)) {
                 for (auto info: dug_tiles) {
-                    td = map.designationAt(info.pos);
+                    td = *Maps::getTileDesignation(info.pos);
                     td.bits.dig = df::tile_dig_designation::No;
-                    map.setDesignationAt(info.pos, td);
+                    *Maps::getTileDesignation(info.pos) = td;
 
                     dug_coords.push_back(info.pos);
-                    refresh_adjacent_smooth_walls(map, info.pos);
+                    refresh_adjacent_smooth_walls(info.pos);
                     if (info.imat < 0)
                         continue;
-                    if (produces_item(options.boulder_percents,
-                                      map, rng, info)) {
+                    if (produces_item(options.boulder_percents, rng, info)) {
+                                      
                         auto k = std::make_pair(info.itype, info.imat);
                         item_coords[k].push_back(info.pos);
                     }
                 }
             }
         } else if (td.bits.smooth == 1) {
-            if (smooth_tile(out, map, pos)) {
-                td = map.designationAt(pos);
+            if (smooth_tile(out, pos)) {
+                td = *Maps::getTileDesignation(pos);
                 td.bits.smooth = 0;
-                map.setDesignationAt(pos, td);
+                *Maps::getTileDesignation(pos) = td;
             }
         } else if (to.bits.carve_track_north == 1
                    || to.bits.carve_track_east == 1
                    || to.bits.carve_track_south == 1
                    || to.bits.carve_track_west == 1) {
-            if (carve_tile(map, pos, to)) {
-                to = map.occupancyAt(pos);
+            if (carve_tile(pos, to)) {
+                to = *Maps::getTileOccupancy(pos);
                 to.bits.carve_track_north = 0;
                 to.bits.carve_track_east = 0;
                 to.bits.carve_track_south = 0;
                 to.bits.carve_track_west = 0;
-                map.setOccupancyAt(pos, to);
+                *Maps::getTileOccupancy(pos) = to;
             }
         }
     }
-
-    DEBUG(general).print("do_dig(): write changes to map..\n");
-    map.WriteAll();
 }
 
 // if pos is empty space, teleport to a floor somewhere below
 // if we fall out of the world (e.g. empty space or walls all the way down),
 // returned position will be invalid
-static DFCoord simulate_fall(const DFCoord &pos) {
-    DFCoord resting_pos(pos);
+static df::coord simulate_fall(const df::coord pos) {
+    df::coord resting_pos(pos);
 
     while (Maps::ensureTileBlock(resting_pos)) {
         df::tiletype tt = *Maps::getTileType(resting_pos);
@@ -858,7 +859,7 @@ static void create_boulders(color_ostream &out,
     std::vector<df::reaction_reagent *> in_reag;
     std::vector<df::item *> in_items;
 
-    DFCoord dump_pos;
+    df::coord dump_pos;
     if (Maps::isValidTilePos(options.dump_pos)) {
         dump_pos = simulate_fall(options.dump_pos);
         if (!Maps::ensureTileBlock(dump_pos))
@@ -869,7 +870,7 @@ static void create_boulders(color_ostream &out,
     for (auto entry : item_coords) {
         df::reaction_product_itemst *prod =
                 df::allocate<df::reaction_product_itemst>();
-        const std::vector<DFCoord> &coords = entry.second;
+        const std::vector<df::coord> &coords = entry.second;
 
         prod->item_type = entry.first.first;
         prod->item_subtype = -1;
@@ -902,7 +903,7 @@ static void create_boulders(color_ostream &out,
         }
 
         for (size_t i = 0; i < num_items; ++i) {
-            DFCoord pos = Maps::isValidTilePos(dump_pos) ?
+            df::coord pos = Maps::isValidTilePos(dump_pos) ?
                     dump_pos : simulate_fall(coords[i]);
             if (!Maps::ensureTileBlock(pos)) {
                 out.printerr(
@@ -917,26 +918,26 @@ static void create_boulders(color_ostream &out,
     }
 }
 
-static bool needs_unhide(const DFCoord &pos) {
+static bool needs_unhide(const df::coord pos) {
     return !Maps::ensureTileBlock(pos)
         || Maps::getTileDesignation(pos)->bits.hidden;
 }
 
-static bool needs_flood_unhide(const DFCoord &pos) {
+static bool needs_flood_unhide(const df::coord pos) {
     return needs_unhide(pos)
-        || needs_unhide(DFCoord(pos.x-1, pos.y-1, pos.z))
-        || needs_unhide(DFCoord(pos.x, pos.y-1, pos.z))
-        || needs_unhide(DFCoord(pos.x+1, pos.y-1, pos.z))
-        || needs_unhide(DFCoord(pos.x-1, pos.y, pos.z))
-        || needs_unhide(DFCoord(pos.x+1, pos.y, pos.z))
-        || needs_unhide(DFCoord(pos.x-1, pos.y+1, pos.z))
-        || needs_unhide(DFCoord(pos.x, pos.y+1, pos.z))
-        || needs_unhide(DFCoord(pos.x+1, pos.y+1, pos.z));
+        || needs_unhide(df::coord(pos.x-1, pos.y-1, pos.z))
+        || needs_unhide(df::coord(pos.x,   pos.y-1, pos.z))
+        || needs_unhide(df::coord(pos.x+1, pos.y-1, pos.z))
+        || needs_unhide(df::coord(pos.x-1, pos.y,   pos.z))
+        || needs_unhide(df::coord(pos.x+1, pos.y,   pos.z))
+        || needs_unhide(df::coord(pos.x-1, pos.y+1, pos.z))
+        || needs_unhide(df::coord(pos.x,   pos.y+1, pos.z))
+        || needs_unhide(df::coord(pos.x+1, pos.y+1, pos.z));
 }
 
 static void post_process_dug_tiles(color_ostream &out,
-                             const std::vector<DFCoord> &dug_coords) {
-    for (DFCoord pos : dug_coords) {
+                             const std::vector<df::coord> &dug_coords) {
+    for (df::coord pos : dug_coords) {
         if (needs_flood_unhide(pos)) {
             // set current tile to hidden to allow flood_unhide to work on tiles
             // that were already visible but that reveal hidden tiles when dug.
@@ -946,7 +947,7 @@ static void post_process_dug_tiles(color_ostream &out,
 
         df::tile_occupancy &to = *Maps::getTileOccupancy(pos);
         if (to.bits.unit || to.bits.item) {
-            DFCoord resting_pos = simulate_fall(pos);
+            df::coord resting_pos = simulate_fall(pos);
             if (resting_pos == pos)
                 continue;
 
@@ -1023,7 +1024,7 @@ bool dig_now_impl(color_ostream &out, const dig_now_options &options) {
     }
 
     // track which positions were modified and where to produce items
-    std::vector<DFCoord> dug_coords;
+    std::vector<df::coord> dug_coords;
     item_coords_t item_coords;
 
     do_dig(out, dug_coords, item_coords, options);
@@ -1063,11 +1064,11 @@ DFhackCExport command_result plugin_shutdown(color_ostream &) {
 // runs dig-now for the specified tile coordinate. default options apply.
 static int dig_now_tile(lua_State *L)
 {
-    DFCoord pos;
+    df::coord pos;
     if (lua_gettop(L) <= 1)
         Lua::CheckDFAssign(L, &pos, 1);
     else
-        pos = DFCoord(luaL_checkint(L, 1), luaL_checkint(L, 2),
+        pos = df::coord(luaL_checkint(L, 1), luaL_checkint(L, 2),
                       luaL_checkint(L, 3));
 
     color_ostream *out = Lua::GetOutput(L);
@@ -1084,17 +1085,15 @@ static int dig_now_tile(lua_State *L)
 
 static int link_adjacent_smooth_walls(lua_State *L)
 {
-    DFCoord pos;
+    df::coord pos;
     if (lua_gettop(L) <= 1)
         Lua::CheckDFAssign(L, &pos, 1);
     else
-        pos = DFCoord(luaL_checkint(L, 1), luaL_checkint(L, 2),
+        pos = df::coord(luaL_checkint(L, 1), luaL_checkint(L, 2),
                       luaL_checkint(L, 3));
 
-    MapExtras::MapCache map;
-    adjust_smooth_wall_dir(map, pos);
-    refresh_adjacent_smooth_walls(map, pos);
-    map.WriteAll();
+    adjust_smooth_wall_dir(pos);
+    refresh_adjacent_smooth_walls(pos);
     return 0;
 }
 

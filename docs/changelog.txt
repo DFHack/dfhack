@@ -70,7 +70,7 @@ Template for new versions:
 ## Lua
 
 ## Removed
-- ``logcleaner``: Removed (cannot be safely implemented at this time)
+- `logcleaner`: Removed (cannot be safely implemented at this time)
 
 # 53.14-r1
 

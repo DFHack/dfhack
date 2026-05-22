@@ -20,6 +20,7 @@
 #include "modules/World.h"
 
 #include <df/block_square_event.h>
+#include <df/block_square_event_mineralst.h>
 #include <df/block_square_event_type.h>
 #include "df/building.h"
 #include "df/builtin_mats.h"
@@ -303,8 +304,7 @@ static bool can_dig_ramp(df::tiletype tt) {
 
 
 
-static void dig_type(const df::coord pos,
-                     df::tiletype tt) {
+static void dig_type(const df::coord pos, df::tiletype tt) {
     auto blk = Maps::getTileBlock(pos);
     if (!blk)
         return;
@@ -442,8 +442,7 @@ struct dug_tile_info {
     }
 };
 
-static bool is_diggable(const df::coord pos,
-                        df::tiletype tt) {
+static bool is_diggable(const df::coord pos, df::tiletype tt) {
     df::tiletype_material mat = tileMaterial(tt);
     switch (mat) {
     case df::tiletype_material::CONSTRUCTION:
@@ -519,17 +518,12 @@ static bool dig_tile(color_ostream &out,
                 target_type = get_target_type(tt, df::tiletype_shape::STAIR_UP);
             break;
         case df::tile_dig_designation::DownStair:
-            if (can_dig_down_stair(tt)) {
-                target_type =
-                        get_target_type(tt, df::tiletype_shape::STAIR_DOWN);
-
-            }
+            if (can_dig_down_stair(tt))
+                target_type = get_target_type(tt, df::tiletype_shape::STAIR_DOWN);
             break;
         case df::tile_dig_designation::UpDownStair:
-            if (can_dig_up_down_stair(tt)) {
-                target_type =
-                        get_target_type(tt, df::tiletype_shape::STAIR_UPDOWN);
-            }
+            if (can_dig_up_down_stair(tt))
+                target_type = get_target_type(tt, df::tiletype_shape::STAIR_UPDOWN);
             break;
         case df::tile_dig_designation::Ramp:
         {
@@ -721,18 +715,42 @@ static bool produces_item(const boulder_percent_options &options,
     if (info.tmat == df::tiletype_material::FEATURE)
         probability = options.deep;
     else {
-        switch (TODOmap.BlockAtTile(info.pos)->TODOveinTypeAt(info.pos)) {
-            case df::inclusion_type::CLUSTER:
-            case df::inclusion_type::VEIN:
-                probability = options.vein;
-                break;
-            case df::inclusion_type::CLUSTER_ONE:
-            case df::inclusion_type::CLUSTER_SMALL:
-                probability = options.small_cluster;
-                break;
-            default:
-                probability = options.layer;
-                break;
+        std::vector <df::block_square_event_mineralst *> veins;
+        Maps::SortBlockEvents(Maps::getTileBlock(info.pos), &veins);
+
+        //  the logic in MapCache WriteVeins() and in tile-material.lua GetVeinMat()
+        //  suggests that veins are not strictly sorted by inclusion type.
+        //  the needed sort order is CLUSTER, VEIN, CLUSTER_SMALL, CLUSTER_ONE.
+        //  accordingly, we can't use the inclusion_type enum; it has VEIN < CLUSTER.
+        //  we can use the df::mineral_event_flag::Shift::shift_* enum.
+        uint32_t priority = 0;
+        probability = options.layer;
+        for (auto vein : veins) {
+            uint32_t veinpriority = -1;
+            uint32_t veinprobability;
+
+            if (vein->flags.bits.cluster_one) {
+                veinpriority = df::mineral_event_flag::Shift::shift_cluster_one;
+                veinprobability = options.small_cluster;
+            }
+            else if (vein->flags.bits.cluster_small) {
+                veinpriority = df::mineral_event_flag::Shift::shift_cluster_small;
+                veinprobability = options.small_cluster;
+            }
+            else if (vein->flags.bits.vein) {
+                veinpriority = df::mineral_event_flag::Shift::shift_vein;
+                veinprobability = options.vein;
+            }
+            else if (vein->flags.bits.cluster) {
+                veinpriority = df::mineral_event_flag::Shift::shift_cluster;
+                veinprobability = options.vein;
+            }
+
+            if (veinpriority >= priority
+                    && vein->getassignment(info.pos.x & 15, info.pos.y & 15)) {
+                priority = veinpriority;
+                probability = veinprobability;
+            }
         }
     }
 
@@ -804,7 +822,6 @@ static void do_dig(color_ostream &out, std::vector<df::coord> &dug_coords,
                     if (info.imat < 0)
                         continue;
                     if (produces_item(options.boulder_percents, rng, info)) {
-                                      
                         auto k = std::make_pair(info.itype, info.imat);
                         item_coords[k].push_back(info.pos);
                     }

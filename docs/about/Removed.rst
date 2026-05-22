@@ -258,6 +258,7 @@ gui/hack-wish
 =============
 Replaced by `gui/create-item`.
 
+.. _gui/logcleaner
 gui/logcleaner
 ===============
 Removed because changes to Dwarf Fortress internals made the functionality

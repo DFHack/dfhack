@@ -61,6 +61,24 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.14-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
 - Core: attempts to delete a pool-allocated DF object will now throw an exception instead of corrupting the heap
 
 ## Documentation
@@ -70,6 +88,7 @@ Template for new versions:
 ## Lua
 
 ## Removed
+- `logcleaner`: Removed (cannot be safely implemented at this time)
 
 # 53.14-r1
 

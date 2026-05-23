@@ -52,7 +52,6 @@ distribution.
 #include "modules/DFSteam.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
-#include "modules/Graphic.h"
 #include "modules/Gui.h"
 #include "modules/Hotkey.h"
 #include "modules/Persistence.h"
@@ -2203,4 +2202,3 @@ TYPE * Core::get##TYPE() \
 }
 
 MODULE_GETTER(Materials);
-MODULE_GETTER(Graphic);

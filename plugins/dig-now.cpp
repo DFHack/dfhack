@@ -301,19 +301,22 @@ static bool can_dig_ramp(df::tiletype tt) {
         shape == df::tiletype_shape::FORTIFICATION;
 }
 
-
-
-
 static void dig_type(const df::coord pos, df::tiletype tt) {
     auto blk = Maps::getTileBlock(pos);
     if (!blk)
         return;
 
-    *Maps::getTileType(pos) = tt;
-
     // digging a tile should revert it to the layer soil/stone material
-    if (!blk->TODOsetStoneAt(pos, tt, TODOmap.layerMaterialAt(pos)))
-        blk->TODOsetSoilAt(pos, tt, TODOmap.layerMaterialAt(pos));
+    auto des = Maps::getTileDesignation(pos);
+    tt = matchTileMaterial(tt, (des->bits.geolayer_index <= 3) ?
+        df::enums::tiletype_material::SOIL : df::enums::tiletype_material::STONE);
+    *Maps::getTileType(pos) = tt;
+    for (auto event : blk->block_events) {
+        if (event->getType() == df::block_square_event_type::mineral) {
+            auto vein = (df::block_square_event_mineralst *)event;
+            vein->setassignment(pos, 0);
+        }
+    }
 }
 
 static df::tiletype get_target_type(df::tiletype tt, df::tiletype_shape shape) {
@@ -746,8 +749,7 @@ static bool produces_item(const boulder_percent_options &options,
                 veinprobability = options.vein;
             }
 
-            if (veinpriority >= priority
-                    && vein->getassignment(info.pos.x & 15, info.pos.y & 15)) {
+            if (veinpriority >= priority && vein->getassignment(info.pos)) {
                 priority = veinpriority;
                 probability = veinprobability;
             }

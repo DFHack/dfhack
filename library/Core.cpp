@@ -2178,4 +2178,3 @@ std::string Core::GetAliasCommand(const std::string &name, bool ignore_params)
         return aliases[name][0];
     return join_strings(" ", aliases[name]);
 }
-

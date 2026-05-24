@@ -35,7 +35,8 @@ distribution.
 
 #include "df/craft_material_class.h"
 
-namespace df {
+namespace df
+{
     struct item;
     struct plant_raw;
     struct creature_raw;
@@ -54,28 +55,32 @@ namespace df {
 
 namespace DFHack
 {
-    struct t_matpair {
+    struct t_matpair
+    {
         int16_t mat_type;
         int32_t mat_index;
 
         t_matpair(int16_t type = -1, int32_t index = -1)
-            : mat_type(type), mat_index(index) {}
+            : mat_type(type), mat_index(index)
+        {}
     };
 
-    struct DFHACK_EXPORT MaterialInfo {
+    struct DFHACK_EXPORT MaterialInfo
+    {
         static const int NUM_BUILTIN = 19;
         static const int GROUP_SIZE = 200;
         static const int CREATURE_BASE = NUM_BUILTIN;
         static const int FIGURE_BASE = NUM_BUILTIN + GROUP_SIZE;
-        static const int PLANT_BASE = NUM_BUILTIN + GROUP_SIZE*2;
-        static const int END_BASE = NUM_BUILTIN + GROUP_SIZE*3;
+        static const int PLANT_BASE = NUM_BUILTIN + GROUP_SIZE * 2;
+        static const int END_BASE = NUM_BUILTIN + GROUP_SIZE * 3;
 
         int16_t type;
         int32_t index;
 
-        df::material *material;
+        df::material* material;
 
-        enum Mode {
+        enum Mode
+        {
             None,
             Builtin,
             Inorganic,
@@ -85,16 +90,16 @@ namespace DFHack
         Mode mode;
 
         int16_t subtype;
-        df::inorganic_raw *inorganic;
-        df::creature_raw *creature;
-        df::plant_raw *plant;
+        df::inorganic_raw* inorganic;
+        df::creature_raw* creature;
+        df::plant_raw* plant;
 
-        df::historical_figure *figure;
+        df::historical_figure* figure;
 
     public:
         MaterialInfo(int16_t type = -1, int32_t index = -1) { decode(type, index); }
-        MaterialInfo(const t_matpair &mp) { decode(mp.mat_type, mp.mat_index); }
-        template<class T> MaterialInfo(T *ptr) { decode(ptr); }
+        MaterialInfo(const t_matpair& mp) { decode(mp.mat_type, mp.mat_index); }
+        template<class T> MaterialInfo(T* ptr) { decode(ptr); }
 
         bool isValid() const { return material != NULL; }
 
@@ -108,25 +113,27 @@ namespace DFHack
         bool isInorganicWildcard() const { return isAnyInorganic() && isBuiltin(); }
 
         bool decode(int16_t type, int32_t index = -1);
-        bool decode(df::item *item);
-        bool decode(const df::material_vec_ref &vr, int idx);
-        bool decode(const t_matpair &mp) { return decode(mp.mat_type, mp.mat_index); }
+        bool decode(df::item* item);
+        bool decode(const df::material_vec_ref& vr, int idx);
+        bool decode(const t_matpair& mp) { return decode(mp.mat_type, mp.mat_index); }
 
-        template<class T> bool decode(T *ptr) {
+        template<class T> bool decode(T* ptr)
+        {
             // Assume and exploit a certain naming convention
             return ptr ? decode(ptr->mat_type, ptr->mat_index) : decode(-1);
         }
 
-        bool find(const std::string &token);
-        bool find(const std::vector<std::string> &tokens);
+        bool find(const std::string& token);
+        bool find(const std::vector<std::string>& tokens);
 
-        bool findBuiltin(const std::string &token);
-        bool findInorganic(const std::string &token);
-        bool findPlant(const std::string &token, const std::string &subtoken);
-        bool findCreature(const std::string &token, const std::string &subtoken);
+        bool findBuiltin(const std::string& token);
+        bool findInorganic(const std::string& token);
+        bool findPlant(const std::string& token, const std::string& subtoken);
+        bool findCreature(const std::string& token, const std::string& subtoken);
 
-        bool findProduct(df::material *material, const std::string &name);
-        bool findProduct(const MaterialInfo &info, const std::string &name) {
+        bool findProduct(df::material* material, const std::string& name);
+        bool findProduct(const MaterialInfo& info, const std::string& name)
+        {
             return findProduct(info.material, name);
         }
 
@@ -135,35 +142,38 @@ namespace DFHack
 
         bool isAnyCloth() const;
 
-        void getMatchBits(df::job_item_flags1 &ok, df::job_item_flags1 &mask) const;
-        void getMatchBits(df::job_item_flags2 &ok, df::job_item_flags2 &mask) const;
-        void getMatchBits(df::job_item_flags3 &ok, df::job_item_flags3 &mask) const;
+        void getMatchBits(df::job_item_flags1& ok, df::job_item_flags1& mask) const;
+        void getMatchBits(df::job_item_flags2& ok, df::job_item_flags2& mask) const;
+        void getMatchBits(df::job_item_flags3& ok, df::job_item_flags3& mask) const;
 
         df::craft_material_class getCraftClass();
 
-        bool matches(const MaterialInfo &mat) const
+        bool matches(const MaterialInfo& mat) const
         {
             if (!mat.isValid()) return true;
             return (type == mat.type) &&
-                   (mat.index == -1 || index == mat.index);
+                (mat.index == -1 || index == mat.index);
         }
 
-        bool matches(const df::job_material_category &cat) const;
-        bool matches(const df::dfhack_material_category &cat) const;
-        bool matches(const df::job_item &jitem,
-                     df::item_type itype = df::item_type::NONE) const;
+        bool matches(const df::job_material_category& cat) const;
+        bool matches(const df::dfhack_material_category& cat) const;
+        bool matches(const df::job_item& jitem,
+            df::item_type itype = df::item_type::NONE) const;
     };
 
-    DFHACK_EXPORT bool parseJobMaterialCategory(df::job_material_category *cat, const std::string &token);
-    DFHACK_EXPORT bool parseJobMaterialCategory(df::dfhack_material_category *cat, const std::string &token);
+    DFHACK_EXPORT bool parseJobMaterialCategory(df::job_material_category* cat, const std::string& token);
+    DFHACK_EXPORT bool parseJobMaterialCategory(df::dfhack_material_category* cat, const std::string& token);
 
-    inline bool operator== (const MaterialInfo &a, const MaterialInfo &b) {
+    inline bool operator== (const MaterialInfo& a, const MaterialInfo& b)
+    {
         return a.type == b.type && a.index == b.index;
     }
-    inline bool operator!= (const MaterialInfo &a, const MaterialInfo &b) {
+    inline bool operator!= (const MaterialInfo& a, const MaterialInfo& b)
+    {
         return a.type != b.type || a.index != b.index;
     }
-    inline bool operator< (const MaterialInfo &a, const MaterialInfo &b) {
+    inline bool operator< (const MaterialInfo& a, const MaterialInfo& b)
+    {
         return a.type < b.type || (a.type == b.type && a.index < b.index);
     }
 
@@ -345,38 +355,18 @@ namespace DFHack
         t_materialIndex mat_index;
         uint32_t flags;
     };
-    /**
-     * The Materials module
-     * \ingroup grp_modules
-     * \ingroup grp_materials
-     */
-    class DFHACK_EXPORT Materials : public Module
+
+
+    namespace Materials
     {
-    public:
-        Materials();
-        ~Materials();
-        bool Finish();
+        /**
+         * The Materials module
+         * \ingroup grp_modules
+         * \ingroup grp_materials
+         */
 
-        std::vector<t_matgloss> race;
-        std::vector<t_creaturetype> raceEx;
-        std::vector<t_descriptor_color> color;
-        std::vector<t_matglossOther> other;
-        std::vector<t_matgloss> alldesc;
-
-        bool CopyInorganicMaterials (std::vector<t_matglossInorganic> & inorganic);
-        bool CopyOrganicMaterials (std::vector<t_matgloss> & organic);
-        bool CopyWoodMaterials (std::vector<t_matgloss> & tree);
-        bool CopyPlantMaterials (std::vector<t_matgloss> & plant);
-
-        bool ReadCreatureTypes (void);
-        bool ReadCreatureTypesEx (void);
-        bool ReadDescriptorColors(void);
-        bool ReadOthers (void);
-
-        bool ReadAllMaterials(void);
-
-        std::string getType(const t_material & mat);
-        std::string getDescription(const t_material & mat);
-    };
+        std::string getType(const t_material& mat);
+        std::string getDescription(const t_material& mat);
+    }
 }
 #endif

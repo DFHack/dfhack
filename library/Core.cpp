@@ -2200,5 +2200,3 @@ TYPE * Core::get##TYPE() \
     }\
     return s_mods.p##TYPE;\
 }
-
-MODULE_GETTER(Materials);

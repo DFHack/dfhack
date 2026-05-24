@@ -61,7 +61,6 @@ namespace DFHack
 
     class Process;
     class Module;
-    class Materials;
     struct VersionInfo;
     class VersionInfoFactory;
     class PluginManager;
@@ -161,9 +160,6 @@ namespace DFHack
         bool isSuspended(void);
         /// Is everything OK?
         bool isValid(void) { return !errorstate; }
-
-        /// get the materials module
-        Materials * getMaterials();
 
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
         command_result runCommand(color_ostream& out, const std::string& command);
@@ -295,7 +291,6 @@ namespace DFHack
         // Module storage
         struct
         {
-            Materials * pMaterials;
         } s_mods;
         std::vector<std::unique_ptr<Module>> allModules;
         DFHack::PluginManager *plug_mgr;

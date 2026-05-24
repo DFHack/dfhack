@@ -30,7 +30,6 @@ distribution.
 #include "VersionInfo.h"
 #include "Types.h"
 #include "Error.h"
-#include "ModuleFactory.h"
 #include "Core.h"
 #include "Debug.h"
 #include "PluginManager.h"

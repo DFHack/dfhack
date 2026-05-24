@@ -288,11 +288,6 @@ namespace DFHack
 
         // FIXME: shouldn't be kept around like this
         std::unique_ptr<DFHack::VersionInfoFactory> vif;
-        // Module storage
-        struct
-        {
-        } s_mods;
-        std::vector<std::unique_ptr<Module>> allModules;
         DFHack::PluginManager *plug_mgr;
 
         // Hotkey Manager

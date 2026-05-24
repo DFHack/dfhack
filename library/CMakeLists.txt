@@ -66,10 +66,8 @@ set(MAIN_HEADERS
     include/MemAccess.h
     include/Memory.h
     include/MiscUtils.h
-    include/Module.h
     include/MemAccess.h
     include/MemoryPatcher.h
-    include/ModuleFactory.h
     include/PluginLua.h
     include/PluginManager.h
     include/PluginStatics.h

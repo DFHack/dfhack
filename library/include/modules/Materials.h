@@ -30,7 +30,6 @@ distribution.
  * @ingroup grp_modules
  */
 #include "Export.h"
-#include "Module.h"
 #include "DataDefs.h"
 
 #include "df/craft_material_class.h"

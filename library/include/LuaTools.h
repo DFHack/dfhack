@@ -287,7 +287,7 @@ namespace DFHack::Lua {
      * Uses RunCoreQueryLoop internally.
      */
     DFHACK_EXPORT bool InterpreterLoop(color_ostream &out, lua_State *state,
-                                       const char *prompt = NULL, const char *hfile = NULL);
+        std::string prompt = {}, std::filesystem::path hfile = {});
 
     /**
      * Run an interactive prompt loop. All access to the lua state

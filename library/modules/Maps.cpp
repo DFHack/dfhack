@@ -40,6 +40,7 @@ distribution.
 #include "df/biome_type.h"
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
+#include "df/block_column_print_infost.h"
 #include "df/block_square_event_grassst.h"
 #include "df/block_square_event_item_spatterst.h"
 #include "df/block_square_event_material_spatterst.h"
@@ -48,10 +49,13 @@ distribution.
 #include "df/building_type.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
+#include "df/entity_plot_invasion_mapst.h"
 #include "df/feature_init.h"
 #include "df/feature_map_shellst.h"
 #include "df/feature_mapst.h"
 #include "df/flow_info.h"
+#include "df/historical_entity.h"
+#include "df/invasion_info.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
 #include "df/material.h"
@@ -59,6 +63,8 @@ distribution.
 #include "df/plant_root_tile.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
+#include "df/plotinfost.h"
+#include "df/plot_invasion_mapst.h"
 #include "df/region_map_entry.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -68,9 +74,12 @@ distribution.
 #include "df/world_underground_region.h"
 #include "df/z_level_flags.h"
 
+
+#include <array>
 #include <string>
 #include <vector>
 #include <map>
+#include <ranges>
 #include <set>
 #include <cstdlib>
 #include <iostream>
@@ -1521,4 +1530,130 @@ int Maps::removeAreaAquifer(df::coord pos1, df::coord pos2, std::function<bool(d
     });
 
     return totalAffectedCount;
+}
+
+void Maps::addBlockColumns(int32_t new_height)
+{
+    auto quantity = new_height - world->map.z_count_block;
+    if (quantity <= 0)
+        return;
+
+    auto world = df::global::world;
+    int32_t z_count_block = world->map.z_count_block;
+    df::map_block**** block_index = world->map.block_index;
+
+    cuboid last_air_layer(
+        0, 0, world->map.z_count_block - 1,
+        world->map.x_count_block - 1, world->map.y_count_block - 1, world->map.z_count_block - 1);
+
+    last_air_layer.forCoord([&] (df::coord bpos) {
+        // Allocate a new block column and copy over data from the old
+        df::map_block** blockColumn =
+            new df::map_block * [z_count_block + quantity];
+        std::memcpy(blockColumn, block_index[bpos.x][bpos.y],
+            z_count_block * sizeof(df::map_block*));
+        delete[] block_index[bpos.x][bpos.y];
+        block_index[bpos.x][bpos.y] = blockColumn;
+
+        df::map_block* last_air_block = blockColumn[bpos.z];
+        for (int32_t count = 0; count < quantity; count++)
+        {
+            df::map_block* air_block = new df::map_block();
+            std::fill(&air_block->tiletype[0][0],
+                &air_block->tiletype[0][0] + (16 * 16),
+                df::tiletype::OpenSpace);
+
+            // Set block positions properly (based on prior air layer)
+            air_block->map_pos = last_air_block->map_pos;
+            air_block->map_pos.z += count + 1;
+            air_block->region_pos = last_air_block->region_pos;
+
+            // Copy other potentially important metadata from prior air
+            // layer
+            std::memcpy(air_block->lighting, last_air_block->lighting,
+                sizeof(air_block->lighting));
+            std::memcpy(air_block->temperature_1, last_air_block->temperature_1,
+                sizeof(air_block->temperature_1));
+            std::memcpy(air_block->temperature_2, last_air_block->temperature_2,
+                sizeof(air_block->temperature_2));
+            std::memcpy(air_block->region_offset, last_air_block->region_offset,
+                sizeof(air_block->region_offset));
+
+            // Create tile designations to inform lighting and
+            // outside markers
+            df::tile_designation designation{};
+            designation.bits.light = true;
+            designation.bits.outside = true;
+            std::fill(&air_block->designation[0][0],
+                &air_block->designation[0][0] + (16 * 16), designation);
+
+            blockColumn[z_count_block + count] = air_block;
+            world->map.map_blocks.push_back(air_block);
+
+            // deal with map_block_column stuff even though it'd probably be
+            // fine
+            df::map_block_column* column =
+                world->map.column_index[bpos.x][bpos.y];
+            if (!column)
+            {
+                continue;
+            }
+            df::block_column_print_infost* glyphs = new df::block_column_print_infost;
+            std::ranges::copy(std::array{0,1,2,3}, glyphs->x);
+            std::ranges::copy(std::array{0,0,0,0}, glyphs->y);
+            std::ranges::copy(std::array{'e','x','p','^'}, glyphs->tile);
+            column->unmined_glyphs.push_back(glyphs);
+        }
+        return true;
+        });
+
+    // Update global z level flags
+    df::z_level_flags* flags = new df::z_level_flags[z_count_block + quantity];
+    memcpy(flags, world->map_extras.z_level_flags,
+        z_count_block * sizeof(df::z_level_flags));
+    for (int32_t count = 0; count < quantity; count++)
+    {
+        flags[z_count_block + count].whole = 0;
+        flags[z_count_block + count].bits.update = 1;
+    }
+    world->map.z_count_block += quantity;
+    world->map.z_count += quantity;
+    delete[] world->map_extras.z_level_flags;
+    world->map_extras.z_level_flags = flags;
+
+    auto updateInvasionMap = [](int32_t new_height, df::plot_invasion_mapst & map) -> void
+    {
+        if (map.blockz == 0)
+            return; // Unused invasion map
+        if (map.blockz >= new_height)
+            return; // No change required
+
+        cuboid blocks(0, 0, 0, map.blockx - 1, map.blocky - 1, 0);
+        blocks.forCoord([&] (df::coord bpos) {
+            // Create new vertical block
+            df::pim_blockst** new_block = new df::pim_blockst * [new_height]();
+            std::memcpy(new_block, map.block_index[bpos.x][bpos.y], map.blockz * sizeof(df::pim_blockst*));
+            // Fill new block with nullptr (no information)
+            std::fill_n(&new_block[map.blockz], new_height - map.blockz, nullptr);
+            delete[] map.block_index[bpos.x][bpos.y];
+            map.block_index[bpos.x][bpos.y] = new_block;
+            return true;
+            });
+
+        map.blockz = new_height;
+    };
+
+    auto plotinfo = df::global::plotinfo;
+
+    for (auto& invasion : plotinfo->invasions.list)
+    {
+        updateInvasionMap(world->map.z_count, invasion->map);
+    }
+    for (auto& entity : world->entities.all)
+    {
+        for (auto& map : entity->plot_invasion_map | std::views::filter([&](df::entity_plot_invasion_mapst* map) { return map->site_id == plotinfo->site_id; }))
+        {
+            updateInvasionMap(world->map.z_count, map->map);
+        }
+    }
 }

@@ -29,6 +29,8 @@ distribution.
 #include "Export.h"
 #include "Hooks.h"
 
+#include "modules/Filesystem.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -249,6 +251,16 @@ namespace DFHack
                 return true;
             }
             return false;
+        }
+
+        const std::filesystem::path getConfigPath()
+        {
+            return Filesystem::getInstallDir() / "dfhack-config";
+        }
+
+        const std::filesystem::path getConfigDefaultsPath()
+        {
+            return getHackPath() / "data" / "dfhack-config-defaults";
         }
 
     private:

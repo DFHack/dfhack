@@ -6,7 +6,7 @@ local scriptmanager = require('script-manager')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
-local OVERLAY_CONFIG_FILE = 'dfhack-config/overlay.json'
+local OVERLAY_CONFIG_FILE = dfhack.getConfigPath() .. '/overlay.json'
 local OVERLAY_WIDGETS_VAR = 'OVERLAY_WIDGETS'
 local GLOBAL_KEY = 'OVERLAY'
 

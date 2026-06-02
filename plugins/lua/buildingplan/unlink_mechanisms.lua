@@ -4,6 +4,7 @@ local dialogs = require('gui.dialogs')
 local overlay = require("plugins.overlay")
 local utils = require("utils")
 local widgets = require("gui.widgets")
+local lever = reqscript("lever")
 
 local function mech_iter(b) --iterate mechanisms backwards
     local t = b.contained_items
@@ -33,6 +34,18 @@ end
 local function get_mech_target(m) --mechanism target building if exists
     local i = get_trigger_index(m)
     return i and df.building.find(m.general_refs[i].building_id) or nil
+end
+
+local function is_lever(b) --building is a lever
+    return b and b._type == df.building_trapst and b.trap_type == df.trap_type.Lever
+end
+
+local function has_pull_job(b) --lever already has a pending pull job
+    for _, j in ipairs(b.jobs) do
+        if j.job_type == df.job_type.PullLever then
+            return true
+        end
+    end
 end
 
 local function has_link_tab(b) --linked building tab exists
@@ -148,7 +161,7 @@ local valid_build = {
 MechLinkOverlay = defclass(MechLinkOverlay, overlay.OverlayWidget)
 MechLinkOverlay.ATTRS
 {
-    desc = "Allows unlinking mechanisms from buildings.",
+    desc = "Allows unlinking mechanisms and pulling linked levers from buildings.",
     default_enabled = true,
     default_pos = {x=-41, y=-4},
     frame = {w=56, h=27},
@@ -303,6 +316,60 @@ function MechLinkOverlay:activate_button(n)
     end
 end
 
+function MechLinkOverlay:get_pull_button(n, ensure)
+    local button = self.subviews["pull_"..n]
+    if not button and ensure then
+        self:addviews
+        {
+            widgets.TextButton
+            {
+                view_id = "pull_"..n,
+                frame = {t=0, r=17, w=8, h=1},
+                label = function() return self:pull_label(n) end,
+                enabled = function() return self:pull_enabled(n) end,
+                on_activate = function() self:activate_pull(n) end,
+                visible = false,
+            },
+        }
+        button = self.subviews["pull_"..n]
+        button:updateLayout(self.frame_body)
+    end
+
+    return button
+end
+
+function MechLinkOverlay:pull_target(n) --linked lever for button n, or nil
+    local button = self:get_pull_button(n)
+    if not button then
+        return
+    end
+
+    local idx = self:idx_from_offset(button.frame.t)
+    if idx > 0 and idx < #self.building.contained_items then
+        local target = get_mech_target(self.building.contained_items[idx].item)
+        if is_lever(target) then
+            return target
+        end
+    end
+end
+
+function MechLinkOverlay:pull_label(n)
+    local target = self:pull_target(n)
+    return target and has_pull_job(target) and "Queued" or "Pull"
+end
+
+function MechLinkOverlay:pull_enabled(n)
+    local target = self:pull_target(n)
+    return target ~= nil and not has_pull_job(target)
+end
+
+function MechLinkOverlay:activate_pull(n)
+    local target = self:pull_target(n)
+    if target and not has_pull_job(target) then
+        lever.leverPullJob(target, false)
+    end
+end
+
 function MechLinkOverlay:ask_unlink_all()
     local saved_mode = self.subviews.unlink_mode:getOptionValue()
     local message = {
@@ -356,6 +423,16 @@ function MechLinkOverlay:update_buttons()
             button.visible = true
         end
         button:updateLayout()
+
+        local pbutton = self:get_pull_button(i, true)
+        pbutton.visible = false
+        if idx > 0 and idx < bci_len and
+            is_lever(get_mech_target(self.building.contained_items[idx].item)) then
+                pbutton.frame.t = offset
+                pbutton.frame.r = h_offset + 9
+                pbutton.visible = true
+        end
+        pbutton:updateLayout()
     end
 
     local b = (self.frame.h % 3) == 1 and #self.links >= self.num_buttons and 0 or 1
@@ -370,6 +447,10 @@ function MechLinkOverlay:preUpdateLayout(parent_rect)
         local button = self:get_button(i)
         if button then
             button.visible = false
+        end
+        local pbutton = self:get_pull_button(i)
+        if pbutton then
+            pbutton.visible = false
         end
     end
 

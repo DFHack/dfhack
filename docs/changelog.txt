@@ -75,6 +75,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `buildingplan`: add a ``Pull`` button next to linked levers on a building's "Show linked buildings" tab so you can queue a pull-lever job without navigating to the lever
 
 ## Fixes
 

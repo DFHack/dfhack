@@ -237,3 +237,8 @@ usual) unless freed via the ``Free`` buttons on the ``Show items`` tab on both
 buildings. This will remove the mechanism from the building and drop it onto the
 ground, allowing it to be reused elsewhere. There is an option to auto-free
 mechanisms when unlinking to perform this step automatically.
+
+For any linked building that is a lever, a ``Pull`` button also appears next to it
+on the ``Show linked buildings`` tab. Clicking it queues a "pull the lever" job on
+that lever without having to navigate to the lever itself. The button changes to
+``Queued`` once a pull job is pending.

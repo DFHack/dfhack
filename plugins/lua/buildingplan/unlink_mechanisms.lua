@@ -366,7 +366,7 @@ end
 function MechLinkOverlay:activate_pull(n)
     local target = self:pull_target(n)
     if target and not has_pull_job(target) then
-        lever.leverPullJob(target, false)
+        lever.leverPullJob(target, true) --do now
     end
 end
 

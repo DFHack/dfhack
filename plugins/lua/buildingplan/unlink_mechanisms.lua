@@ -40,10 +40,10 @@ local function is_lever(b) --building is a lever
     return b and b._type == df.building_trapst and b.trap_type == df.trap_type.Lever
 end
 
-local function has_pull_job(b) --lever already has a pending pull job
+local function get_pull_job(b) --pending pull job on lever, or nil
     for _, j in ipairs(b.jobs) do
         if j.job_type == df.job_type.PullLever then
-            return true
+            return j
         end
     end
 end
@@ -355,17 +355,22 @@ end
 
 function MechLinkOverlay:pull_label(n)
     local target = self:pull_target(n)
-    return target and has_pull_job(target) and "Queued" or "Pull"
+    return target and get_pull_job(target) and "Queued" or "Pull"
 end
 
 function MechLinkOverlay:pull_enabled(n)
-    local target = self:pull_target(n)
-    return target ~= nil and not has_pull_job(target)
+    return self:pull_target(n) ~= nil
 end
 
 function MechLinkOverlay:activate_pull(n)
     local target = self:pull_target(n)
-    if target and not has_pull_job(target) then
+    if not target then
+        return
+    end
+    local job = get_pull_job(target)
+    if job then
+        dfhack.job.removeJob(job) --cancel queued pull
+    else
         lever.leverPullJob(target, true) --do now
     end
 end

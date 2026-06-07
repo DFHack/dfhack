@@ -34,6 +34,8 @@
 #include "df/building_trapst.h"
 #include "df/buildingitemst.h"
 #include "df/caravan_state.h"
+#include "df/flow_info.h"
+#include "df/flow_type.h"
 #include "df/init.h"
 #include "df/item_eggst.h"
 #include "df/plotinfost.h"
@@ -41,6 +43,8 @@
 #include "df/world.h"
 
 #include <array>
+#include <limits>
+#include <type_traits>
 
 using std::string;
 using std::vector;
@@ -318,9 +322,61 @@ static int32_t clamp_coverage(int32_t timeskip) {
     return timeskip;
 }
 
-static bool detect_flows()
+using df_tick_type = std::remove_reference_t<decltype(*cur_year_tick)>;
+
+static df_tick_type flow_next_required_tick(int flow_index)
 {
-    return df::global::flows->size() > 0;
+    using namespace df::enums::flow_type;
+
+    const auto flow = (*flows)[flow_index];
+
+    if (flow == nullptr || flow->flags.bits.DEAD)
+        return std::numeric_limits<df_tick_type>::max();
+
+    const auto cur_tick = *cur_year_tick;
+
+    struct update_parameters_t {
+        int speed;
+        int cycle;
+    };
+
+    const auto [speed, cycle] = [flow] () -> update_parameters_t {
+        switch (flow->type)
+        {
+        case ItemCloud:
+        case MaterialDust:
+        case MaterialGas:
+        case MaterialVapor:
+            if (flow->flags.bits.CREEPING)
+                return update_parameters_t{10, 100};
+            else
+                return update_parameters_t{1, 5};
+        case Dragonfire:
+        case Fire:
+        case Web:
+            return update_parameters_t{1, 3};
+        default:
+            return update_parameters_t{10, 100};
+        }
+        }();
+
+    const int stride = cycle / speed;
+
+    const int phase = (flow_index % stride) * speed;
+
+    const int cur_phase = cur_tick % cycle;
+
+    return cur_tick + (phase - cur_phase) + ((cur_phase > phase) ? cycle : 0);
+}
+
+static df_tick_type flows_next_required_tick() {
+    if (flows == nullptr || flows->empty())
+        return std::numeric_limits<df_tick_type>::max();
+
+    auto flow_indices = std::views::iota(0, (int)flows->size());
+    auto next_flow = std::ranges::min(flow_indices, {}, flow_next_required_tick);
+
+    return flow_next_required_tick(next_flow);
 }
 
 static bool detect_caravans()
@@ -344,15 +400,13 @@ static bool detect_caravans()
 static int32_t clamp_timeskip(int32_t timeskip) {
     if (timeskip <= 0)
         return 0;
-    // timeskip cannot be applied when flows are active, since they are updated every tick and we can't predict them well enough to batch updates
-    if (detect_flows())
-        return 0;
     // timeskip cannot be applied when caravans are loading/unloading because we don't know how to jog that timer
     if (detect_caravans())
         return 0;
     int32_t next_tick = *cur_year_tick + 1;
     timeskip = std::min(timeskip, get_next_trigger_year_tick(next_tick) - next_tick);
     timeskip = std::min(timeskip, get_next_birthday(next_tick) - next_tick);
+    timeskip = std::min(timeskip, flows_next_required_tick() - next_tick);
     return clamp_coverage(timeskip);
 }
 

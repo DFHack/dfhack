@@ -33,8 +33,10 @@
 #include "df/building_nest_boxst.h"
 #include "df/building_trapst.h"
 #include "df/buildingitemst.h"
+#include "df/caravan_state.h"
 #include "df/init.h"
 #include "df/item_eggst.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/world.h"
 
@@ -52,6 +54,8 @@ REQUIRE_GLOBAL(cur_year_tick);
 REQUIRE_GLOBAL(cur_year_tick_advmode);
 REQUIRE_GLOBAL(init);
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(flows);
+REQUIRE_GLOBAL(plotinfo);
 
 namespace DFHack {
     // for configuration-related logging
@@ -314,8 +318,37 @@ static int32_t clamp_coverage(int32_t timeskip) {
     return timeskip;
 }
 
+static bool detect_flows()
+{
+    return df::global::flows->size() > 0;
+}
+
+static bool detect_caravans()
+{
+    auto& caravans = df::global::plotinfo->caravans;
+    return std::any_of(caravans.begin(), caravans.end(), [](auto caravan) {
+        if (caravan->trade_state != df::caravan_state::T_trade_state::AtDepot)
+            return false;
+        auto car_civ = caravan->entity;
+        auto& units = world->units.active;
+        return std::any_of(units.begin(), units.end(), [car_civ] (auto un) {
+            return (un->civ_id == car_civ
+                && DFHack::Units::isMerchant(un)
+                && std::any_of(un->inventory.begin(), un->inventory.end(), [] (auto inv_item) {
+                    return inv_item->item && inv_item->item->flags.bits.trader;
+                    }));
+            });
+        });
+}
+
 static int32_t clamp_timeskip(int32_t timeskip) {
     if (timeskip <= 0)
+        return 0;
+    // timeskip cannot be applied when flows are active, since they are updated every tick and we can't predict them well enough to batch updates
+    if (detect_flows())
+        return 0;
+    // timeskip cannot be applied when caravans are loading/unloading because we don't know how to jog that timer
+    if (detect_caravans())
         return 0;
     int32_t next_tick = *cur_year_tick + 1;
     timeskip = std::min(timeskip, get_next_trigger_year_tick(next_tick) - next_tick);

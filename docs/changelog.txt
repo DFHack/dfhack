@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `timestream`: will not skip ticks whenever a flow is active or when a caravan is loading or unloading
 
 ## Misc Improvements
 

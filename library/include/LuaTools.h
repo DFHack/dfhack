@@ -24,16 +24,6 @@ distribution.
 
 #pragma once
 
-#include <functional>
-#include <string>
-#include <vector>
-#include <set>
-#include <map>
-#include <type_traits>
-#include <unordered_map>
-#include <unordered_set>
-#include <concepts>
-
 #include "Core.h"
 #include "ColorText.h"
 #include "DataDefs.h"
@@ -42,6 +32,17 @@ distribution.
 
 #include <lua.h>
 #include <lauxlib.h>
+
+#include <concepts>
+#include <functional>
+#include <map>
+#include <set>
+#include <string>
+#include <string_view>
+#include <type_traits>
+#include <unordered_map>
+#include <unordered_set>
+#include <vector>
 
 namespace DFHack {
     class function_identity_base;
@@ -287,7 +288,7 @@ namespace DFHack::Lua {
      * Uses RunCoreQueryLoop internally.
      */
     DFHACK_EXPORT bool InterpreterLoop(color_ostream &out, lua_State *state,
-        std::string prompt = {}, std::filesystem::path hfile = {});
+        std::string_view prompt = {}, std::filesystem::path hfile = {});
 
     /**
      * Run an interactive prompt loop. All access to the lua state

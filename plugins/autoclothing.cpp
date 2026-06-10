@@ -20,6 +20,7 @@
 #include "df/item_helmst.h"
 #include "df/item_pantsst.h"
 #include "df/item_shoesst.h"
+#include "df/itemdef_handlerst.h"
 #include "df/itemdef_armorst.h"
 #include "df/itemdef_glovesst.h"
 #include "df/itemdef_helmst.h"
@@ -64,8 +65,8 @@ enum ConfigValues {
 struct ClothingRequirement;
 command_result autoclothing(color_ostream &out, vector<string> &parameters);
 static void do_autoclothing();
-static bool validateMaterialCategory(ClothingRequirement *requirement);
-static bool setItem(string name, ClothingRequirement *requirement);
+static bool validateMaterialCategory(ClothingRequirement& requirement);
+static std::optional<ClothingRequirement> setItem(string name);
 static void generate_control(color_ostream &out);
 static bool isAvailableItem(df::item *item);
 
@@ -127,32 +128,38 @@ struct ClothingRequirement {
         stream >> needed_per_citizen;
     }
 
-    bool SetFromParameters(color_ostream &out, vector<string> &parameters)
+    //FIXME: when C++23, use std::expected here
+    static std::optional<ClothingRequirement> createFromParameters(color_ostream &out, vector<string> &parameters)
     {
-        if (parameters[0] == "clear") { // handle the clear case
-            if (!set_bitfield_field(&material_category, parameters[1], 1))
-                out << "Unrecognized material type: " << parameters[1] << endl;
-            if (!setItem(parameters[2], this)) {
-                out << "Unrecognized item name or token: " << parameters[2] << endl;
-                return false;
-            }
-            else if (!validateMaterialCategory(this)) {
-                out << parameters[1] << " is not a valid material category for " << parameters[2] << endl;
-                return false;
-            }
-            return true;
+        df::job_material_category material_category;
+        if (parameters.size() < 1) return std::nullopt;
+
+        size_t idx = 0;
+        if (parameters[0] == "clear") idx++;
+
+        if (parameters.size() < idx + 1) return std::nullopt;
+
+        if (!set_bitfield_field(&material_category, parameters[idx], 1))
+        {
+            out << "Unrecognized material type: " << parameters[idx] << endl;
+            return std::nullopt;
         }
-        if (!set_bitfield_field(&material_category, parameters[0], 1))
-            out << "Unrecognized material type: " << parameters[0] << endl;
-        if (!setItem(parameters[1], this)) {
-            out << "Unrecognized item name or token: " << parameters[1] << endl;
-            return false;
+
+        if (auto req = setItem(parameters[idx+1]); !req)
+        {
+            out << "Unrecognized item name or token: " << parameters[idx+1] << endl;
+            return std::nullopt;
         }
-        else if (!validateMaterialCategory(this)) {
-            out << parameters[0] << " is not a valid material category for " << parameters[1] << endl;
-            return false;
+
+        else if (!validateMaterialCategory(*req)) {
+            out << parameters[idx] << " is not a valid material category for " << parameters[idx+1] << endl;
+            return std::nullopt;
         }
-        return true;
+        else
+        {
+            req->material_category = material_category;
+            return req;
+        }
     }
 
     string ToReadableLabel() {
@@ -311,94 +318,98 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     return CR_OK;
 }
 
-static bool setItemFromName(string name, ClothingRequirement *requirement)
+std::optional<ClothingRequirement> setItemFromName(string name)
 {
-#define SEARCH_ITEM_RAWS(rawType, job, item) \
-for (auto &itemdef : world->raws.itemdefs.rawType) { \
-    string fullName = itemdef->adjective.empty() ? itemdef->name : itemdef->adjective + " " + itemdef->name; \
-    if (fullName == name) { \
-        requirement->jobType = job_type::job; \
-        requirement->itemType = item_type::item; \
-        requirement->item_subtype = itemdef->subtype; \
-        return true; \
-    } \
-}
-    SEARCH_ITEM_RAWS(armor, MakeArmor, ARMOR);
-    SEARCH_ITEM_RAWS(gloves, MakeGloves, GLOVES);
-    SEARCH_ITEM_RAWS(shoes, MakeShoes, SHOES);
-    SEARCH_ITEM_RAWS(helms, MakeHelm, HELM);
-    SEARCH_ITEM_RAWS(pants, MakePants, PANTS);
-    return false;
+    auto SEARCH_ITEM_RAWS = [&name]<typename FT>(FT df::itemdef_handlerst:: * rawType, df::job_type job, df::item_type item) -> std::optional<ClothingRequirement>
+    {
+        auto& itemdefs = world->raws.itemdefs.*rawType;
+        auto it = std::find_if(itemdefs.begin(), itemdefs.end(), [&name] (auto& itemdef) {
+            string fullName = itemdef->adjective.empty() ? itemdef->name : itemdef->adjective + " " + itemdef->name;
+            return fullName == name;
+            });
+        if (it != itemdefs.end())
+        {
+            auto& itemdef = *it;
+            return ClothingRequirement{.jobType = job, .itemType = item, .item_subtype = itemdef->subtype};
+        }
+        return std::nullopt;
+    };
+
+    if (auto v = SEARCH_ITEM_RAWS(&df::itemdef_handlerst::armor, df::job_type::MakeArmor, df::item_type::ARMOR))
+        return v;
+    if (auto v = SEARCH_ITEM_RAWS(&df::itemdef_handlerst::gloves, df::job_type::MakeGloves, df::item_type::GLOVES))
+        return v;
+    if (auto v = SEARCH_ITEM_RAWS(&df::itemdef_handlerst::shoes, df::job_type::MakeShoes, df::item_type::SHOES))
+        return v;
+    if (auto v = SEARCH_ITEM_RAWS(&df::itemdef_handlerst::helms, df::job_type::MakeHelm, df::item_type::HELM))
+        return v;
+    if (auto v = SEARCH_ITEM_RAWS(&df::itemdef_handlerst::pants, df::job_type::MakePants, df::item_type::PANTS))
+        return v;
+    return std::nullopt;
 }
 
-static bool setItemFromToken(string token, ClothingRequirement *requirement) {
+static std::optional<ClothingRequirement> setItemFromToken(string token) {
     ItemTypeInfo itemInfo;
     if (!itemInfo.find(token))
-        return false;
+        return std::nullopt;
     switch (itemInfo.type)
     {
         case item_type::ARMOR:
-            requirement->jobType = job_type::MakeArmor;
-            break;
+            return ClothingRequirement{.jobType = job_type::MakeArmor, .itemType = itemInfo.type, .item_subtype = itemInfo.subtype};
         case item_type::GLOVES:
-            requirement->jobType = job_type::MakeGloves;
-            break;
+            return ClothingRequirement{.jobType = job_type::MakeGloves, .itemType = itemInfo.type, .item_subtype = itemInfo.subtype};
         case item_type::SHOES:
-            requirement->jobType = job_type::MakeShoes;
-            break;
+            return ClothingRequirement{.jobType = job_type::MakeShoes, .itemType = itemInfo.type, .item_subtype = itemInfo.subtype};
         case item_type::HELM:
-            requirement->jobType = job_type::MakeHelm;
-            break;
+            return ClothingRequirement{.jobType = job_type::MakeHelm, .itemType = itemInfo.type, .item_subtype = itemInfo.subtype};
         case item_type::PANTS:
-            requirement->jobType = job_type::MakePants;
-            break;
+            return ClothingRequirement{.jobType = job_type::MakePants, .itemType = itemInfo.type, .item_subtype = itemInfo.subtype};
         default:
-            return false;
+            return std::nullopt;
     }
-    requirement->itemType = itemInfo.type;
-    requirement->item_subtype = itemInfo.subtype;
-    return true;
 }
 
-static bool setItem(string name, ClothingRequirement *requirement) {
-    return setItemFromName(name, requirement) || setItemFromToken(name, requirement);
+static std::optional<ClothingRequirement> setItem(string name)
+{
+    if (auto v = setItemFromName(name)) return v;
+    return setItemFromToken(name);
 }
 
-static bool armorFlagsMatch(BitArray<df::armor_general_flags> *flags, df::job_material_category *category) {
-    if (flags->is_set(df::armor_general_flags::SOFT) &&
-        (category->bits.cloth || category->bits.yarn || category->bits.silk)
+static bool armorFlagsMatch(BitArray<df::armor_general_flags>& flags, df::job_material_category& category) {
+    if (flags.is_set(df::armor_general_flags::SOFT) &&
+        (category.bits.cloth || category.bits.yarn || category.bits.silk)
     )
         return true;
-    else if (flags->is_set(df::armor_general_flags::BARRED) && category->bits.bone)
+    else if (flags.is_set(df::armor_general_flags::BARRED) && category.bits.bone)
         return true;
-    else if (flags->is_set(df::armor_general_flags::SCALED) && category->bits.shell)
+    else if (flags.is_set(df::armor_general_flags::SCALED) && category.bits.shell)
         return true;
-    return flags->is_set(df::armor_general_flags::LEATHER) && category->bits.leather;
+    return flags.is_set(df::armor_general_flags::LEATHER) && category.bits.leather;
 }
 
-static bool validateMaterialCategory(ClothingRequirement *requirement) {
-    auto itemDef = Items::getSubtypeDef(requirement->itemType, requirement->item_subtype);
-    switch (requirement->itemType)
+static bool validateMaterialCategory(ClothingRequirement& requirement) {
+    auto itemDef = Items::getSubtypeDef(requirement.itemType, requirement.item_subtype);
+    switch (requirement.itemType)
     {
         case item_type::ARMOR:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_armorst, itemDef))
-                return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+                return armorFlagsMatch(armor->props.flags, requirement.material_category);
             break;
         case item_type::GLOVES:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_glovesst, itemDef))
-                return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+                return armorFlagsMatch(armor->props.flags, requirement.material_category);
             break;
         case item_type::SHOES:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_shoesst, itemDef))
-                return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+                return armorFlagsMatch(armor->props.flags, requirement.material_category);
             break;
         case item_type::HELM:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_helmst, itemDef))
-                return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+                return armorFlagsMatch(armor->props.flags, requirement.material_category);
             break;
         case item_type::PANTS:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_pantsst, itemDef))
-                return armorFlagsMatch(&armor->props.flags, &requirement->material_category);
+                return armorFlagsMatch(armor->props.flags, requirement.material_category);
             break;
         default:
             break;
@@ -448,9 +459,12 @@ command_result autoclothing(color_ostream &out, vector<string> &parameters)
     }
 
     // Create a new requirement from the available parameters.
-    ClothingRequirement newRequirement;
-    if (!newRequirement.SetFromParameters(out, parameters))
+    auto newRequirementOpt = ClothingRequirement::createFromParameters(out, parameters);
+    if (!newRequirementOpt)
         return CR_WRONG_USAGE;
+
+    auto& newRequirement = *newRequirementOpt;
+
     // All checks are passed. Now we either show or set the amount.
     bool settingSize = false;
     bool matchedExisting = false;
@@ -787,7 +801,7 @@ static void generate_control(color_ostream &out) {
     }
 
     map<int, int> availableGloves;
-    for (auto glove : world->items.other.HELM) {
+    for (auto glove : world->items.other.GLOVES) {
         if (!isAvailableItem(glove))
             continue;
         availableGloves[glove->maker_race]++;
@@ -798,7 +812,7 @@ static void generate_control(color_ostream &out) {
     }
 
     map<int, int> availablePants;
-    for (auto pants : world->items.other.HELM) {
+    for (auto pants : world->items.other.PANTS) {
         if (!isAvailableItem(pants))
             continue;
         availablePants[pants->maker_race]++;

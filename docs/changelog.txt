@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autoclothing`: will no longer count gloves and pants as if they were helms
 
 ## Misc Improvements
 

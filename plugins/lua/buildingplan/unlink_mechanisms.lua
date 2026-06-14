@@ -48,6 +48,28 @@ local function get_pull_job(b) --pending pull job on lever, or nil
     end
 end
 
+local ASCII_LEVER_OFF = string.char(0x95) --ò
+local ASCII_LEVER_ON = string.char(0xA2) --ó
+
+local function get_lever_state_char(lever) --lever position glyph for the current tileset
+    -- match the current mode because ASCII and premium lever glyphs differ in directions
+    if dfhack.screen.inGraphicsMode() then
+        return lever.state == 0 and "/" or "\\"
+    end
+    return lever.state == 0 and ASCII_LEVER_OFF or ASCII_LEVER_ON
+end
+
+local function pull_label(lever) --button label and pen for the lever's pull state
+    local state_char = get_lever_state_char(lever) --current lever position
+    local job = get_pull_job(lever)
+    if not job then
+        return "Pull    "..state_char, COLOR_WHITE
+    elseif dfhack.job.getWorker(job) then
+        return "Pulling "..state_char, COLOR_GREEN --a citizen has taken the job
+    end
+    return "Queued  "..state_char, COLOR_YELLOW --queued, not yet taken
+end
+
 local function has_link_tab(b) --linked building tab exists
     if not b then
         return
@@ -324,9 +346,8 @@ function MechLinkOverlay:get_pull_button(n, ensure)
             widgets.TextButton
             {
                 view_id = "pull_"..n,
-                frame = {t=0, r=17, w=8, h=1},
-                label = function() return self:pull_label(n) end,
-                enabled = function() return self:pull_enabled(n) end,
+                frame = {t=0, r=17, w=11, h=1},
+                label = "", --set per-frame in update_buttons
                 on_activate = function() self:activate_pull(n) end,
                 visible = false,
             },
@@ -351,15 +372,6 @@ function MechLinkOverlay:pull_target(n) --linked lever for button n, or nil
             return target
         end
     end
-end
-
-function MechLinkOverlay:pull_label(n)
-    local target = self:pull_target(n)
-    return target and get_pull_job(target) and "Queued" or "Pull"
-end
-
-function MechLinkOverlay:pull_enabled(n)
-    return self:pull_target(n) ~= nil
 end
 
 function MechLinkOverlay:activate_pull(n)
@@ -431,11 +443,15 @@ function MechLinkOverlay:update_buttons()
 
         local pbutton = self:get_pull_button(i, true)
         pbutton.visible = false
-        if idx > 0 and idx < bci_len and
-            is_lever(get_mech_target(self.building.contained_items[idx].item)) then
-                pbutton.frame.t = offset
-                pbutton.frame.r = h_offset + 9
-                pbutton.visible = true
+        local target = idx > 0 and idx < bci_len and
+            get_mech_target(self.building.contained_items[idx].item)
+        if is_lever(target) then
+            local label, pen = pull_label(target)
+            pbutton:setLabel(label)
+            pbutton.label.text_pen = pen
+            pbutton.frame.t = offset
+            pbutton.frame.r = h_offset + 9
+            pbutton.visible = true
         end
         pbutton:updateLayout()
     end

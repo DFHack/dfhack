@@ -59,7 +59,7 @@ local function get_lever_state_char(lever) --lever position glyph for the curren
     return lever.state == 0 and ASCII_LEVER_OFF or ASCII_LEVER_ON
 end
 
-local function pull_label(lever) --button label and pen for the lever's pull state
+local function get_pull_label(lever) --button label and pen for the lever's pull state
     local state_char = get_lever_state_char(lever) --current lever position
     local job = get_pull_job(lever)
     if not job then
@@ -446,7 +446,7 @@ function MechLinkOverlay:update_buttons()
         local target = idx > 0 and idx < bci_len and
             get_mech_target(self.building.contained_items[idx].item)
         if is_lever(target) then
-            local label, pen = pull_label(target)
+            local label, pen = get_pull_label(target)
             pbutton:setLabel(label)
             pbutton.label.text_pen = pen
             pbutton.frame.t = offset

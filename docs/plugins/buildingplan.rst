@@ -239,7 +239,6 @@ ground, allowing it to be reused elsewhere. There is an option to auto-free
 mechanisms when unlinking to perform this step automatically.
 
 For any linked building that is a lever, a ``Pull`` button also appears next to it
-on the ``Show linked buildings`` tab. Clicking it queues a high-priority ("do now")
-"pull the lever" job on that lever without having to navigate to the lever itself.
-The button changes to ``Queued`` once a pull job is pending; click it again to
-cancel that job, again without navigating to the lever.
+on the ``Show linked buildings`` tab, with a glyph showing the lever's current
+position. Clicking it queues a high-priority ("do now") pull-lever job without
+having to navigate to the lever itself; click it again to cancel the job.

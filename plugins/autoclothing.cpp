@@ -88,11 +88,11 @@ struct ClothingRequirement {
     int16_t needed_per_citizen = 0;
     map<int16_t, int32_t> total_needed_per_race;
 
-    bool matches(ClothingRequirement *b) {
-        return b->jobType == this->jobType
-            && b->itemType == this->itemType
-            && b->item_subtype == this->item_subtype
-            && b->material_category.whole == this->material_category.whole;
+    bool operator==(ClothingRequirement& b) const {
+        return b.jobType == this->jobType
+            && b.itemType == this->itemType
+            && b.item_subtype == this->item_subtype
+            && b.material_category.whole == this->material_category.whole;
     }
 
     string Serialize() {
@@ -467,7 +467,7 @@ command_result autoclothing(color_ostream &out, vector<string> &parameters)
 
     // All checks are passed. Now we either show or set the amount.
     bool settingSize = false;
-    bool matchedExisting = false;
+
     if (parameters.size() > 2) {
         if (parameters[0] == "clear") {
             newRequirement.needed_per_citizen = 0;
@@ -485,28 +485,30 @@ command_result autoclothing(color_ostream &out, vector<string> &parameters)
         }
     }
 
-    for (size_t i = clothingOrders.size(); i-- > 0;) {
-        if (!clothingOrders[i].matches(&newRequirement))
-            continue;
-        matchedExisting = true;
-        if (settingSize) {
-            if (newRequirement.needed_per_citizen == 0) {
-                clothingOrders.erase(clothingOrders.begin() + i);
-                    if (parameters[0] == "clear")
-                        out << "Unset " << parameters[1] << " " << parameters[2] << endl;
-                    else
-                        out << "Unset " << parameters[0] << " " << parameters[1] << endl;
+    auto it = std::find(clothingOrders.begin(), clothingOrders.end(), newRequirement);
+    if (it != clothingOrders.end())
+    {
+        if (settingSize)
+        {
+            if (newRequirement.needed_per_citizen == 0)
+            {
+                clothingOrders.erase(it);
+                if (parameters[0] == "clear")
+                    out << "Unset " << parameters[1] << " " << parameters[2] << endl;
+                else
+                    out << "Unset " << parameters[0] << " " << parameters[1] << endl;
             }
-            else {
-                clothingOrders[i] = newRequirement;
+            else
+            {
+                *it = newRequirement;
                 out << "Set " << parameters[0] << " " << parameters[1] << " to " << parameters[2] << endl;
             }
         }
         else
-            out << parameters[0] << " " << parameters[1] << " is set to " << clothingOrders[i].needed_per_citizen << endl;
-        break;
+            out << parameters[0] << " " << parameters[1] << " is set to " << it->needed_per_citizen << endl;
     }
-    if (!matchedExisting) {
+    else
+    {
         if (settingSize) {
             if (newRequirement.needed_per_citizen == 0)
                 out << parameters[0] << " " << parameters[1] << " already unset." << endl;

@@ -5,6 +5,7 @@
 #include "DataFuncs.h"
 #include "Debug.h"
 #include "LuaTools.h"
+//#include "LuaWrapper.h"
 #include "PluginManager.h"
 #include "PluginLua.h"
 #include "TileTypes.h"
@@ -224,8 +225,9 @@ static const t_matpair baseMaterialAt(const df::map_block &block, df::coord2d p)
                 break;
 
             //  IS THIS CODE CORRECT?
-            //  intent here is to index 0..15 elements into a vector of unknown length,
-            //  and get the element at vector[ min(index, last_element_offset) ] .
+            //  intent here is to index 0..15 into a vector with 13 or 16 elements
+            //  and get the element at min(index, vector length-1) .
+            //  ranges::advance seems like the right tool.
             auto geo_layer_it = begin(geo_biome->layers);
             std::ranges::advance(geo_layer_it, geolayer_at(block, p), end(geo_biome->layers) - 1);
             rv = t_matpair(INORGANIC, (*geo_layer_it)->mat_index);
@@ -235,12 +237,11 @@ static const t_matpair baseMaterialAt(const df::map_block &block, df::coord2d p)
             // fall back to the first stone layer, or the very last layer.
 
             //  IS TNIS CODE CORRECT?
-            //  intent here is to search a vector of unknown length for the
-            //    first element matching a predicate, and get that element
+            //  intent here is to search a vector with 13 or 16 elements
+            //    for the first element matching a predicate, and get that element
             //    OR the last element in the vector, whether or not it matches.
-            //  this is a lot of faffing around for something that's more concise
-            //    in C style C++; see the SOIL code below.
-            //  maybe I could make the iterators use the layer_inorganic_n function?
+            //  all this is a lot of faffing around for something that's more
+            //    concise in C style C++; see the SOIL code below.
             auto is_stone = [&](df::world_geo_layer *geo_layer)
                     { return getGroundType(geo_layer->mat_index) == STONE; };
             // this vector typically has 16 entries, but I have seen 13 in oceans.
@@ -286,17 +287,17 @@ static const t_matpair baseMaterialAt(const df::map_block &block, df::coord2d p)
         {
             auto region_details = world->world_data->midmap_data.region_details;
             auto des = index_tile(block.designation, p);
-            auto block_region_offset_idx = des.bits.biome;
-            if (block_region_offset_idx >= DFHack::eBiomeCount)
+            auto block_region_offset_idx = static_cast<BiomeOffset>(des.bits.biome);
+            if (block_region_offset_idx >= eBiomeCount)
                 // "can't happen", fall back to the local region tile's biome.
-                block_region_offset_idx = DFHack::eHere;
-            auto region_details_coord2d = getBiomeRgnPos(block.map_pos,
-                static_cast<BiomeOffset>(block_region_offset_idx));
+                block_region_offset_idx = eHere;
+            auto blockptr = &static_cast<df::map_block &>(const_cast<df::map_block &>(block));
+            auto region_details_coord2d = Maps::getBlockTileBiomeRgn(blockptr, p);
             auto region_details_idx = linear_index(region_details,
                     &df::world_region_details::pos, region_details_coord2d);
             if (region_details_idx == -1)
             {
-                // "can't happen"; fall back to the first region.
+                // "can't happen"; fall back to the region of the first map_block.
                 DEBUG(general).print("BaseMaterialAt(block {}, tile {}, case "
                         "LAVA_STONE, didn't find region_details for region coord {}\n",
                         block.map_pos, p, region_details_coord2d);
@@ -633,33 +634,37 @@ static void dig_type(const df::coord pos, df::tiletype in_tt) {
     //      this bug has been temporarily preserved to remain bug-for-bug compatible.
     //      this bug is NOT the same bug as the preserved bug 25 lines below.
     auto tt = in_tt;
+    if (tt == df::tiletype::Void || tileMaterial(tt) == NONE)
+        TRACE(general).print("dig_type: pre-dig: {}.  {} in:{} out:{}\n",
+                (tt == df::tiletype::Void ? "tiletype is Void" : "tiletype_material is NONE"),
+                pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt));
+    if (tileShapeBasic(tileShape(tt)) == None || tileShapeBasic(tileShape(tt)) == Open)
+        TRACE(general).print("dig_type: pre-dig: tiletype_shape_basic is {}.  {} in:{} out:{}\n",
+                (tileShapeBasic(tileShape(tt)) == None ? "None" : "Open"),
+                pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt));
+
     if (tileShapeBasic(tileShape(tt)) != Open) {
         auto matpair = baseMaterialAt(pos);
         auto ground_type = getGroundType(matpair);
         if (ground_type == SOIL || ground_type == STONE)
             tt = matchTileMaterial(tt, ground_type);
         else
-            DEBUG(general).print("dig_type: getGroundType did not return SOIL or STONE."
-                        "  not updating tiletype material. {} in:{} out:{} ({},{})\n",
-                        pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt),
-                        matpair.mat_type, matpair.mat_index);
-        if (tt == df::tiletype::Void)
-            DEBUG(general).print("dig_type: matchTileMaterial: tiletype is Void."
-                    "  {} in:{} out:{} ({},{})\n",
-                    pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt),
-                    matpair.mat_type, matpair.mat_index);
-        if (tileMaterial(tt) == NONE)   // true for tiletypes Void and Unused[0-9]+
-            DEBUG(general).print("dig_type: matchTileMaterial: tiletype_material is NONE."
-                    "  {} in:{} out:{} ({},{})\n",
+            TRACE(general).print("dig_type: getGroundType did not return SOIL or STONE."
+                    "  not updating tiletype material. {} in:{} out:{} ({},{})\n",
                     pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt),
                     matpair.mat_type, matpair.mat_index);
     }
+    if (tt == df::tiletype::Void || tileMaterial(tt) == NONE)
+        TRACE(general).print("dig_type: derived tiletype: {}  {} in:{} out:{}\n",
+                (tt == df::tiletype::Void ? "tiletype is Void" : "tiletype_material is NONE"),
+                pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt));
 
     // this segment temporarily reimplements buggy behavior to remain bug-for-bug compatible.
     // specifically, STONE tiles (i.e. layer stone) which are of the material type
     // of the current region's .lava_stone (e.g. obsidian) are changed to LAVA_STONE.
     // (later: unless they are in a local feature, apparently.)
-    if (true) {     // TODO when bugfixing starts, remove this block.
+    // TODO when bugfixing starts, remove this block.
+    if (true && tileShapeBasic(tileShape(tt)) != Open) {
         auto matpair = baseMaterialAt(pos);
         auto des = index_tile(block->designation, pos);
         auto block_region_offset_idx = des.bits.biome;
@@ -669,11 +674,9 @@ static void dig_type(const df::coord pos, df::tiletype in_tt) {
             tt = matchTileMaterial(tt, LAVA_STONE);
     }
 
-    if (tt == df::tiletype::Void)
-        DEBUG(general).print("dig_type: setting tile: tiletype is Void.  {} in:{} out:{}\n",
-                pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt));
-    if (tileMaterial(tt) == NONE)   // true for tiletypes Void and Unused[0-9]+
-        DEBUG(general).print("dig_type: setting tile: tiletype_material is NONE.  {} in:{} out:{}\n",
+    if (tt == df::tiletype::Void || tileMaterial(tt) == NONE)
+        TRACE(general).print("dig_type: setting tile: {}.  {} in:{} out:{}\n",
+                (tt == df::tiletype::Void ? "tiletype is Void" : "tiletype_material is NONE"),
                 pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt));
     index_tile(block->tiletype, pos) = tt;
 }
@@ -808,7 +811,7 @@ static bool is_diggable(const df::coord pos, df::tiletype tt) {
         case UNDERWORLD_GATE:
             return false;
         case AIR:
-            return true;
+            return false;
         default:
             break;
     }
@@ -848,24 +851,38 @@ static bool dig_tile(color_ostream &out,
         {
             df::coord pos_below(pos.x, pos.y, pos.z-1);
             if (can_dig_channel(tt) && Maps::ensureTileBlock(pos_below)
-                    && is_diggable(pos_below, *Maps::getTileType(pos_below))) {
-                TRACE(channels).print("dig_tile: channeling at ({}) [can_dig_channel: true]\n", pos_below);
+                    /*&& is_diggable(pos_below, *Maps::getTileType(pos_below))*/) {
+                DEBUG(channels).print("dig_tile: channeling at {} [can_dig_channel: true]\n", pos_below);
                 target_type = df::tiletype::OpenSpace;
                 df::coord pos_above(pos.x, pos.y, pos.z+1);
                 if (Maps::ensureTileBlock(pos_above))
                     remove_ramp_top(pos_above);
+                // TODO processing of the tile below probably should be pulled out of this case.
                 df::tile_dig_designation td_below = (*Maps::getTileDesignation(pos_below)).bits.dig;
-                if (dig_tile(out, pos_below, df::tile_dig_designation::Ramp, dug_tiles)) {
+                if (is_diggable(pos_below, *Maps::getTileType(pos_below))
+                        && dig_tile(out, pos_below, df::tile_dig_designation::Ramp, dug_tiles)) {
                     clean_ramps(pos_below);
                     if (td_below == df::tile_dig_designation::Default) {
                         dig_tile(out, pos_below, td_below, dug_tiles);
                     }
                     clean_ramps(pos);
                     propagate_vertical_flags(pos);
+                    if (*Maps::getTileType(pos_below) == df::tiletype::Void
+                            || tileMaterial(*Maps::getTileType(pos_below)) == df::tiletype_shape::NONE)
+                        TRACE(general).print("dig_tile: Channel: post-dig-pos_below: {}.  pos_below {} tiletype {}\n",
+                                *Maps::getTileType(pos_below) == df::tiletype::Void
+                                    ? "tiletype is Void" : "tiletype_material is NONE",
+                                pos_below, static_cast<size_t>(*Maps::getTileType(pos_below)));
                     return true;
                 }
+                else {
+                    // TODO create a floor on the upper level if the lower level is WALL-basic-shaped.
+                    // TODO also if the lower level is a construction, create a floor construction on
+                    //      the upper level with .flags.no_build_item and .flags.top_of_wall set, and
+                    //      the original_tile set to OpenSpace.
+                }
             } else {
-                DEBUG(channels).print("dig_tile: failed to channel at ({}) [can_dig_channel: false]\n", pos_below);
+                DEBUG(channels).print("dig_tile: failed to channel at {} [can_dig_channel: false]\n", pos_below);
             }
             break;
         }
@@ -907,11 +924,9 @@ static bool dig_tile(color_ostream &out,
                 pos.x, pos.y, pos.z, ENUM_AS_STR(designation));
     }
 
-    if (target_type == df::tiletype::Void)
-        DEBUG(general).print("dig_tile: target_type: tiletype is Void.  {} {}\n",
-                pos, static_cast<size_t>(tt));
-    if (tileMaterial(target_type) == df::tiletype_material::NONE)
-        DEBUG(general).print("dig_tile: target_type: tiletype_material is NONE.  {} {}\n",
+    if (target_type == df::tiletype::Void || tileMaterial(target_type) == df::tiletype_material::NONE)
+        TRACE(general).print("dig_tile: target_type: {}.  {} {}\n",
+                target_type == df::tiletype::Void ? "tiletype is Void" : "tiletype_material is NONE",
                 pos, static_cast<size_t>(tt));
 
     // fail if unhandled or no change to tile
@@ -919,7 +934,7 @@ static bool dig_tile(color_ostream &out,
         return false;
 
     dug_tiles.emplace_back(pos);
-    TRACE(general).print("dig_tile: digging the designation tile at ({})\n",pos);
+    TRACE(general).print("dig_tile: digging the designation tile at {}\n",pos);
     dig_type(pos, target_type);
 
     clean_ramps(pos);
@@ -1413,7 +1428,6 @@ DFhackCExport command_result plugin_shutdown(color_ostream &) {
 
 // Lua API
 
-// runs dig-now for the specified tile coordinate. default options apply.
 static int dig_now_tile(lua_State *L)
 {
     df::coord pos;
@@ -1448,6 +1462,38 @@ static int link_adjacent_smooth_walls(lua_State *L)
     refresh_adjacent_smooth_walls(pos);
     return 0;
 }
+
+/*  LuaLS annotations.
+
+--- Runs dig-now for the specified tile coordinate. default options apply.
+--- The tile must have a dig designation, a smooth designation, or the
+--- occupancy must be set for track carving; otherwise nothing is done.
+--- The designations and track-carving occupancy settings will be cleared.
+---
+--- Returns false if no map is loaded or no unit is alive.
+--- Otherwise, returns true whether or not any work was done.
+---
+--- Note: to process large areas, it is better to invoke the `dig-now` plugin.
+--- e.g. `dfhack.run_command("dig-now", "param1", "param2", ...)`.
+---
+---@param x integer
+---@param y integer
+---@param z integer
+---@return boolean
+---@overload fun(pos: df.coord):boolean
+function dig_now_tile(x, y, z) end
+
+--- re-connects smooth walls for the given tile and the orthogonally
+--- adjacent tiles.
+---
+---@param x integer
+---@param y integer
+---@param z integer
+---@return nil
+---@overload fun(pos: df.coord):boolean
+function link_adjacent_smooth_walls(x, y, z)
+
+*/
 
 DFHACK_PLUGIN_LUA_COMMANDS {
     DFHACK_LUA_COMMAND(dig_now_tile),

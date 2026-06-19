@@ -16,17 +16,6 @@ struct SDL_Window;
 union SDL_Event;
 using SDL_Keycode = int32_t;
 
-namespace DFHack
-{
-    struct DFTileSurface
-    {
-        bool paintOver; // draw over original tile?
-        SDL_Surface* surface; // from where it should be drawn
-        SDL_Rect* rect; // from which coords (NULL to draw whole surface)
-        SDL_Rect* dstResize; // if not NULL dst rect will be resized (x/y/w/h will be added to original dst)
-    };
-}
-
 /**
  * The DFSDL module - provides access to SDL functions without actually
  * requiring build-time linkage to SDL

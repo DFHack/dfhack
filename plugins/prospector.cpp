@@ -610,9 +610,7 @@ static command_result embark_prospector(color_ostream &out,
     }
 
     if (options.hidden) {
-        DFHack::Materials *mats = Core::getInstance().getMaterials();
         printVeins(out, veinMats, options);
-        mats->Finish();
     }
 
     out << "Embark depth: " << (world_bottom.upper_z-world_bottom.lower_z+1) << " ";
@@ -634,8 +632,6 @@ static command_result map_prospector(color_ostream &con,
     uint32_t x_max = 0, y_max = 0, z_max = 0;
     Maps::getSize(x_max, y_max, z_max);
     MapExtras::MapCache map;
-
-    DFHack::Materials *mats = Core::getInstance().getMaterials();
 
     DFHack::t_feature blockFeatureGlobal;
     DFHack::t_feature blockFeatureLocal;
@@ -893,9 +889,6 @@ static command_result map_prospector(color_ostream &con,
         con << "Wood in trees:" << std::endl;
         printMats<df::plant_raw, std::greater>(con, treeMats, world->raws.plants.all, options);
     }
-
-    // Cleanup
-    mats->Finish();
 
     return CR_OK;
 }

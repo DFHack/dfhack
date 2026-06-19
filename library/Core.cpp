@@ -40,8 +40,6 @@ distribution.
 #include "MemoryPatcher.h"
 #include "MiscUtils.h"
 #include "MiscUtils.h"
-#include "Module.h"
-#include "ModuleFactory.h"
 #include "PluginManager.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
@@ -52,7 +50,6 @@ distribution.
 #include "modules/DFSteam.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
-#include "modules/Graphic.h"
 #include "modules/Gui.h"
 #include "modules/Hotkey.h"
 #include "modules/Persistence.h"
@@ -1048,7 +1045,6 @@ Core::Core() :
     plug_mgr = nullptr;
     errorstate = false;
     vinfo = 0;
-    memset(&(s_mods), 0, sizeof(s_mods));
 
     // set up hotkey capture
     suppress_duplicate_keyboard_events = true;
@@ -1950,11 +1946,9 @@ int Core::Shutdown ( void )
         plug_mgr = nullptr;
     }
     // invalidate all modules
-    allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
     DFSteam::cleanup(getConsole());
-    memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
     return -1;
 }
@@ -2184,23 +2178,3 @@ std::string Core::GetAliasCommand(const std::string &name, bool ignore_params)
         return aliases[name][0];
     return join_strings(" ", aliases[name]);
 }
-
-/*******************************************************************************
-                                M O D U L E S
-*******************************************************************************/
-
-#define MODULE_GETTER(TYPE) \
-TYPE * Core::get##TYPE() \
-{ \
-    if(errorstate) return nullptr;\
-    if(!s_mods.p##TYPE)\
-    {\
-        std::unique_ptr<Module> mod = create##TYPE();\
-        s_mods.p##TYPE = (TYPE *) mod.get();\
-        allModules.push_back(std::move(mod));\
-    }\
-    return s_mods.p##TYPE;\
-}
-
-MODULE_GETTER(Materials);
-MODULE_GETTER(Graphic);

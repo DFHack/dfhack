@@ -66,10 +66,8 @@ set(MAIN_HEADERS
     include/MemAccess.h
     include/Memory.h
     include/MiscUtils.h
-    include/Module.h
     include/MemAccess.h
     include/MemoryPatcher.h
-    include/ModuleFactory.h
     include/PluginLua.h
     include/PluginManager.h
     include/PluginStatics.h
@@ -157,7 +155,6 @@ set(MODULE_HEADERS
     include/modules/Designations.h
     include/modules/EventManager.h
     include/modules/Filesystem.h
-    include/modules/Graphic.h
     include/modules/Gui.h
     include/modules/GuiHooks.h
     include/modules/Hotkey.h
@@ -189,7 +186,6 @@ set(MODULE_SOURCES
     modules/Designations.cpp
     modules/EventManager.cpp
     modules/Filesystem.cpp
-    modules/Graphic.cpp
     modules/Gui.cpp
     modules/Hotkey.cpp
     modules/Items.cpp

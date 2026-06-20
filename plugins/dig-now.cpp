@@ -84,7 +84,7 @@ static const df::world_geo_biome* geo_biome_at(const df::map_block &block, const
         return nullptr;
     if (biome->geo_index < 0)
         return nullptr;
-    if (biome->geo_index >= df::world_geo_biome::get_vector().size())
+    if (static_cast<size_t>(biome->geo_index) >= df::world_geo_biome::get_vector().size())
         return nullptr;
     auto geo_biome = df::world_geo_biome::get_vector()[biome->geo_index];
     return geo_biome;
@@ -297,7 +297,7 @@ static const t_matpair baseMaterialAt(const df::map_block &block, df::coord2d p)
                     &df::world_region_details::pos, region_details_coord2d);
             if (region_details_idx == -1)
             {
-                // "can't happen"; fall back to the region of the first map_block.
+                // "can't happen"; fall back to the first region in the region_details vector.
                 DEBUG(general).print("BaseMaterialAt(block {}, tile {}, case "
                         "LAVA_STONE, didn't find region_details for region coord {}\n",
                         block.map_pos, p, region_details_coord2d);
@@ -634,31 +634,33 @@ static void dig_type(const df::coord pos, df::tiletype in_tt) {
     //      this bug has been temporarily preserved to remain bug-for-bug compatible.
     //      this bug is NOT the same bug as the preserved bug 25 lines below.
     auto tt = in_tt;
-    if (tt == df::tiletype::Void || tileMaterial(tt) == NONE)
+    if (tt == df::tiletype::Void || tileMaterial(tt) == NONE) {
         TRACE(general).print("dig_type: pre-dig: {}.  {} in:{} out:{}\n",
                 (tt == df::tiletype::Void ? "tiletype is Void" : "tiletype_material is NONE"),
                 pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt));
-    if (tileShapeBasic(tileShape(tt)) == None || tileShapeBasic(tileShape(tt)) == Open)
+    }
+    if (tileShapeBasic(tileShape(tt)) == None || tileShapeBasic(tileShape(tt)) == Open) {
         TRACE(general).print("dig_type: pre-dig: tiletype_shape_basic is {}.  {} in:{} out:{}\n",
                 (tileShapeBasic(tileShape(tt)) == None ? "None" : "Open"),
                 pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt));
-
+    }
     if (tileShapeBasic(tileShape(tt)) != Open) {
         auto matpair = baseMaterialAt(pos);
         auto ground_type = getGroundType(matpair);
         if (ground_type == SOIL || ground_type == STONE)
             tt = matchTileMaterial(tt, ground_type);
-        else
+        else {
             TRACE(general).print("dig_type: getGroundType did not return SOIL or STONE."
                     "  not updating tiletype material. {} in:{} out:{} ({},{})\n",
                     pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt),
                     matpair.mat_type, matpair.mat_index);
+        }
     }
-    if (tt == df::tiletype::Void || tileMaterial(tt) == NONE)
+    if (tt == df::tiletype::Void || tileMaterial(tt) == NONE) {
         TRACE(general).print("dig_type: derived tiletype: {}  {} in:{} out:{}\n",
                 (tt == df::tiletype::Void ? "tiletype is Void" : "tiletype_material is NONE"),
                 pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt));
-
+    }
     // this segment temporarily reimplements buggy behavior to remain bug-for-bug compatible.
     // specifically, STONE tiles (i.e. layer stone) which are of the material type
     // of the current region's .lava_stone (e.g. obsidian) are changed to LAVA_STONE.
@@ -674,10 +676,11 @@ static void dig_type(const df::coord pos, df::tiletype in_tt) {
             tt = matchTileMaterial(tt, LAVA_STONE);
     }
 
-    if (tt == df::tiletype::Void || tileMaterial(tt) == NONE)
+    if (tt == df::tiletype::Void || tileMaterial(tt) == NONE) {
         TRACE(general).print("dig_type: setting tile: {}.  {} in:{} out:{}\n",
                 (tt == df::tiletype::Void ? "tiletype is Void" : "tiletype_material is NONE"),
                 pos, static_cast<size_t>(in_tt), static_cast<size_t>(tt));
+    }
     index_tile(block->tiletype, pos) = tt;
 }
 
@@ -1107,7 +1110,7 @@ static bool produces_item(const boulder_percent_options &options,
     return rng.random(100) < probability;
 }
 
-typedef std::map<std::pair<df::item_type, t_matpair>, std::vector<df::coord>>
+typedef std::map<std::pair<df::item_type, t_matpair>, std::vector<df::coord> >
     item_coords_t;
 
 static void do_dig(color_ostream &out, std::vector<df::coord> &dug_coords,

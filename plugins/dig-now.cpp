@@ -68,6 +68,7 @@ static const df::region_map_entry* biome_at(const df::map_block &block, const df
     return biome;
 }
 
+#if false   // gcc warns about unused functions, and warnings are errors.
 static const df::region_map_entry* biome_at(const df::coord pos)
 {
     auto block = Maps::getTileBlock(pos);
@@ -76,6 +77,7 @@ static const df::region_map_entry* biome_at(const df::coord pos)
     auto blockref = static_cast<const df::map_block &>(*block);
     return biome_at(blockref, df::coord2d(pos) & 15);
 }
+#endif
 
 static const df::world_geo_biome* geo_biome_at(const df::map_block &block, const df::coord2d p)
 {
@@ -90,6 +92,7 @@ static const df::world_geo_biome* geo_biome_at(const df::map_block &block, const
     return geo_biome;
 }
 
+#if false   // gcc warns about unused functions, and warnings are errors.
 static const df::world_geo_biome* geo_biome_at(const df::coord pos)
 {
     auto block = Maps::getTileBlock(pos);
@@ -98,6 +101,7 @@ static const df::world_geo_biome* geo_biome_at(const df::coord pos)
     auto blockref = static_cast<const df::map_block &>(*block);
     return geo_biome_at(blockref, df::coord2d(pos) & 15);
 }
+#endif
 
 static const t_matpair layer_inorganic_n(const df::map_block &block, const df::coord2d p, size_t layer)
 {
@@ -105,10 +109,12 @@ static const t_matpair layer_inorganic_n(const df::map_block &block, const df::c
     auto geo_biome = geo_biome_at(block, p);
     if (!geo_biome)
         return t_matpair(INORGANIC, -1);    // can't happen, generic "rock"
-    layer = clip_range(layer, 0, geo_biome->layers.size() - 1);
+    // gcc-11 complained that 0 was of different signed-ness than size_t!  trying to cast it to unsigned.
+    layer = clip_range(layer, static_cast<size_t>(0), geo_biome->layers.size() - 1);
     return t_matpair(INORGANIC, geo_biome->layers[layer]->mat_index);
 }
 
+#if false   // gcc warns about unused functions, and warnings are errors.
 static const t_matpair layer_inorganic_n(const df::coord pos, size_t layer)
 {
     using namespace df::enums::builtin_mats;
@@ -118,6 +124,7 @@ static const t_matpair layer_inorganic_n(const df::coord pos, size_t layer)
     auto blockref = static_cast<const df::map_block &>(*block);
     return layer_inorganic_n(blockref, df::coord2d(pos) & 15, layer);
 }
+#endif
 
 static const size_t geolayer_at(const df::map_block &block, df::coord2d p)
 {
@@ -129,6 +136,7 @@ static const t_matpair layer_inorganic_at(const df::map_block &block, df::coord2
     return layer_inorganic_n(block, p, geolayer_at(block, p));
 }
 
+#if false   // gcc warns about unused functions, and warnings are errors.
 static const t_matpair layer_inorganic_at(const df::coord pos)
 {
     using namespace df::enums::builtin_mats;
@@ -138,6 +146,7 @@ static const t_matpair layer_inorganic_at(const df::coord pos)
     auto blockref = const_cast<const df::map_block &>(static_cast<df::map_block &>(*block));
     return layer_inorganic_at(blockref, df::coord2d(pos) & 15);
 }
+#endif
 
 static const df::enums::tiletype_material::tiletype_material getGroundType(int32_t mat_index)
 {
@@ -871,11 +880,12 @@ static bool dig_tile(color_ostream &out,
                     clean_ramps(pos);
                     propagate_vertical_flags(pos);
                     if (*Maps::getTileType(pos_below) == df::tiletype::Void
-                            || tileMaterial(*Maps::getTileType(pos_below)) == df::tiletype_shape::NONE)
+                            || tileMaterial(*Maps::getTileType(pos_below)) == df::tiletype_material::NONE) {
                         TRACE(general).print("dig_tile: Channel: post-dig-pos_below: {}.  pos_below {} tiletype {}\n",
                                 *Maps::getTileType(pos_below) == df::tiletype::Void
                                     ? "tiletype is Void" : "tiletype_material is NONE",
                                 pos_below, static_cast<size_t>(*Maps::getTileType(pos_below)));
+                    }
                     return true;
                 }
                 else {
@@ -927,11 +937,11 @@ static bool dig_tile(color_ostream &out,
                 pos.x, pos.y, pos.z, ENUM_AS_STR(designation));
     }
 
-    if (target_type == df::tiletype::Void || tileMaterial(target_type) == df::tiletype_material::NONE)
+    if (target_type == df::tiletype::Void || tileMaterial(target_type) == df::tiletype_material::NONE) {
         TRACE(general).print("dig_tile: target_type: {}.  {} {}\n",
                 target_type == df::tiletype::Void ? "tiletype is Void" : "tiletype_material is NONE",
                 pos, static_cast<size_t>(tt));
-
+    }
     // fail if unhandled or no change to tile
     if (target_type == df::tiletype::Void || target_type == tt)
         return false;

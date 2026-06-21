@@ -4,6 +4,7 @@
 cmake_minimum_required(VERSION 3.18 FATAL_ERROR)
 cmake_policy(SET CMP0048 NEW)
 cmake_policy(SET CMP0074 NEW)
+set(CMAKE_INSTALL_MESSAGE "LAZY")
 
 # set up versioning.
 set(DF_VERSION "53.14")

@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autoclothing`: will no longer count gloves and pants as if they were helms
 - `timestream`: do not skip ticks when a caravan is loading or unloading, and be more careful about skipping ticks when flows are active
 
 ## Misc Improvements

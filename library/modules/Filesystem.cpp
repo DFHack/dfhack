@@ -139,6 +139,19 @@ bool Filesystem::rmdir (std::filesystem::path path) noexcept
     }
 }
 
+bool Filesystem::rmdir_recursive (std::filesystem::path path) noexcept
+{
+    try
+    {
+        std::filesystem::remove_all(path);
+        return true;
+    }
+    catch (std::filesystem::filesystem_error&)
+    {
+        return false;
+    }
+}
+
 bool Filesystem::stat (std::filesystem::path path, std::filesystem::file_status &info) noexcept
 {
     try

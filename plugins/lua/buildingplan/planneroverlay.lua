@@ -15,6 +15,33 @@ config = config or json.open('dfhack-config/buildingplan.json')
 
 local uibs = df.global.buildreq
 
+local ITEM_TO_JOB = {
+    [df.item_type.BED] = 'ConstructBed', [df.item_type.DOOR] = 'ConstructDoor',
+    [df.item_type.CABINET] = 'ConstructCabinet', [df.item_type.TABLE] = 'ConstructTable',
+    [df.item_type.CHAIR] = 'ConstructThrone', [df.item_type.BOX] = 'ConstructChest',
+    [df.item_type.ARMORSTAND] = 'ConstructArmorStand', [df.item_type.WEAPONRACK] = 'ConstructWeaponRack',
+    [df.item_type.STATUE] = 'ConstructStatue', [df.item_type.COFFIN] = 'ConstructCoffin',
+    [df.item_type.HATCH_COVER] = 'ConstructHatchCover', [df.item_type.GRATE] = 'ConstructGrate',
+    [df.item_type.QUERN] = 'ConstructQuern', [df.item_type.MILLSTONE] = 'ConstructMillstone',
+    [df.item_type.TRACTION_BENCH] = 'ConstructTractionBench', [df.item_type.SLAB] = 'ConstructSlab',
+    [df.item_type.ANVIL] = 'ForgeAnvil', [df.item_type.WINDOW] = 'MakeWindow',
+    [df.item_type.CAGE] = 'MakeCage', [df.item_type.BARREL] = 'MakeBarrel',
+    [df.item_type.BUCKET] = 'MakeBucket', [df.item_type.ANIMALTRAP] = 'MakeAnimalTrap',
+    [df.item_type.CHAIN] = 'MakeChain', [df.item_type.FLASK] = 'MakeFlask',
+    [df.item_type.GOBLET] = 'MakeGoblet', [df.item_type.BLOCKS] = 'ConstructBlocks',
+}
+
+local JOB_DEFAULTS = {
+    ConstructBed='wood', ConstructTractionBench='wood', MakeCage='wood',
+    MakeBarrel='wood', MakeBucket='wood', MakeAnimalTrap='wood',
+    ForgeAnvil='iron', MakeChain='iron', MakeFlask='iron', MakeWindow='glass'
+}
+
+local VALID_MAT_CATS = {
+    wood=true, bone=true, shell=true, horn=true, pearl=true, tooth=true,
+    leather=true, silk=true, yarn=true, cloth=true, plant=true
+}
+
 reset_counts_flag = false
 editing_filters_flag = false
 
@@ -1063,35 +1090,6 @@ function PlannerOverlay:queue_order(idx)
 
     local filter = get_cur_filters()[idx]
 
-    local item_to_job = {
-        [df.item_type.BED] = 'ConstructBed',
-        [df.item_type.DOOR] = 'ConstructDoor',
-        [df.item_type.CABINET] = 'ConstructCabinet',
-        [df.item_type.TABLE] = 'ConstructTable',
-        [df.item_type.CHAIR] = 'ConstructThrone',
-        [df.item_type.BOX] = 'ConstructChest',
-        [df.item_type.ARMORSTAND] = 'ConstructArmorStand',
-        [df.item_type.WEAPONRACK] = 'ConstructWeaponRack',
-        [df.item_type.STATUE] = 'ConstructStatue',
-        [df.item_type.COFFIN] = 'ConstructCoffin',
-        [df.item_type.HATCH_COVER] = 'ConstructHatchCover',
-        [df.item_type.GRATE] = 'ConstructGrate',
-        [df.item_type.QUERN] = 'ConstructQuern',
-        [df.item_type.MILLSTONE] = 'ConstructMillstone',
-        [df.item_type.TRACTION_BENCH] = 'ConstructTractionBench',
-        [df.item_type.SLAB] = 'ConstructSlab',
-        [df.item_type.ANVIL] = 'ForgeAnvil',
-        [df.item_type.WINDOW] = 'MakeWindow',
-        [df.item_type.CAGE] = 'MakeCage',
-        [df.item_type.BARREL] = 'MakeBarrel',
-        [df.item_type.BUCKET] = 'MakeBucket',
-        [df.item_type.ANIMALTRAP] = 'MakeAnimalTrap',
-        [df.item_type.CHAIN] = 'MakeChain',
-        [df.item_type.FLASK] = 'MakeFlask',
-        [df.item_type.GOBLET] = 'MakeGoblet',
-        [df.item_type.BLOCKS] = 'ConstructBlocks',
-    }
-
     local job_name = "ConstructBlocks"
     local item_type = nil
     if filter.item_type and filter.item_type ~= -1 then
@@ -1104,8 +1102,8 @@ function PlannerOverlay:queue_order(idx)
         item_type = mapping_vector[filter.vector_id]
     end
 
-    if item_type and item_to_job[item_type] then
-        job_name = item_to_job[item_type]
+    if item_type and ITEM_TO_JOB[item_type] then
+        job_name = ITEM_TO_JOB[item_type]
     end
 
     local order_json = {
@@ -1125,47 +1123,13 @@ function PlannerOverlay:queue_order(idx)
     end
 
     if #cats_list == 0 then
-        local job_defaults = {
-            ConstructBed = {'wood'},
-            ConstructDoor = {'stone'},
-            ConstructCabinet = {'stone'},
-            ConstructTable = {'stone'},
-            ConstructThrone = {'stone'},
-            ConstructChest = {'stone'},
-            ConstructArmorStand = {'stone'},
-            ConstructWeaponRack = {'stone'},
-            ConstructStatue = {'stone'},
-            ConstructCoffin = {'stone'},
-            ConstructHatchCover = {'stone'},
-            ConstructGrate = {'stone'},
-            ConstructQuern = {'stone'},
-            ConstructMillstone = {'stone'},
-            ConstructTractionBench = {'wood'},
-            ConstructSlab = {'stone'},
-            ForgeAnvil = {'iron'},
-            MakeWindow = {'glass'},
-            MakeCage = {'wood'},
-            MakeBarrel = {'wood'},
-            MakeBucket = {'wood'},
-            MakeAnimalTrap = {'wood'},
-            MakeChain = {'iron'},
-            MakeFlask = {'iron'},
-            MakeGoblet = {'stone'},
-            ConstructBlocks = {'stone'},
-        }
-        if job_defaults[job_name] then
-            cats_list = job_defaults[job_name]
-        end
+        -- df manager requires a material category for generic jobs or it queues "unknown material" orders
+        table.insert(cats_list, JOB_DEFAULTS[job_name] or 'stone')
     end
-
-    local valid_mat_cats = {
-        wood=true, bone=true, shell=true, horn=true, pearl=true, tooth=true,
-        leather=true, silk=true, yarn=true, cloth=true, plant=true
-    }
 
     local mat_cats = {}
     for _, cat in ipairs(cats_list) do
-        if valid_mat_cats[cat] then
+        if VALID_MAT_CATS[cat] then
             table.insert(mat_cats, cat)
         elseif cat == 'stone' then
             order_json.material = "INORGANIC"

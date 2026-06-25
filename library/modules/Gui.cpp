@@ -30,7 +30,6 @@ distribution.
 #include "VersionInfo.h"
 #include "Types.h"
 #include "Error.h"
-#include "ModuleFactory.h"
 #include "Core.h"
 #include "Debug.h"
 #include "PluginManager.h"
@@ -105,10 +104,9 @@ using std::string;
 using std::vector;
 using namespace DFHack;
 
-const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
-const int32_t RECENT_REPORT_TICKS = 500; // used by UNIT_COMBAT_REPORT_ALL_ACTIVE
-const int32_t ANNOUNCE_LINE_DURATION = 100; // time to display each line in announcement bar; 2 sec at 50 GFPS
-const int16_t ANNOUNCE_DISPLAY_TIME = 2000; // DF uses this value for most announcements; 40 sec at 50 GFPS
+static constexpr int32_t RECENT_REPORT_TICKS = 500; // used by UNIT_COMBAT_REPORT_ALL_ACTIVE
+static constexpr int32_t ANNOUNCE_LINE_DURATION = 100; // time to display each line in announcement bar; 2 sec at 50 GFPS
+static constexpr int16_t ANNOUNCE_DISPLAY_TIME = 2000; // DF uses this value for most announcements; 40 sec at 50 GFPS
 
 namespace DFHack
 {
@@ -1928,18 +1926,6 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
     }
 
-    // Delete excess reports
-    while (reports.size() > MAX_REPORTS_SIZE)
-    {   // Report destructor
-        if (reports[0] != NULL)
-        {
-            if (reports[0]->flags.bits.announcement)
-                erase_from_vector(world->status.announcements, &df::report::id, reports[0]->id);
-            delete reports[0];
-        }
-        reports.erase(reports.begin());
-    }
-
     return world->status.reports.size() - 1;
 }
 
@@ -2031,14 +2017,6 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
 
     auto &popups = world->status.popups;
     popups.push_back(popup);
-
-    // Delete excess popups
-    while (popups.size() > MAX_REPORTS_SIZE)
-    {
-        if (popups[0] != NULL)
-            delete popups[0];
-        popups.erase(popups.begin());
-    }
 
     Gui::MTB_clean(&world->status.mega_text);
     Gui::MTB_parse(&world->status.mega_text, popups[0]->text);
@@ -2266,18 +2244,6 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         insert_into_vector(world->status.announcements, &df::report::id, new_report);
         new_report->flags.bits.announcement = true;
         world->status.display_timer = info.display_timer;
-    }
-
-    // Delete excess reports
-    while (reports.size() > MAX_REPORTS_SIZE)
-    {   // Report destructor
-        if (reports[0] != NULL)
-        {
-            if (reports[0]->flags.bits.announcement)
-                erase_from_vector(world->status.announcements, &df::report::id, reports[0]->id);
-            delete reports[0];
-        }
-        reports.erase(reports.begin());
     }
 
     if (*gamemode == game_mode::DWARF || // Did dwarf announcement or UCR

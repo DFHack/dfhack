@@ -29,8 +29,6 @@ distribution.
 #include "Export.h"
 #include "Hooks.h"
 
-#include "modules/Graphic.h"
-
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -63,7 +61,6 @@ namespace DFHack
 
     class Process;
     class Module;
-    class Materials;
     struct VersionInfo;
     class VersionInfoFactory;
     class PluginManager;
@@ -163,11 +160,6 @@ namespace DFHack
         bool isSuspended(void);
         /// Is everything OK?
         bool isValid(void) { return !errorstate; }
-
-        /// get the materials module
-        Materials * getMaterials();
-        /// get the graphic module
-        Graphic * getGraphic();
 
         command_result runCommand(color_ostream &out, const std::string &command, std::vector <std::string> &parameters, bool no_autocomplete = false);
         command_result runCommand(color_ostream& out, const std::string& command);
@@ -296,13 +288,6 @@ namespace DFHack
 
         // FIXME: shouldn't be kept around like this
         std::unique_ptr<DFHack::VersionInfoFactory> vif;
-        // Module storage
-        struct
-        {
-            Materials * pMaterials;
-            Graphic * pGraphic;
-        } s_mods;
-        std::vector<std::unique_ptr<Module>> allModules;
         DFHack::PluginManager *plug_mgr;
 
         // Hotkey Manager

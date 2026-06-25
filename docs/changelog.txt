@@ -59,13 +59,93 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autoclothing`: will no longer count gloves and pants as if they were helms
+- `timestream`: do not skip ticks when a caravan is loading or unloading, and be more careful about skipping ticks when flows are active
 
 ## Misc Improvements
 
 ## Documentation
 
 ## API
+
+## Lua
+
+## Removed
+
+# 53.14-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+- Core: attempts to delete a pool-allocated DF object will now throw an exception instead of corrupting the heap
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+- `logcleaner`: Removed (cannot be safely implemented at this time)
+
+# 53.14-r1
+
+## New Tools
+
+## New Features
+- Compatibility with Dwarf Fortress 53.14
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.13-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- ``Gui::makeAnnoucement``, ``Gui::showPopupAnnouncement`, and ``Gui::autoDFAnnouncement`` will no longer attempt to cull the DF announcement vector
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.13-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+- updated documentation for ``autofarm`` for more clarity
+
+## API
 - add flexible casting to ``enum_field`` to enable explicit casting to more types
+- Handle units without current soul in ``Units::getFocusPenalty``
 
 ## Lua
 

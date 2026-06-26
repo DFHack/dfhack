@@ -71,6 +71,26 @@ Template for new versions:
 
 ## Removed
 
+# 53.15-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `autoclothing`: will no longer count gloves and pants as if they were helms
+- `timestream`: do not skip ticks when a caravan is loading or unloading, and be more careful about skipping ticks when flows are active
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
 # 53.14-r2
 
 ## New Tools

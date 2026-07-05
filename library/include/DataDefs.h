@@ -24,14 +24,15 @@ distribution.
 
 #pragma once
 
+#include <functional>
 #include <list>
 #include <map>
 #include <sstream>
+#include <stdexcept>
 #include <string>
 #include <utility>
 #include <unordered_map>
 #include <vector>
-#include <functional>
 
 #include "BitArray.h"
 #include "Export.h"
@@ -572,15 +573,23 @@ namespace df
      *
      */
 
+    using df_pool_id_t = size_t;
+    template<typename T> concept pooled_object = requires () { { T::pool_id } -> std::convertible_to<df_pool_id_t>; };
+
     template<typename T> concept copy_assignable = std::assignable_from<T&, T&> && std::assignable_from<T&, const T&>;
 
     template<typename T>
     void *allocator_fn(void *out, const void *in) {
-        if (out)
+        constexpr df_pool_id_t invalid_pool_id = static_cast<df_pool_id_t>(-1);
+        // unerase type
+        T* _out = out ? reinterpret_cast<T*>(out) : nullptr;
+        const T* _in = in ? reinterpret_cast<const T*>(in) : nullptr;
+
+        if (_out)
         {
             if constexpr (copy_assignable<T>)
             {
-                *(T*)out = *(const T*)in;
+                *_out = *_in;
                 return out;
             }
             else
@@ -588,13 +597,20 @@ namespace df
                 return nullptr;
             }
         }
-        else if (in)
+        else if (_in)
         {
+            if constexpr (pooled_object<T>)
+            {
+                if (_in->pool_id != invalid_pool_id)
+                {
+                    throw std::runtime_error("Pool-allocated type cannot be deallocated with allocator_fn");
+                }
+            }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-            delete (T*)in;
+            delete _in;
 #pragma GCC diagnostic pop
-            return (T*)in;
+            return const_cast<void*>(in);
         }
         else
             return new T();
@@ -632,6 +648,10 @@ namespace df
         enum_field<EnumType,IntType> &operator=(EnumType ev) {
             value = IntType(ev); return *this;
         }
+        explicit operator IntType () const { return IntType(value); }
+        template <typename T>
+        explicit operator T () const { return static_cast<T>(IntType(value)); }
+
     };
 
     template<class ET, class IT>

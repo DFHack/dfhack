@@ -26,26 +26,25 @@ distribution.
 
 #include "Internal.h"
 
-#include "Error.h"
-#include "MemAccess.h"
+#include "ColorText.h"
+#include "Commands.h"
+#include "Console.h"
+#include "CoreDefs.h"
 #include "DataDefs.h"
 #include "Debug.h"
-#include "Console.h"
+#include "DFHackVersion.h"
+#include "Error.h"
+#include "Format.h"
+#include "LuaTools.h"
+#include "MemAccess.h"
 #include "MemoryPatcher.h"
 #include "MiscUtils.h"
-#include "Module.h"
-#include "VersionInfoFactory.h"
-#include "VersionInfo.h"
+#include "MiscUtils.h"
 #include "PluginManager.h"
-#include "ModuleFactory.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
-#include "LuaTools.h"
-#include "DFHackVersion.h"
-#include "md5wrapper.h"
-#include "Format.h"
-
-#include "Commands.h"
+#include "VersionInfo.h"
+#include "VersionInfoFactory.h"
 
 #include "modules/DFSDL.h"
 #include "modules/DFSteam.h"
@@ -53,13 +52,14 @@ distribution.
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
 #include "modules/Hotkey.h"
+#include "modules/Persistence.h"
 #include "modules/Textures.h"
 #include "modules/World.h"
-#include "modules/Persistence.h"
 
-#include "df/init.h"
 #include "df/gamest.h"
+#include "df/global_objects.h"
 #include "df/graphic.h"
+#include "df/init.h"
 #include "df/interfacest.h"
 #include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
@@ -68,35 +68,52 @@ distribution.
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_savegamest.h"
-#include "df/world.h"
 #include "df/world_data.h"
+#include "df/world.h"
 
-#include <stdio.h>
-#include <iomanip>
-#include <stdlib.h>
-#include <fstream>
-#include <thread>
-#include <mutex>
+#include <algorithm>
+#include <cassert>
 #include <condition_variable>
-#include <string>
-#include <vector>
-#include <ranges>
-#include <span>
-#include <map>
-#include <set>
-#include <cstdio>
-#include <cstring>
-#include <sstream>
-#include <forward_list>
-#include <type_traits>
 #include <cstdarg>
+#include <cstdint>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <filesystem>
+#include <forward_list>
+#include <fstream>
+#include <iomanip>
+#include <iostream>
+#include <istream>
+#include <map>
+#include <memory>
+#include <mutex>
+#include <ostream>
+#include <ranges>
+#include <set>
+#include <span>
+#include <sstream>
+#include <string_view>
+#include <string>
+#include <system_error>
+#include <thread>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+#include "md5wrapper.h"
+
 #include <SDL_events.h>
+#include <SDL_keycode.h>
+#include <SDL_video.h>
 
+#include <lua.h>
 
-#ifdef _WIN32
+#ifdef WIN32
 #define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <Windows.h>
+#include <processthreadsapi.h>
 #endif
 
 #ifdef LINUX_BUILD
@@ -105,6 +122,7 @@ distribution.
 
 using namespace DFHack;
 using namespace df::enums;
+
 using df::global::init;
 using df::global::world;
 using std::string;
@@ -859,7 +877,22 @@ bool Core::loadScriptFile(color_ostream &out, std::filesystem::path fname, bool 
         INFO(script,out) << "Running script: " << fname << std::endl;
         std::cerr << "Running script: " << fname << std::endl;
     }
-    std::ifstream script{ fname.c_str() };
+
+    auto pathlist = {getHackPath(), getHackPath().parent_path(), std::filesystem::current_path()};
+
+    std::filesystem::path path;
+
+    for (auto& p : pathlist)
+    {
+        auto candidate = fname.is_relative() ? p / fname : fname;
+        if (std::filesystem::exists(candidate))
+        {
+            path = candidate;
+            break;
+        }
+    }
+
+    std::ifstream script{ path };
     if ( !script )
     {
         if(!silent)
@@ -1012,7 +1045,6 @@ Core::Core() :
     plug_mgr = nullptr;
     errorstate = false;
     vinfo = 0;
-    memset(&(s_mods), 0, sizeof(s_mods));
 
     // set up hotkey capture
     suppress_duplicate_keyboard_events = true;
@@ -1054,16 +1086,17 @@ void Core::fatal (std::string output, const char * title)
 
 std::filesystem::path Core::getHackPath()
 {
-    return Filesystem::get_initial_cwd() / "hack";
+    return hack_path;
 }
 
 df::viewscreen * Core::getTopViewscreen() {
     return getInstance().top_viewscreen;
 }
 
-bool Core::InitMainThread() {
+bool Core::InitMainThread(std::filesystem::path path) {
     // this hook is always called from DF's main (render) thread, so capture this thread id
     df_render_thread = std::this_thread::get_id();
+    hack_path = path;
 
     Filesystem::init();
 
@@ -1091,6 +1124,7 @@ bool Core::InitMainThread() {
         std::cerr << "Build url: " << Version::dfhack_run_url() << std::endl;
     }
     std::cerr << "Starting with working directory: " << Filesystem::getcwd() << std::endl;
+    std::cerr << "Hack path: " << getHackPath() << std::endl;
 
     std::cerr << "Binding to SDL.\n";
     if (!DFSDL::init(con)) {
@@ -1232,9 +1266,9 @@ bool Core::InitSimulationThread()
 {
     // the update hook is only called from the simulation thread, so capture this thread id
     df_simulation_thread = std::this_thread::get_id();
-    if(started)
+    if (started)
         return true;
-    if(errorstate)
+    if (errorstate)
         return false;
 
     // Lock the CoreSuspendMutex until the thread exits or call Core::Shutdown
@@ -1276,20 +1310,20 @@ bool Core::InitSimulationThread()
             std::cout << "Console disabled.\n";
         }
     }
-    else if(con.init(false))
+    else if (con.init(false))
         std::cerr << "Console is running.\n";
     else
         std::cerr << "Console has failed to initialize!\n";
-/*
-    // dump offsets to a file
-    std::ofstream dump("offsets.log");
-    if(!dump.fail())
-    {
-        //dump << vinfo->PrintOffsets();
-        dump.close();
-    }
-    */
-    // initialize data defs
+    /*
+        // dump offsets to a file
+        std::ofstream dump("offsets.log");
+        if(!dump.fail())
+        {
+            //dump << vinfo->PrintOffsets();
+            dump.close();
+        }
+        */
+        // initialize data defs
     virtual_identity::Init(this);
 
     // create config directory if it doesn't already exist
@@ -1306,7 +1340,8 @@ bool Core::InitSimulationThread()
     else
     {
         // ensure all config file directories exist before we start copying files
-        for (auto &entry : default_config_files) {
+        for (auto& entry : default_config_files)
+        {
             // skip over files
             if (!entry.second)
                 continue;
@@ -1316,19 +1351,22 @@ bool Core::InitSimulationThread()
         }
 
         // copy files from the default tree that don't already exist in the config tree
-        for (auto &entry : default_config_files) {
+        for (auto& entry : default_config_files)
+        {
             // skip over directories
             if (entry.second)
                 continue;
             std::filesystem::path filename = entry.first;
-            if (!config_files.contains(filename)) {
+            if (!config_files.contains(filename))
+            {
                 std::filesystem::path src_file = getConfigDefaultsPath() / filename;
                 if (!Filesystem::isfile(src_file))
                     continue;
                 std::filesystem::path dest_file = getConfigPath() / filename;
                 std::ifstream src(src_file, std::ios::binary);
                 std::ofstream dest(dest_file, std::ios::binary);
-                if (!src.good() || !dest.good()) {
+                if (!src.good() || !dest.good())
+                {
                     con.printerr("Copy failed: '{}'\n", filename);
                     continue;
                 }
@@ -1337,6 +1375,17 @@ bool Core::InitSimulationThread()
                 dest.close();
             }
         }
+    }
+
+    // set lua default path if not already set
+    if (std::getenv("DFHACK_LUA_PATH") == nullptr)
+    {
+        std::filesystem::path lua_path = getHackPath() / "lua" / "?.lua";
+#ifdef WIN32
+        _putenv_s("DFHACK_LUA_PATH", lua_path.string().c_str());
+#else
+        setenv("DFHACK_LUA_PATH", lua_path.string().c_str(), 1);
+#endif
     }
 
     loadScriptPaths(con);
@@ -1897,11 +1946,9 @@ int Core::Shutdown ( void )
         plug_mgr = nullptr;
     }
     // invalidate all modules
-    allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
     DFSteam::cleanup(getConsole());
-    memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
     return -1;
 }
@@ -2131,23 +2178,3 @@ std::string Core::GetAliasCommand(const std::string &name, bool ignore_params)
         return aliases[name][0];
     return join_strings(" ", aliases[name]);
 }
-
-/*******************************************************************************
-                                M O D U L E S
-*******************************************************************************/
-
-#define MODULE_GETTER(TYPE) \
-TYPE * Core::get##TYPE() \
-{ \
-    if(errorstate) return nullptr;\
-    if(!s_mods.p##TYPE)\
-    {\
-        std::unique_ptr<Module> mod = create##TYPE();\
-        s_mods.p##TYPE = (TYPE *) mod.get();\
-        allModules.push_back(std::move(mod));\
-    }\
-    return s_mods.p##TYPE;\
-}
-
-MODULE_GETTER(Materials);
-MODULE_GETTER(Graphic);

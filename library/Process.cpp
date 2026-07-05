@@ -22,22 +22,30 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef WIN32
-#ifndef _DARWIN
-#include <cstdlib>
-#endif /* ! _DARWIN */
-#endif /* ! WIN32 */
+#include "Format.h"
+#include "MemAccess.h"
+#include "Memory.h"
+#include "MemoryPatcher.h"
+#include "MiscUtils.h"
+#include "VersionInfo.h"
+#include "VersionInfoFactory.h"
+
+#include "modules/Filesystem.h"
+
+#include <algorithm>
+#include <cstdarg>
+#include <cstdint>
 #include <cstring>
-#include <cstdio>
+#include <exception>
+#include <filesystem>
+#include <iostream>
 #include <map>
-#include <set>
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <filesystem>
 
-#include "Format.h"
-
-#ifndef WIN32
+#ifdef LINUX_BUILD
 #include <dirent.h>
 #include <errno.h>
 #include <sys/mman.h>
@@ -53,28 +61,24 @@ distribution.
 #include <mach/vm_statistics.h>
 #include <dlfcn.h>
 #endif /* _DARWIN */
-#endif /* ! WIN32 */
 
-#include "Error.h"
-#include "Internal.h"
-#include "MemAccess.h"
-#include "Memory.h"
-#include "MemoryPatcher.h"
-#include "MiscUtils.h"
-#include "VersionInfo.h"
-#include "VersionInfoFactory.h"
-#include "modules/Filesystem.h"
-
-#ifndef WIN32
 #include "md5wrapper.h"
-#else /* WIN32 */
+#endif /* LINUX_BUILD */
+
+#ifdef WIN32
 #define _WIN32_WINNT 0x0600
 #define WINVER 0x0600
+
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
+#include <processthreadsapi.h>
+#include <memoryapi.h>
+#include <sysinfoapi.h>
 
-#include <format>
+#include <malloc.h>
+
 #endif /* WIN32 */
 
 using namespace DFHack;
@@ -151,7 +155,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         uint32_t pe_offset = readDWord(d->base + 0x3C);
         read(d->base + pe_offset, sizeof(d->pe_header), (uint8_t*)&(d->pe_header));
         const size_t sectionsSize = sizeof(IMAGE_SECTION_HEADER) * d->pe_header.FileHeader.NumberOfSections;
-        d->sections = (IMAGE_SECTION_HEADER*)malloc(sectionsSize);
+        d->sections = (IMAGE_SECTION_HEADER*)std::malloc(sectionsSize);
         read(d->base + pe_offset + sizeof(d->pe_header), sectionsSize, (uint8_t*)(d->sections));
     }
     catch (std::exception&)

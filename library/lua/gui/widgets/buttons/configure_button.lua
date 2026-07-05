@@ -1,19 +1,71 @@
-local textures = require('gui.textures')
-local GraphicButton = require('gui.widgets.buttons.graphic_button')
+-- A 3x1 tile button with a gear symbol on it. Clicking on it will run a callback
 
-local configure_pen_center = dfhack.pen.parse{
+local textures = require('gui.textures')
+local Panel = require('gui.widgets.containers.panel')
+local Label = require('gui.widgets.labels.label')
+
+local to_pen = dfhack.pen.parse
+
+local button_pen_left = to_pen{fg=COLOR_CYAN,
+    tile=curry(textures.tp_control_panel, 7) or nil, ch=string.byte('[')}
+local button_pen_center = to_pen{
     tile=curry(textures.tp_control_panel, 10) or nil, ch=15} -- gear/masterwork symbol
+local button_pen_right = to_pen{fg=COLOR_CYAN,
+    tile=curry(textures.tp_control_panel, 8) or nil, ch=string.byte(']')}
 
 ---------------------
 -- ConfigureButton --
 ---------------------
 
----@class widgets.ConfigureButton.attrs: widgets.GraphicButton.attrs
----@field super widgets.GraphicButton
-ConfigureButton = defclass(ConfigureButton, GraphicButton)
+---@class widgets.ConfigureButton.attrs: widgets.Panel.attrs
+---@field on_click? function
+---@field pen_left dfhack.pen|fun(): dfhack.pen
+---@field pen_center dfhack.pen|fun(): dfhack.pen
+---@field pen_right dfhack.pen|fun(): dfhack.pen
+
+---@class widgets.ConfigureButton.attrs.partial: widgets.ConfigureButton.attrs
+
+---@class widgets.ConfigureButton: widgets.Panel, widgets.ConfigureButton.attrs
+---@field super widgets.Panel
+---@field ATTRS widgets.ConfigureButton.attrs|fun(attributes: widgets.ConfigureButton.attrs.partial)
+---@overload fun(init_table: widgets.ConfigureButton.attrs.partial): self
+ConfigureButton = defclass(ConfigureButton, Panel)
 
 ConfigureButton.ATTRS{
-    pen_center=configure_pen_center,
+    frame={t=0, l=0, w=3, h=1},
+    on_click=DEFAULT_NIL,
+    pen_left=button_pen_left,
+    pen_center=button_pen_center,
+    pen_right=button_pen_right,
 }
+
+function ConfigureButton:init()
+    self.frame.h = self.frame.h or 1
+    self.frame.w = self.frame.w or 3
+
+    self:addviews{
+        Label{
+            view_id='label',
+            frame={t=0, l=0, w=3, h=1},
+            text={
+                {tile=self.pen_left},
+                {tile=self.pen_center},
+                {tile=self.pen_right},
+            },
+            on_click=self.on_click,
+        },
+    }
+end
+
+function ConfigureButton:refresh()
+    local l = self.subviews.label
+
+    l.on_click = self.on_click
+    l.pen_left = self.pen_left
+    l.pen_center = self.pen_center
+    l.pen_right = self.pen_right
+
+    l:setText({{tile=self.pen_left}, {tile=self.pen_center}, {tile=self.pen_right}})
+end
 
 return ConfigureButton

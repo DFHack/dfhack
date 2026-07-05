@@ -6346,12 +6346,27 @@ This is a specialized subclass of CycleHotkeyLabel that has two options:
 ``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
 ``On`` option is rendered in green.
 
+ConfigureButton class
+---------------------
+
+A 3x1 tile button with a gear symbol on it, intended to represent a configure
+icon. Clicking on the icon will run the given callback. The graphics can also
+be overridden to create custom buttons.
+
+It has the following attributes:
+
+:on_click: The function to run when the icon is clicked.
+:pen_left: Pen or function returning a pen to overwrite the left tile of the button.
+:pen_center: As above, but for the center tile (gear symbol).
+:pen_right: As above, but for the right tile.
+
 HelpButton class
 ----------------
 
-A 3x1 tile button with a question mark on it, intended to represent a help
-icon. Clicking on the icon will launch `gui/launcher` with a given command
-string, showing the help text for that command.
+Subclass of ConfigureButton; a 3x1 tile button with a question mark on it,
+intended to represent a help icon. Clicking on the icon will launch
+`gui/launcher` with a given command string, showing the help text for that
+command.
 
 It has the following attributes:
 
@@ -6361,15 +6376,17 @@ It also sets the ``frame`` attribute so the button appears in the upper right
 corner of the parent, but you can override this to your liking if you want a
 different position.
 
-ConfigureButton class
----------------------
+RadioButton class
+-----------------
 
-A 3x1 tile button with a gear mark on it, intended to represent a configure
-icon. Clicking on the icon will run the given callback.
+Subclass of ConfigureButton; a 3x1 tile button that resembles a radio button
+(or check box in ASCII mode), identical to the ones found in
+`gui/control-panel`. Clicking on the button will toggle its enabled state.
+This state is represented by the boolean value ``toggle_state``.
 
 It has the following attributes:
 
-:on_click: The function on run when the icon is clicked.
+:initial_state: Start in the ``true`` or ``false`` state. Defaults to ``true``.
 
 BannerPanel class
 -----------------

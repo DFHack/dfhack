@@ -1,5 +1,7 @@
+-- A 3x1 tile button that toggles state when clicked
+
 local textures = require('gui.textures')
-local GraphicButton = require('gui.widgets.buttons.graphic_button')
+local ConfigureButton = require('gui.widgets.buttons.configure_button')
 
 local to_pen = dfhack.pen.parse
 
@@ -16,26 +18,26 @@ local disabled_pen_center = to_pen{fg=COLOR_RED,
 local disabled_pen_right = to_pen{fg=COLOR_CYAN,
     tile=curry(textures.tp_control_panel, 6) or nil, ch=string.byte(']')}
 
-------------------
--- ToggleButton --
-------------------
+-----------------
+-- RadioButton --
+-----------------
 
----@class widgets.ToggleButton.attrs: widgets.GraphicButton.attrs
+---@class widgets.RadioButton.attrs: widgets.ConfigureButton.attrs
 ---@field initial_state boolean
 
----@class widgets.ToggleButton.attrs.partial: widgets.ToggleButton.attrs
+---@class widgets.RadioButton.attrs.partial: widgets.RadioButton.attrs
 
----@class widgets.ToggleButton: widgets.GraphicButton, widgets.ToggleButton.attrs
----@field super widgets.GraphicButton
----@field ATTRS widgets.ToggleButton.attrs|fun(attributes: widgets.ToggleButton.attrs.partial)
----@overload fun(init_table: widgets.ToggleButton.attrs.partial): self
-ToggleButton = defclass(ToggleButton, GraphicButton)
+---@class widgets.RadioButton: widgets.ConfigureButton, widgets.RadioButton.attrs
+---@field super widgets.ConfigureButton
+---@field ATTRS widgets.RadioButton.attrs|fun(attributes: widgets.RadioButton.attrs.partial)
+---@overload fun(init_table: widgets.RadioButton.attrs.partial): self
+RadioButton = defclass(RadioButton, ConfigureButton)
 
-ToggleButton.ATTRS{
+RadioButton.ATTRS{
     initial_state=true,
 }
 
-function ToggleButton:init()
+function RadioButton:init()
     self.toggle_state = self.initial_state
 
     self.on_click = function() self.toggle_state = not self.toggle_state end
@@ -46,4 +48,4 @@ function ToggleButton:init()
     self:refresh()
 end
 
-return ToggleButton
+return RadioButton

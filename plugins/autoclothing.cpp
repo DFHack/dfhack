@@ -65,7 +65,7 @@ enum ConfigValues {
 struct ClothingRequirement;
 command_result autoclothing(color_ostream &out, vector<string> &parameters);
 static void do_autoclothing();
-static bool validateMaterialCategory(ClothingRequirement& requirement);
+static bool validateMaterialCategory(ClothingRequirement& requirement, df::job_material_category& material_category);
 static std::optional<ClothingRequirement> setItem(string name);
 static void generate_control(color_ostream &out);
 static bool isAvailableItem(df::item *item);
@@ -151,7 +151,7 @@ struct ClothingRequirement {
             return std::nullopt;
         }
 
-        else if (!validateMaterialCategory(*req)) {
+        else if (!validateMaterialCategory(*req, material_category)) {
             out << parameters[idx] << " is not a valid material category for " << parameters[idx+1] << endl;
             return std::nullopt;
         }
@@ -387,29 +387,29 @@ static bool armorFlagsMatch(BitArray<df::armor_general_flags>& flags, df::job_ma
     return flags.is_set(df::armor_general_flags::LEATHER) && category.bits.leather;
 }
 
-static bool validateMaterialCategory(ClothingRequirement& requirement) {
+static bool validateMaterialCategory(ClothingRequirement& requirement, df::job_material_category& material_category) {
     auto itemDef = Items::getSubtypeDef(requirement.itemType, requirement.item_subtype);
     switch (requirement.itemType)
     {
         case item_type::ARMOR:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_armorst, itemDef))
-                return armorFlagsMatch(armor->props.flags, requirement.material_category);
+                return armorFlagsMatch(armor->props.flags, material_category);
             break;
         case item_type::GLOVES:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_glovesst, itemDef))
-                return armorFlagsMatch(armor->props.flags, requirement.material_category);
+                return armorFlagsMatch(armor->props.flags, material_category);
             break;
         case item_type::SHOES:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_shoesst, itemDef))
-                return armorFlagsMatch(armor->props.flags, requirement.material_category);
+                return armorFlagsMatch(armor->props.flags, material_category);
             break;
         case item_type::HELM:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_helmst, itemDef))
-                return armorFlagsMatch(armor->props.flags, requirement.material_category);
+                return armorFlagsMatch(armor->props.flags, material_category);
             break;
         case item_type::PANTS:
             if (STRICT_VIRTUAL_CAST_VAR(armor, df::itemdef_pantsst, itemDef))
-                return armorFlagsMatch(armor->props.flags, requirement.material_category);
+                return armorFlagsMatch(armor->props.flags, material_category);
             break;
         default:
             break;

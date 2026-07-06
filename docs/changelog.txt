@@ -33,6 +33,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autoclothing`: Fix incorrect invalid material type error
 
 ## Misc Improvements
 

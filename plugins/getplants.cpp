@@ -483,7 +483,7 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
         df::map_block* cur = Maps::getTileBlock(plant->pos);
 
         auto mat = plant->material;
-        if (mat < 0 || mat > world->raws.plants.all.size())
+        if (mat < 0 || mat > int16_t(world->raws.plants.all.size()))
         {
             WARN(log, out).print("plant with invalid material {} in plant vector", mat);
             continue;

@@ -478,41 +478,52 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
     }
 
     count = 0;
-    for (size_t i = 0; i < world->plants.all.size(); i++) {
-        const df::plant* plant = world->plants.all[i];
+    for (auto* plant : world->plants.all)
+    {
         df::map_block* cur = Maps::getTileBlock(plant->pos);
 
-        TRACE(log, out).print("Examining {} at ({}, {}, {}) [index={}]\n", world->raws.plants.all[plant->material]->id, plant->pos.x, plant->pos.y, plant->pos.z, (int)i);
+        auto mat = plant->material;
+        if (mat < 0 || mat > world->raws.plants.all.size())
+        {
+            WARN(log, out).print("plant with invalid material {} in plant vector", mat);
+            continue;
+        }
+
+        TRACE(log, out).print("Examining {} at ({}, {}, {})\n", world->raws.plants.all[mat]->id, plant->pos.x, plant->pos.y, plant->pos.z);
 
         int x = plant->pos.x % 16;
         int y = plant->pos.y % 16;
-        if (plantSelections[plant->material] == selectability::OutOfSeason ||
-            plantSelections[plant->material] == selectability::Selectable) {
+        if (plantSelections[mat] == selectability::OutOfSeason ||
+            plantSelections[mat] == selectability::Selectable)
+        {
             if (exclude ||
-                plantSelections[plant->material] == selectability::OutOfSeason)
+                plantSelections[mat] == selectability::OutOfSeason)
                 continue;
         }
-        else {
+        else
+        {
             if (!exclude)
                 continue;
         }
         df::tiletype tt = cur->tiletype[x][y];
-        df::tiletype_material mat = tileMaterial(tt);
+        df::tiletype_material tile_mat = tileMaterial(tt);
         if ((treesonly || tt != tiletype::Shrub) && ENUM_ATTR(plant_type, is_shrub, plant->type))
             continue;
-        if ((shrubsonly || mat != tiletype_material::TREE) && !ENUM_ATTR(plant_type, is_shrub, plant->type))
+        if ((shrubsonly || tile_mat != tiletype_material::TREE) && !ENUM_ATTR(plant_type, is_shrub, plant->type))
             continue;
         if (cur->designation[x][y].bits.hidden)
             continue;
-        if (collectionCount[plant->material] >= maxCount)
+        if (collectionCount[mat] >= maxCount)
             continue;
-        if (deselect && Designations::unmarkPlant(plant)) {
-            collectionCount[plant->material]++;
+        if (deselect && Designations::unmarkPlant(plant))
+        {
+            collectionCount[mat]++;
             ++count;
         }
-        if (!deselect && designate(out, plant, farming)) {
-            DEBUG(log, out).print("Designated {} at ({}, {}, {}), {}\n", world->raws.plants.all[plant->material]->id, plant->pos.x, plant->pos.y, plant->pos.z, (int)i);
-            collectionCount[plant->material]++;
+        if (!deselect && designate(out, plant, farming))
+        {
+            DEBUG(log, out).print("Designated {} at ({}, {}, {})\n", world->raws.plants.all[mat]->id, plant->pos.x, plant->pos.y, plant->pos.z);
+            collectionCount[mat]++;
             ++count;
         }
     }

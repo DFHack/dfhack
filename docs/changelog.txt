@@ -61,10 +61,12 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- ``widgets.HelpButton``: Now derives from ``widgets.ConfigureButton`` instead of using redundant code
 
 ## Documentation
 
 ## API
+- ``widgets.RadioButton``: New button widget resembling those used in ``gui/control-panel``
 
 ## Lua
 

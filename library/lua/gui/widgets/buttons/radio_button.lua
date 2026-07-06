@@ -44,8 +44,6 @@ function RadioButton:init()
     self.pen_left = function() return self.toggle_state and enabled_pen_left or disabled_pen_left end
     self.pen_center = function() return self.toggle_state and enabled_pen_center or disabled_pen_center end
     self.pen_right = function() return self.toggle_state and enabled_pen_right or disabled_pen_right end
-
-    self:refresh()
 end
 
 return RadioButton

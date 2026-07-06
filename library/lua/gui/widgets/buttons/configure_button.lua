@@ -57,7 +57,7 @@ function ConfigureButton:init()
     }
 end
 
-function ConfigureButton:refresh()
+function ConfigureButton:postinit()
     local l = self.subviews.label
 
     l.on_click = self.on_click

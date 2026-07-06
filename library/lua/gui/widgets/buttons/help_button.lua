@@ -29,9 +29,7 @@ HelpButton.ATTRS{
 
 function HelpButton:init()
     local command = self.command .. ' '
-
     self.on_click = function() dfhack.run_command('gui/launcher', command) end
-    self:refresh()
 end
 
 return HelpButton

@@ -1564,8 +1564,7 @@ void Maps::addBlockColumns(int32_t new_height)
                 df::tiletype::OpenSpace);
 
             // Set block positions properly (based on prior air layer)
-            air_block->map_pos = last_air_block->map_pos;
-            air_block->map_pos.z += count + 1;
+            air_block->map_pos = last_air_block->map_pos + df::coord{0, 0, uint16_t(count + 1)};
             air_block->region_pos = last_air_block->region_pos;
 
             // Copy other potentially important metadata from prior air

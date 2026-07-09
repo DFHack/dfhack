@@ -405,6 +405,8 @@ DFHACK_EXPORT bool removeTileAquifer(int32_t x, int32_t y, int32_t z);
 inline bool removeTileAquifer(df::coord pos) { return removeTileAquifer(pos.x, pos.y, pos.z); }
 DFHACK_EXPORT int removeAreaAquifer(df::coord pos1, df::coord pos2,
     std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block) { return true; });
+
+DFHACK_EXPORT void addBlockColumns(int32_t new_height);
 }
 }
 #endif

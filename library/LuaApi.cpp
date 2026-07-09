@@ -2653,6 +2653,7 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getWalkableGroup),
     WRAPM(Maps, canWalkBetween),
     WRAPM(Maps, spawnFlow),
+    WRAPM(Maps, addBlockColumns),
     WRAPN(hasTileAssignment, hasTileAssignment),
     WRAPN(getTileAssignment, getTileAssignment),
     WRAPN(setTileAssignment, setTileAssignment),

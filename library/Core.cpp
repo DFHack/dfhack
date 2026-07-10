@@ -528,9 +528,9 @@ std::filesystem::path Core::findScript(std::string name)
     return {};
 }
 
-bool loadScriptPathsCore(Core& core, color_ostream &out, bool silent = false)
+bool Core::loadScriptPaths(color_ostream &out, bool silent)
 {
-    std::filesystem::path filename{ core.getConfigPath() / "script-paths.txt" };
+    std::filesystem::path filename{ getConfigPath() / "script-paths.txt" };
     std::ifstream file(filename);
     if (!file)
     {
@@ -553,7 +553,7 @@ bool loadScriptPathsCore(Core& core, color_ostream &out, bool silent = false)
         getline(ss, path);
         if (ch == '+' || ch == '-')
         {
-            if (!core.addScriptPath(path, ch == '+') && !silent)
+            if (!addScriptPath(path, ch == '+') && !silent)
                 out.printerr("{}:{}: Failed to add path: {}\n", filename, line, path);
         }
         else if (!silent)
@@ -1377,7 +1377,7 @@ bool Core::InitSimulationThread()
 #endif
     }
 
-    loadScriptPathsCore(*this, con);
+    loadScriptPaths(con);
 
     // initialize common lua context
     // Calls InitCoreContext after checking IsCoreContext

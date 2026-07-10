@@ -24,15 +24,6 @@ distribution.
 
 #pragma once
 
-#include "Core.h"
-#include "ColorText.h"
-#include "DataDefs.h"
-
-#include "df/interface_key.h"
-
-#include <lua.h>
-#include <lauxlib.h>
-
 #include <concepts>
 #include <functional>
 #include <map>
@@ -43,6 +34,15 @@ distribution.
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
+
+#include "Core.h"
+#include "ColorText.h"
+#include "DataDefs.h"
+
+#include "df/interface_key.h"
+
+#include <lua.h>
+#include <lauxlib.h>
 
 namespace DFHack {
     class function_identity_base;

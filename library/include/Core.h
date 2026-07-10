@@ -191,6 +191,8 @@ namespace DFHack
         std::map<std::string, std::vector<std::string>> ListAliases();
         std::string GetAliasCommand(const std::string &name, bool ignore_params = false);
 
+        // note that this isn't valid until after DFHack is initialized by DF calling `dfhooks_init`
+        // that means that it's invalid during at-init static initialization
         std::filesystem::path getHackPath();
 
         bool isWorldLoaded() { return (last_world_data_ptr != nullptr); }
@@ -253,6 +255,8 @@ namespace DFHack
             return false;
         }
 
+        // Note that this path should be treated as potentially changeable over the life of a Core instance
+        // Consumers should not cache this path in long-lived local variables
         const std::filesystem::path getConfigPath()
         {
             return Filesystem::getInstallDir() / "dfhack-config";
@@ -286,6 +290,8 @@ namespace DFHack
         void onUpdate(color_ostream &out);
         void onStateChange(color_ostream &out, state_change_event event);
         void handleLoadAndUnloadScripts(color_ostream &out, state_change_event event);
+
+        bool loadScriptPaths(color_ostream& out, bool silent = false);
 
         Core(Core const&) = delete;
         void operator=(Core const&) = delete;

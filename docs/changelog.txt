@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autoclothing`: correct defect in validating material specification on command line
 - `getplants`: added protective code to avoid misoperation when a plant has an invalid material (which should never happen, but...)
 
 ## Misc Improvements

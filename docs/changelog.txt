@@ -68,7 +68,7 @@ Template for new versions:
 - Core: added ``getConfigPath()`` API for obtaining the path to user-specific configuration files
 
 ## Lua
-- Added ``dfhack.getConfigPath()`` API, proxying `Core::getConfigPath`
+- Added ``dfhack.getConfigPath()`` API, proxying ``Core::getConfigPath``
 
 ## Removed
 

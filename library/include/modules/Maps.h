@@ -126,28 +126,32 @@ enum BiomeOffset {
  */
 typedef df::block_flags t_blockflags;
 
+template <typename T>
+using arr40d = std::array<std::array<T, 16>, 16>;
+
 /**
  * 16x16 array of tile types
  * \ingroup grp_maps
  */
-typedef df::tiletype tiletypes40d [16][16];
+using tiletypes40d = arr40d<df::tiletype>;
 /**
  * 16x16 array used for squashed block materials
  * \ingroup grp_maps
  */
-typedef int16_t t_blockmaterials [16][16];
+using t_blockmaterials = arr40d<int16_t>;
 /**
  * 16x16 array of designation flags
  * \ingroup grp_maps
  */
 typedef df::tile_designation t_designation;
-typedef t_designation designations40d [16][16];
+using designations40d = arr40d<t_designation>;
+
 /**
  * 16x16 array of occupancy flags
  * \ingroup grp_maps
  */
 typedef df::tile_occupancy t_occupancy;
-typedef t_occupancy occupancies40d [16][16];
+using occupancies40d = arr40d<t_occupancy>;
 /**
  * array of 16 biome indexes valid for the block
  * \ingroup grp_maps
@@ -157,7 +161,7 @@ typedef uint8_t biome_indices40d [9];
  * 16x16 array of temperatures
  * \ingroup grp_maps
  */
-typedef uint16_t t_temperatures [16][16];
+using t_temperatures = arr40d<uint16_t>;
 
 /**
  * Index a tile array by a 2D coordinate, clipping it to mod 16.

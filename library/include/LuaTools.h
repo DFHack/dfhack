@@ -24,15 +24,16 @@ distribution.
 
 #pragma once
 
+#include <concepts>
 #include <functional>
-#include <string>
-#include <vector>
-#include <set>
 #include <map>
+#include <set>
+#include <string>
+#include <string_view>
 #include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
-#include <concepts>
+#include <vector>
 
 #include "Core.h"
 #include "ColorText.h"
@@ -287,7 +288,7 @@ namespace DFHack::Lua {
      * Uses RunCoreQueryLoop internally.
      */
     DFHACK_EXPORT bool InterpreterLoop(color_ostream &out, lua_State *state,
-                                       const char *prompt = NULL, const char *hfile = NULL);
+        std::string_view prompt = {}, std::filesystem::path hfile = {});
 
     /**
      * Run an interactive prompt loop. All access to the lua state

@@ -21,6 +21,7 @@ redistribute it freely, subject to the following restrictions:
    distribution.
  */
 
+#include "Core.h"
 #include "PluginManager.h"
 #include "DebugManager.h"
 #include "Debug.h"
@@ -352,7 +353,9 @@ struct FilterManager : public std::map<size_t, Filter>
     //! Current configuration version implemented by the code
     constexpr static Json::UInt configVersion{1};
     //! Path to the configuration file
-    constexpr static const char* configPath{"dfhack-config/runtime-debug.json"};
+    const inline std::filesystem::path getConfigPath() const {
+        return DFHack::Core::getInstance().getConfigPath() / "runtime-debug.json";
+    }
 
     //! Get reference to the singleton
     static FilterManager& getInstance() noexcept
@@ -434,8 +437,6 @@ private:
     DebugManager::categorySignal_t::Connection connection_;
 };
 
-constexpr const char* FilterManager::configPath;
-
 FilterManager::~FilterManager()
 {
 }
@@ -443,6 +444,7 @@ FilterManager::~FilterManager()
 command_result FilterManager::loadConfig(DFHack::color_ostream& out) noexcept
 {
     nextId_ = 1;
+    auto configPath = getConfigPath();
     if (!Filesystem::isfile(configPath))
         return CR_OK;
     try {
@@ -463,6 +465,7 @@ command_result FilterManager::loadConfig(DFHack::color_ostream& out) noexcept
 
 command_result FilterManager::saveConfig(DFHack::color_ostream& out) const noexcept
 {
+    auto configPath = getConfigPath();
     try {
         DEBUG(command, out) << "Save config to '" << configPath << "'" << std::endl;
         JsonArchive archive;

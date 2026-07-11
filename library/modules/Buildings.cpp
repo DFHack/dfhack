@@ -29,7 +29,6 @@ distribution.
 #include "MemAccess.h"
 #include "Types.h"
 #include "Error.h"
-#include "ModuleFactory.h"
 #include "Core.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"

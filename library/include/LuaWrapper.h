@@ -25,7 +25,8 @@ distribution.
 #pragma once
 
 #include <lua.h>
-#include <lauxlib.h>
+
+#include "DataDefs.h"
 
 /**
  * Internal header file of the lua wrapper.

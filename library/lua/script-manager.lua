@@ -246,7 +246,7 @@ function getModSourcePath(mod_id)
 end
 
 function getModStatePath(mod_id)
-    local path = ('dfhack-config/mods/%s/'):format(mod_id)
+    local path = (dfhack.getConfigPath() + ('/mods/%s/')):format(mod_id)
     if not dfhack.filesystem.mkdir_recursive(path) then
         error(('failed to create mod state directory: "%s"'):format(path))
     end

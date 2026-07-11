@@ -57,11 +57,11 @@ Template for new versions:
 ## New Tools
 
 ## New Features
-- `buildingplan`: added a slider on the weapontrap overlay
 
 ## Fixes
 
 ## Misc Improvements
+- `buildingplan`: added a slider on the weapontrap overlay
 
 ## Documentation
 

@@ -183,7 +183,7 @@ public:
     };
 
     /*!
-     * Fetch a steam object proxy object for output. It also adds standard
+     * Fetch a stream object proxy object for output. It also adds standard
      * message components like time and plugin and category names to the line.
      *
      * User must make sure that the line is terminated with a line end.
@@ -194,6 +194,13 @@ public:
      */
     ostream_proxy_prefix getStream(const level msgLevel) const
     {
+        // if the core instance is unavailable, use stderr as a fallback
+        if (Core::noInstance())
+        {
+            static color_ostream_wrapper fallback{std::cerr};
+            return {*this,fallback,msgLevel};
+        }
+
         return {*this,Core::getInstance().getConsole(),msgLevel};
     }
     /*!

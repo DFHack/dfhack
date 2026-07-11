@@ -65,6 +65,7 @@ Template for new versions:
 
 ## Misc Improvements
 - `buildingplan`: added a slider on the weapontrap overlay
+- `buildingplan`: added a small tooltip text about renaming favorites in the UI
 
 ## Documentation
 

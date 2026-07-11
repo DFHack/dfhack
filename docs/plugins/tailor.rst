@@ -28,6 +28,7 @@ Usage
     tailor now
     tailor materials <material> [<material> ...]
     tailor confiscate [true|false]
+    tailor dye [true|false]
 
 By default, ``tailor`` will prefer using materials in this order::
 
@@ -47,6 +48,11 @@ be undesirable.
 too precious to routinely make into cloth. ``tailor`` does not support modded
 "cloth" types which utilize custom reactions for making clothing out of those
 cloth types.
+
+If dye management is enabled, ``tailor`` will also issue orders to dye cloth
+as needed to fulfill fortress clothing requirements, and will issue orders to
+manufacture dyes required to fulfill the dye cloth orders. Dye management is
+disabled by default.
 
 Examples
 --------
@@ -69,3 +75,11 @@ Caveats
 Modded cloth-like materials are not supported because custom reactions do not
 support being sized for non-dwarf races. The game only supports sizing the
 built-in default make-clothing or make-armor reactions.
+
+Dye automation will not not issue orders to mill dyes that are made at a
+millstone or quern because Dwarf Fortress does not currently support
+"mill plant" orders for a specified material.
+
+At present, dye automation uses any available dye and cloth will be dyed
+with whatever color dye can be found or made. The ability to specify color
+preferences may be added in the future.

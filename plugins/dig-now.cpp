@@ -48,9 +48,6 @@ namespace DFHack {
     DBG_DECLARE(dignow, channels, DebugCategory::LINFO);
 }
 
-#define COORD "%" PRIi16 " %" PRIi16 " %" PRIi16
-#define COORDARGS(id) id.x, id.y, id.z
-
 using namespace DFHack;
 
 struct designation{
@@ -450,12 +447,10 @@ static bool is_diggable(MapExtras::MapCache &map, const DFCoord &pos,
         break;
     }
 
-    if (mat == df::tiletype_material::FEATURE) {
-        // adamantine is the only is diggable feature
-        t_feature feature;
-        return map.BlockAtTile(pos)->GetLocalFeature(&feature)
-                && feature.type == feature_type::deep_special_tube;
-    }
+    MaterialInfo mi;
+    mi.decode(map.baseMaterialAt(pos));
+    if (mi.material != nullptr && mi.material->flags.is_set(df::material_flags::UNDIGGABLE))
+        return false;
 
     return true;
 }
@@ -488,7 +483,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
             DFCoord pos_below(pos.x, pos.y, pos.z-1);
             if (can_dig_channel(tt) && map.ensureBlockAt(pos_below)
                     && is_diggable(map, pos_below, map.tiletypeAt(pos_below))) {
-                TRACE(channels).print("dig_tile: channeling at (" COORD ") [can_dig_channel: true]\n",COORDARGS(pos_below));
+                TRACE(channels).print("dig_tile: channeling at ({}) [can_dig_channel: true]\n", pos_below);
                 target_type = df::tiletype::OpenSpace;
                 DFCoord pos_above(pos.x, pos.y, pos.z+1);
                 if (map.ensureBlockAt(pos_above)) {
@@ -505,7 +500,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     return true;
                 }
             } else {
-                DEBUG(channels).print("dig_tile: failed to channel at (" COORD ") [can_dig_channel: false]\n", COORDARGS(pos_below));
+                DEBUG(channels).print("dig_tile: failed to channel at ({}) [can_dig_channel: false]\n", pos_below);
             }
             break;
         }
@@ -552,8 +547,8 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         case df::tile_dig_designation::No:
         default:
             out.printerr(
-                "unhandled dig designation for tile (%d, %d, %d): %d\n",
-                pos.x, pos.y, pos.z, designation);
+                "unhandled dig designation for tile ({}, {}, {}): {}\n",
+                pos.x, pos.y, pos.z, ENUM_AS_STR(designation));
     }
 
     // fail if unhandled or no change to tile
@@ -561,7 +556,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
         return false;
 
     dug_tiles.emplace_back(map, pos);
-    TRACE(general).print("dig_tile: digging the designation tile at (" COORD ")\n",COORDARGS(pos));
+    TRACE(general).print("dig_tile: digging the designation tile at ({})\n",pos);
     dig_type(map, pos, target_type);
 
     clean_ramps(map, pos);
@@ -900,10 +895,8 @@ static void create_boulders(color_ostream &out,
         if (num_items != coords.size()) {
             MaterialInfo material;
             material.decode(prod->mat_type, prod->mat_index);
-            out.printerr("unexpected number of %s %s produced: expected %zd,"
-                         " got %zd.\n",
-                         material.toString().c_str(),
-                         ENUM_KEY_STR(item_type, prod->item_type).c_str(),
+            out.printerr("unexpected number of {} {} produced: expected {}, got {}.\n",
+                         material.toString(), ENUM_KEY_STR(item_type, prod->item_type),
                          coords.size(), num_items);
             num_items = std::min(num_items, entry.second.size());
         }
@@ -913,7 +906,7 @@ static void create_boulders(color_ostream &out,
                     dump_pos : simulate_fall(coords[i]);
             if (!Maps::ensureTileBlock(pos)) {
                 out.printerr(
-                        "unable to place boulder generated at (%d, %d, %d)\n",
+                        "unable to place boulder generated at ({}, {}, {})\n",
                         coords[i].x, coords[i].y, coords[i].z);
                 continue;
             }
@@ -958,7 +951,7 @@ static void post_process_dug_tiles(color_ostream &out,
                 continue;
 
             if (!Maps::ensureTileBlock(resting_pos)) {
-                out.printerr("No valid tile beneath (%d, %d, %d); can't move"
+                out.printerr("No valid tile beneath ({},{},{}) can't move"
                              " units and items to floor",
                              pos.x, pos.y, pos.z);
                 continue;

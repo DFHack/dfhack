@@ -35,57 +35,58 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
-#include <iostream>
-#include <fstream>
-#include <istream>
-#include <string>
-#include <stdint.h>
-
 #include "RemoteTools.h"
-#include "PluginManager.h"
-#include "MiscUtils.h"
-#include "VersionInfo.h"
+
+#include "ColorText.h"
+#include "Core.h"
+#include "CoreDefs.h"
+#include "DataDefs.h"
 #include "DFHackVersion.h"
+#include "LuaTools.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
+#include "VersionInfo.h"
 
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
-#include "LuaTools.h"
-
-#include "DataDefs.h"
-#include "df/plotinfost.h"
 #include "df/adventurest.h"
-#include "df/world.h"
-#include "df/world_data.h"
-#include "df/unit.h"
-#include "df/unit_misc_trait.h"
-#include "df/unit_soul.h"
-#include "df/unit_skill.h"
+#include "df/creature_raw.h"
+#include "df/global_objects.h"
+#include "df/historical_entity.h"
+#include "df/historical_figure.h"
+#include "df/incident.h"
+#include "df/inorganic_raw.h"
+#include "df/language_name.h"
 #include "df/material.h"
 #include "df/matter_state.h"
-#include "df/inorganic_raw.h"
-#include "df/creature_raw.h"
-#include "df/plant_raw.h"
 #include "df/nemesis_record.h"
-#include "df/historical_figure.h"
-#include "df/historical_entity.h"
-#include "df/squad.h"
+#include "df/plant_raw.h"
+#include "df/plotinfost.h"
+#include "df/profession.h"
 #include "df/squad_position.h"
-#include "df/incident.h"
+#include "df/squad.h"
+#include "df/unit_misc_trait.h"
+#include "df/unit_skill.h"
+#include "df/unit_soul.h"
+#include "df/unit.h"
+#include "df/world_data.h"
+#include "df/world.h"
 
 #include "BasicApi.pb.h"
 
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
-#include <sstream>
-
+#include <fstream>
+#include <iostream>
+#include <istream>
 #include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -336,22 +337,22 @@ void DFHack::describeUnit(BasicUnitInfo *info, df::unit *unit,
         }
     }
 
-    if (unit->curse.add_tags1.whole ||
-        unit->curse.add_tags2.whole ||
-        unit->curse.rem_tags1.whole ||
-        unit->curse.rem_tags2.whole ||
-        unit->curse.name_visible)
+    if (unit->uwss_add_caste_flag.whole ||
+        unit->uwss_remove_caste_flag.whole ||
+        unit->uwss_add_property.whole ||
+        unit->uwss_remove_property.whole ||
+        unit->uwss_use_display_name)
     {
         auto curse = info->mutable_curse();
 
-        curse->set_add_tags1(unit->curse.add_tags1.whole);
-        curse->set_rem_tags1(unit->curse.rem_tags1.whole);
-        curse->set_add_tags2(unit->curse.add_tags2.whole);
-        curse->set_rem_tags2(unit->curse.rem_tags2.whole);
+        curse->set_add_tags1(unit->uwss_add_caste_flag.whole);
+        curse->set_rem_tags1(unit->uwss_add_property.whole);
+        curse->set_add_tags2(unit->uwss_remove_caste_flag.whole);
+        curse->set_rem_tags2(unit->uwss_remove_property.whole);
 
-        if (unit->curse.name_visible)
-            describeNameTriple(curse->mutable_name(), unit->curse.name,
-                               unit->curse.name_plural, unit->curse.name_adjective);
+        if (unit->uwss_use_display_name)
+            describeNameTriple(curse->mutable_name(), unit->uwss_display_name_sing,
+                               unit->uwss_display_name_plur, unit->uwss_display_name_adj);
     }
 
     for (size_t i = 0; i < unit->burrows.size(); i++)
@@ -696,16 +697,16 @@ command_result CoreService::BindMethod(color_ostream &stream,
 
     if (!fn)
     {
-        stream.printerr("RPC method not found: %s::%s\n",
-                        in->plugin().c_str(), in->method().c_str());
+        stream.printerr("RPC method not found: {}::{}\n",
+                        in->plugin(), in->method());
         return CR_FAILURE;
     }
 
     if (fn->p_in_template->GetTypeName() != in->input_msg() ||
         fn->p_out_template->GetTypeName() != in->output_msg())
     {
-        stream.printerr("Requested wrong signature for RPC method: %s::%s\n",
-                        in->plugin().c_str(), in->method().c_str());
+        stream.printerr("Requested wrong signature for RPC method: {}::{}\n",
+                        in->plugin(), in->method());
         return CR_FAILURE;
     }
 

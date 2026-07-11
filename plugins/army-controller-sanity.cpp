@@ -54,12 +54,12 @@ namespace {
             for (auto ac : ent->army_controllers)
             {
                 if (ac_set.count(ac) == 0) {
-                    WARN(log).print("acValidationError: Bad controller %p found in entity id %d\n", ac, ent->id);
+                    WARN(log).print("acValidationError: Bad controller {} found in entity id {}\n", static_cast<void*>(ac), ent->id);
                     ok = false;
                 }
                 if (ac_set.count(ac) != 0 && ac->entity_id != ent->id)
                 {
-                    WARN(log).print("acValidationError: Army controller %d has entity id %d but is linked from entity with id %d\n", ac->id, ac->entity_id, ent->id);
+                    WARN(log).print("acValidationError: Army controller {} has entity id {} but is linked from entity with id {}\n", ac->id, ac->entity_id, ent->id);
                 }
             }
         }
@@ -68,17 +68,17 @@ namespace {
         {
             auto ac = ar->controller;
             if (ac && ac_set.count(ac) == 0) {
-                WARN(log).print("acValidationError: Bad controller %p found in army id %d\n", ac, ar->id);
+                WARN(log).print("acValidationError: Bad controller {} found in army id {}\n", static_cast<void*>(ac), ar->id);
                 ok = false;
             }
             else if (ac && ac->id != ar->controller_id)
             {
-                WARN(log).print("acValidationError: controller %p id mismatch (%d != %d) in army %d\n", ac, ar->controller_id, ac->id, ar->id);
+                WARN(log).print("acValidationError: controller {} id mismatch ({} != {}) in army {}\n", static_cast<void*>(ac), ar->controller_id, ac->id, ar->id);
                 ok = false;
             }
             else if (!ac && ar->controller_id != -1)
             {
-                WARN(log).print("acValidationError: army %d has nonzero controller %d but controller pointer is null\n", ar->id, ar->controller_id);
+                WARN(log).print("acValidationError: army {} has nonzero controller {} but controller pointer is null\n", ar->id, ar->controller_id);
                 ok = false;
             }
         }
@@ -87,17 +87,17 @@ namespace {
         {
             auto ac = un->enemy.army_controller;
             if (ac && ac_set.count(ac) == 0) {
-                WARN(log).print("acValidationError: Bad controller %p found in unit id %d\n", ac, un->id);
+                WARN(log).print("acValidationError: Bad controller {} found in unit id {}\n", static_cast<void*>(ac), un->id);
                 ok = false;
             }
             else if (ac && ac->id != un->enemy.army_controller_id)
             {
-                WARN(log).print("acValidationError: controller %p id mismatch (%d != %d) in unit %d\n", ac, un->enemy.army_controller_id, ac->id, un->id);
+                WARN(log).print("acValidationError: controller {} id mismatch ({} != {}) in unit {}\n", static_cast<void*>(ac), un->enemy.army_controller_id, ac->id, un->id);
                 ok = false;
             }
             else if (!ac && un->enemy.army_controller_id != -1)
             {
-                WARN(log).print("acValidationError: unit %d has has nonzero controller %d but controller pointer is null\n", un->id, un->enemy.army_controller_id);
+                WARN(log).print("acValidationError: unit {} has has nonzero controller {} but controller pointer is null\n", un->id, un->enemy.army_controller_id);
                 ok = false;
             }
         }
@@ -105,7 +105,7 @@ namespace {
         last_army_controller_next_id = *army_controller_next_id;
         last_ac_vec_size = world->army_controllers.all.size();
 
-        INFO(log).print("acValidation: controller count = %ld, next id = %d, season tick count = %d\n",
+        INFO(log).print("acValidation: controller count = {}, next id = {}, season tick count = {}\n",
             last_ac_vec_size, last_army_controller_next_id, *cur_year_tick);
 
         return ok;

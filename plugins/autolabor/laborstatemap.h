@@ -282,6 +282,12 @@ const dwarf_state dwarf_states[] = {
     dwarf_state::OTHER /* HeistItem */,
     dwarf_state::OTHER /* InterrogateSubject */,
     dwarf_state::OTHER /* AcceptHeistItem */,
+    dwarf_state::BUSY /* StoreSquadEquipmentItem */,
+    dwarf_state::BUSY /* MixDye */,
+    dwarf_state::BUSY /* DyeLeather */,
+    dwarf_state::BUSY /* ConstructBoltThrowerParts */,
+    dwarf_state::BUSY /* LoadBoltThrower */,
+    dwarf_state::BUSY /* FireBoltThrower */,
 };
 
 #define ARRAY_COUNT(array) (sizeof(array)/sizeof((array)[0]))

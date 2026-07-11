@@ -276,13 +276,13 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
             string raceString = parameters[a+1];
 
             if ( digAbilities.find(raceString) == digAbilities.end() ) {
-                out.print("Race %s does not have dig abilities assigned.\n", raceString.c_str());
+                out.print("Race {} does not have dig abilities assigned.\n", raceString);
                 return CR_WRONG_USAGE;
             }
             DigAbilities& abilities = digAbilities[raceString];
 
             df::coord bob = Gui::getCursorPos();
-            out.print("(%d,%d,%d), (%d,%d,%d): cost = %" PRId64 "\n", lastDebugEdgeCostPoint.x, lastDebugEdgeCostPoint.y, lastDebugEdgeCostPoint.z, bob.x, bob.y, bob.z, getEdgeCost(out, lastDebugEdgeCostPoint, bob, abilities));
+            out.print("({},{},{}), ({},{},{}): cost = {}\n", lastDebugEdgeCostPoint.x, lastDebugEdgeCostPoint.y, lastDebugEdgeCostPoint.z, bob.x, bob.y, bob.z, getEdgeCost(out, lastDebugEdgeCostPoint, bob, abilities));
             lastDebugEdgeCostPoint = bob;
             a++;
         } else if ( parameters[a] == "now" ) {
@@ -305,7 +305,7 @@ command_result diggingInvadersCommand(color_ostream& out, std::vector<std::strin
         }
     }
     activeDigging = enabled;
-    out.print("diggingInvaders: enabled = %d, activeDigging = %d, edgesPerTick = %d\n", enabled, activeDigging, edgesPerTick);
+    out.print("diggingInvaders: enabled = {}, activeDigging = {}, edgesPerTick = {}\n", enabled, activeDigging, edgesPerTick);
 
     return CR_OK;
 }
@@ -361,7 +361,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         if ( lastDigger && lastDigger->job.current_job && lastDigger->job.current_job->id == lastInvasionJob ) {
             return;
         }
-        //out.print("%s,%d: lastDigger = %d, last job = %d, last digger's job = %d\n", __FILE__, __LINE__, lastInvasionDigger, lastInvasionJob, !lastDigger ? -1 : (!lastDigger->job.current_job ? -1 : lastDigger->job.current_job->id));
+        //out.print("{},{}: lastDigger = {}, last job = {}, last digger's job = {}\n", __FILE__, __LINE__, lastInvasionDigger, lastInvasionJob, !lastDigger ? -1 : (!lastDigger->job.current_job ? -1 : lastDigger->job.current_job->id));
         lastInvasionDigger = lastInvasionJob = -1;
 
         clearDijkstra();
@@ -382,7 +382,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
             } else if ( unit->flags1.bits.active_invader ) {
                 df::creature_raw* raw = df::creature_raw::find(unit->race);
                 if ( raw == NULL ) {
-                    out.print("%s,%d: WTF? Couldn't find creature raw.\n", __FILE__, __LINE__);
+                    out.print("{},{}: WTF? Couldn't find creature raw.\n", __FILE__, __LINE__);
                     continue;
                 }
                 /*
@@ -464,7 +464,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         fringe.erase(fringe.begin());
         //out.print("line %d: fringe size = %d, localPtsFound = %d / %d, closedSetSize = %d, pt = %d,%d,%d\n", __LINE__, fringe.size(), localPtsFound, localPts.size(), closedSet.size(), pt.x,pt.y,pt.z);
         if ( closedSet.find(pt) != closedSet.end() ) {
-            out.print("%s, line %d: Double closure! Bad!\n", __FILE__, __LINE__);
+            out.print("{},{}: Double closure! Bad!\n", __FILE__, __LINE__);
             break;
         }
         closedSet.insert(pt);
@@ -511,7 +511,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         delete myEdges;
     }
     // clock_t time = clock() - t0;
-    //out.print("tickTime = %d, time = %d, totalEdgeTime = %d, total points = %d, total edges = %d, time per point = %.3f, time per edge = %.3f, clocks/sec = %d\n", (int32_t)tickTime, time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
+    //out.print("tickTime = {}, time = {}, totalEdgeTime = {}, total points = {}, total edges = {}, time per point = {:.3f}, time per edge = {:.3f}, clocks/sec = {}\n", (int32_t)tickTime, time, totalEdgeTime, closedSet.size(), edgeCount, (float)time / closedSet.size(), (float)time / edgeCount, CLOCKS_PER_SEC);
     fringe.clear();
 
     if ( !foundTarget )
@@ -590,7 +590,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
 
         //cancel it
         job->flags.bits.item_lost = 1;
-        out.print("%s,%d: cancelling job %d.\n", __FILE__,__LINE__, job->id);
+        out.print("{},{}: cancelling job {}.\n", __FILE__,__LINE__, job->id);
         //invaderJobs.remove(job->id);
     }
     invaderJobs.erase(lastInvasionJob);

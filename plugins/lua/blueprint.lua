@@ -1,6 +1,7 @@
 local _ENV = mkmodule('plugins.blueprint')
 
 local argparse = require('argparse')
+local logistics = require('plugins.logistics')
 local utils = require('utils')
 
 local valid_phase_list = {
@@ -219,6 +220,21 @@ function get_filename(opts, phase, ordinal)
         phase = 'meta'
     end
     return ('%s-%d-%s.csv'):format(fullname, ordinal, phase)
+end
+
+function get_logistics_settings(stockpile_number)
+    local automelt, autotrade, autodump, autotrain, autoforbid, autoclaim = false, false, false, false, false, false
+    local configs = logistics.logistics_getStockpileConfigs(stockpile_number)
+    if configs and #configs == 1 then
+        local config = configs[1]
+        automelt = config.melt ~= 0
+        autotrade = config.trade ~= 0
+        autodump = config.dump ~= 0
+        autotrain = config.train ~= 0
+        autoforbid = config.forbid == 1
+        autoclaim = config.forbid == 2
+    end
+    return automelt, autotrade, autodump, autotrain, autoforbid, autoclaim
 end
 
 -- compatibility with old exported API.

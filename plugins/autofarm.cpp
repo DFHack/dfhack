@@ -22,6 +22,7 @@
 #include "df/unit.h"
 #include "df/world.h"
 
+#include <set>
 #include <queue>
 
 using namespace DFHack;
@@ -199,9 +200,9 @@ public:
         if (old_plant_id != new_plant_id)
         {
             farm->plant_id[season] = new_plant_id;
-            INFO(cycle, out).print("autofarm: changing farm #%d from %s to %s\n", farm->id,
-                get_plant_name(old_plant_id).c_str(),
-                get_plant_name(new_plant_id).c_str());
+            INFO(cycle, out).print("autofarm: changing farm #{} from {} to {}\n", farm->id,
+                get_plant_name(old_plant_id),
+                get_plant_name(new_plant_id));
         }
     }
 
@@ -389,11 +390,11 @@ public:
                 if (plant != std::end(allPlants))
                 {
                     setThreshold((*plant)->index, val);
-                    INFO(control, out).print("threshold of %d for plant %s in saved configuration loaded\n", val, id.c_str());
+                    INFO(control, out).print("threshold of {} for plant {} in saved configuration loaded\n", val, id);
                 }
                 else
                 {
-                    WARN(control, out).print("threshold for unknown plant %s in saved configuration ignored\n", id.c_str());
+                    WARN(control, out).print("threshold for unknown plant {} in saved configuration ignored\n", id);
                 }
             }
         }
@@ -453,7 +454,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream& out)
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable)
 {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -512,7 +513,7 @@ static command_result setThresholds(color_ostream& out, std::vector<std::string>
 static command_result autofarm(color_ostream& out, std::vector<std::string>& parameters)
 {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 

@@ -134,7 +134,7 @@ jobs:
           +quit
         tar xjf dfhack-symbols-linux64-build.tar.bz2 -C DF_steam
         xml/symbols_gen_linux.sh ${{ inputs.version == 'auto' && '50.0' || inputs.version }} STEAM DF_steam
-        if [ "${{ inputs.version }}" = "auto" ]; then
+        if [ "${{ inputs.version }}" == "auto" ]; then
           while pgrep dwarfort; do
             echo "waiting for DF to exit"
             sleep 0.5

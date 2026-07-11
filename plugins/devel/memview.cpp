@@ -75,7 +75,7 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
     for(size_t i=0;i<len;i+=page_size)
     {
         //con.gotoxy(1,i/page_size+1);
-        con.print("0x%08zX ",i+start);
+        con.print("0x{:0>8X} ",i+start);
         for(size_t j=0;(j<page_size) && (i+j<len);j++)
             {
                 if(j%sizeof(void*)==0)
@@ -87,15 +87,15 @@ void outputHex(uint8_t *buf,uint8_t *lbuf,size_t len,size_t start,color_ostream 
                     //TODO make something better?
                 }
                 if(lbuf[j+i]!=buf[j+i])
-                    con.print("*%02X",buf[j+i]); //if modfied show a star
+                    con.print("*{:0>2X}",static_cast<unsigned>(buf[j+i])); //if modfied show a star
                 else
-                    con.print(" %02X",buf[j+i]);
+                    con.print(" {:0>2X}",static_cast<unsigned>(buf[j+i]));
             }
         con.reset_color();
         con.print(" | ");
         for(size_t j=0;(j<page_size) && (i+j<len);j++)
             if((buf[j+i]>31)&&(buf[j+i]<128)) //only printable ascii
-                con.print("%c",buf[j+i]);
+                con.print("{}",static_cast<char>(buf[j+i]));
             else
                 con.print(".");
         con.print("\n");
@@ -187,7 +187,7 @@ command_result memview (color_ostream &out, vector <string> & parameters)
                 isValid=true;
         if(!isValid)
         {
-            out.printerr("Invalid address: %p\n",memdata.addr);
+            out.printerr("Invalid address: {}\n",memdata.addr);
             mymutex->unlock();
             return CR_OK;
         }

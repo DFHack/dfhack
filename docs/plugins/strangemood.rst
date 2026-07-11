@@ -29,6 +29,10 @@ Options
     Make the strange mood strike the selected unit instead of picking one
     randomly. Unit eligibility is still enforced (unless ``--force`` is also
     specified).
+``--id``
+    Make the strange mood strike the unit with the given id instead of picking one
+    randomly. Unit eligibility is still enforced (unless ``--force`` is also
+    specified).
 ``--type <type>``
     Force the mood to be of a particular type instead of choosing randomly based
     on happiness. Valid values are "fey", "secretive", "possessed", "fell", and

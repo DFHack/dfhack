@@ -64,7 +64,7 @@ static Tasks tasks;
 // planned_buildings, then it has either been built or desroyed. therefore there is
 // no chance of duplicate tasks getting added to the tasks queues.
 void PlannedBuilding::remove(color_ostream &out) {
-    DEBUG(control,out).print("removing persistent data for building %d\n", id);
+    DEBUG(control,out).print("removing persistent data for building {}\n", id);
     World::DeletePersistentData(bld_config);
     planned_buildings.erase(id);
 }
@@ -97,8 +97,8 @@ static const vector<const df::job_item *> & get_job_items(color_ostream &out, Bu
                 std::make_tuple(std::get<0>(key), std::get<1>(key), std::get<2>(key), index+1),
                 1, [&](lua_State *L) {
                     df::job_item *jitem = Lua::GetDFObject<df::job_item>(L, -1);
-                    DEBUG(control,out).print("retrieving job_item for (%d, %d, %d) index=%d: 0x%p\n",
-                            std::get<0>(key), std::get<1>(key), std::get<2>(key), index, jitem);
+                    DEBUG(control,out).print("retrieving job_item for {} index={}: {}\n",
+                            key, index, static_cast<void*>(jitem));
                     if (!jitem)
                         failed = true;
                     else
@@ -125,35 +125,35 @@ static void cache_matched(int16_t type, int32_t index) {
     MaterialInfo mi;
     mi.decode(type, index);
     if (mi.matches(stone_cat)) {
-        DEBUG(control).print("cached stone material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        DEBUG(control).print("cached stone material: {} ({}, {})\n", mi.toString(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "stone"));
     } else if (mi.matches(wood_cat)) {
-        DEBUG(control).print("cached wood material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        DEBUG(control).print("cached wood material: {} ({}, {})\n", mi.toString(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "wood"));
     } else if (mi.matches(metal_cat)) {
-        DEBUG(control).print("cached metal material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        DEBUG(control).print("cached metal material: {} ({}, {})\n", mi.toString(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "metal"));
     } else if (mi.matches(glass_cat)) {
-        DEBUG(control).print("cached glass material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        DEBUG(control).print("cached glass material: {} ({}, {})\n", mi.toString(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "glass"));
     } else if (mi.matches(gem_cat)) {
-        DEBUG(control).print("cached gem material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        DEBUG(control).print("cached gem material: {} ({}, {})\n", mi.toString(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "gem"));
     } else if (mi.matches(clay_cat)) {
-        DEBUG(control).print("cached clay material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        DEBUG(control).print("cached clay material: {} ({}, {})\n", mi.toString(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "clay"));
     } else if (mi.matches(cloth_cat)) {
-        DEBUG(control).print("cached cloth material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        DEBUG(control).print("cached cloth material: {} ({}, {})\n", mi.toString(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "cloth"));
     } else if (mi.matches(silk_cat)) {
-        DEBUG(control).print("cached silk material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        DEBUG(control).print("cached silk material: {} ({}, {})\n", mi.toString(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "silk"));
     } else if (mi.matches(yarn_cat)) {
-        DEBUG(control).print("cached yarn material: %s (%d, %d)\n", mi.toString().c_str(), type, index);
+        DEBUG(control).print("cached yarn material: {} ({}, {})\n", mi.toString(), type, index);
         mat_cache.emplace(mi.toString(), std::make_pair(mi, "yarn"));
     }
     else
-        TRACE(control).print("not matched: %s\n", mi.toString().c_str());
+        TRACE(control).print("not matched: {}\n", mi.toString());
 }
 
 static void load_organic_material_cache(df::organic_mat_category cat) {
@@ -201,7 +201,7 @@ void buildingplan_cycle(color_ostream &out, Tasks &tasks,
 static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb, bool unsuspend_on_finalize);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -214,12 +214,12 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     is_enabled = enable;
-    DEBUG(control, out).print("now %s\n", is_enabled ? "enabled" : "disabled");
+    DEBUG(control, out).print("now {}\n", is_enabled ? "enabled" : "disabled");
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
 
     for (auto &entry : job_item_cache ) {
         for (auto &jitem : entry.second) {
@@ -315,13 +315,13 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
         PlannedBuilding pb(out, building_configs[idx]);
         df::building *bld = df::building::find(pb.id);
         if (!bld) {
-            DEBUG(control,out).print("building %d no longer exists; skipping\n", pb.id);
+            DEBUG(control,out).print("building {} no longer exists; skipping\n", pb.id);
             pb.remove(out);
             continue;
         }
         BuildingTypeKey key(bld->getType(), get_subtype(bld), bld->getCustomType());
         if (pb.item_filters.size() != get_item_filters(out, key).getItemFilters().size()) {
-            WARN(control).print("loaded state for building %d doesn't match world\n", pb.id);
+            WARN(control).print("loaded state for building {} doesn't match world\n", pb.id);
             pb.remove(out);
             continue;
         }
@@ -354,7 +354,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot configure %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot configure {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -428,8 +428,8 @@ vector<df::job_item_vector_id> getVectorIds(color_ostream &out, const df::job_it
     // if the filter already has the vector_id set to something specific, use it
     if (job_item->vector_id > df::job_item_vector_id::IN_PLAY)
     {
-        DEBUG(control,out).print("using vector_id from job_item: %s\n",
-              ENUM_KEY_STR(job_item_vector_id, job_item->vector_id).c_str());
+        DEBUG(control,out).print("using vector_id from job_item: {}\n",
+              ENUM_KEY_STR(job_item_vector_id, job_item->vector_id));
         ret.push_back(job_item->vector_id);
         return ret;
     }
@@ -460,7 +460,7 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb, bo
         return false;
 
     if (bld->jobs.size() != 1) {
-        DEBUG(control,out).print("unexpected number of jobs: want 1, got %zu\n", bld->jobs.size());
+        DEBUG(control,out).print("unexpected number of jobs: want 1, got {}\n", bld->jobs.size());
         return false;
     }
 
@@ -489,10 +489,10 @@ static bool registerPlannedBuilding(color_ostream &out, PlannedBuilding & pb, bo
         for (auto vector_id : pb.vector_ids[job_item_idx]) {
             for (int item_num = 0; item_num < job_item->quantity; ++item_num) {
                 tasks[vector_id][bucket].emplace_back(id, rev_jitem_index);
-                DEBUG(control,out).print("added task: %s/%s/%d,%d; "
-                      "%zu vector(s), %zu filter bucket(s), %zu task(s) in bucket\n",
-                      ENUM_KEY_STR(job_item_vector_id, vector_id).c_str(),
-                      bucket.c_str(), id, rev_jitem_index, tasks.size(),
+                DEBUG(control,out).print("added task: {}/{}/{}, {}; "
+                      "{} vector(s), {} filter bucket(s), {} task(s) in bucket\n",
+                      ENUM_KEY_STR(job_item_vector_id, vector_id),
+                      bucket, id, rev_jitem_index, tasks.size(),
                       tasks[vector_id].size(), tasks[vector_id][bucket].size());
             }
         }
@@ -520,16 +520,16 @@ static string get_desc_string(color_ostream &out, df::job_item *jitem,
 
 static void printStatus(color_ostream &out) {
     DEBUG(control,out).print("entering buildingplan_printStatus\n");
-    out.print("buildingplan is %s\n\n", is_enabled ? "enabled" : "disabled");
+    out.print("buildingplan is {}\n\n", is_enabled ? "enabled" : "disabled");
     out.print("Current settings:\n");
-    out.print("  use blocks:   %s\n", config.get_bool(CONFIG_BLOCKS) ? "yes" : "no");
-    out.print("  use boulders: %s\n", config.get_bool(CONFIG_BOULDERS) ? "yes" : "no");
-    out.print("  use logs:     %s\n", config.get_bool(CONFIG_LOGS) ? "yes" : "no");
-    out.print("  use bars:     %s\n", config.get_bool(CONFIG_BARS) ? "yes" : "no");
-    out.print("  plan constructions on tiles with existing constructed floors/ramps when using box select: %s\n",
+    out.print("  use blocks:   {}\n", config.get_bool(CONFIG_BLOCKS) ? "yes" : "no");
+    out.print("  use boulders: {}\n", config.get_bool(CONFIG_BOULDERS) ? "yes" : "no");
+    out.print("  use logs:     {}\n", config.get_bool(CONFIG_LOGS) ? "yes" : "no");
+    out.print("  use bars:     {}\n", config.get_bool(CONFIG_BARS) ? "yes" : "no");
+    out.print("  plan constructions on tiles with existing constructed floors/ramps when using box select: {}\n",
         config.get_bool(CONFIG_RECONSTRUCT) ? "yes" : "no");
     auto burrow = df::burrow::find(config.get_int(CONFIG_BURROW));
-    out.print("  ignore building materials in burrow: %s\n", burrow ? burrow->name.c_str() : "none");
+    out.print("  ignore building materials in burrow: {}\n", burrow ? burrow->name.c_str() : "none");
     out.print("\n");
 
     size_t bld_count = 0;
@@ -560,10 +560,10 @@ static void printStatus(color_ostream &out) {
     }
 
     if (bld_count) {
-        out.print("Waiting for %d item(s) to be produced for %zd building(s):\n",
+        out.print("Waiting for {} item(s) to be produced for {} building(s):\n",
                 total, bld_count);
         for (auto &count : counts)
-            out.print("  %3d %s%s\n", count.second, count.first.c_str(), count.second == 1 ? "" : "s");
+            out.print("  {:3} {}{}\n", count.second, count.first, count.second == 1 ? "" : "s");
     } else {
         out.print("Currently no planned buildings\n");
     }
@@ -571,7 +571,7 @@ static void printStatus(color_ostream &out) {
 }
 
 static bool setSetting(color_ostream &out, string name, bool value) {
-    DEBUG(control,out).print("entering setSetting (%s -> %s)\n", name.c_str(), value ? "true" : "false");
+    DEBUG(control,out).print("entering setSetting ({} -> {})\n", name, value ? "true" : "false");
     if (name == "blocks")
         config.set_bool(CONFIG_BLOCKS, value);
     else if (name == "boulders")
@@ -583,7 +583,7 @@ static bool setSetting(color_ostream &out, string name, bool value) {
     else if (name == "reconstruct")
         config.set_bool(CONFIG_RECONSTRUCT, value);
     else {
-        out.printerr("unrecognized setting: '%s'\n", name.c_str());
+        out.printerr("unrecognized setting: '{}'\n", name);
         return false;
     }
 
@@ -654,8 +654,8 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
         vector<int> *item_ids = NULL, map<MaterialInfo, int32_t> *counts = NULL)
 {
     DEBUG(control,out).print(
-            "entering scanAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
-            type, subtype, custom, index);
+            "entering scanAvailableItems building_type={} subtype={} custom={} index={}\n",
+            ENUM_AS_STR(type), subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     HeatSafety heat = heat_override ? *heat_override : get_heat_safety_filter(key);
     auto &job_items = get_job_items(out, key);
@@ -700,7 +700,7 @@ static int scanAvailableItems(color_ostream &out, df::building_type type, int16_
         }
     }
 
-    DEBUG(control,out).print("found matches %d\n", count);
+    DEBUG(control,out).print("found matches {}\n", count);
     return count;
 }
 
@@ -713,8 +713,8 @@ static int getAvailableItems(lua_State *L) {
     int32_t custom = luaL_checkint(L, 3);
     int index = luaL_checkint(L, 4);
     DEBUG(control,*out).print(
-            "entering getAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
-            type, subtype, custom, index);
+            "entering getAvailableItems building_type={} subtype={} custom={} index={}\n",
+            ENUM_AS_STR(type), subtype, custom, index);
     vector<int> item_ids;
     scanAvailableItems(*out, type, subtype, custom, index, true, false, NULL, &item_ids);
     Lua::PushVector(L, item_ids);
@@ -731,8 +731,8 @@ static int getAvailableItemsByHeat(lua_State *L) {
     int index = luaL_checkint(L, 4);
     HeatSafety heat = (HeatSafety)luaL_checkint(L, 5);
     DEBUG(control,*out).print(
-            "entering getAvailableItemsByHeat building_type=%d subtype=%d custom=%d index=%d\n",
-            type, subtype, custom, index);
+            "entering getAvailableItemsByHeat building_type={} subtype={} custom={} index={} heat={}\n",
+            ENUM_AS_STR(type), subtype, custom, index, static_cast<int>(heat));
     vector<int> item_ids;
     scanAvailableItems(*out, type, subtype, custom, index, true, true, &heat, &item_ids);
     Lua::PushVector(L, item_ids);
@@ -756,8 +756,8 @@ static int getGlobalSettings(lua_State *L) {
 
 static int countAvailableItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int index) {
     DEBUG(control,out).print(
-            "entering countAvailableItems building_type=%d subtype=%d custom=%d index=%d\n",
-            type, subtype, custom, index);
+            "entering countAvailableItems building_type={} subtype={} custom={} index={}\n",
+            ENUM_AS_STR(type), subtype, custom, index);
     int count = scanAvailableItems(out, type, subtype, custom, index, false, false);
     if (count)
         return count;
@@ -816,8 +816,8 @@ static int setMaterialMaskFilter(lua_State *L) {
     int32_t custom = luaL_checkint(L, 3);
     int index = luaL_checkint(L, 4);
     DEBUG(control,*out).print(
-            "entering setMaterialMaskFilter building_type=%d subtype=%d custom=%d index=%d\n",
-            type, subtype, custom, index);
+            "entering setMaterialMaskFilter building_type={} subtype={} custom={} index={}\n",
+            ENUM_AS_STR(type), subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(*out, key).getItemFilters();
     if (index < 0 || filters.size() <= (size_t)index)
@@ -846,8 +846,8 @@ static int setMaterialMaskFilter(lua_State *L) {
             mask |= yarn_cat.whole;
     }
     DEBUG(control,*out).print(
-            "setting material mask filter for building_type=%d subtype=%d custom=%d index=%d to %x\n",
-            type, subtype, custom, index, mask);
+            "setting material mask filter for building_type={} subtype={} custom={} index={} to {:x}\n",
+            ENUM_AS_STR(type), subtype, custom, index, mask);
     ItemFilter filter = filters[index];
     filter.setMaterialMask(mask);
     set<MaterialInfo> new_mats;
@@ -875,8 +875,8 @@ static int getMaterialMaskFilter(lua_State *L) {
     int32_t custom = luaL_checkint(L, 3);
     int index = luaL_checkint(L, 4);
     DEBUG(control,*out).print(
-            "entering getMaterialFilter building_type=%d subtype=%d custom=%d index=%d\n",
-            type, subtype, custom, index);
+            "entering getMaterialFilter building_type={} subtype={} custom={} index={}\n",
+            ENUM_AS_STR(type), subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(*out, key);
     if (index < 0 || filters.getItemFilters().size() <= (size_t)index)
@@ -906,8 +906,8 @@ static int setMaterialFilter(lua_State *L) {
     int32_t custom = luaL_checkint(L, 3);
     int index = luaL_checkint(L, 4);
     DEBUG(control,*out).print(
-            "entering setMaterialFilter building_type=%d subtype=%d custom=%d index=%d\n",
-            type, subtype, custom, index);
+            "entering setMaterialFilter building_type={} subtype={} custom={} index={}\n",
+            ENUM_AS_STR(type), subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(*out, key).getItemFilters();
     if (index < 0 || filters.size() <= (size_t)index)
@@ -920,8 +920,8 @@ static int setMaterialFilter(lua_State *L) {
             mats.emplace(mat_cache.at(mat).first);
     }
     DEBUG(control,*out).print(
-            "setting material filter for building_type=%d subtype=%d custom=%d index=%d to %zd materials\n",
-            type, subtype, custom, index, mats.size());
+            "setting material filter for building_type={} subtype={} custom={} index={} to {} materials\n",
+            ENUM_AS_STR(type), subtype, custom, index, mats.size());
     ItemFilter filter = filters[index];
     filter.setMaterials(mats);
     // ensure relevant masks are explicitly enabled
@@ -963,8 +963,8 @@ static int getMaterialFilter(lua_State *L) {
     int32_t custom = luaL_checkint(L, 3);
     int index = luaL_checkint(L, 4);
     DEBUG(control,*out).print(
-            "entering getMaterialFilter building_type=%d subtype=%d custom=%d index=%d\n",
-            type, subtype, custom, index);
+            "entering getMaterialFilter building_type={} subtype={} custom={} index={}\n",
+            ENUM_AS_STR(type), subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(*out, key).getItemFilters();
     if (index < 0 || filters.size() <= (size_t)index)
@@ -1004,8 +1004,8 @@ static int getMaterialFilter(lua_State *L) {
 
 static void setChooseItems(color_ostream &out, df::building_type type, int16_t subtype, int32_t custom, int choose) {
     DEBUG(control,out).print(
-            "entering setChooseItems building_type=%d subtype=%d custom=%d choose=%d\n",
-            type, subtype, custom, choose);
+            "entering setChooseItems building_type={} subtype={} custom={} choose={}\n",
+            ENUM_AS_STR(type), subtype, custom, choose);
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(out, key);
     filters.setChooseItems(choose);
@@ -1020,8 +1020,8 @@ static int getChooseItems(lua_State *L) {
     int16_t subtype = luaL_checkint(L, 2);
     int32_t custom = luaL_checkint(L, 3);
     DEBUG(control,*out).print(
-            "entering getChooseItems building_type=%d subtype=%d custom=%d\n",
-            type, subtype, custom);
+            "entering getChooseItems building_type={} subtype={} custom={}\n",
+            ENUM_AS_STR(type), subtype, custom);
     BuildingTypeKey key(type, subtype, custom);
     Lua::Push(L, get_item_filters(*out, key).getChooseItems());
     return 1;
@@ -1045,8 +1045,8 @@ static int getHeatSafetyFilter(lua_State *L) {
     int16_t subtype = luaL_checkint(L, 2);
     int32_t custom = luaL_checkint(L, 3);
     DEBUG(control,*out).print(
-            "entering getHeatSafetyFilter building_type=%d subtype=%d custom=%d\n",
-            type, subtype, custom);
+            "entering getHeatSafetyFilter building_type={} subtype={} custom={}\n",
+            ENUM_AS_STR(type), subtype, custom);
     BuildingTypeKey key(type, subtype, custom);
     HeatSafety heat = get_heat_safety_filter(key);
     Lua::Push(L, heat);
@@ -1069,8 +1069,8 @@ static int getSpecials(lua_State *L) {
     int16_t subtype = luaL_checkint(L, 2);
     int32_t custom = luaL_checkint(L, 3);
     DEBUG(control,*out).print(
-            "entering getSpecials building_type=%d subtype=%d custom=%d\n",
-            type, subtype, custom);
+            "entering getSpecials building_type={} subtype={} custom={}\n",
+            ENUM_AS_STR(type), subtype, custom);
     BuildingTypeKey key(type, subtype, custom);
     Lua::Push(L, get_item_filters(*out, key).getSpecials());
     return 1;
@@ -1100,8 +1100,8 @@ static int getQualityFilter(lua_State *L) {
     int32_t custom = luaL_checkint(L, 3);
     int index = luaL_checkint(L, 4);
     DEBUG(control,*out).print(
-            "entering getQualityFilter building_type=%d subtype=%d custom=%d index=%d\n",
-            type, subtype, custom, index);
+            "entering getQualityFilter building_type={} subtype={} custom={} index={}\n",
+            ENUM_AS_STR(type), subtype, custom, index);
     BuildingTypeKey key(type, subtype, custom);
     auto &filters = get_item_filters(*out, key).getItemFilters();
     if (index < 0 || filters.size() <= (size_t)index)

@@ -46,8 +46,8 @@ tuned our build and test workflows to minimize spurious cache misses and keep
 the fast path fast.
 
 Caches are namespaced by key prefixes, and we have one key prefix per build
-context. For example, release builds on gcc-10 are kept in one cache namespace,
-whereas test builds on gcc-10 are kept separate. MSVC release and test builds
+context. For example, release builds on gcc-11 are kept in one cache namespace,
+whereas test builds on gcc-11 are kept separate. MSVC release and test builds
 similarly have their own namespaces. Each cache has a maximum size that is
 enforced by the business logic that writes the cache data.
 

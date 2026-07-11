@@ -100,8 +100,8 @@ static command_result job_material_in_job(color_ostream &out, MaterialInfo &new_
 
     if (!new_mat.isValid() || new_mat.type != 0)
     {
-        out.printerr("New job material isn't inorganic: %s\n",
-                     new_mat.toString().c_str());
+        out.printerr("New job material isn't inorganic: {}\n",
+                     new_mat.toString());
         return CR_FAILURE;
     }
 
@@ -109,22 +109,22 @@ static command_result job_material_in_job(color_ostream &out, MaterialInfo &new_
 
     if (!cur_mat.isValid() || cur_mat.type != 0)
     {
-        out.printerr("Current job material isn't inorganic: %s\n",
-                     cur_mat.toString().c_str());
+        out.printerr("Current job material isn't inorganic: {}\n",
+                     cur_mat.toString());
         return CR_FAILURE;
     }
 
     df::craft_material_class old_class = cur_mat.getCraftClass();
     if (old_class == craft_material_class::None)
     {
-        out.printerr("Unexpected current material type: %s\n",
-                     cur_mat.toString().c_str());
+        out.printerr("Unexpected current material type: {}\n",
+                     cur_mat.toString());
         return CR_FAILURE;
     }
     if (new_mat.getCraftClass() != old_class)
     {
-        out.printerr("New material %s does not satisfy requirement: %s\n",
-                     new_mat.toString().c_str(), ENUM_KEY_STR(craft_material_class, old_class).c_str());
+        out.printerr("New material {} does not satisfy requirement: {}\n",
+                     new_mat.toString(), ENUM_KEY_STR(craft_material_class, old_class));
         return CR_FAILURE;
     }
 
@@ -135,15 +135,15 @@ static command_result job_material_in_job(color_ostream &out, MaterialInfo &new_
 
         if (item_mat != cur_mat)
         {
-            out.printerr("Job item %zu has different material: %s\n",
-                         i, item_mat.toString().c_str());
+            out.printerr("Job item {} has different material: {}\n",
+                         i, item_mat.toString());
             return CR_FAILURE;
         }
 
         if (!new_mat.matches(*item))
         {
-            out.printerr("Job item %zu requirements not satisfied by %s.\n",
-                         i, new_mat.toString().c_str());
+            out.printerr("Job item {} requirements not satisfied by {}.\n",
+                         i, new_mat.toString());
             return CR_FAILURE;
         }
     }
@@ -212,7 +212,7 @@ static command_result job_material_in_build(color_ostream &out, MaterialInfo &ne
         }
     }
 
-    out.printerr("Could not find material in list: %s\n", new_mat.toString().c_str());
+    out.printerr("Could not find material in list: {}\n", new_mat.toString());
     return CR_FAILURE;
 }
 
@@ -222,7 +222,7 @@ static command_result job_material(color_ostream &out, vector <string> & paramet
     if (parameters.size() == 1)
     {
         if (!new_mat.find(parameters[0])) {
-            out.printerr("Could not find material: %s\n", parameters[0].c_str());
+            out.printerr("Could not find material: {}\n", parameters[0]);
             return CR_WRONG_USAGE;
         }
     }
@@ -253,7 +253,7 @@ static command_result job_duplicate(color_ostream &out, vector <string> & parame
          job->job_type != job_type::CollectSand &&
          job->job_type != job_type::CollectClay))
     {
-        out.printerr("Cannot duplicate job %s\n", ENUM_KEY_STR(job_type,job->job_type).c_str());
+        out.printerr("Cannot duplicate job {}\n", ENUM_KEY_STR(job_type,job->job_type));
         return CR_FAILURE;
     }
 

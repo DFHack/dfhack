@@ -197,13 +197,13 @@ Overlay
 This tool also provides three overlays that are managed by the `overlay`
 framework.
 
-asciicarve
-~~~~~~~~~~
+asciidesignated
+~~~~~~~~~~~~~~~
 
-The ``dig.asciicarve`` overlay makes carving designations visible in ASCII
-mode. It highlights tiles that are designated for smoothing, engraving, track
-carving, or fortification carving. The designations blink (slowly) so you can
-still see what is underneath them.
+The ``dig.asciidesignated`` overlay makes designations visible in ASCII mode.
+It highlights tiles that are designated for digging, smoothing, engraving,
+track carving, or fortification carving. The designations blink (slowly) so you
+can still see what is underneath them.
 
 Due to the limitations of the ASCII mode screen buffer, the designation
 highlights may show through other interface elements that overlap the

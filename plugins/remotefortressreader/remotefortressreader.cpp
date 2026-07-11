@@ -213,7 +213,7 @@ command_result loadArtImageChunk(color_ostream &out, std::vector<std::string> & 
     {
         int index = atoi(parameters[0].c_str());
         auto chunk = GetArtImageChunk(&(world->art_image_chunks.all), index);
-        out.print("Loaded chunk id: %d\n", chunk->id);
+        out.print("Loaded chunk id: {}\n", chunk->id);
     }
     return CR_OK;
 }
@@ -627,7 +627,7 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
     }
     clock_t end = clock();
     double elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
-    stream.print("Checking all hashes took %f seconds.", elapsed_secs);
+    stream.print("Checking all hashes took {} seconds.", elapsed_secs);
     return CR_OK;
 }
 
@@ -1679,8 +1679,8 @@ static command_result GetUnitListInside(color_ostream &stream, const BlockReques
                 continue;
         }
 
-        using df::global::cur_year;
-        using df::global::cur_year_tick;
+        //using df::global::cur_year;
+        //using df::global::cur_year_tick;
 
         send_unit->set_age(Units::getAge(unit, false));
 
@@ -2262,8 +2262,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     out->set_map_y(pos_y);
     out->set_world_width(17);
     out->set_world_height(17);
-    char name[256];
-    sprintf(name, "Region %d, %d", pos_x, pos_y);
+    std::string name = fmt::format("Region {}, {}", pos_x, pos_y);
     out->set_name_english(name);
     out->set_name(name);
     auto poles = worldData->flip_latitude;
@@ -2366,8 +2365,7 @@ static void CopyLocalMap(df::world_data * worldData, df::world_region_details* w
     int pos_y = worldRegionDetails->pos.y;
     out->set_map_x(pos_x);
     out->set_map_y(pos_y);
-    char name[256];
-    sprintf(name, "Region %d, %d", pos_x, pos_y);
+    std::string name = fmt::format("Region {}, {}", pos_x, pos_y);
     out->set_name_english(name);
     out->set_name(name);
 

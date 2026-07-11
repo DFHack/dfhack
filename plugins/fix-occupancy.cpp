@@ -107,8 +107,8 @@ static void scan_building(color_ostream &out, df::building * bld, Expected & exp
             auto expected_bld = expected.bld(x, y, bld->z);
             if (bld->isSettingOccupancy() && expected_bld) {
                 if (*expected_bld) {
-                    WARN(log,out).print("Buildings overlap at (%d, %d, %d); please manually remove overlapping building."
-                        " Run ':lua dfhack.gui.revealInDwarfmodeMap(%d, %d, %d, true, true)' to zoom to the tile.\n",
+                    WARN(log,out).print("Buildings overlap at ({}, {}, {}); please manually remove overlapping building."
+                        " Run ':lua dfhack.gui.revealInDwarfmodeMap({}, {}, {}, true, true)' to zoom to the tile.\n",
                         x, y, bld->z, x, y, bld->z);
                 }
                 *expected_bld = bld;
@@ -163,7 +163,7 @@ static void normalize_item_vector(color_ostream &out, df::map_block *block, bool
         prev_id = item_id;
     }
     if (needs_sorting) {
-        INFO(log,out).print("%s item list for map block at (%d, %d, %d)\n",
+        INFO(log,out).print("{} item list for map block at ({}, {}, {})\n",
             dry_run ? "would fix" : "fixing", block->map_pos.x, block->map_pos.y, block->map_pos.z);
         if (!dry_run)
             std::sort(block->items.begin(), block->items.end());
@@ -175,7 +175,7 @@ static void reconcile_map_tile(color_ostream &out, df::building * bld, const df:
 {
     // clear building occupancy if there is no building there
     if (expected_occ.bits.building == df::tile_building_occ::None && block_occ.bits.building != df::tile_building_occ::None) {
-        INFO(log,out).print("%s building occupancy at (%d, %d, %d)\n",
+        INFO(log,out).print("{} building occupancy at ({}, {}, {})\n",
             dry_run ? "would fix" : "fixing", x, y, z);
         if (!dry_run)
             block_occ.bits.building = df::tile_building_occ::None;
@@ -189,7 +189,7 @@ static void reconcile_map_tile(color_ostream &out, df::building * bld, const df:
         if (block_occ.bits.building == df::tile_building_occ::Dynamic)
             block_occ.bits.building = prev_occ;
         else if (prev_occ != block_occ.bits.building) {
-            INFO(log,out).print("%s building occupancy at (%d, %d, %d)\n",
+            INFO(log,out).print("{} building occupancy at ({}, {}, {})\n",
                 dry_run ? "would fix" : "fixing", x, y, z);
             if (dry_run)
                 block_occ.bits.building = prev_occ;
@@ -198,13 +198,13 @@ static void reconcile_map_tile(color_ostream &out, df::building * bld, const df:
 
     // clear unit occupancy if there are no units there
     if (!expected_occ.bits.unit && block_occ.bits.unit) {
-        INFO(log,out).print("%s standing unit occupancy at (%d, %d, %d)\n",
+        INFO(log,out).print("{} standing unit occupancy at ({}, {}, {})\n",
             dry_run ? "would fix" : "fixing", x, y, z);
         if (!dry_run)
             block_occ.bits.unit = false;
     }
     if (!expected_occ.bits.unit_grounded && block_occ.bits.unit_grounded) {
-        INFO(log,out).print("%s grounded unit occupancy at (%d, %d, %d)\n",
+        INFO(log,out).print("{} grounded unit occupancy at ({}, {}, {})\n",
             dry_run ? "would fix" : "fixing", x, y, z);
         if (!dry_run)
             block_occ.bits.unit_grounded = false;
@@ -212,7 +212,7 @@ static void reconcile_map_tile(color_ostream &out, df::building * bld, const df:
 
     // clear item occupancy if there are no items there
     if (!expected_occ.bits.item && block_occ.bits.item) {
-        INFO(log,out).print("%s item occupancy at (%d, %d, %d)\n",
+        INFO(log,out).print("{} item occupancy at ({}, {}, {})\n",
             dry_run ? "would fix" : "fixing", x, y, z);
         if (!dry_run)
             block_occ.bits.item = false;
@@ -223,7 +223,7 @@ static void fix_tile(color_ostream &out, df::coord pos, bool dry_run) {
     auto occ = Maps::getTileOccupancy(pos);
     auto block = Maps::getTileBlock(pos);
     if (!occ || !block) {
-        WARN(log,out).print("invalid tile: (%d, %d, %d)\n", pos.x, pos.y, pos.z);
+        WARN(log,out).print("invalid tile: ({}, {}, {})\n", pos.x, pos.y, pos.z);
         return;
     }
 
@@ -264,7 +264,7 @@ static void fix_tile(color_ostream &out, df::coord pos, bool dry_run) {
     if (expected_bld && expected_occ)
         reconcile_map_tile(out, *expected_bld, *expected_occ, block->occupancy[pos.x&15][pos.y&15], dry_run, pos.x, pos.y, pos.z);
 
-    INFO(log,out).print("verified %zd building(s), %zd unit(s), %zd item(s), 1 map block(s), and 1 map tile(s)\n",
+    INFO(log,out).print("verified {} building(s), {} unit(s), {} item(s), 1 map block(s), and 1 map tile(s)\n",
         num_buildings, num_units, num_items);
 }
 
@@ -273,7 +273,7 @@ static void reconcile_block_items(color_ostream &out, std::set<int32_t> * expect
 
     if (!expected_items) {
         if (block_items.size()) {
-            INFO(log,out).print("%s stale item references in map block at (%d, %d, %d)\n",
+            INFO(log,out).print("{} stale item references in map block at ({}, {}, {})\n",
                 dry_run ? "would fix" : "fixing", block->map_pos.x, block->map_pos.y, block->map_pos.z);
             if (!dry_run)
                 block_items.resize(0);
@@ -282,7 +282,7 @@ static void reconcile_block_items(color_ostream &out, std::set<int32_t> * expect
     }
 
     if (!std::equal(expected_items->begin(), expected_items->end(), block_items.begin(), block_items.end())) {
-        INFO(log,out).print("%s stale item references in map block at (%d, %d, %d)\n",
+        INFO(log,out).print("{} stale item references in map block at ({}, {}, {})\n",
             dry_run ? "would fix" : "fixing", block->map_pos.x, block->map_pos.y, block->map_pos.z);
         if (!dry_run) {
             block_items.resize(expected_items->size());
@@ -324,20 +324,20 @@ static void fix_map(color_ostream &out, bool dry_run) {
                 auto expected_occ = expected.occ(x, y, z);
                 auto expected_bld = expected.bld(x, y, z);
                 if (!expected_occ || !expected_bld) {
-                    TRACE(log,out).print("pos out of bounds (%d, %d, %d)\n", x, y, z);
+                    TRACE(log,out).print("pos out of bounds ({}, {}, {})\n", x, y, z);
                     continue;
                 }
                 df::tile_occupancy &block_occ = block->occupancy[xoff][yoff];
                 if (*expected_bld || (expected_occ->whole & occ_mask) != (block_occ.whole & occ_mask)) {
-                    DEBUG(log,out).print("reconciling occupancy at (%d, %d, %d) (bld=%p, 0x%x ?= 0x%x)\n",
-                        x, y, z, *expected_bld, expected_occ->whole & occ_mask, block_occ.whole & occ_mask);
+                    DEBUG(log,out).print("reconciling occupancy at ({}, {}, {}) (bld={}, 0x{:x} ?= 0x{:x})\n",
+                        x, y, z, static_cast<void*>(*expected_bld), expected_occ->whole & occ_mask, block_occ.whole & occ_mask);
                     reconcile_map_tile(out, *expected_bld, *expected_occ, block_occ, dry_run, x, y, z);
                 }
             }
         }
     }
 
-    INFO(log,out).print("verified %zd buildings, %zd units, %zd items, %zd map blocks, and %zd map tiles\n",
+    INFO(log,out).print("verified {} buildings, {} units, {} items, {} map blocks, and {} map tiles\n",
         world->buildings.all.size(), world->units.active.size(), world->items.other.IN_PLAY.size(),
         world->map.map_blocks.size(), expected.get_size());
 }

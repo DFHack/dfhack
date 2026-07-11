@@ -141,8 +141,9 @@ namespace  DFHack
         /// shutdown the console. NOT thread-safe
         bool shutdown( void );
 
+        bool can_clear() const { return true; }
         /// Clear the console, along with its scrollback
-        void clear();
+        void clear() override;
         /// Position cursor at x,y. 1,1 = top left corner
         void gotoxy(int x, int y);
         /// Enable or disable the caret/cursor

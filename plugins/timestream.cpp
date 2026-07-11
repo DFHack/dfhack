@@ -33,12 +33,18 @@
 #include "df/building_nest_boxst.h"
 #include "df/building_trapst.h"
 #include "df/buildingitemst.h"
+#include "df/caravan_state.h"
+#include "df/flow_info.h"
+#include "df/flow_type.h"
 #include "df/init.h"
 #include "df/item_eggst.h"
+#include "df/plotinfost.h"
 #include "df/unit.h"
 #include "df/world.h"
 
 #include <array>
+#include <limits>
+#include <type_traits>
 
 using std::string;
 using std::vector;
@@ -52,6 +58,8 @@ REQUIRE_GLOBAL(cur_year_tick);
 REQUIRE_GLOBAL(cur_year_tick_advmode);
 REQUIRE_GLOBAL(init);
 REQUIRE_GLOBAL(world);
+REQUIRE_GLOBAL(flows);
+REQUIRE_GLOBAL(plotinfo);
 
 namespace DFHack {
     // for configuration-related logging
@@ -78,7 +86,7 @@ static void on_new_active_unit(color_ostream& out, void* data);
 static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
 
     commands.push_back(PluginCommand(
         plugin_name,
@@ -162,7 +170,7 @@ static void do_disable() {
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -170,7 +178,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable) {
@@ -181,7 +189,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
             do_disable();
         }
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -189,7 +197,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
 
     return CR_OK;
 }
@@ -221,7 +229,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
     if (config.get_bool(CONFIG_IS_ENABLED)) {
         plugin_enable(out, true);
     }
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
 
     return CR_OK;
@@ -230,7 +238,7 @@ DFhackCExport command_result plugin_load_site_data(color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             do_disable();
         }
@@ -246,7 +254,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -270,7 +278,7 @@ static void record_coverage(color_ostream &out) {
     if (coverage_slot >= NUM_COVERAGE_TICKS)
         return;
     if (!tick_coverage[coverage_slot]) {
-        DEBUG(cycle,out).print("recording coverage for slot: %u", coverage_slot);
+        DEBUG(cycle,out).print("recording coverage for slot: {}", coverage_slot);
     }
     tick_coverage[coverage_slot] = true;
 }
@@ -314,12 +322,91 @@ static int32_t clamp_coverage(int32_t timeskip) {
     return timeskip;
 }
 
+using df_tick_type = std::remove_reference_t<decltype(*cur_year_tick)>;
+
+static df_tick_type flow_next_required_tick(int flow_index)
+{
+    using namespace df::enums::flow_type;
+
+    const auto flow = (*flows)[flow_index];
+
+    if (flow == nullptr || flow->flags.bits.DEAD)
+        return std::numeric_limits<df_tick_type>::max();
+
+    const auto cur_tick = *cur_year_tick;
+
+    struct update_parameters_t {
+        int speed;
+        int cycle;
+    };
+
+    const auto [speed, cycle] = [flow] () -> update_parameters_t {
+        switch (flow->type)
+        {
+        case ItemCloud:
+        case MaterialDust:
+        case MaterialGas:
+        case MaterialVapor:
+            if (flow->flags.bits.CREEPING)
+                return update_parameters_t{10, 100};
+            else
+                return update_parameters_t{1, 5};
+        case Dragonfire:
+        case Fire:
+        case Web:
+            return update_parameters_t{1, 3};
+        default:
+            return update_parameters_t{10, 100};
+        }
+        }();
+
+    const int stride = cycle / speed;
+
+    const int phase = (flow_index % stride) * speed;
+
+    const int cur_phase = cur_tick % cycle;
+
+    return cur_tick + (phase - cur_phase) + ((cur_phase > phase) ? cycle : 0);
+}
+
+static df_tick_type flows_next_required_tick() {
+    if (flows == nullptr || flows->empty())
+        return std::numeric_limits<df_tick_type>::max();
+
+    auto flow_indices = std::views::iota(0, (int)flows->size());
+    auto next_flow = std::ranges::min(flow_indices, {}, flow_next_required_tick);
+
+    return flow_next_required_tick(next_flow);
+}
+
+static bool detect_caravans()
+{
+    auto& caravans = df::global::plotinfo->caravans;
+    return std::any_of(caravans.begin(), caravans.end(), [](auto caravan) {
+        if (caravan->trade_state != df::caravan_state::T_trade_state::AtDepot)
+            return false;
+        auto car_civ = caravan->entity;
+        auto& units = world->units.active;
+        return std::any_of(units.begin(), units.end(), [car_civ] (auto un) {
+            return (un->civ_id == car_civ
+                && DFHack::Units::isMerchant(un)
+                && std::any_of(un->inventory.begin(), un->inventory.end(), [] (auto inv_item) {
+                    return inv_item->item && inv_item->item->flags.bits.trader;
+                    }));
+            });
+        });
+}
+
 static int32_t clamp_timeskip(int32_t timeskip) {
     if (timeskip <= 0)
+        return 0;
+    // timeskip cannot be applied when caravans are loading/unloading because we don't know how to jog that timer
+    if (detect_caravans())
         return 0;
     int32_t next_tick = *cur_year_tick + 1;
     timeskip = std::min(timeskip, get_next_trigger_year_tick(next_tick) - next_tick);
     timeskip = std::min(timeskip, get_next_birthday(next_tick) - next_tick);
+    timeskip = std::min(timeskip, flows_next_required_tick() - next_tick);
     return clamp_coverage(timeskip);
 }
 
@@ -341,7 +428,6 @@ static void decrement_counter(T *obj, FT T::*field, int32_t timeskip) {
 
 static void adjust_unit_counters(df::unit * unit, int32_t timeskip) {
     auto * c1 = &unit->counters;
-    decrement_counter(c1, &df::unit::T_counters::think_counter, timeskip);
     decrement_counter(c1, &df::unit::T_counters::job_counter, timeskip);
     decrement_counter(c1, &df::unit::T_counters::swap_counter, timeskip);
     decrement_counter(c1, &df::unit::T_counters::winded, timeskip);
@@ -617,7 +703,7 @@ static void adjust_items(color_ostream &out, int32_t timeskip) {
 }
 
 static void do_cycle(color_ostream &out) {
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    DEBUG(cycle,out).print("running {} cycle\n", plugin_name);
 
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
@@ -648,7 +734,7 @@ static void do_cycle(color_ostream &out) {
     // don't let our deficit grow unbounded if we can never catch up
     timeskip_deficit = std::min(desired_timeskip - float(timeskip), 100.0F);
 
-    DEBUG(cycle,out).print("cur_year_tick: %d, real_fps: %d, timeskip: (%d, +%.2f)\n", *cur_year_tick, real_fps, timeskip, timeskip_deficit);
+    DEBUG(cycle,out).print("cur_year_tick: {}, real_fps: {}, timeskip: ({}, +{:.2f})\n", *cur_year_tick, real_fps, timeskip, timeskip_deficit);
     if (timeskip <= 0)
         return;
 
@@ -670,7 +756,7 @@ static void on_new_active_unit(color_ostream& out, void* data) {
     auto unit = df::unit::find(unit_id);
     if (!unit)
         return;
-    DEBUG(event,out).print("registering new unit %d (%s)\n", unit->id, Units::getReadableName(unit).c_str());
+    DEBUG(event,out).print("registering new unit {} ({})\n", unit->id, Units::getReadableName(unit));
     register_birthday(unit);
 }
 
@@ -679,7 +765,7 @@ static void on_new_active_unit(color_ostream& out, void* data) {
 //
 
 static void timestream_setFps(color_ostream &out, int fps) {
-    DEBUG(cycle,out).print("timestream_setFps: %d\n", fps);
+    DEBUG(cycle,out).print("timestream_setFps: {}\n", fps);
     config.set_int(CONFIG_TARGET_FPS, clamp_fps_to_valid(fps));
 }
 

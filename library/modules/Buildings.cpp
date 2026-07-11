@@ -29,7 +29,6 @@ distribution.
 #include "MemAccess.h"
 #include "Types.h"
 #include "Error.h"
-#include "ModuleFactory.h"
 #include "Core.h"
 #include "TileTypes.h"
 #include "MiscUtils.h"
@@ -615,6 +614,23 @@ bool Buildings::getCorrectSize(df::coord2d &size, df::coord2d &center,
         return false;
 
     case SiegeEngine:
+    {
+        using namespace df::enums::siegeengine_type;
+
+        switch((df::siegeengine_type)subtype)
+        {
+            case df::siegeengine_type::BoltThrower:
+                size = df::coord2d(1, 1);
+                center = df::coord2d(0, 0);
+                break;
+            default:
+                size = df::coord2d(3,3);
+                center = df::coord2d(1,1);
+                break;
+        }
+        return false;
+    }
+
     case Windmill:
     case Wagon:
         size = df::coord2d(3,3);

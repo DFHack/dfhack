@@ -22,6 +22,7 @@ Usage
     autoclothing
     autoclothing <material> <item>
     autoclothing <material> <item> <quantity>
+    autoclothing clear <material> <item>
 
 ``<material>`` can be "cloth", "silk", "yarn", or "leather". The ``<item>`` can
 be anything your civilization can produce, such as "dress" or "mitten".
@@ -43,6 +44,9 @@ Examples
     long as there is cloth available to make them out of).
 ``autoclothing cloth dress``
     Displays the currently set number of cloth dresses chosen per citizen.
+``autoclothing clear cloth "short skirt"``
+    Unsets cloth short skirts from being made if previously enabled such as
+    in the first example
 
 Which should I enable: autoclothing or tailor?
 ----------------------------------------------

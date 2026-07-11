@@ -36,24 +36,25 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
+#include <cassert>
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <exception>
+#include <ios>
 #include <iostream>
 #include <fstream>
-#include <istream>
 #include <string>
-#include <stdint.h>
+#include <vector>
 
+#include "ColorText.h"
+#include "CoreDefs.h"
 #include "RemoteClient.h"
-#include <ActiveSocket.h>
-#include "MiscUtils.h"
 
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
+#include "ActiveSocket.h"
+#include "Host.h"
+#include "SimpleSocket.h"
 
-#include <memory>
 
 #include "json/json.h"
 
@@ -180,7 +181,7 @@ bool RemoteClient::connect(int port)
 
     if (!socket->Open("localhost", port))
     {
-        default_output().printerr("Could not connect to localhost:%d\n", port);
+        default_output().printerr("Could not connect to localhost:{}\n", port);
         return false;
     }
 
@@ -335,8 +336,8 @@ bool RemoteFunctionBase::bind(color_ostream &out, RemoteClient *client,
         if (p_client == client && this->name == name && this->plugin == plugin)
             return true;
 
-        out.printerr("Function already bound to %s::%s\n",
-                     this->plugin.c_str(), this->name.c_str());
+        out.printerr("Function already bound to {}::{}\n",
+                     this->plugin, this->name);
         return false;
     }
 
@@ -372,15 +373,15 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
 {
     if (!isValid())
     {
-        out.printerr("Calling an unbound RPC function %s::%s.\n",
-                     this->plugin.c_str(), this->name.c_str());
+        out.printerr("Calling an unbound RPC function {}:{}.\n",
+                     this->plugin, this->name);
         return CR_NOT_IMPLEMENTED;
     }
 
     if (!p_client->socket->IsSocketValid())
     {
-        out.printerr("In call to %s::%s: invalid socket.\n",
-                     this->plugin.c_str(), this->name.c_str());
+        out.printerr("In call to {}:{}: invalid socket.\n",
+                     this->plugin, this->name);
         return CR_LINK_FAILURE;
     }
 
@@ -388,15 +389,15 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
 
     if (send_size > RPCMessageHeader::MAX_MESSAGE_SIZE)
     {
-        out.printerr("In call to %s::%s: message too large: %d.\n",
-                     this->plugin.c_str(), this->name.c_str(), send_size);
+        out.printerr("In call to {}:{}: message too large: {}.\n",
+                     this->plugin, this->name, send_size);
         return CR_LINK_FAILURE;
     }
 
     if (!sendRemoteMessage(p_client->socket, id, input, true))
     {
-        out.printerr("In call to %s::%s: I/O error in send.\n",
-                     this->plugin.c_str(), this->name.c_str());
+        out.printerr("In call to {}:{}: I/O error in send.\n",
+                     this->plugin, this->name);
         return CR_LINK_FAILURE;
     }
 
@@ -410,8 +411,8 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
 
         if (!readFullBuffer(p_client->socket, &header, sizeof(header)))
         {
-            out.printerr("In call to %s::%s: I/O error in receive header.\n",
-                         this->plugin.c_str(), this->name.c_str());
+            out.printerr("In call to {}:{}: I/O error in receive header.\n",
+                         this->plugin, this->name);
             return CR_LINK_FAILURE;
         }
 
@@ -422,8 +423,8 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
 
         if (header.size < 0 || header.size > RPCMessageHeader::MAX_MESSAGE_SIZE)
         {
-            out.printerr("In call to %s::%s: invalid received size %d.\n",
-                         this->plugin.c_str(), this->name.c_str(), header.size);
+            out.printerr("In call to {}:{}: invalid received size {}.\n",
+                         this->plugin, this->name, header.size);
             return CR_LINK_FAILURE;
         }
 
@@ -431,8 +432,8 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
 
         if (!readFullBuffer(p_client->socket, buf, header.size))
         {
-            out.printerr("In call to %s::%s: I/O error in receive %d bytes of data.\n",
-                         this->plugin.c_str(), this->name.c_str(), header.size);
+            out.printerr("In call to {}:{}: I/O error in receive {} bytes of data.\n",
+                         this->plugin, this->name, header.size);
             return CR_LINK_FAILURE;
         }
 
@@ -440,8 +441,8 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
         case RPC_REPLY_RESULT:
             if (!output->ParseFromArray(buf, header.size))
             {
-                out.printerr("In call to %s::%s: error parsing received result.\n",
-                             this->plugin.c_str(), this->name.c_str());
+                out.printerr("In call to {}:{}: error parsing received result.\n",
+                             this->plugin, this->name);
                 delete[] buf;
                 return CR_LINK_FAILURE;
             }
@@ -454,8 +455,8 @@ command_result RemoteFunctionBase::execute(color_ostream &out,
             if (text_data.ParseFromArray(buf, header.size))
                 text_decoder.decode(&text_data);
             else
-                out.printerr("In call to %s::%s: received invalid text data.\n",
-                             this->plugin.c_str(), this->name.c_str());
+                out.printerr("In call to {}:{}: received invalid text data.\n",
+                             this->plugin, this->name);
             break;
 
         default:

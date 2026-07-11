@@ -57,7 +57,7 @@ static int32_t interfacePct = 100;
 static void overlay_interpose_lua(const char *fn_name, int nargs = 0, int nres = 0,
         Lua::LuaLambda && args_lambda = Lua::DEFAULT_LUA_LAMBDA,
         Lua::LuaLambda && res_lambda = Lua::DEFAULT_LUA_LAMBDA) {
-    DEBUG(event).print("calling overlay lua function: '%s'\n", fn_name);
+    DEBUG(event).print("calling overlay lua function: '{}'\n", fn_name);
 
     color_ostream & out = Core::getInstance().getConsole();
     auto L = DFHack::Core::getInstance().getLuaState();
@@ -159,7 +159,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
         Lua::CallLuaModuleFunction(out, "plugins.overlay", "rescan");
     }
 
-    DEBUG(control).print("%sing interpose hooks\n", enable ? "enabl" : "disabl");
+    DEBUG(control).print("{}ing interpose hooks\n", enable ? "enabl" : "disabl");
 
     if (INTERPOSE_HOOKS_FAILED(adopt_region) ||
 //            INTERPOSE_HOOKS_FAILED(adventure_log) ||

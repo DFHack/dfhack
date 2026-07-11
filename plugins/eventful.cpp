@@ -22,6 +22,7 @@
 #include "df/unit_wound.h"
 #include "df/world.h"
 
+#include <stack>
 #include <string.h>
 #include <stdexcept>
 #include <array>

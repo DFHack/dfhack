@@ -150,7 +150,7 @@ command_result follow (color_ostream &out, std::vector <std::string> & parameter
         ss << "Unpause to begin following " << world->raws.creatures.all[followedUnit->race]->name[0];
         if (followedUnit->name.has_name) ss << " " << followedUnit->name.first_name;
         ss << ". Simply manually move the view to break the following.\n";
-        out.print("%s", ss.str().c_str());
+        out.print("{}", ss.str());
     }
     else followedUnit = 0;
     is_enabled = (followedUnit != NULL);

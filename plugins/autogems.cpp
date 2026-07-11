@@ -314,7 +314,7 @@ bool read_config(color_ostream &out) {
         }
     }
     catch (Json::Exception &e) {
-        out.printerr("autogems: failed to read autogems.json: %s\n", e.what());
+        out.printerr("autogems: failed to read autogems.json: {}\n", e.what());
         return false;
     }
 
@@ -326,7 +326,7 @@ bool read_config(color_ostream &out) {
                 blacklist.insert(mat_index(item.asInt()));
             }
             else {
-                out.printerr("autogems: illegal item at position %i in blacklist\n", i);
+                out.printerr("autogems: illegal item at position {} in blacklist\n", i);
             }
         }
     }
@@ -355,7 +355,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
 DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     if (enable != enabled) {
         if (!INTERPOSE_HOOK(autogem_hook, feed).apply(enable) || !INTERPOSE_HOOK(autogem_hook, render).apply(enable)) {
-            out.printerr("Could not %s autogem hooks!\n", enable? "insert": "remove");
+            out.printerr("Could not {} autogem hooks!\n", enable? "insert": "remove");
             return CR_FAILURE;
         }
 

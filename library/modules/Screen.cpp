@@ -28,7 +28,6 @@ distribution.
 #include "VersionInfo.h"
 #include "Types.h"
 #include "Error.h"
-#include "ModuleFactory.h"
 #include "Core.h"
 #include "PluginManager.h"
 #include "LuaTools.h"
@@ -621,7 +620,7 @@ std::set<df::interface_key> Screen::normalize_text_keys(const std::set<df::inter
     if (!(Core::getInstance().getModstate() & (DFH_MOD_CTRL | DFH_MOD_ALT)) && df::global::enabler->last_text_input[0]) {
         char c = df::global::enabler->last_text_input[0];
         df::interface_key key = charToKey(c);
-        DEBUG(screen).print("adding character %c as interface key %ld\n", c, key);
+        DEBUG(screen).print("adding character {} as interface key {}\n", c, ENUM_AS_STR(key));
         combined_keys.emplace(key);
     }
     return combined_keys;
@@ -780,7 +779,7 @@ void dfhack_viewscreen::logic()
         bool is_df_screen = !is_instance(p);
         auto *next_p = p->parent;
         if (is_df_screen && Screen::isDismissed(p)) {
-            DEBUG(screen).print("raising dismissed DF viewscreen %p\n", p);
+            DEBUG(screen).print("raising dismissed DF viewscreen {}\n", static_cast<void*>(p));
             Screen::raise(p);
         }
         if (is_df_screen)

@@ -410,7 +410,7 @@ static void stop_protect(color_ostream &out)
     pending_recover.clear();
 
     if (!known_jobs.empty())
-        out.print("Unprotecting %zd jobs.\n", known_jobs.size());
+        out.print("Unprotecting {} jobs.\n", known_jobs.size());
 
     for (TKnownJobs::iterator it = known_jobs.begin(); it != known_jobs.end(); ++it)
         delete it->second;
@@ -437,7 +437,7 @@ static void start_protect(color_ostream &out)
     check_lost_jobs(out, 0);
 
     if (!known_jobs.empty())
-        out.print("Protecting %zd jobs.\n", known_jobs.size());
+        out.print("Protecting {} jobs.\n", known_jobs.size());
 }
 
 static void init_state(color_ostream &out)
@@ -456,7 +456,7 @@ static void init_state(color_ostream &out)
         if (get_constraint(out, items[i].val(), &items[i]))
             continue;
 
-        out.printerr("Lost constraint %s\n", items[i].val().c_str());
+        out.printerr("Lost constraint {}\n", items[i].val());
         World::DeletePersistentData(items[i]);
     }
 
@@ -503,8 +503,8 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     pj->holder = df::building::find(pj->building_id);
     if (!pj->holder)
     {
-        out.printerr("Forgetting job %d (%s): holder building lost.\n",
-                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
+        out.printerr("Forgetting job {} ({}): holder building lost.\n",
+                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
         forget_job(out, pj);
         return true;
     }
@@ -512,8 +512,8 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     // Check its state and postpone or cancel if invalid
     if (pj->holder->jobs.size() >= 10)
     {
-        out.printerr("Forgetting job %d (%s): holder building has too many jobs.\n",
-                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
+        out.printerr("Forgetting job {} ({}): holder building has too many jobs.\n",
+                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
         forget_job(out, pj);
         return true;
     }
@@ -535,8 +535,8 @@ static bool recover_job(color_ostream &out, ProtectedJob *pj)
     {
         Job::deleteJobStruct(recovered);
 
-        out.printerr("Inconsistency: job %d (%s) already in list.\n",
-                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type).c_str());
+        out.printerr("Inconsistency: job {} ({}) already in list.\n",
+                        pj->id, ENUM_KEY_STR(job_type, pj->job_copy->job_type));
         return true;
     }
 
@@ -664,7 +664,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     if (tokens[0] == "ANY_CRAFT" || tokens[0] == "CRAFTS") {
         is_craft = true;
     } else if (!item.find(tokens[0]) || !item.isValid()) {
-        out.printerr("Cannot find item type: %s\n", tokens[0].c_str());
+        out.printerr("Cannot find item type: {}\n", tokens[0]);
         return NULL;
     }
 
@@ -674,7 +674,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     df::dfhack_material_category mat_mask;
     std::string maskstr = vector_get(tokens,1);
     if (!maskstr.empty() && !parseJobMaterialCategory(&mat_mask, maskstr)) {
-        out.printerr("Cannot decode material mask: %s\n", maskstr.c_str());
+        out.printerr("Cannot decode material mask: {}\n", maskstr);
         return NULL;
     }
 
@@ -684,7 +684,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
     MaterialInfo material;
     std::string matstr = vector_get(tokens,2);
     if (!matstr.empty() && (!material.find(matstr) || !material.isValid())) {
-        out.printerr("Cannot find material: %s\n", matstr.c_str());
+        out.printerr("Cannot find material: {}\n", matstr);
         return NULL;
     }
 
@@ -692,7 +692,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
         weight += (material.index >= 0 ? 5000 : 1000);
 
     if (mat_mask.whole && material.isValid() && !material.matches(mat_mask)) {
-        out.printerr("Material %s doesn't match mask %s\n", matstr.c_str(), maskstr.c_str());
+        out.printerr("Material {} doesn't match mask {}\n", matstr, maskstr);
         return NULL;
     }
 
@@ -724,7 +724,7 @@ static ItemConstraint *get_constraint(color_ostream &out, const std::string &str
 
                 if (!found)
                 {
-                    out.printerr("Cannot parse token: %s\n", token.c_str());
+                    out.printerr("Cannot parse token: {}\n", token);
                     return NULL;
                 }
             }
@@ -1184,9 +1184,9 @@ static void setJobResumed(color_ostream &out, ProtectedJob *pj, bool goal)
 
     if (goal != current)
     {
-        out.print("%s %s%s\n",
+        out.print("{} {}{}\n",
                      (goal ? "Resuming" : "Suspending"),
-                     shortJobDescription(pj->actual_job).c_str(),
+                     shortJobDescription(pj->actual_job),
                      (!goal || pj->isActuallyResumed() ? "" : " (delayed)"));
     }
 }
@@ -1817,7 +1817,7 @@ static command_result workflow_cmd(color_ostream &out, vector <string> & paramet
         if (deleteConstraint(parameters[1]))
             return CR_OK;
 
-        out.printerr("Constraint not found: %s\n", parameters[1].c_str());
+        out.printerr("Constraint not found: {}\n", parameters[1]);
         return CR_FAILURE;
     }
     else if (cmd == "unlimit-all")

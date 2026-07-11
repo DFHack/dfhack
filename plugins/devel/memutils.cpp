@@ -52,7 +52,7 @@ namespace memutils {
         lua_pushstring(state, expr);
         if (!Lua::SafeCall(*out, state, 1, 1))
         {
-            out->printerr("Failed to evaluate %s\n", expr);
+            out->printerr("Failed to evaluate {}\n", expr);
             return NULL;
         }
 
@@ -60,7 +60,7 @@ namespace memutils {
         lua_swap(state);
         if (!Lua::SafeCall(*out, state, 1, 1) || !lua_isinteger(state, -1))
         {
-            out->printerr("Failed to get address: %s\n", expr);
+            out->printerr("Failed to get address: {}\n", expr);
             return NULL;
         }
 

@@ -55,7 +55,7 @@ command_result readFlag (color_ostream &out, vector <string> & parameters)
     MapExtras::MapCache * MCache = new MapExtras::MapCache();
     t_occupancy oc = MCache->occupancyAt(cursor);
 
-    out.print("Current Value: %d\n", oc.bits.building);
+    out.print("Current Value: {}\n", ENUM_AS_STR(oc.bits.building));
     return CR_OK;
 }
 

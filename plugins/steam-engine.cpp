@@ -870,7 +870,7 @@ static bool find_engines(color_ostream &out)
         if (!ws.gear_tiles.empty())
             engines.push_back(ws);
         else
-            out.printerr("%s has no gear tiles - ignoring.\n", wslist[i]->code.c_str());
+            out.printerr("{} has no gear tiles - ignoring.\n", wslist[i]->code);
     }
 
     return !engines.empty();

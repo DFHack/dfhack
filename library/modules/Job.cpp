@@ -38,6 +38,7 @@ distribution.
 #include "modules/References.h"
 
 #include "df/building.h"
+#include "df/building_workshopst.h"
 #include "df/general_ref.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/general_ref_building_holderst.h"
@@ -48,6 +49,7 @@ distribution.
 #include "df/job_list_link.h"
 #include "df/job_postingst.h"
 #include "df/job_restrictionst.h"
+#include "df/manager_order.h"
 #include "df/plotinfost.h"
 #include "df/specific_ref.h"
 #include "df/unit.h"
@@ -517,6 +519,27 @@ bool DFHack::Job::linkIntoWorld(df::job *job, bool new_id)
     }
 }
 
+df::job* DFHack::Job::createLinked()
+{
+    auto job = new df::job();
+    DFHack::Job::linkIntoWorld(job, true);
+    return job;
+}
+
+bool DFHack::Job::assignToWorkshop(df::job *job, df::building_workshopst *workshop)
+{
+    CHECK_NULL_POINTER(job);
+    CHECK_NULL_POINTER(workshop);
+
+    if (workshop->jobs.size() >= 10) {
+        return false;
+    }
+    job->pos = df::coord(workshop->centerx, workshop->centery, workshop->z);
+    DFHack::Job::addGeneralRef(job, df::general_ref_type::BUILDING_HOLDER, workshop->id);
+    workshop->jobs.push_back(job);
+    return true;
+}
+
 bool DFHack::Job::removePostings(df::job *job, bool remove_all)
 {
     using df::global::world;
@@ -655,6 +678,33 @@ std::string Job::getName(df::job *job)
     button->matgloss = job->mat_index;
     button->specflag = job->specflag;
     button->job_item_flag = job->material_category;
+    button->specdata = job->specdata;
+    button->art_specifier_id1 = job->art_spec.id;
+    button->art_specifier_id2 = job->art_spec.subid;
+
+    button->text(&desc);
+    delete button;
+
+    return desc;
+}
+
+std::string Job::getManagerOrderName(df::manager_order *order)
+{
+    CHECK_NULL_POINTER(order);
+
+    std::string desc;
+    auto button = df::allocate<df::interface_button_building_new_jobst>();
+    button->mstring = order->reaction_name;
+    button->jobtype = order->job_type;
+    button->itemtype = order->item_type;
+    button->subtype = order->item_subtype;
+    button->material = order->mat_type;
+    button->matgloss = order->mat_index;
+    button->specflag = order->specflag;
+    button->job_item_flag = order->material_category;
+    button->specdata = order->specdata;
+    button->art_specifier_id1 = order->art_spec.id;
+    button->art_specifier_id2 = order->art_spec.subid;
 
     button->text(&desc);
     delete button;

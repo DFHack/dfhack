@@ -22,20 +22,30 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#ifndef WIN32
-#ifndef _DARWIN
-#include <cstdlib>
-#endif /* ! _DARWIN */
-#endif /* ! WIN32 */
+#include "Format.h"
+#include "MemAccess.h"
+#include "Memory.h"
+#include "MemoryPatcher.h"
+#include "MiscUtils.h"
+#include "VersionInfo.h"
+#include "VersionInfoFactory.h"
+
+#include "modules/Filesystem.h"
+
+#include <algorithm>
+#include <cstdarg>
+#include <cstdint>
 #include <cstring>
-#include <cstdio>
+#include <exception>
+#include <filesystem>
+#include <iostream>
 #include <map>
-#include <set>
+#include <memory>
+#include <stdexcept>
 #include <string>
 #include <vector>
-#include <filesystem>
 
-#ifndef WIN32
+#ifdef LINUX_BUILD
 #include <dirent.h>
 #include <errno.h>
 #include <sys/mman.h>
@@ -51,27 +61,24 @@ distribution.
 #include <mach/vm_statistics.h>
 #include <dlfcn.h>
 #endif /* _DARWIN */
-#endif /* ! WIN32 */
 
-#include "Error.h"
-#include "Internal.h"
-#include "MemAccess.h"
-#include "Memory.h"
-#include "MiscUtils.h"
-#include "VersionInfo.h"
-#include "VersionInfoFactory.h"
-#include "modules/Filesystem.h"
-
-#ifndef WIN32
 #include "md5wrapper.h"
-#else /* WIN32 */
+#endif /* LINUX_BUILD */
+
+#ifdef WIN32
 #define _WIN32_WINNT 0x0600
 #define WINVER 0x0600
+
+#define NOMINMAX
 #define WIN32_LEAN_AND_MEAN
 #include <windows.h>
 #include <psapi.h>
+#include <processthreadsapi.h>
+#include <memoryapi.h>
+#include <sysinfoapi.h>
 
-#include <format>
+#include <malloc.h>
+
 #endif /* WIN32 */
 
 using namespace DFHack;
@@ -148,7 +155,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         uint32_t pe_offset = readDWord(d->base + 0x3C);
         read(d->base + pe_offset, sizeof(d->pe_header), (uint8_t*)&(d->pe_header));
         const size_t sectionsSize = sizeof(IMAGE_SECTION_HEADER) * d->pe_header.FileHeader.NumberOfSections;
-        d->sections = (IMAGE_SECTION_HEADER*)malloc(sectionsSize);
+        d->sections = (IMAGE_SECTION_HEADER*)std::malloc(sectionsSize);
         read(d->base + pe_offset + sizeof(d->pe_header), sectionsSize, (uint8_t*)(d->sections));
     }
     catch (std::exception&)
@@ -194,7 +201,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         cerr << "1KB hexdump follows:" << endl;
         for(int i = 0; i < 64; i++)
         {
-            fprintf(stderr, "%02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x  %02x %02x %02x %02x\n",
+            fmt::print(std::cerr, "{:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}  {:02x} {:02x} {:02x} {:02x}\n",
                     first_kb[i*16],
                     first_kb[i*16+1],
                     first_kb[i*16+2],
@@ -215,7 +222,7 @@ Process::Process(const VersionInfoFactory& known_versions) : identified(false)
         }
         free(wd);
 #else /* WIN32 */
-        cerr << "PE timestamp: " << std::format("{:#0x}", my_pe) << endl;
+        cerr << "PE timestamp: " << fmt::format("{:#0x}", my_pe) << endl;
 #endif /* WIN32 */
     }
 }
@@ -233,6 +240,9 @@ Process::~Process()
 
 string Process::doReadClassName (void * vptr)
 {
+    if (!checkValidAddress(vptr))
+        throw std::runtime_error(fmt::format("invalid vtable ptr {}", vptr));
+
     char* rtti = Process::readPtr(((char*)vptr - sizeof(void*)));
 #ifndef WIN32
     char* typestring = Process::readPtr(rtti + sizeof(void*));
@@ -588,6 +598,20 @@ void Process::getMemRanges(vector<t_memrange>& ranges)
 }
 #endif
 
+bool Process::checkValidAddress(void* ptr)
+{
+    uintptr_t addr = reinterpret_cast<uintptr_t>(ptr);
+    auto validate = [&] (t_memrange& r) {
+        uintptr_t lo = reinterpret_cast<uintptr_t>(r.start);
+        uintptr_t hi = reinterpret_cast<uintptr_t>(r.end);
+        return addr >= lo && addr < hi;
+        };
+    std::vector<t_memrange> mr;
+    getMemRanges(mr);
+    bool valid = std::any_of(mr.begin(), mr.end(), validate);
+    return valid;
+}
+
 uintptr_t Process::getBase()
 {
 #if WIN32
@@ -644,7 +668,7 @@ uint32_t Process::getTickCount()
 #endif /* WIN32 */
 }
 
-std::filesystem::path Process::getPath()
+[[deprecated]] std::filesystem::path Process::getPath()
 {
 #if defined(WIN32) || !defined(_DARWIN)
     return Filesystem::get_initial_cwd();
@@ -795,4 +819,11 @@ int Process::memProtect(void *ptr, const int length, const int prot)
     DWORD old_prot = 0;
     return !VirtualProtect(ptr, length, prot_native, &old_prot);
 #endif /* WIN32 */
+}
+
+bool Process::patchMemory(void* target, const void* src, size_t count)
+{
+    MemoryPatcher patcher(this);
+
+    return patcher.write(target, src, count);
 }

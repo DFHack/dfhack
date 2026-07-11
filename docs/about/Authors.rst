@@ -43,6 +43,7 @@ Cameron Ewell           Ozzatron
 Carter Bray             Qartar
 Chris Dombroski         cdombroski
 Chris Parsons           chrismdp
+Christian Doczkal       chdoc
 cjhammel                cjhammel
 Clayton Hughes
 Clément Vuchener        cvuchener
@@ -162,6 +163,7 @@ Omniclasm
 Ong Ying Gao            ong-yinggao98
 oorzkws                 oorzkws
 OwnageIsMagic           OwnageIsMagic
+pajawojciech            pajawojciech
 palenerd                dlmarquis
 PassionateAngler        PassionateAngler
 Patrik Lundell          PatrikLundell

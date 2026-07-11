@@ -38,10 +38,16 @@ Commands
 ``adamantine-cloth-wear``
     Prevents adamantine clothing from wearing out while being worn
     (:bug:`6481`).
+``animaltrap-reuse``
+    Makes built animal traps unload caught vermin into stockpiled animal traps
+    so that they can be automatically re-baited and reused.
 ``craft-age-wear``
     Fixes crafted items not wearing out over time (:bug:`6003`). With this
     tweak, items made from cloth and leather will gain a level of wear every 20
     in-game years.
+``drawbridge-tiles``
+    Makes raising bridges in ASCII mode render with different tiles when they
+    are raised.
 ``eggs-fertile``
     Displays an indicator on fertile eggs.
 ``fast-heat``

@@ -95,7 +95,7 @@ command_result cleanmap (color_ostream &out, bool snow, bool mud, bool item_spat
     }
 
     if(num_blocks)
-        out.print("Cleaned %d of %zd map blocks.\n", num_blocks, world->map.map_blocks.size());
+        out.print("Cleaned {} of {} map blocks.\n", num_blocks, world->map.map_blocks.size());
     return CR_OK;
 }
 
@@ -123,7 +123,7 @@ command_result cleanitems (color_ostream &out)
         }
     }
     if (cleaned_total)
-        out.print("Removed %d contaminants from %d items.\n", cleaned_total, cleaned_items);
+        out.print("Removed {} contaminants from {} items.\n", cleaned_total, cleaned_items);
     return CR_OK;
 }
 
@@ -143,7 +143,7 @@ command_result cleanunits (color_ostream &out)
         }
     }
     if (cleaned_total)
-        out.print("Removed %d contaminants from %d creatures.\n", cleaned_total, cleaned_units);
+        out.print("Removed {} contaminants from {} creatures.\n", cleaned_total, cleaned_units);
     return CR_OK;
 }
 
@@ -163,7 +163,7 @@ command_result cleanplants (color_ostream &out)
         }
     }
     if (cleaned_total)
-        out.print("Removed %d contaminants from %d plants.\n", cleaned_total, cleaned_plants);
+        out.print("Removed {} contaminants from {} plants.\n", cleaned_total, cleaned_plants);
     return CR_OK;
 }
 

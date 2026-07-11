@@ -31,9 +31,9 @@ distribution.
  */
 
 #include "Export.h"
-#include "Module.h"
-#include "Types.h"
 #include "DataDefs.h"
+#include "Types.h"
+#include "df/language_name_type.h"
 
 namespace df {
     struct language_name;

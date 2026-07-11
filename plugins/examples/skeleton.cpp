@@ -66,7 +66,7 @@ static command_result command_callback1(color_ostream &out, vector<string> &para
 
 // run when the plugin is loaded
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginCommand> &commands) {
-    DEBUG(status,out).print("initializing %s\n", plugin_name);
+    DEBUG(status,out).print("initializing {}\n", plugin_name);
 
     // For in-tree plugins, don't use the "usage" parameter of PluginCommand.
     // Instead, add an .rst file with the same name as the plugin to the
@@ -80,7 +80,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector<PluginC
 
 // run when the plugin is unloaded
 DFhackCExport command_result plugin_shutdown(color_ostream &out) {
-    DEBUG(status,out).print("shutting down %s\n", plugin_name);
+    DEBUG(status,out).print("shutting down {}\n", plugin_name);
 
     // You *MUST* kill all threads you created before this returns.
     // If anything fails, just return CR_FAILURE. Your plugin will be
@@ -92,7 +92,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
 // run when the `enable` or `disable` command is run with this plugin name as
 // an argument
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
-    DEBUG(status,out).print("%s from the API\n", enable ? "enabled" : "disabled");
+    DEBUG(status,out).print("{} from the API\n", enable ? "enabled" : "disabled");
 
     // you have to maintain the state of the is_enabled variable yourself. it
     // doesn't happen automatically.
@@ -132,7 +132,7 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
                     name = fs[0];
             }
 
-            DEBUG(status,out).print("game state changed: SC_VIEWSCREEN_CHANGED (%s)\n",
+            DEBUG(status,out).print("game state changed: SC_VIEWSCREEN_CHANGED ({})\n",
                 name.c_str());
             break;
         }
@@ -212,7 +212,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 // you can call setRunWithCoreUnlocked(true) on the corresponding PluginCommand
 // that is registered in plugin_init.
 static command_result command_callback1(color_ostream &out, vector<string> &parameters) {
-    DEBUG(command,out).print("%s command called with %zu parameters\n",
+    DEBUG(command,out).print("{} command called with {} parameters\n",
         plugin_name, parameters.size());
 
     // Return CR_WRONG_USAGE to print out your help text. The help text is

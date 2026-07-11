@@ -254,10 +254,10 @@ struct Filter {
 private:
     std::regex category_;
     std::regex plugin_;
-    DebugCategory::level level_;
-    size_t matches_;
-    bool persistent_;
-    bool enabled_;
+    DebugCategory::level level_{DebugCategory::level::LTRACE};
+    size_t matches_{0};
+    bool persistent_{false};
+    bool enabled_{false};
     std::string categoryText_;
     std::string pluginText_;
 };
@@ -804,9 +804,9 @@ static command_result setFilter(color_ostream& out,
                 return v.match(level);
             });
     if (iter == levelNames.end()) {
-        ERR(command,out).print("level ('%s') parameter must be one of "
+        ERR(command,out).print("level ('{}') parameter must be one of "
                 "trace, debug, info, warning, error.\n",
-                parameters[pos].c_str());
+                parameters[pos]);
         return CR_WRONG_USAGE;
     }
 
@@ -1062,8 +1062,8 @@ CommandDispatch::dispatch_t CommandDispatch::dispatch {
 static command_result commandDebugFilter(color_ostream& out,
         std::vector<std::string>& parameters)
 {
-    DEBUG(command,out).print("debugfilter %s, parameter count %zu\n",
-            parameters.size() > 0 ? parameters[0].c_str() : "",
+    DEBUG(command,out).print("debugfilter {}, parameter count {}\n",
+            parameters.size() > 0 ? parameters[0] : "",
             parameters.size());
     auto iter = CommandDispatch::dispatch.end();
     if (0u < parameters.size())
@@ -1096,7 +1096,7 @@ DFhackCExport DFHack::command_result plugin_init(DFHack::color_ostream& out,
             filter.apply(*cat);
         }
     }
-    INFO(init,out).print("plugin_init with %zu commands, %zu filters and %zu categories\n",
+    INFO(init,out).print("plugin_init with {}, {} filters and {} categories\n",
             commands.size(), filMan.size(), catMan.size());
     filMan.connectTo(catMan.categorySignal);
     return rv;

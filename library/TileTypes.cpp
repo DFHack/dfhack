@@ -61,9 +61,9 @@ static df::tiletype find_match(
     {
         if (warn)
         {
-            fprintf(
-                stderr, "NOTE: No shape %s in %s.\n",
-                enum_item_key(shape).c_str(), enum_item_key(mat).c_str()
+            fmt::print(
+                stderr, "NOTE: No shape {} in {}.\n",
+                enum_item_key(shape), enum_item_key(mat)
             );
         }
 
@@ -93,10 +93,10 @@ static df::tiletype find_match(
     {
         if (warn)
         {
-            fprintf(
-                stderr, "NOTE: No special %s in %s:%s.\n",
-                enum_item_key(special).c_str(), enum_item_key(mat).c_str(),
-                enum_item_key(shape).c_str()
+            fmt::print(
+                stderr, "NOTE: No special {} in {}:{}.\n",
+                enum_item_key(special), enum_item_key(mat),
+                enum_item_key(shape)
             );
         }
 
@@ -139,10 +139,9 @@ static df::tiletype find_match(
     {
         if (warn)
         {
-            fprintf(
-                stderr, "NOTE: No direction '%s' in %s:%s:%s.\n",
-                dir.c_str(), enum_item_key(mat).c_str(),
-                enum_item_key(shape).c_str(), enum_item_key(special).c_str()
+            fmt::print(
+                stderr, "NOTE: No direction '{}' in {}:{}:{}.\n",
+                dir, enum_item_key(mat), enum_item_key(shape), enum_item_key(special)
             );
         }
 
@@ -162,10 +161,10 @@ static df::tiletype find_match(
     {
         if (warn)
         {
-            fprintf(
-                stderr, "NOTE: No variant '%s' in %s:%s:%s:%s.\n",
-                enum_item_key(variant).c_str(), enum_item_key(mat).c_str(),
-                enum_item_key(shape).c_str(), enum_item_key(special).c_str(), dir.c_str()
+            fmt::print(
+                stderr, "NOTE: No variant '{}' in {}:{}:{}:{}.\n",
+                enum_item_key(variant), enum_item_key(mat),
+                enum_item_key(shape), enum_item_key(special), dir
             );
         }
 
@@ -214,8 +213,8 @@ static void init_tables()
             tile_to_mat[tiletype_material::STONE][tt] = ttm;
 
             if (ttm == tiletype::Void)
-                fprintf(stderr, "No match for tile %s in STONE.\n",
-                        enum_item_key(tt).c_str());
+                fmt::print(stderr, "No match for tile {} in STONE.\n",
+                        enum_item_key(tt));
         }
         else
         {
@@ -233,8 +232,8 @@ static void init_tables()
                 tile_to_mat[mat][tt] = ttm;
 
                 if (ttm == tiletype::Void)
-                    fprintf(stderr, "No match for tile %s in %s.\n",
-                            enum_item_key(tt).c_str(), enum_item_key(mat).c_str());
+                    fmt::print(stderr, "No match for tile {} in {}.\n",
+                            enum_item_key(tt), enum_item_key(mat));
             }
         }
     }

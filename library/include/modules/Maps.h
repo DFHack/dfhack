@@ -31,8 +31,6 @@ distribution.
 #define CL_MOD_MAPS
 
 #include "Export.h"
-#include "Module.h"
-#include "BitArray.h"
 
 #include "modules/Materials.h"
 
@@ -40,6 +38,7 @@ distribution.
 #include "df/block_flags.h"
 #include "df/feature_type.h"
 #include "df/flow_type.h"
+#include "df/matter_state.h"
 #include "df/tile_dig_designation.h"
 #include "df/tiletype.h"
 #include "df/world_site.h"
@@ -375,6 +374,10 @@ extern DFHACK_EXPORT bool SortBlockEvents(df::map_block *block,
     std::vector<df::block_square_event_designation_priorityst *> *priorities = 0
 );
 
+// Add spatters at the specified location, returning the amount that couldn't be placed (e.g. due to overflow)
+extern DFHACK_EXPORT int32_t addMaterialSpatter (df::coord pos, int16_t mat, int32_t matg, df::matter_state state, int32_t amount);
+extern DFHACK_EXPORT int32_t addItemSpatter (df::coord pos, df::item_type i_type, int16_t i_subtype, int16_t i_subcat1, int32_t i_subcat2, int32_t print_variant, int32_t amount);
+
 // Remove a block event from the block by address.
 extern DFHACK_EXPORT bool RemoveBlockEvent(int32_t x, int32_t y, int32_t z, df::block_square_event *which );
 extern DFHACK_EXPORT bool RemoveBlockEvent(uint32_t x, uint32_t y, uint32_t z, df::block_square_event *which ); // TODO: deprecate me
@@ -403,6 +406,8 @@ DFHACK_EXPORT bool removeTileAquifer(int32_t x, int32_t y, int32_t z);
 inline bool removeTileAquifer(df::coord pos) { return removeTileAquifer(pos.x, pos.y, pos.z); }
 DFHACK_EXPORT int removeAreaAquifer(df::coord pos1, df::coord pos2,
     std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block) { return true; });
+
+DFHACK_EXPORT void addBlockColumns(int32_t new_height);
 
 
 /**

@@ -27,16 +27,24 @@ set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 # Plugins
 # If you are adding a plugin that you do not intend to commit to the DFHack repo,
 # see instructions for adding "external" plugins at the end of this file.
+#
+# CAVEAT: currently (June 2026) DFHack's core code will only autoload plugins from
+# the hack/plugins directory.  They cannot be autoloaded from mod directories.
+# This has been explicit policy for several years.
 
 # Example plugin that uses protobufs
 # proto file must be in the proto/ folder
 # dfhack_plugin(rename rename.cpp LINK_LIBRARIES lua PROTOBUFS rename)
 
+# warning: for complicated reasons, if a plugin uses a vmethod interpose, it must
+# link to lua even if it doesn't otherwise use lua. we'll fix this someday, we promise.
+# we apologize for the inconvenience.
+
 option(BUILD_SUPPORTED "Build the supported plugins (reveal, probe, etc.)." ON)
 if(BUILD_SUPPORTED)
     dfhack_plugin(3dveins 3dveins.cpp)
     dfhack_plugin(army-controller-sanity army-controller-sanity.cpp)
-    dfhack_plugin(add-spatter add-spatter.cpp)
+    dfhack_plugin(add-spatter add-spatter.cpp LINK_LIBRARIES lua)
     dfhack_plugin(aquifer aquifer.cpp LINK_LIBRARIES lua)
     dfhack_plugin(autobutcher autobutcher.cpp LINK_LIBRARIES lua)
     dfhack_plugin(autochop autochop.cpp LINK_LIBRARIES lua)
@@ -71,6 +79,7 @@ if(BUILD_SUPPORTED)
     dfhack_plugin(dwarfvet dwarfvet.cpp LINK_LIBRARIES lua)
     #dfhack_plugin(dwarfmonitor dwarfmonitor.cpp LINK_LIBRARIES lua)
     #add_subdirectory(embark-assistant)
+    dfhack_plugin(edgescroll edgescroll.cpp)
     dfhack_plugin(eventful eventful.cpp LINK_LIBRARIES lua)
     dfhack_plugin(export-map export-map.cpp COMPILE_FLAGS_GCC -fno-gnu-unique)
     dfhack_plugin(fastdwarf fastdwarf.cpp)

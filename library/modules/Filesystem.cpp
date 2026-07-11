@@ -51,7 +51,10 @@ SOFTWARE.
 #include <chrono>
 #include <iostream>
 
+#include "modules/DFSDL.h"
 #include "modules/Filesystem.h"
+
+#include "df/init.h"
 
 using namespace DFHack;
 
@@ -151,17 +154,31 @@ bool Filesystem::stat (std::filesystem::path path, std::filesystem::file_status 
 
 bool Filesystem::exists (std::filesystem::path path) noexcept
 {
-    return std::filesystem::exists(path);
+    std::error_code ec;
+    auto r = std::filesystem::exists(path, ec);
+    if (ec)
+        return false;
+    return r;
 }
 
 bool Filesystem::isfile(std::filesystem::path path) noexcept
 {
-    return std::filesystem::exists(path) && std::filesystem::is_regular_file(path);
+    std::error_code ec;
+    // is_regular_file() also checks for existence.
+    auto r = std::filesystem::is_regular_file(path, ec);
+    if (ec)
+        return false;
+    return r;
 }
 
 bool Filesystem::isdir (std::filesystem::path path) noexcept
 {
-    return std::filesystem::exists(path) && std::filesystem::is_directory(path);
+    std::error_code ec;
+    // is_directory() also checks for existence.
+    auto r = std::filesystem::is_directory(path, ec);
+    if (ec)
+        return false;
+    return r;
 }
 
 std::time_t Filesystem::mtime (std::filesystem::path path) noexcept
@@ -225,4 +242,21 @@ std::filesystem::path Filesystem::canonicalize(std::filesystem::path p) noexcept
     {
         return p;
     }
+}
+
+std::filesystem::path Filesystem::getInstallDir() noexcept
+{
+    return std::filesystem::path{ DFSDL::DFSDL_GetBasePath() };
+}
+
+std::filesystem::path Filesystem::getBaseDir() noexcept
+{
+    auto getsavebase = []() {
+        // assume portable mode is _on_ if init is missing
+        if (!df::global::init || df::global::init->media.flag.is_set(df::enums::init_media_flags::PORTABLE_MODE))
+            return DFSDL::DFSDL_GetBasePath();
+        else
+            return DFSDL::DFSDL_GetPrefPath("Bay 12 Games", "Dwarf Fortress");
+        };
+    return std::filesystem::path{ getsavebase() };
 }

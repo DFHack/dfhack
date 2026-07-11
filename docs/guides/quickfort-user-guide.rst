@@ -2298,8 +2298,10 @@ Symbol            Type                          Properties
 ``ek``            kiln
 ``en``            magma kiln
 ``ib``            ballista
+``it``            bolt thrower
 ``ic``            catapult
 ``Cw``            wall
+``CW``            reinforced wall
 ``Cf``            floor
 ``Cr``            ramp
 ``Cu``            up stair

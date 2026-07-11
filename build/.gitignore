@@ -7,3 +7,5 @@ _CPack_Packages
 *.tar.*
 .cmake
 win64-cross
+dest
+DF

@@ -25,7 +25,8 @@ distribution.
 #pragma once
 
 #include "DataDefs.h"
-#include "DataIdentity.h"
+
+#include <set>
 
 namespace DFHack
 {

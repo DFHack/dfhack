@@ -1,24 +1,18 @@
-#include "Core.h"
 #include "Debug.h"
-#include "Export.h"
 #include "PluginManager.h"
-#include "Hooks.h"
 
 #include <iostream>
-#include <map>
 #include <string>
-#include <vector>
-
-#include <stdio.h>
-#include <stdint.h>
 
 #ifdef WIN32
 #define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
 #include <windows.h>
+#include <libloaderapi.h>
 #define global_search_handle() GetModuleHandle(nullptr)
 #define get_function_address(plugin, function) GetProcAddress((HMODULE)plugin, function)
 #define clear_error()
-#define load_library(fn) LoadLibraryW(fn.c_str())
+#define load_library(fn) LoadLibraryExW(fn.wstring().c_str(), NULL, LOAD_LIBRARY_SEARCH_DEFAULT_DIRS);
 #define close_library(handle) (!(FreeLibrary((HMODULE)handle)))
 #else
 #include <dlfcn.h>
@@ -77,7 +71,7 @@ namespace DFHack
         DFLibrary* ret = (DFLibrary*)load_library(filename);
         if (!ret) {
             auto error = get_error();
-            WARN(plugins).print("OpenPlugin on %s failed: %s\n", filename.string().c_str(), error.c_str());
+            WARN(plugins).print("OpenPlugin on {} failed: {}\n", filename.string(), error);
         }
         return ret;
     }
@@ -91,7 +85,7 @@ namespace DFHack
         if (res != 0)
         {
             auto error = get_error();
-            WARN(plugins).print("ClosePlugin failed: %s\n", error.c_str());
+            WARN(plugins).print("ClosePlugin failed: {}\n", error);
         }
         return (res == 0);
 

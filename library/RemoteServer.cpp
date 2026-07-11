@@ -35,27 +35,36 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
+#ifdef WIN32
+#define NOMINMAX
+#endif
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <exception>
+#include <future>
+#include <ios>
 #include <iostream>
+#include <mutex>
 #include <fstream>
-#include <istream>
 #include <string>
-#include <stdint.h>
+#include <utility>
+#include <vector>
 
+#include "ColorText.h"
+#include "Core.h"
+#include "CoreDefs.h"
+#include "Debug.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
+
+#include "ActiveSocket.h"
+#include "Host.h"
+#include "RemoteClient.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
-
 #include "PassiveSocket.h"
-#include "PluginManager.h"
-#include "MiscUtils.h"
-#include "Debug.h"
-
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
+#include "SimpleSocket.h"
 
 #include <memory>
 #include <thread>
@@ -189,14 +198,14 @@ ServerFunctionBase *ServerConnection::findFunction(color_ostream &out, const std
             Plugin *plug = Core::getInstance().plug_mgr->getPluginByName(plugin);
             if (!plug)
             {
-                out.printerr("No such plugin: %s\n", plugin.c_str());
+                out.printerr("No such plugin: {}\n", plugin);
                 return NULL;
             }
 
             svc = plug->rpc_connect(out);
             if (!svc)
             {
-                out.printerr("Plugin %s doesn't export any RPC methods.\n", plugin.c_str());
+                out.printerr("Plugin {} doesn't export any RPC methods.\n", plugin);
                 return NULL;
             }
 
@@ -299,7 +308,7 @@ void ServerConnection::threadFn()
 
         if (header.size < 0 || header.size > RPCMessageHeader::MAX_MESSAGE_SIZE)
         {
-            out.printerr("In RPC server: invalid received size %d.\n", header.size);
+            out.printerr("In RPC server: invalid received size {}.\n", header.size);
             break;
         }
 
@@ -307,7 +316,7 @@ void ServerConnection::threadFn()
 
         if (!readFullBuffer(socket, buf.get(), header.size))
         {
-            out.printerr("In RPC server: I/O error in receive %d bytes of data.\n", header.size);
+            out.printerr("In RPC server: I/O error in receive {} bytes of data.\n", header.size);
             break;
         }
 
@@ -323,17 +332,17 @@ void ServerConnection::threadFn()
 
         if (!fn)
         {
-            stream.printerr("RPC call of invalid id %d\n", header.id);
+            stream.printerr("RPC call of invalid id {}\n", header.id);
         }
         else
         {
             if (((fn->flags & SF_ALLOW_REMOTE) != SF_ALLOW_REMOTE) && strcmp(socket->GetClientAddr(), "127.0.0.1") != 0)
             {
-                stream.printerr("In call to %s: forbidden host: %s\n", fn->name, socket->GetClientAddr());
+                stream.printerr("In call to {}: forbidden host: {}\n", fn->name, socket->GetClientAddr());
             }
             else if (!fn->in()->ParseFromArray(buf.get(), header.size))
             {
-                stream.printerr("In call to %s: could not decode input args.\n", fn->name);
+                stream.printerr("In call to {}: could not decode input args.\n", fn->name);
             }
             else
             {
@@ -364,7 +373,7 @@ void ServerConnection::threadFn()
 
         if (out_size > RPCMessageHeader::MAX_MESSAGE_SIZE)
         {
-            stream.printerr("In call to %s: reply too large: %d.\n",
+            stream.printerr("In call to {}: reply too large: {}.\n",
                                 (fn ? fn->name : "UNKNOWN"), out_size);
             res = CR_LINK_FAILURE;
         }
@@ -489,7 +498,7 @@ void ServerMainImpl::threadFn(std::promise<bool> promise, int port)
                 break;
             case CSimpleSocket::SocketFirewallError:
             case CSimpleSocket::SocketProtocolError:
-                WARN(socket).print("Connection failed: %s\n", server.socket.DescribeError());
+                WARN(socket).print("Connection failed: {}\n", server.socket.DescribeError());
                 break;
             default:
                 break;

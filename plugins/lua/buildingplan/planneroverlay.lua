@@ -119,6 +119,10 @@ local function is_construction()
     return uibs.building_type == df.building_type.Construction
 end
 
+local function is_siege_engine()
+    return uibs.building_type == df.building_type.SiegeEngine
+end
+
 local function tile_is_construction(pos)
     local tt = dfhack.maps.getTileType(pos)
     if not tt then return false end
@@ -235,6 +239,7 @@ local direction_panel_types = utils.invert{
     df.building_type.WaterWheel,
     df.building_type.AxleHorizontal,
     df.building_type.Rollers,
+    df.building_type.SiegeEngine,
 }
 
 local function has_direction_panel()
@@ -1307,10 +1312,16 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
         if is_stairs() then
             subtype = self:get_stairs_subtype(pos, pd)
         end
+        local fields = {}
+        if is_siege_engine() then
+            local facing = df.global.buildreq.direction
+            fields.facing = facing
+            fields.resting_orientation = facing
+        end
         local bld, err = dfhack.buildings.constructBuilding{pos=pos,
             type=uibs.building_type, subtype=subtype, custom=uibs.custom_type,
             width=pd.width, height=pd.height,
-            direction=uibs.direction, filters=filters}
+            direction=uibs.direction, filters=filters, fields=fields}
         if err then
             -- it's ok if some buildings fail to build
             goto continue

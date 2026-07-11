@@ -12,6 +12,7 @@
 #include "df/building_stockpilest.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
+#include "df/descriptor_color.h"
 #include "df/inorganic_raw.h"
 #include "df/item_quality.h"
 #include <df/itemdef_ammost.h>
@@ -179,8 +180,8 @@ bool StockpileSettingsSerializer::serialize_to_ostream(color_ostream& out, std::
 bool StockpileSettingsSerializer::serialize_to_file(color_ostream& out, const string& file, uint32_t includedElements) {
     std::fstream output(file, std::ios::out | std::ios::binary | std::ios::trunc);
     if (output.fail()) {
-        WARN(log, out).print("ERROR: failed to open file for writing: '%s'\n",
-                file.c_str());
+        WARN(log, out).print("ERROR: failed to open file for writing: '{}'\n",
+                file);
         return false;
     }
     return serialize_to_ostream(out, &output, includedElements);
@@ -201,8 +202,8 @@ bool StockpileSettingsSerializer::parse_from_istream(color_ostream &out, std::is
 bool StockpileSettingsSerializer::unserialize_from_file(color_ostream &out, const string& file, DeserializeMode mode, const vector<string>& filters) {
     std::fstream input(file, std::ios::in | std::ios::binary);
     if (input.fail()) {
-        WARN(log, out).print("failed to open file for reading: '%s'\n",
-                file.c_str());
+        WARN(log, out).print("failed to open file for reading: '{}'\n",
+                file);
         return false;
     }
     return parse_from_istream(out, &input, mode, filters);
@@ -223,7 +224,7 @@ static typename df::enum_traits<E>::base_type token_to_enum_val(const string& to
 
 static bool matches_filter(color_ostream& out, const vector<string>& filters, const string& name) {
     for (auto & filter : filters) {
-        DEBUG(log, out).print("searching for '%s' in '%s'\n", filter.c_str(), name.c_str());
+        DEBUG(log, out).print("searching for '{}' in '{}'\n", filter, name);
         if (std::search(name.begin(), name.end(), filter.begin(), filter.end(),
             [](unsigned char ch1, unsigned char ch2) { return std::toupper(ch1) == std::toupper(ch2); }
         ) != name.end())
@@ -234,7 +235,7 @@ static bool matches_filter(color_ostream& out, const vector<string>& filters, co
 
 static void set_flag(color_ostream& out, const char* name, const vector<string>& filters, bool all, char val, bool enabled, bool& elem) {
     if ((all || enabled) && matches_filter(out, filters, name)) {
-        DEBUG(log, out).print("setting %s to %d\n", name, val);
+        DEBUG(log, out).print("setting {} to {}\n", name, val);
         elem = val;
     }
 }
@@ -242,7 +243,7 @@ static void set_flag(color_ostream& out, const char* name, const vector<string>&
 static void set_filter_elem(color_ostream& out, const char* subcat, const vector<string>& filters, char val,
         const string& name, const string& id, char& elem) {
     if (matches_filter(out, filters, subcat + ((*subcat ? "/" : "") + name))) {
-        DEBUG(log, out).print("setting %s (%s) to %d\n", name.c_str(), id.c_str(), val);
+        DEBUG(log, out).print("setting {} ({}) to {}\n", name, id, val);
         elem = val;
     }
 }
@@ -251,7 +252,7 @@ template<typename T_val, typename T_id>
 static void set_filter_elem(color_ostream& out, const char* subcat, const vector<string>& filters, T_val val,
         const string& name, T_id id, T_val& elem) {
     if (matches_filter(out, filters, subcat + ((*subcat ? "/" : "") + name))) {
-        DEBUG(log, out).print("setting %s (%d) to %d\n", name.c_str(), (int32_t)id, val);
+        DEBUG(log, out).print("setting {} ({}) to {}\n", name, id, val);
         elem = val;
     }
 }
@@ -286,7 +287,7 @@ static bool serialize_list_itemdef(color_ostream& out, FuncWriteExport add_value
         ItemTypeInfo ii;
         if (!ii.decode(type, i))
             continue;
-        DEBUG(log, out).print("adding itemdef type %s\n", ii.getToken().c_str());
+        DEBUG(log, out).print("adding itemdef type {}\n", ii.getToken());
         add_value(ii.getToken());
     }
     return all;
@@ -311,7 +312,7 @@ static void unserialize_list_itemdef(color_ostream& out, const char* subcat, boo
         if (!ii.find(id))
             continue;
         if (ii.subtype < 0 || size_t(ii.subtype) >= pile_list.size()) {
-            WARN(log, out).print("item type index invalid: %d\n", ii.subtype);
+            WARN(log, out).print("item type index invalid: {}\n", ii.subtype);
             continue;
         }
         set_filter_elem(out, subcat, filters, val, id, ii.subtype, pile_list.at(ii.subtype));
@@ -331,7 +332,7 @@ static bool serialize_list_quality(color_ostream& out, FuncWriteExport add_value
         }
         const string f_type(quality_traits::key_table[i]);
         add_value(f_type);
-        DEBUG(log, out).print("adding quality %s\n", f_type.c_str());
+        DEBUG(log, out).print("adding quality {}\n", f_type);
     }
     return all;
 }
@@ -355,7 +356,7 @@ static void unserialize_list_quality(color_ostream& out, const char* subcat, boo
         const string quality = read_value(i);
         df::enum_traits<item_quality>::base_type idx = token_to_enum_val<item_quality>(quality);
         if (idx < 0) {
-            WARN(log, out).print("invalid quality token: %s\n", quality.c_str());
+            WARN(log, out).print("invalid quality token: {}\n", quality);
             continue;
         }
         set_filter_elem(out, subcat, filters, val, quality, idx, pile_list[idx]);
@@ -391,11 +392,11 @@ static bool serialize_list_other_mats(color_ostream& out,
         }
         const string token = other_mats_index(other_mats, i);
         if (token.empty()) {
-            WARN(log, out).print("invalid other material with index %zd\n", i);
+            WARN(log, out).print("invalid other material with index {}\n", i);
             continue;
         }
         add_value(token);
-        DEBUG(log, out).print("other mats %zd is %s\n", i, token.c_str());
+        DEBUG(log, out).print("other mats {} is {}\n", i, token);
     }
     return all;
 }
@@ -415,11 +416,11 @@ static void unserialize_list_other_mats(color_ostream& out, const char* subcat, 
         const string token = read_value(i);
         size_t idx = other_mats_token(other_mats, token);
         if (idx < 0) {
-            WARN(log, out).print("invalid other mat with token %s\n", token.c_str());
+            WARN(log, out).print("invalid other mat with token {}\n", token);
             continue;
         }
         if (idx >= num_elems) {
-            WARN(log, out).print("other_mats index too large! idx[%zd] max_size[%zd]\n", idx, num_elems);
+            WARN(log, out).print("other_mats index too large! idx[{}] max_size[{}]\n", idx, num_elems);
             continue;
         }
         set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
@@ -446,7 +447,7 @@ static bool serialize_list_organic_mat(color_ostream& out, FuncWriteExport add_v
             DEBUG(log, out).print("food mat invalid :(\n");
             continue;
         }
-        DEBUG(log, out).print("organic_material %zd is %s\n", i, token.c_str());
+        DEBUG(log, out).print("organic_material {} is {}\n", i, token);
         add_value(token);
     }
     return all;
@@ -488,12 +489,63 @@ static void unserialize_list_organic_mat(color_ostream& out, const char* subcat,
         const string token = read_value(i);
         int16_t idx = OrganicMatLookup::food_idx_by_token(out, cat, token);
         if (idx < 0 || size_t(idx) >= num_elems) {
-            WARN(log, out).print("organic mat index too large! idx[%d] max_size[%zd]\n", idx, num_elems);
+            WARN(log, out).print("organic mat index too large! idx[{}] max_size[{}]\n", idx, num_elems);
             continue;
         }
         OrganicMatLookup::FoodMat food_mat;
         OrganicMatLookup::food_mat_by_idx(out, cat, idx, food_mat);
         set_filter_elem(out, subcat, filters, val, get_filter_string(out, food_mat), idx, pile_list.at(idx));
+    }
+}
+
+static bool serialize_list_color(color_ostream& out, FuncWriteExport add_value, const vector<char>* colors) {
+    bool all = world->raws.descriptors.colors.size() == colors->size();
+    if (!colors) {
+        DEBUG(log, out).print("serialize_list_color: list null\n");
+        return all;
+    }
+    for (size_t i = 0; i < colors->size(); ++i) {
+        if (!colors->at(i)) {
+            all = false;
+            continue;
+        }
+        add_value(world->raws.descriptors.colors[i]->id);
+    }
+    return all;
+}
+
+// Find the index of a named color, returning SIZE_MAX on unknown.
+static size_t find_color_by_token(const string& token) {
+    auto& colors = world->raws.descriptors.colors;
+    size_t num_colors = colors.size();
+    for (size_t idx = 0; idx < num_colors; ++ idx) {
+        if (colors[idx]->id == token) {
+            return idx;
+        }
+    }
+    return SIZE_MAX;
+}
+
+static void unserialize_list_color(color_ostream& out, const char* subcat, bool all, char val, const vector<string>& filters,
+        FuncReadImport read_value, int32_t list_size, vector<char>& pile_list) {
+    size_t num_elems = world->raws.descriptors.colors.size();
+    pile_list.resize(num_elems, '\0');
+    if (all) {
+        for (size_t idx = 0; idx < num_elems; ++idx) {
+            set_filter_elem(out, subcat, filters, val, world->raws.descriptors.colors[idx]->id, idx, pile_list[idx]);
+        }
+        return;
+    }
+
+    for (int32_t idx = 0; idx < list_size; ++idx) {
+        const string& value = read_value(idx);
+
+        size_t color = find_color_by_token(value);
+        if (color == SIZE_MAX) {
+            WARN(log, out).print("unknown color {}\n", value);
+            continue;
+        }
+        set_filter_elem(out, subcat, filters, val, value, color, pile_list[color]);
     }
 }
 
@@ -504,7 +556,7 @@ static bool serialize_list_item_type(color_ostream& out, FuncItemAllowed is_allo
 
     bool all = true;
     size_t num_item_types = list.size();
-    DEBUG(log, out).print("item_type size = %zd size limit = %d typecasted: %zd\n",
+    DEBUG(log, out).print("item_type size = {} size limit = {} typecasted: {}\n",
             num_item_types, type_traits::last_item_value,
             (size_t)type_traits::last_item_value);
     for (size_t i = 0; i <= (size_t)type_traits::last_item_value; ++i) {
@@ -517,7 +569,7 @@ static bool serialize_list_item_type(color_ostream& out, FuncItemAllowed is_allo
         if (!is_allowed(type))
             continue;
         add_value(r_type);
-        DEBUG(log, out).print("item_type key_table[%zd] type[%d] is %s\n", i + 1, (int16_t)type, r_type.c_str());
+        DEBUG(log, out).print("item_type key_table[{}] type[{}] is {}\n", i + 1, (int16_t)type, r_type);
     }
     return all;
 }
@@ -547,7 +599,7 @@ static void unserialize_list_item_type(color_ostream& out, const char* subcat, b
         if (!is_allowed((item_type)idx))
             continue;
         if (idx < 0 || size_t(idx) >= num_elems) {
-            WARN(log, out).print("error item_type index too large! idx[%d] max_size[%zd]\n", idx, num_elems);
+            WARN(log, out).print("error item_type index too large! idx[{}] max_size[{}]\n", idx, num_elems);
             continue;
         }
         set_filter_elem(out, subcat, filters, val, token, idx, pile_list.at(idx));
@@ -566,7 +618,7 @@ static bool serialize_list_material(color_ostream& out, FuncMaterialAllowed is_a
         mi.decode(0, i);
         if (!is_allowed(mi))
             continue;
-        DEBUG(log, out).print("adding material %s\n", mi.getToken().c_str());
+        DEBUG(log, out).print("adding material {}\n", mi.getToken());
         add_value(mi.getToken());
     }
     return all;
@@ -600,7 +652,7 @@ static void unserialize_list_material(color_ostream& out, const char* subcat, bo
         if (!mi.find(id) || !is_allowed(mi))
             continue;
         if (mi.index < 0 || size_t(mi.index) >= pile_list.size()) {
-            WARN(log, out).print("material type index invalid: %d\n", mi.index);
+            WARN(log, out).print("material type index invalid: {}\n", mi.index);
             continue;
         }
         set_filter_elem(out, subcat, filters, val, id, mi.index, pile_list.at(mi.index));
@@ -619,7 +671,7 @@ static bool serialize_list_creature(color_ostream& out, FuncWriteExport add_valu
         if (r->flags.is_set(creature_raw_flags::GENERATED)
                 || r->creature_id == "EQUIPMENT_WAGON")
             continue;
-        DEBUG(log, out).print("adding creature %s\n", r->creature_id.c_str());
+        DEBUG(log, out).print("adding creature {}\n", r->creature_id);
         add_value(r->creature_id);
     }
     return all;
@@ -649,7 +701,7 @@ static void unserialize_list_creature(color_ostream& out, const char* subcat, bo
         string id = read_value(i);
         int idx = find_creature(id);
         if (idx < 0 || size_t(idx) >= num_elems) {
-            WARN(log, out).print("animal index invalid: %d\n", idx);
+            WARN(log, out).print("animal index invalid: {}\n", idx);
             continue;
         }
         auto r = find_creature(idx);
@@ -669,7 +721,7 @@ static void write_cat(color_ostream& out, const char* name, bool include_types, 
     T_cat_set* cat_set = mutable_cat_fn();
 
     if (!include_types) {
-        DEBUG(log, out).print("including all for %s since only category is being recorded\n", name);
+        DEBUG(log, out).print("including all for {} since only category is being recorded\n", name);
         cat_set->set_all(true);
         return;
     }
@@ -677,7 +729,7 @@ static void write_cat(color_ostream& out, const char* name, bool include_types, 
     if (write_cat_fn(out, cat_set)) {
         // all fields were set. clear them and use the "all" flag instead so "all" can be applied
         // to other worlds with other generated types
-        DEBUG(log, out).print("including all for %s since all fields were enabled\n", name);
+        DEBUG(log, out).print("including all for {} since all fields were enabled\n", name);
         cat_set->Clear();
         cat_set->set_all(true);
     }
@@ -690,7 +742,7 @@ void StockpileSettingsSerializer::write(color_ostream& out, uint32_t includedEle
     if (!(includedElements & INCLUDED_ELEMENTS_CATEGORIES))
         return;
 
-    DEBUG(log, out).print("GROUP SET %s\n",
+    DEBUG(log, out).print("GROUP SET {}\n",
             bitfield_to_string(mSettings->flags).c_str());
 
     bool include_types = 0 != (includedElements & INCLUDED_ELEMENTS_TYPES);
@@ -841,7 +893,7 @@ static void read_elem(color_ostream& out, const char* name, DeserializeMode mode
     bool is_set = elem_fn() != 0;
     if (mode == DESERIALIZE_MODE_SET || is_set) {
         T_elem val = (mode == DESERIALIZE_MODE_DISABLE) ? 0 : elem_fn();
-        DEBUG(log, out).print("setting %s to %d\n", name, val);
+        DEBUG(log, out).print("setting {} to {}\n", name, val);
         setting = val;
     }
 }
@@ -855,7 +907,7 @@ static void read_category(color_ostream& out, const char* name, DeserializeMode 
         std::function<void()> clear_fn,
         std::function<void(bool, char)> set_fn) {
     if (mode == DESERIALIZE_MODE_SET) {
-        DEBUG(log, out).print("clearing %s\n", name);
+        DEBUG(log, out).print("clearing {}\n", name);
         cat_flags &= ~cat_mask;
         clear_fn();
     }
@@ -871,7 +923,7 @@ static void read_category(color_ostream& out, const char* name, DeserializeMode 
 
     bool all = cat_fn().all();
     char val = (mode == DESERIALIZE_MODE_DISABLE) ? (char)0 : (char)1;
-    DEBUG(log, out).print("setting %s %s elements to %d\n",
+    DEBUG(log, out).print("setting {} {} elements to {}\n",
             all ? "all" : "marked", name, val);
     set_fn(all, val);
 }
@@ -918,7 +970,7 @@ void StockpileSerializer::read_general(color_ostream& out, DeserializeMode mode)
     if (!mBuffer.has_use_links_only())
         return;
     bool use_links_only = mBuffer.use_links_only();
-    DEBUG(log, out).print("setting use_links_only to %d\n", use_links_only);
+    DEBUG(log, out).print("setting use_links_only to {}\n", use_links_only);
     mPile->stockpile_flag.bits.use_links_only = use_links_only;
 }
 
@@ -939,7 +991,7 @@ bool StockpileSettingsSerializer::write_ammo(color_ostream& out, StockpileSettin
         mSettings->ammo.mats) && all;
 
     if (mSettings->ammo.other_mats.size() > 2) {
-        WARN(log, out).print("ammo other materials > 2: %zd\n",
+        WARN(log, out).print("ammo other materials > 2: {}\n",
             mSettings->ammo.other_mats.size());
     }
 
@@ -952,7 +1004,7 @@ bool StockpileSettingsSerializer::write_ammo(color_ostream& out, StockpileSettin
         }
         const string token = i == 0 ? "WOOD" : "BONE";
         ammo->add_other_mats(token);
-        DEBUG(log, out).print("other mats %zd is %s\n", i, token.c_str());
+        DEBUG(log, out).print("other mats {} is {}\n", i, token);
     }
 
     all = serialize_list_quality(out,
@@ -1059,10 +1111,12 @@ static bool armor_mat_is_allowed(const MaterialInfo& mi) {
 bool StockpileSettingsSerializer::write_armor(color_ostream& out, StockpileSettings::ArmorSet* armor) {
 
     auto & parmor = mSettings->armor;
-    bool all = parmor.unusable && parmor.usable;
+    bool all = parmor.unusable && parmor.usable && parmor.dyed && parmor.undyed;
 
     armor->set_unusable(parmor.unusable);
     armor->set_usable(parmor.usable);
+    armor->set_dyed(parmor.dyed);
+    armor->set_undyed(parmor.undyed);
 
     // armor type
     all = serialize_list_itemdef(out,
@@ -1125,6 +1179,9 @@ bool StockpileSettingsSerializer::write_armor(color_ostream& out, StockpileSetti
     all = serialize_list_quality(out, [&](const string& token) { armor->add_quality_total(token); },
         parmor.quality_total) && all;
 
+    all = serialize_list_color(out, [&](const string& token) { armor->add_color(token); },
+            &parmor.color) && all;
+
     return all;
 }
 
@@ -1148,6 +1205,9 @@ void StockpileSettingsSerializer::read_armor(color_ostream& out, DeserializeMode
             parmor.mats.clear();
             quality_clear(parmor.quality_core);
             quality_clear(parmor.quality_total);
+            parmor.dyed = false;
+            parmor.undyed = false;
+            parmor.color.clear();
         },
         [&](bool all, char val) {
             auto & barmor = mBuffer.armor();
@@ -1195,6 +1255,13 @@ void StockpileSettingsSerializer::read_armor(color_ostream& out, DeserializeMode
             unserialize_list_quality(out, "total", all, val, filters,
                 [&](const size_t& idx) -> const string& { return barmor.quality_total(idx); },
                 barmor.quality_total_size(), parmor.quality_total);
+
+            unserialize_list_color(out, "color", all, val, filters,
+                [&](const size_t& idx) -> const string& { return barmor.color(idx); },
+                barmor.color_size(), parmor.color);
+
+            set_flag(out, "dyed", filters, all, val, barmor.dyed(), parmor.dyed);
+            set_flag(out, "undyed", filters, all, val, barmor.undyed(), parmor.undyed);
         });
 }
 
@@ -1266,7 +1333,9 @@ void StockpileSettingsSerializer::read_bars_blocks(color_ostream& out, Deseriali
 }
 
 bool StockpileSettingsSerializer::write_cloth(color_ostream& out, StockpileSettings::ClothSet* cloth) {
-    bool all = true;
+    bool all = mSettings->cloth.dyed && mSettings->cloth.undyed;
+    cloth->set_dyed(mSettings->cloth.dyed);
+    cloth->set_undyed(mSettings->cloth.undyed);
 
     all = serialize_list_organic_mat(out,
         [&](const string& token) { cloth->add_thread_silk(token); },
@@ -1300,6 +1369,10 @@ bool StockpileSettingsSerializer::write_cloth(color_ostream& out, StockpileSetti
         [&](const string& token) { cloth->add_cloth_metal(token); },
         &mSettings->cloth.cloth_metal, organic_mat_category::MetalThread) && all;
 
+    all = serialize_list_color(out,
+        [&](const string& token) { cloth->add_color(token); },
+        &mSettings->cloth.color) && all;
+
     return all;
 }
 
@@ -1319,6 +1392,9 @@ void StockpileSettingsSerializer::read_cloth(color_ostream& out, DeserializeMode
             pcloth.cloth_plant.clear();
             pcloth.cloth_yarn.clear();
             pcloth.cloth_metal.clear();
+            pcloth.dyed = false;
+            pcloth.undyed = false;
+            pcloth.color.clear();
         },
         [&](bool all, char val) {
             auto & bcloth = mBuffer.cloth();
@@ -1354,6 +1430,13 @@ void StockpileSettingsSerializer::read_cloth(color_ostream& out, DeserializeMode
             unserialize_list_organic_mat(out, "cloth/metal", all, val, filters,
                 [&](size_t idx) -> string { return bcloth.cloth_metal(idx); },
                 bcloth.cloth_metal_size(), pcloth.cloth_metal, organic_mat_category::MetalThread);
+
+            unserialize_list_color(out, "cloth/color", all, val, filters,
+                [&](size_t idx) -> string { return bcloth.color(idx); },
+                bcloth.color_size(), pcloth.color);
+
+            set_flag(out, "dyed", filters, all, val, bcloth.dyed(), pcloth.dyed);
+            set_flag(out, "undyed", filters, all, val, bcloth.undyed(), pcloth.undyed);
         });
 }
 
@@ -1425,10 +1508,14 @@ static bool finished_goods_mat_is_allowed(const MaterialInfo& mi) {
 }
 
 bool StockpileSettingsSerializer::write_finished_goods(color_ostream& out, StockpileSettings::FinishedGoodsSet* finished_goods) {
-    bool all = serialize_list_item_type(out,
+    bool all = mSettings->finished_goods.dyed && mSettings->finished_goods.undyed;
+    finished_goods->set_dyed(mSettings->finished_goods.dyed);
+    finished_goods->set_undyed(mSettings->finished_goods.undyed);
+
+    all = serialize_list_item_type(out,
         finished_goods_type_is_allowed,
         [&](const string& token) { finished_goods->add_type(token); },
-        mSettings->finished_goods.type);
+        mSettings->finished_goods.type) && all;
 
     all = serialize_list_material(out,
         finished_goods_mat_is_allowed,
@@ -1447,6 +1534,10 @@ bool StockpileSettingsSerializer::write_finished_goods(color_ostream& out, Stock
         [&](const string& token) { finished_goods->add_quality_total(token); },
         mSettings->finished_goods.quality_total) && all;
 
+    all = serialize_list_color(out,
+        [&](const string& token) { finished_goods->add_color(token); },
+        &mSettings->finished_goods.color) && all;
+
     return all;
 }
 
@@ -1463,6 +1554,9 @@ void StockpileSettingsSerializer::read_finished_goods(color_ostream& out, Deseri
             pfinished_goods.mats.clear();
             quality_clear(pfinished_goods.quality_core);
             quality_clear(pfinished_goods.quality_total);
+            pfinished_goods.dyed = false;
+            pfinished_goods.undyed = false;
+            pfinished_goods.color.clear();
         },
         [&](bool all, char val) {
             auto & bfinished_goods = mBuffer.finished_goods();
@@ -1486,6 +1580,13 @@ void StockpileSettingsSerializer::read_finished_goods(color_ostream& out, Deseri
             unserialize_list_quality(out, "total", all, val, filters,
                 [&](const size_t& idx) -> const string& { return bfinished_goods.quality_total(idx); },
                 bfinished_goods.quality_total_size(), pfinished_goods.quality_total);
+
+            unserialize_list_color(out, "color", all, val, filters,
+                [&](const size_t& idx) -> const string& { return bfinished_goods.color(idx); },
+                bfinished_goods.color_size(), pfinished_goods.color);
+
+            set_flag(out, "dyed", filters, all, val, bfinished_goods.dyed(), pfinished_goods.dyed);
+            set_flag(out, "undyed", filters, all, val, bfinished_goods.undyed(), pfinished_goods.undyed);
         });
 }
 
@@ -1731,7 +1832,6 @@ static bool furniture_mat_is_allowed(const MaterialInfo& mi) {
 
 bool StockpileSettingsSerializer::write_furniture(color_ostream& out, StockpileSettings::FurnitureSet* furniture) {
     using df::enums::furniture_type::furniture_type;
-    using type_traits = df::enum_traits<furniture_type>;
 
     auto & pfurniture = mSettings->furniture;
     bool all = true;
@@ -1741,9 +1841,9 @@ bool StockpileSettingsSerializer::write_furniture(color_ostream& out, StockpileS
             all = false;
             continue;
         }
-        string f_type(type_traits::key_table[i]);
+        string f_type{ENUM_KEY_STR(furniture_type, furniture_type(i))};
         furniture->add_type(f_type);
-        DEBUG(log, out).print("furniture_type %zd is %s\n", i, f_type.c_str());
+        DEBUG(log, out).print("furniture_type {} is {}\n", i, f_type);
     }
 
     all = serialize_list_material(out,
@@ -1796,7 +1896,7 @@ void StockpileSettingsSerializer::read_furniture(color_ostream& out, Deserialize
                     const string token = bfurniture.type(i);
                     df::enum_traits<furniture_type>::base_type idx = token_to_enum_val<furniture_type>(token);
                     if (idx < 0 || size_t(idx) >= pfurniture.type.size()) {
-                        WARN(log, out).print("furniture type index invalid %s, idx=%d\n", token.c_str(), idx);
+                        WARN(log, out).print("furniture type index invalid {}, idx={}\n", token, idx);
                         continue;
                     }
                     set_filter_elem(out, "type", filters, val, token, idx, pfurniture.type.at(idx));
@@ -1856,7 +1956,7 @@ bool StockpileSettingsSerializer::write_gems(color_ostream& out, StockpileSettin
         mi.decode(i, -1);
         if (!gem_other_mat_is_allowed(mi))
             continue;
-        DEBUG(log, out).print("gem rough_other mat %zd is %s\n", i, mi.getToken().c_str());
+        DEBUG(log, out).print("gem rough_other mat {} is {}\n", i, mi.getToken());
         gems->add_rough_other_mats(mi.getToken());
     }
 
@@ -1870,7 +1970,7 @@ bool StockpileSettingsSerializer::write_gems(color_ostream& out, StockpileSettin
             mi.decode(0, i);
         if (!gem_other_mat_is_allowed(mi))
             continue;
-        DEBUG(log, out).print("gem cut_other mat %zd is %s\n", i, mi.getToken().c_str());
+        DEBUG(log, out).print("gem cut_other mat {} is {}\n", i, mi.getToken());
         gems->add_cut_other_mats(mi.getToken());
     }
 
@@ -1935,9 +2035,17 @@ void StockpileSettingsSerializer::read_gems(color_ostream& out, DeserializeMode 
 }
 
 bool StockpileSettingsSerializer::write_leather(color_ostream& out, StockpileSettings::LeatherSet* leather) {
-    return serialize_list_organic_mat(out,
+    bool all = mSettings->leather.dyed && mSettings->leather.undyed;
+    leather->set_dyed(mSettings->leather.dyed);
+    leather->set_undyed(mSettings->leather.undyed);
+
+    all = serialize_list_organic_mat(out,
         [&](const string& id) { leather->add_mats(id); },
-        &mSettings->leather.mats, organic_mat_category::Leather);
+        &mSettings->leather.mats, organic_mat_category::Leather) && all;
+    all = serialize_list_color(out,
+            [&](const string& id) { leather->add_color(id); },
+            &mSettings->leather.color) && all;
+    return all;
 }
 
 void StockpileSettingsSerializer::read_leather(color_ostream& out, DeserializeMode mode, const vector<string>& filters) {
@@ -1949,6 +2057,9 @@ void StockpileSettingsSerializer::read_leather(color_ostream& out, DeserializeMo
         mSettings->flags.mask_leather,
         [&]() {
             pleather.mats.clear();
+            pleather.color.clear();
+            pleather.dyed = false;
+            pleather.undyed = false;
         },
         [&](bool all, char val) {
             auto & bleather = mBuffer.leather();
@@ -1956,6 +2067,12 @@ void StockpileSettingsSerializer::read_leather(color_ostream& out, DeserializeMo
             unserialize_list_organic_mat(out, "", all, val, filters,
                 [&](size_t idx) -> string { return bleather.mats(idx); },
                 bleather.mats_size(), pleather.mats, organic_mat_category::Leather);
+            unserialize_list_color(out, "", all, val, filters,
+                [&](size_t idx) -> string { return bleather.color(idx); },
+                bleather.color_size(), pleather.color);
+
+            set_flag(out, "dyed", filters, all, val, bleather.dyed(), pleather.dyed);
+            set_flag(out, "undyed", filters, all, val, bleather.undyed(), pleather.undyed);
         });
 }
 
@@ -2267,7 +2384,7 @@ bool StockpileSettingsSerializer::write_wood(color_ostream& out, StockpileSettin
         if (!wood_mat_is_allowed(plant))
             continue;
         wood->add_mats(plant->id);
-        DEBUG(log, out).print("plant %zd is %s\n", i, plant->id.c_str());
+        DEBUG(log, out).print("plant {} is {}\n", i, plant->id);
     }
     return all;
 }
@@ -2298,7 +2415,7 @@ void StockpileSettingsSerializer::read_wood(color_ostream& out, DeserializeMode 
                     const string token = bwood.mats(i);
                     const size_t idx = find_plant(token);
                     if (idx < 0 || (size_t)idx >= num_elems) {
-                        WARN(log, out).print("wood mat index invalid %s idx=%zd\n", token.c_str(), idx);
+                        WARN(log, out).print("wood mat index invalid {}, idx={}\n", token, idx);
                         continue;
                     }
                     set_filter_elem(out, "", filters, val, token, idx, pwood.mats.at(idx));

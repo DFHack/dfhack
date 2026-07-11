@@ -5,9 +5,6 @@
  * Written by cdombroski.
  */
 
-#include <sstream>
-#include <unordered_map>
-
 #include "Console.h"
 #include "DataDefs.h"
 #include "DataFuncs.h"
@@ -19,8 +16,10 @@
 #include "TileTypes.h"
 
 #include "modules/Buildings.h"
+#include "modules/Constructions.h"
 #include "modules/Filesystem.h"
 #include "modules/Gui.h"
+#include "modules/Hotkey.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
 
@@ -36,12 +35,17 @@
 #include "df/building_trapst.h"
 #include "df/building_water_wheelst.h"
 #include "df/building_workshopst.h"
+#include "df/construction.h"
 #include "df/engraving.h"
 #include "df/entity_position.h"
 #include "df/tile_bitmask.h"
 #include "df/tile_designation.h"
 #include "df/tile_occupancy.h"
 #include "df/world.h"
+
+#include <queue>
+#include <sstream>
+#include <unordered_map>
 
 using std::endl;
 using std::map;
@@ -181,7 +185,12 @@ struct blueprint_processor {
           get_tile(get_tile), init_ctx(init_ctx) { }
 };
 
-// global caches, cleared when the string cache is cleared
+// global caches, lazily initialized and cleared at the end of each blueprint
+// this assumes that no two blueprints are being generated at the same time,
+// which is currently ensured by the higher-level DFHack command handling code.
+// if this assumption ever becomes untrue, we'll need to protect the caches
+// with thread synchronization primitives or make the caches per-blueprint.
+static std::set<string> string_cache;
 static std::unordered_map<df::coord, df::engraving *> engravings_cache;
 static std::unordered_map<df::coord, df::job *> dig_job_cache;
 static PersistentDataItem warm_config, damp_config;
@@ -213,6 +222,14 @@ static void init_caches(DFHack::color_ostream &out, bool cache_engravings) {
     });
 }
 
+static void clear_caches() {
+    string_cache.clear();
+    engravings_cache.clear();
+    dig_job_cache.clear();
+    warm_config = PersistentDataItem();
+    damp_config = PersistentDataItem();
+}
+
 // We use const char * throughout this code instead of std::string to avoid
 // having to allocate memory for all the small string literals. This
 // significantly speeds up processing and allows us to handle very large maps
@@ -221,19 +238,9 @@ static void init_caches(DFHack::color_ostream &out, bool cache_engravings) {
 // allocated until we write out the blueprints at the end.
 // If NULL is passed as the str, the cache is cleared.
 static const char * cache(const char *str) {
-    // this local static assumes that no two blueprints are being generated at
-    // the same time, which is currently ensured by the higher-level DFHack
-    // command handling code. if this assumption ever becomes untrue, we'll
-    // need to protect the cache with thread synchronization primitives or make
-    // the cache per-blueprint.
-    static std::set<string> _cache;
-    if (!str) {
-        _cache.clear();
-        engravings_cache.clear();
-        dig_job_cache.clear();
+    if (!str)
         return NULL;
-    }
-    return _cache.emplace(str).first->c_str();
+    return string_cache.emplace(str).first->c_str();
 }
 
 // Convenience wrapper for std::string.
@@ -606,6 +613,7 @@ static const char * get_construction_str(df::building *b) {
     case construction_type::TrackRampNEW:  return "trackrampNEW";
     case construction_type::TrackRampSEW:  return "trackrampSEW";
     case construction_type::TrackRampNSEW: return "trackrampNSEW";
+    case construction_type::ReinforcedWall: return "CW";
     case construction_type::NONE:
     default:
         return "~";
@@ -626,6 +634,13 @@ static const char * get_constructed_track_str(df::tiletype *tt,
     if (dir.west) str << "W";
 
     return cache(str);
+}
+
+static const char * get_constructed_wall_str(df::coord pos) {
+    df::construction *c = Constructions::findAtTile(pos);
+    if (!c || !(c->flags.bits.reinforced))
+        return "Cw";
+    return "CW";
 }
 
 static const char * get_constructed_floor_str(df::tiletype *tt) {
@@ -649,7 +664,7 @@ static const char * get_tile_construct(color_ostream &out, const df::coord &pos,
         return NULL;
 
     switch (tileShape(*tt)) {
-    case tiletype_shape::WALL:          return "Cw";
+    case tiletype_shape::WALL:          return get_constructed_wall_str(pos);
     case tiletype_shape::FLOOR:         return get_constructed_floor_str(tt);
     case tiletype_shape::RAMP:          return get_constructed_ramp_str(tt);
     case tiletype_shape::FORTIFICATION: return "CF";
@@ -728,7 +743,17 @@ static const char * get_bridge_str(df::building *b) {
 static const char * get_siege_str(df::building *b) {
     df::building_siegeenginest *se =
             virtual_cast<df::building_siegeenginest>(b);
-    return !se || se->type == df::siegeengine_type::Catapult ? "ic" : "ib";
+    if (!se)
+        return "ic";
+
+    switch(se->type) {
+    case df::siegeengine_type::Catapult:    return "ic";
+    case df::siegeengine_type::Ballista:    return "ib";
+    case df::siegeengine_type::BoltThrower: return "it";
+    default:
+        return "ic";
+    }
+
 }
 
 static const char * get_workshop_str(df::building *b) {
@@ -1023,19 +1048,16 @@ static const char * add_expansion_syntax(const df::building *bld,
     return cache(s);
 }
 
+static void add_expansion_syntax(const df::building *bld, ostringstream &keys) {
+    if (keys.str().empty())
+        return;
+    pair<uint32_t, uint32_t> size = get_building_size(bld);
+    keys << "(" << size.first << "x" << size.second << ")";
+}
+
 static const char * add_expansion_syntax(const tile_context &ctx,
                                          const char *keys) {
     return add_expansion_syntax(ctx.b, keys);
-}
-
-static const char * add_label(const tile_context &ctx, const char *keys) {
-    if (!keys)
-        return "~";
-    auto bld = ctx.b;
-    ostringstream s;
-    // use building's id as the unique label
-    s << keys << "/" << "bld_" << bld->id;
-    return cache(s);
 }
 
 static const char * get_tile_build(color_ostream &out, const df::coord &pos, const tile_context &ctx) {
@@ -1051,51 +1073,152 @@ static const char * get_tile_build(color_ostream &out, const df::coord &pos, con
     return add_expansion_syntax(ctx, keys);
 }
 
-static const char * get_place_keys(const tile_context &ctx) {
-    df::building_stockpilest* sp =
-            virtual_cast<df::building_stockpilest>(ctx.b);
-    if (!sp) {
-        return NULL;
+static string quotify_inner(const string &s) {
+    if (s.find_first_of(" ,") == string::npos)
+        return s;
+    ostringstream buf;
+    buf << "\"\"" << s << "\"\"";
+    return buf.str();
+}
+
+static string quotify_outer(const string &s) {
+    if (s.find_first_of("\",") == string::npos)
+        return s;
+    ostringstream buf;
+    buf << "\"" << s << "\"";
+    return buf.str();
+}
+
+static string quotify_outer(const ostringstream &s) {
+    return quotify_outer(s.str());
+}
+
+static void get_place_keys(color_ostream &out, ostringstream &keys, df::building_stockpilest* sp, bool add_label, bool add_properties) {
+    df::stockpile_group_set &flags = sp->settings.flags;
+    if (flags.bits.animals) keys << 'a';
+    if (flags.bits.food) keys << 'f';
+    if (flags.bits.furniture) keys << 'u';
+    if (flags.bits.coins) keys << 'n';
+    if (flags.bits.corpses) keys << 'y';
+    if (flags.bits.refuse) keys << 'r';
+    if (flags.bits.stone) keys << 's';
+    if (flags.bits.wood) keys << 'w';
+    if (flags.bits.gems) keys << 'e';
+    if (flags.bits.bars_blocks) keys << 'b';
+    if (flags.bits.cloth) keys << 'h';
+    if (flags.bits.leather) keys << 'l';
+    if (flags.bits.ammo) keys << 'z';
+    if (flags.bits.sheet) keys << 'S';
+    if (flags.bits.finished_goods) keys << 'g';
+    if (flags.bits.weapons) keys << 'p';
+    if (flags.bits.armor) keys << 'd';
+
+    if (keys.str().empty())
+        keys << 'c';
+
+    if (!add_label && !add_properties)
+        return;
+
+    if (add_label)
+        keys << "/" << "sp_" << sp->id;
+
+    if (!add_properties)
+        return;
+
+    vector<string> properties;
+
+    if (!sp->name.empty())
+        properties.push_back("name=" + quotify_inner(sp->name));
+
+    // only include take_from and give_to targets if they are named
+    vector<string> take_from, give_to;
+    for (auto & target : sp->links.take_from_pile) {
+        if (target->name.empty())
+            continue;
+        take_from.push_back(target->name);
+    }
+    for (auto & target : sp->links.take_from_workshop) {
+        if (target->name.empty())
+            continue;
+        take_from.push_back(target->name);
+    }
+    for (auto & target : sp->links.give_to_pile) {
+        if (target->name.empty())
+            continue;
+        give_to.push_back(target->name);
+    }
+    for (auto & target : sp->links.give_to_workshop) {
+        if (target->name.empty())
+            continue;
+        give_to.push_back(target->name);
+    }
+    if (!take_from.empty())
+        properties.push_back("take_from=" + quotify_inner(join_strings(",", take_from)));
+    if (!give_to.empty())
+        properties.push_back("give_to=" + quotify_inner(join_strings(",", give_to)));
+
+    if (sp->stockpile_flag.bits.use_links_only)
+        properties.push_back("links_only=true");
+
+    // simplify implementation; always record container counts, even if they are set to default values
+    if (!sp->storage.max_barrels && !sp->storage.max_bins && !sp->storage.max_wheelbarrows)
+        properties.push_back("containers=0");
+    else {
+        properties.push_back("barrels=" + int_to_string(sp->storage.max_barrels));
+        properties.push_back("bins=" + int_to_string(sp->storage.max_bins));
+        properties.push_back("wheelbarrows=" + int_to_string(sp->storage.max_wheelbarrows));
     }
 
-    string keys;
-    df::stockpile_group_set &flags = sp->settings.flags;
-    if (flags.bits.animals) keys += 'a';
-    if (flags.bits.food) keys += 'f';
-    if (flags.bits.furniture) keys += 'u';
-    if (flags.bits.coins) keys += 'n';
-    if (flags.bits.corpses) keys += 'y';
-    if (flags.bits.refuse) keys += 'r';
-    if (flags.bits.stone) keys += 's';
-    if (flags.bits.wood) keys += 'w';
-    if (flags.bits.gems) keys += 'e';
-    if (flags.bits.bars_blocks) keys += 'b';
-    if (flags.bits.cloth) keys += 'h';
-    if (flags.bits.leather) keys += 'l';
-    if (flags.bits.ammo) keys += 'z';
-    if (flags.bits.sheet) keys += 'S';
-    if (flags.bits.finished_goods) keys += 'g';
-    if (flags.bits.weapons) keys += 'p';
-    if (flags.bits.armor) keys += 'd';
+    // logistics features
+    Lua::CallLuaModuleFunction(out, "plugins.blueprint", "get_logistics_settings",
+        std::make_tuple(sp->stockpile_number), 6, [&](lua_State *L) {
+        if (lua_toboolean(L, -6)) properties.push_back("automelt=true");
+        if (lua_toboolean(L, -5)) properties.push_back("autotrade=true");
+        if (lua_toboolean(L, -4)) properties.push_back("autodump=true");
+        if (lua_toboolean(L, -3)) properties.push_back("autotrain=true");
+        if (lua_toboolean(L, -2)) properties.push_back("autoforbid=true");
+        if (lua_toboolean(L, -1)) properties.push_back("autoclaim=true");
+    });
 
-    if (keys.empty())
-        return "c";
-    return cache(keys);
+    if (!properties.empty())
+        keys << '{' << join_strings(" ", properties) << '}';
+}
+
+static df::coord get_first_tile(df::building *bld) {
+    df::coord first_pos;
+    cuboid bld_area(bld->x1, bld->y1, bld->z, bld->x2, bld->y2, bld->z);
+    bld_area.forCoord([&](const df::coord &pos) {
+        if (Buildings::containsTile(bld, pos)) {
+            first_pos = pos;
+            return false;
+        }
+        return true;
+    }, true);
+
+    return first_pos;
 }
 
 static const char * get_tile_place(color_ostream &out, const df::coord &pos, const tile_context &ctx) {
-    if (!ctx.b || ctx.b->getType() != building_type::Stockpile)
+    df::building_stockpilest* sp = virtual_cast<df::building_stockpilest>(ctx.b);
+
+    if (!sp || sp->getType() != building_type::Stockpile)
         return NULL;
 
-    if (!is_rectangular(ctx))
-        return add_label(ctx, get_place_keys(ctx));
+    bool rectangular = is_rectangular(sp);
+    bool is_first_tile = pos == get_first_tile(sp);
+    ostringstream keys;
 
-    if (ctx.b->x1 != static_cast<int32_t>(pos.x)
-            || ctx.b->y1 != static_cast<int32_t>(pos.y)) {
-        return if_pretty(ctx, "`");
+    if (!rectangular){
+        get_place_keys(out, keys, sp, true, is_first_tile);
+        return cache(quotify_outer(keys));
     }
 
-    return add_expansion_syntax(ctx, get_place_keys(ctx));
+    if (!is_first_tile)
+        return if_pretty(ctx, "`");
+
+    get_place_keys(out, keys, sp, false, true);
+    add_expansion_syntax(sp, keys);
+    return cache(quotify_outer(keys));
 }
 
 static string get_reservation(color_ostream &out, df::building_civzonest *zone) {
@@ -1109,12 +1232,11 @@ static string get_reservation(color_ostream &out, df::building_civzonest *zone) 
 }
 
 // TODO: handle locations
-static const char * get_zone_keys(color_ostream &out, df::building_civzonest *zone, bool add_properties) {
-    const char * symbol = NULL;
+static void get_zone_keys(color_ostream &out, ostringstream &keys, df::building_civzonest *zone, bool add_label, bool add_properties) {
     vector<string> properties;
 
     if (!zone->name.empty())
-        properties.push_back("name=" + zone->name);
+        properties.push_back(quotify_inner("name=" + zone->name));
     if (!zone->spec_sub_flag.bits.active)
         properties.push_back("active=false");
     if (auto reserved_for = get_reservation(out, zone); !reserved_for.empty()) {
@@ -1124,26 +1246,26 @@ static const char * get_zone_keys(color_ostream &out, df::building_civzonest *zo
     // in DFHack docs order
     switch (zone->type) {
     using namespace df::enums::civzone_type;
-    case MeetingHall: symbol = "m"; break;
-    case Bedroom: symbol = "b"; break;
-    case DiningHall: symbol = "h"; break;
-    case Pen: symbol = "n"; break;
+    case MeetingHall: keys << "m"; break;
+    case Bedroom: keys << "b"; break;
+    case DiningHall: keys << "h"; break;
+    case Pen: keys << "n"; break;
     case Pond:
-        symbol = "p";
+        keys << "p";
         {
             if (zone->zone_settings.pond.flag.bits.keep_filled)
                 properties.push_back("pond=true");
         }
         break;
-    case WaterSource: symbol = "w"; break;
-    case Dungeon: symbol = "j"; break;
-    case FishingArea: symbol = "f"; break;
-    case SandCollection: symbol = "s"; break;
-    case Office: symbol = "o"; break;
-    case Dormitory: symbol = "D"; break;
-    case Barracks: symbol = "B"; break;
+    case WaterSource: keys << "w"; break;
+    case Dungeon: keys << "j"; break;
+    case FishingArea: keys << "f"; break;
+    case SandCollection: keys << "s"; break;
+    case Office: keys << "o"; break;
+    case Dormitory: keys << "D"; break;
+    case Barracks: keys << "B"; break;
     case ArcheryRange:
-        symbol = "a";
+        keys << "a";
         {
             auto & archery = zone->zone_settings.archery;
             if (archery.dir_x == 1 && archery.dir_y == 0)
@@ -1154,14 +1276,16 @@ static const char * get_zone_keys(color_ostream &out, df::building_civzonest *zo
                 properties.push_back("shoot_from=north");
             else if (archery.dir_x == 0 && archery.dir_y == -1)
                 properties.push_back("shoot_from=south");
-            else
-                return NULL;  // invalid direction
+            else {
+                keys.clear();
+                return;  // invalid direction
+            }
         }
         break;
-    case Dump: symbol = "d"; break;
-    case AnimalTraining: symbol = "t"; break;
+    case Dump: keys << "d"; break;
+    case AnimalTraining: keys << "t"; break;
     case Tomb:
-        symbol = "T";
+        keys << "T";
         {
             auto & tomb = zone->zone_settings.tomb;
             if (!tomb.flags.bits.no_pets)
@@ -1171,7 +1295,7 @@ static const char * get_zone_keys(color_ostream &out, df::building_civzonest *zo
         }
         break;
     case PlantGathering:
-        symbol = "g";
+        keys << "g";
         {
             auto & gather = zone->zone_settings.gather;
             if (!gather.flags.bits.pick_trees)
@@ -1182,31 +1306,18 @@ static const char * get_zone_keys(color_ostream &out, df::building_civzonest *zo
                 properties.push_back("gather_fallen=false");
         }
         break;
-    case ClayCollection: symbol = "c"; break;
+    case ClayCollection: keys << "c"; break;
     default:
-        return NULL;
+        return;
     }
 
-    if (!add_properties || properties.empty())
-        return symbol;
+    if (!add_label && (!add_properties || properties.empty()))
+        return;
 
-    ostringstream keys;
-    keys << symbol << '{' << join_strings(" ", properties) << '}';
-    return cache(keys.str());
-}
-
-static df::coord get_first_tile(df::building_civzonest *zone) {
-    df::coord first_pos;
-    cuboid zone_area(zone->x1, zone->y1, zone->z, zone->x2, zone->y2, zone->z);
-    zone_area.forCoord([&](const df::coord &pos) {
-        if (Buildings::containsTile(zone, pos)) {
-            first_pos = pos;
-            return false;
-        }
-        return true;
-    });
-
-    return first_pos;
+    if (add_label)
+        keys << "/" << "zone_" << zone->id;
+    if (add_properties && !properties.empty())
+        keys << '{' << join_strings(" ", properties) << '}';
 }
 
 static const char * get_tile_zone(color_ostream &out, const df::coord &pos, const tile_context &ctx) {
@@ -1220,9 +1331,9 @@ static const char * get_tile_zone(color_ostream &out, const df::coord &pos, cons
     // -- no two non-rectangular zones overlap
 
     // for a first implementation, we will only handle overlapping zones if they
-    // are rectangular. if this is the upper left corner of a rectangular zone,
-    // we will output for that zone. otherwise, if this pos is interior to
-    // all zones, then it doesn't matter which we choose.
+    // are rectangular and have different upper-left corners. if this is the upper
+    // left corner of a rectangular zone, we will output for that zone. otherwise,
+    // if this pos is interior to all zones, then it doesn't matter which we choose.
 
     df::building_civzonest * primary_zone = civzones[0];
     df::coord upper_left_corner;
@@ -1240,15 +1351,21 @@ static const char * get_tile_zone(color_ostream &out, const df::coord &pos, cons
         }
     }
 
+    bool rectangular = is_rectangular(primary_zone);
     bool is_first_tile = pos == upper_left_corner;
+    ostringstream keys;
 
-    if (!is_rectangular(primary_zone))
-        return get_zone_keys(out, primary_zone, is_first_tile);
+    if (!rectangular) {
+        get_zone_keys(out, keys, primary_zone, true, is_first_tile);
+        return cache(quotify_outer(keys));
+    }
 
     if (!is_first_tile)
         return if_pretty(ctx, "`");
 
-    return add_expansion_syntax(primary_zone, get_zone_keys(out, primary_zone, true));
+    get_zone_keys(out, keys, primary_zone, false, true);
+    add_expansion_syntax(primary_zone, keys);
+    return cache(quotify_outer(keys));
 }
 
 static bool create_output_dir(color_ostream &out,
@@ -1259,8 +1376,8 @@ static bool create_output_dir(color_ostream &out,
 
     // create output directory if it doesn't already exist
     if (!Filesystem::mkdir_recursive(parent_path)) {
-        out.printerr("could not create output directory: '%s'\n",
-                     parent_path.c_str());
+        out.printerr("could not create output directory: '{}'\n",
+                     parent_path);
         return false;
     }
     return true;
@@ -1550,9 +1667,9 @@ static command_result do_blueprint(color_ostream &out,
             command << " " << parameters[i];
         }
         string command_str = command.str();
-        out.print("launching %s\n", command_str.c_str());
+        out.print("launching {}\n", command_str);
 
-        Core::getInstance().setHotkeyCmd(command_str);
+        Core::getInstance().getHotkeyManager()->setHotkeyCommand(command_str);
         return CR_OK;
     }
 
@@ -1578,7 +1695,7 @@ static command_result do_blueprint(color_ostream &out,
         }
     }
     if (!Maps::isValidTilePos(start)) {
-        out.printerr("Invalid start position: %d,%d,%d\n",
+        out.printerr("Invalid start position: {},{},{},\n",
                      start.x, start.y, start.z);
         return CR_FAILURE;
     }
@@ -1603,8 +1720,7 @@ static command_result do_blueprint(color_ostream &out,
 
     bool ok = do_transform(out, start, end, options, files);
 
-    // clear caches
-    cache(NULL);
+    clear_caches();
 
     return ok ? CR_OK : CR_FAILURE;
 }
@@ -1642,7 +1758,7 @@ command_result blueprint(color_ostream &out, vector<string> &parameters) {
         else {
             out.print("Generated blueprint file(s):\n");
             for (string &fname : files)
-                out.print("  %s\n", fname.c_str());
+                out.print("  {}\n", fname);
         }
     }
     return cr;

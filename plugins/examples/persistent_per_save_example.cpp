@@ -56,14 +56,14 @@ static PersistentDataItem & ensure_elem_config(color_ostream &out, int id) {
     if (elems.count(id))
         return elems[id];
     string keyname = ELEM_CONFIG_KEY_PREFIX + int_to_string(id);
-    DEBUG(control,out).print("creating new persistent key for elem id %d\n", id);
+    DEBUG(control,out).print("creating new persistent key for elem id {}\n", id);
     elems.emplace(id, World::GetPersistentSiteData(keyname, true));
     return elems[id];
 }
 static void remove_elem_config(color_ostream &out, int id) {
     if (!elems.count(id))
         return;
-    DEBUG(control,out).print("removing persistent key for elem id %d\n", id);
+    DEBUG(control,out).print("removing persistent key for elem id {}\n", id);
     World::DeletePersistentData(elems[id]);
     elems.erase(id);
 }
@@ -82,7 +82,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 static void do_cycle(color_ostream &out);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -95,19 +95,19 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             do_cycle(out);
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -115,7 +115,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
 
     return CR_OK;
 }
@@ -135,7 +135,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     // all the other state we can directly read/modify from the persistent
     // data structure.
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
 
     // load other config elements, if applicable
@@ -154,7 +154,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -170,7 +170,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::IsSiteLoaded()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -190,7 +190,7 @@ static void do_cycle(color_ostream &out) {
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
 
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    DEBUG(cycle,out).print("running {} cycle\n", plugin_name);
 
     // TODO: logic that runs every CYCLE_TICKS ticks
 }

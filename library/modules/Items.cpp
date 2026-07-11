@@ -28,7 +28,6 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
-#include "ModuleFactory.h"
 #include "Types.h"
 #include "VersionInfo.h"
 
@@ -155,7 +154,7 @@ string ItemTypeInfo::getToken() {
     if (custom)
         rv += ":" + custom->id;
     else if (subtype != -1 && type != item_type::PLANT_GROWTH)
-        rv += stl_sprintf(":%d", subtype);
+        rv += fmt::format(":{}", subtype);
     return rv;
 }
 
@@ -859,7 +858,7 @@ static bool detachItem(df::item *item)
 
     if (item->flags.bits.on_ground) {
         if (!removeItemOnGround(item))
-            Core::printerr("Item was marked on_ground, but not in block: %d (%d,%d,%d)\n",
+            Core::printerr("Item was marked on_ground, but not in block: {} ({},{},{})\n",
                 item->id, item->pos.x, item->pos.y, item->pos.z);
         item->flags.bits.on_ground = false;
         return true;
@@ -1200,6 +1199,7 @@ int Items::getItemBaseValue(int16_t item_type, int16_t item_subtype,
             break;
         case CATAPULTPARTS:
         case BALLISTAPARTS:
+        case BOLT_THROWER_PARTS:
         case TRAPPARTS:
             value = 30;
             break;
@@ -1751,8 +1751,39 @@ int Items::getValue(df::item *item, df::caravan_state *caravan) {
     return value;
 }
 
+// Automatically choose a growth print variant for the specified plant growth subtype+material
+int32_t Items::pickGrowthPrint(int16_t subtype, int16_t mat, int32_t matg)
+{
+    int growth_print = -1;
+    // Make sure it's made of a valid plant material, then grab its definition
+    if (mat >= 419 && mat <= 618 && matg >= 0 && (unsigned)matg < world->raws.plants.all.size())
+    {
+        auto plant_def = world->raws.plants.all[matg];
+        // Make sure it subtype is also valid
+        if (subtype >= 0 && (unsigned)subtype < plant_def->growths.size())
+        {
+            auto growth_def = plant_def->growths[subtype];
+            // Try and find a growth print matching the current time
+            // (in practice, only tree leaves use this for autumn color changes)
+            for (size_t i = 0; i < growth_def->prints.size(); i++)
+            {
+                auto print_def = growth_def->prints[i];
+                if (print_def->timing_start <= *df::global::cur_year_tick && *df::global::cur_year_tick <= print_def->timing_end)
+                {
+                    growth_print = i;
+                    break;
+                }
+            }
+            // If we didn't find one, then pick the first one (if it exists)
+            if (growth_print == -1 && !growth_def->prints.empty())
+                growth_print = 0;
+        }
+    }
+    return growth_print;
+}
+
 bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_type item_type,
-    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor)
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor, int32_t count)
 {   // Based on Quietust's plugins/createitem.cpp
     CHECK_NULL_POINTER(unit);
     auto pos = Units::getPosition(unit);
@@ -1765,7 +1796,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
     prod->mat_type = mat_type;
     prod->mat_index = mat_index;
     prod->probability = 100;
-    prod->count = 1;
+    prod->count = count;
 
     switch(item_type)
     {   using namespace df::enums::item_type;
@@ -1796,39 +1827,12 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
         World::isFortressMode() ? df::world_site::find(World::GetCurrentSiteId()) : NULL, NULL);
     delete prod;
 
-    DEBUG(items).print("produced %zd items\n", out_items.size());
+    DEBUG(items).print("produced {} items\n", out_items.size());
 
     for (auto out_item : out_items)
     {   // Plant growths need a valid "growth print", otherwise they behave oddly
         if (auto growth = virtual_cast<df::item_plant_growthst>(out_item))
-        {
-            int growth_print = -1;
-            // Make sure it's made of a valid plant material, then grab its definition
-            if (growth->mat_type >= 419 && growth->mat_type <= 618 && growth->mat_index >= 0 && (unsigned)growth->mat_index < world->raws.plants.all.size())
-            {
-                auto plant_def = world->raws.plants.all[growth->mat_index];
-                // Make sure it subtype is also valid
-                if (growth->subtype >= 0 && (unsigned)growth->subtype < plant_def->growths.size())
-                {
-                    auto growth_def = plant_def->growths[growth->subtype];
-                    // Try and find a growth print matching the current time
-                    // (in practice, only tree leaves use this for autumn color changes)
-                    for (size_t i = 0; i < growth_def->prints.size(); i++)
-                    {
-                        auto print_def = growth_def->prints[i];
-                        if (print_def->timing_start <= *df::global::cur_year_tick && *df::global::cur_year_tick <= print_def->timing_end)
-                        {
-                            growth_print = i;
-                            break;
-                        }
-                    }
-                    // If we didn't find one, then pick the first one (if it exists)
-                    if (growth_print == -1 && !growth_def->prints.empty())
-                        growth_print = 0;
-                }
-            }
-            growth->growth_print = growth_print;
-        }
+            growth->growth_print = pickGrowthPrint(growth->subtype, growth->mat_type, growth->mat_index);
         if (!no_floor)
             out_item->moveToGround(pos.x, pos.y, pos.z);
     }
@@ -1961,17 +1965,10 @@ bool Items::isRequestedTradeGood(df::item *item, df::caravan_state *caravan) {
     return false;
 }
 
-/// When called with game_ui = true, this is equivalent to Bay12's itemst::meltable()
-/// (i.e., returning true if and only if the item has a "designate for melting" button in game)
-bool Items::canMelt(df::item *item, bool game_ui) {
-    CHECK_NULL_POINTER(item);
-    MaterialInfo mat(item);
-    if (mat.getCraftClass() != craft_material_class::Metal)
-        return false;
-
-    switch(item->getType())
+bool Items::usesStandardMaterial(df::item_type item_type)
+{
+    switch(item_type)
     {   using namespace df::enums::item_type;
-        // These are not meltable, even if made from metal
         case CORPSE:
         case CORPSEPIECE:
         case REMAINS:
@@ -1983,8 +1980,20 @@ bool Items::canMelt(df::item *item, bool game_ui) {
         case EGG:
             return false;
         default:
-            break;
+            return true;
     }
+}
+
+/// When called with game_ui = true, this is equivalent to Bay12's itemst::meltable()
+/// (i.e., returning true if and only if the item has a "designate for melting" button in game)
+bool Items::canMelt(df::item *item, bool game_ui) {
+    CHECK_NULL_POINTER(item);
+    MaterialInfo mat(item);
+    if (mat.getCraftClass() != craft_material_class::Metal)
+        return false;
+
+    if (!usesStandardMaterial(item->getType()))
+        return false;
 
     if (item->flags.bits.artifact)
         return false;

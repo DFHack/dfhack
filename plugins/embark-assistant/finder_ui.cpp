@@ -198,7 +198,7 @@ namespace embark_assist {
             size_t civ = 0;
 
             if (!infile) {
-                out.printerr("No profile file found at %s\n", profile_file_name);
+                out.printerr("No profile file found at {}\n", profile_file_name);
                 return;
             }
 
@@ -209,7 +209,7 @@ namespace embark_assist {
 
             while (true) {
                 if (!fgets(line, count, infile) || line[0] != '[') {
-                    out.printerr("Failed to find token start '[' at line %i\n", static_cast<int8_t>(i));
+                    out.printerr("Failed to find token start '[' at line {}\n", static_cast<int8_t>(i));
                     fclose(infile);
                     return;
                 }
@@ -218,7 +218,7 @@ namespace embark_assist {
                     if (line[k] == ':') {
                         for (int l = 1; l < k; l++) {
                             if (state->finder_list[static_cast<int8_t>(i) + civ].text.c_str()[l - 1] != line[l]) {
-                                out.printerr("Token mismatch of %s vs %s\n", line, state->finder_list[static_cast<int8_t>(i) + civ].text.c_str());
+                                out.printerr("Token mismatch of {} vs {}\n", line, state->finder_list[static_cast<int8_t>(i) + civ].text.c_str());
                                 fclose(infile);
                                 return;
                             }
@@ -242,7 +242,7 @@ namespace embark_assist {
                         }
 
                         if (!found) {
-                            out.printerr("Value extraction failure from %s\n", line);
+                            out.printerr("Value extraction failure from {}\n", line);
                             fclose(infile);
                             return;
                         }
@@ -252,7 +252,7 @@ namespace embark_assist {
                 }
 
                 if (!found) {
-                    out.printerr("Value delimiter not found in %s\n", line);
+                    out.printerr("Value delimiter not found in {}\n", line);
                     fclose(infile);
                     return;
                 }

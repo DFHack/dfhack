@@ -79,7 +79,7 @@ static PersistentDataItem & ensure_burrow_config(color_ostream &out, int id) {
     if (watched_burrows_indices.count(id))
         return watched_burrows[watched_burrows_indices[id]];
     string keyname = BURROW_CONFIG_KEY_PREFIX + int_to_string(id);
-    DEBUG(control,out).print("creating new persistent key for burrow %d\n", id);
+    DEBUG(control,out).print("creating new persistent key for burrow {}\n", id);
     watched_burrows.emplace_back(World::GetPersistentSiteData(keyname, true));
     size_t idx = watched_burrows.size()-1;
     watched_burrows_indices.emplace(id, idx);
@@ -88,7 +88,7 @@ static PersistentDataItem & ensure_burrow_config(color_ostream &out, int id) {
 static void remove_burrow_config(color_ostream &out, int id) {
     if (!watched_burrows_indices.count(id))
         return;
-    DEBUG(control,out).print("removing persistent key for burrow %d\n", id);
+    DEBUG(control,out).print("removing persistent key for burrow {}\n", id);
     size_t idx = watched_burrows_indices[id];
     World::DeletePersistentData(watched_burrows[idx]);
     watched_burrows.erase(watched_burrows.begin()+idx);
@@ -110,7 +110,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 static int32_t do_cycle(color_ostream &out, bool force_designate = false);
 
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(control,out).print("initializing %s\n", plugin_name);
+    DEBUG(control,out).print("initializing {}\n", plugin_name);
 
     // provide a configuration interface for the plugin
     commands.push_back(PluginCommand(
@@ -123,19 +123,19 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
         if (enable)
             do_cycle(out, true);
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -143,7 +143,7 @@ DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
 }
 
 DFhackCExport command_result plugin_shutdown (color_ostream &out) {
-    DEBUG(control,out).print("shutting down %s\n", plugin_name);
+    DEBUG(control,out).print("shutting down {}\n", plugin_name);
 
     return CR_OK;
 }
@@ -165,7 +165,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     // all the other state we can directly read/modify from the persistent
     // data structure.
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
     World::GetPersistentSiteData(&watched_burrows, BURROW_CONFIG_KEY_PREFIX, true);
     watched_burrows_indices.clear();
@@ -182,7 +182,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -194,14 +194,14 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (world->frame_counter - cycle_timestamp >= CYCLE_TICKS) {
         int32_t designated = do_cycle(out);
         if (0 < designated)
-            out.print("autochop: designated %d tree(s) for chopping\n", designated);
+            out.print("autochop: designated {} tree(s) for chopping\n", designated);
     }
     return CR_OK;
 }
 
 static command_result do_command(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -371,7 +371,7 @@ static int32_t scan_tree(color_ostream & out, df::plant *plant, int32_t *expecte
         map<int32_t, int32_t> *designated_tree_counts,
         map<int, PersistentDataItem *> &clearcut_burrows,
         map<int, PersistentDataItem *> &chop_burrows) {
-    TRACE(cycle,out).print("  scanning tree at %d,%d,%d\n",
+    TRACE(cycle,out).print("  scanning tree at {},{},{}\n",
                             plant->pos.x, plant->pos.y, plant->pos.z);
 
     if (!is_valid_tree(plant))
@@ -518,7 +518,7 @@ static void scan_logs(color_ostream &out, int32_t *usable_logs,
         *inaccessible_logs = 0;
 
     for (auto &item : world->items.other[items_other_id::IN_PLAY]) {
-        TRACE(cycle,out).print("  scanning log %d\n", item->id);
+        TRACE(cycle,out).print("  scanning log {}\n", item->id);
         if (item->flags.whole & bad_flags.whole)
             continue;
 
@@ -538,7 +538,7 @@ static void scan_logs(color_ostream &out, int32_t *usable_logs,
 }
 
 static int32_t do_cycle(color_ostream &out, bool force_designate) {
-    DEBUG(cycle,out).print("running %s cycle\n", plugin_name);
+    DEBUG(cycle,out).print("running {} cycle\n", plugin_name);
 
     // mark that we have recently run
     cycle_timestamp = world->frame_counter;
@@ -580,7 +580,7 @@ static int32_t do_cycle(color_ostream &out, bool force_designate) {
     // of accessible trees
     int32_t needed = config.get_int(CONFIG_MAX_LOGS) -
             (usable_logs + expected_yield);
-    DEBUG(cycle,out).print("needed logs for this cycle: %d\n", needed);
+    DEBUG(cycle,out).print("needed logs for this cycle: {}\n", needed);
     for (auto & entry : designatable_trees_by_size) {
         if (!Designations::markPlant(entry.second))
             continue;
@@ -590,7 +590,7 @@ static int32_t do_cycle(color_ostream &out, bool force_designate) {
             return newly_marked;
         }
     }
-    out.print("autochop: insufficient accessible trees to reach log target! Still need %d logs!\n",
+    out.print("autochop: insufficient accessible trees to reach log target! Still need {} logs!\n",
             needed);
     return newly_marked;
 }
@@ -623,8 +623,8 @@ static const char * get_protect_str(bool protect_brewable, bool protect_edible, 
 static void autochop_printStatus(color_ostream &out) {
     DEBUG(control,out).print("entering autochop_printStatus\n");
     validate_burrow_configs(out);
-    out.print("autochop is %s\n\n", is_enabled ? "enabled" : "disabled");
-    out.print("  keeping log counts between %d and %d\n",
+    out.print("autochop is {}\n\n", is_enabled ? "enabled" : "disabled");
+    out.print("  keeping log counts between {} and {}\n",
             config.get_int(CONFIG_MIN_LOGS), config.get_int(CONFIG_MAX_LOGS));
     if (config.get_bool(CONFIG_WAITING_FOR_MIN))
         out.print("  currently waiting for min threshold to be crossed before designating more trees\n");
@@ -643,19 +643,19 @@ static void autochop_printStatus(color_ostream &out) {
             &designated_trees, &accessible_yield, &tree_counts, &designated_tree_counts);
 
     out.print("summary:\n");
-    out.print("           accessible logs (usable stock): %d\n", usable_logs);
-    out.print("                        inaccessible logs: %d\n", inaccessible_logs);
-    out.print("                       total visible logs: %d\n", usable_logs + inaccessible_logs);
+    out.print("           accessible logs (usable stock): {}\n", usable_logs);
+    out.print("                        inaccessible logs: {}\n", inaccessible_logs);
+    out.print("                       total visible logs: {}\n", usable_logs + inaccessible_logs);
     out.print("\n");
-    out.print("                         accessible trees: %d\n", accessible_trees);
-    out.print("                       inaccessible trees: %d\n", inaccessible_trees);
-    out.print("                      total visible trees: %d\n", accessible_trees + inaccessible_trees);
+    out.print("                         accessible trees: {}\n", accessible_trees);
+    out.print("                       inaccessible trees: {}\n", inaccessible_trees);
+    out.print("                      total visible trees: {}\n", accessible_trees + inaccessible_trees);
     out.print("\n");
-    out.print("                         designated trees: %d\n", designated_trees);
-    out.print("      expected logs from designated trees: %d\n", expected_yield);
-    out.print("  expected logs from all accessible trees: %d\n", accessible_yield);
+    out.print("                         designated trees: {}\n", designated_trees);
+    out.print("      expected logs from designated trees: {}\n", expected_yield);
+    out.print("  expected logs from all accessible trees: {}\n", accessible_yield);
     out.print("\n");
-    out.print("                    total trees harvested: %d\n", plotinfo->trees_removed);
+    out.print("                    total trees harvested: {}\n", plotinfo->trees_removed);
     out.print("\n");
 
     if (!plotinfo->burrows.list.size()) {
@@ -669,11 +669,10 @@ static void autochop_printStatus(color_ostream &out) {
     for (auto &burrow : plotinfo->burrows.list) {
         name_width = std::max(name_width, (int)burrow->name.size());
     }
-    name_width = -name_width; // left justify
 
-    const char *fmt = "%*s  %4s  %4s  %8s  %5s  %6s  %7s\n";
-    out.print(fmt, name_width, "burrow name", " id ", "chop", "clearcut", "trees", "marked", "protect");
-    out.print(fmt, name_width, "-----------", "----", "----", "--------", "-----", "------", "-------");
+    constexpr auto fmt = "{:<{}}  {:4}  {:4}  {:8}  {:5}  {:6}  {:7}\n";
+    out.print(fmt, "burrow name", name_width, " id ", "chop", "clearcut", "trees", "marked", "protect");
+    out.print(fmt, "-----------", name_width, "----", "----", "--------", "-----", "------", "-------");
 
     for (auto &burrow : plotinfo->burrows.list) {
         bool chop = false;
@@ -689,17 +688,17 @@ static void autochop_printStatus(color_ostream &out) {
             protect_edible = c.get_bool(BURROW_CONFIG_PROTECT_EDIBLE);
             protect_cookable = c.get_bool(BURROW_CONFIG_PROTECT_COOKABLE);
         }
-        out.print(fmt, name_width, burrow->name.c_str(), int_to_string(burrow->id).c_str(),
+        out.print(fmt, Burrows::getName(burrow), name_width, burrow->id,
                 chop ? "[x]" : "[ ]", clearcut ? "[x]" : "[ ]",
-                int_to_string(tree_counts[burrow->id]).c_str(),
-                int_to_string(designated_tree_counts[burrow->id]).c_str(),
+                tree_counts[burrow->id],
+                designated_tree_counts[burrow->id],
                 get_protect_str(protect_brewable, protect_edible, protect_cookable));
     }
 }
 
 static void autochop_designate(color_ostream &out) {
     DEBUG(control,out).print("entering autochop_designate\n");
-    out.print("designated %d tree(s) for chopping\n", do_cycle(out, true));
+    out.print("designated {} tree(s) for chopping\n", do_cycle(out, true));
 }
 
 static void autochop_undesignate(color_ostream &out) {
@@ -709,7 +708,7 @@ static void autochop_undesignate(color_ostream &out) {
         if (is_valid_tree(plant) && Designations::unmarkPlant(plant))
             ++count;
     }
-    out.print("undesignated %d tree(s)\n", count);
+    out.print("undesignated {} tree(s)\n", count);
 }
 
 static void autochop_setTargets(color_ostream &out, int32_t max_logs, int32_t min_logs) {

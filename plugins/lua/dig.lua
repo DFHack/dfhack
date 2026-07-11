@@ -4,7 +4,7 @@ local gui = require('gui')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
-local toolbar_textures = dfhack.textures.loadTileset('hack/data/art/damp_dig_toolbar.png', 8, 12, true)
+local toolbar_textures = dfhack.textures.loadTileset(dfhack.getHackPath()..'/data/art/damp_dig_toolbar.png', 8, 12, true)
 
 local main_if = df.global.game.main_interface
 local selection_rect = df.global.selection_rect
@@ -348,13 +348,18 @@ function WarmDampOverlay:onRenderFrame(dc, rect)
 end
 
 -- --------------------------------
--- CarveOverlay
+-- DesignatedOverlay
 --
 
-CarveOverlay = defclass(CarveOverlay, overlay.OverlayWidget)
-CarveOverlay.ATTRS{
+DesignatedOverlay = defclass(DesignatedOverlay, overlay.OverlayWidget)
+DesignatedOverlay.ATTRS{
     desc='Makes existing carving designations visible when in ASCII mode.',
     viewscreens={
+        'dwarfmode/Designate/DIG_DIG',
+        'dwarfmode/Designate/DIG_REMOVE_STAIRS_RAMPS',
+        'dwarfmode/Designate/DIG_STAIR_UPDOWN',
+        'dwarfmode/Designate/DIG_RAMP',
+        'dwarfmode/Designate/DIG_CHANNEL',
         'dwarfmode/Designate/SMOOTH',
         'dwarfmode/Designate/ENGRAVE',
         'dwarfmode/Designate/TRACK',
@@ -365,8 +370,8 @@ CarveOverlay.ATTRS{
     frame={w=0, h=0},
 }
 
-function CarveOverlay:onRenderFrame()
-    paintScreenCarve()
+function DesignatedOverlay:onRenderFrame()
+    paintScreenDesignated()
 end
 
 -- --------------------------------
@@ -374,7 +379,7 @@ end
 --
 
 OVERLAY_WIDGETS = {
-    asciicarve=CarveOverlay,
+    asciidesignated=DesignatedOverlay,
     warmdamp=WarmDampOverlay,
     warmdamptoolbar=WarmDampToolbarOverlay,
 }

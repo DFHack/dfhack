@@ -26,8 +26,8 @@ distribution.
 
 #include <functional>
 #include <string>
-#include <sstream>
 #include <vector>
+#include <set>
 #include <map>
 #include <type_traits>
 #include <unordered_map>
@@ -39,15 +39,9 @@ distribution.
 #include "DataDefs.h"
 
 #include "df/interface_key.h"
-#include "df/interfacest.h"
 
 #include <lua.h>
 #include <lauxlib.h>
-
-/// Allocate a new user data object and push it on the stack
-inline void *operator new (std::size_t size, lua_State *L) {
-    return lua_newuserdata(L, size);
-}
 
 namespace DFHack {
     class function_identity_base;
@@ -66,6 +60,20 @@ namespace DFHack::Lua {
      * Create or initialize a lua interpreter with access to DFHack tools.
      */
     DFHACK_EXPORT lua_State *Open(color_ostream &out, lua_State *state = NULL);
+
+    /**
+     * Allocate a lua userdata and construct a C++ object in that userdata's storage space
+     * The C++ object must be trivially destructible as lua GC will _not_ call the object's destructor
+     * be aware that the created userdata is left on the Lua stack as well as returned to the caller
+     */
+    template <typename T, typename... Args>
+        requires (std::is_trivially_destructible_v<T>)
+    T* make_lua_userdata(lua_State* L, Args&&... args)
+    {
+        void* stg = lua_newuserdata(L, sizeof(T));
+        T * obj = ::new (stg) T(std::forward<Args>(args)...);
+        return obj;
+    }
 
     DFHACK_EXPORT void PushDFHack(lua_State *state);
     DFHACK_EXPORT void PushBaseGlobals(lua_State *state);
@@ -131,19 +139,19 @@ namespace DFHack::Lua {
      * Return behavior is of SafeCall below.
      */
     DFHACK_EXPORT bool AssignDFObject(color_ostream &out, lua_State *state,
-                                      type_identity *type, void *target, int val_index,
+                                      const type_identity *type, void *target, int val_index,
                                       bool exact_type = false, bool perr = true);
 
     /**
      * Assign the value at val_index to the target of given identity using df.assign().
      * Otherwise throws an error.
      */
-    DFHACK_EXPORT void CheckDFAssign(lua_State *state, type_identity *type,
+    DFHACK_EXPORT void CheckDFAssign(lua_State *state, const type_identity *type,
                                      void *target, int val_index, bool exact_type = false);
 
-    template<typename T> concept df_object = requires(T x)
+    template<typename T> concept df_object = requires()
     {
-        { df::identity_traits<T>::get() } -> std::convertible_to<df::type_identity*>;
+        { df::identity_traits<T>::get() } -> std::convertible_to<const df::type_identity*>;
     };
 
     /**
@@ -286,9 +294,9 @@ namespace DFHack::Lua {
      * is done inside CoreSuspender, while waiting for input happens
      * without the suspend lock.
      */
-    DFHACK_EXPORT bool RunCoreQueryLoop(color_ostream &out, lua_State *state,
-                                        bool (*init)(color_ostream&, lua_State*, void*),
-                                        void *arg);
+    using init_fn = std::function<bool(color_ostream&, lua_State*)>;
+
+    DFHACK_EXPORT bool RunCoreQueryLoop(color_ostream &out, lua_State *state, init_fn init);
 
     /**
      * Attempt to interrupt the currently-executing lua function by raising a lua error

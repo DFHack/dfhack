@@ -63,6 +63,7 @@ Template for new versions:
 - `getplants`: added protective code to avoid misoperation when a plant has an invalid material (which should never happen, but...)
 
 ## Misc Improvements
+- `buildingplan`: added a small tooltip text about renaming favorites in the UI
 
 ## Documentation
 
@@ -226,8 +227,6 @@ Template for new versions:
 
 ## Misc Improvements
 - General: DFHack will unconditionally use UTF-8 for the console on Windows, now that DF forces the process effective system code page to 65001 during startup
-- `buildingplan`: added a small tooltip text about renaming favorites in the UI
-
 
 ## Documentation
 

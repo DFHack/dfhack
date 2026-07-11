@@ -155,7 +155,7 @@ end
 
 -- suspend overlay (formerly in unsuspend.lua)
 
-local textures = dfhack.textures.loadTileset('hack/data/art/unsuspend.png', 32, 32, true)
+local textures = dfhack.textures.loadTileset(dfhack.getHackPath()..'/data/art/unsuspend.png', 32, 32, true)
 
 local ok, buildingplan = pcall(require, 'plugins.buildingplan')
 if not ok then

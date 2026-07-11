@@ -1281,29 +1281,30 @@ bool DFHack::Lua::RunCoreQueryLoop(color_ostream &out, lua_State *state, DFHack:
     return (rv == LUA_OK);
 }
 
-static bool init_interpreter(color_ostream &out, lua_State *state, const char* prompt, const char* hfile)
+static bool init_interpreter(color_ostream &out, lua_State *state, std::string_view prompt, const std::filesystem::path& hfile)
 {
     lua_rawgetp(state, LUA_REGISTRYINDEX, &DFHACK_DFHACK_TOKEN);
     lua_getfield(state, -1, "interpreter");
     lua_remove(state, -2);
-    lua_pushstring(state, prompt);
-    lua_pushstring(state, hfile);
+    lua_pushlstring(state, prompt.data(), prompt.size());
+    lua_pushlstring(state, hfile.string().data(), hfile.string().size());
     return true;
 }
 
 bool DFHack::Lua::InterpreterLoop(color_ostream &out, lua_State *state,
-                                  const char *prompt, const char *hfile)
+                                  std::string_view prompt, std::filesystem::path hfile)
 {
     if (!out.is_console())
         return false;
 
-    if (!hfile)
-        hfile = "dfhack-config/lua.history";
-    if (!prompt)
+    if (hfile.empty())
+        hfile = DFHack::Core::getInstance().getConfigPath() / "lua.history";
+    if (prompt.empty())
         prompt = "lua";
 
-    using namespace std::placeholders;
-    auto init_fn = std::bind(init_interpreter, _1, _2, prompt, hfile);
+    auto init_fn = [&](color_ostream& out, lua_State* state) {
+        return init_interpreter(out, state, prompt, hfile);
+        };
 
     return RunCoreQueryLoop(out, state, init_fn);
 }

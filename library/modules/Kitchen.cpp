@@ -14,7 +14,6 @@ using namespace std;
 #include "Types.h"
 #include "Error.h"
 #include "modules/Kitchen.h"
-#include "ModuleFactory.h"
 #include "Core.h"
 using namespace DFHack;
 

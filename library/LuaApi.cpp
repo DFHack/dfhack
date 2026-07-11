@@ -1359,6 +1359,7 @@ static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
 
 static std::filesystem::path getDFPath() { return Core::getInstance().p->getPath(); }
 static std::filesystem::path getHackPath() { return Core::getInstance().getHackPath(); }
+static std::filesystem::path getConfigPath() { return Core::getInstance().getConfigPath(); }
 
 static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
 static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
@@ -1384,6 +1385,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getDFPath),
     WRAP(getTickCount),
     WRAP(getHackPath),
+    WRAP(getConfigPath),
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
     WRAP(isSiteLoaded),
@@ -2653,6 +2655,7 @@ static const LuaWrapper::FunctionReg dfhack_maps_module[] = {
     WRAPM(Maps, getWalkableGroup),
     WRAPM(Maps, canWalkBetween),
     WRAPM(Maps, spawnFlow),
+    WRAPM(Maps, addBlockColumns),
     WRAPN(hasTileAssignment, hasTileAssignment),
     WRAPN(getTileAssignment, getTileAssignment),
     WRAPN(setTileAssignment, setTileAssignment),

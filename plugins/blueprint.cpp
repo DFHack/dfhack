@@ -6,6 +6,7 @@
  */
 
 #include "Console.h"
+#include "Core.h"
 #include "DataDefs.h"
 #include "DataFuncs.h"
 #include "DataIdentity.h"
@@ -58,8 +59,6 @@ using namespace DFHack;
 
 DFHACK_PLUGIN("blueprint");
 REQUIRE_GLOBAL(world);
-
-static const string BLUEPRINT_USER_DIR = "dfhack-config/blueprints/";
 
 namespace DFHack {
     DBG_DECLARE(blueprint,log);
@@ -1370,9 +1369,9 @@ static const char * get_tile_zone(color_ostream &out, const df::coord &pos, cons
 
 static bool create_output_dir(color_ostream &out,
                               const blueprint_options &opts) {
-    string basename = BLUEPRINT_USER_DIR + opts.name;
-    size_t last_slash = basename.find_last_of("/");
-    string parent_path = basename.substr(0, last_slash);
+    std::filesystem::path BLUEPRINT_USER_DIR = Core::getInstance().getConfigPath() / "blueprints";
+    std::filesystem::path basename = BLUEPRINT_USER_DIR / opts.name;
+    std::filesystem::path parent_path = basename.parent_path();
 
     // create output directory if it doesn't already exist
     if (!Filesystem::mkdir_recursive(parent_path)) {

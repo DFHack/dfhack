@@ -103,6 +103,7 @@ Template for new versions:
 
 ## Misc Improvements
 - Core: attempts to delete a pool-allocated DF object will now throw an exception instead of corrupting the heap
+- `buildingplan`: buildingplan can now generate work orders
 
 ## Documentation
 

@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `autolabor`: Fix running 1 tick less frequently than intended.
 - `buildingplan`: fixed non-clickable pressure plates's triggers (issue #5736)
 - `getplants`: added protective code to avoid misoperation when a plant has an invalid material (which should never happen, but...)
 

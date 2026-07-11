@@ -64,6 +64,7 @@ Template for new versions:
 - `getplants`: added protective code to avoid misoperation when a plant has an invalid material (which should never happen, but...)
 
 ## Misc Improvements
+- `buildingplan`: added a slider on the weapontrap overlay
 
 ## Documentation
 

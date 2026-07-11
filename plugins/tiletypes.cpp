@@ -82,7 +82,8 @@ static const std::map<std::pair<df::tiletype_shape, df::tiletype_shape>, df::til
 };
 static const uint16_t UNDERGROUND_TEMP = 10015;
 
-static const char * HISTORY_FILE = "dfhack-config/tiletypes.history";
+static const std::filesystem::path get_history_file() { return Core::getInstance().getConfigPath() / "tiletypes.history"; }
+
 CommandHistory tiletypes_hist;
 
 command_result df_tiletypes (color_ostream &out, vector <string> & parameters);
@@ -92,7 +93,7 @@ command_result df_tiletypes_here_point (color_ostream &out, vector <string> & pa
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    tiletypes_hist.load(HISTORY_FILE);
+    tiletypes_hist.load(get_history_file());
     commands.push_back(PluginCommand("tiletypes", "Paints tiles of specified types onto the map.", df_tiletypes, true, true));
     commands.push_back(PluginCommand("tiletypes-command", "Run tiletypes commands (seperated by ' ; ')", df_tiletypes_command));
     commands.push_back(PluginCommand("tiletypes-here", "Repeat tiletypes command at cursor (with brush)", df_tiletypes_here));
@@ -102,7 +103,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    tiletypes_hist.save(HISTORY_FILE);
+    tiletypes_hist.save(get_history_file());
     return CR_OK;
 }
 

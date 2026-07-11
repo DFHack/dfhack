@@ -60,6 +60,7 @@ Template for new versions:
 
 ## Fixes
 - `autolabor`: Fix running 1 tick less frequently than intended.
+- `buildingplan`: fixed non-clickable pressure plates's triggers (issue #5736)
 - `getplants`: added protective code to avoid misoperation when a plant has an invalid material (which should never happen, but...)
 
 ## Misc Improvements
@@ -104,6 +105,7 @@ Template for new versions:
 
 ## Misc Improvements
 - Core: attempts to delete a pool-allocated DF object will now throw an exception instead of corrupting the heap
+- `buildingplan`: buildingplan can now generate work orders
 
 ## Documentation
 
@@ -260,6 +262,7 @@ Template for new versions:
 
 ## New Features
 - `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
+- `orders`: exported orders now include a human-readable ``name`` field
 - `sort`: added ``Uniformed`` filter to squad assignment screen to filter dwarves with mining, woodcutting, or hunting labors
 - `sort`: Add death cause button to dead/missing tab in the creatures screen
 

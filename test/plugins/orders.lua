@@ -190,6 +190,7 @@ function test.import_export_reaction_condition()
                     }
                 ],
                 "job" : "CustomReaction",
+                "name" : "Make soap from tallow",
                 "reaction" : "MAKE_SOAP_FROM_TALLOW"
             }
         ]

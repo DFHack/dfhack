@@ -55,6 +55,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `buildingplan`: Added ``buildingplan.copybuilding`` overlay that shows a copy button on planned/constructed buildings.
 
 ## New Features
 

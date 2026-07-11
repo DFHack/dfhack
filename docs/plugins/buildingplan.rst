@@ -237,3 +237,29 @@ usual) unless freed via the ``Free`` buttons on the ``Show items`` tab on both
 buildings. This will remove the mechanism from the building and drop it onto the
 ground, allowing it to be reused elsewhere. There is an option to auto-free
 mechanisms when unlinking to perform this step automatically.
+
+Copying buildings
+-----------------
+
+When viewing a planned or constructed building, a button to ``Copy`` the building
+will appear. Clicking this button puts you in placement mode for that building type,
+allowing you to quickly place copies of already planned/constructed buildings with
+a single action. Details about the copied building are not currently preserved.
+
+You can add a keyboard shortcut to copy buildings without needing to open the building
+info screen. To do this, add a line like the following to your
+``dfhack-config/init/onMapLoad`` file::
+
+    keybinding add <keybinding> copybuilding
+
+In addtion to allowing you to more quickly copy building, this also enables you to copy
+buildings that don't have an info screen, such as constructions.
+
+Each time you copy a building it gets added to a history of recently copied buildings
+(up to 9 entries). To recall these, you can add additional keybindings like the following::
+
+    keybinding add <keybinding> "copybuilding 1"
+    keybinding add <keybinding> "copybuilding 2"
+    ... etc up to 9 as desired
+
+This allows you to quickly cycle through your recently copied buildings.

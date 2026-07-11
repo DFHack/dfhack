@@ -54,7 +54,7 @@ static ReservedRange reserved_range{};
 static std::unordered_map<TexposHandle, long> g_handle_to_texpos;
 static std::unordered_map<TexposHandle, long> g_handle_to_reserved_texpos;
 static std::unordered_map<TexposHandle, SDL_Surface*> g_handle_to_surface;
-static std::unordered_map<std::string, std::vector<TexposHandle>> g_tileset_to_handles;
+static std::unordered_map<std::filesystem::path, std::vector<TexposHandle>> g_tileset_to_handles;
 static std::vector<TexposHandle> g_delayed_regs;
 static std::mutex g_adding_mutex;
 static std::atomic<bool> loading_state = false;
@@ -195,14 +195,14 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface, bool reserved) {
     return handle;
 }
 
-std::vector<TexposHandle> Textures::loadTileset(const std::string& file, int tile_px_w,
+std::vector<TexposHandle> Textures::loadTileset(const std::filesystem::path file, int tile_px_w,
                                                 int tile_px_h, bool reserved) {
     if (g_tileset_to_handles.contains(file))
         return g_tileset_to_handles[file];
     if (!enabler)
         return std::vector<TexposHandle>{};
 
-    SDL_Surface* surface = DFIMG_Load(file.c_str());
+    SDL_Surface* surface = DFIMG_Load(file.string().c_str());
     if (!surface) {
         ERR(textures).printerr("unable to load textures from '{}'\n", file);
         return std::vector<TexposHandle>{};

@@ -6,8 +6,10 @@ local dialogs = require('gui.dialogs')
 local widgets = require('gui.widgets')
 local logistics = require('plugins.logistics')
 local overlay = require('plugins.overlay')
-local STOCKPILES_DIR = 'dfhack-config/stockpiles'
-local STOCKPILES_LIBRARY_DIR = 'hack/data/stockpiles'
+local widgets = require('gui.widgets')
+
+local STOCKPILES_DIR = dfhack.getConfigPath() .. '/stockpiles'
+local STOCKPILES_LIBRARY_DIR = dfhack.getHackPath() .. '/data/stockpiles'
 
 local BAD_FILENAME_REGEX = '[^%w._]'
 

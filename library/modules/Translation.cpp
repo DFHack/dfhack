@@ -27,7 +27,6 @@ distribution.
 #include "VersionInfo.h"
 #include "MemAccess.h"
 #include "Types.h"
-#include "ModuleFactory.h"
 #include "Core.h"
 #include "Error.h"
 #include "DataDefs.h"

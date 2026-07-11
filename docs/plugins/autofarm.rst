@@ -24,9 +24,7 @@ Usage
     Sets thresholds of individual plant types.
 
 You can find the identifiers for the crop types in your world by running the
-following command::
-
-    lua "for _,plant in ipairs(df.global.world.raws.plants.all) do if plant.flags.SEED then print(plant.id) end end"
+following command: ``getplants -f``
 
 Examples
 --------

@@ -60,6 +60,167 @@ Template for new versions:
 - `stockpiles`: Added an export options window to configure the --include option in the UI
 
 ## Fixes
+- `getplants`: added protective code to avoid misoperation when a plant has an invalid material (which should never happen, but...)
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.15-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `autoclothing`: will no longer count gloves and pants as if they were helms
+- `timestream`: do not skip ticks when a caravan is loading or unloading, and be more careful about skipping ticks when flows are active
+
+## Misc Improvements
+
+## Documentation
+
+## API
+- Core: added ``getConfigPath()`` API for obtaining the path to user-specific configuration files
+
+## Lua
+- Added ``dfhack.getConfigPath()`` API, proxying ``Core::getConfigPath``
+
+## Removed
+
+# 53.14-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+- Core: attempts to delete a pool-allocated DF object will now throw an exception instead of corrupting the heap
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+- `logcleaner`: Removed (cannot be safely implemented at this time)
+
+# 53.14-r1
+
+## New Tools
+
+## New Features
+- Compatibility with Dwarf Fortress 53.14
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.13-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
+- ``Gui::makeAnnoucement``, ``Gui::showPopupAnnouncement`, and ``Gui::autoDFAnnouncement`` will no longer attempt to cull the DF announcement vector
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.13-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+- updated documentation for ``autofarm`` for more clarity
+
+## API
+- add flexible casting to ``enum_field`` to enable explicit casting to more types
+- Handle units without current soul in ``Units::getFocusPenalty``
+
+## Lua
+
+## Removed
+
+# 53.12-r1
+
+## New Tools
+
+## New Features
+- Compatibility with Dwarf Fortress 53.12
+
+## Fixes
+- Stockpile definitions in the default library will be correctly found and used (fixed missing path separator)
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.11-r3
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Core: Windows console will always use UTF-8 regardless of system code page settings
+- Steam launcher: Switch to injection strategy, allowing Dwarf Fortress and DFHack to be installed in disparate locations
+
+## Misc Improvements
+- Make DFHack relocatable so that it doesn't depend on being fully co-installed with Dwarf Fortress
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.11-r2
+
+## New Tools
+
+## New Features
+
+## Fixes
 - `autoclothing`, `autoslab`, `tailor`: orders will no longer be created with a repetition frequency of ``NONE``
 
 ## Misc Improvements

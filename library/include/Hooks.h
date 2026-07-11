@@ -26,6 +26,7 @@ distribution.
 
 union SDL_Event;
 
+DFhackCExport void dfhooks_preinit(std::filesystem::path dllpath);
 DFhackCExport void dfhooks_init();
 DFhackCExport void dfhooks_shutdown();
 DFhackCExport void dfhooks_update();

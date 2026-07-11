@@ -11,7 +11,7 @@ local utils = require('utils')
 local widgets = require('gui.widgets')
 require('dfhack.buildings')
 
-config = config or json.open('dfhack-config/buildingplan.json')
+config = config or json.open(dfhack.getConfigPath() .. '/buildingplan.json')
 
 local uibs = df.global.buildreq
 

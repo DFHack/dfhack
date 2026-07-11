@@ -1,14 +1,21 @@
-#include <stddef.h>
+#include "DataIdentity.h"
+
+#include "BitArray.h"
+#include "DataDefs.h"
 
 #include <condition_variable>
+#include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <functional>
+#include <future>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
-#include <vector>
 #include <variant>
+#include <vector>
 
-#include "DataFuncs.h"
-#include "DataIdentity.h"
 
 // the space after the uses of "type" in OPAQUE_IDENTITY_TRAITS_NAME is _required_
 // without it the macro generates a syntax error when type is a template specification
@@ -33,6 +40,7 @@ namespace df {
     INTEGER_IDENTITY_TRAITS(unsigned long,      "unsigned long");
     INTEGER_IDENTITY_TRAITS(long long,          "int64_t");
     INTEGER_IDENTITY_TRAITS(unsigned long long, "uint64_t");
+    INTEGER_IDENTITY_TRAITS(wchar_t,            "wchar_t");
     FLOAT_IDENTITY_TRAITS(float);
     FLOAT_IDENTITY_TRAITS(double);
 
@@ -57,6 +65,7 @@ namespace df {
     OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::variant<std::string, std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::weak_ptr<df::widget_container>);
+    OPAQUE_IDENTITY_TRAITS(wchar_t*);
 
     const buffer_container_identity buffer_container_identity::base_instance;
 

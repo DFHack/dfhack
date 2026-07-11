@@ -27,6 +27,10 @@ set_source_files_properties( Brushes.h PROPERTIES HEADER_FILE_ONLY TRUE )
 # Plugins
 # If you are adding a plugin that you do not intend to commit to the DFHack repo,
 # see instructions for adding "external" plugins at the end of this file.
+#
+# CAVEAT: currently (June 2026) DFHack's core code will only autoload plugins from
+# the hack/plugins directory.  They cannot be autoloaded from mod directories.
+# This has been explicit policy for several years.
 
 # Example plugin that uses protobufs
 # proto file must be in the proto/ folder
@@ -66,7 +70,6 @@ if(BUILD_SUPPORTED)
     dfhack_plugin(createitem createitem.cpp)
     dfhack_plugin(cursecheck cursecheck.cpp)
     dfhack_plugin(cxxrandom cxxrandom.cpp LINK_LIBRARIES lua)
-    dfhack_plugin(logcleaner logcleaner/logcleaner.cpp LINK_LIBRARIES lua)
     dfhack_plugin(deramp deramp.cpp)
     dfhack_plugin(debug debug.cpp LINK_LIBRARIES jsoncpp_static)
     dfhack_plugin(dig dig.cpp LINK_LIBRARIES lua)

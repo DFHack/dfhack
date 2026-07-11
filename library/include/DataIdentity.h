@@ -617,8 +617,10 @@ namespace df
     INTEGER_IDENTITY_TRAITS(unsigned long);
     INTEGER_IDENTITY_TRAITS(long long);
     INTEGER_IDENTITY_TRAITS(unsigned long long);
+    INTEGER_IDENTITY_TRAITS(wchar_t);
     FLOAT_IDENTITY_TRAITS(float);
     FLOAT_IDENTITY_TRAITS(double);
+    OPAQUE_IDENTITY_TRAITS(wchar_t*);
     OPAQUE_IDENTITY_TRAITS(std::condition_variable);
     OPAQUE_IDENTITY_TRAITS(std::fstream);
     OPAQUE_IDENTITY_TRAITS(std::mutex);

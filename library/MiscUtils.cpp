@@ -22,39 +22,49 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "Internal.h"
 #include "Export.h"
 #include "MiscUtils.h"
 #include "ColorText.h"
 
-#include "modules/DFSDL.h"
-
-#ifndef LINUX_BUILD
-// We don't want min and max macros
-#define NOMINMAX
-    #include <Windows.h>
-    // Suppress warning which occurs in header on some WinSDK versions
-    // See dfhack/dfhack#5147 for more information
-    #pragma warning(push)
-    #pragma warning(disable:4091)
-    #include <DbgHelp.h>
-    #pragma warning(pop)
-#else
-    #include <sys/time.h>
-    #include <ctime>
-    #include <cxxabi.h>
-#endif
-
-#include <ctype.h>
-#include <stdarg.h>
-#include <string.h>
+#include <array>
+#include <algorithm>
+#include <cctype>
+#include <cstdarg>
 #include <cstdlib>
 #include <cmath>
-
-#include <sstream>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <exception>
+#include <iomanip>
+#include <ios>
+#include <iostream>
+#include <locale>
 #include <map>
-#include <array>
-#include <unordered_map>
+#include <ostream>
+#include <sstream>
+#include <string>
+#include <utility>
+#include <vector>
+
+#ifdef WIN32
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <Windows.h>
+#include <sysinfoapi.h>
+// Suppress warning which occurs in header on some WinSDK versions
+// See dfhack/dfhack#5147 for more information
+#pragma warning(push)
+#pragma warning(disable:4091)
+#include <DbgHelp.h>
+#pragma warning(pop)
+#endif
+
+#ifdef LINUX_BUILD
+#include <sys/time.h>
+#include <ctime>
+#include <cxxabi.h>
+#endif
 
 NumberFormatType preferred_number_format_type = NumberFormatType::DEFAULT;
 
@@ -499,8 +509,8 @@ uint64_t GetTimeMs64()
 /* Character decoding */
 
 // See http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ for details.
-#define UTF8_ACCEPT 0
-#define UTF8_REJECT 12
+constexpr auto UTF8_ACCEPT = 0;
+constexpr auto UTF8_REJECT = 12;
 
 static const uint8_t utf8d[] = {
   // The first part of the table maps bytes to character classes that
@@ -653,20 +663,31 @@ std::string UTF2DF(const std::string &in)
         out.resize(pos);
     return out;
 }
-
-DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
+static bool console_is_utf8()
 {
-    bool is_utf = false;
 #ifdef LINUX_BUILD
+    static bool checked = false;
+    static bool is_utf = false;
+    if (checked)
+        return is_utf;
+
     std::string locale = "";
     if (getenv("LANG"))
         locale += getenv("LANG");
     if (getenv("LC_CTYPE"))
         locale += getenv("LC_CTYPE");
     locale = toUpper_cp437(locale);
-    is_utf = (locale.find("UTF-8") != std::string::npos) ||
-             (locale.find("UTF8") != std::string::npos);
+    is_utf = (locale.find("UTF-8") != std::string::npos) || (locale.find("UTF8") != std::string::npos);
+    checked = true;
+    return is_utf;
+#else
+    return true; // Since DF 53.11, Windows console is always UTF-8
 #endif
+}
+
+DFHACK_EXPORT std::string DF2CONSOLE(const std::string &in)
+{
+    bool is_utf = console_is_utf8();
     return is_utf ? DF2UTF(in) : in;
 }
 

@@ -293,7 +293,7 @@ local function get_mental_stability(unit)
     local emotionally_obsessive = unit.status.current_soul.personality.traits.EMOTIONALLY_OBSESSIVE
     local humor = unit.status.current_soul.personality.traits.HUMOR
     local love_propensity = unit.status.current_soul.personality.traits.LOVE_PROPENSITY
-    local perseverence = unit.status.current_soul.personality.traits.PERSEVERENCE
+    local perseverance = unit.status.current_soul.personality.traits.PERSEVERANCE
     local politeness = unit.status.current_soul.personality.traits.POLITENESS
     local privacy = unit.status.current_soul.personality.traits.PRIVACY
     local stress_vulnerability = unit.status.current_soul.personality.traits.STRESS_VULNERABILITY
@@ -315,7 +315,7 @@ local function get_mental_stability(unit)
                  + (anxiety_propensity * -0.06) + (bravery * 0.06)
                  + (cheer_propensity * 0.41) + (curious * -0.06) + (discord * 0.14)
                  + (dutifulness * -0.03) + (emotionally_obsessive * -0.13)
-                 + (humor * -0.05) + (love_propensity * 0.15) + (perseverence * -0.07)
+                 + (humor * -0.05) + (love_propensity * 0.15) + (perseverance * -0.07)
                  + (politeness * -0.14) + (privacy * 0.03) + (stress_vulnerability * -0.20)
                  + (tolerant * -0.11)
 

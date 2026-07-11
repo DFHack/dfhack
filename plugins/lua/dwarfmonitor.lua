@@ -5,7 +5,7 @@ local guidm = require('gui.dwarfmode')
 local overlay = require('plugins.overlay')
 local utils = require('utils')
 
-local DWARFMONITOR_CONFIG_FILE = 'dfhack-config/dwarfmonitor.json'
+local DWARFMONITOR_CONFIG_FILE = dfhack.getConfigPath() .. '/dwarfmonitor.json'
 
 -- ------------- --
 -- WeatherWidget --

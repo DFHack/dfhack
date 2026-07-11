@@ -4,7 +4,7 @@ local gui = require('gui')
 local overlay = require('plugins.overlay')
 local widgets = require('gui.widgets')
 
-local toolbar_textures = dfhack.textures.loadTileset('hack/data/art/damp_dig_toolbar.png', 8, 12, true)
+local toolbar_textures = dfhack.textures.loadTileset(dfhack.getHackPath()..'/data/art/damp_dig_toolbar.png', 8, 12, true)
 
 local main_if = df.global.game.main_interface
 local selection_rect = df.global.selection_rect

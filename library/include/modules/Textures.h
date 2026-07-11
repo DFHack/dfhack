@@ -32,7 +32,7 @@ DFHACK_EXPORT TexposHandle loadTexture(SDL_Surface* surface, bool reserved = fal
  * Load tileset from image file.
  * Return vector of handles to obtain valid texposes.
  */
-DFHACK_EXPORT std::vector<TexposHandle> loadTileset(const std::string& file,
+DFHACK_EXPORT std::vector<TexposHandle> loadTileset(const std::filesystem::path file,
                                                     int tile_px_w = TILE_WIDTH_PX,
                                                     int tile_px_h = TILE_HEIGHT_PX,
                                                     bool reserved = false);

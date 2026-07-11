@@ -663,6 +663,7 @@ public:
         order->amount_total = c;
         order->status.bits.validated = false;
         order->status.bits.active = false;
+        order->frequency = df::workquota_frequency_type::OneTime;
         order->id = world->manager_orders.manager_order_next_id++;
 
         world->manager_orders.all.push_back(order);

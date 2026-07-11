@@ -29,6 +29,7 @@ distribution.
 #include <algorithm>
 #include <map>
 #include <iostream>
+#include <filesystem>
 
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
@@ -226,9 +227,9 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
 } // method
 
 // load the XML file with offsets
-bool VersionInfoFactory::loadFile(string path_to_xml)
+bool VersionInfoFactory::loadFile(std::filesystem::path path_to_xml)
 {
-    TiXmlDocument doc( path_to_xml.c_str() );
+    TiXmlDocument doc( path_to_xml.string().c_str() );
     std::cerr << "Loading " << path_to_xml << " ... ";
     //bool loadOkay = doc.LoadFile();
     if (!doc.LoadFile())

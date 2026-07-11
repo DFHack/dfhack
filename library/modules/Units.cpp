@@ -27,7 +27,6 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
-#include "ModuleFactory.h"
 #include "Types.h"
 #include "VersionInfo.h"
 
@@ -2027,6 +2026,9 @@ int32_t Units::getFocusPenalty(df::unit* unit, need_type_set need_types) {
     CHECK_NULL_POINTER(unit);
 
     int max_penalty = INT_MAX;
+    if (!unit->status.current_soul) {
+        return max_penalty;
+    }
     auto& needs = unit->status.current_soul->personality.needs;
     for (auto const need : needs) {
         if (need_types.test(need->id)) {

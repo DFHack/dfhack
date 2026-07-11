@@ -141,6 +141,7 @@ static void createSlabJob(df::unit *unit)
     order->specdata.hist_figure_id = unit->hist_figure_id;
     order->amount_left = 1;
     order->amount_total = 1;
+    order->frequency = df::workquota_frequency_type::OneTime;
     world->manager_orders.all.push_back(order);
 }
 

@@ -35,57 +35,58 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
-#include <iostream>
-#include <fstream>
-#include <istream>
-#include <string>
-#include <stdint.h>
-
 #include "RemoteTools.h"
-#include "PluginManager.h"
-#include "MiscUtils.h"
-#include "VersionInfo.h"
+
+#include "ColorText.h"
+#include "Core.h"
+#include "CoreDefs.h"
+#include "DataDefs.h"
 #include "DFHackVersion.h"
+#include "LuaTools.h"
+#include "MiscUtils.h"
+#include "PluginManager.h"
+#include "VersionInfo.h"
 
 #include "modules/Materials.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
-#include "LuaTools.h"
-
-#include "DataDefs.h"
-#include "df/plotinfost.h"
 #include "df/adventurest.h"
-#include "df/world.h"
-#include "df/world_data.h"
-#include "df/unit.h"
-#include "df/unit_misc_trait.h"
-#include "df/unit_soul.h"
-#include "df/unit_skill.h"
+#include "df/creature_raw.h"
+#include "df/global_objects.h"
+#include "df/historical_entity.h"
+#include "df/historical_figure.h"
+#include "df/incident.h"
+#include "df/inorganic_raw.h"
+#include "df/language_name.h"
 #include "df/material.h"
 #include "df/matter_state.h"
-#include "df/inorganic_raw.h"
-#include "df/creature_raw.h"
-#include "df/plant_raw.h"
 #include "df/nemesis_record.h"
-#include "df/historical_figure.h"
-#include "df/historical_entity.h"
-#include "df/squad.h"
+#include "df/plant_raw.h"
+#include "df/plotinfost.h"
+#include "df/profession.h"
 #include "df/squad_position.h"
-#include "df/incident.h"
+#include "df/squad.h"
+#include "df/unit_misc_trait.h"
+#include "df/unit_skill.h"
+#include "df/unit_soul.h"
+#include "df/unit.h"
+#include "df/world_data.h"
+#include "df/world.h"
 
 #include "BasicApi.pb.h"
 
+#include <cassert>
 #include <cstdio>
 #include <cstdlib>
-#include <sstream>
-
+#include <fstream>
+#include <iostream>
+#include <istream>
 #include <memory>
+#include <sstream>
+#include <string>
+#include <vector>
 
 using namespace DFHack;
 using namespace df::enums;

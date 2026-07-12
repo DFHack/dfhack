@@ -4,6 +4,7 @@
 #include "PluginManager.h"
 
 #include "modules/Filesystem.h"
+#include "modules/Job.h"
 #include "modules/Materials.h"
 #include "modules/World.h"
 
@@ -44,8 +45,15 @@ DFHACK_PLUGIN("orders");
 
 REQUIRE_GLOBAL(world);
 
-static const std::string ORDERS_DIR = "dfhack-config/orders";
-static const std::string ORDERS_LIBRARY_DIR = "hack/data/orders";
+static const std::filesystem::path get_orders_dir()
+{
+    return Core::getInstance().getConfigPath() / "orders";
+}
+
+static std::filesystem::path get_orders_library_dir()
+{
+    return Core::getInstance().getHackPath() / "data" / "orders";
+}
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters);
 
@@ -135,7 +143,7 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
 
 static void list_library(color_ostream &out) {
     std::map<std::filesystem::path, bool> files;
-    if (0 < Filesystem::listdir_recursive(ORDERS_LIBRARY_DIR, files, 0, false)) {
+    if (0 < Filesystem::listdir_recursive(get_orders_library_dir(), files, 0, false)) {
         // if the library directory doesn't exist, just skip it
         return;
     }
@@ -163,7 +171,7 @@ static command_result orders_list_command(color_ostream & out)
     // support subdirs so we can identify and ignore subdirs with ".json" names.
     // also listdir_recursive will alphabetize the list for us.
     std::map<std::filesystem::path, bool> files;
-    Filesystem::listdir_recursive(ORDERS_DIR, files, 0, false);
+    Filesystem::listdir_recursive(get_orders_dir(), files, 0, false);
 
     for (auto& it : files) {
         if (it.second)
@@ -376,6 +384,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
             order["art"] = art;
         }
 
+        order["name"] = Job::getManagerOrderName(it);
         order["amount_left"] = it->amount_left;
         order["amount_total"] = it->amount_total;
         order["is_validated"] = bool(it->status.bits.validated);
@@ -504,9 +513,9 @@ static command_result orders_export_command(color_ostream & out, const std::stri
         orders.append(order);
     }
 
-    Filesystem::mkdir(ORDERS_DIR);
+    Filesystem::mkdir(get_orders_dir());
 
-    std::ofstream file(ORDERS_DIR + "/" + name + ".json");
+    std::ofstream file(get_orders_dir() / ( name + ".json"));
 
     file << orders << std::endl;
 
@@ -924,8 +933,7 @@ static command_result orders_import_command(color_ostream & out, const std::stri
         return CR_WRONG_USAGE;
     }
 
-    const std::string filename((is_library ? ORDERS_LIBRARY_DIR : ORDERS_DIR) +
-                                    "/" + fname + ".json");
+    auto filename((is_library ? get_orders_library_dir() : get_orders_dir()) / (fname + ".json"));
     Json::Value orders;
 
     {

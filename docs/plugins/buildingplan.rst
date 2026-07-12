@@ -204,6 +204,18 @@ other available items (or from items produced in the future if not all items
 are available yet). If there are multiple item types to choose for the current
 building, one dialog will appear per item type.
 
+Queueing work orders
+--------------------
+
+If you are planning a building but do not have the required items in stock, you can
+automatically queue a manager work order to produce the missing quantity. After
+selecting your desired item types and filters, press :kbd:`Ctrl`:kbd:`q` (or click
+"Queue order") to generate a work order.
+
+`buildingplan` will attempt to automatically determine the correct job (e.g. making
+a wooden bed if you are planning a bed) and will respect the material categories
+you have selected in your filters.
+
 Building status
 ---------------
 

@@ -938,7 +938,17 @@ can be omitted.
 
 * ``dfhack.getHackPath()``
 
-  Returns the dfhack directory path, i.e., ``".../df/hack/"``.
+  Returns the DFHack installation directory path (the folder where DFHack is installed).
+  This may be the ``hack`` folder within the DF installation, but you should not rely on this.
+  Specifically, the installation folder is extremely likely to be somewhere else when DFHack is installed from Steam.
+  Always use this function to get the DFHack installation directory path instead of hardcoding it.
+
+* ``dfhack.getConfigPath()``
+
+  Returns the DFHack config directory path (the folder where user-specific configuration files are stored).
+  This is currently the ``dfhack-config`` folder within the DF installation, but you should not rely on this as it is likely to change in the future.
+  Always use this function to get the DFHack config directory path instead of hardcoding it.
+  Avoid storing this value in a long-lived variable, as it's possible that in future versions of DFHack, it may be possible for the config directory to be changed at runtime.
 
 * ``dfhack.getSavePath()``
 

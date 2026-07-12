@@ -11,9 +11,36 @@ local utils = require('utils')
 local widgets = require('gui.widgets')
 require('dfhack.buildings')
 
-config = config or json.open('dfhack-config/buildingplan.json')
+config = config or json.open(dfhack.getConfigPath() .. '/buildingplan.json')
 
 local uibs = df.global.buildreq
+
+local ITEM_TO_JOB = {
+    [df.item_type.BED] = 'ConstructBed', [df.item_type.DOOR] = 'ConstructDoor',
+    [df.item_type.CABINET] = 'ConstructCabinet', [df.item_type.TABLE] = 'ConstructTable',
+    [df.item_type.CHAIR] = 'ConstructThrone', [df.item_type.BOX] = 'ConstructChest',
+    [df.item_type.ARMORSTAND] = 'ConstructArmorStand', [df.item_type.WEAPONRACK] = 'ConstructWeaponRack',
+    [df.item_type.STATUE] = 'ConstructStatue', [df.item_type.COFFIN] = 'ConstructCoffin',
+    [df.item_type.HATCH_COVER] = 'ConstructHatchCover', [df.item_type.GRATE] = 'ConstructGrate',
+    [df.item_type.QUERN] = 'ConstructQuern', [df.item_type.MILLSTONE] = 'ConstructMillstone',
+    [df.item_type.TRACTION_BENCH] = 'ConstructTractionBench', [df.item_type.SLAB] = 'ConstructSlab',
+    [df.item_type.ANVIL] = 'ForgeAnvil', [df.item_type.WINDOW] = 'MakeWindow',
+    [df.item_type.CAGE] = 'MakeCage', [df.item_type.BARREL] = 'MakeBarrel',
+    [df.item_type.BUCKET] = 'MakeBucket', [df.item_type.ANIMALTRAP] = 'MakeAnimalTrap',
+    [df.item_type.CHAIN] = 'MakeChain', [df.item_type.FLASK] = 'MakeFlask',
+    [df.item_type.GOBLET] = 'MakeGoblet', [df.item_type.BLOCKS] = 'ConstructBlocks',
+}
+
+local JOB_DEFAULTS = {
+    ConstructBed='wood', ConstructTractionBench='wood', MakeCage='wood',
+    MakeBarrel='wood', MakeBucket='wood', MakeAnimalTrap='wood',
+    ForgeAnvil='iron', MakeChain='iron', MakeFlask='iron', MakeWindow='glass'
+}
+
+local VALID_MAT_CATS = {
+    wood=true, bone=true, shell=true, horn=true, pearl=true, tooth=true,
+    leather=true, silk=true, yarn=true, cloth=true, plant=true
+}
 
 reset_counts_flag = false
 editing_filters_flag = false
@@ -148,7 +175,7 @@ local function is_interior(bounds, x, y)
         y ~= bounds.y1 and y ~= bounds.y2
 end
 
--- adjusted from CycleHotkeyLabel on the planner panel
+-- adjusted from WeaponSpiketrapPanel (HotKey & Slider) on the planner panel
 local weapon_quantity = 1
 
 local function get_quantity(filter, hollow, bounds)
@@ -248,7 +275,7 @@ local function has_direction_panel()
             and uibs.building_subtype == df.trap_type.TrackStop)
 end
 
-local pressure_plate_panel_frame = {t=4, h=37, w=46, r=28}
+local pressure_plate_panel_frame = {t=4, h=38, w=50, r=28}
 
 local function has_pressure_plate_panel()
     return is_pressure_plate()
@@ -409,6 +436,8 @@ function ItemLine:get_item_line_text()
         self.note = (' Will link later (need to make %d)'):format(-self.available + quantity)
     end
     self.note = string.char(192) .. self.note -- character 192 is "└"
+
+    self.quantity = quantity
 
     return ('%d %s%s'):format(quantity, self.desc, quantity == 1 and '' or 's')
 end
@@ -610,7 +639,7 @@ function PlannerOverlay:init()
 
     local main_panel = widgets.Panel{
         view_id='main',
-        frame={t=1, l=0, r=0, h=14},
+        frame={t=1, l=0, r=0, h=15},
         frame_style=gui.FRAME_INTERIOR_MEDIUM,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('is_not_minimized'),
@@ -657,6 +686,43 @@ function PlannerOverlay:init()
     end
 
     local buildingplan = require('plugins.buildingplan')
+
+    -- WeaponSpiketrapPanel defined outside of main_panel, otherwise addviews breaks -> addviews expects table
+    local WeaponSpiketrapPanel = defclass(WeaponSpiketrapPanel, widgets.Panel)
+    WeaponSpiketrapPanel.ATTRS{
+        view_id='weapons',
+        visible=is_weapon_or_spike_trap,
+    }
+
+    function WeaponSpiketrapPanel:init()
+        self.options = utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10)
+
+        self:addviews{
+            widgets.CycleHotkeyLabel{
+                view_id='weapons_hotkey',
+                frame={b=4, l=1, w=28},
+                key='CUSTOM_T',
+                key_back='CUSTOM_SHIFT_T',
+                label='Number of weapons:',
+                options=self.options,
+                initial_option=weapon_quantity,
+                on_change=function(val)
+                    weapon_quantity = val
+                end
+            },
+
+            widgets.Slider{
+                view_id='weapons_slider',
+                frame={b=6, l=4, w=35},
+                num_stops=#self.options,
+                get_idx_fn=function() return weapon_quantity end,
+                on_change=function(val)
+                    weapon_quantity = val
+                    self.subviews.weapons_hotkey:setOption(val)
+                end
+            }
+        }
+    end
 
     main_panel:addviews{
         widgets.Label{
@@ -728,16 +794,9 @@ function PlannerOverlay:init()
                 {label='Down', value=df.construction_type.DownStair},
             },
         },
-        widgets.CycleHotkeyLabel {  -- TODO: this thing also needs a slider
-            view_id='weapons',
-            frame={b=4, l=1, w=28},
-            key='CUSTOM_T',
-            key_back='CUSTOM_SHIFT_T',
-            label='Number of weapons:',
-            visible=is_weapon_or_spike_trap,
-            options=utils.tabulate(function(i) return {label='('..i..')', value=i, pen=COLOR_YELLOW} end, 1, 10),
-            on_change=function(val) weapon_quantity = val end,
-        },
+
+        WeaponSpiketrapPanel{},
+
         widgets.ToggleHotkeyLabel {
             view_id='engraved',
             frame={b=4, l=1, w=22},
@@ -761,6 +820,16 @@ function PlannerOverlay:init()
         widgets.Panel{
             visible=function() return #get_cur_filters() > 0 end,
             subviews={
+                widgets.HotkeyLabel{
+                    frame={b=3, l=1, w=22},
+                    key='CUSTOM_CTRL_Q',
+                    label='Queue order',
+                    on_activate=function() self:queue_order(self.selected) end,
+                    visible=function()
+                        local item = self.subviews['item'..tostring(self.selected)]
+                        return item and item.available and item.quantity and (item.available < item.quantity)
+                    end
+                },
                 widgets.HotkeyLabel{
                     frame={b=2, l=1, w=22},
                     key='CUSTOM_F',
@@ -841,7 +910,7 @@ function PlannerOverlay:init()
 
     local error_panel = widgets.ResizingPanel{
         view_id='errors',
-        frame={t=15, l=0, r=0},
+        frame={t=16, l=0, r=0},
         frame_style=gui.BOLD_FRAME,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('is_not_minimized'),
@@ -903,7 +972,7 @@ function PlannerOverlay:init()
 
     local favorites_panel = widgets.Panel{
         view_id='favorites',
-        frame={t=15, l=0, r=0, h=9},
+        frame={t=16, l=0, r=0, h=9},
         frame_style=gui.FRAME_INTERIOR_MEDIUM,
         frame_background=gui.CLEAR_PEN,
         visible=self:callback('show_favorites'),
@@ -940,7 +1009,7 @@ function PlannerOverlay:init()
                         is_selected_fn=make_is_selected_filter('0') },
             widgets.CycleHotkeyLabel {
                 view_id='slot_select',
-                frame={b=0, l=2},
+                frame={b=2, l=2},
                 key='CUSTOM_X',
                 key_back='CUSTOM_SHIFT_X',
                 label='next/previous slot',
@@ -950,10 +1019,15 @@ function PlannerOverlay:init()
                 on_change=function(val) self.selected_favorite = val end,
             },
             widgets.HotkeyLabel{
-                frame={b=0, l=28},
+                frame={b=2, l=28},
                 label="set/apply selected",
                 key='CUSTOM_Y',
                 on_activate=function () self:save_restore_filter(self.selected_favorite) end,
+            },
+            widgets.TooltipLabel {
+                frame={b=0, l=2},
+                show_tooltip=true,
+                text="Shift+click to edit the label of a favorite",
             },
 
         }
@@ -974,7 +1048,7 @@ function PlannerOverlay:show_favorites()
 end
 
 function PlannerOverlay:show_hide_favorites(new)
-    local errors_frame = {t=15+(new and 9 or 0), l=0, r=0}
+    local errors_frame = {t=16+(new and 9 or 0), l=0, r=0}
     self.subviews.errors.frame = errors_frame
     self:updateLayout()
 end
@@ -1041,6 +1115,74 @@ end
 
 function PlannerOverlay:clear_filter(idx)
     desc=require('plugins.buildingplan').clearFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx-1)
+end
+
+function PlannerOverlay:queue_order(idx)
+    local item = self.subviews['item'..tostring(idx)]
+    if not item or not item.available or not item.quantity or item.available >= item.quantity then return end
+    local missing = item.quantity - item.available
+    if missing <= 0 then return end
+
+    local filter = get_cur_filters()[idx]
+
+    local job_name = "ConstructBlocks"
+    local item_type = nil
+    if filter.item_type and filter.item_type ~= -1 then
+        item_type = filter.item_type
+    elseif filter.vector_id and filter.vector_id ~= -1 then
+        local mapping_vector = {
+            [df.job_item_vector_id.ANY_WEAPON] = df.item_type.WEAPON,
+            [df.job_item_vector_id.ANY_ARMOR] = df.item_type.ARMOR,
+        }
+        item_type = mapping_vector[filter.vector_id]
+    end
+
+    if item_type and ITEM_TO_JOB[item_type] then
+        job_name = ITEM_TO_JOB[item_type]
+    end
+
+    local order_json = {
+        job = job_name,
+        amount_total = missing
+    }
+
+    local buildingplan = require('plugins.buildingplan')
+    local cats_list = {}
+    if buildingplan.hasFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1) then
+        local cats = buildingplan.getMaterialMaskFilter(uibs.building_type, uibs.building_subtype, uibs.custom_type, idx - 1)
+        for cat, enabled in pairs(cats) do
+            if enabled and cat ~= 'unset' then
+                table.insert(cats_list, cat)
+            end
+        end
+    end
+
+    if #cats_list == 0 then
+        -- df manager requires a material category for generic jobs or it queues "unknown material" orders
+        table.insert(cats_list, JOB_DEFAULTS[job_name] or 'stone')
+    end
+
+    local mat_cats = {}
+    for _, cat in ipairs(cats_list) do
+        if VALID_MAT_CATS[cat] then
+            table.insert(mat_cats, cat)
+        elseif cat == 'stone' then
+            order_json.material = "INORGANIC"
+        elseif cat == 'glass' then
+            order_json.material = "GLASS_GREEN"
+        elseif cat == 'metal' or cat == 'iron' then
+            order_json.material = "IRON"
+        end
+    end
+
+    if #mat_cats > 0 then
+        order_json.material_category = mat_cats
+    end
+
+    dfhack.run_command_silent('workorder', json.encode(order_json))
+
+    local desc = item.desc or "item"
+    dfhack.gui.showAnnouncement('Work order queued for ' .. tostring(missing) .. ' ' .. desc .. '.', COLOR_YELLOW, true)
 end
 
 local function get_placement_data()

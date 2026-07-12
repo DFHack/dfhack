@@ -5767,7 +5767,7 @@ TextArea Functions:
 * ``textarea:getText()``
 
     Returns the current text content of the ``TextArea`` widget as a string.
-    "\n" characters (``string.char(10)``) should be interpreted as new lines
+    ``\n`` characters (``string.char(10)``) should be interpreted as new lines
 
 * ``textarea:setText(text)``
 
@@ -6553,7 +6553,8 @@ Filter behavior:
 
 By default, the filter matches substrings that start at the beginning of a word
 (or after any punctuation). You can instead configure filters to match any
-substring across the full text with a command like::
+substring across the full text by setting ``FILTER_FULL_TEXT`` in `gui/control-panel`
+or set it for the session by running a command like::
 
   :lua require('utils').FILTER_FULL_TEXT=true
 

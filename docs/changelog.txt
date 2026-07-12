@@ -66,13 +66,17 @@ Template for new versions:
 ## Misc Improvements
 - `buildingplan`: added a slider on the weapontrap overlay
 - `buildingplan`: added a small tooltip text about renaming favorites in the UI
+- `buildingplan`: buildingplan can now generate work orders
+- `orders`: exported orders now include a human-readable ``name`` field
 
 ## Documentation
 
 ## API
+- Core: added ``getConfigPath()`` API for obtaining the path to user-specific configuration files
 - ``widgets.RadioButton``: New button widget resembling those used in ``gui/control-panel``
 
 ## Lua
+- Added ``dfhack.getConfigPath()`` API, proxying ``Core::getConfigPath``
 
 ## Removed
 
@@ -91,10 +95,8 @@ Template for new versions:
 ## Documentation
 
 ## API
-- Core: added ``getConfigPath()`` API for obtaining the path to user-specific configuration files
 
 ## Lua
-- Added ``dfhack.getConfigPath()`` API, proxying ``Core::getConfigPath``
 
 ## Removed
 
@@ -108,7 +110,6 @@ Template for new versions:
 
 ## Misc Improvements
 - Core: attempts to delete a pool-allocated DF object will now throw an exception instead of corrupting the heap
-- `buildingplan`: buildingplan can now generate work orders
 
 ## Documentation
 
@@ -265,7 +266,6 @@ Template for new versions:
 
 ## New Features
 - `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
-- `orders`: exported orders now include a human-readable ``name`` field
 - `sort`: added ``Uniformed`` filter to squad assignment screen to filter dwarves with mining, woodcutting, or hunting labors
 - `sort`: Add death cause button to dead/missing tab in the creatures screen
 

@@ -70,6 +70,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``widgets.RadioButton``: New button widget resembling those used in ``gui/control-panel``
 
 ## Lua
 

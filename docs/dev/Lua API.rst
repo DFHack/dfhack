@@ -6396,13 +6396,13 @@ Subclass of ConfigureButton; a 3x1 tile button that resembles a radio button
 It has the following attributes:
 
 :initial_state: Whether to start in the ``true`` or ``false`` state. Defaults to ``true``.
-:on_change: Callback to call when state changes, including initialization. Called as `on_change(val)`.
+:on_change: Callback to call when state changes, including initialization. Called as ``on_change(val)``.
 
 It implements the following method:
 
 * ``RadioButton:setState(val)``
 
-  Sets the state to boolean `val` and calls `on_change` (if defined).
+  Sets the state to boolean ``val`` and calls ``on_change`` (if defined).
 
 BannerPanel class
 -----------------

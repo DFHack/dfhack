@@ -6392,11 +6392,17 @@ RadioButton class
 Subclass of ConfigureButton; a 3x1 tile button that resembles a radio button
 (or check box in ASCII mode), identical to the ones found in
 `gui/control-panel`. Clicking on the button will toggle its enabled state.
-This state is represented by the boolean value ``toggle_state``.
 
 It has the following attributes:
 
-:initial_state: Start in the ``true`` or ``false`` state. Defaults to ``true``.
+:initial_state: Whether to start in the ``true`` or ``false`` state. Defaults to ``true``.
+:on_change: Callback to call when state changes, including initialization. Called as ``on_change(val)``.
+
+It implements the following method:
+
+* ``RadioButton:setState(val)``
+
+  Sets the state to boolean ``val`` and calls ``on_change`` (if defined).
 
 BannerPanel class
 -----------------

@@ -135,16 +135,6 @@ namespace DFHack {
     DBG_DECLARE(core, keybinding, DebugCategory::LINFO);
     DBG_DECLARE(core, script, DebugCategory::LINFO);
 
-    static const std::filesystem::path getConfigPath()
-    {
-        return Filesystem::getInstallDir() / "dfhack-config";
-    };
-
-    static const std::filesystem::path getConfigDefaultsPath()
-    {
-        return Core::getInstance().getHackPath() / "data" / "dfhack-config-defaults";
-    };
-
 class MainThread {
 public:
     //! MainThread::suspend keeps the main DF thread suspended from Core::Init to
@@ -538,7 +528,7 @@ std::filesystem::path Core::findScript(std::string name)
     return {};
 }
 
-bool loadScriptPaths(color_ostream &out, bool silent = false)
+bool Core::loadScriptPaths(color_ostream &out, bool silent)
 {
     std::filesystem::path filename{ getConfigPath() / "script-paths.txt" };
     std::ifstream file(filename);
@@ -563,7 +553,7 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
         getline(ss, path);
         if (ch == '+' || ch == '-')
         {
-            if (!Core::getInstance().addScriptPath(path, ch == '+') && !silent)
+            if (!addScriptPath(path, ch == '+') && !silent)
                 out.printerr("{}:{}: Failed to add path: {}\n", filename, line, path);
         }
         else if (!silent)
@@ -935,12 +925,11 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     }
 
     // load baseline defaults
-    core->loadScriptFile(out, getConfigPath() / "init" / "default.dfhack.init", false);
+    core->loadScriptFile(out, core->getConfigPath() / "init" / "default.dfhack.init", false);
 
     // load user overrides
     std::vector<std::string> prefixes(1, "dfhack");
-    loadScriptFiles(core, out, prefixes, getConfigPath() / "init");
-
+    loadScriptFiles(core, out, prefixes, core->getConfigPath() / "init");
     // show the terminal if requested
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
@@ -962,9 +951,9 @@ static void fInitthread(IODATA * iod)
 // A thread function... for the interactive console.
 static void fIOthread(IODATA * iod)
 {
-    static const std::filesystem::path HISTORY_FILE = getConfigPath() / "dfhack.history";
-
     Core * core = iod->core;
+    std::filesystem::path HISTORY_FILE = core->getConfigPath() / "dfhack.history";
+
     PluginManager * plug_mgr = iod->plug_mgr;
 
     CommandHistory main_history;

@@ -938,7 +938,17 @@ can be omitted.
 
 * ``dfhack.getHackPath()``
 
-  Returns the dfhack directory path, i.e., ``".../df/hack/"``.
+  Returns the DFHack installation directory path (the folder where DFHack is installed).
+  This may be the ``hack`` folder within the DF installation, but you should not rely on this.
+  Specifically, the installation folder is extremely likely to be somewhere else when DFHack is installed from Steam.
+  Always use this function to get the DFHack installation directory path instead of hardcoding it.
+
+* ``dfhack.getConfigPath()``
+
+  Returns the DFHack config directory path (the folder where user-specific configuration files are stored).
+  This is currently the ``dfhack-config`` folder within the DF installation, but you should not rely on this as it is likely to change in the future.
+  Always use this function to get the DFHack config directory path instead of hardcoding it.
+  Avoid storing this value in a long-lived variable, as it's possible that in future versions of DFHack, it may be possible for the config directory to be changed at runtime.
 
 * ``dfhack.getSavePath()``
 
@@ -5757,7 +5767,7 @@ TextArea Functions:
 * ``textarea:getText()``
 
     Returns the current text content of the ``TextArea`` widget as a string.
-    "\n" characters (``string.char(10)``) should be interpreted as new lines
+    ``\n`` characters (``string.char(10)``) should be interpreted as new lines
 
 * ``textarea:setText(text)``
 
@@ -6346,12 +6356,27 @@ This is a specialized subclass of CycleHotkeyLabel that has two options:
 ``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
 ``On`` option is rendered in green.
 
+ConfigureButton class
+---------------------
+
+A 3x1 tile button with a gear symbol on it, intended to represent a configure
+icon. Clicking on the icon will run the given callback. The graphics can also
+be overridden to create custom buttons.
+
+It has the following attributes:
+
+:on_click: The function to run when the icon is clicked.
+:pen_left: Pen or function returning a pen to overwrite the left tile of the button.
+:pen_center: As above, but for the center tile (gear symbol).
+:pen_right: As above, but for the right tile.
+
 HelpButton class
 ----------------
 
-A 3x1 tile button with a question mark on it, intended to represent a help
-icon. Clicking on the icon will launch `gui/launcher` with a given command
-string, showing the help text for that command.
+Subclass of ConfigureButton; a 3x1 tile button with a question mark on it,
+intended to represent a help icon. Clicking on the icon will launch
+`gui/launcher` with a given command string, showing the help text for that
+command.
 
 It has the following attributes:
 
@@ -6361,15 +6386,23 @@ It also sets the ``frame`` attribute so the button appears in the upper right
 corner of the parent, but you can override this to your liking if you want a
 different position.
 
-ConfigureButton class
----------------------
+RadioButton class
+-----------------
 
-A 3x1 tile button with a gear mark on it, intended to represent a configure
-icon. Clicking on the icon will run the given callback.
+Subclass of ConfigureButton; a 3x1 tile button that resembles a radio button
+(or check box in ASCII mode), identical to the ones found in
+`gui/control-panel`. Clicking on the button will toggle its enabled state.
 
 It has the following attributes:
 
-:on_click: The function on run when the icon is clicked.
+:initial_state: Whether to start in the ``true`` or ``false`` state. Defaults to ``true``.
+:on_change: Callback to call when state changes, including initialization. Called as ``on_change(val)``.
+
+It implements the following method:
+
+* ``RadioButton:setState(val)``
+
+  Sets the state to boolean ``val`` and calls ``on_change`` (if defined).
 
 BannerPanel class
 -----------------
@@ -6526,7 +6559,8 @@ Filter behavior:
 
 By default, the filter matches substrings that start at the beginning of a word
 (or after any punctuation). You can instead configure filters to match any
-substring across the full text with a command like::
+substring across the full text by setting ``FILTER_FULL_TEXT`` in `gui/control-panel`
+or set it for the session by running a command like::
 
   :lua require('utils').FILTER_FULL_TEXT=true
 

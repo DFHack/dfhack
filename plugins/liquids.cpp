@@ -58,7 +58,8 @@ using namespace df::enums;
 DFHACK_PLUGIN("liquids");
 REQUIRE_GLOBAL(world);
 
-static const char * HISTORY_FILE = "dfhack-config/liquids.history";
+auto constexpr HISTORY_FILE = "liquids.history";
+
 CommandHistory liquids_hist;
 
 command_result df_liquids (color_ostream &out, vector <string> & parameters);
@@ -66,7 +67,7 @@ command_result df_liquids_here (color_ostream &out, vector <string> & parameters
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    liquids_hist.load(HISTORY_FILE);
+    liquids_hist.load(DFHack::Core::getInstance().getConfigPath() / HISTORY_FILE);
     commands.push_back(PluginCommand(
         "liquids",
         "Place magma, water or obsidian.",
@@ -82,7 +83,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    liquids_hist.save(HISTORY_FILE);
+    liquids_hist.save(DFHack::Core::getInstance().getConfigPath() / HISTORY_FILE);
     return CR_OK;
 }
 

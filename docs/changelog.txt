@@ -60,15 +60,24 @@ Template for new versions:
 
 ## Fixes
 - `autoclothing`: correct defect in validating material specification on command line
+- `autolabor`: Fix running 1 tick less frequently than intended.
+- `buildingplan`: fixed non-clickable pressure plates's triggers (issue #5736)
 - `getplants`: added protective code to avoid misoperation when a plant has an invalid material (which should never happen, but...)
 
 ## Misc Improvements
+- `buildingplan`: added a slider on the weapontrap overlay
+- `buildingplan`: added a small tooltip text about renaming favorites in the UI
+- `buildingplan`: buildingplan can now generate work orders
+- `orders`: exported orders now include a human-readable ``name`` field
 
 ## Documentation
 
 ## API
+- Core: added ``getConfigPath()`` API for obtaining the path to user-specific configuration files
+- ``widgets.RadioButton``: New button widget resembling those used in ``gui/control-panel``
 
 ## Lua
+- Added ``dfhack.getConfigPath()`` API, proxying ``Core::getConfigPath``
 
 ## Removed
 

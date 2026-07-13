@@ -19,7 +19,7 @@ local core = require('gui.widgets.slide_core')
 ---@field super widgets.Widget
 ---@field ATTRS widgets.Slider.attrs|fun(attributes: widgets.Slider.attrs.partial)
 ---@overload fun(init_table: widgets.Slider.initTable): self
-Slider = defclass(Slider, slide_core)
+Slider = defclass(Slider, core)
 Slider.ATTRS{
     get_idx_fn=DEFAULT_NIL,
     on_change=DEFAULT_NIL,
@@ -41,7 +41,7 @@ function Slider:onInput(keys)
     local left_pos = width_per_idx*(left_idx-1)
     local right_pos = width_per_idx*(right_idx-1) + 4
     if x < left_pos then
-        self.on_change(self.get_idx_fn() - 1)
+        self.on_change(self:clamp_idx(self.get_idx_fn() - 1))
     elseif x < left_pos+3 then
         self.is_dragging_target = 'left'
         self.is_dragging_idx = x - left_pos
@@ -52,7 +52,7 @@ function Slider:onInput(keys)
         self.is_dragging_target = 'right'
         self.is_dragging_idx = x - right_pos
     else
-        self.on_change(self.get_idx_fn() + 1)
+        self.on_change(self:clamp_idx(self.get_idx_fn() + 1))
     end
     return true
 end

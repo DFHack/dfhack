@@ -43,6 +43,10 @@ function slide_core:get_min_stops()
     return self.is_single and 1 or 2
 end
 
+function slide_core:clamp_idx(idx)
+    return math.max(1, math.min(self.num_stops, idx))
+end
+
 local function do_drag(self, width_per_idx)
     local x = self.frame_body:localXY(dfhack.screen.getMousePos())
     local cur_pos = x - self.is_dragging_idx
@@ -50,6 +54,7 @@ local function do_drag(self, width_per_idx)
     cur_pos = math.min(width_per_idx*(self.num_stops-1)+7, cur_pos)
     local offset = self.is_dragging_target == 'right' and -2 or 1
     local new_idx = math.max(0, cur_pos+offset)//width_per_idx + 1
+    new_idx = self:clamp_idx(new_idx)
     local new_left_idx, new_right_idx
     if self.is_dragging_target == 'right' then
         new_right_idx = new_idx

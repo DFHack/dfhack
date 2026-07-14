@@ -27,6 +27,7 @@
 #include <list>
 #include <optional>
 #include <string>
+#include <regex>
 #include <unordered_map>
 #include <vector>
 
@@ -57,8 +58,8 @@ struct std::hash<df::coord2d>
 // were only dealing with 2D coordinates in this file
 using coord = df::coord2d;
 
-static int wdim = 768; // dimension of a world tile
-static int rdim = 48;  // dimension of a region tile
+constexpr int wdim = 768; // dimension of a world tile
+constexpr int rdim = 48;  // dimension of a region tile
 
 /**
  * Takes a vector of coordinates interpreted as global region tile coordinates
@@ -117,6 +118,7 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 static command_result export_region_tiles(color_ostream &out);
 static command_result export_sites(color_ostream &out);
 static command_result export_rivers(color_ostream &out);
+static command_result export_elevation(color_ostream &out);
 
 static command_result do_command(color_ostream &out, vector<string> &parameters)
 {
@@ -136,6 +138,9 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
     }
     else if (parameters.size() && parameters[0] == "regions") {
         return export_region_tiles(out);
+    }
+    else if (parameters.size() && parameters[0] == "elevation") {
+        return export_elevation(out);
     }
     else
     {
@@ -409,12 +414,12 @@ static command_result export_region_tiles(color_ostream &out)
             {
                 auto [left, right] = ahead(component, current_position, current_direction);
                 if (left && right) {
-                    // in front of a wall: turn right
+                    // in front of a wall: turn left
                     path.push_back(current_position);
                     current_direction = turn_left(current_direction);
                 }
                 else if (!left && !right) {
-                    // no walls ahead: turn left
+                    // no walls ahead: turn right
                     path.push_back(current_position);
                     current_direction = turn_right(current_direction);
                 }
@@ -634,6 +639,82 @@ static command_result export_rivers(color_ostream &out)
         out_file << ")\n";
     }
 
+
+    return CR_OK;
+}
+
+/********************************************************************** */
+
+static std::string vrtTemplate = R"(
+<VRTDataset rasterXSize="{WIDTH}" rasterYSize="{HEIGHT}">
+  <SRS>EPSG:3857</SRS>
+  <GeoTransform>0,48,0,0,0,-48</GeoTransform>
+  <VRTRasterBand dataType="Int16" band="1" subClass="VRTRawRasterBand">
+    <SourceFilename relativeToVRT="1">elevation.dat</SourceFilename>
+    <ImageOffset>0</ImageOffset>
+    <PixelOffset>2</PixelOffset>
+    <LineOffset>{LINE_OFFSET}</LineOffset>
+    <ByteOrder>LSB</ByteOrder>
+  </VRTRasterBand>
+</VRTDataset>
+)";
+
+
+template<typename T>
+struct matrix {
+    std::size_t ncols;
+    std::size_t nrows;
+    std::vector<T> _data;
+
+    matrix(std::size_t cols, std::size_t rows) : ncols(cols), nrows(rows), _data(cols * rows) {};
+
+    T& operator()(std::size_t col, std::size_t row) {
+        return _data[row * ncols + col];
+    };
+
+    T* data() { return _data.data(); };
+    std::size_t size() { return _data.size(); };
+};
+
+
+static command_result export_elevation(color_ostream &out)
+{
+    // ensure that we have an output file
+    std::string data_filename("elevation.dat");
+    std::ofstream data_file(data_filename, std::ios::out | std::ios::trunc | std::ios::binary);
+
+    std::string vrt_filename("elevation.vrt");
+    std::ofstream vrt_file(vrt_filename, std::ios::out | std::ios::trunc);
+    if (!data_file || !vrt_file) {
+        return CR_FAILURE;
+    }
+
+
+    auto world_width = world->world_data->world_width * 16;
+    auto world_height = world->world_data->world_height * 16;
+
+    matrix<int16_t> height_map(world_width, world_height);
+
+    for (auto const region_details : world->world_data->midmap_data.region_details) {
+        auto world_x = region_details->pos.x;
+        auto world_y = region_details->pos.y;
+        for (int region_x = 0; region_x < 16; ++region_x) {
+            for (int region_y = 0; region_y < 16; ++region_y)
+            {
+                auto elevation = region_details->elevation[region_x][region_y];
+                height_map(16 * world_x + region_x, 16 * world_y + region_y) = elevation;
+            }
+        }
+    }
+
+    data_file.write(
+        reinterpret_cast<const char*>(height_map.data()), height_map.size() * sizeof(int16_t));
+
+    auto vrt = std::regex_replace(vrtTemplate, std::regex("\\{WIDTH\\}"), std::to_string(world_width));
+    vrt = std::regex_replace(vrt, std::regex("\\{HEIGHT\\}"), std::to_string(world_height));
+    vrt = std::regex_replace(vrt, std::regex("\\{LINE_OFFSET\\}"), std::to_string(world_width * sizeof(int16_t)));
+
+    vrt_file << vrt;
 
     return CR_OK;
 }

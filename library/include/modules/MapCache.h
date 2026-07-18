@@ -84,7 +84,7 @@ public:
     };
     static GroundType getGroundType(int material);
 
-    typedef df::block_square_event_mineralst::T_flags DFVeinFlags;
+    typedef df::mineral_event_flag DFVeinFlags;
 
     t_veintype veintype;
     t_blockmaterials veinmats;

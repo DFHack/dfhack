@@ -529,7 +529,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             default:
                 break;
             }
-            if (actual->gate_flags.bits.closed)
+            if (actual->gate_flags.bits.raised)
                 remote_build->set_active(1);
             else
                 remote_build->set_active(0);
@@ -560,17 +560,30 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
             auto facing = actual->facing;
             switch (facing)
             {
-            case df::building_siegeenginest::Left:
-                remote_build->set_direction(WEST);
-                break;
-            case df::building_siegeenginest::Up:
+                using enum df::enums::siegeengine_orientation::siegeengine_orientation;
+            case North:
                 remote_build->set_direction(NORTH);
                 break;
-            case df::building_siegeenginest::Right:
+            case Northeast:
+                remote_build->set_direction(NORTHEAST);
+                break;
+            case East:
                 remote_build->set_direction(EAST);
                 break;
-            case df::building_siegeenginest::Down:
+            case Southeast:
+                remote_build->set_direction(SOUTHEAST);
+                break;
+            case South:
                 remote_build->set_direction(SOUTH);
+                break;
+            case Southwest:
+                remote_build->set_direction(SOUTHWEST);
+                break;
+            case West:
+                remote_build->set_direction(WEST);
+                break;
+            case Northwest:
+                remote_build->set_direction(NORTHWEST);
                 break;
             default:
                 break;
@@ -671,7 +684,7 @@ void CopyBuilding(int buildingIndex, RemoteFortressReader::BuildingInstance * re
         auto actual = strict_virtual_cast<df::building_weaponst>(local_build);
         if (actual)
         {
-            if (actual->gate_flags.bits.closed)
+            if (actual->gate_flags.bits.retracted)
                 remote_build->set_active(1);
             else
                 remote_build->set_active(0);

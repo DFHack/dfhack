@@ -845,16 +845,26 @@ function dfhack.interpreter(prompt,hfile,env)
         return nil, 'not interactive'
     end
 
-    print("Type quit to exit interactive lua interpreter.")
+    local function print_keyword(pre, keyword, post)
+        dfhack.color(COLOR_RESET)
+        if pre ~= nil then dfhack.print(pre) end
+        dfhack.color(COLOR_YELLOW)
+        dfhack.print(keyword)
+        dfhack.color(COLOR_RESET)
+        if post ~= nil then print(post) end
+    end
+    print_keyword("Type ", "quit", " to exit interactive lua interpreter.")
 
     if print_banner then
-        print("Shortcuts:\n"..
-              " '= foo' => '_1,_2,... = foo'\n"..
-              " '! foo' => 'print(foo)'\n"..
-              " '~ foo' => 'printall(foo)'\n"..
-              " '^ foo' => 'printall_recurse(foo)'\n"..
-              " '@ foo' => 'printall_ipairs(foo)'\n"..
-              "All of these save the first result as '_'.")
+        print("Shortcuts:")
+        print_keyword(" '", "= foo", "' => '_1,_2,... = foo'")
+        print_keyword(" '", "! foo", "' => 'print(foo)'")
+        print_keyword(" '", "~ foo", "' => 'printall(foo)'")
+        print_keyword(" '", "^ foo", "' => 'printall_recurse(foo)'")
+        print_keyword(" '", "@ foo", "' => 'printall_ipairs(foo)'")
+        print_keyword("All of these save the first result as '", "_", "'.")
+        print("These keywords refer to the currently-selected object in the game:")
+        print_keyword(" ", "unit item plant building bld job workshop_job wsjob screen scr", "")
         print_banner = false
     end
 
@@ -994,13 +1004,13 @@ local valid_script_flags = {
     scripts = {required = false},
 }
 
-local warned_scripts = {}
+local checked_scripts = {}
 
 function dfhack.run_script(name,...)
-    if not warned_scripts[name] then
+    if not checked_scripts[name] then
+        checked_scripts[name] = true
         local helpdb = require('helpdb')
         if helpdb.has_tag(name, 'unavailable') then
-            warned_scripts[name] = true
             dfhack.printerr(('UNTESTED WARNING: the "%s" script has not been validated to work well with this version of DF.'):format(name))
             dfhack.printerr('It may not work as expected, or it may corrupt your game.')
             qerror('Please run the command again to ignore this warning and proceed.')

@@ -21,6 +21,7 @@ redistribute it freely, subject to the following restrictions:
    distribution.
  */
 
+#include "Core.h"
 #include "PluginManager.h"
 #include "DebugManager.h"
 #include "Debug.h"
@@ -48,30 +49,30 @@ DBG_DECLARE(debug,example,DebugCategory::LINFO);
 
 namespace serialization {
 
-template<typename T>
-struct nvp : public std::pair<const char*, T*> {
-    using parent_t = std::pair<const char*, T*>;
-    nvp(const char* name, T& value) :
-        parent_t{name, &value}
-    {}
-};
+    template<typename T>
+    struct nvp : public std::pair<const char*, T*> {
+        using parent_t = std::pair<const char*, T*>;
+        nvp(const char* name, T& value) :
+            parent_t{name, &value}
+        {}
+    };
 
-template<typename T>
-nvp<T> make_nvp(const char* name, T& value) {
-    return {name, value};
-}
+    template<typename T>
+    nvp<T> make_nvp(const char* name, T& value) {
+        return {name, value};
+    }
 
 }
 
 #define NVP(variable) serialization::make_nvp(#variable, variable)
 
 namespace Json {
-template<typename ET>
-typename std::enable_if<std::is_enum<ET>::value, ET>::type
-get(Json::Value& ar, const std::string &key, const ET& default_)
-{
-    return static_cast<ET>(as<UInt64>(ar.get(key, static_cast<uint64_t>(default_))));
-}
+    template<typename ET>
+        requires (std::is_enum_v<ET>)
+    ET get(Value& ar, const std::string &key, const ET& default_)
+    {
+        return static_cast<ET>(as<UInt64>(ar.get(key, static_cast<uint64_t>(default_))));
+    }
 }
 
 namespace DFHack { namespace debugPlugin {
@@ -254,10 +255,10 @@ struct Filter {
 private:
     std::regex category_;
     std::regex plugin_;
-    DebugCategory::level level_;
-    size_t matches_;
-    bool persistent_;
-    bool enabled_;
+    DebugCategory::level level_{DebugCategory::level::LTRACE};
+    size_t matches_{0};
+    bool persistent_{false};
+    bool enabled_{false};
     std::string categoryText_;
     std::string pluginText_;
 };
@@ -352,7 +353,9 @@ struct FilterManager : public std::map<size_t, Filter>
     //! Current configuration version implemented by the code
     constexpr static Json::UInt configVersion{1};
     //! Path to the configuration file
-    constexpr static const char* configPath{"dfhack-config/runtime-debug.json"};
+    const inline std::filesystem::path getConfigPath() const {
+        return DFHack::Core::getInstance().getConfigPath() / "runtime-debug.json";
+    }
 
     //! Get reference to the singleton
     static FilterManager& getInstance() noexcept
@@ -434,8 +437,6 @@ private:
     DebugManager::categorySignal_t::Connection connection_;
 };
 
-constexpr const char* FilterManager::configPath;
-
 FilterManager::~FilterManager()
 {
 }
@@ -443,6 +444,7 @@ FilterManager::~FilterManager()
 command_result FilterManager::loadConfig(DFHack::color_ostream& out) noexcept
 {
     nextId_ = 1;
+    auto configPath = getConfigPath();
     if (!Filesystem::isfile(configPath))
         return CR_OK;
     try {
@@ -463,6 +465,7 @@ command_result FilterManager::loadConfig(DFHack::color_ostream& out) noexcept
 
 command_result FilterManager::saveConfig(DFHack::color_ostream& out) const noexcept
 {
+    auto configPath = getConfigPath();
     try {
         DEBUG(command, out) << "Save config to '" << configPath << "'" << std::endl;
         JsonArchive archive;
@@ -804,9 +807,9 @@ static command_result setFilter(color_ostream& out,
                 return v.match(level);
             });
     if (iter == levelNames.end()) {
-        ERR(command,out).print("level ('%s') parameter must be one of "
+        ERR(command,out).print("level ('{}') parameter must be one of "
                 "trace, debug, info, warning, error.\n",
-                parameters[pos].c_str());
+                parameters[pos]);
         return CR_WRONG_USAGE;
     }
 
@@ -1062,8 +1065,8 @@ CommandDispatch::dispatch_t CommandDispatch::dispatch {
 static command_result commandDebugFilter(color_ostream& out,
         std::vector<std::string>& parameters)
 {
-    DEBUG(command,out).print("debugfilter %s, parameter count %zu\n",
-            parameters.size() > 0 ? parameters[0].c_str() : "",
+    DEBUG(command,out).print("debugfilter {}, parameter count {}\n",
+            parameters.size() > 0 ? parameters[0] : "",
             parameters.size());
     auto iter = CommandDispatch::dispatch.end();
     if (0u < parameters.size())
@@ -1096,7 +1099,7 @@ DFhackCExport DFHack::command_result plugin_init(DFHack::color_ostream& out,
             filter.apply(*cat);
         }
     }
-    INFO(init,out).print("plugin_init with %zu commands, %zu filters and %zu categories\n",
+    INFO(init,out).print("plugin_init with {}, {} filters and {} categories\n",
             commands.size(), filMan.size(), catMan.size());
     filMan.connectTo(catMan.categorySignal);
     return rv;

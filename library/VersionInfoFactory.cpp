@@ -29,6 +29,7 @@ distribution.
 #include <algorithm>
 #include <map>
 #include <iostream>
+#include <filesystem>
 
 #include "VersionInfoFactory.h"
 #include "VersionInfo.h"
@@ -209,7 +210,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         else if (type == "md5-hash")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
-            fprintf(stderr, "%s (%s): MD5: %s\n", cstr_name, cstr_os, cstr_value);
+            std::cerr << fmt::format("{} ({}): MD5: {}\n", cstr_name, cstr_os, cstr_value ? cstr_value : "NULL");
             if(!cstr_value)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addMD5(cstr_value);
@@ -217,7 +218,7 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
         else if (type == "binary-timestamp")
         {
             const char *cstr_value = pMemEntry->Attribute("value");
-            fprintf(stderr, "%s (%s): PE: %s\n", cstr_name, cstr_os, cstr_value);
+            std::cerr << fmt::format("{} ({}): PE: {}\n", cstr_name, cstr_os, cstr_value ? cstr_value : "NULL");
             if(!cstr_value)
                 throw Error::SymbolsXmlUnderspecifiedEntry(cstr_name);
             mem->addPE(strtol(cstr_value, 0, 16));
@@ -226,9 +227,9 @@ void VersionInfoFactory::ParseVersion (TiXmlElement* entry, VersionInfo* mem)
 } // method
 
 // load the XML file with offsets
-bool VersionInfoFactory::loadFile(string path_to_xml)
+bool VersionInfoFactory::loadFile(std::filesystem::path path_to_xml)
 {
-    TiXmlDocument doc( path_to_xml.c_str() );
+    TiXmlDocument doc( path_to_xml.string().c_str() );
     std::cerr << "Loading " << path_to_xml << " ... ";
     //bool loadOkay = doc.LoadFile();
     if (!doc.LoadFile())

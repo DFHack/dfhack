@@ -30,7 +30,6 @@ using namespace DFHack;
 using namespace df::enums;
 
 DFHACK_PLUGIN("createitem");
-REQUIRE_GLOBAL(cursor);
 REQUIRE_GLOBAL(world);
 REQUIRE_GLOBAL(gametype);
 REQUIRE_GLOBAL(cur_year_tick);
@@ -51,7 +50,7 @@ DFhackCExport command_result plugin_shutdown(color_ostream &out) {
     return CR_OK;
 }
 
-bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_type, int32_t mat_index,
+bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_type, int32_t mat_index, int32_t count,
     bool move_to_cursor = false, bool second_item = false)
 {   // Special logic for making Gloves and Shoes in pairs
     bool is_gloves = (type == item_type::GLOVES);
@@ -67,7 +66,7 @@ bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_t
     bool on_floor = (container == NULL) && (building == NULL) && !move_to_cursor;
 
     vector<df::item *> out_items;
-    if (!Items::createItem(out_items, unit, type, subtype, mat_type, mat_index, !on_floor))
+    if (!Items::createItem(out_items, unit, type, subtype, mat_type, mat_index, !on_floor, count))
         return false;
 
     for (size_t i = 0; i < out_items.size(); i++) {
@@ -84,7 +83,10 @@ bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_t
                 out_items[i]->moveToGround(building->centerx, building->centery, building->z);
         }
         else if (move_to_cursor)
-            out_items[i]->moveToGround(cursor->x, cursor->y, cursor->z);
+        {
+            auto pos = Gui::getCursorPos();
+            out_items[i]->moveToGround(pos.x, pos.y, pos.z);
+        }
         // else createItem() already put it on the floor at the unit's feet, so we're good
 
         // Special logic for creating proper gloves in pairs
@@ -103,7 +105,7 @@ bool makeItem(df::unit *unit, df::item_type type, int16_t subtype, int16_t mat_t
         is_shoes = false;
     // If we asked for gloves/shoes and only got one (and we're making the first one), make another
     if ((is_gloves || is_shoes) && !second_item)
-        return makeItem(unit, type, subtype, mat_type, mat_index, move_to_cursor, true);
+        return makeItem(unit, type, subtype, mat_type, mat_index, count, move_to_cursor, true);
     return true;
 }
 
@@ -142,7 +144,7 @@ static inline bool select_caste_mat(color_ostream &out, vector<string> &tokens,
                     out.printerr("You must also specify a caste.\n");
                 else
                     out.printerr("The creature you specified has no such caste!\n");
-                out.printerr("Valid castes:%s\n", castes.c_str());
+                out.printerr("Valid castes:{}\n", castes);
                 return false;
             }
         }
@@ -196,7 +198,7 @@ static inline bool select_plant_growth(color_ostream &out, vector<string> &token
                 out.printerr("You must also specify a growth ID.\n");
             else
                 out.printerr("The plant you specified has no such growth!\n");
-            out.printerr("Valid growths:%s\n", growths.c_str());
+            out.printerr("Valid growths:{}\n", growths);
             return false;
         }
     }
@@ -224,7 +226,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
 
             ItemTypeInfo iinfo(item->getType(), item->getSubtype());
             MaterialInfo minfo(item->getMaterial(), item->getMaterialIndex());
-            out.print("%s %s\n", iinfo.getToken().c_str(), minfo.getToken().c_str());
+            out.print("{} {}\n", iinfo.getToken(), minfo.getToken());
             return CR_OK;
         }
         else if (parameters[0] == "floor") {
@@ -266,7 +268,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
             dest_container = item->id;
             string name;
             item->getItemDescription(&name, 0);
-            out.print("Items created will be placed inside %s.\n", name.c_str());
+            out.print("Items created will be placed inside {}.\n", name);
             return CR_OK;
         }
         else if (parameters[0] == "building") {
@@ -278,6 +280,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
             }
             switch (building->getType())
             {   using namespace df::enums::building_type;
+                case Table:
                 case Coffin:
                 case Furnace:
                 case TradeDepot:
@@ -292,8 +295,12 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
                 case AnimalTrap:
                 case Cage:
                 case Wagon:
+                case Nest:
                 case NestBox:
                 case Hive:
+                case Bookcase:
+                case DisplayFurniture:
+                case OfferingPlace:
                     break;
                 default:
                     out.printerr("The selected building cannot be used for item storage!\n");
@@ -306,7 +313,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
             dest_building = building->id;
             string name;
             building->getName(&name);
-            out.print("Items created will be placed inside %s.\n", name.c_str());
+            out.print("Items created will be placed inside {}.\n", name);
             return CR_OK;
         }
         else
@@ -395,11 +402,13 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
 
     auto unit = Gui::getSelectedUnit(out, true);
     if (!unit) {
+        auto pos = Gui::getCursorPos();
         if (*gametype == game_type::ADVENTURE_ARENA || World::isAdventureMode())
         {   // Use the adventurer unit
             unit = World::getAdventurer();
+            move_to_cursor = pos.isValid();
         }
-        else if (cursor->x >= 0)
+        else if (pos.isValid())
         {   // Use the first possible citizen if possible, otherwise the first unit
             for (auto u : Units::citizensRange(world->units.active)) {
                 unit = u;
@@ -431,12 +440,10 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
         out.printerr("Previously selected building no longer exists - item will be placed on the floor.\n");
     }
 
-    for (int i = 0; i < count; i++) {
-        if (!makeItem(unit, item_type, item_subtype, mat_type, mat_index, move_to_cursor, false))
-        {
-            out.printerr("Failed to create item!\n");
-            return CR_FAILURE;
-        }
+    if (!makeItem(unit, item_type, item_subtype, mat_type, mat_index, count, move_to_cursor, false))
+    {
+        out.printerr("Failed to create item!\n");
+        return CR_FAILURE;
     }
     return CR_OK;
 }

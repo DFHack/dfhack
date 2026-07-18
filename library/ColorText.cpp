@@ -35,24 +35,12 @@ ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 POSSIBILITY OF SUCH DAMAGE.
 */
 
-
-#include <stdarg.h>
-#include <errno.h>
-#include <stdio.h>
-#include <iostream>
-#include <fstream>
-#include <istream>
 #include <string>
+#include <ostream>
+#include <algorithm>
 
 #include "ColorText.h"
-#include "MiscUtils.h"
 
-#include <algorithm>
-#include <cstdio>
-#include <cstdlib>
-#include <sstream>
-
-using namespace std;
 using namespace DFHack;
 
 bool color_ostream::log_errors_to_stderr = false;
@@ -81,7 +69,7 @@ void color_ostream::end_batch()
     flush_proxy();
 }
 
-color_ostream::color_ostream() : ostream(new buffer(this)), cur_color(COLOR_RESET)
+color_ostream::color_ostream() : std::ostream(new buffer(this)), cur_color(COLOR_RESET)
 {
     //
 }
@@ -89,54 +77,6 @@ color_ostream::color_ostream() : ostream(new buffer(this)), cur_color(COLOR_RESE
 color_ostream::~color_ostream()
 {
     delete buf();
-}
-
-void color_ostream::print(const char *format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    vprint(format, args);
-    va_end(args);
-}
-
-void color_ostream::vprint(const char *format, va_list args)
-{
-    std::string str = stl_vsprintf(format, args);
-
-    if (!str.empty()) {
-        flush_buffer(false);
-        add_text(cur_color, str);
-        if (str[str.size()-1] == '\n')
-            flush_proxy();
-    }
-}
-
-void color_ostream::printerr(const char * format, ...)
-{
-    va_list args;
-    va_start(args, format);
-    vprinterr(format, args);
-    va_end(args);
-}
-
-void color_ostream::vprinterr(const char *format, va_list args)
-{
-    color_value save = cur_color;
-
-    if (log_errors_to_stderr)
-    {
-        va_list args1;
-        va_copy(args1, args);
-        vfprintf(stderr, format, args1);
-        va_end(args1);
-    }
-
-    color(COLOR_LIGHTRED);
-    va_list args2;
-    va_copy(args2, args);
-    vprint(format, args2);
-    va_end(args2);
-    color(save);
 }
 
 void color_ostream::color(color_value c)

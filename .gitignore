@@ -49,6 +49,7 @@ build/compile_commands.json
 build/dfhack_setarch.txt
 build/ImportExecutables.cmake
 build/Testing
+build/_deps
 
 # Python binding binaries
 *.pyc
@@ -64,6 +65,7 @@ build/CPack*Config.cmake
 
 # VSCode files
 .vscode
+*.code-workspace
 
 # ctags file
 tags

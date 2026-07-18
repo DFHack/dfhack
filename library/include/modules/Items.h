@@ -28,8 +28,6 @@ distribution.
 */
 #include "DataDefs.h"
 #include "Export.h"
-#include "MemAccess.h"
-#include "Module.h"
 #include "Types.h"
 
 #include "modules/Materials.h"
@@ -157,7 +155,7 @@ DFHACK_EXPORT bool moveToContainer(df::item *item, df::item *container);
 DFHACK_EXPORT bool moveToBuilding(df::item *item, df::building_actual *building,
     df::building_item_role_type use_mode = df::building_item_role_type::TEMP, bool force_in_building = false);
 DFHACK_EXPORT bool moveToInventory(df::item *item, df::unit *unit,
-    df::unit_inventory_item::T_mode mode = df::unit_inventory_item::Hauled, int body_part = -1);
+    df::inv_item_role_type mode = df::inv_item_role_type::Hauled, int body_part = -1);
 
 /// Remove item from jobs and inventories, hide and forbid.
 /// Unless no_uncat, item is marked for garbage collection.
@@ -172,8 +170,11 @@ DFHACK_EXPORT int getItemBaseValue(int16_t item_type, int16_t item_subtype, int1
 // Gets the value of a specific item, taking into account civ values and trade agreements if a caravan is given.
 DFHACK_EXPORT int getValue(df::item *item, df::caravan_state *caravan = NULL);
 
+// Automatically choose a growth print variant for the specified plant growth subtype+material
+DFHACK_EXPORT int32_t pickGrowthPrint(int16_t subtype, int16_t mat, int32_t matg);
+
 DFHACK_EXPORT bool createItem(std::vector<df::item *> &out_items, df::unit *creator, df::item_type type,
-    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor = false);
+    int16_t item_subtype, int16_t mat_type, int32_t mat_index, bool no_floor = false, int32_t count = 1);
 
 // Returns true if the item is free from mandates, or false if mandates prevent trading the item.
 DFHACK_EXPORT bool checkMandates(df::item *item);
@@ -187,6 +188,9 @@ DFHACK_EXPORT bool canTradeAnyWithContents(df::item *item);
 DFHACK_EXPORT bool markForTrade(df::item *item, df::building_tradedepotst *depot);
 // Returns true if an active caravan will pay extra for the given item.
 DFHACK_EXPORT bool isRequestedTradeGood(df::item *item, df::caravan_state *caravan = NULL);
+
+// DF standard_material_itemtype - returns true if item has material/matgloss, false if race+caste
+DFHACK_EXPORT bool usesStandardMaterial(df::item_type item_type);
 
 // Returns true if the item can currently be melted. If game_ui, then able to be marked is enough.
 DFHACK_EXPORT bool canMelt(df::item *item, bool game_ui = false);

@@ -21,7 +21,6 @@ using namespace std;
 
 #include <df/plotinfost.h>
 #include "df/world.h"
-#include "df/world_raws.h"
 #include "df/building_def.h"
 #include "df/unit_inventory_item.h"
 #include <df/creature_raw.h>
@@ -35,7 +34,6 @@ using std::string;
 using namespace DFHack;
 using namespace df::enums;
 using df::global::world;
-using df::global::cursor;
 using df::global::plotinfo;
 
 using namespace DFHack::Gui;

@@ -69,7 +69,15 @@ function TextArea:setText(text)
         self:getCursor()
     )
 
-    return self.text_area:setText(text)
+    self.text_area:setText(text)
+
+    if self.one_line_mode then
+        self.render_start_x = 1
+        local cursor = self:getCursor()
+        if cursor then
+            self:setCursor(math.min(self:getCursor(), #text + 1))
+        end
+    end
 end
 
 function TextArea:getCursor()

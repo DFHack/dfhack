@@ -123,18 +123,12 @@ Type identity object lifetime and mutability
 ============================================
 
 *Most* instances of ``type_identity`` are statically constructed and immutable and are thus ``const static`` when constructed.
-All ``type_identity`` pointers should be declared ``const``.
-Due to the use of lazy initialization, ``compound_identity`` and its subclasses have a few fields that are marked as ``mutable``
-(so that the ``parent`` and ``child`` members can be updated as additional instances are constructed).
-In addition, ``virtual_identity`` has two fields that are ``mutable`` due to the dual use of this type to implement
-DFHack's vmethod interpose system.
-Due to this dual purpose, it is important that there be at most one ``virtual_identity`` object per virtual class,
-although this is not enforced at present.
+All ``type_identity`` pointers should be declared ``const``. Due to ``virtual_identity``'s role in implementing
+DFHack's vmethod interpose system, it is important that there be at most one ``virtual_identity`` object per virtual class.
 Having more than one ``struct_identity`` object for the same type might also potentially lead to misoperation.
 
 In general, there should be a one to one correspondence between ``type_identity`` objects and C++ types
-(with the special case that ``global_identity`` has no corresponding type).
-As far as we know, for any type other than ``virtual_identity``,
+(with the special case that ``global_identity`` has no corresponding type). As far as we know, for any type other than ``virtual_identity``,
 violations of this constraint will not lead to misoperation, but this constraint should not be lightly violated.
 The Lua/C++ interface does, in a handful of places, assume that it can compare ``type_identity``
 pointers to determine if they reference the same type, but as far as we know all of these instances will fall

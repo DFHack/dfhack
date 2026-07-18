@@ -4,6 +4,7 @@
 #include "PluginManager.h"
 
 #include "modules/Filesystem.h"
+#include "modules/Job.h"
 #include "modules/Materials.h"
 #include "modules/World.h"
 
@@ -44,8 +45,15 @@ DFHACK_PLUGIN("orders");
 
 REQUIRE_GLOBAL(world);
 
-static const std::string ORDERS_DIR = "dfhack-config/orders";
-static const std::string ORDERS_LIBRARY_DIR = "hack/data/orders";
+static const std::filesystem::path get_orders_dir()
+{
+    return Core::getInstance().getConfigPath() / "orders";
+}
+
+static std::filesystem::path get_orders_library_dir()
+{
+    return Core::getInstance().getHackPath() / "data" / "orders";
+}
 
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters);
 
@@ -93,7 +101,7 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     }
 
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -134,8 +142,8 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
 }
 
 static void list_library(color_ostream &out) {
-    std::map<std::string, bool> files;
-    if (0 < Filesystem::listdir_recursive(ORDERS_LIBRARY_DIR, files, 0, false)) {
+    std::map<std::filesystem::path, bool> files;
+    if (0 < Filesystem::listdir_recursive(get_orders_library_dir(), files, 0, false)) {
         // if the library directory doesn't exist, just skip it
         return;
     }
@@ -145,15 +153,15 @@ static void list_library(color_ostream &out) {
         return;
     }
 
-    for (auto it : files)
+    for (auto& it : files)
     {
         if (it.second)
             continue; // skip directories
-        std::string name = it.first;
-        if (name.length() <= 5 || name.rfind(".json") != name.length() - 5)
+        std::filesystem::path name = it.first;
+        if (name.extension() != ".json")
             continue; // skip non-.json files
-        name.resize(name.length() - 5);
-        out << "library/" << name << std::endl;
+        auto sname = name.stem();
+        out << Filesystem::as_string("library" / sname) << std::endl;
     }
 }
 
@@ -162,17 +170,17 @@ static command_result orders_list_command(color_ostream & out)
     // use listdir_recursive instead of listdir even though orders doesn't
     // support subdirs so we can identify and ignore subdirs with ".json" names.
     // also listdir_recursive will alphabetize the list for us.
-    std::map<std::string, bool> files;
-    Filesystem::listdir_recursive(ORDERS_DIR, files, 0, false);
+    std::map<std::filesystem::path, bool> files;
+    Filesystem::listdir_recursive(get_orders_dir(), files, 0, false);
 
-    for (auto it : files) {
+    for (auto& it : files) {
         if (it.second)
             continue; // skip directories
-        std::string name = it.first;
-        if (name.length() <= 5 || name.rfind(".json") != name.length() - 5)
+        std::filesystem::path name = it.first;
+        if (name.extension() != ".json")
             continue; // skip non-.json files
-        name.resize(name.length() - 5);
-        out << name << std::endl;
+        auto sname = name.stem();
+        out << sname.string() << std::endl;
     }
 
     list_library(out);
@@ -376,6 +384,7 @@ static command_result orders_export_command(color_ostream & out, const std::stri
             order["art"] = art;
         }
 
+        order["name"] = Job::getManagerOrderName(it);
         order["amount_left"] = it->amount_left;
         order["amount_total"] = it->amount_total;
         order["is_validated"] = bool(it->status.bits.validated);
@@ -504,9 +513,9 @@ static command_result orders_export_command(color_ostream & out, const std::stri
         orders.append(order);
     }
 
-    Filesystem::mkdir(ORDERS_DIR);
+    Filesystem::mkdir(get_orders_dir());
 
-    std::ofstream file(ORDERS_DIR + "/" + name + ".json");
+    std::ofstream file(get_orders_dir() / ( name + ".json"));
 
     file << orders << std::endl;
 
@@ -765,8 +774,8 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
                 if (it2.isMember("bearing"))
                 {
                     std::string bearing(it2["bearing"].asString());
-                    auto found = std::find_if(world->raws.inorganics.begin(), world->raws.inorganics.end(), [bearing](df::inorganic_raw *raw) -> bool { return raw->id == bearing; });
-                    if (found == world->raws.inorganics.end())
+                    auto found = std::find_if(world->raws.inorganics.all.begin(), world->raws.inorganics.all.end(), [bearing](df::inorganic_raw *raw) -> bool { return raw->id == bearing; });
+                    if (found == world->raws.inorganics.all.end())
                     {
                         delete condition;
 
@@ -774,7 +783,7 @@ static command_result orders_import(color_ostream &out, Json::Value &orders)
 
                         continue;
                     }
-                    condition->metal_ore = found - world->raws.inorganics.begin();
+                    condition->metal_ore = found - world->raws.inorganics.all.begin();
                 }
 
                 if (it2.isMember("reaction_class"))
@@ -924,8 +933,7 @@ static command_result orders_import_command(color_ostream & out, const std::stri
         return CR_WRONG_USAGE;
     }
 
-    const std::string filename((is_library ? ORDERS_LIBRARY_DIR : ORDERS_DIR) +
-                                    "/" + fname + ".json");
+    auto filename((is_library ? get_orders_library_dir() : get_orders_dir()) / (fname + ".json"));
     Json::Value orders;
 
     {
@@ -1008,8 +1016,8 @@ static bool orders_compare(df::manager_order *a, df::manager_order *b)
         return a->workshop_id >= 0;
     }
 
-    if (a->frequency == df::manager_order::T_frequency::OneTime
-            || b->frequency == df::manager_order::T_frequency::OneTime)
+    if (a->frequency == df::workquota_frequency_type::OneTime
+            || b->frequency == df::workquota_frequency_type::OneTime)
         return a->frequency < b->frequency;
     return a->frequency > b->frequency;
 }

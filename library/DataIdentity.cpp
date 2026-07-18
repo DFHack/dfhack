@@ -1,14 +1,21 @@
-#include <stddef.h>
+#include "DataIdentity.h"
+
+#include "BitArray.h"
+#include "DataDefs.h"
 
 #include <condition_variable>
+#include <cstdint>
+#include <filesystem>
 #include <fstream>
+#include <functional>
+#include <future>
+#include <memory>
 #include <mutex>
+#include <optional>
 #include <string>
-#include <vector>
 #include <variant>
+#include <vector>
 
-#include "DataFuncs.h"
-#include "DataIdentity.h"
 
 // the space after the uses of "type" in OPAQUE_IDENTITY_TRAITS_NAME is _required_
 // without it the macro generates a syntax error when type is a template specification
@@ -19,7 +26,7 @@ namespace df {
 #define INTEGER_IDENTITY_TRAITS(type, name) NUMBER_IDENTITY_TRAITS(integer, type, name)
 #define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type, #type)
 #define OPAQUE_IDENTITY_TRAITS_NAME(name, ...) \
-    const opaque_identity identity_traits<__VA_ARGS__ >::identity(sizeof(__VA_ARGS__), allocator_noassign_fn<__VA_ARGS__ >, name)
+    const opaque_identity identity_traits<__VA_ARGS__ >::identity(sizeof(__VA_ARGS__), allocator_fn<__VA_ARGS__ >, name)
 #define OPAQUE_IDENTITY_TRAITS(...) OPAQUE_IDENTITY_TRAITS_NAME(#__VA_ARGS__, __VA_ARGS__ )
 
     INTEGER_IDENTITY_TRAITS(char,               "char");
@@ -33,11 +40,13 @@ namespace df {
     INTEGER_IDENTITY_TRAITS(unsigned long,      "unsigned long");
     INTEGER_IDENTITY_TRAITS(long long,          "int64_t");
     INTEGER_IDENTITY_TRAITS(unsigned long long, "uint64_t");
+    INTEGER_IDENTITY_TRAITS(wchar_t,            "wchar_t");
     FLOAT_IDENTITY_TRAITS(float);
     FLOAT_IDENTITY_TRAITS(double);
 
     const bool_identity identity_traits<bool>::identity;
     const stl_string_identity identity_traits<std::string>::identity;
+    const path_identity identity_traits<std::filesystem::path>::identity;
     const ptr_string_identity identity_traits<char*>::identity;
     const ptr_string_identity identity_traits<const char*>::identity;
     const pointer_identity identity_traits<void*>::identity;
@@ -56,6 +65,7 @@ namespace df {
     OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::variant<std::string, std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::weak_ptr<df::widget_container>);
+    OPAQUE_IDENTITY_TRAITS(wchar_t*);
 
     const buffer_container_identity buffer_container_identity::base_instance;
 

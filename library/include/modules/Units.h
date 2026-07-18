@@ -39,12 +39,14 @@ distribution.
 #include "df/job_skill.h"
 #include "df/mental_attribute_type.h"
 #include "df/misc_trait_type.h"
+#include "df/need_type.h"
 #include "df/physical_attribute_type.h"
 #include "df/unit_action.h"
 #include "df/unit_action_type_group.h"
 #include "df/unit_path_goal.h"
 
 #include <ranges>
+#include <bitset>
 
 namespace df {
     struct activity_entry;
@@ -281,9 +283,9 @@ DFHACK_EXPORT std::string getRaceBabyName(df::unit *unit, bool plural = false);
 DFHACK_EXPORT std::string getRaceChildNameById(int32_t race_id, bool plural = false);
 DFHACK_EXPORT std::string getRaceChildName(df::unit *unit, bool plural = false);
 // Full readable name including profession. HF profession might be different from unit profession.
-DFHACK_EXPORT std::string getReadableName(df::historical_figure *hf);
+DFHACK_EXPORT std::string getReadableName(df::historical_figure *hf, bool skip_english = false);
 // Full readable name including profession, curse name, and tame description.
-DFHACK_EXPORT std::string getReadableName(df::unit *unit);
+DFHACK_EXPORT std::string getReadableName(df::unit *unit, bool skip_english = false);
 
 // Unit's age (in non-integer years). Ignore false identities if true_age.
 DFHACK_EXPORT double getAge(df::unit *unit, bool true_age = false);
@@ -339,6 +341,17 @@ DFHACK_EXPORT bool isGoalAchieved(df::unit *unit, size_t goalIndex = 0);
 DFHACK_EXPORT df::activity_entry *getMainSocialActivity(df::unit *unit);
 DFHACK_EXPORT df::activity_event *getMainSocialEvent(df::unit *unit);
 
+// get largest (i.e. most negative) focus penalty for a set of needs
+using need_type_set = std::bitset<ENUM_LAST_ITEM(need_type)+1UL>;
+DFHACK_EXPORT int32_t getFocusPenalty(df::unit* unit, need_type_set need_types);
+// get focused penalty for a single need
+DFHACK_EXPORT int32_t getFocusPenalty(df::unit* unit, df::need_type need_type);
+
+// unit has an unbailable social activity (e.g. "Socialize!")
+DFHACK_EXPORT bool hasUnbailableSocialActivity(df::unit *unit);
+// unit can be assigned a job
+DFHACK_EXPORT bool isJobAvailable(df::unit *unit, bool preserve_social);
+
 // Stress categories. 0 is highest stress, 6 is lowest.
 DFHACK_EXPORT extern const std::vector<int32_t> stress_cutoffs;
 DFHACK_EXPORT int getStressCategory(df::unit *unit);
@@ -350,5 +363,7 @@ DFHACK_EXPORT void multiplyActionTimers(color_ostream &out, df::unit *unit, floa
 DFHACK_EXPORT void multiplyGroupActionTimers(color_ostream &out, df::unit *unit, float amount, df::unit_action_type_group affectedActionTypeGroup);
 DFHACK_EXPORT void setActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type affectedActionType);
 DFHACK_EXPORT void setGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup);
+
+DFHACK_EXPORT df::unit* get_cached_unit_by_global_id(int32_t id, int32_t& index);
 }
 }

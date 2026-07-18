@@ -33,7 +33,6 @@ distribution.
 #include <iomanip>
 #include <iostream>
 #include <map>
-#include <memory>
 #include <sstream>
 #include <stdint.h>
 #include <vector>
@@ -309,24 +308,43 @@ Link *linked_list_insert_after(Link *pos, Link *link)
 }
 
 /**
- * Returns true if the item with id idToRemove was found, deleted, and removed
- * from the list. Otherwise returns false.
+ * Returns true if an item that matches the given function was found, deleted,
+ * and removed from the list. Otherwise returns false. Only removes the first
+ * match.
+ *
+ * Example usage:
+ *
+ *  linked_list_remove(&world->projectiles.all, [&](df::projectile *proj) {
+ *      if (proj->getType() != df::enums::projectile_type::Unit)
+ *          return false;
+ *      if (auto unit_proj = virtual_cast<df::proj_unitst>(proj))
+ *          return unit_proj->unit == unit;
+ *      return false;
+ *  });
  */
-template<typename Link>
-bool linked_list_remove(Link *head, int32_t idToRemove)
-{
-    for (Link *link = head; link; link = link->next)
-    {
-        if (!link->item || link->item->id != idToRemove)
-            continue;
+template <typename L, typename V = L::iterator::value_type, std::invocable<V> F>
+bool linked_list_remove(L *list, F matches) {
+    auto matches_wrapper = [&](L::iterator::value_type item) {
+        return item && matches(item);
+    };
+    typename L::const_iterator it = std::find_if(list->cbegin(), list->cend(), matches_wrapper);
+    if (it == list->cend())
+        return false;
+    auto item = *it;
+    list->erase(it);
+    delete item;
+    return true;
+}
 
-        link->prev->next = link->next;
-        if (link->next)
-            link->next->prev = link->prev;
-        delete(link);
-        return true;
-    }
-    return false;
+/**
+ * Returns true if the item with id idToRemove was found, deleted, and
+ * removed from the list. Otherwise returns false.
+ */
+template<typename L>
+bool linked_list_remove(L *list, int32_t idToRemove) {
+    return linked_list_remove(list, [&](L::iterator::value_type item) {
+        return item->id == idToRemove;
+    });
 }
 
 template<typename T>
@@ -381,7 +399,7 @@ typename T::mapped_type findPrefixInMap(
 #endif
 
 template<class CT>
-inline bool static_add_to_map(CT *pmap, typename CT::key_type key, typename CT::mapped_type value) {
+inline bool static_add_to_map(CT *pmap, const typename CT::key_type key, const typename CT::mapped_type value) {
     (*pmap)[key] = value;
     return true;
 }
@@ -454,6 +472,19 @@ static inline std::string &rtrim(std::string &s) {
 // trim from both ends
 static inline std::string &trim(std::string &s) {
     return ltrim(rtrim(s));
+}
+
+static inline bool has_backslashes(const std::string_view str)
+{
+    return (str.find('\\') != std::string::npos);
+}
+
+static inline void replace_backslashes_with_forwardslashes(std::string& str)
+{
+    for (auto& c : str) {
+        if (c == '\\')
+            c = '/';
+    }
 }
 
 enum struct NumberFormatType : int32_t {

@@ -35,10 +35,10 @@ bool Checker::is_valid_dereference(const QueueItem & item, const CheckedStructur
     // assumes MALLOC_PERTURB_=45
 #ifdef DFHACK64
 #define UNINIT_PTR 0xd2d2d2d2d2d2d2d2
-#define FAIL_PTR(message) FAIL(stl_sprintf("0x%016zx: ", reinterpret_cast<uintptr_t>(base)) << message)
+#define FAIL_PTR(message) FAIL(fmt::format("{:#016x} ", reinterpret_cast<uintptr_t>(base)) << message)
 #else
 #define UNINIT_PTR 0xd2d2d2d2
-#define FAIL_PTR(message) FAIL(stl_sprintf("0x%08zx: ", reinterpret_cast<uintptr_t>(base)) << message)
+#define FAIL_PTR(message) FAIL(fmt::format("{:#016x} ", reinterpret_cast<uintptr_t>(base)) << message)
 #endif
     if (uintptr_t(base) == UNINIT_PTR)
     {

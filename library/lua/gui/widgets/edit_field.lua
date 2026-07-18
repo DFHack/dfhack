@@ -114,7 +114,6 @@ function EditField:init()
         self:setFocus(true)
     end
 
-    self.start_pos = 1
     self.cursor = #self.text + 1
     self.ignore_keys = self.ignore_keys or {}
 

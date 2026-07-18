@@ -8,7 +8,6 @@
 #include "df/viewscreen.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/world.h"
-#include "df/world_raws.h"
 
 #include "finder_ui.h"
 #include "help_ui.h"

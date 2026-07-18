@@ -24,18 +24,21 @@ distribution.
 
 #pragma once
 
+#include <functional>
+#include <list>
 #include <map>
-#include <set>
 #include <sstream>
+#include <stdexcept>
 #include <string>
-#include <type_traits>
 #include <utility>
+#include <unordered_map>
 #include <vector>
 
 #include "BitArray.h"
 #include "Export.h"
+#include "Format.h"
 
-typedef struct lua_State lua_State;
+struct lua_State;
 
 /*
  * Definitions of DFHack namespace structs used by generated headers.
@@ -71,7 +74,7 @@ namespace DFHack
         PTRFLAG_HAS_BAD_POINTERS = 2,
     };
 
-    typedef void *(*TAllocateFn)(void*,const void*);
+    using TAllocateFn = void *(*)(void*, const void*);
 
     class DFHACK_EXPORT type_identity {
         const size_t size;
@@ -121,10 +124,10 @@ namespace DFHack
         constructed_identity(size_t size, const TAllocateFn alloc)
             : type_identity(size), allocator(alloc) {};
 
-        virtual bool can_allocate() const { return (allocator != NULL); }
-        virtual void *do_allocate() const { return allocator(NULL,NULL); }
+        virtual bool can_allocate() const { return (allocator != nullptr); }
+        virtual void *do_allocate() const { return allocator(nullptr,nullptr); }
         virtual bool do_copy(void *tgt, const void *src) const { return allocator(tgt,src) == tgt; }
-        virtual bool do_destroy(void *obj) const { return allocator(NULL,obj) == obj; }
+        virtual bool do_destroy(void *obj) const { return allocator(nullptr,obj) == obj; }
     public:
         virtual bool isPrimitive() const { return false; }
         virtual bool isConstructed() const { return true; }
@@ -134,28 +137,30 @@ namespace DFHack
     };
 
     class DFHACK_EXPORT compound_identity : public constructed_identity {
-        static compound_identity *list;
-        mutable compound_identity *next;
+        static std::list<const compound_identity*>* list;
+        static std::unordered_map<const compound_identity*, const compound_identity*>* parent_map;
+        static std::unordered_map<const compound_identity*, std::vector<const compound_identity*>>* children_map;
+        static std::vector<const compound_identity*>* top_scope;
 
         const char *dfhack_name;
-        mutable compound_identity *scope_parent;
-        mutable std::vector<const compound_identity*> scope_children;
-        static std::vector<const compound_identity*> top_scope;
+        const compound_identity *const scope_parent;
+
+        static void ensure_compound_identity_init();
 
     protected:
         compound_identity(size_t size, TAllocateFn alloc,
             const compound_identity *scope_parent, const char *dfhack_name);
 
-        virtual void doInit(Core *core);
+        virtual void doInit(Core *core) const;
 
     public:
         const char *getName() const { return dfhack_name; }
 
         virtual const std::string getFullName() const;
 
-        const compound_identity *getScopeParent() const { return scope_parent; }
-        const std::vector<const compound_identity*> &getScopeChildren() const { return scope_children; }
-        static const std::vector<const compound_identity*> &getTopScope() { return top_scope; }
+        const compound_identity *getScopeParent() const { return (*parent_map)[this]; }
+        const std::vector<const compound_identity*> &getScopeChildren() const { return (*children_map)[this]; }
+        static const std::vector<const compound_identity*> &getTopScope() { return *top_scope; }
 
         static void Init(Core *core);
     };
@@ -201,7 +206,7 @@ namespace DFHack
     class DFHACK_EXPORT enum_identity : public compound_identity {
     public:
         struct ComplexData {
-            std::map<int64_t, size_t> value_index_map;
+            std::unordered_map<int64_t, size_t> value_index_map;
             std::vector<int64_t> index_value_map;
             ComplexData(std::initializer_list<int64_t> values);
             size_t size() const {
@@ -257,8 +262,8 @@ namespace DFHack
     };
 
     struct struct_field_info_extra {
-        enum_identity *index_enum;
-        type_identity *ref_target;
+        const enum_identity *index_enum;
+        const type_identity *ref_target;
         const char *union_tag_field;
         const char *union_tag_attr;
         const char *original_name;
@@ -286,14 +291,15 @@ namespace DFHack
     };
 
     class DFHACK_EXPORT struct_identity : public compound_identity {
-        mutable struct_identity *parent;
-        mutable std::vector<const struct_identity*> children;
-        bool has_children;
+        static std::unordered_map<const struct_identity*, const struct_identity*>* parent_map;
+        static std::unordered_map<const struct_identity*, std::vector<const struct_identity*>>* children_map;
 
         const struct_field_info *fields;
 
+        static void ensure_struct_identity_init();
+
     protected:
-        virtual void doInit(Core *core);
+        virtual void doInit(Core *core) const override;
 
     public:
         struct_identity(size_t size, TAllocateFn alloc,
@@ -302,9 +308,9 @@ namespace DFHack
 
         virtual identity_type type() const { return IDTYPE_STRUCT; }
 
-        const struct_identity *getParent() const { return parent; }
-        const std::vector<const struct_identity*> &getChildren() const { return children; }
-        bool hasChildren() const { return has_children; }
+        const struct_identity *getParent() const { return (*parent_map)[this]; }
+        const std::vector<const struct_identity*> &getChildren() const { return (*children_map)[this]; }
+        bool hasChildren() const { return (*children_map)[this].size() > 0; }
 
         const struct_field_info *getFields() const { return fields; }
 
@@ -326,8 +332,8 @@ namespace DFHack
     class DFHACK_EXPORT union_identity : public struct_identity {
     public:
         union_identity(size_t size, TAllocateFn alloc,
-                compound_identity *scope_parent, const char *dfhack_name,
-                struct_identity *parent, const struct_field_info *fields);
+                const compound_identity *scope_parent, const char *dfhack_name,
+                const struct_identity *parent, const struct_field_info *fields);
 
         virtual identity_type type() const { return IDTYPE_UNION; }
 
@@ -351,36 +357,88 @@ namespace DFHack
         virtual void build_metatable(lua_State *state) const;
     };
 
+    namespace
+    {
+        template<typename ... Bases>
+        struct overload : Bases ...
+        {
+            using is_transparent = void;
+            using Bases::operator() ...;
+        };
+
+        struct char_pointer_hash
+        {
+            auto operator()(const char* ptr) const noexcept
+            {
+                return std::hash<std::string_view>{}(ptr);
+            }
+        };
+
+        using transparent_string_hash = overload<
+            std::hash<std::string>,
+            std::hash<std::string_view>,
+            char_pointer_hash
+        >;
+    }
+
 #ifdef _MSC_VER
-    typedef void *virtual_ptr;
+    using virtual_ptr = void*;
 #else
-    typedef virtual_class *virtual_ptr;
+    using virtual_ptr = virtual_class*;
 #endif
 
     class DFHACK_EXPORT VMethodInterposeLinkBase;
     class MemoryPatcher;
 
     class DFHACK_EXPORT virtual_identity : public struct_identity {
-        static std::map<void*, virtual_identity*> known;
+    public:
+        using interpose_t = VMethodInterposeLinkBase*;
+        using interpose_list_t = std::unordered_map<int, interpose_t>;
+
+    private:
+        static std::unordered_map<std::string, const virtual_identity*, transparent_string_hash, std::equal_to<>> *name_lookup;
+        static std::unordered_map<void*, const virtual_identity*>* known;
+        static std::unordered_map<const virtual_identity*, void*>* vtable_ptr_map;
+        static std::unordered_map<const virtual_identity*, interpose_list_t>* interpose_list_map;
 
         const char *original_name;
-
-        mutable void *vtable_ptr;
 
         bool is_plugin;
 
         friend class VMethodInterposeLinkBase;
-        mutable std::map<int,VMethodInterposeLinkBase*> interpose_list;
+
+        static void ensure_virtual_identity_init();
 
     protected:
-        virtual void doInit(Core *core);
+        virtual void doInit(Core *core) const override;
 
         static void *get_vtable(virtual_ptr instance_ptr) { return *(void**)instance_ptr; }
 
-        bool can_allocate() const { return struct_identity::can_allocate() && (vtable_ptr != NULL); }
+        void* vtable_ptr() const
+        {
+            auto& lst = (*vtable_ptr_map);
+            auto it = lst.find(this);
+            return it != lst.end() ? it->second : nullptr;
+        }
+
+        bool can_allocate() const { return struct_identity::can_allocate() && (vtable_ptr() != nullptr); }
 
         void *get_vmethod_ptr(int index) const;
         bool set_vmethod_ptr(MemoryPatcher &patcher, int index, void *ptr) const;
+
+        interpose_list_t& get_interpose_list() const { return (*interpose_list_map)[this]; }
+        interpose_t get_interpose(int index) const {
+            auto &lst = get_interpose_list();
+            auto it = lst.find(index);
+            return it != lst.end() ? it->second : nullptr;
+        }
+        void set_interpose(int index, interpose_t link) const {
+            auto &lst = get_interpose_list();
+            if (link)
+                lst[index] = link;
+            else
+                lst.erase(index);
+        }
 
     public:
         virtual_identity(size_t size, const TAllocateFn alloc,
@@ -394,16 +452,16 @@ namespace DFHack
         const char *getOriginalName() const { return original_name ? original_name : getName(); }
 
     public:
-        static virtual_identity *get(virtual_ptr instance_ptr);
+        static const virtual_identity *get(virtual_ptr instance_ptr);
 
-        static virtual_identity *find(void *vtable);
-        static virtual_identity *find(const std::string &name);
+        static const virtual_identity *find(void *vtable);
+        static const virtual_identity *find(std::string_view name);
 
         bool is_instance(virtual_ptr instance_ptr) const {
             if (!instance_ptr) return false;
-            if (vtable_ptr) {
+            if (vtable_ptr()) {
                 void *vtable = get_vtable(instance_ptr);
-                if (vtable == vtable_ptr) return true;
+                if (vtable == vtable_ptr()) return true;
                 if (!hasChildren()) return false;
             }
             return is_subclass(get(instance_ptr));
@@ -411,20 +469,20 @@ namespace DFHack
 
         bool is_direct_instance(virtual_ptr instance_ptr) const {
             if (!instance_ptr) return false;
-            return vtable_ptr ? (vtable_ptr == get_vtable(instance_ptr))
-                              : (this == get(instance_ptr));
+            auto vp = vtable_ptr();
+            return vp ? (vp == get_vtable(instance_ptr)) : (this == get(instance_ptr));
         }
 
         template<class P> static P get_vmethod_ptr(P selector);
 
     public:
-        bool can_instantiate() { return can_allocate(); }
-        virtual_ptr instantiate() { return can_instantiate() ? (virtual_ptr)do_allocate() : NULL; }
+        bool can_instantiate() const { return can_allocate(); }
+        virtual_ptr instantiate() const { return can_instantiate() ? (virtual_ptr)do_allocate() : NULL; }
         static virtual_ptr clone(virtual_ptr obj);
 
     public:
         // Strictly for use in virtual class constructors
-        void adjust_vtable(virtual_ptr obj, virtual_identity *main);
+        void adjust_vtable(virtual_ptr obj, const virtual_identity *main) const;
     };
 
     template<class T>
@@ -494,56 +552,78 @@ namespace df
     using DFHack::DfLinkedList;
     using DFHack::DfOtherVectors;
 
-    template<class T>
-    typename std::enable_if<
-        std::is_copy_assignable<T>::value,
-        void*
-    >::type allocator_try_assign(void *out, const void *in) {
-        *(T*)out = *(const T*)in;
-        return out;
-    }
+    /*
+     *
+     * Allocator functions are used to allocate, deallocate, and copy-assign objects
+     *
+     * When out is non-null, the object pointed to by in is copy-assigned over the object
+     * pointed to by out, if possible. When assignment is possible, out is returned.
+     * When assignment is not possible, nothing is done and nullptr is returned.
+     * The type must be copy-assignable for this to work; move-assignment is not
+     * supported. Callers can determine if the assignment succeeded by checking for the
+     * return value matching out (or simply being not null).
+     *
+     * When only in is non-null, the object pointed to by in is destroyed and deallocated,
+     * and in is returned. Note that the return value points to deallocated memory
+     * and should not be dereferenced.
+     *
+     * When both out and in are null, a new object is constructed and returned.
+     *
+     * Calling an allocator function with out non-null and in null is undefined behavior.
+     *
+     */
 
-    template<class T>
-    typename std::enable_if<
-        !std::is_copy_assignable<T>::value,
-        void*
-    >::type allocator_try_assign(void *out, const void *in) {
-        // assignment is not possible; do nothing
-        return NULL;
-    }
+    using df_pool_id_t = size_t;
+    template<typename T> concept pooled_object = requires () { { T::pool_id } -> std::convertible_to<df_pool_id_t>; };
 
+    template<typename T> concept copy_assignable = std::assignable_from<T&, T&> && std::assignable_from<T&, const T&>;
+
+    template<typename T>
+    void *allocator_fn(void *out, const void *in) {
+        constexpr df_pool_id_t invalid_pool_id = static_cast<df_pool_id_t>(-1);
+        // unerase type
+        T* _out = out ? reinterpret_cast<T*>(out) : nullptr;
+        const T* _in = in ? reinterpret_cast<const T*>(in) : nullptr;
+
+        if (_out)
+        {
+            if constexpr (copy_assignable<T>)
+            {
+                *_out = *_in;
+                return out;
+            }
+            else
+            {
+                return nullptr;
+            }
+        }
+        else if (_in)
+        {
+            if constexpr (pooled_object<T>)
+            {
+                if (_in->pool_id != invalid_pool_id)
+                {
+                    throw std::runtime_error("Pool-allocated type cannot be deallocated with allocator_fn");
+                }
+            }
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wdelete-non-virtual-dtor"
-    template<class T>
-    void *allocator_fn(void *out, const void *in) {
-        if (out) { return allocator_try_assign<T>(out, in); }
-        else if (in) { delete (T*)in; return (T*)in; }
-        else return new T();
-    }
+            delete _in;
 #pragma GCC diagnostic pop
-
-    template<class T>
-    void *allocator_nodel_fn(void *out, const void *in) {
-        if (out) { *(T*)out = *(const T*)in; return out; }
-        else if (in) { return NULL; }
-        else return new T();
-    }
-
-    template<class T>
-    void *allocator_noassign_fn(void *out, const void *in) {
-        if (out) { return NULL; }
-        else if (in) { delete (T*)in; return (T*)in; }
-        else return new T();
+            return const_cast<void*>(in);
+        }
+        else
+            return new T();
     }
 
     template<class T>
     struct identity_traits {};
 
     template<class T>
-        requires requires () { { &T::_identity } -> std::convertible_to<compound_identity*>; }
+        requires requires () { { &T::_identity } -> std::convertible_to<const compound_identity*>; }
     struct identity_traits<T> {
         static const bool is_primitive = false;
-        static compound_identity *get() { return &T::_identity; }
+        static const compound_identity *get() { return &T::_identity; }
     };
 
     template<class T>
@@ -568,6 +648,10 @@ namespace df
         enum_field<EnumType,IntType> &operator=(EnumType ev) {
             value = IntType(ev); return *this;
         }
+        explicit operator IntType () const { return IntType(value); }
+        template <typename T>
+        explicit operator T () const { return static_cast<T>(IntType(value)); }
+
     };
 
     template<class ET, class IT>
@@ -615,6 +699,25 @@ namespace df
         static const bool is_method = true;
     };
 
+    template<typename RT, typename ...AT>
+    struct return_type<RT(*)(AT...) noexcept> {
+        using type = RT;
+        static const bool is_method = false;
+    };
+
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT(CT::*)(AT...) noexcept> {
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
+    };
+
+    template<typename RT, class CT, typename ...AT>
+    struct return_type<RT(CT::*)(AT...) const noexcept> {
+        using type = RT;
+        using class_type = CT;
+        static const bool is_method = true;
+    };
 
 }
 
@@ -632,97 +735,86 @@ namespace DFHack {
     /**
      * Return the next item in the enum, wrapping to the first one at the end if 'wrap' is true (otherwise an invalid item).
      */
-    template<class T>
-    inline typename std::enable_if<
-        !df::enum_traits<T>::is_complex,
-        typename df::enum_traits<T>::enum_type
-    >::type next_enum_item(T v, bool wrap = true)
+    template <typename T> concept complex_enum = (df::enum_traits<T>::is_complex);
+
+    template<typename T>
+    inline auto next_enum_item(T v, bool wrap = true) -> typename df::enum_traits<T>::enum_type
     {
-        typedef df::enum_traits<T> traits;
-        typedef typename traits::base_type base_type;
-        base_type iv = base_type(v);
-        if (iv < traits::last_item_value)
+        using traits = df::enum_traits<T>;
+
+        if constexpr (complex_enum<T>)
         {
-            return T(iv + 1);
-        }
-        else
-        {
-            if (wrap)
-                return traits::first_item;
+            const auto& complex = traits::complex;
+            const auto it = complex.value_index_map.find(v);
+            if (it != complex.value_index_map.end())
+            {
+                if (!wrap && it->second + 1 == complex.size())
+                {
+                    return T(traits::last_item_value + 1);
+                }
+                size_t next_index = (it->second + 1) % complex.size();
+                return T(complex.index_value_map[next_index]);
+            }
             else
                 return T(traits::last_item_value + 1);
         }
-    }
-
-    template<class T>
-    inline typename std::enable_if<
-        df::enum_traits<T>::is_complex,
-        typename df::enum_traits<T>::enum_type
-    >::type next_enum_item(T v, bool wrap = true)
-    {
-        typedef df::enum_traits<T> traits;
-        const auto &complex = traits::complex;
-        const auto it = complex.value_index_map.find(v);
-        if (it != complex.value_index_map.end())
-        {
-            if (!wrap && it->second + 1 == complex.size())
-            {
-                return T(traits::last_item_value + 1);
-            }
-            size_t next_index = (it->second + 1) % complex.size();
-            return T(complex.index_value_map[next_index]);
-        }
         else
-            return T(traits::last_item_value + 1);
+        {
+            using base_type = typename traits::base_type;
+            base_type iv = base_type(v);
+            if (iv < traits::last_item_value)
+            {
+                return T(iv + 1);
+            }
+            else
+            {
+                if (wrap)
+                    return traits::first_item;
+                else
+                    return T(traits::last_item_value + 1);
+            }
+        }
     }
 
     /**
      * Check if the value is valid for its enum type.
      */
-    template<class T>
-    inline typename std::enable_if<
-        !df::enum_traits<T>::is_complex,
-        bool
-    >::type is_valid_enum_item(T v)
+    template<typename T>
+    inline bool is_valid_enum_item(T v)
     {
-        return df::enum_traits<T>::is_valid(v);
+        if constexpr (complex_enum<T>)
+        {
+            const auto& complex = df::enum_traits<T>::complex;
+            return complex.value_index_map.find(v) != complex.value_index_map.end();
+        }
+        else
+        {
+            return df::enum_traits<T>::is_valid(v);
+        }
     }
 
-    template<class T>
-    inline typename std::enable_if<
-        df::enum_traits<T>::is_complex,
-        bool
-    >::type is_valid_enum_item(T v)
-    {
-        const auto &complex = df::enum_traits<T>::complex;
-        return complex.value_index_map.find(v) != complex.value_index_map.end();
-    }
 
     /**
      * Return the enum item key string pointer, or NULL if none.
      */
     template<class T>
-    inline typename std::enable_if<
-        !df::enum_traits<T>::is_complex,
-        const char *
-    >::type enum_item_raw_key(T val) {
-        typedef df::enum_traits<T> traits;
-        return traits::is_valid(val) ? traits::key_table[(short)val - traits::first_item_value] : NULL;
+    const char* enum_item_raw_key(T val) {
+        using traits = df::enum_traits<T>;
+        if constexpr (complex_enum<T>)
+        {
+            const auto& value_index_map = traits::complex.value_index_map;
+            auto it = value_index_map.find(val);
+            if (it != value_index_map.end())
+                return traits::key_table[it->second];
+            else
+                return nullptr;
+        }
+        else
+        {
+            return traits::is_valid(val) ? traits::key_table[(short)val - traits::first_item_value] : nullptr;
+        }
     }
 
-    template<class T>
-    inline typename std::enable_if<
-        df::enum_traits<T>::is_complex,
-        const char *
-    >::type enum_item_raw_key(T val) {
-        typedef df::enum_traits<T> traits;
-        const auto &value_index_map = traits::complex.value_index_map;
-        auto it = value_index_map.find(val);
-        if (it != value_index_map.end())
-            return traits::key_table[it->second];
-        else
-            return NULL;
-    }
 
     /**
      * Return the enum item key string pointer, or "?" if none.
@@ -754,7 +846,7 @@ namespace DFHack {
      */
     template<class T>
     inline bool find_enum_item(T *var, const std::string &name) {
-        typedef df::enum_traits<T> traits;
+        using traits = df::enum_traits<T>;
         int size = traits::last_item_value-traits::first_item_value+1;
         int idx = findEnumItem(name, size, traits::key_table);
         if (idx < 0) return false;
@@ -877,7 +969,7 @@ namespace DFHack {
     inline void flagarray_to_string(std::vector<std::string> *pvec, const BitArray<T> &val) {
         typedef df::enum_traits<T> traits;
         int size = traits::last_item_value-traits::first_item_value+1;
-        flagarrayToString(pvec, val.bits, val.size,
+        flagarrayToString(pvec, val.bits(), val.size(),
                           (int)traits::first_item_value, size, traits::key_table);
     }
 
@@ -910,7 +1002,7 @@ namespace DFHack {
 #define ENUM_KEY_STR(enum,val) (DFHack::enum_item_key<df::enum>(val))
 #define ENUM_FIRST_ITEM(enum) (df::enum_traits<df::enum>::first_item)
 #define ENUM_LAST_ITEM(enum) (df::enum_traits<df::enum>::last_item)
-
+#define ENUM_AS_STR(val) (DFHack::enum_item_key(val))
 #define ENUM_NEXT_ITEM(enum,val) \
     (DFHack::next_enum_item<df::enum>(val))
 #define FOR_ENUM_ITEMS(enum,iter) \
@@ -938,3 +1030,25 @@ namespace std {
         }
     };
 }
+
+template <>
+struct fmt::formatter<df::coord> : fmt::formatter<std::string_view>
+{
+    template <typename FormatContext>
+    auto format(const df::coord& c, FormatContext& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(
+            fmt::format("({}, {}, {})", c.x, c.y, c.z), ctx);
+    }
+};
+
+template <>
+struct fmt::formatter<df::coord2d> : fmt::formatter<std::string_view>
+{
+    template <typename FormatContext>
+    auto format(const df::coord2d& c, FormatContext& ctx) const
+    {
+        return fmt::formatter<std::string_view>::format(
+            fmt::format("({}, {})", c.x, c.y), ctx);
+    }
+};

@@ -2,8 +2,10 @@
 #include <string>
 #include <vector>
 
+#include "modules/DFSDL.h"
 #include "modules/Gui.h"
 #include "modules/Screen.h"
+#include "modules/Hotkey.h"
 
 #include "Debug.h"
 #include "LuaTools.h"
@@ -40,11 +42,11 @@ static bool can_invoke(const string &cmdline, df::viewscreen *screen) {
 }
 
 static int cleanupHotkeys(lua_State *) {
-    DEBUG(log).print("cleaning up old stub keybindings for: %s\n", join_strings(", ", Gui::getCurFocus(true)).c_str());
+    DEBUG(log).print("cleaning up old stub keybindings for: {}\n", join_strings(", ", Gui::getCurFocus(true)));
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [](const string &sym) {
         string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
-        DEBUG(log).print("clearing keybinding: %s\n", keyspec.c_str());
-        Core::getInstance().ClearKeyBindings(keyspec);
+        DEBUG(log).print("clearing keybinding: {}\n", keyspec);
+        Core::getInstance().getHotkeyManager()->removeKeybind(keyspec);
     });
     valid = false;
     sorted_keys.clear();
@@ -82,61 +84,18 @@ static void add_binding_if_valid(color_ostream &out, const string &sym, const st
     sorted_keys.push_back(sym);
     string keyspec = sym + "@" + MENU_SCREEN_FOCUS_STRING;
     string binding = "hotkeys invoke " + int_to_string(sorted_keys.size() - 1);
-    DEBUG(log).print("adding keybinding: %s -> %s\n", keyspec.c_str(), binding.c_str());
-    Core::getInstance().AddKeyBinding(keyspec, binding);
+    DEBUG(log).print("adding keybinding: {} -> {}\n", keyspec, binding);
+    Core::getInstance().getHotkeyManager()->addKeybind(keyspec, binding);
 }
 
 static void find_active_keybindings(color_ostream &out, df::viewscreen *screen, bool filtermenu) {
-    DEBUG(log).print("scanning for active keybindings\n");
     if (valid)
         cleanupHotkeys(NULL);
 
-    vector<string> valid_keys;
-
-    for (char c = '0'; c <= '9'; c++) {
-        valid_keys.push_back(string(&c, 1));
-    }
-
-    for (char c = 'A'; c <= 'Z'; c++) {
-        valid_keys.push_back(string(&c, 1));
-    }
-
-    for (int i = 1; i <= 12; i++) {
-        valid_keys.push_back('F' + int_to_string(i));
-    }
-
-    valid_keys.push_back("`");
-
-    for (int shifted = 0; shifted < 2; shifted++) {
-        for (int alt = 0; alt < 2; alt++) {
-            for (int ctrl = 0; ctrl < 2; ctrl++) {
-                for (auto it = valid_keys.begin(); it != valid_keys.end(); it++) {
-                    string sym;
-                    if (ctrl) sym += "Ctrl-";
-                    if (alt) sym += "Alt-";
-                    if (shifted) sym += "Shift-";
-                    sym += *it;
-
-                    auto list = Core::getInstance().ListKeyBindings(sym);
-                    for (auto invoke_cmd = list.begin(); invoke_cmd != list.end(); invoke_cmd++) {
-                        string::size_type colon_pos = invoke_cmd->find(":");
-                        // colons at location 0 are for commands like ":lua"
-                        if (colon_pos == string::npos || colon_pos == 0) {
-                            add_binding_if_valid(out, sym, *invoke_cmd, screen, filtermenu);
-                        }
-                        else {
-                            vector<string> tokens;
-                            split_string(&tokens, *invoke_cmd, ":");
-                            string focus = tokens[0].substr(1);
-                            if(Gui::matchFocusString(focus)) {
-                                auto cmdline = trim(tokens[1]);
-                                add_binding_if_valid(out, sym, cmdline, screen, filtermenu);
-                            }
-                        }
-                    }
-                }
-            }
-        }
+    auto active_binds = Core::getInstance().getHotkeyManager()->listActiveKeybinds();
+    for (const auto& bind : active_binds) {
+        string sym = bind.spec.toString(false);
+        add_binding_if_valid(out, sym, bind.cmdline, screen, filtermenu);
     }
 
     valid = true;
@@ -164,10 +123,10 @@ static void list(color_ostream &out) {
     if (!valid)
         find_active_keybindings(out, Gui::getCurViewscreen(true), false);
 
-    out.print("Valid keybindings for the current focus:\n %s\n",
-              join_strings("\n", Gui::getCurFocus(true)).c_str());
+    out.print("Valid keybindings for the current focus:\n {}\n",
+              join_strings("\n", Gui::getCurFocus(true)));
     std::for_each(sorted_keys.begin(), sorted_keys.end(), [&](const string &sym) {
-        out.print("%s: %s\n", sym.c_str(), current_bindings[sym].c_str());
+        out.print("{}: {}\n", sym, current_bindings[sym]);
     });
 
     if (!was_valid)
@@ -181,7 +140,7 @@ static bool invoke_command(color_ostream &out, const size_t index) {
         return false;
 
     auto cmd = current_bindings[sorted_keys[index]];
-    DEBUG(log).print("invoking command: '%s'\n", cmd.c_str());
+    DEBUG(log).print("invoking command: '{}'\n", cmd);
 
     {
         Screen::Hide hideGuard(screen, Screen::Hide::RESTORE_AT_TOP);
@@ -194,11 +153,11 @@ static bool invoke_command(color_ostream &out, const size_t index) {
 
 static command_result hotkeys_cmd(color_ostream &out, vector <string> & parameters) {
     if (!parameters.size()) {
-        DEBUG(log).print("invoking command: '%s'\n", INVOKE_MENU_DEFAULT_COMMAND.c_str());
+        DEBUG(log).print("invoking command: '{}'\n", INVOKE_MENU_DEFAULT_COMMAND);
         return Core::getInstance().runCommand(out, INVOKE_MENU_DEFAULT_COMMAND);
     } else if (parameters.size() == 2 && parameters[0] == "menu") {
         string cmd = INVOKE_MENU_BASE_COMMAND + parameters[1];
-        DEBUG(log).print("invoking command: '%s'\n", cmd.c_str());
+        DEBUG(log).print("invoking command: '{}'\n", cmd);
         return Core::getInstance().runCommand(out, cmd);
     }
 

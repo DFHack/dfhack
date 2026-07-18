@@ -30,7 +30,6 @@ distribution.
 #include "VersionInfo.h"
 #include "Types.h"
 #include "Error.h"
-#include "ModuleFactory.h"
 #include "Core.h"
 #include "Debug.h"
 #include "PluginManager.h"
@@ -84,13 +83,13 @@ distribution.
 #include "df/route_stockpile_link.h"
 #include "df/soundst.h"
 #include "df/stop_depart_condition.h"
-#include "df/ui_unit_view_mode.h"
 #include "df/unit.h"
 #include "df/unit_inventory_item.h"
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/viewscreen_dungeonmodest.h"
 #include "df/viewscreen_dwarfmodest.h"
 #include "df/viewscreen_legendsst.h"
+#include "df/viewscreen_new_arenast.h"
 #include "df/viewscreen_new_regionst.h"
 #include "df/viewscreen_setupdwarfgamest.h"
 #include "df/viewscreen_titlest.h"
@@ -105,10 +104,9 @@ using std::string;
 using std::vector;
 using namespace DFHack;
 
-const size_t MAX_REPORTS_SIZE = 3000; // DF clears old reports to maintain this vector size
-const int32_t RECENT_REPORT_TICKS = 500; // used by UNIT_COMBAT_REPORT_ALL_ACTIVE
-const int32_t ANNOUNCE_LINE_DURATION = 100; // time to display each line in announcement bar; 2 sec at 50 GFPS
-const int16_t ANNOUNCE_DISPLAY_TIME = 2000; // DF uses this value for most announcements; 40 sec at 50 GFPS
+static constexpr int32_t RECENT_REPORT_TICKS = 500; // used by UNIT_COMBAT_REPORT_ALL_ACTIVE
+static constexpr int32_t ANNOUNCE_LINE_DURATION = 100; // time to display each line in announcement bar; 2 sec at 50 GFPS
+static constexpr int16_t ANNOUNCE_DISPLAY_TIME = 2000; // DF uses this value for most announcements; 40 sec at 50 GFPS
 
 namespace DFHack
 {
@@ -135,7 +133,7 @@ static df::layer_object_listst *getLayerList(df::viewscreen_layer *layer, int id
 }
 */
 
-static std::string getNameChunk(virtual_identity *id, int start, int end)
+static std::string getNameChunk(const virtual_identity *id, int start, int end)
 {
     if (!id)
         return "UNKNOWN";
@@ -152,9 +150,10 @@ static std::string getNameChunk(virtual_identity *id, int start, int end)
  */
 
 typedef void (*getFocusStringsHandler)(std::string &str, std::vector<std::string> &strList, df::viewscreen *screen);
-static std::map<virtual_identity*, getFocusStringsHandler> getFocusStringsHandlers;
+static std::map<const virtual_identity*, getFocusStringsHandler> getFocusStringsHandlers;
 
 #define VIEWSCREEN(name) df::viewscreen_##name##st
+
 #define DEFINE_GET_FOCUS_STRING_HANDLER(screen_type) \
     static void getFocusStrings_##screen_type(const std::string &baseFocus, std::vector<std::string> &focusStrings, VIEWSCREEN(screen_type) *screen);\
     DFHACK_STATIC_ADD_TO_MAP(\
@@ -187,6 +186,18 @@ DEFINE_GET_FOCUS_STRING_HANDLER(new_region)
 
     if (focusStrings.empty())
         focusStrings.push_back(baseFocus);
+}
+
+DEFINE_GET_FOCUS_STRING_HANDLER(new_arena)
+{
+    if (screen->raw_load)
+        focusStrings.push_back(baseFocus + "/Loading");
+    else if (screen->doing_mods)
+        focusStrings.push_back(baseFocus + "/Mods");
+
+    if (focusStrings.empty())
+        focusStrings.push_back(baseFocus);
+
 }
 
 DEFINE_GET_FOCUS_STRING_HANDLER(choose_start_site)
@@ -763,11 +774,6 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
         newFocusString += "/CreateSquad";
         focusStrings.push_back(newFocusString);
     }
-    if (game->main_interface.squad_supplies.open) {
-        newFocusString = baseFocus;
-        newFocusString += "/SquadSupplies";
-        focusStrings.push_back(newFocusString);
-    }
     if (game->main_interface.squads.open) {
         newFocusString = baseFocus;
         newFocusString += "/Squads";
@@ -817,11 +823,12 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
         newFocusString = baseFocus;
         newFocusString += "/Settings";
         newFocusString += '/' + enum_item_key(game->main_interface.settings.current_mode);
-        if (game->main_interface.settings.doing_custom_settings)
-            newFocusString += "/CustomSettings";
-        else
-            newFocusString += "/Default";
-
+        if (game->main_interface.settings.current_mode == df::settings_tab_type::DIFFICULTY) {
+            if (game->main_interface.settings.doing_custom_settings)
+                newFocusString += "/CustomSettings";
+            else
+                newFocusString += "/Default";
+        }
         focusStrings.push_back(newFocusString);
     }
     if (game->main_interface.adventure.aim_projectile.open) {
@@ -847,6 +854,9 @@ static void add_main_interface_focus_strings(const string &baseFocus, vector<str
     }
     if (game->main_interface.adventure.jump.open) {
         focusStrings.push_back(baseFocus + "/Jump");
+    }
+    if (game->main_interface.adventure.look.open) {
+        focusStrings.push_back(baseFocus + "/Look");
     }
     if (game->main_interface.adventure.movement_options.open) {
         focusStrings.push_back(baseFocus + "/MovementOptions");
@@ -958,7 +968,7 @@ std::vector<std::string> Gui::getFocusStrings(df::viewscreen* top)
         }
     }
 
-    if (virtual_identity *id = virtual_identity::get(top))
+    if (const virtual_identity *id = virtual_identity::get(top))
     {
         std::string name = getNameChunk(id, 11, 2);
 
@@ -1830,7 +1840,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         return -1;
     else if (message.empty())
     {
-        Core::printerr("Empty announcement %u\n", type); // DF would print this to errorlog.txt
+        Core::printerr("Empty announcement {}\n", ENUM_AS_STR(type)); // DF would print this to errorlog.txt
         return -1;
     }
 
@@ -1876,7 +1886,7 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
     new_report->text = message;
     new_report->color = color;
     new_report->bright = bright;
-    new_report->flags.whole = adv_unconscious ? df::report::T_flags::mask_unconscious : 0x0;
+    new_report->flags.whole = adv_unconscious ? df::announcement_flag::mask_unconscious : 0x0;
     new_report->pos = pos;
     new_report->id = world->status.next_report_id++;
     new_report->year = *df::global::cur_year;
@@ -1916,18 +1926,6 @@ DFHACK_EXPORT int Gui::makeAnnouncement(df::announcement_type type, df::announce
         world->status.display_timer = ANNOUNCE_DISPLAY_TIME;
     }
 
-    // Delete excess reports
-    while (reports.size() > MAX_REPORTS_SIZE)
-    {   // Report destructor
-        if (reports[0] != NULL)
-        {
-            if (reports[0]->flags.bits.announcement)
-                erase_from_vector(world->status.announcements, &df::report::id, reports[0]->id);
-            delete reports[0];
-        }
-        reports.erase(reports.begin());
-    }
-
     return world->status.reports.size() - 1;
 }
 
@@ -1945,6 +1943,8 @@ bool Gui::addCombatReport(df::unit *unit, df::unit_report_type slot, df::report 
     auto alert_type = announcement_alert_type::NONE;
     switch (slot)
     {
+        case unit_report_type::NONE: /* should never happen? */
+            return false;
         case unit_report_type::Combat:
             world->status.flags.bits.combat = true;
             alert_type = announcement_alert_type::COMBAT;
@@ -2018,14 +2018,6 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
     auto &popups = world->status.popups;
     popups.push_back(popup);
 
-    // Delete excess popups
-    while (popups.size() > MAX_REPORTS_SIZE)
-    {
-        if (popups[0] != NULL)
-            delete popups[0];
-        popups.erase(popups.begin());
-    }
-
     Gui::MTB_clean(&world->status.mega_text);
     Gui::MTB_parse(&world->status.mega_text, popups[0]->text);
     Gui::MTB_set_width(&world->status.mega_text);
@@ -2056,17 +2048,17 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
 {   // Based on reverse-engineering of "make_announcement" FUN_1400574e0 (v50.11 win64 Steam)
     if (!world->allow_announcements)
     {
-        DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n%s\n", message.c_str());
+        DEBUG(gui).print("Skipped announcement because world->allow_announcements is false:\n{}\n", message);
         return false;
     }
     else if (!is_valid_enum_item(info.type) || info.type == df::announcement_type::NONE)
     {
-        WARN(gui).print("Invalid announcement type:\n%s\n", message.c_str());
+        WARN(gui).print("Invalid announcement type:\n{}\n", message);
         return false;
     }
     else if (message.empty())
     {
-        Core::printerr("Empty announcement %u\n", info.type); // DF would print this to errorlog.txt
+        Core::printerr("Empty announcement {}\n", ENUM_AS_STR(info.type)); // DF would print this to errorlog.txt
         return false;
     }
 
@@ -2077,7 +2069,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if (!a_flags.bits.A_DISPLAY && !a_flags.bits.DO_MEGA)
         {
-            DEBUG(gui).print("Skipped announcement not enabled at all for adventure mode:\n%s\n", message.c_str());
+            DEBUG(gui).print("Skipped announcement not enabled at all for adventure mode:\n{}\n", message);
             return false;
         }
 
@@ -2091,7 +2083,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             {   // Adventure mode reuses a dwarf mode digging designation bit to determine current visibility
                 if (!Maps::isValidTilePos(info.pos) || (Maps::getTileDesignation(info.pos)->whole & 0x10) == 0x0)
                 {
-                    DEBUG(gui).print("Adventure mode announcement not detected:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Adventure mode announcement not detected:\n{}\n", message);
                     return false;
                 }
             }
@@ -2101,7 +2093,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     {
         if ((info.unit_a || info.unit_d) && (!info.unit_a || Units::isHidden(info.unit_a)) && (!info.unit_d || Units::isHidden(info.unit_d)))
         {
-            DEBUG(gui).print("Dwarf mode announcement not detected:\n%s\n", message.c_str());
+            DEBUG(gui).print("Dwarf mode announcement not detected:\n{}\n", message);
             return false;
         }
 
@@ -2111,7 +2103,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             {
                 if (!info.unit_a && !info.unit_d)
                 {
-                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT because it has no units:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT because it has no units:\n{}\n", message);
                     return false;
                 }
             }
@@ -2119,12 +2111,12 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
             {
                 if (!a_flags.bits.UNIT_COMBAT_REPORT_ALL_ACTIVE)
                 {
-                    DEBUG(gui).print("Skipped announcement not enabled at all for dwarf mode:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped announcement not enabled at all for dwarf mode:\n{}\n", message);
                     return false;
                 }
                 else if (!recent_report_any(info.unit_a) && !recent_report_any(info.unit_d))
                 {
-                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT_ALL_ACTIVE because there's no active report:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Skipped UNIT_COMBAT_REPORT_ALL_ACTIVE because there's no active report:\n{}\n", message);
                     return false;
                 }
             }
@@ -2157,7 +2149,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
 
         if (samp_index >= 0)
         {
-            DEBUG(gui).print("Playing sound #%d for announcement.\n", samp_index);
+            DEBUG(gui).print("Playing sound #{} for announcement.\n", samp_index);
             //play_sound(musicsound_info, samp_index, 255, true); // g_src/music_and_sound_g.h // TODO: implement sounds
         }
     }
@@ -2184,7 +2176,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
                     if (a_flags.bits.D_DISPLAY)
                         world->status.display_timer = info.display_timer;
 
-                    DEBUG(gui).print("Announcement succeeded as repeat:\n%s\n", message.c_str());
+                    DEBUG(gui).print("Announcement succeeded as repeat:\n{}\n", message);
                     return true;
                 }
             }
@@ -2196,7 +2188,7 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
     new_report->text = message;
     new_report->color = info.color;
     new_report->bright = info.bright;
-    new_report->flags.whole = adv_unconscious ? df::report::T_flags::mask_unconscious : 0x0;
+    new_report->flags.whole = adv_unconscious ? df::announcement_flag::mask_unconscious : 0x0;
     new_report->zoom_type = info.zoom_type;
     new_report->pos = info.pos;
     new_report->zoom_type2 = info.zoom_type2;
@@ -2254,26 +2246,14 @@ bool Gui::autoDFAnnouncement(df::announcement_infost info, string message)
         world->status.display_timer = info.display_timer;
     }
 
-    // Delete excess reports
-    while (reports.size() > MAX_REPORTS_SIZE)
-    {   // Report destructor
-        if (reports[0] != NULL)
-        {
-            if (reports[0]->flags.bits.announcement)
-                erase_from_vector(world->status.announcements, &df::report::id, reports[0]->id);
-            delete reports[0];
-        }
-        reports.erase(reports.begin());
-    }
-
     if (*gamemode == game_mode::DWARF || // Did dwarf announcement or UCR
         (*gamemode == game_mode::ADVENTURE && a_flags.bits.A_DISPLAY) || // Did adventure announcement
         (a_flags.bits.DO_MEGA && !adv_unconscious)) // Did popup
     {
-        DEBUG(gui).print("Announcement succeeded and displayed:\n%s\n", message.c_str());
+        DEBUG(gui).print("Announcement succeeded and displayed:\n{}\n", message);
     }
     else
-        DEBUG(gui).print("Announcement added internally and to gamelog.txt but didn't qualify to be displayed anywhere:\n%s\n", message.c_str());
+        DEBUG(gui).print("Announcement added internally and to gamelog.txt but didn't qualify to be displayed anywhere:\n{}\n", message);
 
     return true;
 }
@@ -2479,8 +2459,8 @@ void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
 
                     if (buff1 == "VAR") // Color from dipscript var
                     {
-                        DEBUG(gui).print("MTB_parse received:\n[C:VAR:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
-                            buff2.c_str(), buff3.c_str(), mtb->environment ? "Active" : "NULL");
+                        DEBUG(gui).print("MTB_parse received:\n[C:VAR:{}:{}]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: {}\n",
+                            buff2, buff3, mtb->environment ? "Active" : "NULL");
                         //MTB_set_color_on_var(mtb, buff2, buff3);
                     }
                     else
@@ -2534,8 +2514,8 @@ void Gui::MTB_parse(df::markup_text_boxst *mtb, string parse_text)
                     string buff_var_name = grab_token_string_pos(parse_text, i, ':');
                     i += buff_var_name.size();
 
-                    DEBUG(gui).print("MTB_parse received:\n[VAR:%s:%s:%s]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: %s\n",
-                        buff_format.c_str(), buff_var_type.c_str(), buff_var_name.c_str(), mtb->environment ? "Active" : "NULL");
+                    DEBUG(gui).print("MTB_parse received:\n[VAR:{}:{}:{}]\nwhich is for dipscripts and is unimplemented.\nThe dipscript environment itself is: {}\n",
+                        buff_format, buff_var_type, buff_var_name, mtb->environment ? "Active" : "NULL");
                     //MTB_append_variable(mtb, str, buff_format, buff_var_type, buff_var_name);
                 }
                 else if (token_buffer == "R" || token_buffer == "B" || token_buffer == "P")
@@ -2672,10 +2652,9 @@ void Gui::MTB_set_width(df::markup_text_boxst *mtb, int32_t n_width)
 df::widget * Gui::getWidget(df::widget_container *container, string name) {
     CHECK_NULL_POINTER(container);
     // ensure the compiler catches the change if we ever fix the template parameters
-    std::map<void *, void *> & orig_field = container->children_by_name;
-    auto children_by_name = reinterpret_cast<std::map<std::string, std::shared_ptr<df::widget>> *>(&orig_field);
-    if (children_by_name->contains(name))
-        return (*children_by_name)[name].get();
+    auto & children_by_name = container->children_by_name;
+    if (children_by_name.contains(name))
+        return (children_by_name)[name].get();
     return NULL;
 }
 
@@ -2707,7 +2686,7 @@ df::viewscreen *Gui::getCurViewscreen(bool skip_dismissed)
     return ws;
 }
 
-df::viewscreen *Gui::getViewscreenByIdentity (virtual_identity &id, int n)
+df::viewscreen *Gui::getViewscreenByIdentity (const virtual_identity &id, int n)
 {
     bool limit = (n > 0);
     df::viewscreen *screen = Gui::getCurViewscreen();
@@ -2744,9 +2723,18 @@ df::coord Gui::getViewportPos()
 df::coord Gui::getCursorPos()
 {
     using df::global::cursor;
+    if (World::isAdventureMode())
+    {
+        if (!game)
+            return df::coord();
+        auto &look = game->main_interface.adventure.look;
+        if (!look.open)
+            return df::coord();
+        return look.cursor;
+    }
+
     if (!cursor)
         return df::coord();
-
     return df::coord(cursor->x, cursor->y, cursor->z);
 }
 
@@ -2819,33 +2807,31 @@ bool Gui::revealInDwarfmodeMap(int32_t x, int32_t y, int32_t z, bool center, boo
 
     unfollow();
 
+    if (!Maps::isValidTilePos(x, y, z))
+        return false;
+
     auto dims = getDwarfmodeViewDims();
     int32_t w = dims.map_x2 - dims.map_x1 + 1;
     int32_t h = dims.map_y2 - dims.map_y1 + 1;
     int32_t new_win_x, new_win_y, new_win_z;
     getViewCoords(new_win_x, new_win_y, new_win_z);
 
-    if (Maps::isValidTilePos(x, y, z))
-    {
-        if (center)
-        {
-            new_win_x = x - w / 2;
-            new_win_y = y - h / 2;
-        }
-        else // just bring it on screen
-        {
-            if (new_win_x > (x - 5)) // equivalent to: "while (new_win_x > x - 5) new_win_x -= 10;"
-                new_win_x -= (new_win_x - (x - 5) - 1) / 10 * 10 + 10;
-            if (new_win_y > (y - 5))
-                new_win_y -= (new_win_y - (y - 5) - 1) / 10 * 10 + 10;
-            if (new_win_x < (x + 5 - w))
-                new_win_x += ((x + 5 - w) - new_win_x - 1) / 10 * 10 + 10;
-            if (new_win_y < (y + 5 - h))
-                new_win_y += ((y + 5 - h) - new_win_y - 1) / 10 * 10 + 10;
-        }
-
-        new_win_z = z;
+    if (center) {
+        new_win_x = x - w / 2;
+        new_win_y = y - h / 2;
+    } else {
+        // just bring it on screen
+        if (new_win_x > (x - 5)) // equivalent to: "while (new_win_x > x - 5) new_win_x -= 10;"
+            new_win_x -= (new_win_x - (x - 5) - 1) / 10 * 10 + 10;
+        if (new_win_y > (y - 5))
+            new_win_y -= (new_win_y - (y - 5) - 1) / 10 * 10 + 10;
+        if (new_win_x < (x + 5 - w))
+            new_win_x += ((x + 5 - w) - new_win_x - 1) / 10 * 10 + 10;
+        if (new_win_y < (y + 5 - h))
+            new_win_y += ((y + 5 - h) - new_win_y - 1) / 10 * 10 + 10;
     }
+
+    new_win_z = z;
 
     *window_x = new_win_x;
     *window_y = new_win_y;
@@ -2911,7 +2897,7 @@ bool Gui::inRenameBuilding()
     return false;
 }
 
-bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
+bool Gui::getViewCoords(int32_t &x, int32_t &y, int32_t &z)
 {
     x = *df::global::window_x;
     y = *df::global::window_y;
@@ -2919,7 +2905,7 @@ bool Gui::getViewCoords (int32_t &x, int32_t &y, int32_t &z)
     return true;
 }
 
-bool Gui::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
+bool Gui::setViewCoords(const int32_t x, const int32_t y, const int32_t z)
 {
     (*df::global::window_x) = x;
     (*df::global::window_y) = y;
@@ -2927,32 +2913,53 @@ bool Gui::setViewCoords (const int32_t x, const int32_t y, const int32_t z)
     return true;
 }
 
-bool Gui::getCursorCoords (int32_t &x, int32_t &y, int32_t &z)
+bool Gui::getCursorCoords(int32_t &x, int32_t &y, int32_t &z)
 {
-    x = df::global::cursor->x;
-    y = df::global::cursor->y;
-    z = df::global::cursor->z;
+    using df::global::cursor;
+    bool is_adv = World::isAdventureMode();
+    if (is_adv || !cursor)
+    {
+        df::coord p;
+        if (is_adv && game)
+        {
+            auto &look = game->main_interface.adventure.look;
+            if (look.open)
+                p = look.cursor;
+        }
+        x = p.x; y = p.y; z = p.z;
+        return p.isValid();
+    }
+
+    x = cursor->x; y = cursor->y; z = cursor->z;
     return has_cursor();
 }
 
-bool Gui::getCursorCoords (df::coord &pos)
+bool Gui::getCursorCoords(df::coord &pos)
 {
-    pos.x = df::global::cursor->x;
-    pos.y = df::global::cursor->y;
-    pos.z = df::global::cursor->z;
-    return has_cursor();
+    pos = getCursorPos();
+    return pos.isValid();
 }
 
 //FIXME: confine writing of coords to map bounds?
-bool Gui::setCursorCoords (const int32_t x, const int32_t y, const int32_t z)
+bool Gui::setCursorCoords(const int32_t x, const int32_t y, const int32_t z)
 {
-    df::global::cursor->x = x;
-    df::global::cursor->y = y;
-    df::global::cursor->z = z;
+    using df::global::cursor;
+    if (World::isAdventureMode())
+    {
+        if (!game)
+            return false;
+        auto &look = game->main_interface.adventure.look;
+        look.cursor = df::coord(x, y, z);
+        return true;
+    }
+    if (!cursor)
+        return false;
+
+    cursor->x = x; cursor->y = y; cursor->z = z;
     return true;
 }
 
-bool Gui::getDesignationCoords (int32_t &x, int32_t &y, int32_t &z)
+bool Gui::getDesignationCoords(int32_t &x, int32_t &y, int32_t &z)
 {
     x = selection_rect->start_x;
     y = selection_rect->start_y;
@@ -2960,7 +2967,7 @@ bool Gui::getDesignationCoords (int32_t &x, int32_t &y, int32_t &z)
     return (x >= 0) ? false : true;
 }
 
-bool Gui::setDesignationCoords (const int32_t x, const int32_t y, const int32_t z)
+bool Gui::setDesignationCoords(const int32_t x, const int32_t y, const int32_t z)
 {
     selection_rect->start_x = x;
     selection_rect->start_y = y;

@@ -300,7 +300,7 @@ local function getTokenArg1Else(userdata, token)
     elseif df.is_instance(df.building_workshopst, userdata) or df.is_instance(df.building_furnacest, userdata) then
         rawStruct = df.building_def.find(userdata.custom_type)
     elseif df.is_instance(df.interaction_instance, userdata) then
-        rawStruct = df.global.world.raws.interactions[userdata.interaction_id]
+        rawStruct = df.global.world.raws.interactions.all[userdata.interaction_id]
     else
         -- Assume raw struct *is* argument 1
         rawStruct = userdata

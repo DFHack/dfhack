@@ -509,7 +509,7 @@ local function addReactionJobs(ret,bid,wid,cid)
 end
 local function scanRawsOres()
     local ret={}
-    for idx,ore in ipairs(df.global.world.raws.inorganics) do
+    for idx,ore in ipairs(df.global.world.raws.inorganics.all) do
         if #ore.metal_ore.mat_index~=0 then
             ret[idx]=ore
         end

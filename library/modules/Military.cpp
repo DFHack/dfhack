@@ -4,18 +4,34 @@
 #include "MiscUtils.h"
 #include "modules/Military.h"
 #include "modules/Translation.h"
+#include "modules/Units.h"
+#include "df/activity_entry.h"
+#include "df/activity_event.h"
 #include "df/building.h"
 #include "df/building_civzonest.h"
+#include "df/building_squad_infost.h"
+#include "df/histfig_entity_link_former_positionst.h"
+#include "df/histfig_entity_link_former_squadst.h"
+#include "df/histfig_entity_link_positionst.h"
+#include "df/histfig_entity_link_squadst.h"
 #include "df/historical_figure.h"
 #include "df/historical_entity.h"
+#include "df/history_event_remove_hf_entity_linkst.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
+#include "df/equipment_update.h"
 #include "df/plotinfost.h"
+#include "df/military_routinest.h"
 #include "df/squad.h"
-#include "df/squad_position.h"
-#include "df/squad_schedule_order.h"
+#include "df/squad_barracks_infost.h"
+#include "df/squad_month_positionst.h"
 #include "df/squad_order.h"
 #include "df/squad_order_trainst.h"
+#include "df/squad_position.h"
+#include "df/squad_routine_schedulest.h"
+#include "df/squad_schedule_entry.h"
+#include "df/squad_schedule_order.h"
+#include "df/unit.h"
 #include "df/world.h"
 
 using namespace DFHack;
@@ -90,7 +106,7 @@ df::squad* Military::makeSquad(int32_t assignment_id)
     result->id = *df::global::squad_next_id;
     result->uniform_priority = result->id + 1; //no idea why, but seems to hold
     result->supplies.carry_food = 2;
-    result->supplies.carry_water = df::squad::T_supplies::Water;
+    result->supplies.carry_water = df::squad_water_level_type::Water;
     result->entity_id = df::global::plotinfo->group_id;
     result->leader_position = corresponding_position->id;
     result->leader_assignment = found_assignment->id;
@@ -110,7 +126,8 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
     for (const auto& routine : routines)
     {
-        df::squad_schedule_entry* asched = (df::squad_schedule_entry*)malloc(sizeof(df::squad_schedule_entry) * 12);
+        df::squad_routine_schedulest* schedule = new df::squad_routine_schedulest();
+        auto &asched = schedule->month;
 
         for(int kk=0; kk < 12; kk++)
         {
@@ -118,14 +135,14 @@ df::squad* Military::makeSquad(int32_t assignment_id)
 
             for(int jj=0; jj < squad_size; jj++)
             {
-                int32_t* order_assignments = new int32_t();
-                *order_assignments = -1;
+                df::squad_month_positionst* order_assignments = new df::squad_month_positionst();
+                order_assignments->assigned_order_idx = -1;
 
                 asched[kk].order_assignments.push_back(order_assignments);
             }
         }
 
-        auto insert_training_order = [asched, squad_size](int month)
+        auto insert_training_order = [&](int month)
         {
             df::squad_schedule_order* order = new df::squad_schedule_order();
             order->min_count = squad_size;
@@ -206,7 +223,7 @@ df::squad* Military::makeSquad(int32_t assignment_id)
             }
         }
 
-        result->schedule.push_back(reinterpret_cast<df::squad::T_schedule*>(asched));
+        result->schedule.routine.push_back(schedule);
     }
 
     //Modify necessary world state
@@ -228,8 +245,8 @@ void Military::updateRoomAssignments(int32_t squad_id, int32_t civzone_id, df::s
     if (squad == nullptr || zone == nullptr)
         return;
 
-    df::squad::T_rooms* room_from_squad = nullptr;
-    df::building_civzonest::T_squad_room_info* room_from_building = nullptr;
+    df::squad_barracks_infost* room_from_squad = nullptr;
+    df::building_squad_infost* room_from_building = nullptr;
 
     for (auto room : squad->rooms)
     {
@@ -257,18 +274,18 @@ void Military::updateRoomAssignments(int32_t squad_id, int32_t civzone_id, df::s
 
     if (!avoiding_squad_roundtrip && room_from_squad == nullptr)
     {
-        room_from_squad = new df::squad::T_rooms();
+        room_from_squad = new df::squad_barracks_infost();
         room_from_squad->building_id = civzone_id;
 
-        insert_into_vector(squad->rooms, &df::squad::T_rooms::building_id, room_from_squad);
+        insert_into_vector(squad->rooms, &df::squad_barracks_infost::building_id, room_from_squad);
     }
 
     if (room_from_building == nullptr)
     {
-        room_from_building = new df::building_civzonest::T_squad_room_info();
+        room_from_building = new df::building_squad_infost();
         room_from_building->squad_id = squad_id;
 
-        insert_into_vector(zone->squad_room_info, &df::building_civzonest::T_squad_room_info::squad_id, room_from_building);
+        insert_into_vector(zone->squad_room_info, &df::building_squad_infost::squad_id, room_from_building);
     }
 
     if (room_from_squad)
@@ -288,4 +305,230 @@ void Military::updateRoomAssignments(int32_t squad_id, int32_t civzone_id, df::s
             }
         }
     }
+}
+
+static void remove_soldier_entity_link(df::historical_figure* hf, df::squad* squad)
+{
+    int32_t start_year = -1;
+    for (size_t i = 0; i < hf->entity_links.size(); i++)
+    {
+        df::histfig_entity_link* link = hf->entity_links[i];
+        if (link->getType() != df::enums::histfig_entity_link_type::SQUAD)
+            continue;
+
+        auto squad_link = strict_virtual_cast<df::histfig_entity_link_squadst>(link);
+        if (squad_link == nullptr || squad_link->squad_id != squad->id)
+            continue;
+
+        hf->entity_links.erase(hf->entity_links.begin() + i);
+        start_year = squad_link->start_year;
+
+        delete squad_link;
+        break;
+    }
+
+    if (start_year == -1)
+        return;
+
+    auto former_squad = df::allocate<df::histfig_entity_link_former_squadst>();
+    former_squad->squad_id = squad->id;
+    former_squad->entity_id = squad->entity_id;
+    former_squad->start_year = start_year;
+    former_squad->end_year = *df::global::cur_year;
+    former_squad->link_strength = 100;
+
+    hf->entity_links.push_back(former_squad);
+
+    // Unassigning a normal soldier does not seem to generate an event record.
+}
+
+static void remove_officer_entity_link(df::historical_figure* hf, df::squad* squad)
+{
+    std::vector<Units::NoblePosition> nps;
+    if (!Units::getNoblePositions(&nps, hf))
+        return;
+
+    int32_t assignment_id = -1;
+    int32_t pos_id = -1;
+    for (auto& np : nps)
+    {
+        if (np.entity->id != squad->entity_id || np.assignment->squad_id != squad->id)
+            continue;
+
+        np.assignment->histfig = -1;
+        np.assignment->histfig2 = -1;
+
+        assignment_id = np.assignment->id;
+        pos_id = np.position->id;
+        break;
+    }
+
+    if (assignment_id == -1)
+        return;
+
+    int32_t start_year = -1;
+    for (size_t i = 0; i < hf->entity_links.size(); i++)
+    {
+        df::histfig_entity_link* link = hf->entity_links[i];
+        if (link->getType() != df::enums::histfig_entity_link_type::POSITION)
+            continue;
+
+        auto pos_link = strict_virtual_cast<df::histfig_entity_link_positionst>(link);
+        if (pos_link == nullptr)
+            continue;
+        if (pos_link->assignment_id != assignment_id && pos_link->entity_id != squad->entity_id)
+            continue;
+
+        hf->entity_links.erase(hf->entity_links.begin() + i);
+        start_year = pos_link->start_year;
+
+        delete pos_link;
+        break;
+    }
+
+    if (start_year == -1)
+        return;
+
+    auto former_pos = df::allocate<df::histfig_entity_link_former_positionst>();
+    former_pos->assignment_id = assignment_id;
+    former_pos->entity_id = squad->entity_id;
+    former_pos->start_year = start_year;
+    former_pos->end_year = *df::global::cur_year;
+    former_pos->link_strength = 100;
+
+    hf->entity_links.push_back(former_pos);
+
+    int32_t event_id = (*df::global::hist_event_next_id)++;
+    auto former_pos_event = df::allocate<df::history_event_remove_hf_entity_linkst>();
+    former_pos_event->year = *df::global::cur_year;
+    former_pos_event->seconds = *df::global::cur_year_tick;
+    former_pos_event->id = event_id;
+    former_pos_event->civ = squad->entity_id;
+    former_pos_event->histfig = hf->id;
+    former_pos_event->position_id = pos_id;
+    former_pos_event->link_type = df::histfig_entity_link_type::POSITION;
+
+    df::global::world->history.events.push_back(former_pos_event);
+}
+
+static void add_soldier_entity_link(df::historical_figure* hf, df::squad* squad, int32_t squad_pos)
+{
+    auto squad_link = df::allocate<df::histfig_entity_link_squadst>();
+    squad_link->squad_id = squad->id;
+    squad_link->squad_position = squad_pos;
+    squad_link->entity_id = squad->entity_id;
+    squad_link->start_year = *df::global::cur_year;
+    squad_link->link_strength = 100;
+
+    hf->entity_links.push_back(squad_link);
+}
+
+bool Military::addToSquad(int32_t unit_id, int32_t squad_id, int32_t squad_pos)
+{
+    df::unit* unit = df::unit::find(unit_id);
+    if (unit == nullptr || unit->military.squad_id != -1) return false;
+
+    df::historical_figure* hf = df::historical_figure::find(unit->hist_figure_id);
+    if (hf == nullptr)
+        return false;
+
+    df::squad* squad = df::squad::find(squad_id);
+    if (squad == nullptr) return false;
+
+    if (squad_pos == -1)
+    {
+        for (int p = 0; p < 10; p++)
+        {
+            auto pp = vector_get(squad->positions, p);
+            if (pp == nullptr || pp->occupant == -1)
+            {
+                squad_pos = p;
+                break;
+            }
+        }
+    }
+    if (squad_pos == -1) return false;
+
+    // this function cannot (currently) change the squad commander
+    if (squad_pos == 0) return false;
+
+    df::squad_position* pos = vector_get(squad->positions, squad_pos);
+    if (pos == nullptr)
+        pos = squad->positions[squad_pos] = df::allocate<df::squad_position>();
+
+    pos->occupant = hf->id;
+    // does anything else need to be set here?
+
+    unit->military.squad_id = squad->id;
+    unit->military.squad_position = squad_pos;
+
+    add_soldier_entity_link(hf, squad, squad_pos);
+
+    #define F(flag) df::equipment_update::mask_##flag
+    auto constexpr update_flags = F(weapon) | F(armor) | F(shoes) | F(shield) | F(helm) | F(gloves)
+                                | F(ammo) | F(pants) | F(backpack) | F(quiver) | F(flask);
+    #undef F
+
+    squad->ammo.update.whole |= update_flags;
+    df::global::plotinfo->equipment.update.whole |= update_flags;
+
+    return true;
+}
+
+bool Military::removeFromSquad(int32_t unit_id)
+{
+    // based on unitst::remove_squad_info
+    df::unit *unit = df::unit::find(unit_id);
+    if (unit == nullptr || unit->military.squad_id == -1 || unit->military.squad_position == -1)
+        return false;
+
+    // abort individual training
+    if (unit->individual_drills.size())
+        unit->flags3.bits.verify_personal_training = true;
+
+    int32_t squad_id = unit->military.squad_id;
+    int32_t squad_pos = unit->military.squad_position;
+
+    df::squad* squad = df::squad::find(squad_id);
+
+    if (squad)
+    {
+        df::squad_position* pos = vector_get(squad->positions, squad_pos);
+        if (pos)
+        {
+            // based on unitst::remove_squad_activity_info
+            FOR_ENUM_ITEMS(squad_event_type, i)
+            {
+                auto activity_entry = df::activity_entry::find(pos->activities[i]);
+                if (activity_entry)
+                {
+                    auto activity_event = binsearch_in_vector(activity_entry->events, &df::activity_event::event_id, pos->events[i]);
+                    if (activity_event)
+                    {
+                        activity_event->removeParticipant(unit->hist_figure_id, unit->id, false);
+                        pos->activities[i] = -1;
+                        pos->events[i] = -1;
+                    }
+                }
+            }
+
+            // remove from squad position
+            pos->occupant = -1;
+        }
+    }
+    // remove from unit information
+    unit->military.squad_id = -1;
+    unit->military.squad_position = -1;
+
+    // remove entity squad link
+    df::historical_figure* hf = df::historical_figure::find(unit->hist_figure_id);
+    if (hf == nullptr || squad == nullptr)
+        return false;
+
+    if (squad_pos == 0) // is unit a commander?
+        remove_officer_entity_link(hf, squad);
+    else
+        remove_soldier_entity_link(hf, squad);
+
+    return true;
 }

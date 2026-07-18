@@ -41,7 +41,7 @@ static bool deserializeMaterialMask(const string& ser, df::dfhack_material_categ
         return true;
 
     if (!parseJobMaterialCategory(&mat_mask, ser)) {
-        DEBUG(control).print("invalid job material category serialization: '%s'", ser.c_str());
+        DEBUG(control).print("invalid job material category serialization: '{}'", ser);
         return false;
     }
     return true;
@@ -56,7 +56,7 @@ static bool deserializeMaterials(const string& ser, set<DFHack::MaterialInfo> &m
     for (auto m = mat_names.begin(); m != mat_names.end(); m++) {
         DFHack::MaterialInfo material;
         if (!material.find(*m) || !material.isValid()) {
-            DEBUG(control).print("invalid material name serialization: '%s'", ser.c_str());
+            DEBUG(control).print("invalid material name serialization: '{}'", ser);
             return false;
         }
         materials.emplace(material);
@@ -68,7 +68,7 @@ ItemFilter::ItemFilter(color_ostream &out, const string& serialized) : ItemFilte
     vector<string> tokens;
     split_string(&tokens, serialized, "/");
     if (tokens.size() < 5) {
-        DEBUG(control,out).print("invalid ItemFilter serialization: '%s'", serialized.c_str());
+        DEBUG(control,out).print("invalid ItemFilter serialization: '{}'", serialized);
         return;
     }
 
@@ -155,8 +155,8 @@ bool ItemFilter::matches(DFHack::MaterialInfo &material) const {
 bool ItemFilter::matches(df::item *item) const {
     int16_t quality = (item->flags.bits.artifact ? df::item_quality::Artifact : item->getQuality());
     if (quality < min_quality || quality > max_quality) {
-        TRACE(cycle).print("item outside of quality range (%d not between %d and %d)\n",
-                quality, min_quality, max_quality);
+        TRACE(cycle).print("item outside of quality range ({} not between {} and {})\n",
+                ENUM_AS_STR(static_cast<df::item_quality>(quality)), ENUM_AS_STR(min_quality), ENUM_AS_STR(max_quality));
         return false;
     }
 

@@ -63,17 +63,17 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
 DFhackCExport command_result plugin_enable(color_ostream &out, bool enable) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
     if (enable != is_enabled) {
         is_enabled = enable;
-        DEBUG(control,out).print("%s from the API; persisting\n",
+        DEBUG(control,out).print("{} from the API; persisting\n",
                                 is_enabled ? "enabled" : "disabled");
         config.set_bool(CONFIG_IS_ENABLED, is_enabled);
     } else {
-        DEBUG(control,out).print("%s from the API, but already %s; no action\n",
+        DEBUG(control,out).print("{} from the API, but already {}; no action\n",
                                 is_enabled ? "enabled" : "disabled",
                                 is_enabled ? "enabled" : "disabled");
     }
@@ -94,7 +94,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     // all the other state we can directly read/modify from the persistent
     // data structure.
     is_enabled = config.get_bool(CONFIG_IS_ENABLED);
-    DEBUG(control,out).print("loading persisted enabled state: %s\n",
+    DEBUG(control,out).print("loading persisted enabled state: {}\n",
                             is_enabled ? "true" : "false");
     did_complain = false;
     return CR_OK;
@@ -103,7 +103,7 @@ DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
 DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == DFHack::SC_WORLD_UNLOADED) {
         if (is_enabled) {
-            DEBUG(control,out).print("world unloaded; disabling %s\n",
+            DEBUG(control,out).print("world unloaded; disabling {}\n",
                                     plugin_name);
             is_enabled = false;
         }
@@ -139,7 +139,7 @@ struct_identity autonestbox_options::_identity(sizeof(autonestbox_options), &df:
 
 static command_result df_autonestbox(color_ostream &out, vector<string> &parameters) {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot run %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -235,9 +235,9 @@ static bool assignUnitToZone(color_ostream &out, df::unit *unit, df::building_ci
     unit->general_refs.push_back(ref);
     zone->assigned_units.push_back(unit->id);
 
-    INFO(cycle,out).print("Unit %d (%s) assigned to nestbox zone %d (%s)\n",
-        unit->id, Units::getRaceName(unit).c_str(),
-        zone->id, zone->name.c_str());
+    INFO(cycle,out).print("Unit {} ({}) assigned to nestbox zone {} ({})\n",
+        unit->id, Units::getRaceName(unit),
+        zone->id, zone->name);
 
     return true;
 }
@@ -247,13 +247,13 @@ static bool assignUnitToZone(color_ostream &out, df::unit *unit, df::building_ci
 static size_t getFreeNestboxZones(color_ostream &out, vector<df::building_civzonest *> &free_zones) {
     size_t assigned = 0;
     for (auto zone : world->buildings.other.ZONE_PEN) {
-        TRACE(cycle,out).print("scanning pasture %d (%s)\n", zone->id, zone->name.c_str());
+        TRACE(cycle,out).print("scanning pasture {} ({})\n", zone->id, zone->name);
         if (!Buildings::isActive(zone)) {
-            TRACE(cycle,out).print("pasture %d is inactive\n", zone->id);
+            TRACE(cycle,out).print("pasture {} is inactive\n", zone->id);
             continue;
         }
         if (!isEmptyPasture(zone)) {
-            TRACE(cycle,out).print("pasture %d is not empty\n", zone->id);
+            TRACE(cycle,out).print("pasture {} is not empty\n", zone->id);
             continue;
         }
 
@@ -262,23 +262,23 @@ static size_t getFreeNestboxZones(color_ostream &out, vector<df::building_civzon
         df::coord pos(zone->x1, zone->y1, zone->z);
         auto bld = Buildings::findAtTile(pos);
         if (!bld || bld->getType() != df::building_type::NestBox) {
-            TRACE(cycle,out).print("pasture %d does not have nestbox in upper left corner\n", zone->id);
+            TRACE(cycle,out).print("pasture {} does not have nestbox in upper left corner\n", zone->id);
             continue;
         }
-        TRACE(cycle,out).print("found nestbox %d in pasture %d\n", bld->id, zone->id);
+        TRACE(cycle,out).print("found nestbox {} in pasture {}\n", bld->id, zone->id);
 
         df::building_nest_boxst *nestbox = virtual_cast<df::building_nest_boxst>(bld);
         if (!nestbox) {
-            TRACE(cycle,out).print("nestbox %d is somehow not a nestbox\n", bld->id);
+            TRACE(cycle,out).print("nestbox {} is somehow not a nestbox\n", bld->id);
             continue;
         }
 
         if (nestbox->claimed_by >= 0) {
             if (auto unit = df::unit::find(nestbox->claimed_by)) {
-                TRACE(cycle,out).print("nestbox %d is claimed by unit %d (%s)\n", bld->id,
-                    nestbox->claimed_by, Units::getReadableName(unit).c_str());
+                TRACE(cycle,out).print("nestbox {} is claimed by unit {} ({})\n", bld->id,
+                    nestbox->claimed_by, Units::getReadableName(unit));
                 if (!isFreeEgglayer(unit)) {
-                    DEBUG(cycle,out).print("cannot assign unit %d to nestbox %d: not a free egg layer\n", unit->id, bld->id);
+                    DEBUG(cycle,out).print("cannot assign unit {} to nestbox {}: not a free egg layer\n", unit->id, bld->id);
                 } else {
                     // if the nestbox is claimed by a free egg layer, attempt to assign that unit to the zone
                     if (assignUnitToZone(out, unit, zone))
@@ -327,7 +327,7 @@ static size_t assign_nestboxes(color_ostream &out) {
             DEBUG(cycle,out).print("Failed to assign unit to building.\n");
             return assigned;
         }
-        DEBUG(cycle,out).print("assigned unit %d to zone %d\n",
+        DEBUG(cycle,out).print("assigned unit {} to zone {}\n",
                                 free_units[idx]->id, free_zones[idx]->id);
         ++assigned;
     }

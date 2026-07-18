@@ -29,7 +29,7 @@ DBG_DECLARE(stockpiles, log, DebugCategory::LINFO);
 static command_result do_command(color_ostream& out, vector<string>& parameters);
 
 DFhackCExport command_result plugin_init(color_ostream &out, vector<PluginCommand> &commands) {
-    DEBUG(log, out).print("initializing %s\n", plugin_name);
+    DEBUG(log, out).print("initializing {}\n", plugin_name);
 
     commands.push_back(PluginCommand(
         plugin_name,
@@ -62,7 +62,7 @@ static df::building_stockpilest* get_stockpile(int id) {
 static bool stockpiles_export(color_ostream& out, string fname, int id, uint32_t includedElements) {
     df::building_stockpilest* sp = get_stockpile(id);
     if (!sp) {
-        out.printerr("Specified building isn't a stockpile: %d.\n", id);
+        out.printerr("Specified building isn't a stockpile: {}\n", id);
         return false;
     }
 
@@ -72,12 +72,12 @@ static bool stockpiles_export(color_ostream& out, string fname, int id, uint32_t
     try {
         StockpileSerializer cereal(sp);
         if (!cereal.serialize_to_file(out, fname, includedElements)) {
-            out.printerr("could not save to '%s'\n", fname.c_str());
+            out.printerr("could not save to '{}'\n", fname);
             return false;
         }
     }
     catch (std::exception& e) {
-        out.printerr("serialization failed: protobuf exception: %s\n", e.what());
+        out.printerr("serialization failed: protobuf exception: {}\n", e.what());
         return false;
     }
 
@@ -87,7 +87,7 @@ static bool stockpiles_export(color_ostream& out, string fname, int id, uint32_t
 static bool stockpiles_import(color_ostream& out, string fname, int id, string mode_str, string filter) {
     df::building_stockpilest* sp = get_stockpile(id);
     if (!sp) {
-        out.printerr("Specified building isn't a stockpile: %d.\n", id);
+        out.printerr("Specified building isn't a stockpile: {}\n", id);
         return false;
     }
 
@@ -95,7 +95,7 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
         fname += ".dfstock";
 
     if (!Filesystem::exists(fname)) {
-        out.printerr("ERROR: file doesn't exist: '%s'\n", fname.c_str());
+        out.printerr("ERROR: file doesn't exist: '{}'\n", fname);
         return false;
     }
 
@@ -111,12 +111,12 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
     try {
         StockpileSerializer cereal(sp);
         if (!cereal.unserialize_from_file(out, fname, mode, filters)) {
-            out.printerr("deserialization failed: '%s'\n", fname.c_str());
+            out.printerr("deserialization failed: '{}'\n", fname);
             return false;
         }
     }
     catch (std::exception& e) {
-        out.printerr("deserialization failed: protobuf exception: %s\n", e.what());
+        out.printerr("deserialization failed: protobuf exception: {}\n", e.what());
         return false;
     }
 
@@ -126,13 +126,13 @@ static bool stockpiles_import(color_ostream& out, string fname, int id, string m
 static df::stockpile_settings * get_stop_settings(color_ostream& out, int route_id, int stop_id) {
     auto route = df::hauling_route::find(route_id);
     if (!route) {
-        out.printerr("Specified hauling route not found: %d.\n", route_id);
+        out.printerr("Specified hauling route not found: {}\n", route_id);
         return NULL;
     }
 
     df::hauling_stop *stop = binsearch_in_vector(route->stops, &df::hauling_stop::id, stop_id);
     if (!stop) {
-        out.printerr("Specified hauling stop not found in route %d: %d.\n", route_id, stop_id);
+        out.printerr("Specified hauling stop not found in route {}: {}.\n", route_id, stop_id);
         return NULL;
     }
 
@@ -150,12 +150,12 @@ static bool stockpiles_route_export(color_ostream& out, string fname, int route_
     try {
         StockpileSettingsSerializer cereal(settings);
         if (!cereal.serialize_to_file(out, fname, includedElements)) {
-            out.printerr("could not save to '%s'\n", fname.c_str());
+            out.printerr("could not save to '{}'\n", fname);
             return false;
         }
     }
     catch (std::exception& e) {
-        out.printerr("serialization failed: protobuf exception: %s\n", e.what());
+        out.printerr("serialization failed: protobuf exception: {}\n", e.what());
         return false;
     }
 
@@ -171,7 +171,7 @@ static bool stockpiles_route_import(color_ostream& out, string fname, int route_
         fname += ".dfstock";
 
     if (!Filesystem::exists(fname)) {
-        out.printerr("ERROR: file doesn't exist: '%s'\n", fname.c_str());
+        out.printerr("ERROR: file doesn't exist: '{}'\n", fname);
         return false;
     }
 
@@ -187,12 +187,12 @@ static bool stockpiles_route_import(color_ostream& out, string fname, int route_
     try {
         StockpileSettingsSerializer cereal(settings);
         if (!cereal.unserialize_from_file(out, fname, mode, filters)) {
-            out.printerr("deserialization failed: '%s'\n", fname.c_str());
+            out.printerr("deserialization failed: '{}'\n", fname);
             return false;
         }
     }
     catch (std::exception& e) {
-        out.printerr("deserialization failed: protobuf exception: %s\n", e.what());
+        out.printerr("deserialization failed: protobuf exception: {}\n", e.what());
         return false;
     }
 

@@ -15,12 +15,8 @@ Usage
     Open the visualiser in a new window.
 
 The viewer window has read-only access to the game, and can follow the game view
-or be moved independently. Configuration for stonesense can be set in the
-``dfhack-config/stonesense/init.txt`` file in your DF game directory. If the window refresh
-rate is too low, change ``SEGMENTSIZE_Z`` to ``2`` in this file, and if you are
-unable to see the edges of the map with the overlay active, try decreasing the
-value for ``SEGMENTSIZE_XY`` -- normal values are ``50`` to ``80``, depending
-on your screen resolution.
+or be moved independently. Configuration for Stonesense can be set in the
+``dfhack-config/stonesense/init.txt`` file in your DF game directory.
 
 .. figure:: ../images/stonesense-roadtruss.jpg
    :align: center
@@ -37,10 +33,9 @@ Mouse controls are hard-coded and cannot be changed.
 :Scrollwheel:   Move up and down
 :Ctrl-Scroll:   Increase/decrease Z depth shown
 
-Follow mode makes the Stonesense view follow the location of the DF
-window. The offset can be adjusted by holding :kbd:`Ctrl` while using the
-keyboard window movement keys. When you turn on cursor follow mode, the
-Stonesense debug cursor will follow the DF cursor when the latter exists.
+Follow mode makes the Stonesense view follow the location and zoom level of the DF
+window. The offset can be adjusted by holding :kbd:`Alt` while using the
+keyboard window movement keys.
 
 You can take screenshots with :kbd:`F5`, larger screenshots with
 :kbd:`Ctrl`:kbd:`F5`, and screenshot the whole map at full resolution with
@@ -57,14 +52,14 @@ views, fog, and rotation. Here's the important section:
    :end-before: VALID ACTIONS:
 
 
-Streaming stonesense on Windows
+Streaming Stonesense on Windows
 -------------------------------
-If you wish to stream stonesense thru a broadcasting software such as `OBS <https://obsproject.com/>`_
-then you may find that opening stonesense causes your main DF window to flicker
-between DF and stonesense. While it is unknown exactly what causes this, a fix
-does exist. Simply make sure that both DF and stonesense are using ``Window Capture``
+If you wish to stream Stonesense thru a broadcasting software such as `OBS <https://obsproject.com/>`_
+then you may find that opening Stonesense causes your main DF window to flicker
+between DF and Stonesense. While it is unknown exactly what causes this, a fix
+does exist. Simply make sure that both DF and Stonesense are using ``Window Capture``
 and NOT ``Game Capture``. This will stop the flickering from happening and enable
-you to stream stonesense for all to enjoy. This has been tested in OBS on Windows 10 but
+you to stream Stonesense for all to enjoy. This has been tested in OBS on Windows 10 but
 should work on Windows 11 and in `Streamlabs <https://streamlabs.com/>`_. Linux, having no
 ``Game Capture`` option should be unaffected by this issue.
 
@@ -75,13 +70,37 @@ If Stonesense gives an error saying that it can't load
 detail sprites used. Either open :file:`creatures/init.txt` and remove the
 line containing that folder, or :dffd:`use these smaller sprites <6096>`.
 
+Sometimes if you have opened Stonesense and then resize the DF window, DF will appear to be
+unresponsive. This bug is graphical only and if you hit :kbd:`Ctrl`:kbd:`Alt`:kbd:`S` and wait
+a minute or so (since you can't see when the game finishes saving) the game should quicksave.
+
+If you have Stonesense open in a fort and want to load a new fort, you MUST close Stonesense before
+loading the new fort or the game will crash.
+
 Stonesense requires working graphics acceleration, and we recommend
 at least a dual core CPU to avoid slowing down your game of DF.
+
+Yellow cubes and missing sprites
+--------------------------------
+If you are seeing yellow cubes in Stonesense, then there is something on the map that
+Stonesense does not have a sprite for.
+
+.. figure:: ../images/stonesense-yellowcubes.png
+   :align: center
+
+   An example of the yellow cubes.
+
+If you would like to help us in fixing this, there are two things you can do:
+
+* Make an issue on `GitHub <https://github.com/DFHack/stonesense/issues>`_ with what
+  item is missing and pictures of what it looks like in DF.
+* Create the art yourself. For help with this, please see the `stonesense-art-guide`.
 
 Useful links
 ------------
 - Report issues on `Github <https://github.com/DFHack/stonesense/issues>`_
 - `support`
+- `Stonesense Subreddit <https://www.reddit.com/r/stonesense/>`_
 - :forums:`Official Stonesense thread <106497>`
 - :forums:`Screenshots thread <48172>`
 - :wiki:`Main wiki page <Utility:Stonesense>`

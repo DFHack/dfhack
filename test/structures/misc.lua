@@ -24,12 +24,39 @@ function test.overlappingGlobals()
     end
 end
 
-function test.viewscreenDtors()
+local known_bad_types = {
+    -- renderer base class has non-destructible padding declared
+    renderer_2d_base=true,
+    renderer_2d=true,
+    renderer_offscreen=true,
+
+    -- abstract base classes that aren't instantiable
+    active_script_varst=true,
+    widget_sheet_button=true,
+}
+
+if dfhack.getOSType() == 'linux' then
+    -- empty destructors are declared inline for these types,
+    -- and gcc appears to optimize them out
+    known_bad_types.mental_picture_propertyst = true
+    known_bad_types.region_block_eventst = true
+end
+
+function test.destructors()
+    local count = 1
     for name, type in pairs(df) do
-        if name:startswith('viewscreen') then
-            print('testing', name)
-            local v = type:new()
+        if known_bad_types[name] then
+            goto continue
+        end
+        print(('testing constructor %5d: %s'):format(count, name))
+        local ok, v = pcall(function() return type:new() end)
+        if not ok then
+            print('        constructor failed; skipping destructor test')
+        else
+            print('        destructor ok')
             expect.true_(v:delete(), "destructor returned false: " .. name)
         end
+        count = count + 1
+        ::continue::
     end
 end

@@ -98,7 +98,12 @@ function TextAreaContent:setCursor(cursor_offset)
 end
 
 function TextAreaContent:setSelection(from_offset, to_offset)
+    if #self.text == 0 then
+        return
+    end
+
     -- text selection is always start on self.cursor and end on self.sel_end
+
     self:setCursor(from_offset)
     self.sel_end = to_offset
 
@@ -127,7 +132,11 @@ function TextAreaContent:eraseSelection()
 end
 
 function TextAreaContent:setClipboard(text)
-    dfhack.internal.setClipboardTextCp437Multiline(text)
+    if self.one_line_mode then
+        dfhack.internal.setClipboardTextCp437(text)
+    else
+        dfhack.internal.setClipboardTextCp437Multiline(text)
+    end
 end
 
 function TextAreaContent:copy()
@@ -151,7 +160,7 @@ function TextAreaContent:copy()
             self:lineStartOffset(),
             self:lineEndOffset()
         )
-        if curr_line:sub(-1,-1) ~= NEWLINE then
+        if not self.one_line_mode and curr_line:sub(-1,-1) ~= NEWLINE then
             curr_line = curr_line .. NEWLINE
         end
 
@@ -170,8 +179,9 @@ function TextAreaContent:cut()
 end
 
 function TextAreaContent:paste()
-    local clipboard_lines = dfhack.internal.getClipboardTextCp437Multiline()
-    local clipboard = table.concat(clipboard_lines, '\n')
+    local clipboard = self.one_line_mode and
+        dfhack.internal.getClipboardTextCp437() or
+        table.concat(dfhack.internal.getClipboardTextCp437Multiline(), '\n')
     if clipboard then
         if self.clipboard_mode == CLIPBOARD_MODE.LINE and not self:hasSelection() then
             local origin_offset = self.cursor
@@ -235,12 +245,10 @@ function TextAreaContent:onRenderBody(dc)
         dc:newline()
     end
 
-    local show_focus = not self.enable_cursor_blink
-        or (
-            not self:hasSelection()
-            and self.parent_view:hasFocus()
-            and gui.blink_visible(530)
-        )
+    local show_focus = not self:hasSelection() and (
+        not self.enable_cursor_blink
+        or (self.parent_view:hasFocus() and gui.blink_visible(530))
+    )
 
     if show_focus then
         local x, y = self.wrapped_text:indexToCoords(self.cursor)

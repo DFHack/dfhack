@@ -6,6 +6,7 @@ local gui = require('gui')
 local helpdb = require('helpdb')
 local json = require('json')
 local mock = require('test_util.mock')
+local overlay = require('plugins.overlay')
 local script = require('gui.script')
 local utils = require('utils')
 
@@ -289,12 +290,13 @@ local MODES = {
 
 local function load_test_config(config_file)
     local config = {}
+    print ("loading test config from " .. config_file)
     if dfhack.filesystem.isfile(config_file) then
         config = json.decode_file(config_file)
     end
 
     if not config.test_dir then
-        config.test_dir = dfhack.getHackPath() .. 'scripts/test'
+        config.test_dir = dfhack.getHackPath() .. '/scripts/test'
     end
 
     if not config.save_dir then
@@ -426,6 +428,7 @@ end
 
 local function finish_tests(done_command)
     dfhack.internal.IN_TEST = false
+    overlay.rescan()
     if done_command and #done_command > 0 then
         dfhack.run_command(done_command)
     end

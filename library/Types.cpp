@@ -22,35 +22,23 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
-#include "Internal.h"
-#include "Export.h"
 #include "MiscUtils.h"
-#include "Error.h"
 #include "Types.h"
 
 #include "modules/Filesystem.h"
 
 #include "df/general_ref.h"
+#include "df/general_ref_type.h"
+#include "df/global_objects.h"
 #include "df/specific_ref.h"
+#include "df/specific_ref_type.h"
 
-#ifndef LINUX_BUILD
-    #include <Windows.h>
-    #include "wdirent.h"
-#else
-    #include <sys/time.h>
-    #include <ctime>
-    #include <dirent.h>
-    #include <errno.h>
-#endif
-
-#include <ctype.h>
-#include <stdarg.h>
-
-#include <sstream>
-#include <map>
+#include <filesystem>
+#include <string>
+#include <vector>
 
 
-int DFHack::getdir(std::string dir, std::vector<std::string> &files)
+int DFHack::getdir(std::filesystem::path dir, std::vector<std::filesystem::path> &files)
 {
     return DFHack::Filesystem::listdir(dir, files);
 }

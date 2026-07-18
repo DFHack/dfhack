@@ -118,7 +118,7 @@ void Checker::queue_globals()
         // offset is the position of the DFHack pointer to this global.
         auto ptr = *reinterpret_cast<const void **>(field->offset);
 
-        QueueItem item(stl_sprintf("df.global.%s", field->name), ptr);
+        QueueItem item(fmt::format("df.global.{}", field->name), ptr);
         CheckedStructure cs(field);
 
         if (!ptr)
@@ -886,7 +886,7 @@ void Checker::check_stl_string(const QueueItem & item)
     else if (is_gcc && length > 0 && !is_valid_dereference(QueueItem(item, "?start?", reinterpret_cast<void *>(string->start)), 1))
     {
         // nullptr is NOT okay here
-        FAIL("invalid string pointer " << stl_sprintf("0x%" PRIxPTR, string->start));
+        FAIL("invalid string pointer " << fmt::format("{:#x}", string->start));
         return;
     }
     else if (is_local && length >= 16)

@@ -40,8 +40,8 @@ static string serialize(const std::vector<ItemFilter> &item_filters, const std::
 
 DefaultItemFilters::DefaultItemFilters(color_ostream &out, BuildingTypeKey key, const std::vector<const df::job_item *> &jitems)
         : key(key), choose_items(ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER) {
-    DEBUG(control,out).print("creating persistent data for filter key %d,%d,%d\n",
-                            std::get<0>(key), std::get<1>(key), std::get<2>(key));
+    DEBUG(control,out).print("creating persistent data for filter key {},{},{}\n",
+                            ENUM_AS_STR(std::get<0>(key)), std::get<1>(key), std::get<2>(key));
     filter_config = World::AddPersistentSiteData(FILTER_CONFIG_KEY);
     filter_config.set_int(FILTER_CONFIG_TYPE, std::get<0>(key));
     filter_config.set_int(FILTER_CONFIG_SUBTYPE, std::get<1>(key));
@@ -61,16 +61,16 @@ DefaultItemFilters::DefaultItemFilters(color_ostream &out, PersistentDataItem &f
             choose_items > ItemSelectionChoice::ITEM_SELECTION_CHOICE_AUTOMATERIAL)
         choose_items = ItemSelectionChoice::ITEM_SELECTION_CHOICE_FILTER;
     auto &serialized = filter_config.get_str();
-    DEBUG(control,out).print("deserializing default item filters for key %d,%d,%d: %s\n",
-        std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
+    DEBUG(control,out).print("deserializing default item filters for key {},{},{}: {}\n",
+        ENUM_AS_STR(std::get<0>(key)), std::get<1>(key), std::get<2>(key), serialized);
     if (!jitems.size())
         return;
     std::vector<std::string> elems;
     split_string(&elems, serialized, "|");
     std::vector<ItemFilter> filters = deserialize_item_filters(out, elems[0]);
     if (filters.size() != jitems.size()) {
-        WARN(control,out).print("ignoring invalid filters_str for key %d,%d,%d: '%s'\n",
-            std::get<0>(key), std::get<1>(key), std::get<2>(key), serialized.c_str());
+        WARN(control,out).print("ignoring invalid filters_str for key {},{},{}: '{}'\n",
+            ENUM_AS_STR(std::get<0>(key)), std::get<1>(key), std::get<2>(key), serialized);
         item_filters.resize(jitems.size());
     } else
         item_filters = filters;
@@ -99,13 +99,13 @@ void DefaultItemFilters::setSpecial(const std::string &special, bool val) {
 
 void DefaultItemFilters::setItemFilter(DFHack::color_ostream &out, const ItemFilter &filter, int index) {
     if (index < 0 || item_filters.size() <= (size_t)index) {
-        WARN(control,out).print("invalid index for filter key %d,%d,%d: %d\n",
-                std::get<0>(key), std::get<1>(key), std::get<2>(key), index);
+        WARN(control,out).print("invalid index for filter key {},{},{}: {}\n",
+                ENUM_AS_STR(std::get<0>(key)), std::get<1>(key), std::get<2>(key), index);
         return;
     }
 
     item_filters[index] = filter;
     filter_config.set_str( serialize(item_filters, specials));
-    DEBUG(control,out).print("updated item filter and persisted for key %d,%d,%d: %s\n",
-        std::get<0>(key), std::get<1>(key), std::get<2>(key), filter_config.get_str().c_str());
+    DEBUG(control,out).print("updated item filter and persisted for key {},{},{}: {}\n",
+        ENUM_AS_STR(std::get<0>(key)), std::get<1>(key), std::get<2>(key), filter_config.get_str());
 }

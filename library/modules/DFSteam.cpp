@@ -1,11 +1,30 @@
-#include "Internal.h"
-
 #include "modules/DFSteam.h"
 
 #include "Debug.h"
 #include "PluginManager.h"
 
+#include "ColorText.h"
+#include "Core.h"
+
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <string>
+#include <vector>
+
 #include "df/gamest.h"
+#include <df/global_objects.h>
+
+#ifdef WIN32
+#define NOMINMAX
+#define WIN32_LEAN_AND_MEAN
+#include <windows.h>
+#include <minwinbase.h>
+#include <handleapi.h>
+#include <processthreadsapi.h>
+#include <TlHelp32.h>
+#include <libloaderapi.h>
+#endif
 
 namespace DFHack
 {
@@ -100,9 +119,6 @@ void DFSteam::cleanup(color_ostream& out) {
 
 #ifdef WIN32
 
-#include <process.h>
-#include <windows.h>
-#include <TlHelp32.h>
 
 static bool is_running_on_wine() {
     typedef const char* (CDECL wine_get_version)(void);
@@ -157,13 +173,13 @@ static bool launchDFHack(color_ostream& out) {
     si.cb = sizeof(si);
     ZeroMemory(&pi, sizeof(pi));
 
-    static LPCWSTR procname = L"hack/launchdf.exe";
+    auto procpath = Core::getInstance().getHackPath() / "launchdf.exe";
     static const char * env = "\0";
 
     // note that the environment must be explicitly zeroed out and not NULL,
     // otherwise the launched process will inherit this process's environment,
     // and the Steam API in the launchdf process will think it is in DF's context.
-    BOOL res = CreateProcessW(procname,
+    BOOL res = CreateProcessW(procpath.wstring().c_str(),
             NULL, NULL, NULL, FALSE, 0, (LPVOID)env, NULL, &si, &pi);
 
     return !!res;
@@ -179,8 +195,8 @@ static bool findProcess(color_ostream& out, std::string name, pid_t &pid) {
     command += name;
     FILE *cmd_pipe = popen(command.c_str(), "r");
     if (!cmd_pipe) {
-        WARN(dfsteam, out).print("failed to exec '%s' (error: %d)\n",
-            command.c_str(), errno);
+        WARN(dfsteam, out).print("failed to exec '{}' (error: {})\n",
+            command, errno);
         return false;
     }
 
@@ -204,13 +220,14 @@ static bool launchDFHack(color_ostream& out) {
 
     pid = fork();
     if (pid == -1) {
-        WARN(dfsteam, out).print("failed to fork (error: %d)\n", errno);
+        WARN(dfsteam, out).print("failed to fork (error: {})\n", errno);
         return false;
     } else if (pid == 0) {
         // child process
-        static const char * command = "hack/launchdf";
+        auto procpath = Core::getInstance().getHackPath() / "launchdf";
+        auto command = procpath.string();
         unsetenv("SteamAppId");
-        execl(command, command, NULL);
+        execl(command.c_str(), command.c_str(), NULL);
         _exit(EXIT_FAILURE);
     }
 
@@ -248,5 +265,5 @@ void DFSteam::launchSteamDFHackIfNecessary(color_ostream& out) {
     }
 
     bool ret = launchDFHack(out);
-    DEBUG(dfsteam, out).print("launching DFHack via Steam: %s\n", ret ? "successful" : "unsuccessful");
+    DEBUG(dfsteam, out).print("launching DFHack via Steam: {}\n", ret ? "successful" : "unsuccessful");
 }

@@ -378,6 +378,12 @@ Flags and subcategory prefixes::
     paste/
     pressed/
 
+Properties::
+
+    brewable
+    millable
+    processable
+
 Settings files::
 
     preparedmeals

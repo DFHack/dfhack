@@ -33,6 +33,7 @@ distribution.
 #include <mutex>
 #include <string>
 #include <vector>
+#include <filesystem>
 
 namespace  DFHack
 {
@@ -43,7 +44,7 @@ namespace  DFHack
         {
             this->capacity = capacity;
         }
-        bool load (const char * filename)
+        bool load (std::filesystem::path filename)
         {
             std::string reader;
             std::ifstream infile(filename);
@@ -58,7 +59,7 @@ namespace  DFHack
             }
             return true;
         }
-        bool save (const char * filename)
+        bool save (std::filesystem::path filename)
         {
             if (!history.size())
                 return true;
@@ -140,8 +141,9 @@ namespace  DFHack
         /// shutdown the console. NOT thread-safe
         bool shutdown( void );
 
+        bool can_clear() const { return true; }
         /// Clear the console, along with its scrollback
-        void clear();
+        void clear() override;
         /// Position cursor at x,y. 1,1 = top left corner
         void gotoxy(int x, int y);
         /// Enable or disable the caret/cursor

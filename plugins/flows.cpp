@@ -46,11 +46,11 @@ command_result df_flows (color_ostream &out, vector <string> & parameters)
         }
     }
 
-    out.print("Blocks with liquid_1=true: %d\n", flow1);
-    out.print("Blocks with liquid_2=true: %d\n", flow2);
-    out.print("Blocks with both:          %d\n", flowboth);
-    out.print("Water tiles:               %d\n", water);
-    out.print("Magma tiles:               %d\n", magma);
+    out.print("Blocks with liquid_1=true: {}\n", flow1);
+    out.print("Blocks with liquid_2=true: {}\n", flow2);
+    out.print("Blocks with both:          {}\n", flowboth);
+    out.print("Water tiles:               {}\n", water);
+    out.print("Magma tiles:               {}\n", magma);
     return CR_OK;
 }
 

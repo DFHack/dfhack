@@ -83,7 +83,7 @@ static void find_material(int *type, int *index, df::item *input, MaterialSource
             if (!info.findProduct(info, mat.product_name))
             {
                 color_ostream_proxy out(Core::getInstance().getConsole());
-                out.printerr("Cannot find product '%s'\n", mat.product_name.c_str());
+                out.printerr("Cannot find product '{}'\n", mat.product_name);
             }
         }
 
@@ -293,7 +293,7 @@ static void find_reagent(
         return;
     }
 
-    out.printerr("Invalid reagent name '%s' in '%s'\n", name.c_str(), react->code.c_str());
+    out.printerr("Invalid reagent name '{}' in '{}'\n", name, react->code);
 }
 
 static void parse_product(

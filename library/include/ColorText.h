@@ -24,6 +24,7 @@ distribution.
 
 #pragma once
 #include "Export.h"
+#include "Format.h"
 
 #include <list>
 #include <fstream>
@@ -65,7 +66,7 @@ namespace  DFHack
     class DFHACK_EXPORT color_ostream : public std::ostream
     {
     public:
-        typedef DFHack::color_value color_value;
+        using color_value = DFHack::color_value;
 
     private:
         color_value cur_color;
@@ -104,13 +105,24 @@ namespace  DFHack
         color_ostream();
         virtual ~color_ostream();
 
-        /// Print a formatted string, like printf
-        void print(const char *format, ...) Wformat(printf,2,3);
-        void vprint(const char *format, va_list args) Wformat(printf,2,0);
+        template <typename... Args>
+        void print(fmt::format_string<Args...> format, Args&& ... args)
+        {
+            auto str = fmt::format(format, std::forward<Args>(args)...);
+            flush_buffer(false);
+            add_text(cur_color, str);
+        }
 
-        /// Print a formatted string, like printf, in red
-        void printerr(const char *format, ...) Wformat(printf,2,3);
-        void vprinterr(const char *format, va_list args) Wformat(printf,2,0);
+        template <typename... Args>
+        void printerr(fmt::format_string<Args...> format, Args&& ... args)
+        {
+            auto str = fmt::format(format, std::forward<Args>(args)...);
+            if (log_errors_to_stderr) {
+                std::cerr << str;
+            }
+            flush_buffer(false);
+            add_text(COLOR_LIGHTRED, str);
+        }
 
         /// Get color
         color_value color() { return cur_color; }
@@ -121,6 +133,9 @@ namespace  DFHack
 
         virtual bool is_console() { return false; }
         virtual color_ostream *proxy_target() { return NULL; }
+
+        virtual bool can_clear() const { return false; }
+        virtual void clear() {}
 
         static bool log_errors_to_stderr;
     };
@@ -175,4 +190,5 @@ namespace  DFHack
 
         void decode(dfproto::CoreTextNotification *data);
     };
+
 }

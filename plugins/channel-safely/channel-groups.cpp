@@ -111,7 +111,7 @@ void ChannelGroups::add(const df::coord &map_pos) {
                 // we already have group "prime" if you will, so we're going to merge the new find into prime
                 Group &group2 = groups.at(index2);
                 // merge
-                TRACE(groups).print(" -> merging two groups. group 1 size: %zu. group 2 size: %zu\n", group->size(),
+                TRACE(groups).print(" -> merging two groups. group 1 size: {}. group 2 size: {}\n", group->size(),
                                     group2.size());
                 for (auto pos2: group2) {
                     group->emplace(pos2);
@@ -119,7 +119,7 @@ void ChannelGroups::add(const df::coord &map_pos) {
                 }
                 group2.clear();
                 free_spots.emplace(index2);
-                TRACE(groups).print("    merged size: %zu\n", group->size());
+                TRACE(groups).print("    merged size: {}\n", group->size());
             }
         }
     }
@@ -143,13 +143,13 @@ void ChannelGroups::add(const df::coord &map_pos) {
     }
     // puts the "add" in "ChannelGroups::add"
     group->emplace(map_pos);
-    DEBUG(groups).print(" = group[%d] of (" COORD ") is size: %zu\n", group_index, COORDARGS(map_pos), group->size());
+    DEBUG(groups).print(" = group[{}] of (" COORD ") is size: {}\n", group_index, COORDARGS(map_pos), group->size());
 
     // we may have performed a merge, so we update all the `coord -> group index` mappings
     for (auto &wpos: *group) {
         groups_map[wpos] = group_index;
     }
-    DEBUG(groups).print(" <- add() exits, there are %zu mappings\n", groups_map.size());
+    DEBUG(groups).print(" <- add() exits, there are {} mappings\n", groups_map.size());
 }
 
 // scans a single tile for channel designations
@@ -192,7 +192,7 @@ void ChannelGroups::scan(bool full_scan) {
     std::set<df::coord> gone_jobs;
     set_difference(last_jobs, jobs, gone_jobs);
     set_difference(jobs, last_jobs, new_jobs);
-    INFO(groups).print("gone jobs: %zd\nnew jobs: %zd\n",gone_jobs.size(), new_jobs.size());
+    INFO(groups).print("gone jobs: {}\nnew jobs: {}\n",gone_jobs.size(), new_jobs.size());
     for (auto &pos : new_jobs) {
         add(pos);
     }
@@ -236,7 +236,7 @@ void ChannelGroups::scan(bool full_scan) {
                                 for (df::block_square_event* event: block->block_events) {
                                     if (auto evT = virtual_cast<df::block_square_event_designation_priorityst>(event)) {
                                         // we want to let the user keep some designations free of being managed
-                                        TRACE(groups).print("   tile designation priority: %d\n", evT->priority[lx][ly]);
+                                        TRACE(groups).print("   tile designation priority: {}\n", evT->priority[lx][ly]);
                                         if (evT->priority[lx][ly] < 1000 * config.ignore_threshold) {
                                             if (empty_group) {
                                                 group_blocks.emplace(block);
@@ -338,9 +338,9 @@ void ChannelGroups::debug_groups() {
         int idx = 0;
         DEBUG(groups).print(" debugging group data\n");
         for (auto &group: groups) {
-            DEBUG(groups).print("  group %d (size: %zu)\n", idx, group.size());
+            DEBUG(groups).print("  group {} (size: {})\n", idx, group.size());
             for (auto &pos: group) {
-                DEBUG(groups).print("   (%d,%d,%d)\n", pos.x, pos.y, pos.z);
+                DEBUG(groups).print("   ({},{},{})\n", pos.x, pos.y, pos.z);
             }
             idx++;
         }
@@ -350,9 +350,9 @@ void ChannelGroups::debug_groups() {
 // prints debug info group mappings
 void ChannelGroups::debug_map() {
     if (DFHack::debug_groups.isEnabled(DebugCategory::LTRACE)) {
-        INFO(groups).print("Group Mappings: %zu\n", groups_map.size());
+        INFO(groups).print("Group Mappings: {}\n", groups_map.size());
         for (auto &pair: groups_map) {
-            TRACE(groups).print(" map[" COORD "] = %d\n", COORDARGS(pair.first), pair.second);
+            TRACE(groups).print(" map[" COORD "] = {}\n", COORDARGS(pair.first), pair.second);
         }
     }
 }

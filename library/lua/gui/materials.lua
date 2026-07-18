@@ -116,7 +116,7 @@ end
 function MaterialDialog:initInorganicMode()
     local choices = {}
 
-    for i,mat in ipairs(df.global.world.raws.inorganics) do
+    for i,mat in ipairs(df.global.world.raws.inorganics.all) do
         self:addMaterial(choices, mat.material, 0, i, false, mat)
     end
 
@@ -378,14 +378,14 @@ function ItemTraitsDialog(args)
     end
     --------------------------------------
     local set_ore_ix = {}
-    for i, raw in ipairs(df.global.world.raws.inorganics) do
+    for i, raw in ipairs(df.global.world.raws.inorganics.all) do
         for _, ix in ipairs(raw.metal_ore.mat_index) do
             set_ore_ix[ix] = true
         end
     end
     local ores = {}
     for ix in pairs(set_ore_ix) do
-        local raw = df.global.world.raws.inorganics[ix]
+        local raw = df.global.world.raws.inorganics.all[ix]
         ores[#ores+1] = {mat_index = ix, name = raw.material.state_name.Solid}
     end
     table.sort(ores, function(a,b) return a.name < b.name end)

@@ -7,6 +7,7 @@ local utils = require('utils')
 
 local dscreen = dfhack.screen
 
+local a_look = df.global.game.main_interface.adventure.look
 local g_cursor = df.global.cursor
 local g_sel_rect = df.global.selection_rect
 local world_map = df.global.world.map
@@ -38,17 +39,35 @@ end
 
 ---@return df.coord|nil
 function getCursorPos()
-    if g_cursor.x >= 0 then
+    if dfhack.world.isAdventureMode() then
+        if a_look.open then
+            return copyall(a_look.cursor)
+        end
+    elseif g_cursor.x >= 0 then
         return copyall(g_cursor)
     end
 end
 
 function setCursorPos(cursor)
-    df.global.cursor = copyall(cursor)
+    if dfhack.world.isAdventureMode() then
+        a_look.cursor = copyall(cursor)
+    else
+        df.global.cursor = copyall(cursor)
+    end
 end
 
 function clearCursorPos()
-    df.global.cursor = xyz2pos(nil)
+    if dfhack.world.isAdventureMode() then
+        if not a_look.open then
+            return
+        end
+        local u = dfhack.world.getAdventurer()
+        if u and u.pos:isValid() then
+            a_look.cursor = copyall(u.pos)
+        end
+    else
+        df.global.cursor = xyz2pos(nil)
+    end
 end
 
 function getSelection()
@@ -249,7 +268,7 @@ end
 
 function get_hotkey_target(key)
     local hk = HOTKEY_KEYS[key]
-    if hk and hk.cmd == df.ui_hotkey.T_cmd.Zoom then
+    if hk and hk.cmd == df.hotkey_type.Zoom then
         return xyz2pos(hk.x, hk.y, hk.z)
     end
 end

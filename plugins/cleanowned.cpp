@@ -47,7 +47,7 @@ DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
 {
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
-        out.printerr("Cannot enable %s without a loaded fort.\n", plugin_name);
+        out.printerr("Cannot enable {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
     }
 
@@ -155,16 +155,16 @@ command_result df_cleanowned (color_ostream &out, vector <string> & parameters)
             std::string description;
             item->getItemDescription(&description, 0);
             out.print(
-                "[%d] %s (wear level %d)",
+                "[{}] {} (wear level {})",
                 item->id,
-                DF2CONSOLE(description).c_str(),
+                DF2CONSOLE(description),
                 item->getWear()
             );
 
             df::unit *owner = Items::getOwner(item);
 
             if (owner)
-                out.print(", owner %s", DF2CONSOLE(Units::getReadableName(owner)).c_str());
+                out.print(", owner {}", DF2CONSOLE(Units::getReadableName(owner)));
 
             if (!dry_run)
             {

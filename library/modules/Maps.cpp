@@ -31,7 +31,6 @@ distribution.
 #include "Error.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
-#include "ModuleFactory.h"
 #include "VersionInfo.h"
 
 #include "modules/Buildings.h"
@@ -41,19 +40,31 @@ distribution.
 #include "df/biome_type.h"
 #include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
+#include "df/block_column_print_infost.h"
 #include "df/block_square_event_grassst.h"
+#include "df/block_square_event_item_spatterst.h"
+#include "df/block_square_event_material_spatterst.h"
+#include "df/block_square_event_spoorst.h"
 #include "df/building.h"
 #include "df/building_type.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
+#include "df/entity_plot_invasion_mapst.h"
 #include "df/feature_init.h"
+#include "df/feature_map_shellst.h"
+#include "df/feature_mapst.h"
 #include "df/flow_info.h"
+#include "df/historical_entity.h"
+#include "df/invasion_info.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
+#include "df/material.h"
 #include "df/plant.h"
 #include "df/plant_root_tile.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
+#include "df/plotinfost.h"
+#include "df/plot_invasion_mapst.h"
 #include "df/region_map_entry.h"
 #include "df/world.h"
 #include "df/world_data.h"
@@ -63,9 +74,12 @@ distribution.
 #include "df/world_underground_region.h"
 #include "df/z_level_flags.h"
 
+
+#include <array>
 #include <string>
 #include <vector>
 #include <map>
+#include <ranges>
 #include <set>
 #include <cstdlib>
 #include <iostream>
@@ -195,10 +209,10 @@ bool cuboid::containsPos(int16_t x, int16_t y, int16_t z) const {
         x <= x_max && y <= y_max && z <= z_max;
 }
 
-void cuboid::forCoord(std::function<bool(df::coord)> fn) const
+void cuboid::forCoord(std::function<bool(df::coord)> fn, bool row_major) const
 {
     if (isValid()) // Only iterate if valid cuboid.
-        Maps::forCoord(fn, x_min, y_min, z_max, x_max, y_max, z_min);
+        Maps::forCoord(fn, x_min, y_min, z_max, x_max, y_max, z_min, row_major);
 }
 
 void cuboid::forBlock(std::function<bool(df::map_block *, cuboid)> fn, bool ensure_block) const
@@ -228,18 +242,27 @@ bool Maps::IsValid() {
 }
 
 void Maps::forCoord(std::function<bool(df::coord)> fn, int16_t x1, int16_t y1, int16_t z1,
-    int16_t x2, int16_t y2, int16_t z2)
+    int16_t x2, int16_t y2, int16_t z2, bool row_major)
 {
     int16_t dx = x1 > x2 ? -1 : 1;
     int16_t dy = y1 > y2 ? -1 : 1;
     int16_t dz = z1 > z2 ? -1 : 1;
 
-    // Process z, y, then x.
-    for (int16_t x = x1; x != x2 + dx; x += dx)
-        for (int16_t y = y1; y != y2 + dy; y += dy)
-            for (int16_t z = z1; z != z2 + dz; z += dz)
-                if (!fn(df::coord(x, y, z)))
-                    return; // Break iterator.
+    if (row_major) {
+        // Process z, y, then x.
+        for (int16_t z = z1; z != z2 + dz; z += dz)
+            for (int16_t y = y1; y != y2 + dy; y += dy)
+                for (int16_t x = x1; x != x2 + dx; x += dx)
+                    if (!fn(df::coord(x, y, z)))
+                        return; // Break iterator.
+    } else {
+        // Process z, x, then y.
+        for (int16_t z = z1; z != z2 + dz; z += dz)
+            for (int16_t x = x1; x != x2 + dx; x += dx)
+                for (int16_t y = y1; y != y2 + dy; y += dy)
+                    if (!fn(df::coord(x, y, z)))
+                        return; // Break iterator.
+    }
 }
 
 // getter for map size in blocks
@@ -515,7 +538,7 @@ df::feature_init *Maps::getLocalInitFeature(df::coord2d rgn_pos, int32_t index)
 
     df::coord2d sub = rgn_pos & 15;
 
-    vector <df::feature_init *> &features = fptr->feature_init[sub.x][sub.y];
+    vector<df::feature_init *> &features = fptr->feature_init[sub.x][sub.y];
 
     return vector_get(features, index);
 }
@@ -640,9 +663,254 @@ bool Maps::SortBlockEvents(df::map_block *block,
             if (priorities)
                 priorities->push_back((df::block_square_event_designation_priorityst *)evt);
             break;
+        default:
+            assert("Unhandled block event type" && false); // FIXME temporary - replace with NONE case after structure are updated
+            break;
         }
     }
     return true;
+}
+
+// Based on worldst::add_material_spatter_tile_capped
+int32_t Maps::addMaterialSpatter (df::coord pos, int16_t mat, int32_t matg, df::matter_state state, int32_t amount)
+{
+    // Hardcoded maximum
+    int32_t cap = 255;
+
+    // Sanity checks
+    if (amount > cap)
+        amount = cap;
+    // DF doesn't handle negative numbers, so disallow them
+    if (amount < 0)
+        amount = 0;
+
+    // DF rejects materials of NONE:*
+    if (mat == -1)
+        return amount;
+
+    // Extra check: make sure the material correctly exists
+    MaterialInfo matinfo(mat, matg);
+    if (!matinfo.isValid())
+        return amount;
+
+    df::map_block *block = Maps::getTileBlock(pos);
+    if (!block)
+        return amount;
+
+    int16_t bx = pos.x & 0xF, by = pos.y & 0xF;
+
+    // Extra check: specify state == NONE to auto-pick based on tile temperature
+    // Note that this won't choose POWDER/PASTE/PRESSED
+    if (state == df::matter_state::None)
+    {
+        uint16_t tile = block->temperature_1[bx][by];
+        uint16_t melt = matinfo.material->heat.melting_point;
+        uint16_t boil = matinfo.material->heat.boiling_point;
+        if (boil != 60001 && tile >= boil)
+            state = df::matter_state::Gas;
+        else if (melt != 60001 && tile >= melt)
+            state = df::matter_state::Liquid;
+        else
+            state = df::matter_state::Solid;
+    }
+
+    if (amount > 0)
+    {
+        // scan all SPOOR events and clear the PRESENT flag if the type is HFID_COMBINEDCASTE_BP, ITEMT_ITEMST_ORIENT, or MESS
+        for (size_t i = 0; i < block->block_events.size(); i++)
+        {
+            df::block_square_event *evt = block->block_events[i];
+            if (evt->getType() != block_square_event_type::spoor)
+                continue;
+            auto spoor = (df::block_square_event_spoorst *)evt;
+            if (!spoor->info.flags[bx][by].bits.present)
+                continue;
+            if (spoor->info.type[bx][by] == df::spoor_type::HFID_COMBINEDCASTE_BP ||
+                spoor->info.type[bx][by] == df::spoor_type::ITEMT_ITEMST_ORIENT ||
+                spoor->info.type[bx][by] == df::spoor_type::MESS)
+                spoor->info.flags[bx][by].bits.present = false;
+        }
+    }
+
+    // Find existing matching material spatter
+    df::block_square_event_material_spatterst *spatter = nullptr;
+    // DF: get_material_spatter_event_even_if_empty(...)
+    for (int i = block->block_events.size() - 1; i >= 0; i--)
+    {
+        df::block_square_event *evt = block->block_events[i];
+        if (evt->getType() != block_square_event_type::material_spatter)
+            continue;
+        auto spt = (df::block_square_event_material_spatterst *)evt;
+        if (spt->mat_type == mat && spt->mat_index == matg &&
+            spt->mat_state == state)
+        {
+            spatter = spt;
+            break;
+        }
+    }
+
+    // If we didn't find one, make a new one
+    if (!spatter)
+    {
+        spatter = df::allocate<df::block_square_event_material_spatterst>();
+        spatter->mat_type = mat;
+        spatter->mat_index = matg;
+        spatter->mat_state = state;
+        memset(spatter->amount, 0, sizeof(spatter->amount));
+        spatter->min_temperature = spatter->max_temperature = 60001;
+
+        uint16_t melt = matinfo.material->heat.melting_point;
+        uint16_t boil = matinfo.material->heat.boiling_point;
+
+        switch (state)
+        {   using namespace df::enums::matter_state;
+        case Solid:
+        case Powder:
+        case Paste:
+        case Pressed:
+            if (melt != 60001)
+                boil = melt;
+            spatter->max_temperature = boil;
+            break;
+        case Liquid:
+            if (melt != 60001 && melt != 0)
+                spatter->min_temperature = melt - 1;
+            spatter->max_temperature = boil;
+            break;
+        // Can't really have gas spatters, but DF has this check
+        // presumably, DF could convert this into a flow
+        case Gas:
+            if (boil != 60001 && boil != 0)
+                spatter->min_temperature = boil - 1;
+            else if (melt != 60001 && melt != 0)
+                spatter->min_temperature = melt - 1;
+            break;
+        case None:
+            // impossible
+            break;
+        }
+        // DF doesn't check heatdam/colddam/ignite points here
+        block->block_events.push_back(spatter);
+    }
+
+    int32_t newamount = spatter->amount[bx][by] + amount;
+    if (newamount > cap)
+    {
+        amount = newamount - cap;
+        newamount = cap;
+    }
+    else
+        amount = 0;
+
+    spatter->amount[bx][by] = (uint8_t)newamount;
+    block->flags.bits.may_have_material_spatter = 1;
+
+    return amount;
+}
+
+// Based on worldst::add_item_spatter_tile_capped
+int32_t Maps::addItemSpatter (df::coord pos, df::item_type i_type, int16_t i_subtype, int16_t i_subcat1, int32_t i_subcat2, int32_t print_variant, int32_t amount)
+{
+    // DF passes this as a parameter, but it's always the same
+    int32_t cap = 10000;
+
+    // Sanity checks
+    if (amount > cap)
+        amount = cap;
+    // DF doesn't handle negative numbers, so disallow them
+    if (amount < 0)
+        amount = 0;
+
+    df::map_block *block = Maps::getTileBlock(pos);
+    if (!block)
+        return amount;
+
+    int16_t bx = pos.x & 0xF, by = pos.y & 0xF;
+
+    if (amount > 0)
+    {
+        // scan all SPOOR events and clear the PRESENT flag if the type is HFID_COMBINEDCASTE_BP, ITEMT_ITEMST_ORIENT, or MESS
+        for (size_t i = 0; i < block->block_events.size(); i++)
+        {
+            df::block_square_event *evt = block->block_events[i];
+            if (evt->getType() != block_square_event_type::spoor)
+                continue;
+            auto spoor = (df::block_square_event_spoorst *)evt;
+            if (!spoor->info.flags[bx][by].bits.present)
+                continue;
+            if (spoor->info.type[bx][by] == df::spoor_type::HFID_COMBINEDCASTE_BP ||
+                spoor->info.type[bx][by] == df::spoor_type::ITEMT_ITEMST_ORIENT ||
+                spoor->info.type[bx][by] == df::spoor_type::MESS)
+                spoor->info.flags[bx][by].bits.present = false;
+        }
+    }
+
+    // Allow auto-selecting growth print for plant growths
+    if (i_type == df::item_type::PLANT_GROWTH && print_variant == -1)
+        print_variant = Items::pickGrowthPrint(i_subtype, i_subcat1, i_subcat2);
+
+    // Find existing matching item spatter
+    df::block_square_event_item_spatterst *spatter = nullptr;
+    // DF: get_item_spatter_event_even_if_empty(...)
+    for (int i = block->block_events.size() - 1; i >= 0; i--)
+    {
+        df::block_square_event *evt = block->block_events[i];
+        if (evt->getType() != block_square_event_type::item_spatter)
+            continue;
+        auto spt = (df::block_square_event_item_spatterst *)evt;
+        if (spt->item_type == i_type && spt->item_subtype == i_subtype &&
+            spt->mattype == i_subcat1 && spt->matindex == i_subcat2 &&
+            spt->print_variant == print_variant)
+        {
+            spatter = spt;
+            break;
+        }
+    }
+
+    // If we didn't find one, make a new one
+    if (!spatter)
+    {
+        spatter = df::allocate<df::block_square_event_item_spatterst>();
+        spatter->item_type = i_type;
+        spatter->item_subtype = i_subtype;
+        spatter->mattype = i_subcat1;
+        spatter->matindex = i_subcat2;
+        spatter->print_variant = print_variant;
+        memset(spatter->amount, 0, sizeof(spatter->amount));
+        memset(spatter->flag, 0, sizeof(spatter->flag));
+        spatter->min_temperature = spatter->max_temperature = 60001;
+
+        if (Items::usesStandardMaterial(i_type))
+        {
+            MaterialInfo info(i_subcat1, i_subcat2);
+            if (info.isValid())
+            {
+                uint16_t melt = info.material->heat.melting_point;
+                uint16_t boil = info.material->heat.melting_point;
+                if (melt != 60001)
+                    spatter->max_temperature = melt;
+                else
+                    spatter->max_temperature = boil;
+                // DF doesn't look at the heatdam/colddam/ignite temperatures
+            }
+        }
+        block->block_events.push_back(spatter);
+    }
+
+    int32_t newamount = spatter->amount[bx][by] + amount;
+    if (newamount > cap)
+    {
+        amount = newamount - cap;
+        newamount = cap;
+    }
+    else
+        amount = 0;
+
+    spatter->amount[bx][by] = newamount;
+    spatter->flag[bx][by].bits.season_full_timer = 7;
+    block->flags.bits.may_have_item_spatter = 1;
+
+    return amount;
 }
 
 inline bool RemoveBlockEventInline(int32_t x, int32_t y, int32_t z, df::block_square_event * which)
@@ -947,13 +1215,13 @@ static int16_t basic_wet_dry_effect(int16_t region_y, int16_t rain)
     auto dimy = world->world_data->world_height;
     auto pole = world->world_data->flip_latitude;
 
-    if (dimy > 65 && pole != df::world_data::T_flip_latitude::None)
+    if (dimy > 65 && pole != df::pole_type::None)
     {   // Medium and Large worlds with at least one pole
         auto latitude = region_y;
 
-        if (pole == df::world_data::T_flip_latitude::South)
+        if (pole == df::pole_type::South)
             latitude = dimy - region_y - 1;
-        else if (pole == df::world_data::T_flip_latitude::Both)
+        else if (pole == df::pole_type::Both)
         {
             if (region_y < dimy / 2)
                 latitude = region_y * 2;
@@ -993,7 +1261,7 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
     bool tropical;
 
     // Determine tropicality
-    if (pole == df::world_data::T_flip_latitude::None)
+    if (pole == df::pole_type::None)
     {
         potential_tropical = region->temperature > 74;
         tropical = region->temperature > 84;
@@ -1002,9 +1270,9 @@ df::enums::biome_type::biome_type Maps::getBiomeTypeWithRef(int16_t region_x, in
     {
         auto latitude = region_ref_y; // DF just uses region_y, but embark assistant needs region_ref_y
 
-        if (pole == df::world_data::T_flip_latitude::South)
+        if (pole == df::pole_type::South)
             latitude = dimy - region_ref_y - 1;
-        else if (pole == df::world_data::T_flip_latitude::Both)
+        else if (pole == df::pole_type::Both)
         {
             if (region_ref_y < dimy / 2)
                 latitude = region_ref_y * 2;
@@ -1262,4 +1530,129 @@ int Maps::removeAreaAquifer(df::coord pos1, df::coord pos2, std::function<bool(d
     });
 
     return totalAffectedCount;
+}
+
+void Maps::addBlockColumns(int32_t new_height)
+{
+    auto quantity = new_height - world->map.z_count_block;
+    if (quantity <= 0)
+        return;
+
+    auto world = df::global::world;
+    int32_t z_count_block = world->map.z_count_block;
+    df::map_block**** block_index = world->map.block_index;
+
+    cuboid last_air_layer(
+        0, 0, world->map.z_count_block - 1,
+        world->map.x_count_block - 1, world->map.y_count_block - 1, world->map.z_count_block - 1);
+
+    last_air_layer.forCoord([&] (df::coord bpos) {
+        // Allocate a new block column and copy over data from the old
+        df::map_block** blockColumn =
+            new df::map_block * [z_count_block + quantity];
+        std::memcpy(blockColumn, block_index[bpos.x][bpos.y],
+            z_count_block * sizeof(df::map_block*));
+        delete[] block_index[bpos.x][bpos.y];
+        block_index[bpos.x][bpos.y] = blockColumn;
+
+        df::map_block* last_air_block = blockColumn[bpos.z];
+        for (int32_t count = 0; count < quantity; count++)
+        {
+            df::map_block* air_block = new df::map_block();
+            std::fill(&air_block->tiletype[0][0],
+                &air_block->tiletype[0][0] + (16 * 16),
+                df::tiletype::OpenSpace);
+
+            // Set block positions properly (based on prior air layer)
+            air_block->map_pos = last_air_block->map_pos + df::coord{0, 0, uint16_t(count + 1)};
+            air_block->region_pos = last_air_block->region_pos;
+
+            // Copy other potentially important metadata from prior air
+            // layer
+            std::memcpy(air_block->lighting, last_air_block->lighting,
+                sizeof(air_block->lighting));
+            std::memcpy(air_block->temperature_1, last_air_block->temperature_1,
+                sizeof(air_block->temperature_1));
+            std::memcpy(air_block->temperature_2, last_air_block->temperature_2,
+                sizeof(air_block->temperature_2));
+            std::memcpy(air_block->region_offset, last_air_block->region_offset,
+                sizeof(air_block->region_offset));
+
+            // Create tile designations to inform lighting and
+            // outside markers
+            df::tile_designation designation{};
+            designation.bits.light = true;
+            designation.bits.outside = true;
+            std::fill(&air_block->designation[0][0],
+                &air_block->designation[0][0] + (16 * 16), designation);
+
+            blockColumn[z_count_block + count] = air_block;
+            world->map.map_blocks.push_back(air_block);
+
+            // deal with map_block_column stuff even though it'd probably be
+            // fine
+            df::map_block_column* column =
+                world->map.column_index[bpos.x][bpos.y];
+            if (!column)
+            {
+                continue;
+            }
+            df::block_column_print_infost* glyphs = new df::block_column_print_infost;
+            std::ranges::copy(std::array{0,1,2,3}, glyphs->x);
+            std::ranges::copy(std::array{0,0,0,0}, glyphs->y);
+            std::ranges::copy(std::array{'e','x','p','^'}, glyphs->tile);
+            column->unmined_glyphs.push_back(glyphs);
+        }
+        return true;
+        });
+
+    // Update global z level flags
+    df::z_level_flags* flags = new df::z_level_flags[z_count_block + quantity];
+    memcpy(flags, world->map_extras.z_level_flags,
+        z_count_block * sizeof(df::z_level_flags));
+    for (int32_t count = 0; count < quantity; count++)
+    {
+        flags[z_count_block + count].whole = 0;
+        flags[z_count_block + count].bits.update = 1;
+    }
+    world->map.z_count_block += quantity;
+    world->map.z_count += quantity;
+    delete[] world->map_extras.z_level_flags;
+    world->map_extras.z_level_flags = flags;
+
+    auto updateInvasionMap = [](int32_t new_height, df::plot_invasion_mapst & map) -> void
+    {
+        if (map.blockz == 0)
+            return; // Unused invasion map
+        if (map.blockz >= new_height)
+            return; // No change required
+
+        cuboid blocks(0, 0, 0, map.blockx - 1, map.blocky - 1, 0);
+        blocks.forCoord([&] (df::coord bpos) {
+            // Create new vertical block
+            df::pim_blockst** new_block = new df::pim_blockst * [new_height]();
+            std::memcpy(new_block, map.block_index[bpos.x][bpos.y], map.blockz * sizeof(df::pim_blockst*));
+            // Fill new block with nullptr (no information)
+            std::fill_n(&new_block[map.blockz], new_height - map.blockz, nullptr);
+            delete[] map.block_index[bpos.x][bpos.y];
+            map.block_index[bpos.x][bpos.y] = new_block;
+            return true;
+            });
+
+        map.blockz = new_height;
+    };
+
+    auto plotinfo = df::global::plotinfo;
+
+    for (auto& invasion : plotinfo->invasions.list)
+    {
+        updateInvasionMap(world->map.z_count, invasion->map);
+    }
+    for (auto& entity : world->entities.all)
+    {
+        for (auto& map : entity->plot_invasion_map | std::views::filter([&](df::entity_plot_invasion_mapst* map) { return map->site_id == plotinfo->site_id; }))
+        {
+            updateInvasionMap(world->map.z_count, map->map);
+        }
+    }
 }

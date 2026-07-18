@@ -25,6 +25,13 @@ It does not describe all of the utility functions
 implemented by Lua files located in :file:`hack/lua/*`
 (:file:`library/lua/*` in the git repo).
 
+.. admonition:: Is this the DF or DFHack Lua API?
+   :class: warning
+
+    This document describes the Lua API provided by DFHack, not
+    the Lua API provided by Dwarf Fortress. For information about DF's Lua API, see
+    :wiki:`Lua scripting`
+    on the Dwarf Fortress Wiki.
 
 .. contents:: Contents
   :local:
@@ -931,7 +938,17 @@ can be omitted.
 
 * ``dfhack.getHackPath()``
 
-  Returns the dfhack directory path, i.e., ``".../df/hack/"``.
+  Returns the DFHack installation directory path (the folder where DFHack is installed).
+  This may be the ``hack`` folder within the DF installation, but you should not rely on this.
+  Specifically, the installation folder is extremely likely to be somewhere else when DFHack is installed from Steam.
+  Always use this function to get the DFHack installation directory path instead of hardcoding it.
+
+* ``dfhack.getConfigPath()``
+
+  Returns the DFHack config directory path (the folder where user-specific configuration files are stored).
+  This is currently the ``dfhack-config`` folder within the DF installation, but you should not rely on this as it is likely to change in the future.
+  Always use this function to get the DFHack config directory path instead of hardcoding it.
+  Avoid storing this value in a long-lived variable, as it's possible that in future versions of DFHack, it may be possible for the config directory to be changed at runtime.
 
 * ``dfhack.getSavePath()``
 
@@ -1073,7 +1090,8 @@ Screens
 
 * ``dfhack.gui.getCurFocus([skip_dismissed])``
 
-  Returns the focus string of the current viewscreen.
+  Returns a list of focus strings for the current viewscreen. Equivalent to
+  ``dfhack.gui.getFocusStrings(dfhack.gui.getCurViewscreen(skip_dismissed))``.
 
 * ``dfhack.gui.getViewscreenByType(type[, depth])``
 
@@ -1312,6 +1330,10 @@ Job module
 
   Creates a deep copy of the given job.
 
+* ``dfhack.job.createLinked()``
+
+  Create a job and immediately link it into the global job list.
+
 * ``dfhack.job.printJobDetails(job)``
 
   Prints info about the job.
@@ -1336,6 +1358,12 @@ Job module
 * ``dfhack.job.getSpecificRef(job, type)``
 
   Searches for a specific_ref with the given type.
+
+* ``dfhack.job.assignToWorkshop(job, workshop)``
+
+  Assign job to workshop (i.e. establish the bidirectional link between the job
+  and the workshop). Does nothing and returns ``false`` if the workshop already
+  has the maximum of ten jobs.
 
 * ``dfhack.job.getHolder(job)``
 
@@ -1395,9 +1423,9 @@ Job module
   Attach a real item to this job. If the item is intended to satisfy a job_item
   filter, the index of that filter should be passed in ``filter_idx``; otherwise,
   pass ``-1``. Similarly, if you don't care where the item is inserted, pass
-  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_item_ref.T_role``.
+  ``-1`` for ``insert_idx``. The ``role`` param is a ``df.job_role_type``.
   If the item needs to be brought to the job site, then the value should be
-  ``df.job_item_ref.T_role.Hauled``.
+  ``df.job_role_type.Hauled``.
 
 * ``dfhack.job.isSuitableItem(job_item, item_type, item_subtype)``
 
@@ -1411,6 +1439,57 @@ Job module
 * ``dfhack.job.getName(job)``
 
   Returns the job's description, as seen in the Units and Jobs screens.
+
+* ``dfhack.job.getManagerOrderName(manager_order)``
+
+  Returns the manager order's description, as seen in the Work orders screen.
+
+Hotkey module
+-------------
+
+* ``dfhack.hotkey.addKeybind(keyspec, command)``
+
+  Creates a new keybind with the provided keyspec (see the `keybinding` documentation
+  for details on format).
+  Returns false on failure to create keybind.
+
+* ``dfhack.hotkey.removeKeybind(keyspec, [match_focus=true, command])``
+
+  Removes keybinds matching the provided keyspec.
+  If match_focus is set, the focus portion of the keyspec is matched against.
+  If command is provided and not an empty string, the command is matched against.
+  Returns false if no keybinds were removed.
+
+* ``dfhack.hotkey.listActiveKeybinds()``
+
+  Returns a list of keybinds active within the current context.
+  The items are tables with the following attributes:
+  :spec: The keyspec for the hotkey
+  :command: The command the hotkey runs when pressed
+
+* ``dfhack.hotkey.listAllKeybinds()``
+
+  Returns a list of all keybinds currently registered.
+  The items are tables with the following attributes:
+  :spec: The keyspec for the hotkey
+  :command: The command the hotkey runs when pressed
+
+* ``dfhack.hotkey.requestKeybindingInput([cancel=false])``
+
+  Enqueues or cancels a request that the next hotkey-compatible input is saved
+  and not processed, retrievable with ``dfhack.hotkey.getKeybindingInput()``.
+  If cancel is true, any current request is cancelled.
+
+* ``dfhack.hotkey.getKeybindingInput()``
+
+  Reads the latest saved keybind input that was requested.
+  Returns a keyspec string for the input, or nil if no input has been saved.
+
+* ``dfhack.hotkey.isDisruptiveKeybind(keyspec)``
+
+  Determines if the provided keyspec could be disruptive to the game experience.
+  This includes the majority of standard characters and special keys such as escape,
+  backspace, and return when lacking modifiers other than Shift.
 
 Units module
 ------------
@@ -1627,7 +1706,7 @@ Units module
   Returns true if the unit is within a box defined by the
   specified coordinates.
 
-``dfhack.units.getUnitsInBox(pos1, pos2[, filter])``
+* ``dfhack.units.getUnitsInBox(pos1, pos2[, filter])``
 * ``dfhack.units.getUnitsInBox(x1,y1,z1,x2,y2,z2[,filter])``
 
   Returns a table of all units within the specified coordinates.
@@ -1772,17 +1851,18 @@ Units module
   Get human-readable baby or child name (e.g., "dwarven baby" or
   "dwarven child").
 
-* ``dfhack.units.getReadableName(unit or historical_figure)``
+* ``dfhack.units.getReadableName(unit or historical_figure[, skip_english])``
 
-  Returns a string that includes the language name of the unit (if any), the
-  race of the unit (if different from fort), whether it is trained for war or
-  hunting, any syndrome-given descriptions (such as "necromancer"), the
-  training level (if tame), and profession or noble role. If a
-  ``historical_figure`` is passed instead of a unit, some information
-  (e.g., agitation status) is not available, and the profession may be
-  different (e.g., "Monk") from what is displayed in fort mode.
+  Returns a string that includes the native and english language name (if
+  ``skip_english`` is not ``true``) of the unit (if any), the race of the unit
+  (if different from fort), whether it is trained for war or hunting, any
+  syndrome-given descriptions (such as "necromancer"), the training level (if
+  tame), and profession or noble role. If a ``historical_figure`` is passed
+  instead of a unit, some information (e.g., agitation status) is not
+  available, and the profession may be different (e.g., "Monk") from what is
+  displayed in fort mode.
 
-* ``dfhack.units.getAge(unit[,true_age])``
+* ``dfhack.units.getAge(unit[, true_age])``
 
   Returns the age of the unit in years as a floating-point value.
   If ``true_age`` is true, ignores false identities.
@@ -1892,6 +1972,23 @@ Units module
   Return the ``df.activity_entry`` or ``df.activity_event`` representing the
   unit's current social activity.
 
+* ``dfhack.units.hasUnbailableSocialActivity(unit)``
+
+  Unit has an uninterruptible social activity (e.g. a purple "Socialize!").
+
+* ``dfhack.units.isJobAvailable(unit [, preserve_social])``
+
+  Check whether a unit can be assigned to (i.e. is looking for) a job. Will
+  return ``true`` if the unit is engaged in "green" social activities, unless
+  the boolean ``preserve_social`` is true. Will never interrupt uninterruptible
+  social activities (e.g. a purple "Socialize!").
+
+* ``dfhack.units.getFocusPenalty(unit, need_type [, need_type, ...])``
+
+  Get largest (i.e. most negative) focus penalty associated to a collection of
+  ``df.need_type`` arguments. Returns a number strictly greater than 400 if the
+  unit does not have any of the requested needs.
+
 * ``dfhack.units.getStressCategory(unit)``
 
   Returns a number from 0-6 indicating stress. 0 is most stressed; 6 is least.
@@ -1985,6 +2082,32 @@ Military module
 * ``dfhack.military.getSquadName(squad_id)``
 
   Returns the name of a squad as a string.
+
+* ``dfhack.military.removeFromSquad(unit_id)``
+
+  Removes a unit from its squad. Unsets the unit's
+  military information (i.e., ``unit.military.squad_id`` and
+  ``unit.military.squad_pos``), the squad's position information (i.e.,
+  ``squad.positions[squad_pos].occupant``), modifies the unit's entity links
+  to indicate former squad membership or command, and creates a corresponding
+  world history event.
+
+  * ``dfhack.military.addToSquad(unit_id, squad_id, squad_pos)``
+
+  Adds a unit to a squad. Sets the unit's
+  military information (i.e., ``unit.military.squad_id`` and
+  ``unit.military.squad_pos``), the squad's position information (i.e.,
+  ``squad.positions[squad_pos].occupant``), adds a unit's entity links to
+  indicate squad membership. Does not currently add world history events.
+  If ``squad_pos`` is -1, the unit will be added to the first open slot in
+  the squad.
+
+  This API cannot be used to set or change the leader of a squad and will fail
+  if ``squad_pos`` is specified as 0 or if ``squad_pos`` is specified as -1 and
+  the squad leader position is currently vacant. It will also fail if
+  the requested squad position is already occupied, the squad does not exist,
+  the unit does not exist, or the requested unit is already a member of another
+  squad.
 
 Items module
 ------------
@@ -2099,7 +2222,7 @@ Items module
 * ``dfhack.items.moveToInventory(item,unit[,use_mode[,body_part]])``
 
   Move the item to the unit inventory. Returns *false* if impossible.
-  ``use_mode`` defaults to ``df.unit_inventory_item.T_mode.Hauled``.
+  ``use_mode`` defaults to ``df.inv_item_role_type.Hauled``.
   ``body_part`` defaults to ``-1``.
 
 * ``dfhack.items.remove(item[,no_uncat])``
@@ -2377,8 +2500,29 @@ Maps module
   Removes an aquifer from the given tile position.
   Returns *true* or *false* depending on success.
 
+* ``dfhack.maps.addMaterialSpatter(pos, mat, matg, state, amount)``
+
+  Adds a material spatter to the specified map tile. If the tile is already
+  full of that spatter, returns the amount left over.
+
+  Specifying a state of -1 (None) will automatically choose either Solid,
+  Liquid, or Gas based on the material properties and the tile temperature.
+
+* ``dfhack.maps.addItemSpatter(pos, i_type, i_subtype, subcat1, subcat2, print_variant, amount)``
+
+  Adds an item spatter to the specified map tile. If the tile is already
+  full of that spatter, returns the amount left over.
+
+  For plant growths, specifying a print_variant of -1 will automatically
+  choose an appropriate value. For other item types, this field is ignored.
+
 Burrows module
 --------------
+
+* ``dfhack.burrows.getName(burrow)``
+
+  Returns the name of the burrow.
+  If the burrow has no set name, returns the same placeholder name that DF would show in the UI.
 
 * ``dfhack.burrows.findByName(name[, ignore_final_plus])``
 
@@ -2438,6 +2582,10 @@ General
 
   Searches for a specific_ref with the given type.
 
+* ``dfhack.buildings.getOwner(civzone)``
+
+  Returns the owner of the zone or *nil* if there isn't one.
+
 * ``dfhack.buildings.setOwner(civzone,unit)``
 
   Replaces the owner of the civzone. If unit is *nil*, removes ownership.
@@ -2468,14 +2616,15 @@ General
   using width and height for flexible dimensions.
   Returns *is_flexible, width, height, center_x, center_y*.
 
-* ``dfhack.buildings.checkFreeTiles(pos,size[,extents[,change_extents[,allow_occupied[,allow_wall[,allow_flow]]]]])``
+* ``dfhack.buildings.checkFreeTiles(pos,size[,bld[,change_extents[,allow_occupied[,allow_wall[,allow_flow]]]]])``
 
-  Checks if the rectangle defined by ``pos`` and ``size``, and possibly extents,
-  can be used for placing a building. If ``change_extents`` is true, bad tiles
-  are removed from extents. If ``allow_occupied``, the occupancy test is skipped.
-  Set ``allow_wall`` to true if the building is unhindered by walls (such as an
-  activity zone). Set ``allow_flow`` to true if the building can be built even
-  if there is deep water or any magma on the tile (such as abstract buildings).
+  Checks if the rectangle defined by ``pos`` and ``size``, and possibly the
+  extents associated with bld, can be used for placing a building. If
+  ``change_extents`` is true, bad tiles are removed from extents. If
+  ``allow_occupied``, the occupancy test is skipped. Set ``allow_wall`` to true
+  if the building is unhindered by walls (such as an activity zone). Set
+  ``allow_flow`` to true if the building can be built even if there is deep
+  water or any magma on the tile (such as abstract buildings).
 
 * ``dfhack.buildings.countExtentTiles(extents,defval)``
 
@@ -3158,12 +3307,6 @@ unless otherwise noted.
   specified by ``path``, or -1 if ``path`` does not exist.
   This depends on the system clock and should only be used locally.
 
-* ``dfhack.filesystem.atime(path)``
-* ``dfhack.filesystem.ctime(path)``
-
-  Return values vary across operating systems - return the ``st_atime`` and
-  ``st_ctime`` fields of a C++ stat struct, respectively.
-
 * ``dfhack.filesystem.listdir(path)``
 
   Lists files/directories in a directory.  Returns ``{}`` if ``path`` does not exist.
@@ -3178,6 +3321,16 @@ unless otherwise noted.
   while ``listdir_recursive()`` returns the initial path and all components
   following it for each entry. Set ``include_prefix`` to false if you don't
   want the ``path`` string prepended to the returned filenames.
+
+* ``dfhack.filesystem.getBaseDir()``
+
+  Returns a directory to which DF (and thus DFHack) can save files. This will either
+  be DF's install directory, or the path returned by ``SDLGetPrefDir``, depending on whether
+  DF is in "portable mode" or not.
+
+* ``dfhack.filesystem.getInstallDir()``
+
+  Returns the the directory in which DF is installed.
 
 Console API
 -----------
@@ -3312,12 +3465,14 @@ and are only documented here for completeness:
 
 * ``dfhack.internal.findScript(name)``
 
-  Searches `script paths <script-paths>` for the script ``name`` and returns the
-  path of the first file found, or ``nil`` on failure.
+  Searches `script paths <script-paths>` for the script ``name`` (which
+  includes the ``.lua`` extension) and returns the absolute path of the first
+  file found, or ``nil`` on failure. Slashes in the path are canonicalized to
+  forward slashes.
 
   .. note::
-    This requires an extension to be specified (``.lua`` or ``.rb``) - use
-    ``dfhack.findScript()`` to include the ``.lua`` extension automatically.
+    You can use the ``dfhack.findScript()`` wrapper if you want to specify the
+    script name without the ``.lua`` extension.
 
 * ``dfhack.internal.runCommand(command[, use_console])``
 
@@ -3417,6 +3572,11 @@ and are only documented here for completeness:
 
   Sets the system clipboard text from a CP437 string. Character 0x10 is
   interpreted as a newline instead of the usual CP437 glyph.
+
+* ``dfhack.internal.getModifiers()``
+
+  Returns the state of the keyboard modifier keys in a table of string ->
+  boolean. The keys are ``ctrl``, ``shift``, ``super``, and ``alt``.
 
 * ``dfhack.internal.getSuppressDuplicateKeyboardEvents()``
 * ``dfhack.internal.setSuppressDuplicateKeyboardEvents(suppress)``
@@ -3751,6 +3911,29 @@ paths will be relative to the top level game directory and will end in a slash
 
   Which would open ``dfhack-config/mods/my_awesome_mod/settings.json``. After
   calling ``getModStatePath``, the returned directory is guaranteed to exist.
+
+* ``get_active_mods()``
+
+  Returns a list of all active mods in the current world. The list elements are
+  tables containing the following fields:
+
+    - id: mod id
+    - name: mod display name
+    - version: mod display version
+    - numeric_version: numeric mod version
+    - path: path to the mod directory
+    - vanilla: true if this is a vanilla mod
+
+* ``get_mod_info_metadata(mod_path, tags)``
+
+  Returns a table with the values of the given tags from the ``info.txt`` file
+  in the given mod directory. The ``mod_path`` argument must be a path to a mod
+  directory (retrieved, say, from ``get_active_mods()``). The ``tags`` argument
+  is a string or a list of strings representing the tags to retrieve. The
+  function will return a table with the tag names as keys and their values as
+  values. If a requested tag includes the string ``NUMERIC_``, it will return
+  the numeric value for that tag (e.g., ``NUMERIC_VERSION`` will return the
+  numeric version of the mod as a number instead of a string).
 
 utils
 =====
@@ -5584,7 +5767,7 @@ TextArea Functions:
 * ``textarea:getText()``
 
     Returns the current text content of the ``TextArea`` widget as a string.
-    "\n" characters (``string.char(10)``) should be interpreted as new lines
+    ``\n`` characters (``string.char(10)``) should be interpreted as new lines
 
 * ``textarea:setText(text)``
 
@@ -5936,6 +6119,8 @@ common text token lists that you can then pass as ``text`` to a ``Label``:
     Example 2: The DFHack logo - a graphical button in graphics mode and a text
     button in ASCII mode. The ASCII colors use the default for hovering::
 
+        local logo_textures=dfhack.textures.loadTileset(
+            'hack/data/art/logo.png', 8, 12, true),
         widgets.Label{
             text=widgets.makeButtonLabelText{
                 chars={
@@ -5943,10 +6128,12 @@ common text token lists that you can then pass as ``text`` to a ``Label``:
                     {179, 'H', 'a', 179},
                     {179, 'c', 'k', 179},
                 },
-                tileset=dfhack.textures.loadTileset(
-                    'hack/data/art/logo.png', 8, 12, true),
-                tileset_hover=dfhack.textures.loadTileset(
-                    'hack/data/art/logo_hovered.png', 8, 12, true),
+                tileset=logo_textures,
+                tileset_offset=1,
+                tileset_stride=8,
+                tileset_hover=logo_textures,
+                tileset_hover_offset=5,
+                tileset_hover_stride=8,
             },
             on_click=function()
                 dfhack.run_command{'hotkeys', 'menu', self.name}
@@ -6169,12 +6356,27 @@ This is a specialized subclass of CycleHotkeyLabel that has two options:
 ``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
 ``On`` option is rendered in green.
 
+ConfigureButton class
+---------------------
+
+A 3x1 tile button with a gear symbol on it, intended to represent a configure
+icon. Clicking on the icon will run the given callback. The graphics can also
+be overridden to create custom buttons.
+
+It has the following attributes:
+
+:on_click: The function to run when the icon is clicked.
+:pen_left: Pen or function returning a pen to overwrite the left tile of the button.
+:pen_center: As above, but for the center tile (gear symbol).
+:pen_right: As above, but for the right tile.
+
 HelpButton class
 ----------------
 
-A 3x1 tile button with a question mark on it, intended to represent a help
-icon. Clicking on the icon will launch `gui/launcher` with a given command
-string, showing the help text for that command.
+Subclass of ConfigureButton; a 3x1 tile button with a question mark on it,
+intended to represent a help icon. Clicking on the icon will launch
+`gui/launcher` with a given command string, showing the help text for that
+command.
 
 It has the following attributes:
 
@@ -6184,15 +6386,23 @@ It also sets the ``frame`` attribute so the button appears in the upper right
 corner of the parent, but you can override this to your liking if you want a
 different position.
 
-ConfigureButton class
----------------------
+RadioButton class
+-----------------
 
-A 3x1 tile button with a gear mark on it, intended to represent a configure
-icon. Clicking on the icon will run the given callback.
+Subclass of ConfigureButton; a 3x1 tile button that resembles a radio button
+(or check box in ASCII mode), identical to the ones found in
+`gui/control-panel`. Clicking on the button will toggle its enabled state.
 
 It has the following attributes:
 
-:on_click: The function on run when the icon is clicked.
+:initial_state: Whether to start in the ``true`` or ``false`` state. Defaults to ``true``.
+:on_change: Callback to call when state changes, including initialization. Called as ``on_change(val)``.
+
+It implements the following method:
+
+* ``RadioButton:setState(val)``
+
+  Sets the state to boolean ``val`` and calls ``on_change`` (if defined).
 
 BannerPanel class
 -----------------
@@ -6349,7 +6559,8 @@ Filter behavior:
 
 By default, the filter matches substrings that start at the beginning of a word
 (or after any punctuation). You can instead configure filters to match any
-substring across the full text with a command like::
+substring across the full text by setting ``FILTER_FULL_TEXT`` in `gui/control-panel`
+or set it for the session by running a command like::
 
   :lua require('utils').FILTER_FULL_TEXT=true
 
@@ -6444,9 +6655,23 @@ change, the ``RangeSlider`` appearance will adjust automatically.
 :get_left_idx_fn: The function used by the RangeSlider to get the notch index on which
                   to display the left handle.
 :get_right_idx_fn: The function used by the RangeSlider to get the notch index on which
-                   to display the right handle.
+                  to display the right handle.
 :on_left_change: Callback executed when moving the left handle.
 :on_right_change: Callback executed when moving the right handle.
+
+Slider class
+-----------------
+
+This widget implements a mouse-interactable slider. The player can move the handle to
+set the value of the slider. The parent widget owns the slider value, and can control
+it independently (e.g., with a ``CycleHotkeyLabel``). If the value changes, the ``Slider``
+appearance will adjust automatically.
+
+:num_stops: Used to specify the number of "notches" in the slider, the places
+            where the handle can stop. (This should match the parents' number of options.)
+:get_idx_fn: The function used by the Slider to get the notch index on which
+                  to display the handle.
+:on_change: Callback executed when moving the handle.
 
 DimensionsTooltip class
 -----------------------
@@ -7348,6 +7573,15 @@ Importing scripts
      not present::
 
       --@ module = true
+
+     In order to be recognized, this line **must** begin with ``--@`` with no
+     whitespace characters before it::
+
+      --@ module = true   OK
+      --@module = true    OK
+      -- @module = true   NOT OK (no --@ found due to space after --)
+       --@module = true   NOT OK (leading space, --@ is not at the beginning of the line)
+      ---@module = true   NOT OK (leading dash, --@ is not at the beginning of the line)
 
   2. Include a check for ``dfhack_flags.module``, and avoid running any code
      that has side-effects if this flag is true. For instance::

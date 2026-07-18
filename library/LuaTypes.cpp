@@ -41,6 +41,7 @@ distribution.
 
 #include "PluginManager.h"
 #include "MiscUtils.h"
+#include "modules/Filesystem.h"
 
 #include <lua.h>
 #include <lauxlib.h>
@@ -186,6 +187,24 @@ void df::stl_string_identity::lua_write(lua_State *state, int fname_idx, void *p
         field_error(state, fname_idx, "string expected", "write");
 
     *(std::string*)ptr = std::string(bytes, size);
+}
+
+void df::path_identity::lua_read(lua_State* state, int fname_idx, void* ptr) const
+{
+    auto ppath = (std::filesystem::path*)ptr;
+    auto str = DFHack::Filesystem::as_string(*ppath);
+    lua_pushlstring(state, (char*)str.data(), str.size());
+}
+
+void df::path_identity::lua_write(lua_State* state, int fname_idx, void* ptr, int val_index) const
+{
+    size_t size;
+    const char* bytes = lua_tolstring(state, val_index, &size);
+    if (!bytes)
+        field_error(state, fname_idx, "path expected", "write");
+
+    std::u8string str((char8_t*)bytes, size);
+    *(std::filesystem::path*)ptr = std::filesystem::path(str);
 }
 
 void df::pointer_identity::lua_read(lua_State *state, int fname_idx, void *ptr, const type_identity *target)
@@ -1234,7 +1253,7 @@ int LuaWrapper::method_wrapper_core(lua_State *state, function_identity_base *id
         field_error(state, UPVAL_METHOD_NAME, e.what(), "invoke");
     }
     catch (std::exception &e) {
-        std::string tmp = stl_sprintf("C++ exception: %s", e.what());
+        std::string tmp = fmt::format("C++ exception: {}", e.what());
         field_error(state, UPVAL_METHOD_NAME, tmp.c_str(), "invoke");
     }
 

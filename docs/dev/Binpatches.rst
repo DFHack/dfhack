@@ -50,10 +50,20 @@ directly in memory at runtime::
 
 If the name of the patch has no extension or directory separators, the
 script uses :file:`hack/patches/<df-version>/<name>.dif`, thus auto-selecting
-the version appropriate for the currently loaded executable.
+the version appropriate for the currently loaded executable. The ``df-version``
+is the version string in the loaded symbol table. For example, if you want to
+make a patch for all distributed verisons of DF 51.05, you'd provide a ``dif``
+file in each of the following directories:
+
+- :file:`hack/patches/v0.51.05 linux64 CLASSIC/mypatch.dif`
+- :file:`hack/patches/v0.51.05 linux64 ITCH/mypatch.dif`
+- :file:`hack/patches/v0.51.05 linux64 STEAM/mypatch.dif`
+- :file:`hack/patches/v0.51.05 win64 CLASSIC/mypatch.dif`
+- :file:`hack/patches/v0.51.05 win64 ITCH/mypatch.dif`
+- :file:`hack/patches/v0.51.05 win64 STEAM/mypatch.dif`
 
 This is the preferred method; it's easier to debug, does not cause persistent
-problems, and leaves file checksums alone.  As with many other commands, users
+problems, and leaves file checksums alone. As with many other commands, users
 can simply add it to `dfhack.init` to reapply the patch every time DF is run.
 
 

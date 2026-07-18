@@ -3,7 +3,6 @@
 #include "Export.h"
 #include "PluginManager.h"
 #include "df/world.h"
-#include "df/world_raws.h"
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
 #include "modules/World.h"
@@ -191,10 +190,10 @@ command_result list_creatures(color_ostream &out, std::vector <std::string> & pa
         auto creatureRaw = world->raws.creatures.all[i];
         if (!creatureRaw->flags.is_set(df::enums::creature_raw_flags::GENERATED))
             continue;
-        out.print("%s",creatureRaw->creature_id.c_str());
+        out.print("{}",creatureRaw->creature_id);
         if (detailed)
         {
-            out.print("\t%s",creatureRaw->caste[0]->description.c_str());
+            out.print("\t{}",creatureRaw->caste[0]->description);
         }
         out.print("\n");
     }

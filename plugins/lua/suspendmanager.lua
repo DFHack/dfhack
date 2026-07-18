@@ -26,6 +26,25 @@ function isBuildingPlanJob(job)
     return suspendmanager_isBuildingPlanJob(job)
 end
 
+--- Return the selected construction job
+local function getSelectedBuildingJob()
+    -- This is not relying on dfhack.gui.getSelectedJob() because we don't want
+    -- the job of a selected or followed unit, only of a selected building
+    local building = dfhack.gui.getSelectedBuilding(true)
+    if not building then
+        return nil
+    end
+
+    -- Find if the building is being constructed
+    for _, job in ipairs(building.jobs) do
+        if job.job_type == df.job_type.ConstructBuilding then
+            return job
+        end
+    end
+
+    return nil
+end
+
 function runOnce(prevent_blocking, quiet, unsuspend_everything)
     suspendmanager_runOnce(prevent_blocking, unsuspend_everything)
     if (not quiet) then
@@ -69,7 +88,7 @@ function StatusOverlay:init()
 end
 
 function StatusOverlay:get_status_string()
-    local job = dfhack.gui.getSelectedJob(true)
+    local job = getSelectedBuildingJob()
     if job and job.flags.suspend then
         return "Suspended because: " .. suspendmanager_suspensionDescription(job) .. "."
     end
@@ -77,8 +96,11 @@ function StatusOverlay:get_status_string()
 end
 
 function StatusOverlay:render(dc)
-    local job = dfhack.gui.getSelectedJob(true)
-    if not job or job.job_type ~= df.job_type.ConstructBuilding or not isEnabled() or isBuildingPlanJob(job) then
+    if not isEnabled() then
+        return
+    end
+    local job = getSelectedBuildingJob()
+    if not job or isBuildingPlanJob(job) then
         return
     end
     StatusOverlay.super.render(self, dc)
@@ -110,8 +132,8 @@ function ToggleOverlay:init()
 end
 
 function ToggleOverlay:shouldRender()
-    local job = dfhack.gui.getSelectedJob(true)
-    return job and job.job_type == df.job_type.ConstructBuilding and not isBuildingPlanJob(job)
+    local job = getSelectedBuildingJob()
+    return job and not isBuildingPlanJob(job)
 end
 
 function ToggleOverlay:render(dc)
@@ -133,11 +155,16 @@ end
 
 -- suspend overlay (formerly in unsuspend.lua)
 
-local textures = dfhack.textures.loadTileset('hack/data/art/unsuspend.png', 32, 32, true)
+local textures = dfhack.textures.loadTileset(dfhack.getHackPath()..'/data/art/unsuspend.png', 32, 32, true)
 
 local ok, buildingplan = pcall(require, 'plugins.buildingplan')
 if not ok then
     buildingplan = nil
+end
+
+local function show_suspend_overlay()
+    return dfhack.screen.inGraphicsMode() or
+        dfhack.gui.matchFocusString('dwarfmode/Default', dfhack.gui.getDFViewscreen(true))
 end
 
 SuspendOverlay = defclass(SuspendOverlay, overlay.OverlayWidget)
@@ -146,6 +173,7 @@ SuspendOverlay.ATTRS{
     viewscreens='dwarfmode',
     default_enabled=true,
     frame={w=0, h=0},
+    visible=show_suspend_overlay,
     overlay_onupdate_max_freq_seconds=30,
 }
 

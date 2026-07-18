@@ -52,6 +52,13 @@ using namespace df::enums;
 using df::global::world;
 using df::global::plotinfo;
 
+std::string Burrows::getName(df::burrow* burrow)
+{
+    CHECK_NULL_POINTER(burrow);
+    return burrow->name.empty() ? fmt::format("Burrow {}", burrow->id + 1) : burrow->name;
+}
+
+
 df::burrow *Burrows::findByName(std::string name, bool ignore_final_plus)
 {
     auto &vec = df::burrow::get_vector();
@@ -99,8 +106,6 @@ bool Burrows::isAssignedUnit(df::burrow *burrow, df::unit *unit)
 
 void Burrows::setAssignedUnit(df::burrow *burrow, df::unit *unit, bool enable)
 {
-    using df::global::plotinfo;
-
     CHECK_NULL_POINTER(unit);
     CHECK_NULL_POINTER(burrow);
 

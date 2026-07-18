@@ -36,6 +36,7 @@ POSSIBILITY OF SUCH DAMAGE.
 */
 
 
+#define NOMINMAX
 #include <windows.h>
 #include <conio.h>
 #include <stdarg.h>
@@ -232,16 +233,16 @@ namespace DFHack
             size_t len = raw_buffer.size();
             int cooked_cursor = raw_cursor;
 
-            while ((plen + cooked_cursor) >= cols)
+            if (plen + cooked_cursor > cols)
             {
-                buf++;
-                len--;
-                cooked_cursor--;
+                int adj = std::min(plen + cooked_cursor - cols, len);
+                buf += adj;
+                len -= adj;
+                cooked_cursor -= adj;
             }
-            while (plen + len > cols)
-            {
-                len--;
-            }
+
+            if (len + plen > cols)
+                len = cols - plen;
 
             CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
             GetConsoleScreenBufferInfo(console_out, &inf);
@@ -472,6 +473,10 @@ bool Console::init(bool)
     wlock = new std::recursive_mutex();
     HMENU  hm = GetSystemMenu(d->ConsoleWindow,false);
     DeleteMenu(hm, SC_CLOSE, MF_BYCOMMAND);
+
+    // force console code pages to utf-8
+    SetConsoleCP(CP_UTF8);
+    SetConsoleOutputCP(CP_UTF8);
 
     // set the screen buffer to be big enough to let us scroll text
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);

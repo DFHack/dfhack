@@ -1091,7 +1091,7 @@ Translation module
     * - ``type``
       - | Integer value of the name type. This ensures that the generated name will be appropriate for the given category of object. For allowed values see ``df.language_name_type`` enum.
         |
-        | Example values: 
+        | Example values:
         | ``df.global.world.entities.all[100].name.type``
         | ``df.unit.find(79).name.type``
         | ``dfhack.gui.getSelectedUnit().name.type``

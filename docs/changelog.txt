@@ -63,6 +63,7 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
+- ``dfhack.translation.generateName``: added a table containing explanations and data types for each of the parameters
 
 ## API
 

@@ -1065,7 +1065,6 @@ Translation module
   **Parameters:**
   
   .. list-table::
-    :widths: 15 30 10
     :header-rows: 1
 
     * - Name
@@ -1087,7 +1086,7 @@ Translation module
         | ``df.global.world.entities.all[0].name.language``
         | ``df.unit.find(79).name.language``
         | ``dfhack.gui.getSelectedUnit().name.language``
-        | ``0`` 
+        | ``0``
       - ``int``
     * - ``type``
       - | Integer value of the name type. This ensures that the generated name will be appropriate for the given category of object. For allowed values see ``df.language_name_type`` enum. 

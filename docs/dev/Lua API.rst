@@ -1063,7 +1063,7 @@ Translation module
   Dynamically generate a random name using the same logic the game itself uses.
 
   **Parameters:**
-  
+
   .. list-table::
     :header-rows: 1
 
@@ -1071,16 +1071,16 @@ Translation module
       - Explanation
       - Data Type
     * - ``name``
-      - | ``name`` property of the object that will have its name generated. 
+      - | ``name`` property of the object that will have its name generated.
         |
-        | Example values: 
+        | Example values:
         | ``df.global.world.entities.all[0].name``
         | ``df.unit.find(79).name``
         | ``dfhack.gui.getSelectedUnit().name``
         | ``df.language_name::new()``
       - ``df.language_name``
     * - ``language``
-      - | Integer index of the language used for generating the name within ``df.language_translation``. 
+      - | Integer index of the language used for generating the name within ``df.language_translation``.
         |
         | Example values:
         | ``df.global.world.entities.all[0].name.language``
@@ -1089,7 +1089,7 @@ Translation module
         | ``0``
       - ``int``
     * - ``type``
-      - | Integer value of the name type. This ensures that the generated name will be appropriate for the given category of object. For allowed values see ``df.language_name_type`` enum. 
+      - | Integer value of the name type. This ensures that the generated name will be appropriate for the given category of object. For allowed values see ``df.language_name_type`` enum.
         |
         | Example values: 
         | ``df.global.world.entities.all[100].name.type``
@@ -1100,11 +1100,11 @@ Translation module
       - ``df.language_name_type``
     * - ``major_selector``
       - | Section of the loaded game raws containing words used for generating the name.
-        | 
+        |
         | Example value for sites belonging to civ with id 100:
         | ``df.historical_entity.find(100).entity_raw.symbols.symbols_major[df.entity_name_type.SITE]``
-        | 
-        | Example value for units: 
+        |
+        | Example value for units:
         | ``df.global.world.raws.language.word_table[0][df.language_name_category.Unit]``
       - ``df.language_word_table``
     * - ``minor_selector``
@@ -1113,7 +1113,7 @@ Translation module
         | Example value for sites belonging to civ with id 100:
         | ``df.historical_entity.find(100).entity_raw.symbols.symbols_minor[df.entity_name_type.SITE]``
         |
-        | Example value for units: 
+        | Example value for units:
         | ``df.global.world.raws.language.word_table[1][df.language_name_category.Unit]``
       - ``df.language_word_table``
 

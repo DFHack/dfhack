@@ -1072,7 +1072,7 @@ Translation module
       - Explanation
       - Data Type
     * - ``name``
-      - | ``name`` property of the object that will have its name generated.
+      - | ``name`` property of the object that will have its name generated. This is an output parameter.
         |
         | Example values:
         | ``df.global.world.entities.all[0].name``

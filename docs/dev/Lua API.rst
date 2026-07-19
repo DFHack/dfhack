@@ -1066,7 +1066,7 @@ Translation module
 
   .. list-table::
     :header-rows: 1
-    :widths: 20 60 20
+    :widths: 21 60 19
 
     * - Name
       - Explanation

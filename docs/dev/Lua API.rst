@@ -1060,7 +1060,63 @@ Translation module
 
 * ``dfhack.translation.generateName(name,language,type,major_selector,minor_selector)``
 
-  Dynamically generate a name using the same logic the game itself uses.
+  Dynamically generate a random name using the same logic the game itself uses.
+
+  **Parameters:**
+  
+  .. list-table::
+    :widths: 15 30 10
+    :header-rows: 1
+
+    * - Name
+      - Explanation
+      - Data Type
+    * - :code:`name`
+      - | :code:`name` property of the object that will have its name generated. 
+        |
+        | Example values: 
+        | :code:`df.global.world.entities.all[0].name`
+        | :code:`df.unit.find(79).name`
+        | :code:`dfhack.gui.getSelectedUnit().name`
+        | :code:`df.language_name::new()`
+      - :code:`df.language_name`
+    * - :code:`language`
+      - | Integer index of the language used for generating the name within :code:`df.language_translation`. 
+        |
+        | Example values:
+        | :code:`df.global.world.entities.all[0].name.language`
+        | :code:`df.unit.find(79).name.language`
+        | :code:`dfhack.gui.getSelectedUnit().name.language`
+        | :code:`0` 
+      - :code:`int`
+    * - :code:`type`
+      - | Integer value of the name type. This ensures that the generated name will be appropriate for the given category of object. For allowed values see :code:`df.language_name_type` enum. 
+        |
+        | Example values: 
+        | :code:`df.global.world.entities.all[100].name.type`
+        | :code:`df.unit.find(79).name.type`
+        | :code:`dfhack.gui.getSelectedUnit().name.type`
+        | :code:`df.language_name_type.Figure`
+        | :code:`13`
+      - :code:`df.language_name_type`
+    * - :code:`major_selector`
+      - | Section of the loaded game raws containing words used for generating the name.
+        | 
+        | Example value for sites belonging to civ with id 100:
+        | :code:`df.historical_entity.find(100).entity_raw.symbols.symbols_major[df.entity_name_type.SITE]`
+        | 
+        | Example value for units: 
+        | :code:`df.global.world.raws.language.word_table[0][df.language_name_category.Unit]`
+      - :code:`df.language_word_table`
+    * - :code:`minor_selector`
+      - | Section of the loaded game raws containing words used for generating the name.
+        |
+        | Example value for sites belonging to civ with id 100:
+        | :code:`df.historical_entity.find(100).entity_raw.symbols.symbols_minor[df.entity_name_type.SITE]`
+        |
+        | Example value for units: 
+        | :code:`df.global.world.raws.language.word_table[1][df.language_name_category.Unit]`
+      - :code:`df.language_word_table`
 
 Gui module
 ----------

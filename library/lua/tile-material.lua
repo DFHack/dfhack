@@ -172,33 +172,10 @@ end
 
 -- GetTreeMat returns the material of the tree at the given tile or nil if the tile does not have a
 -- tree or giant mushroom.
--- Currently roots are ignored.
 function GetTreeMat(x, y, z)
     local pos = prepPos(x, y, z)
-
-    local function coordInTree(pos, tree)
-        local x1 = tree.pos.x - math.floor(tree.tree_info.dim_x / 2)
-        local x2 = tree.pos.x + math.floor(tree.tree_info.dim_x / 2)
-        local y1 = tree.pos.y - math.floor(tree.tree_info.dim_y / 2)
-        local y2 = tree.pos.y + math.floor(tree.tree_info.dim_y / 2)
-        local z1 = tree.pos.z
-        local z2 = tree.pos.z + tree.tree_info.body_height
-
-        if not ((pos.x >= x1 and pos.x <= x2) and (pos.y >= y1 and pos.y <= y2) and (pos.z >= z1 and pos.z <= z2)) then
-            return false
-        end
-
-        return not tree.tree_info.body[pos.z - tree.pos.z]:_displace((pos.y - y1) * tree.tree_info.dim_x + (pos.x - x1)).blocked
-    end
-
-    for _, tree in ipairs(df.global.world.plants.all) do
-        if tree.tree_info ~= nil then
-            if coordInTree(pos, tree) then
-                return dfhack.matinfo.decode(419, tree.material)
-            end
-        end
-    end
-    return nil
+    local plant = dfhack.maps.getPlantAtTile(pos)
+    return plant and plant.tree_info and dfhack.matinfo.decode(419, plant.material) or nil
 end
 
 -- GetShrubMat returns the material of the shrub at the given tile or nil if the tile does not
@@ -289,7 +266,7 @@ BasicMats = {
     [df.tiletype_material.DRIFTWOOD] = GetLayerMat,
     [df.tiletype_material.POOL] = GetLayerMat,
     [df.tiletype_material.BROOK] = GetLayerMat,
-    [df.tiletype_material.ROOT] = GetLayerMat,
+    [df.tiletype_material.ROOT] = GetTreeMat,
     [df.tiletype_material.TREE] = GetTreeMat,
     [df.tiletype_material.MUSHROOM] = GetTreeMat,
     [df.tiletype_material.UNDERWORLD_GATE] = nil, -- I guess this is for the gates found in vaults?
@@ -327,6 +304,7 @@ OnlyPlantMats = {
     [df.tiletype_material.GRASS_DRY] = GetGrassMat,
     [df.tiletype_material.GRASS_DEAD] = GetGrassMat,
     [df.tiletype_material.PLANT] = GetShrubMat,
+    [df.tiletype_material.ROOT] = GetTreeMat,
     [df.tiletype_material.TREE] = GetTreeMat,
     [df.tiletype_material.MUSHROOM] = GetTreeMat,
 }

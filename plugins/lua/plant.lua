@@ -3,14 +3,12 @@ local _ENV = mkmodule('plugins.plant')
 local argparse = require('argparse')
 local utils = require('utils')
 
-local function search_str(s)
-    return dfhack.upperCp437(dfhack.toSearchNormalized(s))
-end
+local toSearch = dfhack.toSearchNormalized
 
 local function find_plant_idx(s) --find plant raw index by id string
-    local id_str = search_str(s)
+    local id_str = toSearch(s)
     for k, v in ipairs(df.global.world.raws.plants.all) do
-        if search_str(v.id) == id_str then
+        if toSearch(v.id) == id_str then
             return k
         end
     end

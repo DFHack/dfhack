@@ -304,15 +304,16 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     return CR_OK;
 }
 
-uint16_t fletcher16(uint8_t const *data, size_t bytes)
+uint16_t fletcher16(const void *data_, size_t bytes)
 {
+    auto data = static_cast<const std::byte*>(data_);
     uint16_t sum1 = 0xff, sum2 = 0xff;
 
     while (bytes) {
         size_t tlen = bytes > 20 ? 20 : bytes;
         bytes -= tlen;
         do {
-            sum2 += sum1 += *data++;
+            sum2 += sum1 += static_cast<uint8_t>(*data++);
         } while (--tlen);
         sum1 = (sum1 & 0xff) + (sum1 >> 8);
         sum2 = (sum2 & 0xff) + (sum2 >> 8);
@@ -335,7 +336,7 @@ void ConvertDfColor(int16_t index, RemoteFortressReader::ColorDefinition * out)
     out->set_blue(gps->uccolor[index][2]);
 }
 
-void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
+void ConvertDfColor(std::array<int16_t,3>& in, RemoteFortressReader::ColorDefinition * out)
 {
     int index = in[0] | (8 * in[2]);
     ConvertDfColor(index, out);
@@ -623,7 +624,7 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block * block = world->map.map_blocks[i];
-        fletcher16((uint8_t*)(block->tiletype), 16 * 16 * sizeof(df::enums::tiletype::tiletype));
+        fletcher16((block->tiletype).data(), 16 * 16 * sizeof(df::enums::tiletype::tiletype));
     }
     clock_t end = clock();
     double elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
@@ -654,7 +655,7 @@ bool IsTiletypeChanged(DFCoord pos)
     uint16_t hash;
     df::map_block * block = Maps::getBlock(pos);
     if (block)
-        hash = fletcher16((uint8_t*)(block->tiletype), 16 * 16 * (sizeof(df::enums::tiletype::tiletype)));
+        hash = fletcher16((block->tiletype).data(), 16 * 16 * (sizeof(df::enums::tiletype::tiletype)));
     else
         hash = 0;
     if (hashes[pos] != hash)
@@ -672,7 +673,7 @@ bool IsDesignationChanged(DFCoord pos)
     uint16_t hash;
     df::map_block * block = Maps::getBlock(pos);
     if (block)
-        hash = fletcher16((uint8_t*)(block->designation), 16 * 16 * (sizeof(df::tile_designation)));
+        hash = fletcher16((block->designation).data(), 16 * 16 * (sizeof(df::tile_designation)));
     else
         hash = 0;
     if (waterHashes[pos] != hash)

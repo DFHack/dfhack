@@ -320,7 +320,7 @@ static void unserialize_list_itemdef(color_ostream& out, const char* subcat, boo
 }
 
 static bool serialize_list_quality(color_ostream& out, FuncWriteExport add_value,
-        const bool(&quality_list)[7]) {
+        const std::array<bool,7> &quality_list) {
     using df::enums::item_quality::item_quality;
     using quality_traits = df::enum_traits<item_quality>;
 
@@ -337,12 +337,12 @@ static bool serialize_list_quality(color_ostream& out, FuncWriteExport add_value
     return all;
 }
 
-static void quality_clear(bool(&pile_list)[7]) {
-    std::fill(pile_list, pile_list + 7, false);
+static void quality_clear(std::array<bool,7> &pile_list) {
+    pile_list.fill(false);
 }
 
 static void unserialize_list_quality(color_ostream& out, const char* subcat, bool all, bool val, const vector<string>& filters,
-        FuncReadImport read_value, int32_t list_size, bool(&pile_list)[7]) {
+        FuncReadImport read_value, int32_t list_size, std::array<bool,7> &pile_list) {
     if (all) {
         for (auto idx = 0; idx < 7; ++idx) {
             string id = ENUM_KEY_STR(item_quality, (df::item_quality)idx);

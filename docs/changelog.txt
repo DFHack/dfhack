@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `buildingplan`: restore planner UI elements: hollow constructions, only engraved slabs, only empty cages, weapon count
 
 ## Misc Improvements
 

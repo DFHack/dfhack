@@ -67,7 +67,13 @@ Template for new versions:
 
 ## API
 
+- ``Screen``: new functions ``paintMapPortTile`` and ``readMapPortTile`` to write and read world and region map tiles.
+
 ## Lua
+
+- Added ``Screen::paintMapPortTile`` as ``dfhack.screen.paintMapPortTile``
+- Added ``Screen::readMapPortTile`` as ``dfhack.screen.readMapPortTile``
+
 
 ## Removed
 

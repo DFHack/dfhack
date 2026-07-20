@@ -61,6 +61,19 @@ Code format
   * ``#include`` directives should be sorted: C++ libraries first, then DFHack modules, then ``df/`` headers,
     then local includes. Within each category they should be sorted alphabetically.
 
+General C++ code guidelines
+---------------------------
+* This project is currently built at the C++20 feature level, and C++20 features should be used when appropriate. C++23 features will be allowed once all of our build platforms support them.
+* NEVER use ``using namespace`` in a header file. In source files, do not use ``using namespace std``; instead, import each STL identifier you need specifically (e.g. ``using std::string;``).
+* Avoid platform specific code as much as possible.
+* Avoid including ``Windows.h``; if you must, ensure that ``NOMINMAX`` and ``WIN32_LEAN_AND_MEAN`` are defined before including it.
+* Do not include C headers (e.g. ``<stdio.h>``); use the C++ versions (e.g. ``<cstdio>``) instead.
+* Do not use ``std::string`` (or ``char *``) for path names; always use ``std::filesystem::path``. This avoids issues with encoding, especially on the Windows platform, which is roughly 80% of our user base.
+* Do not use ``printf`` or similar functions for formatting strings; use C++ streams or ``fmt::format`` instead. We use the `fmt library <https://fmt.dev/latest/index.html>`__ for formatting strings; this dependency is automatically fetched by our build system.
+* Avoid out parameters; prefer returning a struct, pair, or tuple, or using ``std::optional`` instead.
+* Prefer range for loops to traditional for loops when iterating over a container.
+* Avoid macros when possible; prefer ``constexpr`` variables for constants and functions or templates for code generation.
+
 .. _contributing-pr-guidelines:
 
 Pull request guidelines

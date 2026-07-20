@@ -1,11 +1,16 @@
+#include <ios>
+#include <string>
+#include <vector>
+
 #include "LuaTools.h"
+#include "MiscUtils.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
 
 #include "modules/Gui.h"
-#include "modules/Materials.h"
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
+#include "modules/Materials.h"
 
 #include "df/block_square_event_grassst.h"
 #include "df/block_square_event_world_constructionst.h"
@@ -15,6 +20,8 @@
 #include "df/civzone_type.h"
 #include "df/construction_type.h"
 #include "df/furnace_type.h"
+#include "df/global_objects.h"
+#include "df/inorganic_raw.h"
 #include "df/item.h"
 #include "df/map_block.h"
 #include "df/region_map_entry.h"
@@ -86,10 +93,8 @@ static void describeTile(color_ostream &out, df::tiletype tiletype) {
 }
 
 static command_result df_probe(color_ostream &out, vector<string> & parameters) {
-    DFHack::Materials *Materials = Core::getInstance().getMaterials();
 
-    vector<t_matglossInorganic> inorganic;
-    bool hasmats = Materials->CopyInorganicMaterials(inorganic);
+    auto& inorganic = world->raws.inorganics.all;
 
     if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
@@ -173,29 +178,25 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     out << "geolayer: " << des.bits.geolayer_index
         << std::endl;
     int16_t base_rock = mc.layerMaterialAt(cursor);
-    if (base_rock != -1) {
+    if (base_rock != -1)
+    {
         out << "Layer material: " << std::dec << base_rock;
-        if(hasmats)
-            out << " / " << inorganic[base_rock].id
-                << " / "
-                << inorganic[base_rock].name
-                << std::endl;
-        else
-            out << std::endl;
+        out << " / " << inorganic[base_rock]->id
+            << " / "
+            << inorganic[base_rock]->material.stone_name
+            << std::endl;
     }
     int16_t vein_rock = mc.veinMaterialAt(cursor);
-    if (vein_rock != -1) {
+    if (vein_rock != -1)
+    {
         out << "Vein material (final): " << std::dec << vein_rock;
-        if(hasmats)
-            out << " / " << inorganic[vein_rock].id
-                << " / "
-                << inorganic[vein_rock].name
-                << " ("
-                << ENUM_KEY_STR(inclusion_type,b->veinTypeAt(cursor))
-                << ")"
-                << std::endl;
-        else
-            out << std::endl;
+        out << " / " << inorganic[vein_rock]->id
+            << " / "
+            << inorganic[vein_rock]->material.stone_name
+            << " ("
+            << ENUM_KEY_STR(inclusion_type, b->veinTypeAt(cursor))
+            << ")"
+            << std::endl;
     }
     MaterialInfo minfo(mc.baseMaterialAt(cursor));
     if (minfo.isValid())
@@ -309,17 +310,6 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     return CR_OK;
 }
 
-union Subtype {
-    int16_t subtype;
-    df::civzone_type civzone_type;
-    df::furnace_type furnace_type;
-    df::workshop_type workshop_type;
-    df::construction_type construction_type;
-    df::shop_type shop_type;
-    df::siegeengine_type siegeengine_type;
-    df::trap_type trap_type;
-};
-
 static command_result df_bprobe(color_ostream &out, vector<string> & parameters) {
     auto bld = Gui::getSelectedBuilding(out);
     if (!bld)
@@ -329,7 +319,7 @@ static command_result df_bprobe(color_ostream &out, vector<string> & parameters)
     bld->getName(&name);
 
     auto bld_type = bld->getType();
-    Subtype subtype{bld->getSubtype()};
+    int16_t subtype{bld->getSubtype()};
     int32_t custom = bld->getCustomType();
 
     out.print("Building {:<4}, \"{}\", type {} ({})",
@@ -342,46 +332,46 @@ static command_result df_bprobe(color_ostream &out, vector<string> & parameters)
     switch (bld_type) {
     case df::building_type::Civzone:
         out.print(", subtype {} ({})",
-                    ENUM_KEY_STR(civzone_type, subtype.civzone_type),
-                    subtype.subtype);
+                    ENUM_KEY_STR(civzone_type, static_cast<df::civzone_type>(subtype)),
+                    subtype);
         break;
     case df::building_type::Furnace:
         out.print(", subtype {} ({})",
-                    ENUM_KEY_STR(furnace_type, subtype.furnace_type),
-                    subtype.subtype);
-        if (subtype.furnace_type == df::furnace_type::Custom)
+                    ENUM_KEY_STR(furnace_type, static_cast<df::furnace_type>(subtype)),
+                    subtype);
+        if (static_cast<df::furnace_type>(subtype) == df::furnace_type::Custom)
             out.print(", custom type {} ({})",
                         world->raws.buildings.all[custom]->code,
                         custom);
         break;
     case df::building_type::Workshop:
         out.print(", subtype {} ({})",
-                    ENUM_KEY_STR(workshop_type, subtype.workshop_type),
-                    subtype.subtype);
-        if (subtype.workshop_type == df::workshop_type::Custom)
+                    ENUM_KEY_STR(workshop_type, static_cast<df::workshop_type>(subtype)),
+                    subtype);
+        if (subtype == static_cast<int16_t>(df::workshop_type::Custom))
             out.print(", custom type {} ({})",
                         world->raws.buildings.all[custom]->code,
                         custom);
         break;
     case df::building_type::Construction:
         out.print(", subtype {} ({})",
-                    ENUM_KEY_STR(construction_type, subtype.construction_type),
-                    subtype.subtype);
+                    ENUM_KEY_STR(construction_type, static_cast<df::construction_type>(subtype)),
+                    subtype);
         break;
     case df::building_type::Shop:
         out.print(", subtype {} ({})",
-                    ENUM_KEY_STR(shop_type, subtype.shop_type),
-                    subtype.subtype);
+                    ENUM_KEY_STR(shop_type, static_cast<df::shop_type>(subtype)),
+                    subtype);
         break;
     case df::building_type::SiegeEngine:
         out.print(", subtype {} ({})",
-                    ENUM_KEY_STR(siegeengine_type, subtype.siegeengine_type),
-                    subtype.subtype);
+                    ENUM_KEY_STR(siegeengine_type, static_cast<df::siegeengine_type>(subtype)),
+                    subtype);
         break;
     case df::building_type::Trap:
         out.print(", subtype {} ({})",
-                    ENUM_KEY_STR(trap_type, subtype.trap_type),
-                    subtype.subtype);
+                    ENUM_KEY_STR(trap_type, static_cast<df::trap_type>(subtype)),
+                    subtype);
         break;
     case df::building_type::NestBox:
     {
@@ -391,8 +381,8 @@ static command_result df_bprobe(color_ostream &out, vector<string> & parameters)
         break;
     }
     default:
-        if (subtype.subtype != -1)
-            out.print(", subtype {}", subtype.subtype);
+        if (subtype != -1)
+            out.print(", subtype {}", subtype);
         break;
     }
 

@@ -27,7 +27,6 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
-#include "ModuleFactory.h"
 #include "Types.h"
 #include "VersionInfo.h"
 

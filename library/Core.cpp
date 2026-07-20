@@ -40,8 +40,6 @@ distribution.
 #include "MemoryPatcher.h"
 #include "MiscUtils.h"
 #include "MiscUtils.h"
-#include "Module.h"
-#include "ModuleFactory.h"
 #include "PluginManager.h"
 #include "RemoteServer.h"
 #include "RemoteTools.h"
@@ -52,7 +50,6 @@ distribution.
 #include "modules/DFSteam.h"
 #include "modules/EventManager.h"
 #include "modules/Filesystem.h"
-#include "modules/Graphic.h"
 #include "modules/Gui.h"
 #include "modules/Hotkey.h"
 #include "modules/Persistence.h"
@@ -137,16 +134,6 @@ static size_t loadScriptFiles(Core* core, color_ostream& out, std::span<const st
 namespace DFHack {
     DBG_DECLARE(core, keybinding, DebugCategory::LINFO);
     DBG_DECLARE(core, script, DebugCategory::LINFO);
-
-    static const std::filesystem::path getConfigPath()
-    {
-        return Filesystem::getInstallDir() / "dfhack-config";
-    };
-
-    static const std::filesystem::path getConfigDefaultsPath()
-    {
-        return Core::getInstance().getHackPath() / "data" / "dfhack-config-defaults";
-    };
 
 class MainThread {
 public:
@@ -541,7 +528,7 @@ std::filesystem::path Core::findScript(std::string name)
     return {};
 }
 
-bool loadScriptPaths(color_ostream &out, bool silent = false)
+bool Core::loadScriptPaths(color_ostream &out, bool silent)
 {
     std::filesystem::path filename{ getConfigPath() / "script-paths.txt" };
     std::ifstream file(filename);
@@ -566,7 +553,7 @@ bool loadScriptPaths(color_ostream &out, bool silent = false)
         getline(ss, path);
         if (ch == '+' || ch == '-')
         {
-            if (!Core::getInstance().addScriptPath(path, ch == '+') && !silent)
+            if (!addScriptPath(path, ch == '+') && !silent)
                 out.printerr("{}:{}: Failed to add path: {}\n", filename, line, path);
         }
         else if (!silent)
@@ -938,12 +925,11 @@ static void run_dfhack_init(color_ostream &out, Core *core)
     }
 
     // load baseline defaults
-    core->loadScriptFile(out, getConfigPath() / "init" / "default.dfhack.init", false);
+    core->loadScriptFile(out, core->getConfigPath() / "init" / "default.dfhack.init", false);
 
     // load user overrides
     std::vector<std::string> prefixes(1, "dfhack");
-    loadScriptFiles(core, out, prefixes, getConfigPath() / "init");
-
+    loadScriptFiles(core, out, prefixes, core->getConfigPath() / "init");
     // show the terminal if requested
     auto L = DFHack::Core::getInstance().getLuaState();
     Lua::CallLuaModuleFunction(out, L, "dfhack", "getHideConsoleOnStartup", 0, 1,
@@ -965,9 +951,9 @@ static void fInitthread(IODATA * iod)
 // A thread function... for the interactive console.
 static void fIOthread(IODATA * iod)
 {
-    static const std::filesystem::path HISTORY_FILE = getConfigPath() / "dfhack.history";
-
     Core * core = iod->core;
+    std::filesystem::path HISTORY_FILE = core->getConfigPath() / "dfhack.history";
+
     PluginManager * plug_mgr = iod->plug_mgr;
 
     CommandHistory main_history;
@@ -1048,7 +1034,6 @@ Core::Core() :
     plug_mgr = nullptr;
     errorstate = false;
     vinfo = 0;
-    memset(&(s_mods), 0, sizeof(s_mods));
 
     // set up hotkey capture
     suppress_duplicate_keyboard_events = true;
@@ -1950,11 +1935,9 @@ int Core::Shutdown ( void )
         plug_mgr = nullptr;
     }
     // invalidate all modules
-    allModules.clear();
     Textures::cleanup();
     DFSDL::cleanup();
     DFSteam::cleanup(getConsole());
-    memset(&(s_mods), 0, sizeof(s_mods));
     d.reset();
     return -1;
 }
@@ -2184,23 +2167,3 @@ std::string Core::GetAliasCommand(const std::string &name, bool ignore_params)
         return aliases[name][0];
     return join_strings(" ", aliases[name]);
 }
-
-/*******************************************************************************
-                                M O D U L E S
-*******************************************************************************/
-
-#define MODULE_GETTER(TYPE) \
-TYPE * Core::get##TYPE() \
-{ \
-    if(errorstate) return nullptr;\
-    if(!s_mods.p##TYPE)\
-    {\
-        std::unique_ptr<Module> mod = create##TYPE();\
-        s_mods.p##TYPE = (TYPE *) mod.get();\
-        allModules.push_back(std::move(mod));\
-    }\
-    return s_mods.p##TYPE;\
-}
-
-MODULE_GETTER(Materials);
-MODULE_GETTER(Graphic);

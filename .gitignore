@@ -65,6 +65,7 @@ build/CPack*Config.cmake
 
 # VSCode files
 .vscode
+*.code-workspace
 
 # ctags file
 tags

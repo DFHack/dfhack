@@ -301,7 +301,7 @@ static int32_t estimate_logs(const df::plant *plant) {
         return 0;
 
     MaterialInfo mi;
-    mi.decode(MaterialInfo::PLANT_BASE, plant->material);
+    mi.decode(df::builtin_mats::PLANT_1, plant->material);
     bool is_shroom = mi.plant->flags.is_set(df::plant_raw_flags::TREE_HAS_MUSHROOM_CAP);
 
     int32_t trunks = 0, parent_dir = 0;

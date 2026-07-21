@@ -167,7 +167,7 @@ static void load_organic_material_cache(df::organic_mat_category cat) {
 
 static void load_material_cache() {
     auto &raws = world->raws;
-    for (int i = 1; i < DFHack::MaterialInfo::NUM_BUILTIN; ++i)
+    for (int i = 1; i < df::builtin_mats::CREATURE_1; ++i)
         if (raws.mat_table.builtin[i])
             cache_matched(i, -1);
 

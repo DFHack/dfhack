@@ -943,7 +943,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case ROOT:
     case TREE:
     case PLANT:
-        rv.mat_type = MaterialInfo::PLANT_BASE;
+        rv.mat_type = df::builtin_mats::PLANT_1;
         if (auto plant = plants[block->map_pos + df::coord(x,y,0)])
         {
             if (auto raw = df::plant_raw::find(plant->material))
@@ -958,7 +958,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case GRASS_DARK:
     case GRASS_DRY:
     case GRASS_DEAD:
-        rv.mat_type = MaterialInfo::PLANT_BASE;
+        rv.mat_type = df::builtin_mats::PLANT_1;
         if (auto raw = df::plant_raw::find(grass[x][y]))
         {
             rv.mat_type = raw->material_defs.type[plant_material_def::basic_mat];

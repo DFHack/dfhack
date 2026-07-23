@@ -634,12 +634,12 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
 
 void CopyMat(RemoteFortressReader::MatPair * mat, int type, int index)
 {
-    if (type >= MaterialInfo::FIGURE_BASE && type < MaterialInfo::PLANT_BASE)
+    if (type >= df::builtin_mats::HIST_FIG_1 && type <= df::builtin_mats::HIST_FIG_200)
     {
         df::historical_figure * figure = df::historical_figure::find(index);
         if (figure)
         {
-            type -= MaterialInfo::GROUP_SIZE;
+            type = (type - df::builtin_mats::HIST_FIG_1) + df::builtin_mats::CREATURE_1;
             index = figure->race;
         }
     }
@@ -817,9 +817,9 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
     MaterialInfo mat;
     for (size_t i = 0; i < raws->inorganics.all.size(); i++)
     {
-        mat.decode(0, i);
+        mat.decode(df::builtin_mats::INORGANIC, i);
         MaterialDefinition *mat_def = out->add_material_list();
-        mat_def->mutable_mat_pair()->set_mat_type(0);
+        mat_def->mutable_mat_pair()->set_mat_type(df::builtin_mats::INORGANIC);
         mat_def->mutable_mat_pair()->set_mat_index(i);
         mat_def->set_id(mat.getToken());
         mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
@@ -828,11 +828,11 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             ConvertDFColorDescriptor(raws->inorganics.all[i]->material.state_color[GetState(&raws->inorganics.all[i]->material)], mat_def->mutable_state_color());
         }
     }
-    for (int i = 0; i < 19; i++)
+    for (int i = 0; i < df::builtin_mats::CREATURE_1; i++)
     {
         int k = -1;
-        if (i == 7)
-            k = 1;// for coal.
+        if (i == df::builtin_mats::COAL)
+            k = 1;// for coke and charcoal
         for (int j = -1; j <= k; j++)
         {
             mat.decode(i, j);
@@ -852,9 +852,9 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         df::creature_raw * creature = raws->creatures.all[i];
         for (size_t j = 0; j < creature->material.size(); j++)
         {
-            mat.decode(j + MaterialInfo::CREATURE_BASE, i);
+            mat.decode(j + df::builtin_mats::CREATURE_1, i);
             MaterialDefinition *mat_def = out->add_material_list();
-            mat_def->mutable_mat_pair()->set_mat_type(j + 19);
+            mat_def->mutable_mat_pair()->set_mat_type(j + df::builtin_mats::CREATURE_1);
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
@@ -869,9 +869,9 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         df::plant_raw * plant = raws->plants.all[i];
         for (size_t j = 0; j < plant->material.size(); j++)
         {
-            mat.decode(j + 419, i);
+            mat.decode(j + df::builtin_mats::PLANT_1, i);
             MaterialDefinition *mat_def = out->add_material_list();
-            mat_def->mutable_mat_pair()->set_mat_type(j + 419);
+            mat_def->mutable_mat_pair()->set_mat_type(j + df::builtin_mats::PLANT_1);
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
@@ -2096,14 +2096,14 @@ static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
             auto plantMat = out->add_plant_materials();
 
             plantMat->set_mat_index(pop->plant);
-            plantMat->set_mat_type(419);
+            plantMat->set_mat_type(df::builtin_mats::PLANT_1);
         }
         else if (pop->type == world_population_type::Tree)
         {
             auto plantMat = out->add_tree_materials();
 
             plantMat->set_mat_index(pop->plant);
-            plantMat->set_mat_type(419);
+            plantMat->set_mat_type(df::builtin_mats::PLANT_1);
         }
     }
 #if DF_VERSION_INT >= 43005

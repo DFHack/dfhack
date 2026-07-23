@@ -39,7 +39,7 @@ void Kitchen::debug_print(color_ostream &out)
                        plotinfo->kitchen.mat_types[i],
                        plotinfo->kitchen.mat_indices[i],
                        plotinfo->kitchen.exc_types[i].whole,
-                       (plotinfo->kitchen.mat_types[i] >= 419 && plotinfo->kitchen.mat_types[i] <= 618) ? world->raws.plants.all[plotinfo->kitchen.mat_indices[i]]->id : "n/a"
+                       (plotinfo->kitchen.mat_types[i] >= df::builtin_mats::PLANT_1 && plotinfo->kitchen.mat_types[i] <= df::builtin_mats::PLANT_200) ? world->raws.plants.all[plotinfo->kitchen.mat_indices[i]]->id : "n/a"
         );
     }
     out.print("\n");

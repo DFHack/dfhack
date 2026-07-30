@@ -2,6 +2,7 @@
 
 #include "ColorText.h"
 #include "Export.h"
+#include "PluginManager.h"
 
 #include <cstdint>
 #include <functional>

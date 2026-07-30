@@ -26,12 +26,12 @@ using std::vector;
 static DFLibrary *g_sdl_handle = nullptr;
 static DFLibrary *g_sdl_image_handle = nullptr;
 
-DFLibrary* obtain_library_handle()
+DFLibrary* DFHack::DFSDL::obtain_library_handle()
 {
     return g_sdl_handle;
 }
 
-DFLibrary* obtain_image_library_handle()
+DFLibrary* DFHack::DFSDL::obtain_image_library_handle()
 {
     return g_sdl_image_handle;
 }

@@ -35,6 +35,13 @@ namespace DFHack::DFSDL
         */
     void cleanup();
 
+    /**
+    * Obtain DFHack's handle to the SDL or IMG libraries, in case a plugin needs
+    * to map a SDL API not mapped here
+        */
+    DFHACK_EXPORT DFLibrary* obtain_library_handle();
+    DFHACK_EXPORT DFLibrary* obtain_image_library_handle();
+
     DFHACK_EXPORT SDL_Surface* DFIMG_Load(const char* file);
     DFHACK_EXPORT SDL_Surface* DFSDL_CreateRGBSurface(uint32_t flags, int width, int height, int depth, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);
     DFHACK_EXPORT SDL_Surface* DFSDL_CreateRGBSurfaceFrom(void* pixels, int width, int height, int depth, int pitch, uint32_t Rmask, uint32_t Gmask, uint32_t Bmask, uint32_t Amask);

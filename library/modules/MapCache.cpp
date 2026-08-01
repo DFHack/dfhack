@@ -96,8 +96,6 @@ const BiomeInfo MapCache::biome_stub = {
       -1, -1, -1, -1, -1, -1, -1, -1 }
 };
 
-#define COPY(a,b) memcpy(&a,&b,sizeof(a))
-
 MapExtras::Block::Block(MapCache *parent, DFCoord _bcoord) :
     parent(parent),
     designated_tiles{}
@@ -123,20 +121,19 @@ void MapExtras::Block::init()
 
     if(block)
     {
-        COPY(designation, block->designation);
-        COPY(occupancy, block->occupancy);
-
-        COPY(temp1, block->temperature_1);
-        COPY(temp2, block->temperature_2);
+        designation = block->designation;
+        occupancy = block->occupancy;
+        temp1 = block->temperature_1;
+        temp2 = block->temperature_2;
 
         valid = true;
     }
     else
     {
-        memset(designation,0,sizeof(designation));
-        memset(occupancy,0,sizeof(occupancy));
-        memset(temp1,0,sizeof(temp1));
-        memset(temp2,0,sizeof(temp2));
+        designation.fill({});
+        occupancy.fill({});
+        temp1.fill({});
+        temp2.fill({});
     }
 }
 
@@ -198,10 +195,10 @@ void MapExtras::Block::init_tiles(bool basemat)
 MapExtras::Block::TileInfo::TileInfo()
 {
     dirty_raw.clear();
-    memset(raw_tiles,0,sizeof(raw_tiles));
+    raw_tiles.fill({});
     ice_info = NULL;
     con_info = NULL;
-    memset(base_tiles,0,sizeof(base_tiles));
+    base_tiles.fill({});
 }
 
 MapExtras::Block::TileInfo::~TileInfo()
@@ -218,6 +215,15 @@ void MapExtras::Block::TileInfo::init_iceinfo()
     ice_info = new IceInfo();
 }
 
+template <typename T>
+constexpr T arr40d_neg1() {
+    T tmp{};
+    std::remove_reference_t<decltype(tmp[0])> tmp2{};
+    tmp2.fill(-1);
+    tmp.fill(tmp2);
+    return tmp;
+};
+
 void MapExtras::Block::TileInfo::init_coninfo()
 {
     if (con_info)
@@ -225,17 +231,17 @@ void MapExtras::Block::TileInfo::init_coninfo()
 
     con_info = new ConInfo();
     con_info->constructed.clear();
-    COPY(con_info->tiles, base_tiles);
-    memset(con_info->mat_type, -1, sizeof(con_info->mat_type));
-    memset(con_info->mat_index, -1, sizeof(con_info->mat_index));
+    con_info->tiles = base_tiles;
+    con_info->mat_type = arr40d_neg1<t_blockmaterials>();
+    con_info->mat_index = arr40d_neg1<t_blockmaterials>();
 }
 
 MapExtras::Block::BasematInfo::BasematInfo()
 {
     vein_dirty.clear();
-    memset(mat_type,0,sizeof(mat_type));
-    memset(mat_index,-1,sizeof(mat_index));
-    memset(veinmat,-1,sizeof(veinmat));
+    mat_type.fill({});
+    mat_index = arr40d_neg1<t_blockmaterials>();
+    veinmat = arr40d_neg1<t_blockmaterials>();
 }
 
 bool MapExtras::Block::setFlagAt(df::coord2d p, df::tile_designation::Mask mask, bool set)
@@ -481,7 +487,7 @@ void MapExtras::Block::ParseTiles(TileInfo *tiles)
     tiletypes40d icetiles;
     BlockInfo::SquashFrozenLiquids(block, icetiles);
 
-    COPY(tiles->raw_tiles, block->tiletype);
+    tiles->raw_tiles = block->tiletype;
 
     for (int x = 0; x < 16; x++)
     {
@@ -598,7 +604,7 @@ void MapExtras::Block::WriteTiles(TileInfo *tiles)
 
     if (tiles->ice_info && tiles->ice_info->dirty.has_assignments())
     {
-        df::tiletype (*newtiles)[16] = (tiles->con_info ? tiles->con_info->tiles : tiles->base_tiles);
+        auto newtiles = (tiles->con_info ? tiles->con_info->tiles : tiles->base_tiles);
 
         for (int i = block->block_events.size()-1; i >= 0; i--)
         {
@@ -646,8 +652,8 @@ void MapExtras::Block::ParseBasemats(TileInfo *tiles, BasematInfo *bmats)
 
     info.prepare(this);
 
-    COPY(bmats->veinmat, info.veinmats);
-    COPY(bmats->veintype, info.veintype);
+    bmats->veinmat = info.veinmats;
+    bmats->veintype = info.veintype;
 
     for (int x = 0; x < 16; x++)
     {
@@ -779,7 +785,7 @@ bool MapExtras::Block::Write ()
 
     if(dirty_designations)
     {
-        COPY(block->designation, designation);
+        block->designation = designation;
         block->flags.bits.designated = true;
         block->dsgn_check_cooldown = 0;
         dirty_designations = false;
@@ -798,13 +804,13 @@ bool MapExtras::Block::Write ()
     }
     if(dirty_temperatures)
     {
-        COPY(block->temperature_1, temp1);
-        COPY(block->temperature_2, temp2);
+        block->temperature_1 = temp1;
+        block->temperature_2 = temp2;
         dirty_temperatures = false;
     }
     if(dirty_occupancies)
     {
-        COPY(block->occupancy, occupancy);
+        block->occupancy = occupancy;
         dirty_occupancies = false;
     }
     return true;
@@ -937,7 +943,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case ROOT:
     case TREE:
     case PLANT:
-        rv.mat_type = MaterialInfo::PLANT_BASE;
+        rv.mat_type = df::builtin_mats::PLANT_1;
         if (auto plant = plants[block->map_pos + df::coord(x,y,0)])
         {
             if (auto raw = df::plant_raw::find(plant->material))
@@ -952,7 +958,7 @@ t_matpair MapExtras::BlockInfo::getBaseMaterial(df::tiletype tt, df::coord2d pos
     case GRASS_DARK:
     case GRASS_DRY:
     case GRASS_DEAD:
-        rv.mat_type = MaterialInfo::PLANT_BASE;
+        rv.mat_type = df::builtin_mats::PLANT_1;
         if (auto raw = df::plant_raw::find(grass[x][y]))
         {
             rv.mat_type = raw->material_defs.type[plant_material_def::basic_mat];
@@ -1034,8 +1040,8 @@ void MapExtras::BlockInfo::SquashVeins(df::map_block *mb, t_blockmaterials & mat
 {
     std::vector <df::block_square_event_mineralst *> veins;
     Maps::SortBlockEvents(mb,&veins);
-    memset(materials,-1,sizeof(materials));
-    memset(veintype, 0, sizeof(t_veintype));
+    materials = arr40d_neg1<t_blockmaterials>();
+    veintype.fill({});
 
     for (uint32_t x = 0;x<16;x++) for (uint32_t y = 0; y< 16;y++)
     {
@@ -1054,7 +1060,7 @@ void MapExtras::BlockInfo::SquashFrozenLiquids(df::map_block *mb, tiletypes40d &
 {
     std::vector <df::block_square_event_frozen_liquidst *> ices;
     Maps::SortBlockEvents(mb,NULL,&ices);
-    memset(frozen,0,sizeof(frozen));
+    frozen.fill({});
     for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
     {
         for (size_t i = 0; i < ices.size(); i++)
@@ -1089,7 +1095,7 @@ void MapExtras::BlockInfo::SquashGrass(df::map_block *mb, t_blockmaterials &mate
 {
     std::vector<df::block_square_event_grassst*> grasses;
     Maps::SortBlockEvents(mb, NULL, NULL, NULL, &grasses);
-    memset(materials,-1,sizeof(materials));
+    materials = arr40d_neg1<t_blockmaterials>();
     for (uint32_t x = 0; x < 16; x++) for (uint32_t y = 0; y < 16; y++)
     {
         int amount = 0;

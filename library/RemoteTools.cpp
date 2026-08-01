@@ -530,7 +530,7 @@ static command_result ListMaterials(color_ostream &stream,
 
     if (in->builtin())
     {
-        for (int i = 0; i < MaterialInfo::NUM_BUILTIN; i++)
+        for (int i = 0; i < df::builtin_mats::CREATURE_1; i++)
             listMaterial(out, i, -1, mask);
     }
 
@@ -549,7 +549,7 @@ static command_result ListMaterials(color_ostream &stream,
             auto praw = vec[i];
 
             for (size_t j = 0; j < praw->material.size(); j++)
-                listMaterial(out, MaterialInfo::CREATURE_BASE+j, i, mask);
+                listMaterial(out, df::builtin_mats::CREATURE_1+j, i, mask);
         }
     }
 
@@ -561,7 +561,7 @@ static command_result ListMaterials(color_ostream &stream,
             auto praw = vec[i];
 
             for (size_t j = 0; j < praw->material.size(); j++)
-                listMaterial(out, MaterialInfo::PLANT_BASE+j, i, mask);
+                listMaterial(out, df::builtin_mats::PLANT_1+j, i, mask);
         }
     }
 

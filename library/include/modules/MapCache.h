@@ -68,8 +68,8 @@ struct BiomeInfo {
     int16_t layer_stone[MAX_LAYERS];
 };
 
-typedef uint8_t t_veintype[16][16];
-typedef df::tiletype t_tilearr[16][16];
+using t_veintype = arr40d<uint8_t>;
+using t_tilearr = arr40d<df::tiletype>;
 
 class BlockInfo
 {

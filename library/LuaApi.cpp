@@ -72,6 +72,7 @@ distribution.
 #include "df/building_stockpilest.h"
 #include "df/building_tradedepotst.h"
 #include "df/building_workshopst.h"
+#include "df/builtin_mats.h"
 #include "df/burrow.h"
 #include "df/caravan_state.h"
 #include "df/construction.h"
@@ -491,7 +492,7 @@ static bool decode_matinfo(lua_State *state, MaterialInfo *info, bool numpair = 
             if (auto item = Lua::GetDFObject<df::item>(state, 1))
                 return info->decode(item);
             if (auto plant = Lua::GetDFObject<df::plant>(state, 1))
-                return info->decode(MaterialInfo::PLANT_BASE, plant->material);
+                return info->decode(df::builtin_mats::PLANT_1, plant->material);
             if (auto mvec = Lua::GetDFObject<df::material_vec_ref>(state, 1))
                 return info->decode(*mvec, luaL_checkint(state, 2));
         }
@@ -1359,6 +1360,7 @@ static uint32_t getTickCount() { return Core::getInstance().p->getTickCount(); }
 
 static std::filesystem::path getDFPath() { return Core::getInstance().p->getPath(); }
 static std::filesystem::path getHackPath() { return Core::getInstance().getHackPath(); }
+static std::filesystem::path getConfigPath() { return Core::getInstance().getConfigPath(); }
 
 static bool isWorldLoaded() { return Core::getInstance().isWorldLoaded(); }
 static bool isMapLoaded() { return Core::getInstance().isMapLoaded(); }
@@ -1384,6 +1386,7 @@ static const LuaWrapper::FunctionReg dfhack_module[] = {
     WRAP(getDFPath),
     WRAP(getTickCount),
     WRAP(getHackPath),
+    WRAP(getConfigPath),
     WRAP(isWorldLoaded),
     WRAP(isMapLoaded),
     WRAP(isSiteLoaded),
@@ -3127,6 +3130,34 @@ static int screen_readTile(lua_State *L)
     return 1;
 }
 
+static int screen_paintMapPortTile(lua_State *L)
+{
+    Pen pen;
+    Lua::CheckPen(L, &pen, 1);
+    int x = luaL_checkint(L, 2);
+    int y = luaL_checkint(L, 3);
+    if (lua_gettop(L) >= 4 && !lua_isnil(L, 4))
+    {
+        if (lua_type(L, 4) == LUA_TSTRING)
+            pen.ch = lua_tostring(L, 4)[0];
+        else
+            pen.ch = luaL_checkint(L, 4);
+    }
+    if (lua_gettop(L) >= 5 && !lua_isnil(L, 5))
+        pen.tile = luaL_checkint(L, 5);
+    lua_pushboolean(L, Screen::paintMapPortTile(pen, x, y));
+    return 1;
+}
+
+static int screen_readMapPortTile(lua_State *L)
+{
+    int x = luaL_checkint(L, 1);
+    int y = luaL_checkint(L, 2);
+    Pen pen = Screen::readMapPortTile(x, y, &df::graphic_map_portst::screentexpos_site);
+    Lua::Push(L, pen);
+    return 1;
+}
+
 static int screen_paintString(lua_State *L)
 {
     Pen pen;
@@ -3314,6 +3345,8 @@ static const luaL_Reg dfhack_screen_funcs[] = {
     { "getWindowSize", screen_getWindowSize },
     { "paintTile", screen_paintTile },
     { "readTile", screen_readTile },
+    { "paintMapPortTile", screen_paintMapPortTile },
+    { "readMapPortTile", screen_readMapPortTile },
     { "paintString", screen_paintString },
     { "fillRect", screen_fillRect },
     { "findGraphicsTile", screen_findGraphicsTile },

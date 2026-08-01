@@ -6,11 +6,11 @@ inline uint16_t &operator[] (int y)
 }
 void clear()
 {
-    memset(bits,0,sizeof(bits));
+    bits.fill(0);
 }
 void set_all()
 {
-    memset(bits,0xFF,sizeof(bits));
+    bits.fill(-1);
 }
 inline bool getassignment( const df::coord2d &xy )
 {

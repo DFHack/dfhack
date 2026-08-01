@@ -304,15 +304,16 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
     return CR_OK;
 }
 
-uint16_t fletcher16(uint8_t const *data, size_t bytes)
+uint16_t fletcher16(const void *data_, size_t bytes)
 {
+    auto data = static_cast<const std::byte*>(data_);
     uint16_t sum1 = 0xff, sum2 = 0xff;
 
     while (bytes) {
         size_t tlen = bytes > 20 ? 20 : bytes;
         bytes -= tlen;
         do {
-            sum2 += sum1 += *data++;
+            sum2 += sum1 += static_cast<uint8_t>(*data++);
         } while (--tlen);
         sum1 = (sum1 & 0xff) + (sum1 >> 8);
         sum2 = (sum2 & 0xff) + (sum2 >> 8);
@@ -335,7 +336,7 @@ void ConvertDfColor(int16_t index, RemoteFortressReader::ColorDefinition * out)
     out->set_blue(gps->uccolor[index][2]);
 }
 
-void ConvertDfColor(int16_t in[3], RemoteFortressReader::ColorDefinition * out)
+void ConvertDfColor(std::array<int16_t,3>& in, RemoteFortressReader::ColorDefinition * out)
 {
     int index = in[0] | (8 * in[2]);
     ConvertDfColor(index, out);
@@ -623,7 +624,7 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
     for (size_t i = 0; i < world->map.map_blocks.size(); i++)
     {
         df::map_block * block = world->map.map_blocks[i];
-        fletcher16((uint8_t*)(block->tiletype), 16 * 16 * sizeof(df::enums::tiletype::tiletype));
+        fletcher16((block->tiletype).data(), 16 * 16 * sizeof(df::enums::tiletype::tiletype));
     }
     clock_t end = clock();
     double elapsed_secs = double(end - start) / CLOCKS_PER_SEC;
@@ -633,12 +634,12 @@ static command_result CheckHashes(color_ostream &stream, const EmptyMessage *in)
 
 void CopyMat(RemoteFortressReader::MatPair * mat, int type, int index)
 {
-    if (type >= MaterialInfo::FIGURE_BASE && type < MaterialInfo::PLANT_BASE)
+    if (type >= df::builtin_mats::HIST_FIG_1 && type <= df::builtin_mats::HIST_FIG_200)
     {
         df::historical_figure * figure = df::historical_figure::find(index);
         if (figure)
         {
-            type -= MaterialInfo::GROUP_SIZE;
+            type = (type - df::builtin_mats::HIST_FIG_1) + df::builtin_mats::CREATURE_1;
             index = figure->race;
         }
     }
@@ -654,7 +655,7 @@ bool IsTiletypeChanged(DFCoord pos)
     uint16_t hash;
     df::map_block * block = Maps::getBlock(pos);
     if (block)
-        hash = fletcher16((uint8_t*)(block->tiletype), 16 * 16 * (sizeof(df::enums::tiletype::tiletype)));
+        hash = fletcher16((block->tiletype).data(), 16 * 16 * (sizeof(df::enums::tiletype::tiletype)));
     else
         hash = 0;
     if (hashes[pos] != hash)
@@ -672,7 +673,7 @@ bool IsDesignationChanged(DFCoord pos)
     uint16_t hash;
     df::map_block * block = Maps::getBlock(pos);
     if (block)
-        hash = fletcher16((uint8_t*)(block->designation), 16 * 16 * (sizeof(df::tile_designation)));
+        hash = fletcher16((block->designation).data(), 16 * 16 * (sizeof(df::tile_designation)));
     else
         hash = 0;
     if (waterHashes[pos] != hash)
@@ -816,9 +817,9 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
     MaterialInfo mat;
     for (size_t i = 0; i < raws->inorganics.all.size(); i++)
     {
-        mat.decode(0, i);
+        mat.decode(df::builtin_mats::INORGANIC, i);
         MaterialDefinition *mat_def = out->add_material_list();
-        mat_def->mutable_mat_pair()->set_mat_type(0);
+        mat_def->mutable_mat_pair()->set_mat_type(df::builtin_mats::INORGANIC);
         mat_def->mutable_mat_pair()->set_mat_index(i);
         mat_def->set_id(mat.getToken());
         mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
@@ -827,11 +828,11 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
             ConvertDFColorDescriptor(raws->inorganics.all[i]->material.state_color[GetState(&raws->inorganics.all[i]->material)], mat_def->mutable_state_color());
         }
     }
-    for (int i = 0; i < 19; i++)
+    for (int i = 0; i < df::builtin_mats::CREATURE_1; i++)
     {
         int k = -1;
-        if (i == 7)
-            k = 1;// for coal.
+        if (i == df::builtin_mats::COAL)
+            k = 1;// for coke and charcoal
         for (int j = -1; j <= k; j++)
         {
             mat.decode(i, j);
@@ -851,9 +852,9 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         df::creature_raw * creature = raws->creatures.all[i];
         for (size_t j = 0; j < creature->material.size(); j++)
         {
-            mat.decode(j + MaterialInfo::CREATURE_BASE, i);
+            mat.decode(j + df::builtin_mats::CREATURE_1, i);
             MaterialDefinition *mat_def = out->add_material_list();
-            mat_def->mutable_mat_pair()->set_mat_type(j + 19);
+            mat_def->mutable_mat_pair()->set_mat_type(j + df::builtin_mats::CREATURE_1);
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
@@ -868,9 +869,9 @@ static command_result GetMaterialList(color_ostream &stream, const EmptyMessage 
         df::plant_raw * plant = raws->plants.all[i];
         for (size_t j = 0; j < plant->material.size(); j++)
         {
-            mat.decode(j + 419, i);
+            mat.decode(j + df::builtin_mats::PLANT_1, i);
             MaterialDefinition *mat_def = out->add_material_list();
-            mat_def->mutable_mat_pair()->set_mat_type(j + 419);
+            mat_def->mutable_mat_pair()->set_mat_type(j + df::builtin_mats::PLANT_1);
             mat_def->mutable_mat_pair()->set_mat_index(i);
             mat_def->set_id(mat.getToken());
             mat_def->set_name(DF2UTF(mat.toString())); //find the name at cave temperature;
@@ -2095,14 +2096,14 @@ static void SetRegionTile(RegionTile * out, df::region_map_entry * e1)
             auto plantMat = out->add_plant_materials();
 
             plantMat->set_mat_index(pop->plant);
-            plantMat->set_mat_type(419);
+            plantMat->set_mat_type(df::builtin_mats::PLANT_1);
         }
         else if (pop->type == world_population_type::Tree)
         {
             auto plantMat = out->add_tree_materials();
 
             plantMat->set_mat_index(pop->plant);
-            plantMat->set_mat_type(419);
+            plantMat->set_mat_type(df::builtin_mats::PLANT_1);
         }
     }
 #if DF_VERSION_INT >= 43005

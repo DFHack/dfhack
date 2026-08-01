@@ -29,6 +29,8 @@ distribution.
 #include "Export.h"
 #include "Hooks.h"
 
+#include "modules/Filesystem.h"
+
 #include <algorithm>
 #include <atomic>
 #include <chrono>
@@ -154,8 +156,11 @@ namespace DFHack
         friend void ::dfhooks_sdl_loop();
         friend bool ::dfhooks_ncurses_key(int key);
     public:
-        /// Get the single Core instance or make one.
+        /// Get the current active Core instance. will assert if none exists
+        /// Use noInstance() to check first if unsure
         static Core& getInstance();
+        static bool noInstance() { return active_instance == nullptr; }
+
         /// check if the activity lock is owned by this thread
         bool isSuspended(void);
         /// Is everything OK?
@@ -189,6 +194,8 @@ namespace DFHack
         std::map<std::string, std::vector<std::string>> ListAliases();
         std::string GetAliasCommand(const std::string &name, bool ignore_params = false);
 
+        // note that this isn't valid until after DFHack is initialized by DF calling `dfhooks_init`
+        // that means that it's invalid during at-init static initialization
         std::filesystem::path getHackPath();
 
         bool isWorldLoaded() { return (last_world_data_ptr != nullptr); }
@@ -251,11 +258,26 @@ namespace DFHack
             return false;
         }
 
-    private:
-        DFHack::Console con;
+        // Note that this path should be treated as potentially changeable over the life of a Core instance
+        // Consumers should not cache this path in long-lived local variables
+        const std::filesystem::path getConfigPath()
+        {
+            return Filesystem::getInstallDir() / "dfhack-config";
+        }
+
+        const std::filesystem::path getConfigDefaultsPath()
+        {
+            return getHackPath() / "data" / "dfhack-config-defaults";
+        }
 
         Core();
         ~Core();
+
+    private:
+        static Core* active_instance;
+
+        DFHack::Console con;
+
 
         struct Private;
         std::unique_ptr<Private> d;
@@ -274,6 +296,8 @@ namespace DFHack
         void onUpdate(color_ostream &out);
         void onStateChange(color_ostream &out, state_change_event event);
         void handleLoadAndUnloadScripts(color_ostream &out, state_change_event event);
+
+        bool loadScriptPaths(color_ostream& out, bool silent = false);
 
         Core(Core const&) = delete;
         void operator=(Core const&) = delete;

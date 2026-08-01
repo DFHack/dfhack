@@ -23,6 +23,8 @@
 #include <array>
 #include <chrono>
 #include <deque>
+#include <filesystem>
+#include <fstream>
 #include <functional>
 #include <list>
 #include <optional>
@@ -61,6 +63,16 @@ using coord = df::coord2d;
 constexpr int wdim = 768; // dimension of a world tile
 constexpr int rdim = 48;  // dimension of a region tile
 
+static std::ofstream open_output_file(
+    const std::filesystem::path& filename,
+    std::ios_base::openmode mode = std::ios::out | std::ios::trunc)
+{
+    auto base = Core::getInstance().getConfigPath() / "map-export";
+    std::filesystem::create_directories(base);
+    return std::ofstream(base / filename, mode);
+}
+
+
 /**
  * Takes a vector of coordinates interpreted as global region tile coordinates
  * (i.e. 16 region tiles per world tile) and emits a WKT path in GIS-compatible
@@ -74,21 +86,21 @@ auto print_path(std::ostream &out, const std::vector<coord> &path) {
     print_range(out, path, print_point, "(", ",", ")");
 }
 
-df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t dir) {
-    switch (dir) {
-        case 1: world_x--   ; world_y++; break;
-        case 2:             ; world_y++; break;
-        case 3: world_x++   ; world_y++; break;
-        case 4: world_x--   ;          ; break;
-        // case 5 induces no change
-        case 6: world_x++   ;          ; break;
-        case 7: world_x--   ; world_y--; break;
-        case 8:             ; world_y--; break;
-        case 9: world_x++   ; world_y--; break;
-    }
-    world_x = std::clamp(world_x,(int16_t)0,(int16_t)(world->world_data->world_width - 1));
-    world_y = std::clamp(world_y,(int16_t)0,(int16_t)(world->world_data->world_height - 1));
-    return { world_x, world_y };
+df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t offset_dir) {
+    constexpr auto biome_offset = std::to_array<std::pair<int16_t, int16_t>>({
+        {-1, 1}, {0, 1}, {1, 1},
+        {-1, 0}, {0, 0}, {1, 0},
+        {-1,-1}, {0,-1}, {1,-1}
+    });
+
+    auto [diff_x, diff_y] = biome_offset[std::clamp(offset_dir, (int8_t)1, (int8_t)9) - 1];
+    return {
+        (int16_t)std::clamp(world_x + diff_x,0,world->world_data->world_width - 1),
+        (int16_t)std::clamp(world_y + diff_y,0,world->world_data->world_height - 1)
+    };
+}
+df::coord2d get_world_index(coord world_pos, int8_t offset_dir) {
+    return get_world_index(world_pos.x, world_pos.y, offset_dir);
 }
 
 const char* describe_surroundings(int savagery, int evilness) {
@@ -102,10 +114,14 @@ const char* describe_surroundings(int savagery, int evilness) {
     return surroundings[3 * evilness_index + savagery_index];
 }
 
-
 static command_result do_command(color_ostream &out, vector<string> &parameters);
+static command_result export_regions(color_ostream &out);
+static command_result export_sites(color_ostream &out);
+static command_result export_rivers(color_ostream &out);
+static command_result export_elevation(color_ostream &out);
+
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
-    DEBUG(log,out).print("initializing %s\n", plugin_name);
+    DEBUG(log,out).print("initializing {}\n", plugin_name);
 
     commands.push_back(PluginCommand(
         plugin_name,
@@ -114,11 +130,6 @@ DFhackCExport command_result plugin_init(color_ostream &out, std::vector <Plugin
 
     return CR_OK;
 }
-
-static command_result export_region_tiles(color_ostream &out);
-static command_result export_sites(color_ostream &out);
-static command_result export_rivers(color_ostream &out);
-static command_result export_elevation(color_ostream &out);
 
 static command_result do_command(color_ostream &out, vector<string> &parameters)
 {
@@ -129,38 +140,30 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
         return CR_WRONG_USAGE;
     }
 
-    if (parameters.size() && parameters[0] == "sites")
-    {
-        return export_sites(out);
-    }
-    else if (parameters.size() && parameters[0] == "rivers") {
-        return export_rivers(out);
-    }
-    else if (parameters.size() && parameters[0] == "regions") {
-        return export_region_tiles(out);
-    }
-    else if (parameters.size() && parameters[0] == "elevation") {
-        return export_elevation(out);
-    }
-    else
-    {
-        auto ok_region = export_region_tiles(out);
-        auto ok_sites = ok_region == CR_OK ? export_sites(out) : ok_region;
-        return ok_sites == CR_OK ? export_rivers(out) : ok_sites;
-    }
+    const bool run_all = parameters.empty() || std::ranges::find(parameters, "all") != parameters.end();
+
+    auto result = CR_WRONG_USAGE;
+    const auto run_if_selected = [&](std::string name, command_result(*export_fn)(color_ostream &out)) {
+        if (result != CR_FAILURE && (run_all || std::ranges::find(parameters, name) != parameters.end()))
+        {
+            result = export_fn(out);
+        }
+    };
+
+    run_if_selected("regions", &export_regions);
+    run_if_selected("sites", &export_sites);
+    run_if_selected("rivers", &export_rivers);
+    run_if_selected("elevation", &export_elevation);
+
+    return result;
 }
 
 /********************************************************************** */
 
 static command_result export_sites(color_ostream &out)
 {
-    out.print("exporting sites... ");
-    out.flush();
-    const auto start{std::chrono::steady_clock::now()};
-
     // ensure that we have an output file
-    std::string filename("sites.csv");
-    std::ofstream out_file(filename, std::ios::out | std::ios::trunc);
+    auto out_file = open_output_file("sites.csv");
     if (!out_file) {
         return CR_FAILURE;
     }
@@ -185,7 +188,7 @@ static command_result export_sites(color_ostream &out)
         df::creature_raw *race = nullptr;
         if (owner){
             race = df::creature_raw::find(owner->race);
-            DEBUG(warning, out).print("owner (%d) of site (%d) has undefined race (%d)", owner->id, site->id, owner->race);
+            DEBUG(warning, out).print("owner ({}) of site ({}) has undefined race ({})", owner->id, site->id, owner->race);
             if (!race)            {
                 df::creature_raw::find(civ->race);
             }
@@ -215,17 +218,12 @@ static command_result export_sites(color_ostream &out)
         print_range(out_file, std::vector<vector<coord>>{path}, print_path , "POLYGON(", ",", ")\n" );
     }
 
-
-    const auto finish{std::chrono::steady_clock::now()};
-    const std::chrono::duration<double> elapsed_seconds{finish - start};
-    out.print("done in %.2fs !\n", elapsed_seconds.count());
     return CR_OK;
 }
 
 /********************************************************************** */
 
-
-
+// reverse lex-ordering (topmost leftmost tile is smallest)
 bool region_order(coord p1, coord p2) {
     return p1.y < p2.y || (p1.y == p2.y && p1.x < p2.x);
 };
@@ -259,6 +257,14 @@ coord advance(coord pos, direction dir) {
     return pos + as_offset(dir);
 }
 
+
+/**
+ *  Look-ahead relative to the direction of movement:
+ *
+ *  L ↑ R    | L
+ *  - + -  → + →
+ *    ↑      | R
+ */
 std::pair<bool,bool> ahead(const std::vector<coord> &component, coord pos, direction dir) {
     auto test = [&](int16_t x, int16_t y){
         coord offset{x,y};
@@ -279,19 +285,17 @@ std::pair<bool,bool> ahead(const std::vector<coord> &component, coord pos, direc
     }
 }
 
-static command_result export_region_tiles(color_ostream &out)
+static command_result export_regions(color_ostream &out)
 {
-    out.print("%lu / %d region map tiles loaded\n",
+    out.print("{} / {} region map tiles loaded\n",
         world->world_data->midmap_data.region_details.size(),
         world->world_data->world_width * world->world_data->world_height
     );
-    out.print("exporting map... \n");
-    out.flush();
+    out.print("exporting map... ");
     const auto start{std::chrono::steady_clock::now()};
 
     // ensure that we have an output file
-    std::string filename("map.csv");
-    std::ofstream out_file(filename, std::ios::out | std::ios::trunc);
+    auto out_file = open_output_file("map.csv");
     if (!out_file) {
         return CR_FAILURE;
     }
@@ -308,25 +312,23 @@ static command_result export_region_tiles(color_ostream &out)
 
     /* Preprocessing: cluster region tiles by the world tile used for the biome information */
 
-    // map world tile coord -> vector of region tiles referencing of world title
+    // map world tile coord -> vector of region tiles referencing world title for biome information
     std::unordered_map<coord,std::vector<coord>> world_tile_region;
 
     // iterating over the region details allows the user to do partial map exports
-    // by manually scrolling on the embark site selection
+    // by manually scrolling on the zoomed embark selection map
     for (auto const region_details : world->world_data->midmap_data.region_details) {
-        auto world_x = region_details->pos.x;
-        auto world_y = region_details->pos.y;
+        auto &world_pos = region_details->pos;
         for (int region_x = 0; region_x < 16; ++region_x) {
             for (int region_y = 0; region_y < 16; ++region_y)
             {
-                auto biome_tile = get_world_index(world_x, world_y, region_details->biome[region_x][region_y]);
-                world_tile_region[biome_tile].emplace_back(16 * world_x + region_x, 16 * world_y + region_y);
+                auto biome_tile = get_world_index(world_pos, region_details->biome[region_x][region_y]);
+                world_tile_region[biome_tile].emplace_back(world_pos * 16 + coord(region_x, region_y));
             }
         }
     }
 
-    out.print("processing %ld world tile regions\n", world_tile_region.size());
-
+    // out.print("processing {} world tile regions\n", world_tile_region.size());
 
     static std::array<coord,4> directions{
         as_offset(direction::North),
@@ -342,13 +344,17 @@ static command_result export_region_tiles(color_ostream &out)
          // sorting the region provides O(log n) membership test.
          std::ranges::sort(region, region_order);
 
-        /* Phase I : compute the connected components of the world tile region */
+        /**
+         * Phase I : compute the connected components of the world tile region using DFS algorithm.
+         * (except for the southern and eastern map edge, all world tile regions
+         * should have a single component)
+         */
 
-        // component_assignment[i] is the component id of region[i]
+        // component_assignment[i] is the component id of region[i] (0 means unassigned)
         std::vector<unsigned int> component_assignment;
         component_assignment.resize(region.size(),0);
 
-        // (indices of) blocks in the current component that have been discovered but not yet explored
+        // (indices of) region tiles in the current component that have been discovered but not yet explored
         std::deque<size_t> agenda;
         unsigned int current_component = 0;
 
@@ -367,9 +373,9 @@ static command_result export_region_tiles(color_ostream &out)
                 auto pos = region[pos_idx];
 
                 for (const auto& offset : directions) {
-                    auto lb = std::ranges::lower_bound(region, pos + offset, region_order);
-                    if (lb != region.end() && *lb == pos + offset) {
-                        auto n_idx = std::distance(region.begin(), lb);
+                    const auto it = std::ranges::lower_bound(region, pos + offset, region_order);
+                    if (it != region.end() && *it == pos + offset) {
+                        auto n_idx = std::distance(region.begin(), it);
                         if (component_assignment[n_idx] == 0) {
                             component_assignment[n_idx] = current_component;
                             agenda.push_back(n_idx);
@@ -487,7 +493,7 @@ static command_result export_region_tiles(color_ostream &out)
 
     const auto finish{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{finish - start};
-    out.print("done in %f s !\n", elapsed_seconds.count());
+    out.print("done in {} s !\n", elapsed_seconds.count());
     return CR_OK;
 }
 
@@ -507,18 +513,37 @@ struct river_tile {
 struct gate {
     int active,min,max;
 
-    static gate get(const df::world_region_details *const region_details, int region_x, int region_y, direction dir) {
+    static gate get(
+        const df::world_region_details *const region_details,
+        int region_x, int region_y, direction dir
+    ) {
         auto& vertical = region_details->rivers_vertical;
         auto& horizontal = region_details->rivers_horizontal;
         switch (dir) {
             case direction::North:
-                return { vertical.active[region_x][region_y], vertical.x_min[region_x][region_y], vertical.x_max[region_x][region_y] };
+                return {
+                    vertical.active[region_x][region_y],
+                    vertical.x_min[region_x][region_y],
+                    vertical.x_max[region_x][region_y]
+                };
             case direction::West:
-                return { horizontal.active[region_x][region_y], horizontal.y_min[region_x][region_y], horizontal.y_max[region_x][region_y] };
+                return {
+                    horizontal.active[region_x][region_y],
+                    horizontal.y_min[region_x][region_y],
+                    horizontal.y_max[region_x][region_y]
+                };
             case direction::South:
-                return { vertical.active[region_x][region_y+1], vertical.x_min[region_x][region_y+1], vertical.x_max[region_x][region_y+1] };
+                return {
+                    vertical.active[region_x][region_y+1],
+                    vertical.x_min[region_x][region_y+1],
+                    vertical.x_max[region_x][region_y+1]
+                };
             case direction::East:
-                return { horizontal.active[region_x+1][region_y], horizontal.y_min[region_x+1][region_y], horizontal.y_max[region_x+1][region_y] };
+                return {
+                    horizontal.active[region_x+1][region_y],
+                    horizontal.y_min[region_x+1][region_y],
+                    horizontal.y_max[region_x+1][region_y]
+                };
             default:
                 assert(false);
                 return {};
@@ -543,8 +568,7 @@ bool is_land(const df::world_region_details *const region_details, int16_t regio
 static command_result export_rivers(color_ostream &out)
 {
     // ensure that we have an output file
-    std::string filename("rivers.csv");
-    std::ofstream out_file(filename, std::ios::out | std::ios::trunc);
+    auto out_file = open_output_file("rivers.csv");
     if (!out_file) {
         return CR_FAILURE;
     }
@@ -645,27 +669,13 @@ static command_result export_rivers(color_ostream &out)
 
 /********************************************************************** */
 
-static std::string vrtTemplate = R"(
-<VRTDataset rasterXSize="{WIDTH}" rasterYSize="{HEIGHT}">
-  <SRS>EPSG:3857</SRS>
-  <GeoTransform>0,48,0,0,0,-48</GeoTransform>
-  <VRTRasterBand dataType="Int16" band="1" subClass="VRTRawRasterBand">
-    <SourceFilename relativeToVRT="1">elevation.dat</SourceFilename>
-    <ImageOffset>0</ImageOffset>
-    <PixelOffset>2</PixelOffset>
-    <LineOffset>{LINE_OFFSET}</LineOffset>
-    <ByteOrder>LSB</ByteOrder>
-  </VRTRasterBand>
-</VRTDataset>
-)";
-
-
 template<typename T>
-struct matrix {
+class matrix {
     std::size_t ncols;
     std::size_t nrows;
     std::vector<T> _data;
 
+public:
     matrix(std::size_t cols, std::size_t rows) : ncols(cols), nrows(rows), _data(cols * rows) {};
 
     T& operator()(std::size_t col, std::size_t row) {
@@ -680,15 +690,11 @@ struct matrix {
 static command_result export_elevation(color_ostream &out)
 {
     // ensure that we have an output file
-    std::string data_filename("elevation.dat");
-    std::ofstream data_file(data_filename, std::ios::out | std::ios::trunc | std::ios::binary);
-
-    std::string vrt_filename("elevation.vrt");
-    std::ofstream vrt_file(vrt_filename, std::ios::out | std::ios::trunc);
+    auto data_file = open_output_file("elevation.dat", std::ios::out | std::ios::trunc | std::ios::binary);
+    auto vrt_file = open_output_file("elevation.vrt");
     if (!data_file || !vrt_file) {
         return CR_FAILURE;
     }
-
 
     auto world_width = world->world_data->world_width * 16;
     auto world_height = world->world_data->world_height * 16;
@@ -707,13 +713,26 @@ static command_result export_elevation(color_ostream &out)
         }
     }
 
-    data_file.write(
-        reinterpret_cast<const char*>(height_map.data()), height_map.size() * sizeof(int16_t));
+    data_file.write(reinterpret_cast<const char*>(height_map.data()), height_map.size() * sizeof(int16_t));
+
+    // provide an interpretation for the elevation map consistent with the remaining exports
+    const std::string vrtTemplate =
+R"(<VRTDataset rasterXSize="{WIDTH}" rasterYSize="{HEIGHT}">
+<SRS>EPSG:3857</SRS>
+<GeoTransform>0,48,0,0,0,-48</GeoTransform>
+<VRTRasterBand dataType="Int16" band="1" subClass="VRTRawRasterBand">
+    <SourceFilename relativeToVRT="1">elevation.dat</SourceFilename>
+    <ImageOffset>0</ImageOffset>
+    <PixelOffset>2</PixelOffset>
+    <LineOffset>{LINE_OFFSET}</LineOffset>
+    <ByteOrder>LSB</ByteOrder>
+</VRTRasterBand>
+</VRTDataset>
+)";
 
     auto vrt = std::regex_replace(vrtTemplate, std::regex("\\{WIDTH\\}"), std::to_string(world_width));
     vrt = std::regex_replace(vrt, std::regex("\\{HEIGHT\\}"), std::to_string(world_height));
     vrt = std::regex_replace(vrt, std::regex("\\{LINE_OFFSET\\}"), std::to_string(world_width * sizeof(int16_t)));
-
     vrt_file << vrt;
 
     return CR_OK;

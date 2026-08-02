@@ -80,11 +80,11 @@ aside.dfhack-tool-summary p:last-child {
    margin-bottom: 0;
 }
 
-table {
+table.dfhack-param-table {
     table-layout: fixed;
     width: 110%;
 }
 
-table span.pre {
+table.dfhack-param-table span.pre {
     white-space: wrap;
 }

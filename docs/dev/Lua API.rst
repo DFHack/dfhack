@@ -1065,6 +1065,7 @@ Translation module
   **Parameters:**
 
   .. list-table::
+    :class: dfhack-param-table
     :header-rows: 1
     :widths: 21 60 19
 

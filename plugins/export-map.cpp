@@ -22,11 +22,13 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cmath>
 #include <deque>
 #include <filesystem>
 #include <fstream>
 #include <functional>
 #include <list>
+#include <numeric>
 #include <optional>
 #include <string>
 #include <regex>
@@ -159,6 +161,9 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 }
 
 /********************************************************************** */
+/* Site Export                                                          */
+/********************************************************************** */
+
 
 static command_result export_sites(color_ostream &out)
 {
@@ -221,6 +226,8 @@ static command_result export_sites(color_ostream &out)
     return CR_OK;
 }
 
+/********************************************************************** */
+/* Region Map Export                                                    */
 /********************************************************************** */
 
 // reverse lex-ordering (topmost leftmost tile is smallest)
@@ -498,17 +505,99 @@ static command_result export_regions(color_ostream &out)
 }
 
 /********************************************************************** */
+/* River Export                                                         */
+/********************************************************************** */
 
+//
 // used for global coordinates at local tile granularity (129*768 = 99072 doesn't fit into df::coord2d)
+template<typename T>
 struct gcoord {
-    int x,y;
+    T x, y;
+
+    gcoord() = default;
+    gcoord(T x, T y) : x(x), y(y) {}
+
+    template<typename U>
+    explicit gcoord(const gcoord<U> &other) : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)) {};
+
+    gcoord operator+(const gcoord &other) const
+    {
+        return {x + other.x, y + other.y};
+    }
+
+    gcoord operator-(const gcoord &other) const
+    {
+        return {x - other.x, y - other.y};
+    }
+
+    gcoord operator*(T s) const
+    {
+        return {x * s, y * s};
+    }
+
+    gcoord operator/(T s) const
+    {
+        return {x / s, y / s};
+    }
+
+    static T dotp(const gcoord& a, const gcoord& b)
+    {
+        return a.x * b.x + a.y * b.y;
+    }
 };
+
+// linear interpolation between two points
+static gcoord<double> lerp(gcoord<double> A, gcoord<double> B, double t)
+{
+    return A + (B - A) * t;
+}
+
+// "orthogonal" projection of the point P onto the line segment AB
+static gcoord<double> project_onto_line(gcoord<double> A, gcoord<double> B, gcoord<double> P)
+{
+    auto AB = B - A;
+    auto AP = P - A;
+    auto t = gcoord<double>::dotp(AP, AB) / gcoord<double>::dotp(AB, AB);
+    return A + AB * std::clamp(t, 0.0, 1.0);
+}
+
 
 struct river_tile {
-    using polygon_t = std::list<gcoord>;
+    using polygon_t = std::vector<gcoord<int>>;
     polygon_t polygon;
-    //std::optional<polygon_t::iterator> north, south, west, east;
 };
+
+/**
+ * To get reasonably-looking river confluences, we project the centroid of all
+ * river gates onto the line segments between the river gates and then
+ * interpolate between the centroid and the projection point.
+ */
+static void fix_confluence_tiles(river_tile::polygon_t& polygon)
+{
+    assert(polygon.size() > 4 && polygon.size() % 2 == 0);
+
+    auto centroid =
+        gcoord<double>(std::reduce(polygon.begin(), polygon.end())) / static_cast<double>(polygon.size());
+
+    river_tile::polygon_t inset_polygon;
+
+    for (size_t i = 0; i + 1 < polygon.size(); i += 2) {
+        auto pair_start = polygon[i];
+        auto pair_end = polygon[i + 1];
+        auto next_pair_start = polygon[(i + 2) % polygon.size()];
+
+        inset_polygon.emplace_back(pair_start);
+        inset_polygon.emplace_back(pair_end);
+
+        auto projection = project_onto_line(gcoord<double>(pair_end), gcoord<double>(next_pair_start), centroid);
+        auto inset_point = lerp(projection, centroid, 0.6);
+        inset_polygon.emplace_back(gcoord<int>(inset_point));
+    }
+
+    polygon = std::move(inset_polygon);
+}
+
+
 
 struct gate {
     int active,min,max;
@@ -598,7 +687,7 @@ static command_result export_rivers(color_ostream &out)
         for (int region_x = 0; region_x < 16; ++region_x) {
             for (int region_y = 0; region_y < 16; ++region_y)
             {
-                gcoord base = { world_x * wdim + region_x * rdim, world_y * wdim + region_y * rdim };
+                gcoord<int> base = { world_x * wdim + region_x * rdim, world_y * wdim + region_y * rdim };
 
                 auto north = gate::get(region_details, region_x, region_y, direction::North);
                 auto west = gate::get(region_details, region_x, region_y, direction::West);
@@ -632,6 +721,10 @@ static command_result export_rivers(color_ostream &out)
                     tile.polygon.emplace_back(base.x + rdim, base.y + east.min);
                 }
 
+                if (tile.polygon.size() > 4) {
+                    fix_confluence_tiles(tile.polygon);
+                }
+
                 auto r_idx = world_river.at({world_x, world_y});
                 tile_index[r_idx][ coord(world_x * 16 + region_x, world_y * 16 + region_y) ] = std::move(tile);
             }
@@ -650,7 +743,7 @@ static command_result export_rivers(color_ostream &out)
         bool first = true;
         for (auto &[tile_pos, tile] : river_index) {
                 tile.polygon.emplace_back(*tile.polygon.begin());
-                auto print_position = [](std::ostream &out, gcoord pos) {
+                auto print_position = [](std::ostream &out, gcoord<int> pos) {
                     out << pos.x << " " << -pos.y;
                 };
                 if (first) {
@@ -667,6 +760,8 @@ static command_result export_rivers(color_ostream &out)
     return CR_OK;
 }
 
+/********************************************************************** */
+/* Elevation Map Export                                                 */
 /********************************************************************** */
 
 template<typename T>

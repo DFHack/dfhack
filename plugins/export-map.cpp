@@ -80,7 +80,7 @@ static std::ofstream open_output_file(
  * (i.e. 16 region tiles per world tile) and emits a WKT path in GIS-compatible
  * local tile coordinates (negative y-coordinates, 48 stepts per region tile)
  */
-auto print_path(std::ostream &out, const std::vector<coord> &path) {
+static void print_path(std::ostream &out, const std::vector<coord> &path) {
     auto scale = rdim;
     assert(path.size());
     auto print_point = [scale](std::ostream &out, const coord &pos){
@@ -88,7 +88,7 @@ auto print_path(std::ostream &out, const std::vector<coord> &path) {
     print_range(out, path, print_point, "(", ",", ")");
 }
 
-df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t offset_dir) {
+static df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t offset_dir) {
     constexpr auto biome_offset = std::to_array<std::pair<int16_t, int16_t>>({
         {-1, 1}, {0, 1}, {1, 1},
         {-1, 0}, {0, 0}, {1, 0},
@@ -101,7 +101,7 @@ df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t offset_dir)
         (int16_t)std::clamp(world_y + diff_y,0,world->world_data->world_height - 1)
     };
 }
-df::coord2d get_world_index(coord world_pos, int8_t offset_dir) {
+static df::coord2d get_world_index(coord world_pos, int8_t offset_dir) {
     return get_world_index(world_pos.x, world_pos.y, offset_dir);
 }
 
@@ -167,6 +167,10 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
 
 static command_result export_sites(color_ostream &out)
 {
+    out.print("exporting sites ... ");
+    out.flush();
+    const auto start{std::chrono::steady_clock::now()};
+
     // ensure that we have an output file
     auto out_file = open_output_file("sites.csv");
     if (!out_file) {
@@ -223,6 +227,10 @@ static command_result export_sites(color_ostream &out)
         print_range(out_file, std::vector<vector<coord>>{path}, print_path , "POLYGON(", ",", ")\n" );
     }
 
+    const auto finish{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{finish - start};
+    out.print("done in {:2f} s !\n", elapsed_seconds.count());
+
     return CR_OK;
 }
 
@@ -237,15 +245,15 @@ bool region_order(coord p1, coord p2) {
 
 enum class direction : int { North = 0, West = 1, South = 2, East = 3 };
 
-direction turn_left(direction dir) {
+static constexpr direction turn_left(direction dir) {
     return (direction)(((int)dir+1) % 4);
 }
 
-direction turn_right(direction dir) {
+static constexpr direction turn_right(direction dir) {
     return (direction)(((int)dir+3) % 4);
 }
 
-coord as_offset(direction dir) {
+static coord as_offset(direction dir) {
     switch (dir) {
         case direction::North:
             return { 0, -1 };
@@ -260,7 +268,7 @@ coord as_offset(direction dir) {
     }
 }
 
-coord advance(coord pos, direction dir) {
+static coord advance(coord pos, direction dir) {
     return pos + as_offset(dir);
 }
 
@@ -272,7 +280,7 @@ coord advance(coord pos, direction dir) {
  *  - + -  → + →
  *    ↑      | R
  */
-std::pair<bool,bool> ahead(const std::vector<coord> &component, coord pos, direction dir) {
+static std::pair<bool,bool> ahead(const std::vector<coord> &component, coord pos, direction dir) {
     auto test = [&](int16_t x, int16_t y){
         coord offset{x,y};
         return std::ranges::binary_search(component, pos + offset, region_order);
@@ -298,7 +306,8 @@ static command_result export_regions(color_ostream &out)
         world->world_data->midmap_data.region_details.size(),
         world->world_data->world_width * world->world_data->world_height
     );
-    out.print("exporting map... ");
+    out.print("exporting map ... ");
+    out.flush();
     const auto start{std::chrono::steady_clock::now()};
 
     // ensure that we have an output file
@@ -500,7 +509,7 @@ static command_result export_regions(color_ostream &out)
 
     const auto finish{std::chrono::steady_clock::now()};
     const std::chrono::duration<double> elapsed_seconds{finish - start};
-    out.print("done in {} s !\n", elapsed_seconds.count());
+    out.print("done in {:2f} s !\n", elapsed_seconds.count());
     return CR_OK;
 }
 
@@ -645,7 +654,7 @@ struct gate {
 };
 
 
-bool is_land(const df::world_region_details *const region_details, int16_t region_x, int16_t region_y) {
+static bool is_land(const df::world_region_details *const region_details, int16_t region_x, int16_t region_y) {
     CHECK_NULL_POINTER(region_details);
     auto [world_x, world_y] = region_details->pos;
     auto biome_tile = get_world_index(world_x, world_y, region_details->biome[region_x][region_y]);
@@ -656,13 +665,26 @@ bool is_land(const df::world_region_details *const region_details, int16_t regio
 
 static command_result export_rivers(color_ostream &out)
 {
+    out.print("exporting rivers ... ");
+    out.flush();
+    const auto start{std::chrono::steady_clock::now()};
+
     // ensure that we have an output file
     auto out_file = open_output_file("rivers.csv");
     if (!out_file) {
         return CR_FAILURE;
     }
 
-    // create lookup table for rivers based on world tile coordinates
+
+    /**
+     * In DwarfFortress, a world tile can only have at most one river. As a
+     * consequence, rivers do not end at a confluence point but they already
+     * change their name when they enter the world tile containing the
+     * confluence. Grouping river tiles by world tile allows us to only output
+     * one multipolygon feature per river.
+     */
+
+    // create lookup table for rivers based on world tile coordinates (index into world_data->rivers)
     std::unordered_map<coord,size_t> world_river;
 
     // assign river end first, so that it can be overridden by proper path elements
@@ -679,8 +701,8 @@ static command_result export_rivers(color_ostream &out)
         }
     }
 
-    // river idx -> region tile coord -> tile
-    std::unordered_map<size_t,std::unordered_map<coord,river_tile>> tile_index;
+    // river idx -> river tiles
+    std::unordered_map<size_t,std::vector<river_tile>> tile_index;
 
     for (auto const region_details : world->world_data->midmap_data.region_details) {
         auto [world_x, world_y] = region_details->pos;
@@ -725,8 +747,9 @@ static command_result export_rivers(color_ostream &out)
                     fix_confluence_tiles(tile.polygon);
                 }
 
+                // locate the river using world coordinates and assign the tile
                 auto r_idx = world_river.at({world_x, world_y});
-                tile_index[r_idx][ coord(world_x * 16 + region_x, world_y * 16 + region_y) ] = std::move(tile);
+                tile_index[r_idx].push_back(std::move(tile));
             }
         }
     }
@@ -735,13 +758,14 @@ static command_result export_rivers(color_ostream &out)
     // generate output
     out_file << "name_df;name_en;geometry_wkt\n";
 
-    for (auto& [r_idx, river_index] : tile_index) {
+    for (auto& [r_idx, river_tiles] : tile_index) {
         auto river = world->world_data->rivers.at(r_idx);
         out_file << DF2UTF(Translation::translateName(&river->name, false)) << ";";
         out_file << DF2UTF(Translation::translateName(&river->name, true)) << ";";
         out_file << "MULTIPOLYGON(";
         bool first = true;
-        for (auto &[tile_pos, tile] : river_index) {
+        for (auto &tile : river_tiles) {
+                // close the polygon
                 tile.polygon.emplace_back(*tile.polygon.begin());
                 auto print_position = [](std::ostream &out, gcoord<int> pos) {
                     out << pos.x << " " << -pos.y;
@@ -756,6 +780,9 @@ static command_result export_rivers(color_ostream &out)
         out_file << ")\n";
     }
 
+    const auto finish{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{finish - start};
+    out.print("done in {:2f} s !\n", elapsed_seconds.count());
 
     return CR_OK;
 }
@@ -784,6 +811,10 @@ public:
 
 static command_result export_elevation(color_ostream &out)
 {
+    out.print("exporting elevation ... ");
+    out.flush();
+    const auto start{std::chrono::steady_clock::now()};
+
     // ensure that we have an output file
     auto data_file = open_output_file("elevation.dat", std::ios::out | std::ios::trunc | std::ios::binary);
     auto vrt_file = open_output_file("elevation.vrt");
@@ -829,6 +860,10 @@ R"(<VRTDataset rasterXSize="{WIDTH}" rasterYSize="{HEIGHT}">
     vrt = std::regex_replace(vrt, std::regex("\\{HEIGHT\\}"), std::to_string(world_height));
     vrt = std::regex_replace(vrt, std::regex("\\{LINE_OFFSET\\}"), std::to_string(world_width * sizeof(int16_t)));
     vrt_file << vrt;
+
+    const auto finish{std::chrono::steady_clock::now()};
+    const std::chrono::duration<double> elapsed_seconds{finish - start};
+    out.print("done in {:2f} s !\n", elapsed_seconds.count());
 
     return CR_OK;
 }

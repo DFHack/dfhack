@@ -756,7 +756,7 @@ int32_t Maps::addMaterialSpatter (df::coord pos, int16_t mat, int32_t matg, df::
         spatter->mat_type = mat;
         spatter->mat_index = matg;
         spatter->mat_state = state;
-        memset(spatter->amount, 0, sizeof(spatter->amount));
+        spatter->amount.fill({});
         spatter->min_temperature = spatter->max_temperature = 60001;
 
         uint16_t melt = matinfo.material->heat.melting_point;
@@ -876,8 +876,8 @@ int32_t Maps::addItemSpatter (df::coord pos, df::item_type i_type, int16_t i_sub
         spatter->mattype = i_subcat1;
         spatter->matindex = i_subcat2;
         spatter->print_variant = print_variant;
-        memset(spatter->amount, 0, sizeof(spatter->amount));
-        memset(spatter->flag, 0, sizeof(spatter->flag));
+        spatter->amount.fill({});
+        spatter->flag.fill({});
         spatter->min_temperature = spatter->max_temperature = 60001;
 
         if (Items::usesStandardMaterial(i_type))
@@ -1569,14 +1569,10 @@ void Maps::addBlockColumns(int32_t new_height)
 
             // Copy other potentially important metadata from prior air
             // layer
-            std::memcpy(air_block->lighting, last_air_block->lighting,
-                sizeof(air_block->lighting));
-            std::memcpy(air_block->temperature_1, last_air_block->temperature_1,
-                sizeof(air_block->temperature_1));
-            std::memcpy(air_block->temperature_2, last_air_block->temperature_2,
-                sizeof(air_block->temperature_2));
-            std::memcpy(air_block->region_offset, last_air_block->region_offset,
-                sizeof(air_block->region_offset));
+            air_block->lighting = last_air_block->lighting;
+            air_block->temperature_1 = last_air_block->temperature_1;
+            air_block->temperature_2 = last_air_block->temperature_2;
+            air_block->region_offset = last_air_block->region_offset;
 
             // Create tile designations to inform lighting and
             // outside markers
@@ -1598,9 +1594,9 @@ void Maps::addBlockColumns(int32_t new_height)
                 continue;
             }
             df::block_column_print_infost* glyphs = new df::block_column_print_infost;
-            std::ranges::copy(std::array{0,1,2,3}, glyphs->x);
-            std::ranges::copy(std::array{0,0,0,0}, glyphs->y);
-            std::ranges::copy(std::array{'e','x','p','^'}, glyphs->tile);
+            glyphs->x = {0,1,2,3};
+            glyphs->y = {0,0,0,0};
+            glyphs->tile = {'e','x','p','^'};
             column->unmined_glyphs.push_back(glyphs);
         }
         return true;

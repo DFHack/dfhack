@@ -66,13 +66,6 @@ namespace DFHack
 
     struct DFHACK_EXPORT MaterialInfo
     {
-        static const int NUM_BUILTIN = 19;
-        static const int GROUP_SIZE = 200;
-        static const int CREATURE_BASE = NUM_BUILTIN;
-        static const int FIGURE_BASE = NUM_BUILTIN + GROUP_SIZE;
-        static const int PLANT_BASE = NUM_BUILTIN + GROUP_SIZE * 2;
-        static const int END_BASE = NUM_BUILTIN + GROUP_SIZE * 3;
-
         int16_t type;
         int32_t index;
 

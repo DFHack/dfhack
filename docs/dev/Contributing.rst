@@ -120,6 +120,37 @@ Pull request guidelines
   or add "WIP" to the title. Otherwise, your pull request may be reviewed and/or
   merged prematurely.
 
+* Avoid using force pushes to your pull request branch after it has been reviewed,
+  as this can make it difficult for reviewers to see what has changed since their
+  last review. If you need to make changes, consider creating a new commit instead
+  of amending or rebasing. We neither enforce nor recommend a "single commit" rule; if you do
+  choose to squash your commits, please ensure that the commit message is clear and descriptive of the changes made.
+  If your pull request has an unusually large number of commits, a maintainer may
+  request that you squash your commits into a smaller number of commits before merging.
+
+* All pull requests must be accompanied by a description of the changes made, and
+  any relevant information for reviewers. If your pull request addresses an
+  issue, please include a reference to that issue in the description (e.g.
+  "Fixes #1234"). If your pull request is related to another pull request, please
+  include a reference to that pull request in the description (e.g. "Related to
+  #1234").
+
+* All pull requests which have user facing changes, including all new features, bug fixes, or
+  changes to existing functionality, must include an entry in the "Future" section of
+  the changelog for the relevant repository. If your pull request is merged, this entry
+  will be added to the appropriate changelog. These entries are used when preparing the release
+  notes for each release, so please be sure to include a clear and concise description
+  of the changes made. See `build-changelog` for more information on the changelog format.
+  Changes that do not require a changelog entry are mainly those that are purely internal,
+  such as refactoring not intended to change semantics, code cleanup, changes to CI implementation
+  or to documentation, or changes directly related to the release process. When in doubt,
+  assume a changelog entry will be required.
+
+* Pull requests that add or modify tools must include a corresponding update to the documentation
+  for that tool. Similarly, pull requests that add or modify either the C++ or Lua APIs
+  must include a corresponding update to the appropriate API documentation.
+  See `docs-standards` for details.
+
 Other ways to help
 ==================
 DFHack is a software project, but there's a lot more to it than programming.

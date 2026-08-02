@@ -2929,12 +2929,9 @@ Common parameters to these functions include:
 * ``x``, ``y``: screen coordinates in tiles; the upper left corner of the screen
   is ``x = 0, y = 0``
 * ``pen``: a `pen object <lua-screen-pen>`
-* ``map``: a boolean indicating whether to draw to a separate map buffer
-  (defaults to false, which is suitable for off-map text or a screen that hides
-  the map entirely). Note that only third-party plugins like TWBT currently
-  implement a separate map buffer. If no such plugins are enabled, passing
-  ``true`` has no effect. However, this parameter should still be used to ensure
-  that scripts work properly with such plugins.
+* ``map``: a boolean (defaults to false) indicating whether to draw to a
+  separate map buffer. The Steam version uses separate map buffers with square
+  tiles for for all types of maps (i.e. fort, region, and world).
 
 Functions:
 
@@ -2960,14 +2957,30 @@ Functions:
 * ``dfhack.screen.paintTile(pen,x,y[,char[,tile[,map]]])``
 
   Paints a tile using given parameters. `See below <lua-screen-pen>` for a
-  description of ``pen``.
+  description of ``pen``. The map argument is only supported for local maps
+  (i.e. fort mode and adventure mode outside of fast travel). The ``char`` and
+  ``tile`` arguments allow overriding the respective parts of the ``pen``
+  without constructing a new pen beforehand.
 
   Returns *false* on error, e.g., if coordinates are out of bounds
+
+* ``dfhack.screen.paintMapPortTile(pen,x,y[,char[,tile]])``
+
+  Paints a tile using given parameters onto the interface texpos layer of a map
+  port (e.g., the world map or the zoomed-in map for embark selection). The
+  ``char`` and ``tile`` arguments work as above.
 
 * ``dfhack.screen.readTile(x,y[,map])``
 
   Retrieves the contents of the specified tile from the screen buffers.
   Returns a `pen object <lua-screen-pen>`, or *nil* if invalid or TrueType.
+
+* ``dfhack.screen.readMapPortTile(x,y)``
+
+  Retrieves the contents of the specified tile from the screen buffers. Returns
+  a `pen object <lua-screen-pen>`, or *nil* if invalid.
+
+  For now only looks at the ``sites`` textpos layer.
 
 * ``dfhack.screen.paintString(pen,x,y,text[,map])``
 

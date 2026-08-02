@@ -59,15 +59,24 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `buildingplan`: restore planner UI elements: hollow constructions, only engraved slabs, only empty cages, weapon count
 
 ## Misc Improvements
+- `EventManager`: add safety check to potentially avoid a DFHack crash when DF's ``reports`` table is out of order
 
 ## Documentation
 - ``dfhack.translation.generateName``: added a table containing explanations and data types for each of the parameters
 
 ## API
+- ``DFSDL``: added ``obtain_library_handle`` and ``obtain_image_library_handle`` so that a plugin can obtain DFHack's already-open handle to these libs instead of having to do it itself.
+- ``Screen``: new functions ``paintMapPortTile`` and ``readMapPortTile`` to write and read world and region map tiles.
+- ``Materials``: ``MaterialInfo`` constants ``NUM_BUILTIN``, ``GROUP_SIZE``, ``CREATURE_BASE``, ``FIGURE_BASE``, ``PLANT_BASE``, and ``END_BASE`` removed. New plugins should use appropriate members of the ``df::builtin_mats`` enum.
 
 ## Lua
+
+- Added ``Screen::paintMapPortTile`` as ``dfhack.screen.paintMapPortTile``
+- Added ``Screen::readMapPortTile`` as ``dfhack.screen.readMapPortTile``
+- Deprecated ``gui.materials.CREATURE_BASE`` and ``gui.materials.PLANT_BASE`` - scripts should instead use ``df.builtin_mats.CREATURE_1`` and ``df.builtin_mats.PLANT_1``, respectively.
 
 ## Removed
 

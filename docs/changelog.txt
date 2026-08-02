@@ -62,6 +62,7 @@ Template for new versions:
 - `buildingplan`: restore planner UI elements: hollow constructions, only engraved slabs, only empty cages, weapon count
 
 ## Misc Improvements
+- `EventManager`: add safety check to potentially avoid a DFHack crash when DF's ``reports`` table is out of order
 
 ## Documentation
 

@@ -59,6 +59,24 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.15-r3
+
+## New Tools
+
+## New Features
+
+## Fixes
 - `buildingplan`: restore planner UI elements: hollow constructions, only engraved slabs, only empty cages, weapon count
 
 ## Misc Improvements
@@ -72,7 +90,6 @@ Template for new versions:
 - ``Materials``: ``MaterialInfo`` constants ``NUM_BUILTIN``, ``GROUP_SIZE``, ``CREATURE_BASE``, ``FIGURE_BASE``, ``PLANT_BASE``, and ``END_BASE`` removed. New plugins should use appropriate members of the ``df::builtin_mats`` enum.
 
 ## Lua
-
 - Added ``Screen::paintMapPortTile`` as ``dfhack.screen.paintMapPortTile``
 - Added ``Screen::readMapPortTile`` as ``dfhack.screen.readMapPortTile``
 - Deprecated ``gui.materials.CREATURE_BASE`` and ``gui.materials.PLANT_BASE`` - scripts should instead use ``df.builtin_mats.CREATURE_1`` and ``df.builtin_mats.PLANT_1``, respectively.

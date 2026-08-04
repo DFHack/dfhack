@@ -50,6 +50,12 @@ macro(CHECK_GCC compiler_path)
     if(${GCC_VERSION_OUT} VERSION_LESS "11")
         message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 11 or later")
     endif()
+    # GCC 16 currently has a defect that prevents it from compiling DFHack
+    # -Warray-bounds is broken in GCC 16 and we'd rather disable the compiler than remove this warning
+    # will reconsider when this defect is fixed in a future GCC release
+    if(${GCC_VERSION_OUT} VERSION_GREATER_EQUAL "16")
+        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 15 or earlier")
+    endif()
 endmacro()
 
 if(UNIX)

@@ -1,6 +1,7 @@
 #include "Debug.h"
 #include "Error.h"
 #include "MiscUtils.h"
+#include "PluginLua.h"
 #include "PluginManager.h"
 
 #include "modules/Maps.h"
@@ -65,16 +66,6 @@ using coord = df::coord2d;
 constexpr int wdim = 768; // dimension of a world tile
 constexpr int rdim = 48;  // dimension of a region tile
 
-static std::ofstream open_output_file(
-    const std::filesystem::path& filename,
-    std::ios_base::openmode mode = std::ios::out | std::ios::trunc)
-{
-    auto base = Core::getInstance().getConfigPath() / "map-export";
-    std::filesystem::create_directories(base);
-    return std::ofstream(base / filename, mode);
-}
-
-
 /**
  * Takes a vector of coordinates interpreted as global region tile coordinates
  * (i.e. 16 region tiles per world tile) and emits a WKT path in GIS-compatible
@@ -122,6 +113,42 @@ static command_result export_sites(color_ostream &out);
 static command_result export_rivers(color_ostream &out);
 static command_result export_elevation(color_ostream &out);
 
+struct Config {
+    bool group_by_world = false;
+    bool group_by_date = false;
+};
+
+static Config config{};
+
+static auto exportmap_getWorldFolderName() {
+    auto& world_name = world->world_data->name;
+    return fmt::format("{} ({})",
+        DF2UTF(Translation::translateName(&world_name, true)),
+        DF2UTF(Translation::translateName(&world_name, false)));
+}
+
+static auto exportmap_getDateFolderName() {
+    return fmt::format("{}-{}",
+        *df::global::cur_year,
+        *df::global::cur_year_tick / 33600 + 1);
+}
+
+static std::ofstream open_output_file(
+    const std::filesystem::path& filename,
+    std::ios_base::openmode mode = std::ios::out | std::ios::trunc)
+{
+    auto base = Core::getInstance().getConfigPath() / "map-export";
+    if (config.group_by_world || config.group_by_date) {
+        base /= std::filesystem::path(exportmap_getWorldFolderName());
+    }
+    if (config.group_by_date) {
+        base /= std::filesystem::path(exportmap_getDateFolderName());
+    }
+    std::filesystem::create_directories(base);
+    return std::ofstream(base / filename, mode);
+}
+
+
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     DEBUG(log,out).print("initializing {}\n", plugin_name);
 
@@ -142,11 +169,23 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
         return CR_WRONG_USAGE;
     }
 
-    const bool run_all = parameters.empty() || std::ranges::find(parameters, "all") != parameters.end();
+    auto has_param = [&parameters](const string &option) {
+        return std::ranges::find(parameters, option) != parameters.end();
+    };
+
+    config = {};
+    if (has_param("--group-by-world")) {
+        config.group_by_world = true;
+    }
+    if (has_param("--group-by-date")) {
+        config.group_by_date = true;
+    }
+
+    const bool run_all = parameters.empty() || has_param("all");
 
     auto result = CR_WRONG_USAGE;
     const auto run_if_selected = [&](std::string name, command_result(*export_fn)(color_ostream &out)) {
-        if (result != CR_FAILURE && (run_all || std::ranges::find(parameters, name) != parameters.end()))
+        if (result != CR_FAILURE && (run_all || has_param(name)))
         {
             result = export_fn(out);
         }
@@ -881,3 +920,9 @@ R"(<VRTDataset rasterXSize="{WIDTH}" rasterYSize="{HEIGHT}">
 
     return CR_OK;
 }
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(exportmap_getWorldFolderName),
+    DFHACK_LUA_FUNCTION(exportmap_getDateFolderName),
+    DFHACK_LUA_END
+};

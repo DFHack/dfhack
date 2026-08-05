@@ -59,6 +59,8 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- a safety check was added to ``Screen::doSetTile_char`` fur out of bound pen color values
+- ``TextArea`` widget corrected to use ``COLOR_BLACK`` instead of ``COLOR_RESET`` as default background color
 
 ## Misc Improvements
 

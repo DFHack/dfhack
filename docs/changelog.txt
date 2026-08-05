@@ -61,6 +61,7 @@ Template for new versions:
 ## Fixes
 - a safety check was added to ``Screen::doSetTile_char`` fur out of bound pen color values
 - ``TextArea`` widget corrected to use ``COLOR_BLACK`` instead of ``COLOR_RESET`` as default background color
+- ``Screen::Pen``: COLOR_RESET from Lua is changed to grey (fg) or black (bg); color values are masked to 4 bits to keep them in the expected range
 
 ## Misc Improvements
 

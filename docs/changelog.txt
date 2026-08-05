@@ -59,10 +59,28 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- a safety check was added to ``Screen::doSetTile_char`` fur out of bound pen color values
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.16-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
 - ``TextArea`` widget corrected to use ``COLOR_BLACK`` instead of ``COLOR_RESET`` as default background color
 
 ## Misc Improvements
+- a safety check was added to ``Screen::doSetTile_char`` for out of bound pen color values
 
 ## Documentation
 

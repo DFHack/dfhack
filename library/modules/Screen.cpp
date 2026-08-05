@@ -477,9 +477,9 @@ bool Screen::drawBorder(const std::string &title)
     if (!gps) return false;
 
     auto dim = getWindowSize();
-    Pen border('\xDB', 8);
-    Pen text(0, 0, 7);
-    Pen signature(0, 0, 8);
+    Pen border('\xDB', COLOR_DARKGREY);
+    Pen text(0, COLOR_BLACK, COLOR_GREY);
+    Pen signature(0, COLOR_BLACK, COLOR_DARKGREY);
 
     for (int x = 0; x < dim.x; x++)
     {
@@ -513,8 +513,8 @@ bool Screen::invalidate()
     return true;
 }
 
-const Pen Screen::Painter::default_pen(0,COLOR_GREY,0);
-const Pen Screen::Painter::default_key_pen(0,COLOR_LIGHTGREEN,0);
+const Pen Screen::Painter::default_pen(0, COLOR_GREY, COLOR_BLACK);
+const Pen Screen::Painter::default_key_pen(0, COLOR_LIGHTGREEN, COLOR_BLACK);
 
 void Screen::Painter::do_paint_string(const std::string &str, const Pen &pen, bool map)
 {

@@ -94,26 +94,26 @@ namespace DFHack
             // NOTE: LuaApi.cpp assumes this struct is plain data and has empty destructor
 
             Pen(char ch = 0, int8_t fg = 7, int8_t bg = 0, int tile = 0, bool color_tile = false)
-              : ch(ch), fg(fg&7), bg(bg), bold(!!(fg&8)),
+              : ch(ch), fg(fg&7), bg(bg&15), bold(!!(fg&8)),
                 tile(tile), tile_mode(color_tile ? CharColor : AsIs), tile_fg(0), tile_bg(0)
             {}
             Pen(char ch, int8_t fg, int8_t bg, bool bold, int tile = 0, bool color_tile = false)
-              : ch(ch), fg(fg), bg(bg), bold(bold),
+              : ch(ch), fg(fg&15), bg(bg&15), bold(bold),
                 tile(tile), tile_mode(color_tile ? CharColor : AsIs), tile_fg(0), tile_bg(0)
             {}
             Pen(char ch, int8_t fg, int8_t bg, int tile, int8_t tile_fg, int8_t tile_bg)
-              : ch(ch), fg(fg&7), bg(bg), bold(!!(fg&8)),
-                tile(tile), tile_mode(TileColor), tile_fg(tile_fg), tile_bg(tile_bg)
+              : ch(ch), fg(fg&7), bg(bg&15), bold(!!(fg&8)),
+                tile(tile), tile_mode(TileColor), tile_fg(tile_fg&15), tile_bg(tile_bg&15)
             {}
             Pen(char ch, int8_t fg, int8_t bg, bool bold, int tile, int8_t tile_fg, int8_t tile_bg)
-              : ch(ch), fg(fg), bg(bg), bold(bold),
-                tile(tile), tile_mode(TileColor), tile_fg(tile_fg), tile_bg(tile_bg)
+              : ch(ch), fg(fg&15), bg(bg&15), bold(bold),
+                tile(tile), tile_mode(TileColor), tile_fg(tile_fg&15), tile_bg(tile_bg&15)
             {}
 
             void adjust(int8_t nfg) { fg = nfg&7; bold = !!(nfg&8); }
-            void adjust(int8_t nfg, bool nbold) { fg = nfg; bold = nbold; }
-            void adjust(int8_t nfg, int8_t nbg) { adjust(nfg); bg = nbg; }
-            void adjust(int8_t nfg, bool nbold, int8_t nbg) { adjust(nfg, nbold); bg = nbg; }
+            void adjust(int8_t nfg, bool nbold) { fg = nfg&15; bold = nbold; }
+            void adjust(int8_t nfg, int8_t nbg) { adjust(nfg); bg = nbg&15; }
+            void adjust(int8_t nfg, bool nbold, int8_t nbg) { adjust(nfg, nbold); bg = nbg&15; }
 
             Pen color(int8_t nfg) const { Pen cp(*this); cp.adjust(nfg); return cp; }
             Pen color(int8_t nfg, bool nbold) const { Pen cp(*this); cp.adjust(nfg, nbold); return cp; }

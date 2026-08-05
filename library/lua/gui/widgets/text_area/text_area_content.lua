@@ -37,7 +37,7 @@ function TextAreaContent:init()
     self.cursor = nil
 
     self.main_pen = dfhack.pen.parse({
-        bg=COLOR_RESET,
+        bg=COLOR_BLACK,
         bold=true
     }, self.text_pen)
 

@@ -54,6 +54,8 @@ distribution.
 #include "df/renderer.h"
 #include "df/plant.h"
 
+#include <algorithm>
+#include <span>
 #include <string>
 #include <vector>
 #include <map>
@@ -209,14 +211,15 @@ static bool doSetTile_char(const Pen &pen, int x, int y, bool use_graphics)
         *texpos_lower = df::global::init->texpos_border_interior; // basic black background
     }
 
-    auto rgb_fg = &gps->uccolor[fg][0];
-    auto rgb_bg = &gps->uccolor[bg][0];
-    screen[1] = rgb_fg[0];
-    screen[2] = rgb_fg[1];
-    screen[3] = rgb_fg[2];
-    screen[4] = rgb_bg[0];
-    screen[5] = rgb_bg[1];
-    screen[6] = rgb_bg[2];
+    if (fg >= 0 && fg <= COLOR_MAX)
+        std::ranges::copy(gps->uccolor[fg], &screen[1]);
+    else
+        WARN(screen).print("in doSetTile_char, fg {} out of range\n", fg);
+
+    if (bg >= 0 && bg <= COLOR_MAX)
+        std::ranges::copy(gps->uccolor[bg], &screen[4]);
+    else
+        WARN(screen).print("in doSetTile_char, bg {} out of range\n", bg);
 
     return true;
 }

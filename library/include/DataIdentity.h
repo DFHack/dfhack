@@ -632,6 +632,7 @@ namespace df
     OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::variant<std::string, std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::weak_ptr<df::widget_container>);
+    OPAQUE_IDENTITY_TRAITS(std::filesystem::file_time_type);
 
 #ifdef BUILD_DFHACK_LIB
     template<typename T>

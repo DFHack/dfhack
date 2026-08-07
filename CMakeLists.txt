@@ -7,8 +7,8 @@ cmake_policy(SET CMP0074 NEW)
 set(CMAKE_INSTALL_MESSAGE "LAZY")
 
 # set up versioning.
-set(DF_VERSION "53.15")
-set(DFHACK_RELEASE "r2")
+set(DF_VERSION "53.16")
+set(DFHACK_RELEASE "r1")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -49,6 +49,12 @@ macro(CHECK_GCC compiler_path)
     string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
     if(${GCC_VERSION_OUT} VERSION_LESS "11")
         message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 11 or later")
+    endif()
+    # GCC 16 currently has a defect that prevents it from compiling DFHack
+    # -Warray-bounds is broken in GCC 16 and we'd rather disable the compiler than remove this warning
+    # will reconsider when this defect is fixed in a future GCC release
+    if(${GCC_VERSION_OUT} VERSION_GREATER_EQUAL "16")
+        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 15 or earlier")
     endif()
 endmacro()
 

@@ -3754,6 +3754,9 @@ environment by the mandatory init file dfhack.lua:
   ``COLOR_GREY`` and ``COLOR_DARKGREY`` can also be spelled ``COLOR_GRAY`` and
   ``COLOR_DARKGRAY``.
 
+  Note: ``COLOR_RESET`` is not valid in a `Pen <lua-screen-pen>`, and using it in a Pen color field
+  will result in runtime warnings and may result in color flashing or other unexpected results.
+
 * State change event codes, used by ``dfhack.onStateChange``
 
   Available only in the `core context <lua-core-context>`, as is the event itself:

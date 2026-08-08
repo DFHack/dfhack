@@ -59,6 +59,24 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.16-r1.1
+
+## New Tools
+
+## New Features
+
+## Fixes
 - `stockpiles` will no longer incorrectly size the "rough gem" and "cut gem" vectors, which avoids a crash when viewing stockpile settings. This potentially affects anything that uses blueprints to create a stockpile, including `gui/quantum`
 
 ## Misc Improvements

@@ -1984,24 +1984,24 @@ void StockpileSettingsSerializer::read_gems(color_ostream& out, DeserializeMode 
         std::bind(&StockpileSettings::gems, mBuffer),
         mSettings->flags.whole,
         mSettings->flags.mask_gems,
-        [&]() {
+        [&] () {
             pgems.cut_other_mats.clear();
             pgems.cut_mats.clear();
             pgems.rough_other_mats.clear();
             pgems.rough_mats.clear();
         },
-        [&](bool all, char val) {
-            auto & bgems = mBuffer.gems();
+        [&] (bool all, char val) {
+            auto& bgems = mBuffer.gems();
 
             unserialize_list_material(out, "mats/rough", all, val, filters, gem_mat_is_allowed,
-                [&](const size_t& idx) -> const string& { return bgems.rough_mats(idx); },
+                [&] (const size_t& idx) -> const string& { return bgems.rough_mats(idx); },
                 bgems.rough_mats_size(), pgems.rough_mats);
 
             unserialize_list_material(out, "mats/cut", all, val, filters, gem_cut_mat_is_allowed,
-                [&](const size_t& idx) -> const string& { return bgems.cut_mats(idx); },
+                [&] (const size_t& idx) -> const string& { return bgems.cut_mats(idx); },
                 bgems.cut_mats_size(), pgems.cut_mats);
 
-            const size_t builtin_size = std::extent<decltype(world->raws.mat_table.builtin)>::value;
+            const size_t builtin_size = world->raws.mat_table.builtin.size();
             pgems.rough_other_mats.resize(builtin_size, '\0');
             pgems.cut_other_mats.resize(builtin_size, '\0');
             if (all) {

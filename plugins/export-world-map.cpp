@@ -95,14 +95,14 @@ struct Config {
 
 static Config config{};
 
-static auto exportmap_getWorldFolderName() {
+static auto getWorldFolderName() {
     auto& world_name = world->world_data->name;
     return fmt::format("{} ({})",
         DF2UTF(Translation::translateName(&world_name, true)),
         DF2UTF(Translation::translateName(&world_name, false)));
 }
 
-static auto exportmap_getDateFolderName() {
+static auto getDateFolderName() {
     return fmt::format("{}-{}",
         *df::global::cur_year,
         *df::global::cur_year_tick / 33600 + 1);
@@ -114,10 +114,10 @@ static std::ofstream open_output_file(
 {
     auto base = Core::getInstance().getConfigPath() / "map-export";
     if (config.group_by_world || config.group_by_date) {
-        base /= std::filesystem::path(exportmap_getWorldFolderName());
+        base /= std::filesystem::path(getWorldFolderName());
     }
     if (config.group_by_date) {
-        base /= std::filesystem::path(exportmap_getDateFolderName());
+        base /= std::filesystem::path(getDateFolderName());
     }
     std::filesystem::create_directories(base);
     return std::ofstream(base / filename, mode);
@@ -914,7 +914,7 @@ R"(<VRTDataset rasterXSize="{WIDTH}" rasterYSize="{HEIGHT}">
 }
 
 DFHACK_PLUGIN_LUA_FUNCTIONS {
-    DFHACK_LUA_FUNCTION(exportmap_getWorldFolderName),
-    DFHACK_LUA_FUNCTION(exportmap_getDateFolderName),
+    DFHACK_LUA_FUNCTION(getWorldFolderName),
+    DFHACK_LUA_FUNCTION(getDateFolderName),
     DFHACK_LUA_END
 };

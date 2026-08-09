@@ -66,6 +66,10 @@ Template for new versions:
 ## Documentation
 
 ## API
+- `MiscUtils`: new helper function ``print_range`` to print ranges with prefix, separator, and suffix
+- `Maps`: new function ``getSiteTypeName`` to print the sites classification as a string (e.g. "mountain halls")
+- `Maps`: new function ``addRegionBiomeOffset`` to shift world region coordinate by region_details biome reference
+- `Maps`: new function ``describeSurroundings`` to get surroundings classification from savagery and evilness
 
 ## Lua
 

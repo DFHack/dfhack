@@ -436,6 +436,22 @@ df::tile_occupancy *Maps::getTileOccupancy(int32_t x, int32_t y, int32_t z)
     return block ? &block->occupancy[x&15][y&15] : NULL;
 }
 
+df::coord2d Maps::addRegionBiomeOffset(df::coord2d world_pos, int8_t offset_dir) {
+    // Note 1: textual order of offfsets is upside down compared to the keypad order used by the biome offset
+    // Note 2: also upside down compared to (fort) map block region offsets
+    constexpr auto biome_offset = std::to_array<std::pair<int16_t, int16_t>>({
+        {-1, 1}, {0, 1}, {1, 1},
+        {-1, 0}, {0, 0}, {1, 0},
+        {-1,-1}, {0,-1}, {1,-1}
+    });
+
+    auto [diff_x, diff_y] = biome_offset[std::clamp(offset_dir, (int8_t)1, (int8_t)9) - 1];
+    return {
+        (int16_t)std::clamp(world_pos.x + diff_x,0,world->world_data->world_width - 1),
+        (int16_t)std::clamp(world_pos.y + diff_y,0,world->world_data->world_height - 1)
+    };
+}
+
 df::region_map_entry *Maps::getRegionBiome(df::coord2d rgn_pos)
 {
     auto data = world->world_data;
@@ -1533,6 +1549,17 @@ int Maps::removeAreaAquifer(df::coord pos1, df::coord pos2, std::function<bool(d
     });
 
     return totalAffectedCount;
+}
+
+const char* Maps::describeSurroundings(int savagery, int evilness) {
+    constexpr std::array<const char*,9>surroundings{
+        "Serene",   "Mirthful",     "Joyous Wilds",
+        "Calm",     "Wilderness",   "Untamed Wilds",
+        "Sinister", "Haunted",      "Terrifying"
+    };
+    auto savagery_index = savagery < 33 ? 0 : (savagery > 65 ? 2 : 1);
+    auto evilness_index = evilness < 33 ? 0 : (evilness > 65 ? 2 : 1);
+    return surroundings[3 * evilness_index + savagery_index];
 }
 
 void Maps::addBlockColumns(int32_t new_height)

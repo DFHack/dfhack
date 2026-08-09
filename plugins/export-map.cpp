@@ -81,33 +81,6 @@ static void print_path(std::ostream &out, const std::vector<coord> &path) {
     print_range(out, path, print_point, "(", ",", ")");
 }
 
-static df::coord2d get_world_index(int16_t world_x, int16_t world_y, int8_t offset_dir) {
-    constexpr auto biome_offset = std::to_array<std::pair<int16_t, int16_t>>({
-        {-1, 1}, {0, 1}, {1, 1},
-        {-1, 0}, {0, 0}, {1, 0},
-        {-1,-1}, {0,-1}, {1,-1}
-    });
-
-    auto [diff_x, diff_y] = biome_offset[std::clamp(offset_dir, (int8_t)1, (int8_t)9) - 1];
-    return {
-        (int16_t)std::clamp(world_x + diff_x,0,world->world_data->world_width - 1),
-        (int16_t)std::clamp(world_y + diff_y,0,world->world_data->world_height - 1)
-    };
-}
-static df::coord2d get_world_index(coord world_pos, int8_t offset_dir) {
-    return get_world_index(world_pos.x, world_pos.y, offset_dir);
-}
-
-const char* describe_surroundings(int savagery, int evilness) {
-    constexpr std::array<const char*,9>surroundings{
-        "Serene",   "Mirthful",     "Joyous Wilds",
-        "Calm",     "Wilderness",   "Untamed Wilds",
-        "Sinister", "Haunted",      "Terrifying"
-    };
-    auto savagery_index = savagery < 33 ? 0 : (savagery > 65 ? 2 : 1);
-    auto evilness_index = evilness < 33 ? 0 : (evilness > 65 ? 2 : 1);
-    return surroundings[3 * evilness_index + savagery_index];
-}
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static command_result export_regions(color_ostream &out);
@@ -484,7 +457,7 @@ static command_result export_regions(color_ostream &out)
         for (int region_x = 0; region_x < 16; ++region_x) {
             for (int region_y = 0; region_y < 16; ++region_y)
             {
-                auto biome_tile = get_world_index(world_pos, region_details->biome[region_x][region_y]);
+                auto biome_tile = Maps::addRegionBiomeOffset(world_pos, region_details->biome[region_x][region_y]);
                 world_tile_region[biome_tile].emplace_back(world_pos * 16 + coord(region_x, region_y));
             }
         }
@@ -559,7 +532,7 @@ static command_result export_regions(color_ostream &out)
             region_map_entry.rainfall,
             region_map_entry.salinity,
             // "surroundings", "elevation", "reanimating", "has_bogeymen"
-            describe_surroundings(region_map_entry.savagery, region_map_entry.evilness),
+            Maps::describeSurroundings(region_map_entry.savagery, region_map_entry.evilness),
             region_map_entry.elevation,
             world_region->reanimating,
             world_region->has_bogeymen
@@ -729,8 +702,7 @@ struct gate {
 
 static bool is_land(const df::world_region_details *const region_details, int16_t region_x, int16_t region_y) {
     CHECK_NULL_POINTER(region_details);
-    auto [world_x, world_y] = region_details->pos;
-    auto biome_tile = get_world_index(world_x, world_y, region_details->biome[region_x][region_y]);
+    auto biome_tile = Maps::addRegionBiomeOffset(region_details->pos, region_details->biome[region_x][region_y]);
     auto region_map_entry = Maps::getRegionBiome(biome_tile);
     CHECK_NULL_POINTER(region_map_entry);
     return region_map_entry->elevation >= 100 && !region_map_entry->flags.is_set(df::enums::region_map_entry_flags::is_lake);

@@ -55,7 +55,7 @@ Template for new versions:
 # Future
 
 ## New Tools
-- `export-map`: Export world map data for GIS and other external tools.
+- `export-world-map`: Export world map data for GIS and other external tools.
 
 ## New Features
 

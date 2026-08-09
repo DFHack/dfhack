@@ -1,5 +1,5 @@
-export-map
-==========
+export-world-map
+================
 
 .. dfhack-tool::
     :summary: Export world map data for GIS and other external tools.
@@ -14,7 +14,7 @@ done prior to running this export tool.
 
 The supported export targets are:
 
-- ``regions``: writes world tile regions and their biome information to ``map.csv``.
+- ``regions``: writes world tile regions and their biome information to ``regions.csv``.
 - ``sites``: writes site extents and ownership/civilization information to ``sites.csv``.
 - ``rivers``: writes rivers to ``rivers.csv``.
 - ``elevation``: writes elevation data to ``elevation.dat`` and ``elevation.vrt``.
@@ -27,24 +27,34 @@ Usage
 
 ::
 
-    export-map
-    export-map <topic>
-    export-map <topic> <topic> ...
-    export-map all
+    export-world-map
+    export-world-map <topic>
+    export-world-map <topic> <topic> ...
+    export-world-map all
 
 If no topic is given, or if ``all`` is supplied, every supported export target
 is run.
 
+Options
+-------
+
+``--group-by-world``
+    Create a folder named after the world in the ``map-export`` directory.
+
+``--group-by-date``
+    Create a folder with name ``year-month`` inside the world folder. Implies
+    ``--group-by-world``.
+
 Examples
 --------
 
-``export-map``
+``export-world-map``
     Export all supported datasets.
 
-``export-map regions``
+``export-world-map regions``
     Export only region boundary geometries.
 
-``export-map sites rivers``
+``export-world-map sites rivers``
     Export site and river geometries only.
 
 

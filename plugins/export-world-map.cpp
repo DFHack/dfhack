@@ -43,7 +43,7 @@ using std::vector;
 
 using namespace DFHack;
 
-DFHACK_PLUGIN("export-map");
+DFHACK_PLUGIN("export-world-map");
 
 REQUIRE_GLOBAL(world);
 
@@ -430,7 +430,7 @@ static command_result export_regions(color_ostream &out)
     const auto start{std::chrono::steady_clock::now()};
 
     // ensure that we have an output file
-    auto out_file = open_output_file("map.csv");
+    auto out_file = open_output_file("regions.csv");
     if (!out_file) {
         return CR_FAILURE;
     }

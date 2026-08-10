@@ -55,6 +55,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `smooth-movement`: smoothly animate creature, item, and vehicle movement in the fortress viewport
 
 ## New Features
 

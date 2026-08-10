@@ -49,6 +49,7 @@ Clayton Hughes
 Clément Vuchener        cvuchener
 Corey                   CoreyJ87
 daedsidog               daedsidog
+Dailton Filho           notliad
 Dan Amlund              danamlund
 Daniel Brooks           db48x
 David                   Nilsolm
@@ -121,6 +122,7 @@ Kurik Amudnil
 Kévin Boissonneault     KABoissonneault
 Lethosor                lethosor
 LordGolias              LordGolias
+Magnus Anderson         magnus-ISU
 Mark Nielson            pseudodragon
 Mason11987              Mason11987
 Matt Regul              mattregul
@@ -261,6 +263,7 @@ Vitaly Pronkin          pronvit                 mifki
 ViTuRaS                 ViTuRaS
 Vjek                    vjek
 Vladimir Florov         foxxelias
+wala343                 wala343
 Warmist                 warmist
 Wes Malone              wesQ3
 Will H                  TSM-EVO

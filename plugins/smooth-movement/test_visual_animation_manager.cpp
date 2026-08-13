@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Zlib
 
 #include <array>
 #ifdef NDEBUG

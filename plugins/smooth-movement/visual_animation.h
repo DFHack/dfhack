@@ -1,4 +1,4 @@
-// SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: Zlib
 
 #ifndef SMOOTH_MOVEMENT_VISUAL_ANIMATION_H
 #define SMOOTH_MOVEMENT_VISUAL_ANIMATION_H

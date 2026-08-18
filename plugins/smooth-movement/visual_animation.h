@@ -8,13 +8,34 @@
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
+#include <optional>
+#include <span>
 #include <vector>
 
 #include "DataDefs.h"
 
-template <typename T> struct point2dst {
+namespace df {
+struct graphic_viewportst;
+}
+
+template <typename T>
+struct coord2dst {
     T x = 0;
     T y = 0;
+
+    constexpr bool operator==(const coord2dst &other) const { return x == other.x && y == other.y; }
+    constexpr bool operator!=(const coord2dst &other) const { return x != other.x || y != other.y; }
+    constexpr bool operator<(const coord2dst &other) const {
+        return x != other.x ? x < other.x : y < other.y;
+    }
+    constexpr coord2dst operator+(const coord2dst &other) const { return {x + other.x, y + other.y}; }
+    constexpr coord2dst operator-(const coord2dst &other) const { return {x - other.x, y - other.y}; }
+    constexpr coord2dst operator/(int number) const {
+        return {(x < 0 ? x - number : x) / number, (y < 0 ? y - number : y) / number};
+    }
+    constexpr coord2dst operator*(int number) const { return {x * number, y * number}; }
+    constexpr coord2dst operator%(int number) const { return {(x + number) % number, (y + number) % number}; }
+    constexpr coord2dst operator&(int number) const { return {x & number, y & number}; }
 };
 
 enum class viewport_visual_layer : uint8_t {
@@ -37,7 +58,7 @@ struct visual_layer_descriptorst {
     visual_render_groupst render_group;
     bool moves_independently;
     bool matches_any_previous;
-    point2dst<int8_t> anchor_offset;
+    coord2dst<int8_t> anchor_offset;
 };
 
 constexpr std::array visual_layer_descriptors = {
@@ -45,47 +66,47 @@ constexpr std::array visual_layer_descriptors = {
                               .render_group = visual_render_groupst::main,
                               .moves_independently = false,
                               .matches_any_previous = false,
-                              .anchor_offset = point2dst<int8_t>{-1, 0}},
+                              .anchor_offset = {-1, 0}},
     visual_layer_descriptorst{.layer = viewport_visual_layer::center,
                               .render_group = visual_render_groupst::main,
                               .moves_independently = true,
                               .matches_any_previous = false,
-                              .anchor_offset = point2dst<int8_t>{0, 0}},
+                              .anchor_offset = {0, 0}},
     visual_layer_descriptorst{.layer = viewport_visual_layer::left,
                               .render_group = visual_render_groupst::main,
                               .moves_independently = false,
                               .matches_any_previous = false,
-                              .anchor_offset = point2dst<int8_t>{1, 0}},
+                              .anchor_offset = {1, 0}},
     visual_layer_descriptorst{.layer = viewport_visual_layer::upright,
                               .render_group = visual_render_groupst::upper,
                               .moves_independently = false,
                               .matches_any_previous = false,
-                              .anchor_offset = point2dst<int8_t>{-1, 1}},
+                              .anchor_offset = {-1, 1}},
     visual_layer_descriptorst{.layer = viewport_visual_layer::up,
                               .render_group = visual_render_groupst::upper,
                               .moves_independently = false,
                               .matches_any_previous = false,
-                              .anchor_offset = point2dst<int8_t>{0, 1}},
+                              .anchor_offset = {0, 1}},
     visual_layer_descriptorst{.layer = viewport_visual_layer::upleft,
                               .render_group = visual_render_groupst::upper,
                               .moves_independently = false,
                               .matches_any_previous = false,
-                              .anchor_offset = point2dst<int8_t>{1, 1}},
+                              .anchor_offset = {1, 1}},
     visual_layer_descriptorst{.layer = viewport_visual_layer::vehicle,
                               .render_group = visual_render_groupst::vehicle,
                               .moves_independently = true,
                               .matches_any_previous = true,
-                              .anchor_offset = point2dst<int8_t>{0, 0}},
+                              .anchor_offset = {0, 0}},
     visual_layer_descriptorst{.layer = viewport_visual_layer::item,
                               .render_group = visual_render_groupst::item,
                               .moves_independently = true,
                               .matches_any_previous = false,
-                              .anchor_offset = point2dst<int8_t>{0, 0}},
+                              .anchor_offset = {0, 0}},
     visual_layer_descriptorst{.layer = viewport_visual_layer::designation,
                               .render_group = visual_render_groupst::designation,
                               .moves_independently = false,
                               .matches_any_previous = true,
-                              .anchor_offset = point2dst<int8_t>{0, 0}}};
+                              .anchor_offset = {0, 0}}};
 
 constexpr std::array visual_layer_draw_order = {
     viewport_visual_layer::center,   viewport_visual_layer::item,
@@ -143,7 +164,7 @@ constexpr bool visual_layer_matches(viewport_visual_layer layer, int32_t current
 }
 
 struct viewport_visual_animation_inputst {
-    const void *viewport = nullptr;
+    const df::graphic_viewportst *viewport = nullptr;
     df::coord2d dimensions = df::coord2d(0, 0);
     uint64_t context_revision = 0;
     std::array<const int32_t *, static_cast<size_t>(viewport_visual_layer::count)> current{};
@@ -166,7 +187,7 @@ struct viewport_visual_animation_inputst {
 
 struct visual_movement_renderst {
     bool active = false;
-    point2dst<float> source;
+    coord2dst<float> source;
     float progress = 1.0f;
     bool inherited = false;
 };
@@ -212,13 +233,13 @@ class visual_animation_managerst {
     struct movementst {
         viewport_visual_layer layer;
         int32_t texpos;
-        point2dst<float> source;
+        coord2dst<float> source;
         df::coord2d target;
         uint32_t start_time_ms;
     };
 
     struct viewport_animationst {
-        const void *viewport = nullptr;
+        const df::graphic_viewportst *viewport = nullptr;
         df::coord2d dimensions = df::coord2d(0, 0);
         uint64_t context_revision = 0;
         bool has_context = false;
@@ -244,8 +265,7 @@ class visual_animation_managerst {
         // scroll activity.
         int32_t suppress_frames = 0;
         // Buffer contents last seen, to recognize a repeat of them.
-        uint64_t buffer_signature = 0;
-        bool has_buffer_signature = false;
+        std::optional<uint64_t> buffer_signature;
         // Set while the previous buffer still belongs to a view that has been left
         // behind.
         bool previous_view_stale = false;
@@ -344,7 +364,8 @@ class visual_animation_managerst {
         return double(matches) / double(considered);
     }
 
-    static df::coord2d shared_movement_delta(const int32_t *current, const int32_t *previous,
+    static df::coord2d shared_movement_delta(std::span<const int32_t> current,
+                                             std::span<const int32_t> previous,
                                              int32_t dim_x, int32_t dim_y) {
         df::coord2d best(0, 0);
         int32_t best_count = 1;
@@ -427,30 +448,27 @@ class visual_animation_managerst {
         // first sighting does not.
         const bool view_switched =
             state.has_context &&
-            (state.context_revision != input.context_revision ||
-             state.dimensions.x != input.dimensions.x || state.dimensions.y != input.dimensions.y);
+            (state.context_revision != input.context_revision || state.dimensions != input.dimensions);
         const bool context_changed = !state.has_context || view_switched;
         // The scroll delta is queued here as a hint; the buffers are
         // hypothesis-tested each frame to find where it lands. Detection stays
         // suppressed until then: a shifted buffer makes every panned creature look
         // like a real move.
-        if (state.has_pan && (state.pan.x != input.pan.x || state.pan.y != input.pan.y)) {
+        if (state.has_pan && state.pan != input.pan) {
             if (state.pending.size() >= max_pending_shifts) {
                 // Same give-up as the other two sites: the owed shifts are unknowable
                 // now.
                 abandon_pending(state);
                 reset_facing(state);
             }
-            state.pending.emplace_back(input.pan.x - state.pan.x, input.pan.y - state.pan.y);
+            state.pending.emplace_back(input.pan - state.pan);
             state.pending_frames = 0;
             state.suppress_frames = 2;
         }
         state.context_revision = input.context_revision;
-        state.dimensions.x = input.dimensions.x;
-        state.dimensions.y = input.dimensions.y;
+        state.dimensions = input.dimensions;
         state.has_context = true;
-        state.pan.x = input.pan.x;
-        state.pan.y = input.pan.y;
+        state.pan = input.pan;
         state.has_pan = true;
         if (context_changed) {
             state.facing.assign(size_t(input.dimensions.x) * size_t(input.dimensions.y),
@@ -462,9 +480,8 @@ class visual_animation_managerst {
         // every sprite by a tile.
         const uint64_t signature = compute_buffer_signature(input);
         const bool buffers_advanced =
-            !state.has_buffer_signature || state.buffer_signature != signature;
+            !state.buffer_signature || *state.buffer_signature != signature;
         state.buffer_signature = signature;
-        state.has_buffer_signature = true;
 
         if (context_changed) {
             // Skips the recompute sweep, so clear has_mirrored here or a stale true
@@ -501,12 +518,11 @@ class visual_animation_managerst {
             bool any_data = false;
             df::coord2d shift(0, 0);
             for (size_t count = 1; count <= state.pending.size(); ++count) {
-                shift.x += state.pending[count - 1].x;
-                shift.y += state.pending[count - 1].y;
+                shift = shift + state.pending[count - 1];
                 // A prefix netting to zero is indistinguishable from "nothing landed
                 // yet". Accepting it would retire shifts the buffers have still to
                 // apply.
-                if (shift.x == 0 && shift.y == 0)
+                if (shift == df::coord2d{0, 0})
                     continue;
                 const double ratio = shift_match_ratio(input, shift.x, shift.y);
                 // Emptiness is per-prefix: a long one can push every sprite out of
@@ -638,8 +654,10 @@ class visual_animation_managerst {
                 const int32_t *previous = previous_layers[layer];
                 const auto shared_delta =
                     static_cast<viewport_visual_layer>(layer) == viewport_visual_layer::center
-                        ? shared_movement_delta(current, previous, input.dimensions.x,
-                                                input.dimensions.y)
+                        ? shared_movement_delta(
+                              std::span(current, size_t(tile_count)),
+                              std::span(previous, size_t(tile_count)), input.dimensions.x,
+                              input.dimensions.y)
                         : df::coord2d(0, 0);
                 for (int32_t x = 0; x < input.dimensions.x; ++x) {
                     for (int32_t y = 0; y < input.dimensions.y; ++y) {
@@ -788,18 +806,23 @@ class visual_animation_managerst {
 
     uint32_t get_frame_delta_ms() const { return frame_delta_ms; }
 
-    visual_facingst get_facing(const void *viewport, int32_t x, int32_t y) const {
+    visual_facingst get_facing(const void *viewport, df::coord2d pos) const {
         for (const viewport_animationst &state : viewports) {
             if (state.viewport != viewport)
                 continue;
-            if (x < 0 || x >= state.dimensions.x || y < 0 || y >= state.dimensions.y)
+            if (pos.x < 0 || pos.x >= state.dimensions.x || pos.y < 0 ||
+                pos.y >= state.dimensions.y)
                 break;
-            const size_t index = size_t(x) * size_t(state.dimensions.y) + size_t(y);
+            const size_t index = size_t(pos.x) * size_t(state.dimensions.y) + size_t(pos.y);
             if (index >= state.facing.size())
                 break;
             return static_cast<visual_facingst>(state.facing[index]);
         }
         return native_sprite_facing;
+    }
+
+    visual_facingst get_facing(const void *viewport, int32_t x, int32_t y) const {
+        return get_facing(viewport, df::coord2d(x, y));
     }
 
     bool has_mirrored_facing(const void *viewport) const {

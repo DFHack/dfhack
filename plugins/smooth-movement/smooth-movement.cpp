@@ -4,6 +4,7 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#include <iterator>
 #include <set>
 #include <string>
 #include <type_traits>
@@ -77,12 +78,15 @@ bool has_pan_context = false;
 bool flip_enabled = false;
 bool zlevel_enabled = false;
 
-constexpr uint32_t viewport_spatter_fire_frame_1 = 1U << 28;
-constexpr uint32_t viewport_spatter_fire_frame_2 = 2U << 28;
-constexpr uint32_t viewport_spatter_fire_frame_3 = 3U << 28;
-constexpr uint32_t viewport_spatter_fire_frame_4 = 4U << 28;
+// DF stores fire's animation frame in bits 28--31 of screentexpos_spatter_flag.
+constexpr uint32_t viewport_spatter_fire_frame_shift = 28;
+constexpr uint32_t viewport_spatter_fire_frame_1 = 1U << viewport_spatter_fire_frame_shift;
+constexpr uint32_t viewport_spatter_fire_frame_2 = 2U << viewport_spatter_fire_frame_shift;
+constexpr uint32_t viewport_spatter_fire_frame_3 = 3U << viewport_spatter_fire_frame_shift;
+constexpr uint32_t viewport_spatter_fire_frame_4 = 4U << viewport_spatter_fire_frame_shift;
 constexpr uint32_t fire_bits = viewport_spatter_fire_frame_1 | viewport_spatter_fire_frame_2 |
                                viewport_spatter_fire_frame_3 | viewport_spatter_fire_frame_4;
+// DF's native renderer draws 32-pixel tiles at viewport zoom 128.
 constexpr int32_t native_tile_pixels = 32;
 constexpr int32_t native_viewport_zoom = 128;
 
@@ -93,6 +97,7 @@ void update_visual_context(const df::renderer_2d_base *renderer, const df::graph
     const visual_contextst context = {
         .z_level = window_z ? *window_z : 0,
         .viewport_dimensions = df::coord2d(vp->dim_x, vp->dim_y),
+        // DF clip arrays hold inclusive minimum and maximum coordinates.
         .clip_min = df::coord2d(vp->clipx[0], vp->clipy[0]),
         .clip_max = df::coord2d(vp->clipx[1], vp->clipy[1]),
         .zoom = renderer->viewport_zoom_factor,
@@ -485,6 +490,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                 if (!visual_layer_moves_independently(visual_layer)) {
                     bool anchored = false;
                     for (const render_proxyst &anchor : proxies) {
+                        // Creature fragments lie no more than one tile from their center layer.
                         if (anchor.layer == viewport_visual_layer::center &&
                             std::abs(anchor.target.x - x) <= 1 &&
                             std::abs(anchor.target.y - y) <= 1 &&
@@ -699,7 +705,7 @@ std::vector<df::graphic_viewportst *> active_viewports() {
     std::vector<df::graphic_viewportst *> viewports;
     if (gps == nullptr)
         return viewports;
-    for (int32_t lower = 7; lower >= 0; --lower) {
+    for (size_t lower = std::size(gps->lower_viewport); lower-- > 0;) {
         df::graphic_viewportst *vp = gps->lower_viewport[lower];
         if (viewport_readable(vp))
             viewports.push_back(vp);

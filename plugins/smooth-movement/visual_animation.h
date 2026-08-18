@@ -277,13 +277,20 @@ class visual_animation_managerst {
     bool force_full_redraw = false;
     std::vector<viewport_animationst> viewports;
 
+    // Tuned visual transition length; this is not a DF timing contract.
     static constexpr uint32_t movement_duration_ms = 100;
     // Scrolling faster than detection keeps up: give up rather than test ever
     // more prefixes.
     static constexpr size_t max_pending_shifts = 8;
     // Bounds the wait on a scroll that never lands, so suppression cannot stick
-    // forever.
+    // forever. These are observed recovery limits, not viewport limits.
     static constexpr int32_t max_pending_age_frames = 120;
+    // A majority of visible, position-bearing sprites must confirm a scroll.
+    static constexpr double min_scroll_match_ratio = 0.5;
+    // Wait for buffer settling before treating changes as creature movement.
+    static constexpr int32_t scroll_settle_redraws = 2;
+    // Give up when a queued scroll does not match this many redraws.
+    static constexpr int32_t max_unmatched_scroll_redraws = 4;
 
     static void clear_pending(viewport_animationst &state) {
         state.pending.clear();
@@ -463,7 +470,7 @@ class visual_animation_managerst {
             }
             state.pending.emplace_back(input.pan - state.pan);
             state.pending_frames = 0;
-            state.suppress_frames = 2;
+            state.suppress_frames = scroll_settle_redraws;
         }
         state.context_revision = input.context_revision;
         state.dimensions = input.dimensions;
@@ -530,7 +537,7 @@ class visual_animation_managerst {
                 if (ratio < 0.0)
                     continue;
                 any_data = true;
-                if (ratio >= 0.5) {
+                if (ratio >= min_scroll_match_ratio) {
                     landed = shift;
                     landed_count = count;
                     break;
@@ -585,17 +592,17 @@ class visual_animation_managerst {
                 state.suppress_frames = 0;
                 landed_shift = landed;
                 translated = true;
-            } else if (shift_match_ratio(input, 0, 0) >= 0.5 &&
+            } else if (shift_match_ratio(input, 0, 0) >= min_scroll_match_ratio &&
                        ++state.pending_age <= max_pending_age_frames) {
                 // The buffers have not moved yet, so the scroll is still in flight.
                 state.pending_frames = 0;
-            } else if (++state.pending_frames > 4) {
+            } else if (++state.pending_frames > max_unmatched_scroll_redraws) {
                 // The shift never showed up recognizably: fall back to the safe reset.
                 abandon_pending(state);
                 // The delta was never identified, so the grid cannot be translated.
                 reset_facing(state);
                 // It may yet land, so do not resume detection on the very next redraw.
-                state.suppress_frames = 2;
+                state.suppress_frames = scroll_settle_redraws;
             }
         }
 

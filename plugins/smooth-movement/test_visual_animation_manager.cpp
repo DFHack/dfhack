@@ -126,24 +126,27 @@ int main() {
 
     {
         constexpr int32_t dim = 4;
+        constexpr int32_t creature_texpos = 77;
+        constexpr uint32_t initial_frame_ms = 1000;
+        constexpr uint32_t frame_interval_ms = 16;
         int32_t empty[dim * dim] = {};
         int32_t before[dim * dim] = {};
         int32_t west_after[dim * dim] = {};
         const int viewport_token = 0;
         const void *viewport = &viewport_token;
 
-        before[2 * dim + 2] = 77;
-        west_after[1 * dim + 2] = 77; // moved west: x 2 -> 1
+        before[2 * dim + 2] = creature_texpos;
+        west_after[1 * dim + 2] = creature_texpos; // moved west: x 2 -> 1
 
         // Moving west sets west facing on the target tile.
         {
             visual_animation_managerst manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
-            run_frame(manager, input, 1000);
+            run_frame(manager, input, initial_frame_ms);
             assert(!manager.has_active_movement(viewport));
             set_layer(input, viewport_visual_layer::center, west_after, before);
-            run_frame(manager, input, 1016);
+            run_frame(manager, input, initial_frame_ms + frame_interval_ms);
             assert(manager.has_active_movement(viewport));
             assert(manager.get_facing(viewport, 1, 2) == visual_facingst::west);
         }
@@ -155,12 +158,12 @@ int main() {
             visual_animation_managerst manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
-            run_frame(manager, input, 1000);
+            run_frame(manager, input, initial_frame_ms);
             set_layer(input, viewport_visual_layer::center, west_after, before);
-            run_frame(manager, input, 1016);
+            run_frame(manager, input, initial_frame_ms + frame_interval_ms);
             assert(manager.get_facing(viewport, 1, 2) == visual_facingst::west);
             set_layer(input, viewport_visual_layer::center, before, west_after);
-            run_frame(manager, input, 1032);
+            run_frame(manager, input, initial_frame_ms + 2 * frame_interval_ms);
             assert(manager.get_facing(viewport, 2, 2) == visual_facingst::east);
         }
 
@@ -171,21 +174,21 @@ int main() {
             visual_animation_managerst manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
-            run_frame(manager, input, 1000);
+            run_frame(manager, input, initial_frame_ms);
             assert(!manager.has_mirrored_facing(viewport));
             // Moving west matches the art, so nothing is mirrored yet.
             set_layer(input, viewport_visual_layer::center, west_after, before);
-            run_frame(manager, input, 1016);
+            run_frame(manager, input, initial_frame_ms + frame_interval_ms);
             assert(manager.get_facing(viewport, 1, 2) == visual_facingst::west);
             assert(!manager.has_mirrored_facing(viewport));
             // Moving east faces away from the art and raises the flag.
             set_layer(input, viewport_visual_layer::center, before, west_after);
-            run_frame(manager, input, 1032);
+            run_frame(manager, input, initial_frame_ms + 2 * frame_interval_ms);
             assert(manager.get_facing(viewport, 2, 2) == visual_facingst::east);
             assert(manager.has_mirrored_facing(viewport));
             // The creature leaves: the tile clears and so does the flag.
             set_layer(input, viewport_visual_layer::center, empty, before);
-            run_frame(manager, input, 1048);
+            run_frame(manager, input, initial_frame_ms + 3 * frame_interval_ms);
             assert(manager.get_facing(viewport, 2, 2) == native_sprite_facing);
             assert(!manager.has_mirrored_facing(viewport));
             assert(!manager.has_mirrored_facing(nullptr));
@@ -196,14 +199,14 @@ int main() {
             visual_animation_managerst manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
-            run_frame(manager, input, 1000);
+            run_frame(manager, input, initial_frame_ms);
             set_layer(input, viewport_visual_layer::center, west_after, before);
-            run_frame(manager, input, 1016);
+            run_frame(manager, input, initial_frame_ms + frame_interval_ms);
             assert(manager.get_facing(viewport, 1, 2) == visual_facingst::west);
             int32_t up[dim * dim] = {};
-            up[1 * dim + 1] = 77; // north: (1,2) -> (1,1), no horizontal component
+            up[1 * dim + 1] = creature_texpos; // north: (1,2) -> (1,1), no horizontal component
             set_layer(input, viewport_visual_layer::center, up, west_after);
-            run_frame(manager, input, 1032);
+            run_frame(manager, input, initial_frame_ms + 2 * frame_interval_ms);
             assert(manager.get_facing(viewport, 1, 1) == visual_facingst::west);
         }
 
@@ -212,7 +215,7 @@ int main() {
             visual_animation_managerst manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
-            run_frame(manager, input, 1000);
+            run_frame(manager, input, initial_frame_ms);
             assert(manager.get_facing(viewport, -1, 0) == native_sprite_facing);
             assert(manager.get_facing(viewport, dim, 0) == native_sprite_facing);
             assert(manager.get_facing(nullptr, 0, 0) == native_sprite_facing);
@@ -230,13 +233,13 @@ int main() {
             auto main_input = make_input(main_viewport, dim, empty);
             set_layer(lower_input, viewport_visual_layer::center, before, empty);
             set_layer(main_input, viewport_visual_layer::center, before, empty);
-            z_levels.begin_frame(1000);
+            z_levels.begin_frame(initial_frame_ms);
             z_levels.synchronize_viewport(lower_input);
             z_levels.synchronize_viewport(main_input);
             z_levels.end_frame();
             set_layer(lower_input, viewport_visual_layer::center, west_after, before);
             set_layer(main_input, viewport_visual_layer::center, west_after, before);
-            z_levels.begin_frame(1016);
+            z_levels.begin_frame(initial_frame_ms + frame_interval_ms);
             z_levels.synchronize_viewport(lower_input);
             z_levels.synchronize_viewport(main_input);
             z_levels.end_frame();
@@ -252,6 +255,9 @@ int main() {
     // inheriting the previous facing.
     {
         constexpr int32_t diag_dim = 5;
+        constexpr int32_t creature_texpos = 77;
+        constexpr uint32_t initial_frame_ms = 1000;
+        constexpr uint32_t frame_interval_ms = 16;
         int32_t diag_empty[diag_dim * diag_dim] = {};
         int32_t start[diag_dim * diag_dim] = {};
         int32_t north_east[diag_dim * diag_dim] = {};
@@ -261,36 +267,36 @@ int main() {
         const int diag_token = 0;
         const void *diag_viewport = &diag_token;
 
-        start[2 * diag_dim + 2] = 77;      // (2,2)
-        north_east[3 * diag_dim + 1] = 77; // (2,2) -> (3,1): dx +1, dy -1
-        south_west[2 * diag_dim + 2] = 77; // (3,1) -> (2,2): dx -1, dy +1
-        south_east[3 * diag_dim + 3] = 77; // (2,2) -> (3,3): dx +1, dy +1
-        north_west[2 * diag_dim + 2] = 77; // (3,3) -> (2,2): dx -1, dy -1
+        start[2 * diag_dim + 2] = creature_texpos;      // (2,2)
+        north_east[3 * diag_dim + 1] = creature_texpos; // (2,2) -> (3,1): dx +1, dy -1
+        south_west[2 * diag_dim + 2] = creature_texpos; // (3,1) -> (2,2): dx -1, dy +1
+        south_east[3 * diag_dim + 3] = creature_texpos; // (2,2) -> (3,3): dx +1, dy +1
+        north_west[2 * diag_dim + 2] = creature_texpos; // (3,3) -> (2,2): dx -1, dy -1
 
         visual_animation_managerst diagonal;
         auto input = make_input(diag_viewport, diag_dim, diag_empty);
         set_layer(input, viewport_visual_layer::center, start, diag_empty);
-        run_frame(diagonal, input, 1000);
+        run_frame(diagonal, input, initial_frame_ms);
         assert(diagonal.get_facing(diag_viewport, 2, 2) == native_sprite_facing);
 
         set_layer(input, viewport_visual_layer::center, north_east, start);
-        run_frame(diagonal, input, 1016);
+        run_frame(diagonal, input, initial_frame_ms + frame_interval_ms);
         assert(diagonal.get_facing(diag_viewport, 3, 1) == visual_facingst::east);
 
         // West is the grid default, so the westward legs also assert a movement was
         // registered. Otherwise an untracked step leaving the tile at its default
         // would pass.
         set_layer(input, viewport_visual_layer::center, south_west, north_east);
-        run_frame(diagonal, input, 1032);
+        run_frame(diagonal, input, initial_frame_ms + 2 * frame_interval_ms);
         assert(diagonal.get_movement(diag_viewport, viewport_visual_layer::center, 2, 2).active);
         assert(diagonal.get_facing(diag_viewport, 2, 2) == visual_facingst::west);
 
         set_layer(input, viewport_visual_layer::center, south_east, south_west);
-        run_frame(diagonal, input, 1048);
+        run_frame(diagonal, input, initial_frame_ms + 3 * frame_interval_ms);
         assert(diagonal.get_facing(diag_viewport, 3, 3) == visual_facingst::east);
 
         set_layer(input, viewport_visual_layer::center, north_west, south_east);
-        run_frame(diagonal, input, 1064);
+        run_frame(diagonal, input, initial_frame_ms + 4 * frame_interval_ms);
         assert(diagonal.get_movement(diag_viewport, viewport_visual_layer::center, 2, 2).active);
         assert(diagonal.get_facing(diag_viewport, 2, 2) == visual_facingst::west);
     }
@@ -301,6 +307,7 @@ int main() {
     // the grid can only be dropped.
     {
         using pan_grid = test_grid<4>;
+        constexpr int32_t creature_texpos = 77;
         constexpr uint32_t frame_interval_ms = 16;
         pan_grid pan_empty;
         pan_grid at_one;
@@ -310,8 +317,8 @@ int main() {
         const int pan_token = 0;
         const void *pan_viewport = &pan_token;
 
-        at_one.at(1, 1) = 77;
-        at_two.at(2, 1) = 77; // steps east, x 1 -> 2, so it faces east
+        at_one.at(1, 1) = creature_texpos;
+        at_two.at(2, 1) = creature_texpos; // steps east, x 1 -> 2, so it faces east
         unmatched_a.at(2, 1) = 78;
         unmatched_b.at(2, 1) = 79;
 
@@ -469,7 +476,8 @@ int main() {
         assert(manager.get_facing(gap_viewport, 2, 3) == native_sprite_facing);
     }
 
-    assert(animation_progress(100, 0, 100) == 1.0f);
+    constexpr uint32_t animation_duration_ms = 100;
+    assert(animation_progress(animation_duration_ms, 0, animation_duration_ms) == 1.0f);
     assert(inherited_visual_source_tile(0, 0, 1) == -1);
     assert(inherited_visual_source_tile(2, 0, 1) == 1);
     assert(visual_layer_descriptor(viewport_visual_layer::right).anchor_offset.x == -1);
@@ -491,12 +499,13 @@ int main() {
     set_layer(input, viewport_visual_layer::center, current, previous);
 
     visual_animation_managerst movement;
-    run_frame(movement, input, 1990);
+    constexpr uint32_t movement_start_time_ms = 2000;
+    run_frame(movement, input, movement_start_time_ms - 10);
     assert(!movement.requires_full_redraw());
 
     previous.at(0, 1) = creature_texpos;
     current.at(1, 1) = creature_texpos;
-    run_frame(movement, input, 2000);
+    run_frame(movement, input, movement_start_time_ms);
     auto render = movement.get_movement(viewport, viewport_visual_layer::center, 1, 1);
     assert(render.active);
     assert(render.source.x == 0 && render.source.y == 1);
@@ -505,16 +514,16 @@ int main() {
 
     previous = current;
     set_layer(input, viewport_visual_layer::center, current, previous);
-    run_frame(movement, input, 2050);
+    run_frame(movement, input, movement_start_time_ms + animation_duration_ms / 2);
     render = movement.get_movement(viewport, viewport_visual_layer::center, 1, 1);
     assert(render.active);
     assert(render.progress == 0.5f);
 
-    run_frame(movement, input, 2100);
+    run_frame(movement, input, movement_start_time_ms + animation_duration_ms);
     assert(!movement.get_movement(viewport, viewport_visual_layer::center, 1, 1).active);
     assert(movement.requires_full_redraw());
 
-    run_frame(movement, input, 2120);
+    run_frame(movement, input, movement_start_time_ms + animation_duration_ms + 20);
     assert(!movement.requires_full_redraw());
 
     visual_animation_managerst ambiguous;
@@ -671,7 +680,8 @@ int main() {
     set_layer(input, viewport_visual_layer::item, status_current, status_previous);
     set_layer(input, viewport_visual_layer::designation, status_current, status_previous);
     visual_animation_managerst companion;
-    run_frame(companion, input, 8990);
+    constexpr uint32_t companion_start_time_ms = 9000;
+    run_frame(companion, input, companion_start_time_ms - 10);
     previous[0 * 3 + 1] = 42;
     current[1 * 3 + 1] = 42;
     status_previous[0 * 3 + 0] = 90;
@@ -688,14 +698,14 @@ int main() {
                                 {0, 0}, {1, 0}));
     status_previous[0 * 3 + 0] = 90;
     status_previous[1 * 3 + 0] = 0;
-    run_frame(companion, input, 9000);
+    run_frame(companion, input, companion_start_time_ms);
     auto status = companion.get_movement(viewport, viewport_visual_layer::designation, 1, 0);
     assert(status.active && !status.inherited && status.source.x == 0 && status.source.y == 0);
     const auto carried_item = companion.get_movement(viewport, viewport_visual_layer::item, 1, 0);
     assert(carried_item.active && carried_item.inherited);
     previous = current;
     status_current[1 * 3 + 0] = 92;
-    run_frame(companion, input, 9050);
+    run_frame(companion, input, companion_start_time_ms + animation_duration_ms / 2);
     status = companion.get_movement(viewport, viewport_visual_layer::designation, 1, 0);
     assert(status.active && status.progress == 0.5f);
 
@@ -747,20 +757,21 @@ int main() {
     constexpr int32_t vehicle_texpos_during_move = 78;
     constexpr int32_t vehicle_texpos_stationary = 79;
     constexpr int32_t vehicle_texpos_after_move = 80;
-    run_frame(vehicle, input, 11990);
+    constexpr uint32_t vehicle_start_time_ms = 12000;
+    run_frame(vehicle, input, vehicle_start_time_ms - 10);
     previous.at(0, 1) = vehicle_texpos_before;
     current.at(1, 1) = vehicle_texpos_during_move;
-    run_frame(vehicle, input, 12000);
+    run_frame(vehicle, input, vehicle_start_time_ms);
     assert(vehicle.get_movement(viewport, viewport_visual_layer::vehicle, 1, 1).active);
     previous = current;
     current.at(1, 1) = vehicle_texpos_stationary;
-    run_frame(vehicle, input, 12050);
+    run_frame(vehicle, input, vehicle_start_time_ms + animation_duration_ms / 2);
     const auto cart = vehicle.get_movement(viewport, viewport_visual_layer::vehicle, 1, 1);
     assert(cart.active && cart.progress == 0.5f);
     previous = current;
     current.fill(0);
     current.at(2, 1) = vehicle_texpos_after_move;
-    run_frame(vehicle, input, 12060);
+    run_frame(vehicle, input, vehicle_start_time_ms + animation_duration_ms / 2 + 10);
     const auto chained = vehicle.get_movement(viewport, viewport_visual_layer::vehicle, 2, 1);
     assert(chained.active && chained.source.x > 0.0f && chained.source.x < 1.0f &&
            chained.progress == 0.0f);

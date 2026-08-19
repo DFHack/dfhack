@@ -117,7 +117,7 @@ void update_visual_context(const df::renderer_2d_base *renderer, const df::graph
     // On a pure pan the reset signature is unchanged, but last frame's blackout
     // coverage is in the old viewport frame, so discard it (the engine repaints
     // the whole scrolled viewport anyway).
-    const df::coord2d pan{window_x ? *window_x : 0, window_y ? *window_y : 0};
+    const df::coord2d pan(window_x ? *window_x : 0, window_y ? *window_y : 0);
     if (!has_pan_context || previous_pan != pan)
         previous_coverage.clear();
     previous_pan = pan;
@@ -548,8 +548,8 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                     (group == visual_render_groupst::main || group == visual_render_groupst::upper);
                 // Facing is read from the anchor tile so every fragment of one creature
                 // agrees.
-                const df::coord2d anchor{x + mirror_descriptor.anchor_offset.x,
-                                         y + mirror_descriptor.anchor_offset.y};
+                const df::coord2d anchor(x + mirror_descriptor.anchor_offset.x,
+                                         y + mirror_descriptor.anchor_offset.y);
                 const bool mirrored = mirror_eligible &&
                                       animation_manager.get_facing(vp, anchor) != native_sprite_facing;
                 // The anchor's own layer has no offset, so it flips in place.
@@ -624,7 +624,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
     if (flip_enabled) {
         for (int32_t anchor_x = 0; anchor_x < vp->dim_x; ++anchor_x) {
             for (int32_t anchor_y = 0; anchor_y < vp->dim_y; ++anchor_y) {
-                const df::coord2d anchor{anchor_x, anchor_y};
+                const df::coord2d anchor(anchor_x, anchor_y);
                 if (animation_manager.get_facing(vp, anchor) == native_sprite_facing)
                     continue;
                 for (const auto visual_layer : visual_layer_draw_order) {

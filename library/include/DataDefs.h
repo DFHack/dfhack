@@ -1016,4 +1016,3 @@ namespace DFHack {
 // Global object pointers
 #define DF_GLOBAL_VALUE(name,defval) (df::global::name ? *df::global::name : defval)
 #define DF_GLOBAL_FIELD(name,fname,defval) (df::global::name ? df::global::name->fname : defval)
-

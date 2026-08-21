@@ -33,6 +33,7 @@ distribution.
 #include "DataDefs.h"
 
 #include "df/craft_material_class.h"
+#include "df/item_type.h"
 
 namespace df
 {

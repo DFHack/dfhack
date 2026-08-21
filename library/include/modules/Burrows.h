@@ -23,11 +23,15 @@ distribution.
 */
 
 #pragma once
+
+#include <vector>
+
 #include "Export.h"
 #include "DataDefs.h"
 #include "modules/Maps.h"
 
-#include <vector>
+#include "df/coord.h"
+#include "df/coord2d.h"
 
 /**
  * \defgroup grp_burrows Burrows module and its types

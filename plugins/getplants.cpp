@@ -1,3 +1,5 @@
+#include <set>
+
 #include "Debug.h"
 #include "PluginManager.h"
 #include "TileTypes.h"
@@ -7,6 +9,7 @@
 #include "modules/Materials.h"
 #include "modules/Random.h"
 
+#include "df/global_objects.h"
 #include "df/map_block.h"
 #include "df/map_block_column.h"
 #include "df/material.h"
@@ -20,8 +23,6 @@
 #include "df/world_data.h"
 #include "df/world_object_data.h"
 #include "df/world_site.h"
-
-#include <set>
 
 using std::string;
 using std::vector;

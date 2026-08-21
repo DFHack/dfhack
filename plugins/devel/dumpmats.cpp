@@ -1,16 +1,17 @@
 // Dump all hardcoded materials
 #include "Console.h"
+#include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
 
-#include "DataDefs.h"
-#include "df/world.h"
-#include "df/material.h"
 #include "df/builtin_mats.h"
-#include "df/matter_state.h"
 #include "df/descriptor_color.h"
+#include "df/global_objects.h"
 #include "df/item_type.h"
+#include "df/material.h"
+#include "df/matter_state.h"
 #include "df/strain_type.h"
+#include "df/world.h"
 
 using std::string;
 using std::vector;

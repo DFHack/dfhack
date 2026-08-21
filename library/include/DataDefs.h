@@ -997,6 +997,7 @@ namespace DFHack {
     DFHACK_EXPORT const struct_field_info *find_union_tag(const struct_identity *structure, const struct_field_info *union_field);
 }
 
+
 #define ENUM_ATTR(enum,attr,val) (df::enum_traits<df::enum>::attrs(val).attr)
 #define ENUM_ATTR_STR(enum,attr,val) DFHack::ifnull(ENUM_ATTR(enum,attr,val),"?")
 #define ENUM_KEY_STR(enum,val) (DFHack::enum_item_key<df::enum>(val))
@@ -1013,42 +1014,6 @@ namespace DFHack {
  */
 
 // Global object pointers
-#include "df/global_objects.h"
-
 #define DF_GLOBAL_VALUE(name,defval) (df::global::name ? *df::global::name : defval)
 #define DF_GLOBAL_FIELD(name,fname,defval) (df::global::name ? df::global::name->fname : defval)
 
-// A couple of headers that have to be included at once
-#include "df/coord2d.h"
-#include "df/coord.h"
-
-namespace std {
-    template <>
-    struct hash<df::coord> {
-        std::size_t operator()(const df::coord& c) const {
-            return c();
-        }
-    };
-}
-
-template <>
-struct fmt::formatter<df::coord> : fmt::formatter<std::string_view>
-{
-    template <typename FormatContext>
-    auto format(const df::coord& c, FormatContext& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(
-            fmt::format("({}, {}, {})", c.x, c.y, c.z), ctx);
-    }
-};
-
-template <>
-struct fmt::formatter<df::coord2d> : fmt::formatter<std::string_view>
-{
-    template <typename FormatContext>
-    auto format(const df::coord2d& c, FormatContext& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(
-            fmt::format("({}, {})", c.x, c.y), ctx);
-    }
-};

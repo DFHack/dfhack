@@ -36,7 +36,10 @@ distribution.
 
 #include "df/biome_type.h"
 #include "df/block_flags.h"
+#include "df/coord.h"
+#include "df/coord2d.h"
 #include "df/feature_type.h"
+#include "df/flow_info.h"
 #include "df/flow_type.h"
 #include "df/matter_state.h"
 #include "df/tile_dig_designation.h"

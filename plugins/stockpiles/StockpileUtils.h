@@ -5,6 +5,7 @@
 
 #include "df/world.h"
 #include "df/creature_raw.h"
+#include "df/global_objects.h"
 #include "df/plant_raw.h"
 
 // Utility Functions {{{

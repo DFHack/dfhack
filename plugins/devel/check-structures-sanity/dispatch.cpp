@@ -3,6 +3,7 @@
 #include <cinttypes>
 #include <queue>
 
+#include "df/global_objects.h"
 #include "df/large_integer.h"
 
 Checker::Checker(color_ostream & out) :

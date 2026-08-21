@@ -31,9 +31,14 @@ distribution.
  * @ingroup grp_modules
  */
 
-#include "Export.h"
-#include "modules/Persistence.h"
 #include "DataDefs.h"
+#include "Export.h"
+
+#include "modules/Persistence.h"
+
+#include "df/game_mode.h"
+#include "df/game_type.h"
+#include "df/unit.h"
 
 
 namespace df

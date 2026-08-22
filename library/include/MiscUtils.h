@@ -415,14 +415,14 @@ inline bool static_add_to_map(CT *pmap, const typename CT::key_type key, const t
  */
 template<
     std::ranges::input_range Range,
-    std::invocable<std::ostream&, std::ranges::range_reference_t<Range>> Callable>
+    std::invocable<std::ostream&, std::ranges::range_reference_t<const Range>> Callable>
 void print_range(
     std::ostream &out,
     const Range &elements,
     Callable&& print_element,
-    const std::string &prefix = "[",
-    const std::string &separator = ", ",
-    const std::string &suffix = "]"
+    const std::string_view prefix = "[",
+    const std::string_view separator = ", ",
+    const std::string_view suffix = "]"
 ){
     out << prefix;
     auto it = std::ranges::begin(elements);
@@ -442,9 +442,9 @@ template<std::ranges::input_range Range>
 void print_range(
     std::ostream &out,
     const Range& elements,
-    const std::string &prefix = "[",
-    const std::string &separator = ", ",
-    const std::string &suffix = "]"
+    const std::string_view prefix = "[",
+    const std::string_view separator = ", ",
+    const std::string_view suffix = "]"
 ){
     auto print_element = [](std::ostream &out, auto& e) { out << e; };
     print_range(out, elements, print_element, prefix, separator, suffix);

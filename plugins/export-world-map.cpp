@@ -69,9 +69,9 @@ constexpr int wdim = 768; // dimension of a world tile
 constexpr int rdim = 48;  // dimension of a region tile
 
 /**
- * Takes a vector of coordinates interpreted as global region tile coordinates
+ * Takes a range of coordinates interpreted as global region tile coordinates
  * (i.e. 16 region tiles per world tile) and emits a WKT path in GIS-compatible
- * local tile coordinates (negative y-coordinates, 48 stepts per region tile)
+ * local tile coordinates (negative y-coordinates, 48 map units per region tile)
  */
 static void print_path(std::ostream &out, const std::vector<coord> &path) {
     auto scale = rdim;
@@ -81,6 +81,10 @@ static void print_path(std::ostream &out, const std::vector<coord> &path) {
     print_range(out, path, print_point, "(", ",", ")");
 }
 
+// format various values separated by the separator character (ends with a separator)
+static auto print_csv_line(std::ostream &out, char sep, auto ...args) {
+    ([&]{ out << args << sep; }() ,...);
+}
 
 static command_result do_command(color_ostream &out, vector<string> &parameters);
 static command_result export_regions(color_ostream &out);
@@ -192,8 +196,8 @@ static command_result export_sites(color_ostream &out)
     }
 
     // If you change anything in this vector, don't forget to change the
-    // corresponding comments and arguments in the call to print_csv below
-    vector<std::string> headings = {
+    // corresponding comments and arguments in the call to print_csv_line below
+    constexpr std::array<std::string_view, 12> headings = {
         "site_id", "civ_id", "created_year", "cur_owner_id", "type",
         "site_name_df", "site_name_en", "civ_name_df", "civ_name_en", "site_government_df", "site_government_en", "owner_race"
     };
@@ -217,8 +221,7 @@ static command_result export_sites(color_ostream &out)
             }
         }
 
-        auto print_csv = [&out_file](auto ...args){ ([&]{ out_file << args << ";" ; }() ,...); };
-        print_csv(
+        print_csv_line(out_file, ';',
             //  "site_id", "civ_id", "created_year", "cur_owner_id", "type",
             site->id,
             site->civ_id,
@@ -436,8 +439,8 @@ static command_result export_regions(color_ostream &out)
     }
 
     // If you change anything in this vector, don't forget to change the
-    // corresponding comments and arguments in the call to print_csv below
-    vector<std::string> headings = {
+    // corresponding comments and arguments in the call to print_csv_line below
+    constexpr std::array<std::string_view, 23> headings = {
         "world_x", "world_y", "num_tiles", "num_components", "biome_type",
         "region_id", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df",
         "evilness", "savagery", "volcanism", "drainage", "temperature", "vegetation", "rainfall", "salinity",
@@ -507,8 +510,7 @@ static command_result export_regions(color_ostream &out)
         auto world_region = df::world_region::find(region_map_entry.region_id);
         auto landmass = df::world_landmass::find(region_map_entry.landmass_id);
 
-        auto print_csv = [&out_line](auto ...args){ ([&]{ out_line << args << ";" ; }() ,...); };
-        print_csv(
+        print_csv_line(out_line, ';',
             // "world_x", "world_y", "num_tiles", "num_components", "biome_type",
             biome_tile.x,
             biome_tile.y,
@@ -805,8 +807,10 @@ static command_result export_rivers(color_ostream &out)
 
     for (auto& [r_idx, river_tiles] : tile_index) {
         auto river = world->world_data->rivers.at(r_idx);
-        out_file << DF2UTF(Translation::translateName(&river->name, false)) << ";";
-        out_file << DF2UTF(Translation::translateName(&river->name, true)) << ";";
+        print_csv_line(out_file, ';',
+            DF2UTF(Translation::translateName(&river->name, false)),
+            DF2UTF(Translation::translateName(&river->name, true))
+        );
         out_file << "MULTIPOLYGON(";
         bool first = true;
         for (auto &tile : river_tiles) {

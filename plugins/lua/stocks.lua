@@ -19,7 +19,8 @@ local function expand_all()
     for idx=0,num_sections-1 do
         stocks.current_type_a_expanded[idx] = true
     end
-    stocks.i_height = num_sections * 3
+    num_items = #stocks.current_type_i_list
+    stocks.i_height = (num_items + num_sections) * 3
 end
 
 local function remove_empty()

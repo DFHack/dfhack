@@ -632,6 +632,7 @@ namespace df
     OPAQUE_IDENTITY_TRAITS(std::optional<std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::variant<std::string, std::function<void()> >);
     OPAQUE_IDENTITY_TRAITS(std::weak_ptr<df::widget_container>);
+    OPAQUE_IDENTITY_TRAITS(std::filesystem::file_time_type);
 
 #ifdef BUILD_DFHACK_LIB
     template<typename T>
@@ -711,6 +712,11 @@ namespace df
 #ifdef BUILD_DFHACK_LIB
     template<class T, int sz> struct identity_traits<T [sz]> {
         static const container_identity *get();
+    };
+
+    template<class T, size_t sz> struct identity_traits<std::array<T, sz>>
+    {
+        static const container_identity* get();
     };
 
     template<class T> struct identity_traits<std::vector<T> > {
@@ -793,6 +799,13 @@ namespace df
 #ifdef BUILD_DFHACK_LIB
     template<class T, int sz>
     inline const container_identity *identity_traits<T [sz]>::get() {
+        static const buffer_container_identity identity(sz, identity_traits<T>::get());
+        return &identity;
+    }
+
+    template<class T, size_t sz>
+    inline const container_identity* identity_traits<std::array<T,sz>>::get()
+    {
         static const buffer_container_identity identity(sz, identity_traits<T>::get());
         return &identity;
     }

@@ -2,11 +2,14 @@
 // and flags the constructions to recreate their components upon disassembly
 
 #include "Console.h"
+#include "DataDefs.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "Types.h"
+
 #include "modules/Maps.h"
 
-#include "DataDefs.h"
+#include "df/global_objects.h"
 #include "df/item.h"
 #include "df/world.h"
 #include "df/construction.h"

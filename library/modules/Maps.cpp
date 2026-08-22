@@ -38,15 +38,15 @@ distribution.
 #include "modules/Maps.h"
 
 #include "df/biome_type.h"
-#include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
+#include "df/block_burrow.h"
 #include "df/block_column_print_infost.h"
 #include "df/block_square_event_grassst.h"
 #include "df/block_square_event_item_spatterst.h"
 #include "df/block_square_event_material_spatterst.h"
 #include "df/block_square_event_spoorst.h"
-#include "df/building.h"
 #include "df/building_type.h"
+#include "df/building.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
 #include "df/entity_plot_invasion_mapst.h"
@@ -56,22 +56,25 @@ distribution.
 #include "df/flow_info.h"
 #include "df/historical_entity.h"
 #include "df/invasion_info.h"
-#include "df/map_block.h"
 #include "df/map_block_column.h"
+#include "df/map_block.h"
 #include "df/material.h"
-#include "df/plant.h"
 #include "df/plant_root_tile.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
-#include "df/plotinfost.h"
+#include "df/plant.h"
 #include "df/plot_invasion_mapst.h"
+#include "df/plotinfost.h"
 #include "df/region_map_entry.h"
-#include "df/world.h"
+#include "df/site_map_infost.h"
 #include "df/world_data.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
 #include "df/world_region_details.h"
+#include "df/world_site_type.h"
+#include "df/world_site.h"
 #include "df/world_underground_region.h"
+#include "df/world.h"
 #include "df/z_level_flags.h"
 
 
@@ -433,6 +436,22 @@ df::tile_occupancy *Maps::getTileOccupancy(int32_t x, int32_t y, int32_t z)
     return block ? &block->occupancy[x&15][y&15] : NULL;
 }
 
+df::coord2d Maps::addRegionBiomeOffset(df::coord2d world_pos, int8_t offset_dir) {
+    // Note 1: textual order of offfsets is upside down compared to the keypad order used by the biome offset
+    // Note 2: also upside down compared to (fort) map block region offsets
+    constexpr auto biome_offset = std::to_array<std::pair<int16_t, int16_t>>({
+        {-1, 1}, {0, 1}, {1, 1},
+        {-1, 0}, {0, 0}, {1, 0},
+        {-1,-1}, {0,-1}, {1,-1}
+    });
+
+    auto [diff_x, diff_y] = biome_offset[std::clamp(offset_dir, (int8_t)1, (int8_t)9) - 1];
+    return {
+        (int16_t)std::clamp(world_pos.x + diff_x,0,world->world_data->world_width - 1),
+        (int16_t)std::clamp(world_pos.y + diff_y,0,world->world_data->world_height - 1)
+    };
+}
+
 df::region_map_entry *Maps::getRegionBiome(df::coord2d rgn_pos)
 {
     auto data = world->world_data;
@@ -756,7 +775,7 @@ int32_t Maps::addMaterialSpatter (df::coord pos, int16_t mat, int32_t matg, df::
         spatter->mat_type = mat;
         spatter->mat_index = matg;
         spatter->mat_state = state;
-        memset(spatter->amount, 0, sizeof(spatter->amount));
+        spatter->amount.fill({});
         spatter->min_temperature = spatter->max_temperature = 60001;
 
         uint16_t melt = matinfo.material->heat.melting_point;
@@ -876,8 +895,8 @@ int32_t Maps::addItemSpatter (df::coord pos, df::item_type i_type, int16_t i_sub
         spatter->mattype = i_subcat1;
         spatter->matindex = i_subcat2;
         spatter->print_variant = print_variant;
-        memset(spatter->amount, 0, sizeof(spatter->amount));
-        memset(spatter->flag, 0, sizeof(spatter->flag));
+        spatter->amount.fill({});
+        spatter->flag.fill({});
         spatter->min_temperature = spatter->max_temperature = 60001;
 
         if (Items::usesStandardMaterial(i_type))
@@ -1532,6 +1551,17 @@ int Maps::removeAreaAquifer(df::coord pos1, df::coord pos2, std::function<bool(d
     return totalAffectedCount;
 }
 
+const char* Maps::describeSurroundings(int savagery, int evilness) {
+    constexpr std::array<const char*,9>surroundings{
+        "Serene",   "Mirthful",     "Joyous Wilds",
+        "Calm",     "Wilderness",   "Untamed Wilds",
+        "Sinister", "Haunted",      "Terrifying"
+    };
+    auto savagery_index = savagery < 33 ? 0 : (savagery > 65 ? 2 : 1);
+    auto evilness_index = evilness < 33 ? 0 : (evilness > 65 ? 2 : 1);
+    return surroundings[3 * evilness_index + savagery_index];
+}
+
 void Maps::addBlockColumns(int32_t new_height)
 {
     auto quantity = new_height - world->map.z_count_block;
@@ -1569,14 +1599,10 @@ void Maps::addBlockColumns(int32_t new_height)
 
             // Copy other potentially important metadata from prior air
             // layer
-            std::memcpy(air_block->lighting, last_air_block->lighting,
-                sizeof(air_block->lighting));
-            std::memcpy(air_block->temperature_1, last_air_block->temperature_1,
-                sizeof(air_block->temperature_1));
-            std::memcpy(air_block->temperature_2, last_air_block->temperature_2,
-                sizeof(air_block->temperature_2));
-            std::memcpy(air_block->region_offset, last_air_block->region_offset,
-                sizeof(air_block->region_offset));
+            air_block->lighting = last_air_block->lighting;
+            air_block->temperature_1 = last_air_block->temperature_1;
+            air_block->temperature_2 = last_air_block->temperature_2;
+            air_block->region_offset = last_air_block->region_offset;
 
             // Create tile designations to inform lighting and
             // outside markers
@@ -1598,9 +1624,9 @@ void Maps::addBlockColumns(int32_t new_height)
                 continue;
             }
             df::block_column_print_infost* glyphs = new df::block_column_print_infost;
-            std::ranges::copy(std::array{0,1,2,3}, glyphs->x);
-            std::ranges::copy(std::array{0,0,0,0}, glyphs->y);
-            std::ranges::copy(std::array{'e','x','p','^'}, glyphs->tile);
+            glyphs->x = {0,1,2,3};
+            glyphs->y = {0,0,0,0};
+            glyphs->tile = {'e','x','p','^'};
             column->unmined_glyphs.push_back(glyphs);
         }
         return true;
@@ -1654,5 +1680,89 @@ void Maps::addBlockColumns(int32_t new_height)
         {
             updateInvasionMap(world->map.z_count, map->map);
         }
+    }
+}
+
+
+
+// reverse engineered from DF 50.13 (FUN_140d82ca0, likely sitest::get_site_type_name)
+const char* Maps::getSiteTypeName(df::world_site *site) {
+    using wst = df::enums::world_site_type::world_site_type;
+    switch (site->type) {
+        case wst::PlayerFortress:
+        case wst::MountainHalls:
+            if (site->min_depth == 0 && (0 < site->max_depth)){
+                return "fortress";
+            }
+            if (site->min_depth > 0) {
+                return "mountain halls";
+            }
+            return "hillocks";
+
+        case wst::DarkFortress: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "fortress" : "pits";
+        }
+
+        case wst::Cave:
+            return "cave";
+
+        case wst::ForestRetreat:
+            return "forest retreat";
+
+        case wst::Town: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "town" : "hamlet";
+        }
+
+        case wst::ImportantLocation:
+            return "important location";
+
+        case wst::LairShrine:
+            if (site->subtype_info) {
+                switch (site->subtype_info->lair_type) {
+                    case df::enums::lair_type::LABYRINTH:
+                        return "labyrinth";
+                    case df::enums::lair_type::SHRINE:
+                        return "shrine";
+                    default:
+                        break;
+                }
+            }
+            return "lair";
+
+        case wst::Fortress:
+            if (site->subtype_info) {
+                switch (site->subtype_info->fortress_type) {
+                    case df::enums::fortress_type::TOWER:
+                        return "tower";
+                    case df::enums::fortress_type::MONASTERY:
+                        return "monastery";
+                    case df::enums::fortress_type::FORT:
+                        return "fort";
+                    default:
+                        return "castle";
+                }
+            }
+            return "fortress";
+
+        case wst::Camp:
+            return "camp";
+
+        case wst::Monument:
+            if (site->subtype_info) {
+                switch (site->subtype_info->monument_type) {
+                    case df::enums::monument_type::TOMB:
+                        return "tomb";
+                    case df::enums::monument_type::VAULT:
+                        return "vault";
+                    default:
+                        break;
+                }
+            }
+            return "monument";
+
+        default:
+            return "site";
     }
 }

@@ -36,11 +36,15 @@ distribution.
 
 #include "df/biome_type.h"
 #include "df/block_flags.h"
+#include "df/coord.h"
+#include "df/coord2d.h"
 #include "df/feature_type.h"
+#include "df/flow_info.h"
 #include "df/flow_type.h"
 #include "df/matter_state.h"
 #include "df/tile_dig_designation.h"
 #include "df/tiletype.h"
+#include "df/world_site.h"
 
 namespace df {
     struct block_square_event;
@@ -126,28 +130,32 @@ enum BiomeOffset {
  */
 typedef df::block_flags t_blockflags;
 
+template <typename T>
+using arr40d = std::array<std::array<T, 16>, 16>;
+
 /**
  * 16x16 array of tile types
  * \ingroup grp_maps
  */
-typedef df::tiletype tiletypes40d [16][16];
+using tiletypes40d = arr40d<df::tiletype>;
 /**
  * 16x16 array used for squashed block materials
  * \ingroup grp_maps
  */
-typedef int16_t t_blockmaterials [16][16];
+using t_blockmaterials = arr40d<int16_t>;
 /**
  * 16x16 array of designation flags
  * \ingroup grp_maps
  */
 typedef df::tile_designation t_designation;
-typedef t_designation designations40d [16][16];
+using designations40d = arr40d<t_designation>;
+
 /**
  * 16x16 array of occupancy flags
  * \ingroup grp_maps
  */
 typedef df::tile_occupancy t_occupancy;
-typedef t_occupancy occupancies40d [16][16];
+using occupancies40d = arr40d<t_occupancy>;
 /**
  * array of 16 biome indexes valid for the block
  * \ingroup grp_maps
@@ -157,7 +165,7 @@ typedef uint8_t biome_indices40d [9];
  * 16x16 array of temperatures
  * \ingroup grp_maps
  */
-typedef uint16_t t_temperatures [16][16];
+using t_temperatures = arr40d<uint16_t>;
 
 /**
  * Index a tile array by a 2D coordinate, clipping it to mod 16.
@@ -347,6 +355,8 @@ inline df::tiletype *getTileType(df::coord pos) { return getTileType(pos.x, pos.
 inline df::tile_designation *getTileDesignation(df::coord pos) { return getTileDesignation(pos.x, pos.y, pos.z); }
 inline df::tile_occupancy *getTileOccupancy(df::coord pos) { return getTileOccupancy(pos.x, pos.y, pos.z); }
 
+// shift world region coordinate by region_details biome reference
+DFHACK_EXPORT df::coord2d addRegionBiomeOffset(df::coord2d world_pos, int8_t offset_dir);
 // Returns biome info about the specified world region.
 DFHACK_EXPORT df::region_map_entry *getRegionBiome(df::coord2d rgn_pos);
 
@@ -407,6 +417,16 @@ DFHACK_EXPORT int removeAreaAquifer(df::coord pos1, df::coord pos2,
     std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block) { return true; });
 
 DFHACK_EXPORT void addBlockColumns(int32_t new_height);
+
+// Get surroundings classification from savagery and evilness
+DFHACK_EXPORT const char* describeSurroundings(int savagery, int evilness);
+
+/**
+ * A single function does not merit a "Sites" module, hence we collect site functions here in the meantime.
+ */
+
+// Get the classification string (e.g. "town", "hillocs", "tower", etc.) for a site
+DFHACK_EXPORT const char* getSiteTypeName(df::world_site *site);
 }
 }
 #endif

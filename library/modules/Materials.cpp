@@ -108,7 +108,7 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
     {
         material = raws.mat_table.builtin[type];
     }
-    else if (type == 0)
+    else if (type == df::builtin_mats::INORGANIC)
     {
         mode = Inorganic;
         inorganic = df::inorganic_raw::find(index);
@@ -116,23 +116,23 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
             return false;
         material = &inorganic->material;
     }
-    else if (type < CREATURE_BASE)
+    else if (type < df::builtin_mats::CREATURE_1)
     {
         material = raws.mat_table.builtin[type];
     }
-    else if (type < FIGURE_BASE)
+    else if (type <= df::builtin_mats::CREATURE_200)
     {
         mode = Creature;
-        subtype = type - CREATURE_BASE;
+        subtype = type - df::builtin_mats::CREATURE_1;
         creature = df::creature_raw::find(index);
         if (!creature || size_t(subtype) >= creature->material.size())
             return false;
         material = creature->material[subtype];
     }
-    else if (type < PLANT_BASE)
+    else if (type <= df::builtin_mats::HIST_FIG_200)
     {
         mode = Creature;
-        subtype = type - FIGURE_BASE;
+        subtype = type - df::builtin_mats::HIST_FIG_1;
         figure = df::historical_figure::find(index);
         if (!figure)
             return false;
@@ -141,10 +141,10 @@ bool MaterialInfo::decode(int16_t type, int32_t index)
             return false;
         material = creature->material[subtype];
     }
-    else if (type < END_BASE)
+    else if (type <= df::builtin_mats::PLANT_200)
     {
         mode = Plant;
-        subtype = type - PLANT_BASE;
+        subtype = type - df::builtin_mats::PLANT_1;
         plant = df::plant_raw::find(index);
         if (!plant || size_t(subtype) >= plant->material.size())
             return false;
@@ -219,7 +219,7 @@ bool MaterialInfo::findBuiltin(const std::string& token)
     }
 
     auto& raws = world->raws;
-    for (int i = 0; i < NUM_BUILTIN; i++)
+    for (int i = 0; i < df::builtin_mats::CREATURE_1; i++)
     {
         auto obj = raws.mat_table.builtin[i];
         if (obj && obj->id == token)
@@ -266,7 +266,7 @@ bool MaterialInfo::findPlant(const std::string& token, const std::string& subtok
 
         for (size_t j = 0; j < p->material.size(); j++)
             if (p->material[j]->id == subtoken)
-                return decode(PLANT_BASE + j, i);
+                return decode(df::builtin_mats::PLANT_1 + j, i);
 
         break;
     }
@@ -286,7 +286,7 @@ bool MaterialInfo::findCreature(const std::string& token, const std::string& sub
 
         for (size_t j = 0; j < p->material.size(); j++)
             if (p->material[j]->id == subtoken)
-                return decode(CREATURE_BASE + j, i);
+                return decode(df::builtin_mats::CREATURE_1 + j, i);
 
         break;
     }

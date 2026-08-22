@@ -22,8 +22,8 @@ namespace {
     DFHack::VersionInfo *global_table_ = DFHack::Core::getInstance().vinfo.get(); \
     void * tmp_;
 
-#define INIT_GLOBAL_FUNCTION_ITEM(type,name) \
-    if (global_table_->getAddress(#name,tmp_)) name = (type*)tmp_;
+#define INIT_GLOBAL_FUNCTION_ITEM(name, ...) \
+    if (global_table_->getAddress(#name,tmp_)) name = (__VA_ARGS__*)tmp_;
 
 #define TID(type) (&identity_traits< type >::identity)
 

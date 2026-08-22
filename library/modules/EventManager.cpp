@@ -1136,6 +1136,11 @@ static void manageUnitAttackEvent(color_ostream& out) {
     multimap<Plugin*,EventHandler> copy(handlers[EventType::UNIT_ATTACK].begin(), handlers[EventType::UNIT_ATTACK].end());
     std::vector<df::report*>& reports = df::global::world->status.reports;
     size_t idx = df::report::binsearch_index(reports, lastReportUnitAttack, false);
+    if (idx >= reports.size())
+    {
+        WARN(log, out).print("manageUnitAttackEvent: last reported unit attack lookup failed ({} -> {})\n", lastReportUnitAttack, idx);
+        return;
+    }
     // returns the index to the key equal to or greater than the key provided
     idx = reports[idx]->id == lastReportUnitAttack ? idx + 1 : idx; // we need the index after (where the new stuff is)
 

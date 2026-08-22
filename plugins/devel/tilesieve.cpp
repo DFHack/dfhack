@@ -1,16 +1,18 @@
 // This is a generic plugin that does nothing useful apart from acting as an example... of a plugin that does nothing :D
 
-// some headers required for a plugin. Nothing special, just the basics.
-#include <Console.h>
-#include <Export.h>
-#include <PluginManager.h>
 #include <set>
-// DF data structure definition headers
+
+#include "Console.h"
 #include "DataDefs.h"
+#include "Export.h"
+#include "PluginManager.h"
+#include "TileTypes.h"
+
 #include "modules/Maps.h"
+
+#include "df/global_objects.h"
 #include "df/map_block.h"
 #include "df/world.h"
-#include "TileTypes.h"
 
 using namespace DFHack;
 using namespace df::enums;

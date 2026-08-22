@@ -44,6 +44,7 @@ distribution.
 #include "df/matter_state.h"
 #include "df/tile_dig_designation.h"
 #include "df/tiletype.h"
+#include "df/world_site.h"
 
 namespace df {
     struct block_square_event;
@@ -354,6 +355,8 @@ inline df::tiletype *getTileType(df::coord pos) { return getTileType(pos.x, pos.
 inline df::tile_designation *getTileDesignation(df::coord pos) { return getTileDesignation(pos.x, pos.y, pos.z); }
 inline df::tile_occupancy *getTileOccupancy(df::coord pos) { return getTileOccupancy(pos.x, pos.y, pos.z); }
 
+// shift world region coordinate by region_details biome reference
+DFHACK_EXPORT df::coord2d addRegionBiomeOffset(df::coord2d world_pos, int8_t offset_dir);
 // Returns biome info about the specified world region.
 DFHACK_EXPORT df::region_map_entry *getRegionBiome(df::coord2d rgn_pos);
 
@@ -414,6 +417,16 @@ DFHACK_EXPORT int removeAreaAquifer(df::coord pos1, df::coord pos2,
     std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block) { return true; });
 
 DFHACK_EXPORT void addBlockColumns(int32_t new_height);
+
+// Get surroundings classification from savagery and evilness
+DFHACK_EXPORT const char* describeSurroundings(int savagery, int evilness);
+
+/**
+ * A single function does not merit a "Sites" module, hence we collect site functions here in the meantime.
+ */
+
+// Get the classification string (e.g. "town", "hillocs", "tower", etc.) for a site
+DFHACK_EXPORT const char* getSiteTypeName(df::world_site *site);
 }
 }
 #endif

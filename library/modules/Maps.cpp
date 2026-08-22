@@ -38,15 +38,15 @@ distribution.
 #include "modules/Maps.h"
 
 #include "df/biome_type.h"
-#include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
+#include "df/block_burrow.h"
 #include "df/block_column_print_infost.h"
 #include "df/block_square_event_grassst.h"
 #include "df/block_square_event_item_spatterst.h"
 #include "df/block_square_event_material_spatterst.h"
 #include "df/block_square_event_spoorst.h"
-#include "df/building.h"
 #include "df/building_type.h"
+#include "df/building.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
 #include "df/entity_plot_invasion_mapst.h"
@@ -56,22 +56,25 @@ distribution.
 #include "df/flow_info.h"
 #include "df/historical_entity.h"
 #include "df/invasion_info.h"
-#include "df/map_block.h"
 #include "df/map_block_column.h"
+#include "df/map_block.h"
 #include "df/material.h"
-#include "df/plant.h"
 #include "df/plant_root_tile.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
-#include "df/plotinfost.h"
+#include "df/plant.h"
 #include "df/plot_invasion_mapst.h"
+#include "df/plotinfost.h"
 #include "df/region_map_entry.h"
-#include "df/world.h"
+#include "df/site_map_infost.h"
 #include "df/world_data.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
 #include "df/world_region_details.h"
+#include "df/world_site_type.h"
+#include "df/world_site.h"
 #include "df/world_underground_region.h"
+#include "df/world.h"
 #include "df/z_level_flags.h"
 
 
@@ -431,6 +434,22 @@ df::tile_occupancy *Maps::getTileOccupancy(int32_t x, int32_t y, int32_t z)
 {
     df::map_block *block = getTileBlock(x,y,z);
     return block ? &block->occupancy[x&15][y&15] : NULL;
+}
+
+df::coord2d Maps::addRegionBiomeOffset(df::coord2d world_pos, int8_t offset_dir) {
+    // Note 1: textual order of offfsets is upside down compared to the keypad order used by the biome offset
+    // Note 2: also upside down compared to (fort) map block region offsets
+    constexpr auto biome_offset = std::to_array<std::pair<int16_t, int16_t>>({
+        {-1, 1}, {0, 1}, {1, 1},
+        {-1, 0}, {0, 0}, {1, 0},
+        {-1,-1}, {0,-1}, {1,-1}
+    });
+
+    auto [diff_x, diff_y] = biome_offset[std::clamp(offset_dir, (int8_t)1, (int8_t)9) - 1];
+    return {
+        (int16_t)std::clamp(world_pos.x + diff_x,0,world->world_data->world_width - 1),
+        (int16_t)std::clamp(world_pos.y + diff_y,0,world->world_data->world_height - 1)
+    };
 }
 
 df::region_map_entry *Maps::getRegionBiome(df::coord2d rgn_pos)
@@ -1532,6 +1551,17 @@ int Maps::removeAreaAquifer(df::coord pos1, df::coord pos2, std::function<bool(d
     return totalAffectedCount;
 }
 
+const char* Maps::describeSurroundings(int savagery, int evilness) {
+    constexpr std::array<const char*,9>surroundings{
+        "Serene",   "Mirthful",     "Joyous Wilds",
+        "Calm",     "Wilderness",   "Untamed Wilds",
+        "Sinister", "Haunted",      "Terrifying"
+    };
+    auto savagery_index = savagery < 33 ? 0 : (savagery > 65 ? 2 : 1);
+    auto evilness_index = evilness < 33 ? 0 : (evilness > 65 ? 2 : 1);
+    return surroundings[3 * evilness_index + savagery_index];
+}
+
 void Maps::addBlockColumns(int32_t new_height)
 {
     auto quantity = new_height - world->map.z_count_block;
@@ -1650,5 +1680,89 @@ void Maps::addBlockColumns(int32_t new_height)
         {
             updateInvasionMap(world->map.z_count, map->map);
         }
+    }
+}
+
+
+
+// reverse engineered from DF 50.13 (FUN_140d82ca0, likely sitest::get_site_type_name)
+const char* Maps::getSiteTypeName(df::world_site *site) {
+    using wst = df::enums::world_site_type::world_site_type;
+    switch (site->type) {
+        case wst::PlayerFortress:
+        case wst::MountainHalls:
+            if (site->min_depth == 0 && (0 < site->max_depth)){
+                return "fortress";
+            }
+            if (site->min_depth > 0) {
+                return "mountain halls";
+            }
+            return "hillocks";
+
+        case wst::DarkFortress: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "fortress" : "pits";
+        }
+
+        case wst::Cave:
+            return "cave";
+
+        case wst::ForestRetreat:
+            return "forest retreat";
+
+        case wst::Town: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "town" : "hamlet";
+        }
+
+        case wst::ImportantLocation:
+            return "important location";
+
+        case wst::LairShrine:
+            if (site->subtype_info) {
+                switch (site->subtype_info->lair_type) {
+                    case df::enums::lair_type::LABYRINTH:
+                        return "labyrinth";
+                    case df::enums::lair_type::SHRINE:
+                        return "shrine";
+                    default:
+                        break;
+                }
+            }
+            return "lair";
+
+        case wst::Fortress:
+            if (site->subtype_info) {
+                switch (site->subtype_info->fortress_type) {
+                    case df::enums::fortress_type::TOWER:
+                        return "tower";
+                    case df::enums::fortress_type::MONASTERY:
+                        return "monastery";
+                    case df::enums::fortress_type::FORT:
+                        return "fort";
+                    default:
+                        return "castle";
+                }
+            }
+            return "fortress";
+
+        case wst::Camp:
+            return "camp";
+
+        case wst::Monument:
+            if (site->subtype_info) {
+                switch (site->subtype_info->monument_type) {
+                    case df::enums::monument_type::TOMB:
+                        return "tomb";
+                    case df::enums::monument_type::VAULT:
+                        return "vault";
+                    default:
+                        break;
+                }
+            }
+            return "monument";
+
+        default:
+            return "site";
     }
 }

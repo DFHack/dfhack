@@ -33,6 +33,7 @@
 #include <numeric>
 #include <optional>
 #include <regex>
+#include <span>
 #include <sstream>
 #include <string>
 #include <unordered_map>
@@ -73,7 +74,7 @@ constexpr int rdim = 48;  // dimension of a region tile
  * (i.e. 16 region tiles per world tile) and emits a WKT path in GIS-compatible
  * local tile coordinates (negative y-coordinates, 48 map units per region tile)
  */
-static void print_path(std::ostream &out, const std::vector<coord> &path) {
+static void print_path(std::ostream &out, const std::span<const coord> path) {
     auto scale = rdim;
     assert(path.size());
     auto print_point = [scale](std::ostream &out, const coord &pos){
@@ -234,14 +235,14 @@ static command_result export_sites(color_ostream &out)
             TRANSLATE_DF_EN(owner, owner->name),
             race ? race->name[2] : "NONE"
         );
-        const vector<coord> path{
+        const std::array<coord, 5> path{
             coord(site->global_min_x, site->global_min_y),
             coord(site->global_max_x+1, site->global_min_y),
             coord(site->global_max_x+1, site->global_max_y+1),
             coord(site->global_min_x, site->global_max_y+1),
             coord(site->global_min_x, site->global_min_y)
         };
-        print_range(out_file, std::vector<vector<coord>>{path}, print_path , "POLYGON(", ",", ")\n" );
+        print_range(out_file, std::array<std::array<coord, 5>, 1>{path}, print_path , "POLYGON(", ",", ")\n" );
     }
 
     const auto finish{std::chrono::steady_clock::now()};

@@ -1,4 +1,7 @@
 
+#include <vector>
+#include <set>
+
 #include "PluginManager.h"
 #include "DataDefs.h"
 
@@ -8,6 +11,7 @@
 #include "df/caste_body_info.h"
 #include "df/construction.h"
 #include "df/coord.h"
+#include "df/global_objects.h"
 #include "df/item.h"
 #include "df/item_actual.h"
 #include "df/job.h"
@@ -15,9 +19,6 @@
 #include "df/unit_wound.h"
 #include "df/unit_wound_layerst.h"
 #include "df/world.h"
-
-#include <vector>
-#include <set>
 
 using namespace DFHack;
 using namespace std;

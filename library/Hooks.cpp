@@ -2,6 +2,7 @@
 #include "Export.h"
 
 #include "df/gamest.h"
+#include "df/global_objects.h"
 
 #ifdef _WIN32
 #   define WIN32_LEAN_AND_MEAN

@@ -39,6 +39,8 @@ distribution.
 #include "ColorText.h"
 #include "DataDefs.h"
 
+#include "df/coord.h"
+#include "df/coord2d.h"
 #include "df/interface_key.h"
 
 #include <lua.h>

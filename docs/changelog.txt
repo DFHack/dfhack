@@ -56,6 +56,7 @@ Template for new versions:
 
 ## New Tools
 - `smooth-movement`: smoothly animate creature, item, and vehicle movement in the fortress viewport
+- `export-world-map`: Export world map data for GIS and other external tools.
 
 ## New Features
 
@@ -66,6 +67,10 @@ Template for new versions:
 ## Documentation
 
 ## API
+- Added ``MiscUtils::print_range`` to print ranges with prefix, separator, and suffix
+- Added ``Maps::getSiteTypeName`` to print the sites classification as a string (e.g. "mountain halls")
+- Added ``Maps::addRegionBiomeOffset`` to shift world region coordinate by region_details biome reference
+- Added ``Maps::describeSurroundings`` to get surroundings classification from savagery and evilness
 
 ## Lua
 

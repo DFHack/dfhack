@@ -22,10 +22,12 @@
 #include "modules/DFSDL.h"
 
 #include "df/coord2d.h"
+#include "df/global_objects.h"
 #include "df/graphic.h"
 #include "df/graphic_viewportst.h"
 #include "df/renderer_2d_base.h"
 #include "df/texture_fullid.h"
+#include "df/viewport_spatter_flag.h"
 
 #include "visual_animation.h"
 
@@ -78,14 +80,6 @@ bool has_pan_context = false;
 bool flip_enabled = false;
 bool zlevel_enabled = false;
 
-// DF stores fire's animation frame in bits 28--31 of screentexpos_spatter_flag.
-constexpr uint32_t viewport_spatter_fire_frame_shift = 28;
-constexpr uint32_t viewport_spatter_fire_frame_1 = 1U << viewport_spatter_fire_frame_shift;
-constexpr uint32_t viewport_spatter_fire_frame_2 = 2U << viewport_spatter_fire_frame_shift;
-constexpr uint32_t viewport_spatter_fire_frame_3 = 3U << viewport_spatter_fire_frame_shift;
-constexpr uint32_t viewport_spatter_fire_frame_4 = 4U << viewport_spatter_fire_frame_shift;
-constexpr uint32_t fire_bits = viewport_spatter_fire_frame_1 | viewport_spatter_fire_frame_2 |
-                               viewport_spatter_fire_frame_3 | viewport_spatter_fire_frame_4;
 // DF's native renderer draws 32-pixel tiles at viewport zoom 128.
 constexpr int32_t native_tile_pixels = 32;
 constexpr int32_t native_viewport_zoom = 128;
@@ -216,7 +210,7 @@ bool inside_clip(const df::graphic_viewportst *vp, int32_t x, int32_t y) {
 
 bool has_fire(const df::graphic_viewportst *vp, int32_t x, int32_t y) {
     return vp->screentexpos_spatter_flag != nullptr &&
-           (vp->screentexpos_spatter_flag[x * vp->dim_y + y] & fire_bits) != 0;
+           vp->screentexpos_spatter_flag[x * vp->dim_y + y].bits.fire_frame_type != 0;
 }
 
 template <typename T> class scoped_value_restorest {

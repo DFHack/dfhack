@@ -13,6 +13,7 @@
 #include <vector>
 
 #include "DataDefs.h"
+#include "df/coord2d.h"
 
 namespace df {
 struct graphic_viewportst;

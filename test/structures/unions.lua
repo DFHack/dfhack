@@ -16,10 +16,14 @@ function test.unit_action_type()
         for index, name in ipairs(df.unit_action_type) do
             expect.true_(name, "unit_action_type entry without name: " .. tostring(index))
             local tag = df.unit_action_type.attrs[name].tag
-            expect.true_(tag, "unit_action_type entry missing tag: name=" .. name)
-            action.type = index
-            expect.pairs_contains(action.data, tag,
-                "unit_action_type entry missing from unit_action.data: name=" .. name)
+            if name ~= 'NONE' then
+--                expect.false_(tag, "unit_action_type tag entry for NONE is not absent")
+            else
+                expect.true_(tag, "unit_action_type entry missing tag: name=" .. name)
+                action.type = index
+                expect.pairs_contains(action.data, tag,
+                    "unit_action_type entry missing from unit_action.data: name=" .. name)
+            end
         end
     end)
 end

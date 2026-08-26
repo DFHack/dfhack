@@ -17,7 +17,7 @@ function test.unit_action_type()
             expect.true_(name, "unit_action_type entry without name: " .. tostring(index))
             local tag = df.unit_action_type.attrs[name].tag
             if name ~= 'NONE' then
---                expect.false_(tag, "unit_action_type tag entry for NONE is not absent")
+                expect.false_(tag, "unit_action_type tag entry for NONE is not absent")
             else
                 expect.true_(tag, "unit_action_type entry missing tag: name=" .. name)
                 action.type = index

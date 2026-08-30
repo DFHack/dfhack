@@ -198,11 +198,11 @@ static command_result export_sites(color_ostream &out)
 
     // If you change anything in this vector, don't forget to change the
     // corresponding comments and arguments in the call to print_csv_line below
-    constexpr std::array<std::string_view, 12> headings = {
+    constexpr auto headings = std::to_array<std::string_view>({
         "site_id", "civ_id", "created_year", "cur_owner_id", "type",
         "site_name_df", "site_name_en", "civ_name_df", "civ_name_en", "site_government_df", "site_government_en", "owner_race"
-    };
-    print_range(out_file, headings,"",";",";boundary_wkt\n" );
+    });
+    print_range(out_file, headings,"",";",";boundary_wkt\n");
 
     #define TRANSLATE_DF_EN(guard, name_object)\
         guard ? DF2UTF(Translation::translateName(&name_object, false)) : "NONE",\
@@ -441,12 +441,12 @@ static command_result export_regions(color_ostream &out)
 
     // If you change anything in this vector, don't forget to change the
     // corresponding comments and arguments in the call to print_csv_line below
-    constexpr std::array<std::string_view, 23> headings = {
+    constexpr auto headings = std::to_array<std::string_view>({
         "world_x", "world_y", "num_tiles", "num_components", "biome_type",
-        "region_id", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df",
+        "region_id", "geo_index", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df",
         "evilness", "savagery", "volcanism", "drainage", "temperature", "vegetation", "rainfall", "salinity",
         "surroundings", "elevation", "reanimating", "has_bogeymen"
-    };
+    });
     print_range(out_file, headings,"",";",";boundary_wkt\n" );
 
     /* Preprocessing: cluster region tiles by the world tile used for the biome information */
@@ -518,8 +518,9 @@ static command_result export_regions(color_ostream &out)
             region.size(),
             components.size(),
             ENUM_KEY_STR(biome_type,Maps::getBiomeType(biome_tile.x, biome_tile.y)),
-            // "region_id", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df"
+            // "region_id", "geo_index", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df"
             region_map_entry.region_id,
+            region_map_entry.geo_index,
             world_region ? DF2UTF(Translation::translateName(&world_region->name, true)) : "NONE",
             world_region ? DF2UTF(Translation::translateName(&world_region->name, false)) : "NONE",
             region_map_entry.landmass_id,

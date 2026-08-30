@@ -67,6 +67,7 @@ distribution.
 #include "df/plotinfost.h"
 #include "df/region_map_entry.h"
 #include "df/site_map_infost.h"
+#include "df/weather_type.h"
 #include "df/world_data.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
@@ -987,6 +988,28 @@ df::coord2d Maps::getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos)
     }
 
     return df::coord2d();
+}
+
+df::weather_type Maps::getCurrentWeather(df::coord pos)
+{
+    if (df::global::current_weather){
+        auto &map = world->map;
+        auto [biome_x, biome_y] = Maps::getTileBiomeRgn(pos);
+        const int weather_x = biome_x - map.region_x / 16 + 1;
+        const int weather_y = biome_y - map.region_y / 16 + 1;
+        return (*df::global::current_weather)[weather_x][weather_y];
+    }
+    return df::weather_type::None;
+}
+
+df::weather_type Maps::getCurrentWeather()
+{
+    auto &map = world->map;
+    if (map.x_count > 0 && map.y_count > 0 && map.z_count > 0) {
+        return Maps::getCurrentWeather(df::coord( map.x_count / 2, map.y_count / 2, map.z_count / 2 ));
+    } else {
+        return df::weather_type::None;
+    }
 }
 
 /*

@@ -61,6 +61,8 @@ Template for new versions:
 
 ## Fixes
 
+- Fix broken weather lookup in ``World::ReadCurrentWeather``
+
 ## Misc Improvements
 
 ## Documentation
@@ -70,6 +72,8 @@ Template for new versions:
 - Added ``Maps::getSiteTypeName`` to print the sites classification as a string (e.g. "mountain halls")
 - Added ``Maps::addRegionBiomeOffset`` to shift world region coordinate by region_details biome reference
 - Added ``Maps::describeSurroundings`` to get surroundings classification from savagery and evilness
+- Added ``Maps::getCurrentWeather`` to determine the current weather on the map.
+- Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``
 
 ## Lua
 

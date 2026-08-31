@@ -33,7 +33,7 @@ else(CMAKE_CONFIGURATION_TYPES)
     set(DFHACK_TYPE_HELP "Choose the type of build, options are: Release and RelWithDebInfo")
     # Prevent cmake C module attempts to overwrite our help string
     if(NOT CMAKE_BUILD_TYPE)
-        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "${DFHACK_TYPE_HELP}")
+        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "${DFHACK_TYPE_HELP}" FORCE)
     else(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "${DFHACK_TYPE_HELP}")
     endif(NOT CMAKE_BUILD_TYPE)

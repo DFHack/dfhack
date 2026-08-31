@@ -146,6 +146,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `stocks`: add button/hotkey for expanding all categories on stocks interface
 - `buildingplan`: add a ``Pull`` button next to linked levers on a building's "Show linked buildings" tab so you can queue a high-priority pull-lever job (or cancel a queued one) without navigating to the lever
 
 ## Fixes

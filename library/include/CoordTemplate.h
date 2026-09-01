@@ -24,6 +24,9 @@ namespace DFHack
         Coord2d() : x(initializer), y(initializer) {}
         Coord2d(T x, T y) : x(x), y(y) {}
 
+        template<typename U>
+        explicit Coord2d(const Coord2d<U> &other) : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)) {};
+
         bool isValid() const { return x >= 0; }
 
         void clear()
@@ -76,6 +79,32 @@ namespace DFHack
             r = m * (r + x);
             r = m * (r + y);
             return r;
+        }
+
+        // dot product
+        T dotp(const Coord2d& other) const
+        {
+            return x * other.x + y * other.y;
+        }
+
+        // linear interpolation between two points
+        Coord2d lerp(const Coord2d& other, T t) const requires std::floating_point<T>
+        {
+            return *this + (other - *this) * t;
+        }
+
+        // orthogonal projection of the point onto the line (segment) AB
+        Coord2d project_onto_line(
+            const Coord2d& A,
+            const Coord2d& B,
+            bool clamp = false
+        ) const requires std::floating_point<T>
+        {
+            auto P = *this;
+            auto AB = B - A;
+            auto AP = P - A;
+            auto t = AP.dotp(AB) / AB.dotp(AB);
+            return A + AB * (clamp ? std::clamp(t, 0.0, 1.0) : t);
         }
     };
 

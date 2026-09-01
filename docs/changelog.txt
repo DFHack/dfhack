@@ -62,6 +62,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type
 
 ## Documentation
 

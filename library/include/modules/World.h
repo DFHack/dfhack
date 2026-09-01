@@ -39,6 +39,7 @@ distribution.
 #include "df/game_mode.h"
 #include "df/game_type.h"
 #include "df/unit.h"
+#include "df/weather_type.h"
 
 
 namespace df
@@ -80,7 +81,7 @@ namespace DFHack
         DFHACK_EXPORT uint32_t ReadCurrentYear();
         DFHACK_EXPORT uint32_t ReadCurrentMonth();
         DFHACK_EXPORT uint32_t ReadCurrentDay();
-        DFHACK_EXPORT uint8_t ReadCurrentWeather();
+        DFHACK_EXPORT df::weather_type ReadCurrentWeather(); // deprecated
         DFHACK_EXPORT void SetCurrentWeather(uint8_t weather);
         DFHACK_EXPORT bool ReadGameMode(t_gamemodes& rd);
         DFHACK_EXPORT bool WriteGameMode(const t_gamemodes & wr); // this is very dangerous

@@ -44,6 +44,7 @@ distribution.
 #include "df/matter_state.h"
 #include "df/tile_dig_designation.h"
 #include "df/tiletype.h"
+#include "df/weather_type.h"
 #include "df/world_site.h"
 
 namespace df {
@@ -364,6 +365,9 @@ DFHACK_EXPORT df::region_map_entry *getRegionBiome(df::coord2d rgn_pos);
 DFHACK_EXPORT df::coord2d getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos);
 
 inline df::coord2d getTileBiomeRgn(df::coord pos) { return getBlockTileBiomeRgn(getTileBlock(pos), pos); }
+
+DFHACK_EXPORT df::weather_type getCurrentWeather(df::coord pos);
+DFHACK_EXPORT df::weather_type getCurrentWeather();
 
 // Enables per-frame updates for liquid flow and/or temperature.
 DFHACK_EXPORT void enableBlockUpdates(df::map_block *blk, bool flow = false, bool temperature = false);

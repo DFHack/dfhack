@@ -2724,6 +2724,18 @@ static int maps_getTileBiomeRgn(lua_State *L)
     return Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
 }
 
+static int maps_getCurrentWeather(lua_State *L)
+{
+    if (lua_gettop(L) == 0)
+    {
+        lua_pushinteger(L, Maps::getCurrentWeather());
+    } else {
+        auto pos = CheckCoordXYZ(L, 1, true);
+        lua_pushinteger(L, Maps::getCurrentWeather(pos));
+    }
+    return 1;
+}
+
 static int maps_getPlantAtTile(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
@@ -2830,6 +2842,7 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "getTileFlags", maps_getTileFlags },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
+    { "getCurrentWeather", maps_getCurrentWeather },
     { "getPlantAtTile", maps_getPlantAtTile },
     { "getBiomeType", maps_getBiomeType },
     { "isTileAquifer", maps_isTileAquifer },

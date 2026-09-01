@@ -29,6 +29,7 @@ distribution.
 #include "modules/Gui.h"
 #include "modules/Translation.h"
 #include "modules/Units.h"
+#include "modules/Maps.h"
 #include "modules/World.h"
 #include "modules/Translation.h"
 
@@ -37,6 +38,7 @@ distribution.
 #include "df/map_block.h"
 #include "df/plotinfost.h"
 #include "df/viewscreen_dwarfmodest.h"
+#include "df/weather_type.h"
 #include "df/world.h"
 #include "df/world_data.h"
 #include "df/world_site.h"
@@ -153,11 +155,9 @@ uint32_t World::ReadCurrentDay()
     return ((ReadCurrentTick() / 1200) % 28) + 1;
 }
 
-uint8_t World::ReadCurrentWeather()
+df::weather_type World::ReadCurrentWeather()
 {
-    if (df::global::current_weather)
-        return (*df::global::current_weather)[2][2];
-    return 0;
+    return Maps::getCurrentWeather();
 }
 
 void World::SetCurrentWeather(uint8_t weather)

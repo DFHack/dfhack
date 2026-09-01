@@ -2342,7 +2342,8 @@ World module
 
 * ``dfhack.world.ReadCurrentWeather()``
 
-  Returns the current game weather (``df.weather_type``).
+  Returns the current game weather (``df.weather_type``). Deprecated: use
+  ``dfhack.maps.getCurrentWeather()`` instead.
 
 * ``dfhack.world.SetCurrentWeather(weather)``
 
@@ -2440,6 +2441,13 @@ Maps module
 * ``dfhack.maps.getTileBiomeRgn(coords)``, or ``getTileBiomeRgn(x,y,z)``
 
   Returns *x, y* for use with ``getRegionBiome`` and ``getBiomeType``.
+
+* ``dfhack.maps.getCurrentWeather(coords)``
+  ``dfhack.maps.getCurrentWeather(x,y,z)``
+  ``dfhack.maps.getCurrentWeather()``
+
+  Returns the current game weather (``df.weather_type``) at the specified tile
+  or at the center of the map if no argument is provided.
 
 * ``dfhack.maps.getPlantAtTile(pos)``, or ``getPlantAtTile(x,y,z)``
 

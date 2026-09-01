@@ -205,7 +205,7 @@ namespace DFHack
     static const struct_field_info coord3d_fields[] = {
         { struct_field_info::PRIMITIVE, "x", offsetof(U, x), &df::identity_traits<T>::identity, 0, 0 },
         { struct_field_info::PRIMITIVE, "y", offsetof(U, y), &df::identity_traits<T>::identity, 0, 0 },
-        { struct_field_info::PRIMITIVE, "z", offsetof(U, y), &df::identity_traits<T>::identity, 0, 0 },
+        { struct_field_info::PRIMITIVE, "z", offsetof(U, z), &df::identity_traits<T>::identity, 0, 0 },
         { struct_field_info::OBJ_METHOD, "isValid", 0, df::wrap_function(&U::isValid), 0, 0 },
         { struct_field_info::OBJ_METHOD, "clear", 0, df::wrap_function(&U::clear), 0, 0 } ,
         { struct_field_info::END }

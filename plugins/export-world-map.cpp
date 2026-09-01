@@ -600,7 +600,7 @@ static void fix_confluence_tiles(river_tile::polygon_t& polygon)
         auto projection = centroid.project_onto_line(
             Coord2d<double>(pair_end), Coord2d<double>(next_pair_start), true
         );
-        auto inset_point = Coord2d<double>::lerp(projection, centroid, 0.6);
+        auto inset_point = projection.lerp(centroid, 0.6);
         inset_polygon.emplace_back(Coord2d<int>(inset_point));
     }
 

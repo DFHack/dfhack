@@ -82,15 +82,15 @@ namespace DFHack
         }
 
         // dot product
-        static T dotp(const Coord2d& a, const Coord2d& b)
+        T dotp(const Coord2d& other) const
         {
-            return a.x * b.x + a.y * b.y;
+            return x * other.x + y * other.y;
         }
 
         // linear interpolation between two points
-        static Coord2d lerp(const Coord2d& A, const Coord2d& B, T t) requires std::floating_point<T>
+        Coord2d lerp(const Coord2d& other, T t) const requires std::floating_point<T>
         {
-            return A + (B - A) * t;
+            return *this + (other - *this) * t;
         }
 
         // orthogonal projection of the point onto the line (segment) AB
@@ -98,12 +98,12 @@ namespace DFHack
             const Coord2d& A,
             const Coord2d& B,
             bool clamp = false
-        ) requires std::floating_point<T>
+        ) const requires std::floating_point<T>
         {
             auto P = *this;
             auto AB = B - A;
             auto AP = P - A;
-            auto t = Coord2d::dotp(AP, AB) / Coord2d::dotp(AB, AB);
+            auto t = AP.dotp(AB) / AB.dotp(AB);
             return A + AB * (clamp ? std::clamp(t, 0.0, 1.0) : t);
         }
     };

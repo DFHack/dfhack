@@ -45,6 +45,7 @@ using std::set;
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 
+#include "df/coord2d.h"
 #include "df/tile_dig_designation.h"
 #include "df/world.h"
 
@@ -68,9 +69,9 @@ struct tiletypes_options {
     static struct_identity _identity;
 };
 static const struct_field_info tiletypes_options_fields[] = {
-    { struct_field_info::PRIMITIVE, "help",   offsetof(tiletypes_options, help),   &df::identity_traits<bool>::identity, 0, 0 },
-    { struct_field_info::PRIMITIVE, "quiet",  offsetof(tiletypes_options, quiet),  &df::identity_traits<bool>::identity, 0, 0 },
-    { struct_field_info::SUBSTRUCT, "cursor", offsetof(tiletypes_options, cursor), &df::coord::_identity,                0, 0 },
+    { struct_field_info::PRIMITIVE, "help",   offsetof(tiletypes_options, help),   &df::identity_traits<bool>::identity,   0, 0 },
+    { struct_field_info::PRIMITIVE, "quiet",  offsetof(tiletypes_options, quiet),  &df::identity_traits<bool>::identity,   0, 0 },
+    { struct_field_info::SUBSTRUCT, "cursor", offsetof(tiletypes_options, cursor),  df::identity_traits<df::coord>::get(), 0, 0},
     { struct_field_info::END }
 };
 struct_identity tiletypes_options::_identity(sizeof(tiletypes_options), &df::allocator_fn<tiletypes_options>, NULL, "tiletypes_options", NULL, tiletypes_options_fields);

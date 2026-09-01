@@ -118,7 +118,7 @@ namespace DFHack
     };
 
     template <typename T, T initializer = DFHack::coord_default_initializer<T>, typename U = DFHack::Coord2d<T, initializer>>
-    static inline const struct_identity coord2d_identity{sizeof(U), &df::allocator_fn<U>, nullptr, "coord", nullptr, coord2d_fields<T,initializer>};
+    static inline const struct_identity coord2d_identity{sizeof(U), &df::allocator_fn<U>, nullptr, "coord2d", nullptr, coord2d_fields<T,initializer>};
 
     template <typename T, T initializer = coord_default_initializer<T>>
     struct Coord3d

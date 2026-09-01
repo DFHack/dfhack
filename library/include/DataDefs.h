@@ -143,11 +143,12 @@ namespace DFHack
         static std::vector<const compound_identity*>* top_scope;
 
         const char *dfhack_name;
-        const compound_identity *const scope_parent;
 
         static void ensure_compound_identity_init();
 
     protected:
+        const compound_identity *const scope_parent;
+
         compound_identity(size_t size, TAllocateFn alloc,
             const compound_identity *scope_parent, const char *dfhack_name);
 
@@ -163,6 +164,9 @@ namespace DFHack
         static const std::vector<const compound_identity*> &getTopScope() { return *top_scope; }
 
         static void Init(Core *core);
+
+        bool is_equivalent(const compound_identity* other) const;
+
     };
 
     // Bitfields
@@ -297,6 +301,7 @@ namespace DFHack
         const struct_field_info *fields;
 
         static void ensure_struct_identity_init();
+        struct_identity* parent;
 
     protected:
         virtual void doInit(Core *core) const override;
@@ -317,6 +322,8 @@ namespace DFHack
         bool is_subclass(const struct_identity *subtype) const;
 
         virtual void build_metatable(lua_State *state) const;
+
+        bool is_equivalent(const struct_identity* other) const;
     };
 
     class DFHACK_EXPORT global_identity : public struct_identity {

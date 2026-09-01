@@ -134,6 +134,18 @@ const std::string compound_identity::getFullName() const
         return getName();
 }
 
+bool compound_identity::is_equivalent(const compound_identity* other) const
+{
+    if (this->byte_size() != other->byte_size() || strcmp(this->getName(), other->getName()) != 0)
+        return false;
+
+    if (this->scope_parent != other->scope_parent &&
+        !(this->scope_parent && other->scope_parent && this->scope_parent->is_equivalent(other->scope_parent)))
+        return false;
+
+    return true;
+}
+
 static std::mutex *known_mutex = NULL;
 
 void compound_identity::Init(Core *core)
@@ -237,6 +249,27 @@ bool struct_identity::is_subclass(const struct_identity *actual) const
         if (actual == this) return true;
 
     return false;
+}
+
+bool struct_identity::is_equivalent(const struct_identity* other) const
+{
+    if (!static_cast<const compound_identity*>(this)->is_equivalent(static_cast<const compound_identity*>(other)))
+        return false;
+
+    if (this->parent != other->parent &&
+        !(this->parent && other->parent && this->parent->is_equivalent(other->parent)))
+        return false;
+
+    const struct_field_info* f0 = this->fields;
+    const struct_field_info* f1 = other->fields;
+
+    for (; f0->mode != struct_field_info::Mode::END && f1->mode != struct_field_info::Mode::END; f0++, f1++)
+    {
+        if (f0->mode != f1->mode || f0->offset != f1->offset || f0->count != f1->count || strcmp(f0->name, f1->name) != 0)
+            return false;
+    }
+
+    return true;
 }
 
 const std::string pointer_identity::getFullName() const

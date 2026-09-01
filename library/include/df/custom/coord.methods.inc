@@ -1,5 +1,5 @@
-coord(const coord2d &c, uint16_t _z) : x(c.x), y(c.y), z(_z) {}
-coord(uint16_t _x, uint16_t _y, uint16_t _z) : x(_x), y(_y), z(_z) {}
+coord(const coord2d &c, int16_t _z) : x(c.x), y(c.y), z(_z) {}
+coord(int16_t _x, int16_t _y, int16_t _z) : x(_x), y(_y), z(_z) {}
 
 operator coord2d() const { return coord2d(x,y); }
 

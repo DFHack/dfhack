@@ -62,6 +62,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type
 
 ## Documentation
 
@@ -145,6 +146,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `stocks`: add button/hotkey for expanding all categories on stocks interface
 - `buildingplan`: add a ``Pull`` button next to linked levers on a building's "Show linked buildings" tab so you can queue a high-priority pull-lever job (or cancel a queued one) without navigating to the lever
 
 ## Fixes

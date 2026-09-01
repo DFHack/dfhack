@@ -314,6 +314,8 @@ bool LuaWrapper::is_type_compatible(lua_State *state, const type_identity *type1
         auto b1 = (struct_identity*)type1;
         auto b2 = (struct_identity*)type2;
 
+        if (b1->is_equivalent(b2)) return true;
+
         return (!exact_equal && b1->is_subclass(b2));
     }
 
@@ -373,7 +375,9 @@ void *LuaWrapper::get_object_internal(lua_State *state, const type_identity *typ
     if (!LookupTypeInfo(state, in_method)) // metatable -> type?
         return NULL;
 
-    if (type && lua_touserdata(state, -1) != type)
+    type_identity* othertype = static_cast<type_identity*>(lua_touserdata(state, -1));
+
+    if (type && othertype != type)
     {
         /*
          * If valid but different type, do an intelligent comparison.

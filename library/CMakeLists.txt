@@ -50,7 +50,7 @@ set(MAIN_HEADERS
     include/ColorText.h
     include/Commands.h
     include/Console.h
-    include/Coord.h
+    include/CoordTemplate.h
     include/Core.h
     include/CoreDefs.h
     include/DataDefs.h

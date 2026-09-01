@@ -1,3 +1,4 @@
+#include "CoordTemplate.h"
 #include "Debug.h"
 #include "Error.h"
 #include "MiscUtils.h"
@@ -7,6 +8,7 @@
 #include "modules/Maps.h"
 #include "modules/Translation.h"
 
+#include "df/coord2d.h"
 #include "df/creature_raw.h"
 #include "df/entity_raw.h"
 #include "df/historical_entity.h"
@@ -567,62 +569,8 @@ static command_result export_regions(color_ostream &out)
 /* River Export                                                         */
 /********************************************************************** */
 
-//
-// used for global coordinates at local tile granularity (129*768 = 99072 doesn't fit into df::coord2d)
-template<typename T>
-struct gcoord {
-    T x, y;
-
-    gcoord() = default;
-    gcoord(T x, T y) : x(x), y(y) {}
-
-    template<typename U>
-    explicit gcoord(const gcoord<U> &other) : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)) {};
-
-    gcoord operator+(const gcoord &other) const
-    {
-        return {x + other.x, y + other.y};
-    }
-
-    gcoord operator-(const gcoord &other) const
-    {
-        return {x - other.x, y - other.y};
-    }
-
-    gcoord operator*(T s) const
-    {
-        return {x * s, y * s};
-    }
-
-    gcoord operator/(T s) const
-    {
-        return {x / s, y / s};
-    }
-
-    static T dotp(const gcoord& a, const gcoord& b)
-    {
-        return a.x * b.x + a.y * b.y;
-    }
-};
-
-// linear interpolation between two points
-static gcoord<double> lerp(gcoord<double> A, gcoord<double> B, double t)
-{
-    return A + (B - A) * t;
-}
-
-// "orthogonal" projection of the point P onto the line segment AB
-static gcoord<double> project_onto_line(gcoord<double> A, gcoord<double> B, gcoord<double> P)
-{
-    auto AB = B - A;
-    auto AP = P - A;
-    auto t = gcoord<double>::dotp(AP, AB) / gcoord<double>::dotp(AB, AB);
-    return A + AB * std::clamp(t, 0.0, 1.0);
-}
-
-
 struct river_tile {
-    using polygon_t = std::vector<gcoord<int>>;
+    using polygon_t = std::vector<Coord2d<int>>;
     polygon_t polygon;
 };
 
@@ -635,8 +583,9 @@ static void fix_confluence_tiles(river_tile::polygon_t& polygon)
 {
     assert(polygon.size() > 4 && polygon.size() % 2 == 0);
 
-    auto centroid =
-        gcoord<double>(std::reduce(polygon.begin(), polygon.end())) / static_cast<double>(polygon.size());
+    auto centroid = Coord2d<double>(
+        std::reduce(polygon.begin(), polygon.end(), Coord2d<int>(0, 0), std::plus<Coord2d<int>>())
+    ) / static_cast<double>(polygon.size());
 
     river_tile::polygon_t inset_polygon;
 
@@ -648,9 +597,11 @@ static void fix_confluence_tiles(river_tile::polygon_t& polygon)
         inset_polygon.emplace_back(pair_start);
         inset_polygon.emplace_back(pair_end);
 
-        auto projection = project_onto_line(gcoord<double>(pair_end), gcoord<double>(next_pair_start), centroid);
-        auto inset_point = lerp(projection, centroid, 0.6);
-        inset_polygon.emplace_back(gcoord<int>(inset_point));
+        auto projection = centroid.project_onto_line(
+            Coord2d<double>(pair_end), Coord2d<double>(next_pair_start), true
+        );
+        auto inset_point = Coord2d<double>::lerp(projection, centroid, 0.6);
+        inset_polygon.emplace_back(Coord2d<int>(inset_point));
     }
 
     polygon = std::move(inset_polygon);
@@ -758,7 +709,7 @@ static command_result export_rivers(color_ostream &out)
         for (int region_x = 0; region_x < 16; ++region_x) {
             for (int region_y = 0; region_y < 16; ++region_y)
             {
-                gcoord<int> base = { world_x * wdim + region_x * rdim, world_y * wdim + region_y * rdim };
+                Coord2d<int> base = { world_x * wdim + region_x * rdim, world_y * wdim + region_y * rdim };
 
                 auto north = gate::get(region_details, region_x, region_y, direction::North);
                 auto west = gate::get(region_details, region_x, region_y, direction::West);
@@ -818,7 +769,7 @@ static command_result export_rivers(color_ostream &out)
         for (auto &tile : river_tiles) {
                 // close the polygon
                 tile.polygon.emplace_back(*tile.polygon.begin());
-                auto print_position = [](std::ostream &out, gcoord<int> pos) {
+                auto print_position = [](std::ostream &out, Coord2d<int> pos) {
                     out << pos.x << " " << -pos.y;
                 };
                 if (first) {

@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: Zlib
 
-#include <array>
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
+
+#include <array>
 #include <cassert>
 #include <cstdint>
 #include <limits>

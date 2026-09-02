@@ -241,7 +241,7 @@ void with_zeroed_values(const Callback &callback, T &value, Values &...values) {
 
 struct render_proxyst {
     viewport_visual_layer layer;
-    coord2dst<float> source;
+    DFHack::Coord2d<float> source;
     df::coord2d target;
     int32_t texpos;
     float progress;
@@ -441,7 +441,7 @@ void render_copy_maybe_mirrored(SDL_Renderer *renderer, SDL_Texture *texture,
 
 void draw_proxy(df::renderer_2d_base *renderer, const render_proxyst &proxy) {
     const int32_t zoom = renderer->viewport_zoom_factor;
-    const coord2dst<int32_t> target{
+    const DFHack::Coord2d<int32_t> target{
         tile_pixel(proxy.target.x, renderer->origin_x, zoom),
         tile_pixel(proxy.target.y, renderer->origin_y, zoom)};
     const float tile_size = float(::tile_size(zoom));
@@ -472,7 +472,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                     vp, static_cast<viewport_visual_layer>(layer), x, y);
                 if (!movement.active)
                     continue;
-                const coord2dst<float> target{float(x), float(y)};
+                const DFHack::Coord2d<float> target{float(x), float(y)};
                 const auto movement_delta = movement.source - target;
                 const int32_t inherited_source_x =
                     inherited_visual_source_tile(x, movement.source.x, x);
@@ -489,7 +489,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                             std::abs(anchor.target.x - x) <= 1 &&
                             std::abs(anchor.target.y - y) <= 1 &&
                             anchor.source -
-                                    coord2dst<float>{float(anchor.target.x), float(anchor.target.y)} ==
+                                    DFHack::Coord2d<float>{float(anchor.target.x), float(anchor.target.y)} ==
                                 movement_delta &&
                             anchor.progress == movement.progress)
                             anchored = true;
@@ -525,7 +525,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                                 anchor.target.x == x + descriptor.anchor_offset.x &&
                                 anchor.target.y == y + descriptor.anchor_offset.y &&
                                 anchor.source -
-                                        coord2dst<float>{float(anchor.target.x), float(anchor.target.y)} ==
+                                        DFHack::Coord2d<float>{float(anchor.target.x), float(anchor.target.y)} ==
                                     movement_delta &&
                                 anchor.progress == movement.progress)
                                 owns_fragment = true;

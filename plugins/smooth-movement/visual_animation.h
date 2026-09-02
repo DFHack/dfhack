@@ -12,32 +12,13 @@
 #include <span>
 #include <vector>
 
+#include "CoordTemplate.h"
 #include "DataDefs.h"
 #include "df/coord2d.h"
 
 namespace df {
 struct graphic_viewportst;
 }
-
-template <typename T>
-struct coord2dst {
-    T x = 0;
-    T y = 0;
-
-    constexpr bool operator==(const coord2dst &other) const { return x == other.x && y == other.y; }
-    constexpr bool operator!=(const coord2dst &other) const { return x != other.x || y != other.y; }
-    constexpr bool operator<(const coord2dst &other) const {
-        return x != other.x ? x < other.x : y < other.y;
-    }
-    constexpr coord2dst operator+(const coord2dst &other) const { return {x + other.x, y + other.y}; }
-    constexpr coord2dst operator-(const coord2dst &other) const { return {x - other.x, y - other.y}; }
-    constexpr coord2dst operator/(int number) const {
-        return {(x < 0 ? x - number : x) / number, (y < 0 ? y - number : y) / number};
-    }
-    constexpr coord2dst operator*(int number) const { return {x * number, y * number}; }
-    constexpr coord2dst operator%(int number) const { return {(x + number) % number, (y + number) % number}; }
-    constexpr coord2dst operator&(int number) const { return {x & number, y & number}; }
-};
 
 enum class viewport_visual_layer : uint8_t {
     right,
@@ -59,10 +40,10 @@ struct visual_layer_descriptorst {
     visual_render_groupst render_group;
     bool moves_independently;
     bool matches_any_previous;
-    coord2dst<int8_t> anchor_offset;
+    DFHack::Coord2d<int8_t> anchor_offset;
 };
 
-constexpr std::array visual_layer_descriptors = {
+const std::array visual_layer_descriptors = {
     visual_layer_descriptorst{.layer = viewport_visual_layer::right,
                               .render_group = visual_render_groupst::main,
                               .moves_independently = false,
@@ -116,17 +97,6 @@ constexpr std::array visual_layer_draw_order = {
     viewport_visual_layer::up,       viewport_visual_layer::upleft,
     viewport_visual_layer::designation};
 
-constexpr bool valid_visual_layer_descriptors() {
-    for (size_t i = 0; i < visual_layer_descriptors.size(); ++i) {
-        const auto &descriptor = visual_layer_descriptors[i];
-        if (static_cast<size_t>(descriptor.layer) != i)
-            return false;
-    }
-    return true;
-}
-
-static_assert(valid_visual_layer_descriptors());
-
 constexpr bool valid_visual_layer_draw_order() {
     uint16_t layers = 0;
     for (const auto layer : visual_layer_draw_order) {
@@ -140,26 +110,25 @@ constexpr bool valid_visual_layer_draw_order() {
 
 static_assert(valid_visual_layer_draw_order());
 
-constexpr const visual_layer_descriptorst &visual_layer_descriptor(viewport_visual_layer layer) {
+inline const visual_layer_descriptorst &visual_layer_descriptor(viewport_visual_layer layer) {
     return visual_layer_descriptors[static_cast<size_t>(layer)];
 }
 
-constexpr visual_render_groupst visual_render_group(viewport_visual_layer layer) {
+inline visual_render_groupst visual_render_group(viewport_visual_layer layer) {
     return visual_layer_descriptor(layer).render_group;
 }
 
-constexpr bool visual_layer_moves_independently(viewport_visual_layer layer) {
+inline bool visual_layer_moves_independently(viewport_visual_layer layer) {
     return visual_layer_descriptor(layer).moves_independently;
 }
 
-constexpr bool visual_layer_tracks_own_movement(viewport_visual_layer layer) {
+inline bool visual_layer_tracks_own_movement(viewport_visual_layer layer) {
     const auto &descriptor = visual_layer_descriptor(layer);
     return descriptor.moves_independently ||
            descriptor.render_group == visual_render_groupst::designation;
 }
 
-constexpr bool visual_layer_matches(viewport_visual_layer layer, int32_t current,
-                                    int32_t previous) {
+inline bool visual_layer_matches(viewport_visual_layer layer, int32_t current, int32_t previous) {
     return visual_layer_descriptor(layer).matches_any_previous ? previous != 0
                                                                : previous == current;
 }
@@ -188,7 +157,7 @@ struct viewport_visual_animation_inputst {
 
 struct visual_movement_renderst {
     bool active = false;
-    coord2dst<float> source;
+    DFHack::Coord2d<float> source{0.0f, 0.0f};
     float progress = 1.0f;
     bool inherited = false;
 };
@@ -234,7 +203,7 @@ class visual_animation_managerst {
     struct movementst {
         viewport_visual_layer layer;
         int32_t texpos;
-        coord2dst<float> source;
+        DFHack::Coord2d<float> source;
         df::coord2d target;
         uint32_t start_time_ms;
     };
@@ -722,24 +691,22 @@ class visual_animation_managerst {
                             continue;
 
                         claimed_sources[source] = 1;
-                        float visual_source_x = float(source / input.dimensions.y);
-                        float visual_source_y = float(source % input.dimensions.y);
+                        DFHack::Coord2d<float> visual_source{
+                            float(source / input.dimensions.y), float(source % input.dimensions.y)};
                         for (size_t i = 0; i < existing_movement_count; ++i) {
                             const movementst &movement = state.movements[i];
                             if (movement.layer != static_cast<viewport_visual_layer>(layer) ||
-                                movement.target.x != visual_source_x ||
-                                movement.target.y != visual_source_y)
+                                movement.target.x != visual_source.x ||
+                                movement.target.y != visual_source.y)
                                 continue;
                             const float progress = movement_progress(movement.start_time_ms);
-                            visual_source_x = movement.source.x +
-                                              (movement.target.x - movement.source.x) * progress;
-                            visual_source_y = movement.source.y +
-                                              (movement.target.y - movement.source.y) * progress;
+                            visual_source = movement.source.lerp(
+                                {float(movement.target.x), float(movement.target.y)}, progress);
                             break;
                         }
                         state.movements.push_back({static_cast<viewport_visual_layer>(layer),
                                                    texpos,
-                                                   {visual_source_x, visual_source_y},
+                                                   visual_source,
                                                    df::coord2d(x, y),
                                                    frame_time_ms});
                         if (static_cast<viewport_visual_layer>(layer) ==

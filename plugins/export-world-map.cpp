@@ -1,3 +1,4 @@
+#include "CoordTemplate.h"
 #include "Debug.h"
 #include "Error.h"
 #include "MiscUtils.h"
@@ -7,6 +8,7 @@
 #include "modules/Maps.h"
 #include "modules/Translation.h"
 
+#include "df/coord2d.h"
 #include "df/creature_raw.h"
 #include "df/entity_raw.h"
 #include "df/historical_entity.h"
@@ -198,11 +200,11 @@ static command_result export_sites(color_ostream &out)
 
     // If you change anything in this vector, don't forget to change the
     // corresponding comments and arguments in the call to print_csv_line below
-    constexpr std::array<std::string_view, 12> headings = {
+    constexpr auto headings = std::to_array<std::string_view>({
         "site_id", "civ_id", "created_year", "cur_owner_id", "type",
         "site_name_df", "site_name_en", "civ_name_df", "civ_name_en", "site_government_df", "site_government_en", "owner_race"
-    };
-    print_range(out_file, headings,"",";",";boundary_wkt\n" );
+    });
+    print_range(out_file, headings,"",";",";boundary_wkt\n");
 
     #define TRANSLATE_DF_EN(guard, name_object)\
         guard ? DF2UTF(Translation::translateName(&name_object, false)) : "NONE",\
@@ -441,12 +443,12 @@ static command_result export_regions(color_ostream &out)
 
     // If you change anything in this vector, don't forget to change the
     // corresponding comments and arguments in the call to print_csv_line below
-    constexpr std::array<std::string_view, 23> headings = {
+    constexpr auto headings = std::to_array<std::string_view>({
         "world_x", "world_y", "num_tiles", "num_components", "biome_type",
-        "region_id", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df",
+        "region_id", "geo_index", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df",
         "evilness", "savagery", "volcanism", "drainage", "temperature", "vegetation", "rainfall", "salinity",
         "surroundings", "elevation", "reanimating", "has_bogeymen"
-    };
+    });
     print_range(out_file, headings,"",";",";boundary_wkt\n" );
 
     /* Preprocessing: cluster region tiles by the world tile used for the biome information */
@@ -518,8 +520,9 @@ static command_result export_regions(color_ostream &out)
             region.size(),
             components.size(),
             ENUM_KEY_STR(biome_type,Maps::getBiomeType(biome_tile.x, biome_tile.y)),
-            // "region_id", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df"
+            // "region_id", "geo_index", "region_name_en", "region_name_df", "landmass_id", "landmass_name_en", "landmass_name_df"
             region_map_entry.region_id,
+            region_map_entry.geo_index,
             world_region ? DF2UTF(Translation::translateName(&world_region->name, true)) : "NONE",
             world_region ? DF2UTF(Translation::translateName(&world_region->name, false)) : "NONE",
             region_map_entry.landmass_id,
@@ -566,62 +569,8 @@ static command_result export_regions(color_ostream &out)
 /* River Export                                                         */
 /********************************************************************** */
 
-//
-// used for global coordinates at local tile granularity (129*768 = 99072 doesn't fit into df::coord2d)
-template<typename T>
-struct gcoord {
-    T x, y;
-
-    gcoord() = default;
-    gcoord(T x, T y) : x(x), y(y) {}
-
-    template<typename U>
-    explicit gcoord(const gcoord<U> &other) : x(static_cast<T>(other.x)), y(static_cast<T>(other.y)) {};
-
-    gcoord operator+(const gcoord &other) const
-    {
-        return {x + other.x, y + other.y};
-    }
-
-    gcoord operator-(const gcoord &other) const
-    {
-        return {x - other.x, y - other.y};
-    }
-
-    gcoord operator*(T s) const
-    {
-        return {x * s, y * s};
-    }
-
-    gcoord operator/(T s) const
-    {
-        return {x / s, y / s};
-    }
-
-    static T dotp(const gcoord& a, const gcoord& b)
-    {
-        return a.x * b.x + a.y * b.y;
-    }
-};
-
-// linear interpolation between two points
-static gcoord<double> lerp(gcoord<double> A, gcoord<double> B, double t)
-{
-    return A + (B - A) * t;
-}
-
-// "orthogonal" projection of the point P onto the line segment AB
-static gcoord<double> project_onto_line(gcoord<double> A, gcoord<double> B, gcoord<double> P)
-{
-    auto AB = B - A;
-    auto AP = P - A;
-    auto t = gcoord<double>::dotp(AP, AB) / gcoord<double>::dotp(AB, AB);
-    return A + AB * std::clamp(t, 0.0, 1.0);
-}
-
-
 struct river_tile {
-    using polygon_t = std::vector<gcoord<int>>;
+    using polygon_t = std::vector<Coord2d<int>>;
     polygon_t polygon;
 };
 
@@ -634,8 +583,9 @@ static void fix_confluence_tiles(river_tile::polygon_t& polygon)
 {
     assert(polygon.size() > 4 && polygon.size() % 2 == 0);
 
-    auto centroid =
-        gcoord<double>(std::reduce(polygon.begin(), polygon.end())) / static_cast<double>(polygon.size());
+    auto centroid = Coord2d<double>(
+        std::reduce(polygon.begin(), polygon.end(), Coord2d<int>(0, 0), std::plus<Coord2d<int>>())
+    ) / static_cast<double>(polygon.size());
 
     river_tile::polygon_t inset_polygon;
 
@@ -647,9 +597,11 @@ static void fix_confluence_tiles(river_tile::polygon_t& polygon)
         inset_polygon.emplace_back(pair_start);
         inset_polygon.emplace_back(pair_end);
 
-        auto projection = project_onto_line(gcoord<double>(pair_end), gcoord<double>(next_pair_start), centroid);
-        auto inset_point = lerp(projection, centroid, 0.6);
-        inset_polygon.emplace_back(gcoord<int>(inset_point));
+        auto projection = centroid.project_onto_line(
+            Coord2d<double>(pair_end), Coord2d<double>(next_pair_start), true
+        );
+        auto inset_point = projection.lerp(centroid, 0.6);
+        inset_polygon.emplace_back(Coord2d<int>(inset_point));
     }
 
     polygon = std::move(inset_polygon);
@@ -757,7 +709,7 @@ static command_result export_rivers(color_ostream &out)
         for (int region_x = 0; region_x < 16; ++region_x) {
             for (int region_y = 0; region_y < 16; ++region_y)
             {
-                gcoord<int> base = { world_x * wdim + region_x * rdim, world_y * wdim + region_y * rdim };
+                Coord2d<int> base = { world_x * wdim + region_x * rdim, world_y * wdim + region_y * rdim };
 
                 auto north = gate::get(region_details, region_x, region_y, direction::North);
                 auto west = gate::get(region_details, region_x, region_y, direction::West);
@@ -817,7 +769,7 @@ static command_result export_rivers(color_ostream &out)
         for (auto &tile : river_tiles) {
                 // close the polygon
                 tile.polygon.emplace_back(*tile.polygon.begin());
-                auto print_position = [](std::ostream &out, gcoord<int> pos) {
+                auto print_position = [](std::ostream &out, Coord2d<int> pos) {
                     out << pos.x << " " << -pos.y;
                 };
                 if (first) {

@@ -79,6 +79,6 @@ commands:
 
 ::
 
-    ogr2ogr -a_srs "EPSG:3857" -of Parquet map.parquet -oo 'GEOM_POSSIBLE_NAMES=*wkt' -oo 'KEEP_GEOM_COLUMNS=NO' -oo 'AUTODETECT_TYPE=YES' map.csv
+    ogr2ogr -a_srs "EPSG:3857" -of Parquet regions.parquet -oo 'GEOM_POSSIBLE_NAMES=*wkt' -oo 'KEEP_GEOM_COLUMNS=NO' -oo 'AUTODETECT_TYPE=YES' regions.csv
     ogr2ogr -a_srs "EPSG:3857" -of Parquet rivers.parquet -oo 'GEOM_POSSIBLE_NAMES=*wkt' -oo 'KEEP_GEOM_COLUMNS=NO' -oo 'AUTODETECT_TYPE=YES' rivers.csv
     gdal raster convert elevation.vrt elevation.tif

@@ -62,7 +62,10 @@ Template for new versions:
 
 ## Fixes
 
+- Fix broken weather lookup in ``World::ReadCurrentWeather``
+
 ## Misc Improvements
+- Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type
 
 ## Documentation
 
@@ -71,6 +74,8 @@ Template for new versions:
 - Added ``Maps::getSiteTypeName`` to print the sites classification as a string (e.g. "mountain halls")
 - Added ``Maps::addRegionBiomeOffset`` to shift world region coordinate by region_details biome reference
 - Added ``Maps::describeSurroundings`` to get surroundings classification from savagery and evilness
+- Added ``Maps::getCurrentWeather`` to determine the current weather on the map.
+- Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``
 
 ## Lua
 

@@ -809,6 +809,8 @@ private:
         return get_unit_description(element.unit);
     }
 
+    using pets_search_base::should_check_input;
+
     bool should_check_input()
     {
         return viewscreen->mode == T_mode::List;

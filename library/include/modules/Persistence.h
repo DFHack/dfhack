@@ -36,6 +36,7 @@ distribution.
 #include <memory>
 #include <string>
 #include <vector>
+#include <fstream>
 
 namespace DFHack
 {
@@ -193,7 +194,7 @@ namespace DFHack
 
         const int WORLD_ENTITY_ID = -30000;
 
-        // Returns a new PersistentDataItem with the specified key associated wtih the specified
+        // Returns a new PersistentDataItem with the specified key associated with the specified
         // entity_id. Pass WORLD_ENTITY_ID for the entity_id to indicate the global world context.
         // If there is no world loaded or the key is empty, returns an invalid item.
         DFHACK_EXPORT PersistentDataItem addItem(int entity_id, const std::string &key);
@@ -215,5 +216,31 @@ namespace DFHack
         DFHACK_EXPORT void getAllByKey(std::vector<PersistentDataItem> &vec, int entity_id, const std::string &key);
         // Returns the number of seconds since the current savegame was saved or loaded.
         DFHACK_EXPORT uint32_t getUnsavedSeconds();
+
+        // Returns the path to a file that will correspond to the specified key associated with the specified
+        // entity_id. Pass WORLD_ENTITY_ID for the entity_id to indicate the global world context.
+        // If there is no world loaded or the key is empty, returns an empty path.
+        DFHACK_EXPORT std::filesystem::path addFile(int entity_id, const std::string& key);
+        // Returns the path to a file associated with the key and the entity_id.
+        // If "added" is not null and there is no such file, a new file is returned and
+        // the bool value is set to true. If "added" is not null and a file is found or
+        // no new file can be created, the bool value is set to false. If "added" is null,
+        // no new file will be added.
+        // If just_for_reading is `true`, the file will not be copied to the current directory
+        // and should not be modified.
+        DFHACK_EXPORT std::filesystem::path getFile(int entity_id, const std::string& key, bool *added = nullptr, bool just_for_reading = false);
+        // Fills the vector with all the keys and paths to files corresponding to the entity_id.
+        // If just_for_reading is `true`, the file will not be copied to the current directory
+        // and should not be modified.
+        DFHACK_EXPORT void getAllFiles(std::vector<std::pair<std::string, std::filesystem::path>>& vec, int entity_id, bool just_for_reading = false);
+        // Fills the vector with paths to each file with a key that is
+        // greater than or equal to "min" and less than "max".
+        // If just_for_reading is `true`, the file will not be copied to the current directory
+        // and should not be modified.
+        DFHACK_EXPORT void getAllFilesByKeyRange(std::vector<std::pair<std::string, std::filesystem::path>>& vec, int entity_id,
+                                                 const std::string& min, const std::string& max, bool just_for_reading = false);
+        // Attempts to delete the file corresponding to the given entity_id and key.
+        // Returns false if the file was not deleted (due to not existing or some other error).
+        DFHACK_EXPORT bool deleteFile(int entity_id, const std::string& key);
     }
 }

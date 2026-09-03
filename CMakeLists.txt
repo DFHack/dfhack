@@ -419,6 +419,9 @@ include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
+# CMake 4 removed support for policy versions older than 3.5. Keep the
+# bundled third-party projects buildable without modifying their submodules.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 add_subdirectory(depends)
 
 # Testing with CTest

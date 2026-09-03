@@ -132,6 +132,7 @@ Template for new versions:
 - `EventManager`: add safety check to potentially avoid a DFHack crash when DF's ``reports`` table is out of order
 
 ## Documentation
+- ``dfhack.translation.generateName``: added a table containing explanations and data types for each of the parameters
 
 ## API
 - ``DFSDL``: added ``obtain_library_handle`` and ``obtain_image_library_handle`` so that a plugin can obtain DFHack's already-open handle to these libs instead of having to do it itself.

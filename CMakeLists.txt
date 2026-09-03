@@ -196,7 +196,7 @@ endif()
 
 # set up versioning.
 set(DF_VERSION "0.47.05")
-set(DFHACK_RELEASE "r8")
+set(DFHACK_RELEASE "r9")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -419,6 +419,9 @@ include_directories(depends/tthread)
 include_directories(${ZLIB_INCLUDE_DIRS})
 include_directories(depends/clsocket/src)
 include_directories(depends/xlsxio/include)
+# CMake 4 removed support for policy versions older than 3.5. Keep the
+# bundled third-party projects buildable without modifying their submodules.
+set(CMAKE_POLICY_VERSION_MINIMUM 3.5)
 add_subdirectory(depends)
 
 # Testing with CTest

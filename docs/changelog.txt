@@ -55,6 +55,11 @@ changelog.txt uses a syntax similar to RST, with a few special sequences:
 ## Removed
 - ``fix-job-postings`` from the `workflow` plugin is now obsolete since affected savegames can no longer be loaded
 
+# 0.47.05-r9
+
+## Internals
+- Fixed building with newer versions of CMake and GCC
+
 # 0.47.05-r8
 
 ## New Plugins

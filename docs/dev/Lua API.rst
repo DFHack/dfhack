@@ -3322,6 +3322,10 @@ unless otherwise noted.
 
   Removes a directory. Only works if the directory is already empty.
 
+* ``dfhack.filesystem.rmdir_recursive(path)``
+
+  Removes a directory and all of its contents recursively.
+
 * ``dfhack.filesystem.mtime(path)``
 
   Returns the modification time (in seconds) of the file or directory

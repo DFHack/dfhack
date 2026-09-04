@@ -22,6 +22,7 @@ must not be misrepresented as being the original software.
 distribution.
 */
 
+#include "ColorText.h"
 #include "Core.h"
 #include "Error.h"
 #include "Internal.h"
@@ -232,14 +233,30 @@ static bool get_bool_field(lua_State *L, bool *pf, int idx, const char *name, bo
     return !nil;
 }
 
+static int8_t mask_pen_color(int8_t color, int8_t default_color) {
+    if (color == COLOR_RESET)
+        color = default_color;
+    return color & 15;
+}
+
+static bool get_color_field(lua_State *L, int8_t *pf, int idx, const char *name, int defval)
+{
+    bool nonnil = get_int_field(L, pf, idx, name, defval); // defval for nil
+    *pf = mask_pen_color(*pf, defval); // defval for COLOR_RESET
+    return nonnil;
+}
+
+static constexpr int8_t DEFAULT_FG = COLOR_GREY;
+static constexpr int8_t DEFAULT_BG = COLOR_BLACK;
+
 static void decode_pen(lua_State *L, Pen &pen, int idx)
 {
     idx = lua_absindex(L, idx);
 
     get_char_field(L, &pen.ch, idx, "ch", 0);
 
-    get_int_field(L, &pen.fg, idx, "fg", 7);
-    get_int_field(L, &pen.bg, idx, "bg", 0);
+    get_color_field(L, &pen.fg, idx, "fg", DEFAULT_FG);
+    get_color_field(L, &pen.bg, idx, "bg", DEFAULT_BG);
 
     lua_getfield(L, idx, "bold");
     if (lua_isnil(L, -1))
@@ -252,8 +269,8 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
 
     get_int_or_closure_field(L, &pen.tile, idx, "tile", 0);
 
-    bool tcolor = get_int_field(L, &pen.tile_fg, idx, "tile_fg", 7);
-    tcolor = get_int_field(L, &pen.tile_bg, idx, "tile_bg", 0) || tcolor;
+    bool tcolor = get_color_field(L, &pen.tile_fg, idx, "tile_fg", DEFAULT_FG);
+    tcolor = get_color_field(L, &pen.tile_bg, idx, "tile_bg", DEFAULT_BG) || tcolor;
 
     if (tcolor)
         pen.tile_mode = Pen::TileColor;
@@ -672,7 +689,7 @@ void Lua::CheckPen(lua_State *L, Screen::Pen *pen, int index, bool allow_nil, bo
     }
     else if (allow_color && lua_isnumber(L, index))
     {
-        *pen = Pen(0, lua_tointeger(L, index)&15, 0);
+        *pen = Pen(0, mask_pen_color(lua_tointeger(L, index), DEFAULT_FG), 0);
     }
     else
     {
@@ -698,8 +715,8 @@ static int adjust_pen(lua_State *L, bool no_copy)
 
             iidx = -1;
 
-            pen.fg = luaL_optint(L, 2, pen.fg) & 15;
-            pen.bg = luaL_optint(L, 3, pen.bg);
+            pen.fg = mask_pen_color(luaL_optint(L, 2, pen.fg), DEFAULT_FG);
+            pen.bg = mask_pen_color(luaL_optint(L, 3, pen.bg), DEFAULT_BG);
 
             if (!lua_isnil(L, 4))
                 pen.bold = lua_toboolean(L, 4);
@@ -864,7 +881,7 @@ static int dfhack_pen_newindex(lua_State *L)
         lua_pushinteger(L, (unsigned char)pen.ch);
         break;
     case 1:
-        pen.fg = luaL_checkint(L, 3) & 15;
+        pen.fg = mask_pen_color(luaL_checkint(L, 3), DEFAULT_FG);
         lua_pushinteger(L, pen.fg);
         break;
     case 2:
@@ -872,7 +889,7 @@ static int dfhack_pen_newindex(lua_State *L)
         lua_pushboolean(L, pen.bold);
         break;
     case 3:
-        pen.bg = luaL_checkint(L, 3) & 15;
+        pen.bg = mask_pen_color(luaL_checkint(L, 3), DEFAULT_BG);
         lua_pushinteger(L, pen.bg);
         break;
     case 4:
@@ -891,14 +908,14 @@ static int dfhack_pen_newindex(lua_State *L)
         lua_pushboolean(L, pen.tile_mode == Pen::CharColor);
         break;
     case 6:
-        if (pen.tile_mode != Pen::TileColor) { wipe_tc = true; pen.tile_bg = 0; }
-        pen.tile_fg = luaL_checkint(L, 3) & 15;
+        if (pen.tile_mode != Pen::TileColor) { wipe_tc = true; pen.tile_bg = DEFAULT_BG; }
+        pen.tile_fg = mask_pen_color(luaL_checkint(L, 3), DEFAULT_FG);
         pen.tile_mode = Pen::TileColor;
         lua_pushinteger(L, pen.tile_fg);
         break;
     case 7:
-        if (pen.tile_mode != Pen::TileColor) { wipe_tc = true; pen.tile_fg = 7; }
-        pen.tile_bg = luaL_checkint(L, 3) & 15;
+        if (pen.tile_mode != Pen::TileColor) { wipe_tc = true; pen.tile_fg = DEFAULT_FG; }
+        pen.tile_bg = mask_pen_color(luaL_checkint(L, 3), DEFAULT_BG);
         pen.tile_mode = Pen::TileColor;
         lua_pushinteger(L, pen.tile_bg);
         break;

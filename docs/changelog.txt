@@ -60,6 +60,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- ``Screen::Pen``: COLOR_RESET from Lua is changed to grey (fg) or black (bg); color values are masked to 4 bits to keep them in the expected range
 
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
 

@@ -1,6 +1,7 @@
 #include "Console.h"
 #include "DataDefs.h"
 #include "Export.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
 
 #include "modules/Filesystem.h"
@@ -79,6 +80,59 @@ static command_result orders_sort_command(color_ostream & out);
 static command_result orders_recheck_command(color_ostream & out);
 static command_result orders_recheck_current_command(color_ostream & out);
 
+/**
+ * Dispatches a Lua-backed orders subcommand through plugins.orders.
+ *
+ * parse_commandline returns (success, error_message), where success is a
+ * boolean and error_message is either a string or nil. Expected validation
+ * failures are returned instead of raised so they can be reported without
+ * CallLuaModuleFunction appending its "Failed Lua call" diagnostic. The
+ * response shape is checked here so a broken Lua implementation cannot be
+ * mistaken for a successful command. Actual Lua exceptions still follow the
+ * normal CallLuaModuleFunction error path.
+ */
+static command_result orders_lua_command(color_ostream & out,
+                                         std::vector<std::string> & parameters)
+{
+    bool response_valid = false;
+    bool command_succeeded = false;
+    std::string error_message;
+    if (!Lua::CallLuaModuleFunction(out, "plugins.orders", "parse_commandline",
+            std::make_tuple(parameters), 2, [&](lua_State *L) {
+                response_valid = lua_isboolean(L, -2) &&
+                    (lua_isnil(L, -1) || lua_type(L, -1) == LUA_TSTRING);
+                if (!response_valid)
+                    return;
+
+                command_succeeded = lua_toboolean(L, -2);
+                if (lua_type(L, -1) == LUA_TSTRING)
+                {
+                    const char *message = lua_tostring(L, -1);
+                    error_message = message;
+                }
+            }))
+    {
+        return CR_FAILURE;
+    }
+
+    if (!response_valid)
+    {
+        out.printerr("orders: Lua subcommand returned an invalid response.\n");
+        return CR_FAILURE;
+    }
+
+    if (!command_succeeded)
+    {
+        if (error_message.empty())
+            out.printerr("orders: Lua subcommand failed without an error message.\n");
+        else
+            out.printerr("{}\n", error_message);
+        return CR_FAILURE;
+    }
+
+    return CR_OK;
+}
+
 static command_result orders_command(color_ostream & out, std::vector<std::string> & parameters)
 {
     class color_ostream_resetter
@@ -103,6 +157,11 @@ static command_result orders_command(color_ostream & out, std::vector<std::strin
     if (!Core::getInstance().isMapLoaded() || !World::isFortressMode()) {
         out.printerr("Cannot run {} without a loaded fort.\n", plugin_name);
         return CR_FAILURE;
+    }
+
+    if (parameters[0] == "positions" || parameters[0] == "move")
+    {
+        return orders_lua_command(out, parameters);
     }
 
     if (parameters[0] == "export" && parameters.size() == 2)

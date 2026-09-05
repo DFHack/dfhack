@@ -3,9 +3,20 @@ local _ENV = mkmodule('plugins.orders')
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
+local position = require('plugins.orders.position')
+local position_overlay = require('plugins.orders.position_overlay')
+local work_order_list = require('plugins.orders.work_order_list')
 local textures = require('gui.textures')
 local utils = require('utils')
 local widgets = require('gui.widgets')
+
+--- Handles Lua-backed subcommands forwarded by the native orders plugin.
+---@param args string[]
+---@return boolean success
+---@return string? error_message
+function parse_commandline(args)
+    return position.parse_commandline(args)
+end
 
 --
 -- OrdersOverlay
@@ -714,12 +725,10 @@ end
 -- OrdersSearchOverlay
 --
 
-local ORDER_HEIGHT = 3
-local TABS_WIDTH_THRESHOLD = 155
-local LIST_START_Y_ONE_TABS_ROW = 8
-local LIST_START_Y_TWO_TABS_ROWS = 10
-local BOTTOM_MARGIN = 9
-local ARROW_X = 10
+-- Immediately follows the position overlay at its four-character minimum.
+-- Very large position values may expand back into this fixed indicator column.
+local ARROW_X = 11
+local SEARCH_FILTER_VIEW_ID = 'filter'
 
 local SELECTED_PEN = dfhack.pen.parse{fg=COLOR_BLACK, bg=COLOR_WHITE, bold=true}
 local MATCH_PEN = dfhack.pen.parse{fg=COLOR_WHITE, bg=COLOR_BLACK, bold=true}
@@ -756,63 +765,6 @@ local function concat_order_names()
     return table.concat(names, "|")
 end
 
-local function getListStartY()
-    local rect = gui.get_interface_rect()
-
-    if rect.width >= TABS_WIDTH_THRESHOLD then
-        return LIST_START_Y_ONE_TABS_ROW
-    else
-        return LIST_START_Y_TWO_TABS_ROWS
-    end
-end
-
-local function getViewportSize()
-    local rect = gui.get_interface_rect()
-    local list_start_y = getListStartY()
-
-    local available_height = rect.height - list_start_y - BOTTOM_MARGIN
-    return math.floor(available_height / ORDER_HEIGHT)
-end
-
-local function getVisibleOrderIndices()
-    local orders = df.global.world.manager_orders.all
-    local scroll_pos = mi.info.work_orders.scroll_position_work_orders
-
-    if #orders == 0 then return 0, -1 end
-
-    local viewport_size = getViewportSize()
-    local viewport_start = scroll_pos
-    local viewport_end = scroll_pos + viewport_size - 1
-
-    -- Handle end-of-list case
-    if viewport_end >= #orders then
-        viewport_end = #orders - 1
-        viewport_start = math.max(0, viewport_end - viewport_size + 1)
-    end
-
-    return viewport_start, viewport_end
-end
-
-local function calculateOrderY(order_idx)
-    local orders = df.global.world.manager_orders.all
-
-    if #orders == 0 or order_idx < 0 or order_idx >= #orders then
-        return nil
-    end
-
-    local viewport_start, viewport_end = getVisibleOrderIndices()
-
-    -- Check if order is in viewport
-    if order_idx < viewport_start or order_idx > viewport_end then
-        return nil
-    end
-
-    local list_start_y = getListStartY()
-    local pos_in_viewport = order_idx - viewport_start
-
-    return list_start_y + (pos_in_viewport * ORDER_HEIGHT)
-end
-
 OrdersSearchOverlay = defclass(OrdersSearchOverlay, overlay.OverlayWidget)
 OrdersSearchOverlay.ATTRS{
     desc='Adds a search box to find and navigate to matching manager orders.',
@@ -833,10 +785,11 @@ function OrdersSearchOverlay:init()
         visible=function() return not self.minimized end,
         subviews={
             widgets.EditField{
-                view_id='filter',
+                view_id=SEARCH_FILTER_VIEW_ID,
                 frame={t=0, l=0},
                 key='CUSTOM_ALT_S',
                 on_change=self:callback('update_filter'),
+                on_focus=position_overlay.clear_active_edit,
                 on_submit=self:callback('on_submit'),
                 on_submit2=self:callback('on_submit2'),
             },
@@ -888,6 +841,8 @@ function OrdersSearchOverlay:init()
         main_panel,
         minimized_panel,
     }
+    position_overlay.bind_orders_search_field(
+        self.subviews[SEARCH_FILTER_VIEW_ID])
 
     self.minimized = false
     self.matched_indices = {}
@@ -906,7 +861,7 @@ function OrdersSearchOverlay:overlay_onupdate()
 end
 
 function OrdersSearchOverlay:update_filter()
-    local text = self.subviews.filter.text
+    local text = self.subviews[SEARCH_FILTER_VIEW_ID].text
     self.matched_indices = perform_search(text)
     self.current_match_idx = 0
 
@@ -919,16 +874,16 @@ end
 
 function OrdersSearchOverlay:on_submit()
     self:cycle_match(1)
-    self.subviews.filter:setFocus(true)
+    self.subviews[SEARCH_FILTER_VIEW_ID]:setFocus(true)
 end
 
 function OrdersSearchOverlay:on_submit2()
     self:cycle_match(-1)
-    self.subviews.filter:setFocus(true)
+    self.subviews[SEARCH_FILTER_VIEW_ID]:setFocus(true)
 end
 
 function OrdersSearchOverlay:cycle_match(direction)
-    local search_text = self.subviews.filter.text
+    local search_text = self.subviews[SEARCH_FILTER_VIEW_ID].text
 
     local new_matches = perform_search(search_text)
 
@@ -952,7 +907,8 @@ function OrdersSearchOverlay:cycle_match(direction)
 
     -- Scroll to the selected match only if not already visible
     local order_idx = self.matched_indices[self.current_match_idx]
-    local viewport_start, viewport_end = getVisibleOrderIndices()
+    local viewport_start, viewport_end =
+        work_order_list.get_visible_order_indices()
     if order_idx < viewport_start or order_idx > viewport_end then
         mi.info.work_orders.scroll_position_work_orders = order_idx
     end
@@ -987,7 +943,7 @@ end
 function OrdersSearchOverlay:onInput(keys)
     if mi.job_details.open then return end
 
-    local filter_field = self.subviews.filter
+    local filter_field = self.subviews[SEARCH_FILTER_VIEW_ID]
     if not filter_field then return false end
 
     -- Unfocus search on right-click
@@ -1030,7 +986,7 @@ function OrdersSearchOverlay:render_highlights(dc)
                                self.matched_indices[self.current_match_idx] or nil
 
     for _, match_order_idx in ipairs(self.matched_indices) do
-        local match_y = calculateOrderY(match_order_idx)
+        local match_y = work_order_list.get_order_y(match_order_idx)
 
         if match_y then
             local pen = (match_order_idx == selected_order_idx) and SELECTED_PEN or MATCH_PEN
@@ -1047,6 +1003,7 @@ end
 OVERLAY_WIDGETS = {
     recheck=RecheckOverlay,
     importexport=OrdersOverlay,
+    position=position_overlay.PositionOverlay,
     search=OrdersSearchOverlay,
     skillrestrictions=SkillRestrictionOverlay,
     laborrestrictions=LaborRestrictionsOverlay,

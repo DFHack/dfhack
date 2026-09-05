@@ -59,6 +59,8 @@ Template for new versions:
 
 ## New Features
 
+- `orders`: add commands and an inline overlay for listing and changing manager-order positions
+
 ## Fixes
 
 - Fix broken weather lookup in ``World::ReadCurrentWeather``

@@ -10,6 +10,15 @@ Usage
 
 ``orders list``
     Shows the list of previously exported orders, including the orders library.
+``orders positions [--show-id]``
+    Lists fort-wide manager orders in their displayed priority order, including
+    each order's position, frequency, remaining and total quantities, and name.
+    Pass ``--show-id`` to also include manager-order IDs.
+``orders move <current-position> <new-position> [--show-id]``
+    Moves the existing manager order at ``current-position`` to
+    ``new-position``. Positions are one-based, matching those listed by
+    ``orders positions``. Pass ``--show-id`` to include manager-order IDs in
+    the result.
 ``orders export <name>``
     Saves all the current manager orders in a file.
 ``orders import <name>``
@@ -47,6 +56,10 @@ Examples
 ``orders import library/basic``
     Import manager orders from the library that keep your fort stocked with
     basic essentials.
+``orders positions --show-id``
+    List the current manager orders and their IDs.
+``orders move 5 3``
+    Move the order currently displayed at position 5 to position 3.
 
 Overlays
 --------
@@ -71,6 +84,15 @@ overlay that allows you to recheck conditions for just that order. This is
 useful for when the conditions were true when the order started, but they have
 become false and now you're just getting repeated cancellation spam as the
 order cannot be fulfilled.
+
+orders.position
+~~~~~~~~~~~~~~~
+
+Displays the one-based positions listed by ``orders positions`` beside
+fort-wide work orders. Click a position, enter a one-based destination, and
+press Enter to move the order. Modified shortcuts cancel the edit and pass
+through to DFHack or Dwarf Fortress. The inline operation is silent when
+successful and shows invalid input in an error dialog.
 
 orders.skillrestrictions and orders.laborrestrictions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~

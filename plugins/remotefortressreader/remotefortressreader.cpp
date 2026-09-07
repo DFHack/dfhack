@@ -1578,7 +1578,6 @@ static command_result GetBlockList(color_ostream &stream, const BlockRequest *in
 
 static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage *in, TiletypeList *out)
 {
-    int count = 0;
     FOR_ENUM_ITEMS(tiletype, tt)
     {
         Tiletype * type = out->add_tiletype_list();
@@ -1592,7 +1591,6 @@ static command_result GetTiletypeList(color_ostream &stream, const EmptyMessage 
         type->set_material(TranslateMaterial(tileMaterial(tt)));
         type->set_variant(TranslateVariant(tileVariant(tt)));
         type->set_direction(tileDirection(tt).getStr());
-        count++;
     }
     return CR_OK;
 }

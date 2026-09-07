@@ -456,7 +456,7 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
     MapExtras::MapCache cache;
 
     // clock_t t0 = clock();
-    clock_t totalEdgeTime = 0;
+    // clock_t totalEdgeTime = 0;
     int32_t edgesExpanded = 0;
     while(!fringe.empty()) {
         if ( edgesPerTick > 0 && edgesExpanded++ >= edgesPerTick ) {
@@ -484,9 +484,9 @@ void findAndAssignInvasionJob(color_ostream& out, void* tickTime) {
         }
 
         cost_t myCost = costMap[pt];
-        clock_t edgeTime = clock();
+        // clock_t edgeTime = clock();
         vector<Edge>* myEdges = getEdgeSet(out, pt, cache, xMax, yMax, zMax, abilities);
-        totalEdgeTime += (clock() - edgeTime);
+        // totalEdgeTime += (clock() - edgeTime);
         for ( auto a = myEdges->begin(); a != myEdges->end(); a++ ) {
             Edge &e = *a;
             if ( e.p1 == df::coord() )

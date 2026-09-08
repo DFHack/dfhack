@@ -40,7 +40,7 @@ namespace DFHack
         }
         bool operator!=(const Coord2d& other) const
         {
-            return x != other.x || y == other.y;
+            return x != other.x || y != other.y;
         }
         bool operator<(const Coord2d& other) const
         {
@@ -147,7 +147,7 @@ namespace DFHack
         }
         bool operator!=(const Coord3d& other) const
         {
-            return x != other.x || y == other.y || z == other.z;
+            return x != other.x || y != other.y || z != other.z;
         }
         bool operator<(const Coord3d& other) const
         {

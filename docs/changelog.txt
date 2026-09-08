@@ -67,6 +67,7 @@ Template for new versions:
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type
 
 ## Documentation
+- Document ``autodump-destroy-here``. Remove mention of ``autodump destroy`` able to revert destruction.
 
 ## API
 - Added ``MiscUtils::print_range`` to print ranges with prefix, separator, and suffix

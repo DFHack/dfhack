@@ -3385,6 +3385,7 @@ static const LuaWrapper::FunctionReg dfhack_filesystem_module[] = {
     WRAPM(Filesystem, mkdir),
     WRAPM(Filesystem, mkdir_recursive),
     WRAPM(Filesystem, rmdir),
+    WRAPM(Filesystem, rmdir_recursive),
     WRAPM(Filesystem, exists),
     WRAPM(Filesystem, isfile),
     WRAPM(Filesystem, isdir),

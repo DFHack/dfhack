@@ -19,7 +19,7 @@ struct test_grid {
 
     std::array<int32_t, Dimension * Dimension> tiles{};
 
-    int32_t &at(int32_t x, int32_t y) { return tiles[y * dimension + x]; }
+    int32_t &at(int32_t x, int32_t y) { return tiles[x * dimension + y]; }
     int32_t &operator[](size_t index) { return tiles[index]; }
     const int32_t *data() const { return tiles.data(); }
     void fill(int32_t value) { tiles.fill(value); }
@@ -60,8 +60,8 @@ bool moved_between_tiles(viewport_visual_layer layer, const test_grid<Dimension>
                          const test_grid<Dimension> &previous, df::coord2d source,
                          df::coord2d target) {
     return visual_moved_between_tiles(layer, current.data(), previous.data(),
-                                      source.y * Dimension + source.x,
-                                      target.y * Dimension + target.x);
+                                      source.x * Dimension + source.y,
+                                      target.x * Dimension + target.y);
 }
 
 template <int32_t Dimension>

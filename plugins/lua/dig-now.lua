@@ -4,11 +4,21 @@ local argparse = require('argparse')
 local guidm = require('gui.dwarfmode')
 local utils = require('utils')
 
+---@diagnostic disable-next-line: duplicate-doc-alias
+---@alias coord df.coord | { x:integer, y: integer, z:integer }
+---@alias boulder_percents { layer:integer, vein:integer, small_cluster:integer, deep:integer }    -- dig-now.cpp boulder_percent_options_fields
+---@alias opts { help:boolean, start:coord, end:coord, dump_pos:coord, boulder_percents:boulder_percents }  -- dig-now.cpp dig_now_options_fields
+
+---@param opts opts
+---@param configname 'start' | 'end' | 'dump_pos'
+---@param arg 'here' | string  -- "x,y,z", integers, map coordinate
 local function parse_coords(opts, configname, arg)
-    local cursor = argparse.coords(arg, configname)
+    local cursor = argparse.coords(arg, configname) ---@type coord
     utils.assign(opts[configname], cursor)
 end
 
+---@param opts opts
+---@param arg string  -- "int,int,int,int" ranges 0..100
 local function parse_percentages(opts, arg)
     local nums = argparse.numberList(arg, 'percentages', 4)
     for _,percentage in ipairs(nums) do
@@ -24,12 +34,16 @@ local function parse_percentages(opts, arg)
             nums[1], nums[2], nums[3], nums[4]
 end
 
+---@generic T  -- any, non-nil
+---@param ... T
 local function min_to_max(...)
     local args = {...}
     table.sort(args, function(a, b) return a < b end)
     return table.unpack(args)
 end
 
+---@param opts opts
+---@param ... string
 function parse_commandline(opts, ...)
     local use_zlevel = false
     local positionals = argparse.processArgsGetopt({...}, {

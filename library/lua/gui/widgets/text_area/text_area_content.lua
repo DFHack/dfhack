@@ -288,8 +288,6 @@ function TextAreaContent:onRenderBody(dc)
             dc:seek(0, to_y - 1)
                 :string(line)
         end
-
-        dc:pen({bg=COLOR_RESET}, self.text_pen)
     end
 
     if self.debug then
@@ -313,7 +311,7 @@ function TextAreaContent:onRenderBody(dc)
             self.sel_end
         ) or ''
 
-        dc:pen({fg=COLOR_LIGHTRED, bg=COLOR_RESET})
+        dc:pen({fg=COLOR_LIGHTRED})
             :seek(0, self.parent_view.frame_body.height + self.render_start_line_y - 2)
             :string(debug_msg)
             :seek(0, self.parent_view.frame_body.height + self.render_start_line_y - 3)

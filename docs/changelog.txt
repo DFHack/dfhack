@@ -61,6 +61,8 @@ Template for new versions:
 ## New Features
 - `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
 
+- `orders`: add an inline overlay for viewing and changing manager-order positions
+
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
 - Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused

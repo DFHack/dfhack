@@ -4,6 +4,7 @@ local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
 local work_order_list = require('plugins.orders.work_order_list')
+local position_overlay = require('plugins.orders.position_overlay')
 local textures = require('gui.textures')
 local utils = require('utils')
 local widgets = require('gui.widgets')
@@ -776,6 +777,7 @@ function OrdersSearchOverlay:init()
                 frame={t=0, l=0},
                 key='CUSTOM_ALT_S',
                 on_change=self:callback('update_filter'),
+                on_focus=position_overlay.clear_active_edit,
                 on_submit=self:callback('on_submit'),
                 on_submit2=self:callback('on_submit2'),
             },
@@ -827,6 +829,8 @@ function OrdersSearchOverlay:init()
         main_panel,
         minimized_panel,
     }
+    position_overlay.bind_orders_search_field(
+        self.subviews.filter)
 
     self.minimized = false
     self.matched_indices = {}
@@ -987,6 +991,7 @@ end
 OVERLAY_WIDGETS = {
     recheck=RecheckOverlay,
     importexport=OrdersOverlay,
+    position=position_overlay.PositionOverlay,
     search=OrdersSearchOverlay,
     skillrestrictions=SkillRestrictionOverlay,
     laborrestrictions=LaborRestrictionsOverlay,

@@ -78,6 +78,8 @@ Template for new versions:
 
 ## Lua
 
+- `orders`: make work-order list geometry available to Lua overlays
+
 ## Removed
 
 # 53.16-r1.1

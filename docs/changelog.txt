@@ -59,6 +59,8 @@ Template for new versions:
 
 ## New Features
 
+- `orders`: add an inline overlay for viewing and changing manager-order positions
+
 ## Fixes
 
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
@@ -77,6 +79,8 @@ Template for new versions:
 - Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``
 
 ## Lua
+
+- `orders`: make work-order list geometry available to Lua overlays
 
 ## Removed
 

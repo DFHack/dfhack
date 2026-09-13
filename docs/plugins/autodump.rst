@@ -8,6 +8,9 @@ autodump
 .. dfhack-command:: autodump-destroy-here
     :summary: Destroy items marked for dumping under the keyboard cursor.
 
+.. dfhack-command:: autodump-destroy-item
+    :summary: Destroy the selected item.
+
 This tool can instantly move all unforbidden items marked for dumping to the
 tile under the keyboard cursor. After moving the items, the dump flag is unset
 and the forbid flag is set, just as if it had been dumped normally. See
@@ -24,19 +27,22 @@ Usage
 
     autodump [<options>]
     autodump-destroy-here
+    autodump-destroy-item
 
 ``autodump-destroy-here`` is an alias for ``autodump destroy-here`` and is
 intended for use as a keybinding.
+
+``autodump-destroy-item`` marks the currently viewed item for destruction.
+The pending destruction can be canceled if the command is run again before
+unpausing. (Does not work on items marked by ``autodump destroy``.)
 
 Options
 -------
 
 ``destroy``
-    Destroy instead of dumping. Doesn't require a cursor. If ``autodump`` is
-    called again with this option before the game is resumed, it cancels
-    pending destroy actions.
+    Destroy instead of dumping. Doesn't require a cursor.
 ``destroy-here``
-    Destroy items marked for dumping under the cursor.
+    Destroy items under the cursor that are marked for dumping.
 ``visible``
     Only process items that are not hidden.
 ``hidden``
@@ -48,8 +54,12 @@ Examples
 --------
 
 ``autodump``
-    Teleports items marked for dumping to the cursor position.
+    Teleports unforbidden items marked for dumping to the cursor position.
 ``autodump destroy``
-    Destroys all unforbidden items marked for dumping
+    Destroys all unforbidden items marked for dumping.
+``autodump destroy forbidden``
+    Destroys all forbidden items marked for dumping, skipping unforbidden items.
 ``autodump-destroy-here``
-    Destroys items on the selected tile that are marked for dumping.
+    Destroys unforbidden items on the selected tile that are marked for dumping.
+``autodump-destroy-item``
+    Destroys the item currently being viewed, or reverts its pending destruction.

@@ -1646,6 +1646,7 @@ Units module
 * ``dfhack.units.hasExtravision(unit)``
 * ``dfhack.units.isOpposedToLife(unit)``
 * ``dfhack.units.isBloodsucker(unit)``
+* ``dfhack.units.breathes(unit)``
 
   Simple checks of caste attributes that can be modified by curses.
 
@@ -2003,6 +2004,13 @@ Units module
 * ``dfhack.units.getStressCutoffs()``
 
   Returns a table of the cutoffs used by the above stress level functions.
+
+* ``dfhack.units.getBreathingState(unit)``
+
+  Returns a value indicating the unit's current breathing state, which can be one of the following:
+    * ``CANT`` (0) - The unit cannot breathe and is at risk of suffocation.
+    * ``TROUBLE`` (1) - The unit is having trouble breathing but is not in immediate danger.
+    * ``FINE`` (2) - The unit is breathing normally.
 
 Action Timer API
 ~~~~~~~~~~~~~~~~

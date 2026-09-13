@@ -74,6 +74,7 @@ Template for new versions:
 - Added ``Maps::addRegionBiomeOffset`` to shift world region coordinate by region_details biome reference
 - Added ``Maps::describeSurroundings`` to get surroundings classification from savagery and evilness
 - Added ``Maps::getCurrentWeather`` to determine the current weather on the map.
+- Added ``Units::breathes`` and ``Units::getBreathingState``
 - Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``
 
 ## Lua

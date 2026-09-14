@@ -133,7 +133,7 @@ int main() {
         int32_t empty[dim * dim] = {};
         int32_t before[dim * dim] = {};
         int32_t west_after[dim * dim] = {};
-        const int viewport_token = 0;
+        const int viewport_token{};
         const void *viewport = &viewport_token;
 
         before[2 * dim + 2] = creature_texpos;
@@ -489,6 +489,47 @@ int main() {
            visual_layer_descriptor(viewport_visual_layer::up).anchor_offset.y == 1);
     assert(visual_layer_descriptor(viewport_visual_layer::upleft).anchor_offset.x == 1 &&
            visual_layer_descriptor(viewport_visual_layer::upleft).anchor_offset.y == 1);
+
+    // A multi-tile fragment follows its exact anchor in a crowded scene.
+    {
+        constexpr int32_t crowded_dimension = 5;
+        constexpr int32_t anchor_texpos = 11;
+        constexpr int32_t neighbor_texpos = 22;
+        const DFHack::Coord2d<int32_t> anchor_source(1, 2);
+        const DFHack::Coord2d<int32_t> anchor_target(2, 2);
+        const DFHack::Coord2d<int32_t> neighbor_source(3, 2);
+        const DFHack::Coord2d<int32_t> neighbor_target(3, 1);
+        constexpr uint32_t initial_time_ms = 1000;
+        constexpr uint32_t movement_time_ms = 1016;
+        test_grid<crowded_dimension> empty;
+        test_grid<crowded_dimension> before;
+        test_grid<crowded_dimension> after;
+        before.at(anchor_source.x, anchor_source.y) = anchor_texpos;
+        before.at(neighbor_source.x, neighbor_source.y) = neighbor_texpos;
+        after.at(anchor_target.x, anchor_target.y) = anchor_texpos;
+        after.at(neighbor_target.x, neighbor_target.y) = neighbor_texpos;
+        const int viewport_token = 0;
+        const void *crowded_viewport = &viewport_token;
+        visual_animation_managerst crowded;
+        auto crowded_input = make_input(crowded_viewport, empty);
+        set_layer(crowded_input, viewport_visual_layer::center, before, empty);
+        run_frame(crowded, crowded_input, initial_time_ms);
+        set_layer(crowded_input, viewport_visual_layer::center, after, before);
+        run_frame(crowded, crowded_input, movement_time_ms);
+        const auto anchor = crowded.get_movement(crowded_viewport,
+                                                  viewport_visual_layer::center,
+                                                  anchor_target.x, anchor_target.y);
+        const auto fragment_target =
+            anchor_target - DFHack::Coord2d<int32_t>(
+                                visual_layer_descriptor(viewport_visual_layer::right).anchor_offset);
+        const auto fragment = crowded.get_movement(crowded_viewport,
+                                                    viewport_visual_layer::right,
+                                                    fragment_target.x, fragment_target.y);
+        assert(anchor.active && fragment.active && fragment.inherited);
+        assert(fragment.movement_id == anchor.movement_id);
+        assert(fragment.source == DFHack::Coord2d<float>(anchor_target));
+        assert(fragment.progress == anchor.progress);
+    }
 
     using small_grid = test_grid<3>;
     constexpr int32_t creature_texpos = 42;

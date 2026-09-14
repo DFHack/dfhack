@@ -155,11 +155,15 @@ struct viewport_visual_animation_inputst {
     }
 };
 
+using visual_movement_idst = uint64_t;
+constexpr visual_movement_idst no_visual_movement = 0;
+
 struct visual_movement_renderst {
     bool active = false;
     DFHack::Coord2d<float> source{0.0f, 0.0f};
     float progress = 1.0f;
     bool inherited = false;
+    visual_movement_idst movement_id = no_visual_movement;
 };
 
 inline float animation_progress(uint32_t now_ms, uint32_t start_time_ms, uint32_t duration_ms) {
@@ -206,6 +210,7 @@ class visual_animation_managerst {
         DFHack::Coord2d<float> source;
         df::coord2d target;
         uint32_t start_time_ms;
+        visual_movement_idst id;
     };
 
     struct viewport_animationst {
@@ -246,6 +251,14 @@ class visual_animation_managerst {
     bool has_frame = false;
     bool force_full_redraw = false;
     std::vector<viewport_animationst> viewports;
+    visual_movement_idst next_movement_id = 1;
+
+    visual_movement_idst allocate_movement_id() {
+        const auto id = next_movement_id++;
+        if (next_movement_id == no_visual_movement)
+            next_movement_id = 1;
+        return id;
+    }
 
     // Tuned visual transition length; this is not a DF timing contract.
     static constexpr uint32_t movement_duration_ms = 100;
@@ -708,7 +721,8 @@ class visual_animation_managerst {
                                                    texpos,
                                                    visual_source,
                                                    df::coord2d(x, y),
-                                                   frame_time_ms});
+                                                   frame_time_ms,
+                                                   allocate_movement_id()});
                         if (static_cast<viewport_visual_layer>(layer) ==
                                 viewport_visual_layer::center &&
                             state.facing.size() ==
@@ -826,15 +840,31 @@ class visual_animation_managerst {
                 continue;
             const movementst *companion = nullptr;
             bool ambiguous = false;
+            const auto &descriptor = visual_layer_descriptor(layer);
+            const DFHack::Coord2d<int32_t> target(target_x, target_y);
+            const bool creature_fragment = descriptor.render_group == visual_render_groupst::main ||
+                                           descriptor.render_group == visual_render_groupst::upper;
             for (const movementst &movement : state.movements) {
                 if (movement.layer == layer && movement.target.x == target_x &&
                     movement.target.y == target_y) {
-                    return {true, movement.source, movement_progress(movement.start_time_ms)};
+                    return {true, movement.source, movement_progress(movement.start_time_ms), false,
+                            movement.id};
                 }
                 if (layer == viewport_visual_layer::vehicle ||
                     layer == viewport_visual_layer::center ||
-                    movement.layer != viewport_visual_layer::center ||
-                    std::abs(movement.target.x - target_x) > 1 ||
+                    movement.layer != viewport_visual_layer::center)
+                    continue;
+                if (creature_fragment) {
+                    const DFHack::Coord2d<int32_t> movement_target(movement.target.x,
+                                                                   movement.target.y);
+                    if (movement_target ==
+                        target + DFHack::Coord2d<int32_t>(descriptor.anchor_offset)) {
+                        companion = &movement;
+                        break;
+                    }
+                    continue;
+                }
+                if (std::abs(movement.target.x - target_x) > 1 ||
                     std::abs(movement.target.y - target_y) > 1)
                     continue;
                 if (companion != nullptr && (companion->source.x - companion->target.x !=
@@ -853,7 +883,8 @@ class visual_animation_managerst {
                         {target_x + companion->source.x - companion->target.x,
                          target_y + companion->source.y - companion->target.y},
                         movement_progress(companion->start_time_ms),
-                        true};
+                        true,
+                        companion->id};
             break;
         }
         return {};

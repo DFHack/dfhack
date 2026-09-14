@@ -249,6 +249,7 @@ struct render_proxyst {
     bool mirrored = false;
     int32_t mirror_shift = 0;
     tile_coveragest coverage;
+    visual_movement_idst movement_id = no_visual_movement;
 };
 
 struct render_coveragest {
@@ -488,10 +489,12 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                         if (anchor.layer == viewport_visual_layer::center &&
                             std::abs(anchor.target.x - x) <= 1 &&
                             std::abs(anchor.target.y - y) <= 1 &&
-                            anchor.source -
+                            (visual_layer != viewport_visual_layer::designation
+                                 ? anchor.movement_id == movement.movement_id
+                                 : (anchor.source -
                                     DFHack::Coord2d<float>{float(anchor.target.x), float(anchor.target.y)} ==
                                 movement_delta &&
-                            anchor.progress == movement.progress)
+                                    anchor.progress == movement.progress)))
                             anchored = true;
                     }
                     if (!anchored)
@@ -519,15 +522,14 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                             inherited_source_x * vp->dim_y + inherited_source_y, index);
                     if (!fragment_moved) {
                         const auto &descriptor = visual_layer_descriptor(visual_layer);
+                        const DFHack::Coord2d<int32_t> fragment_target{x, y};
                         bool owns_fragment = false;
                         for (const render_proxyst &anchor : proxies)
                             if (anchor.layer == viewport_visual_layer::center &&
-                                anchor.target.x == x + descriptor.anchor_offset.x &&
-                                anchor.target.y == y + descriptor.anchor_offset.y &&
-                                anchor.source -
-                                        DFHack::Coord2d<float>{float(anchor.target.x), float(anchor.target.y)} ==
-                                    movement_delta &&
-                                anchor.progress == movement.progress)
+                                DFHack::Coord2d<int32_t>{anchor.target.x, anchor.target.y} ==
+                                    fragment_target +
+                                        DFHack::Coord2d<int32_t>{descriptor.anchor_offset} &&
+                                anchor.movement_id == movement.movement_id)
                                 owns_fragment = true;
                         if (!owns_fragment)
                             continue;
@@ -606,6 +608,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                 proxy.texture = cached_texture(renderer, texpos);
                 if (proxy.texture == nullptr)
                     continue;
+                proxy.movement_id = movement.movement_id;
                 proxies.push_back(std::move(proxy));
             }
         }

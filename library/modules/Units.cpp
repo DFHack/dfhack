@@ -89,6 +89,7 @@ distribution.
 #include "df/unit_wound_layerst.h"
 #include "df/world.h"
 #include "df/world_site.h"
+#include "df/wrestle_state_type.h"
 
 #include <algorithm>
 #include <bitset>
@@ -548,6 +549,12 @@ bool Units::isOpposedToLife(df::unit *unit) {
 bool Units::isBloodsucker(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
     return IS_ACTIVE_CASTE_FLAG(BLOODSUCKER);
+}
+
+bool Units::breathes(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return !IS_ACTIVE_CASTE_FLAG(NOBREATHE);
 }
 #undef IS_ACTIVE_CASTE_FLAG
 
@@ -2326,4 +2333,19 @@ df::unit* Units::get_cached_unit_by_global_id(int32_t id, int32_t& index)
     }
     index = binsearch_index(vector, &df::unit::id, id);
     return index != -1 ? vector[index] : nullptr;
+}
+
+// reverse engineered from df's unitst::breathingstate
+Units::breathing_state Units::getBreathingState(df::unit* unit)
+{
+    using enum breathing_state;
+
+    if (!Units::breathes(unit)) return FINE;
+    if (unit->flags1.bits.drowning) return CANT;
+
+    auto& wrestle_items = unit->status.wrestle_items;
+    if (std::any_of(wrestle_items.begin(), wrestle_items.end(), [] (auto w) { return w->advantage < 0 && w->state == df::wrestle_state_type::Choke; }))
+        return CANT;
+
+    return unit->flags2.bits.breathing_problem ? ( unit->flags2.bits.breathing_good ? TROUBLE : CANT ) : FINE;
 }

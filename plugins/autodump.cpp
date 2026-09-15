@@ -72,9 +72,43 @@ static constexpr uint32_t proj_flags = (
     df::projectile_flags::mask_no_collide
 );
 
+// Original flags of items marked for destruction, so the marking can be
+// reverted while the game is still paused (once a frame passes, the garbage
+// collector may have already deleted the items)
+static map<int, df::item_flags> pending_destroy;
+static int last_frame = 0;
+
+static void reset_pending_destroy()
+{
+    if (world->frame_counter != last_frame)
+    {
+        last_frame = world->frame_counter;
+        pending_destroy.clear();
+    }
+}
+
+// mark an item for destruction, along with anything it contains, so that
+// contained items are not left pointing at a deleted container
+static void mark_for_destroy(df::item *itm)
+{
+    if (!pending_destroy.count(itm->id))
+        pending_destroy[itm->id] = itm->flags;
+
+    itm->flags.bits.garbage_collect = true;
+    // Cosmetic changes: make them disappear from view instantly.
+    itm->flags.bits.forbid = true;
+    itm->flags.bits.hidden = true;
+
+    vector<df::item *> contained_items;
+    Items::getContainedItems(itm, &contained_items);
+    for (auto child : contained_items)
+        mark_for_destroy(child);
+}
+
 static command_result autodump_main(color_ostream &out, vector<string> &parameters)
 {   // Command line options.
     bool destroy = false;
+    bool undestroy = false;
     bool here = false;
     bool need_visible = false;
     bool need_hidden = false;
@@ -86,6 +120,8 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
             destroy = true;
         else if (p == "destroy-here")
             destroy = here = true;
+        else if (p == "undestroy")
+            undestroy = true;
         else if (p == "visible")
             need_visible = true;
         else if (p == "hidden")
@@ -103,6 +139,27 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
     else if (!Maps::IsValid()) {
         out.printerr("Map is not available!\n");
         return CR_FAILURE;
+    }
+
+    reset_pending_destroy();
+
+    if (undestroy)
+    {   // Revert items marked for destruction while the game is still paused.
+        int restored_total = 0;
+        for (auto &entry : pending_destroy)
+        {
+            if (auto itm = df::item::find(entry.first))
+            {   // Item could have already been garbage collected
+                itm->flags.bits.garbage_collect = entry.second.bits.garbage_collect;
+                itm->flags.bits.hidden = entry.second.bits.hidden;
+                itm->flags.bits.dump = entry.second.bits.dump;
+                itm->flags.bits.forbid = entry.second.bits.forbid;
+                restored_total++;
+            }
+        }
+        pending_destroy.clear();
+        out.print("Done. {} items unmarked for destruction.\n", restored_total);
+        return CR_OK;
     }
 
     int dumped_total = 0;
@@ -176,10 +233,18 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
         else { // Destroy
             if (here && itm->pos != pos_cursor)
                 continue;
-            itm->flags.bits.garbage_collect = true;
-            // Cosmetic changes: make them disappear from view instantly.
-            itm->flags.bits.forbid = true;
-            itm->flags.bits.hidden = true;
+            // Don't destroy items in unit inventories (including items inside
+            // carried containers); deleting them leaves unit equipment refs
+            // dangling. Matches the check in autodump-destroy-item.
+            bool held_by_unit = itm->flags.bits.in_inventory;
+            for (auto ref : itm->general_refs)
+            {
+                if (ref->getType() == general_ref_type::UNIT_HOLDER)
+                    held_by_unit = true;
+            }
+            if (held_by_unit)
+                continue;
+            mark_for_destroy(itm);
         }
         dumped_total++;
     }
@@ -202,9 +267,6 @@ command_result df_autodump_destroy_here(color_ostream &out, vector<string> &para
     return autodump_main(out, args);
 }
 
-static map<int, df::item_flags> pending_destroy;
-static int last_frame = 0;
-
 command_result df_autodump_destroy_item(color_ostream &out, vector<string> &parameters)
 {
     if (!parameters.empty())
@@ -215,18 +277,14 @@ command_result df_autodump_destroy_item(color_ostream &out, vector<string> &para
         return CR_FAILURE;
 
     // Allow undoing the destroy.
-    if (world->frame_counter != last_frame)
-    {
-        last_frame = world->frame_counter;
-        pending_destroy.clear();
-    }
+    reset_pending_destroy();
 
     if (pending_destroy.count(item->id))
     {
         df::item_flags old_flags = pending_destroy[item->id];
         pending_destroy.erase(item->id);
 
-        item->flags.bits.garbage_collect = false;
+        item->flags.bits.garbage_collect = old_flags.bits.garbage_collect;
         item->flags.bits.hidden = old_flags.bits.hidden;
         item->flags.bits.dump = old_flags.bits.dump;
         item->flags.bits.forbid = old_flags.bits.forbid;

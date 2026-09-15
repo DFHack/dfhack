@@ -68,6 +68,7 @@ Template for new versions:
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type
 
 ## Documentation
+- Document ``autodump-destroy-here``. Remove mention of ``autodump destroy`` able to revert destruction.
 
 ## API
 - Added ``MiscUtils::print_range`` to print ranges with prefix, separator, and suffix
@@ -75,6 +76,7 @@ Template for new versions:
 - Added ``Maps::addRegionBiomeOffset`` to shift world region coordinate by region_details biome reference
 - Added ``Maps::describeSurroundings`` to get surroundings classification from savagery and evilness
 - Added ``Maps::getCurrentWeather`` to determine the current weather on the map.
+- Added ``Units::breathes`` and ``Units::getBreathingState``
 - Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``
 
 ## Lua

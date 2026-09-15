@@ -2134,6 +2134,8 @@ static const luaL_Reg dfhack_textures_funcs[] = {
 
 /***** Units module *****/
 
+static int getBreathingState(df::unit* u) { return (int)Units::getBreathingState(u); }
+
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isActive),
     WRAPM(Units, isVisible),
@@ -2186,6 +2188,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, hasExtravision),
     WRAPM(Units, isOpposedToLife),
     WRAPM(Units, isBloodsucker),
+    WRAPM(Units, breathes),
     WRAPM(Units, isDwarf),
     WRAPM(Units, isAnimal),
     WRAPM(Units, isMerchant),
@@ -2258,6 +2261,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, unassignTrainer),
     WRAPM(Units, hasUnbailableSocialActivity),
     WRAPM(Units, isJobAvailable),
+    WRAPN(getBreathingState, getBreathingState),
     { NULL, NULL }
 };
 

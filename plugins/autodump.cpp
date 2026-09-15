@@ -91,7 +91,7 @@ static void reset_pending_destroy()
 // contained items are not left pointing at a deleted container
 static void mark_for_destroy(df::item *itm)
 {
-    if (!pending_destroy.count(itm->id))
+    if (!pending_destroy.contains(itm->id))
         pending_destroy[itm->id] = itm->flags;
 
     itm->flags.bits.garbage_collect = true;
@@ -148,14 +148,16 @@ static command_result autodump_main(color_ostream &out, vector<string> &paramete
         int restored_total = 0;
         for (auto &entry : pending_destroy)
         {
-            if (auto itm = df::item::find(entry.first))
-            {   // Item could have already been garbage collected
-                itm->flags.bits.garbage_collect = entry.second.bits.garbage_collect;
-                itm->flags.bits.hidden = entry.second.bits.hidden;
-                itm->flags.bits.dump = entry.second.bits.dump;
-                itm->flags.bits.forbid = entry.second.bits.forbid;
-                restored_total++;
-            }
+            // Items already garbage collected or deleted by another plugin
+            // are no longer in items.all, so find() returns NULL for them.
+            df::item *itm = df::item::find(entry.first);
+            if (!itm)
+                continue;
+            itm->flags.bits.garbage_collect = entry.second.bits.garbage_collect;
+            itm->flags.bits.hidden = entry.second.bits.hidden;
+            itm->flags.bits.dump = entry.second.bits.dump;
+            itm->flags.bits.forbid = entry.second.bits.forbid;
+            restored_total++;
         }
         pending_destroy.clear();
         out.print("Done. {} items unmarked for destruction.\n", restored_total);
@@ -279,7 +281,7 @@ command_result df_autodump_destroy_item(color_ostream &out, vector<string> &para
     // Allow undoing the destroy.
     reset_pending_destroy();
 
-    if (pending_destroy.count(item->id))
+    if (pending_destroy.contains(item->id))
     {
         df::item_flags old_flags = pending_destroy[item->id];
         pending_destroy.erase(item->id);

@@ -1076,9 +1076,9 @@ bool Gui::any_job_hotkey(df::viewscreen *top)
 // A focused lua screen owns the selection, so we must report none; a
 // defocused lua screen is transparent to the UI below, so the native checks
 // still apply.
-template<typename T>
-static std::optional<T *> dfscreen_selection(df::viewscreen *top,
-        T * (dfhack_viewscreen::*method)())
+template<typename R>
+static std::optional<R> dfscreen_selection(df::viewscreen *top,
+        R (dfhack_viewscreen::*method)())
 {
     auto dfscreen = dfhack_viewscreen::try_cast(top);
     if (!dfscreen)

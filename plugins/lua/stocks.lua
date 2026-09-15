@@ -6,24 +6,28 @@ local widgets = require('gui.widgets')
 
 local stocks = df.global.game.main_interface.stocks
 
-local function collapse_all()
+-- module-level so unit tests can exercise them
+function collapse_all()
     local num_sections = #stocks.current_type_a_expanded
     for idx=0,num_sections-1 do
         stocks.current_type_a_expanded[idx] = false
     end
     stocks.i_height = num_sections * 3
+    -- the collapsed list is much shorter; reset the scroll position so the
+    -- view isn't left pointing past the end of the list
+    stocks.scroll_position_item = 0
 end
 
-local function expand_all()
+function expand_all()
     local num_sections = #stocks.current_type_a_expanded
     for idx=0,num_sections-1 do
         stocks.current_type_a_expanded[idx] = true
     end
-    num_items = #stocks.current_type_i_list
+    local num_items = #stocks.current_type_i_list
     stocks.i_height = (num_items + num_sections) * 3
 end
 
-local function remove_empty()
+function remove_empty()
     local empties = {}
     for itype,v in ipairs(stocks.storeamount) do
         if v == 0 and stocks.badamount[itype] == 0 then
@@ -35,6 +39,10 @@ local function remove_empty()
     end
     for idx=#stocks.filtered_type_list-1,0,-1 do
         if empties[stocks.filtered_type_list[idx]] then stocks.filtered_type_list:erase(idx) end
+    end
+    -- removing types shortens the type list; keep the scroll position in bounds
+    if stocks.scroll_position_type >= #stocks.filtered_type_list then
+        stocks.scroll_position_type = math.max(0, #stocks.filtered_type_list - 1)
     end
 end
 

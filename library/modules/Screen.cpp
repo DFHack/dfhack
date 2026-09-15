@@ -179,19 +179,21 @@ static bool doSetTile_char(const Pen &pen, int x, int y, bool use_graphics)
         *flag &= flag_mask;
     }
 
-    // COLOR_RESET only has meaning on text consoles; use the Pen defaults
-    // (grey text on black) so out-of-range colors can't reach the buffers
-    uint8_t fg = (pen.fg < 0 ? COLOR_GREY : pen.fg) | (pen.bold << 3);
-    uint8_t bg = pen.bg < 0 ? COLOR_BLACK : pen.bg;
+    // out-of-range colors (including COLOR_RESET, which only has meaning
+    // on text consoles) get the Pen defaults, grey text on black, so
+    // they can't reach the buffers
+    uint8_t fg = (pen.fg < 0 || pen.fg > COLOR_MAX ? COLOR_GREY : pen.fg)
+        | (pen.bold << 3);
+    uint8_t bg = pen.bg < 0 || pen.bg > COLOR_MAX ? COLOR_BLACK : pen.bg;
 
     if (pen.tile_mode == Screen::Pen::CharColor)
         *flag |= 2; // SCREENTEXPOS_FLAG_ADDCOLOR
     else if (pen.tile_mode == Screen::Pen::TileColor) {
         *flag |= 1; // SCREENTEXPOS_FLAG_GRAYSCALE
         if (pen.tile_fg)
-            fg = pen.tile_fg < 0 ? COLOR_GREY : pen.tile_fg;
+            fg = pen.tile_fg < 0 || pen.tile_fg > COLOR_MAX ? COLOR_GREY : pen.tile_fg;
         if (pen.tile_bg)
-            bg = pen.tile_bg < 0 ? COLOR_BLACK : pen.tile_bg;
+            bg = pen.tile_bg < 0 || pen.tile_bg > COLOR_MAX ? COLOR_BLACK : pen.tile_bg;
     }
 
     if (pen.tile && use_graphics) {

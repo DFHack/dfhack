@@ -61,8 +61,9 @@ Template for new versions:
 
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
+- Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused
+- `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
 - `timestream`: deal properly with units who have breathing difficulties
-- fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

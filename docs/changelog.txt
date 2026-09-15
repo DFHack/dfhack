@@ -58,11 +58,13 @@ Template for new versions:
 - `export-world-map`: Export world map data for GIS and other external tools.
 
 ## New Features
+- `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
 
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
-- `timestream`: deal properly with units who have breathing difficulties
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
+- `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
+- `timestream`: deal properly with units who have breathing difficulties
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

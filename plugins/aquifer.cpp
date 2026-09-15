@@ -151,6 +151,7 @@ static void get_z_range(color_ostream &out, int & minz, int & maxz, const df::co
     else
         maxz = get_max_aq_z(out, pos1, pos2) - skip_top;
 
+    maxz = std::min((int)pos2.z, maxz);
     minz = std::max((int)pos1.z, maxz - levels + 1);
 
     DEBUG(log,out).print("calculated z range: minz={}, maxz={}\n", minz, maxz);
@@ -188,11 +189,32 @@ static void aquifer_list(color_ostream &out, df::coord pos1, df::coord pos2, int
     }
 }
 
-static int aquifer_drain(color_ostream &out, string aq_type,
-    df::coord pos1, df::coord pos2, int skip_top, int levels, bool leaky)
+// adjust the pos range to honor --skip-top and top-relative --levels,
+// which are only meaningful when the target is the whole map (--all).
+// for drain/convert the reference level is the topmost existing aquifer;
+// for add it is the topmost level that can hold an aquifer tile.
+static bool apply_top_relative_z(color_ostream &out, df::coord & pos1, df::coord & pos2,
+    int skip_top, int levels, bool top_is_aq)
 {
-    DEBUG(log,out).print("entering aquifer_drain: aq_type={}, pos1={}, pos2={}, skip_top={}, levels={}, leaky={}\n",
-        aq_type, pos1, pos2, skip_top, levels, leaky);
+    int minz = 0, maxz = -1;
+    get_z_range(out, minz, maxz, pos1, pos2, levels, top_is_aq, skip_top);
+    if (maxz < minz)
+        return false;
+    pos1.z = minz;
+    pos2.z = maxz;
+    return true;
+}
+
+static int aquifer_drain(color_ostream &out, string aq_type,
+    df::coord pos1, df::coord pos2, int skip_top, int levels, bool leaky, bool top_relative)
+{
+    DEBUG(log,out).print("entering aquifer_drain: aq_type={}, pos1={}, pos2={}, skip_top={}, levels={}, leaky={}, top_relative={}\n",
+        aq_type, pos1, pos2, skip_top, levels, leaky, top_relative);
+
+    if (top_relative && !apply_top_relative_z(out, pos1, pos2, skip_top, levels, true)) {
+        DEBUG(log, out).print("no aquifer levels in range after skip_top/levels\n");
+        return 0;
+    }
 
     const bool all = aq_type == "all";
     const bool heavy_state = aq_type == "heavy";
@@ -211,10 +233,15 @@ static int aquifer_drain(color_ostream &out, string aq_type,
 }
 
 static int aquifer_convert(color_ostream &out, string aq_type,
-    df::coord pos1, df::coord pos2, int skip_top, int levels, bool leaky)
+    df::coord pos1, df::coord pos2, int skip_top, int levels, bool leaky, bool top_relative)
 {
-    DEBUG(log,out).print("entering aquifer_convert: aq_type={}, pos1={}, pos2={}, skip_top={}, levels={}, leaky={}\n",
-        aq_type, pos1, pos2, skip_top, levels, leaky);
+    DEBUG(log,out).print("entering aquifer_convert: aq_type={}, pos1={}, pos2={}, skip_top={}, levels={}, leaky={}, top_relative={}\n",
+        aq_type, pos1, pos2, skip_top, levels, leaky, top_relative);
+
+    if (top_relative && !apply_top_relative_z(out, pos1, pos2, skip_top, levels, true)) {
+        DEBUG(log, out).print("no aquifer levels in range after skip_top/levels\n");
+        return 0;
+    }
 
     const bool heavy_state = aq_type == "heavy";
 
@@ -232,10 +259,15 @@ static int aquifer_convert(color_ostream &out, string aq_type,
 }
 
 static int aquifer_add(color_ostream &out, string aq_type,
-    df::coord pos1, df::coord pos2, int skip_top, int levels, bool leaky)
+    df::coord pos1, df::coord pos2, int skip_top, int levels, bool leaky, bool top_relative)
 {
-    DEBUG(log,out).print("entering aquifer_add: aq_type={}, pos1={}, pos2={}, skip_top={}, levels={}, leaky={}\n",
-        aq_type, pos1, pos2, skip_top, levels, leaky);
+    DEBUG(log,out).print("entering aquifer_add: aq_type={}, pos1={}, pos2={}, skip_top={}, levels={}, leaky={}, top_relative={}\n",
+        aq_type, pos1, pos2, skip_top, levels, leaky, top_relative);
+
+    if (top_relative && !apply_top_relative_z(out, pos1, pos2, skip_top, levels, false)) {
+        DEBUG(log, out).print("no levels in range after skip_top/levels\n");
+        return 0;
+    }
 
     const bool heavy_state = aq_type == "heavy";
 

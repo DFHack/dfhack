@@ -240,6 +240,35 @@ int32_t World::GetCurrentSiteId() {
     return -1;
 }
 
+void World::GetCurrentSiteIdsWithExtraRange(std::vector<int32_t>& ids, const int32_t x_range, const int32_t y_range, const uint32_t max)
+{
+    ids.clear();
+    if (!plotinfo || max < 1)
+    {
+        return;
+    }
+    if (isFortressMode())
+    {
+        ids.push_back(plotinfo->site_id);
+    }
+    if (auto adv = getAdventurer(); adv && world->world_data) {
+        auto& world_map = world->map;
+        auto adv_pos = Units::getPosition(adv);
+        df::coord2d rgn_pos(world_map.region_x + adv_pos.x / 48, world_map.region_y + adv_pos.y / 48);
+        for (auto site : world->world_data->sites) {
+            if (rgn_pos.x + x_range >= site->global_min_x && rgn_pos.x - x_range <= site->global_max_x
+                && rgn_pos.y + y_range >= site->global_min_y && rgn_pos.y - y_range <= site->global_max_y)
+            {
+                ids.push_back(site->id);
+                if (ids.size() >= max)
+                {
+                    return;
+                }
+            }
+        }
+    }
+}
+
 bool World::IsSiteLoaded() {
     return GetCurrentSiteId() != -1;
 }

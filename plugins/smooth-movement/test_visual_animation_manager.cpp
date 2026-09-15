@@ -25,9 +25,9 @@ struct test_grid {
     void fill(int32_t value) { tiles.fill(value); }
 };
 
-viewport_visual_animation_inputst make_input(const void *viewport, int32_t dimension,
+viewport_visual_animation_input make_input(const void *viewport, int32_t dimension,
                                              const int32_t *empty) {
-    viewport_visual_animation_inputst input;
+    viewport_visual_animation_input input;
     input.viewport = static_cast<const df::graphic_viewportst *>(viewport);
     input.dimensions = df::coord2d(dimension, dimension);
     input.context_revision = 1;
@@ -37,12 +37,12 @@ viewport_visual_animation_inputst make_input(const void *viewport, int32_t dimen
 }
 
 template <int32_t Dimension>
-viewport_visual_animation_inputst make_input(const void *viewport,
+viewport_visual_animation_input make_input(const void *viewport,
                                              const test_grid<Dimension> &empty) {
     return make_input(viewport, Dimension, empty.data());
 }
 
-void set_layer(viewport_visual_animation_inputst &input, viewport_visual_layer layer,
+void set_layer(viewport_visual_animation_input &input, viewport_visual_layer layer,
                const int32_t *current, const int32_t *previous) {
     const size_t index = static_cast<size_t>(layer);
     input.current[index] = current;
@@ -50,7 +50,7 @@ void set_layer(viewport_visual_animation_inputst &input, viewport_visual_layer l
 }
 
 template <int32_t Dimension>
-void set_layer(viewport_visual_animation_inputst &input, viewport_visual_layer layer,
+void set_layer(viewport_visual_animation_input &input, viewport_visual_layer layer,
                const test_grid<Dimension> &current, const test_grid<Dimension> &previous) {
     set_layer(input, layer, current.data(), previous.data());
 }
@@ -65,12 +65,12 @@ bool moved_between_tiles(viewport_visual_layer layer, const test_grid<Dimension>
 }
 
 template <int32_t Dimension>
-void clear_layers(viewport_visual_animation_inputst &input, const test_grid<Dimension> &empty) {
+void clear_layers(viewport_visual_animation_input &input, const test_grid<Dimension> &empty) {
     input.current.fill(empty.data());
     input.previous.fill(empty.data());
 }
 
-void run_frame(visual_animation_managerst &manager, const viewport_visual_animation_inputst &input,
+void run_frame(visual_animation_manager &manager, const viewport_visual_animation_input &input,
                uint32_t now_ms) {
     manager.begin_frame(now_ms);
     manager.synchronize_viewport(input);
@@ -80,7 +80,7 @@ void run_frame(visual_animation_managerst &manager, const viewport_visual_animat
 } // namespace
 
 int main() {
-    visual_animation_managerst manager;
+    visual_animation_manager manager;
     manager.begin_frame(1000);
     assert(manager.get_frame_time_ms() == 1000);
     assert(manager.get_frame_delta_ms() == 0);
@@ -92,20 +92,20 @@ int main() {
     manager.begin_frame(1020);
     assert(manager.get_frame_delta_ms() == 0);
 
-    visual_animation_managerst rollover;
+    visual_animation_manager rollover;
     rollover.begin_frame(std::numeric_limits<uint32_t>::max() - 5);
     rollover.begin_frame(3);
     assert(rollover.get_frame_delta_ms() == 9);
     // Facing rule: only a horizontal component changes facing.
-    assert(facing_after_move(1, visual_facingst::west) == visual_facingst::east);
-    assert(facing_after_move(-1, visual_facingst::east) == visual_facingst::west);
+    assert(facing_after_move(1, visual_facing::west) == visual_facing::east);
+    assert(facing_after_move(-1, visual_facing::east) == visual_facing::west);
     // dy is not an input, so a diagonal is only ever the sign of dx.
     // The four real diagonals run end to end through the manager further down.
-    assert(facing_after_move(1, visual_facingst::east) == visual_facingst::east);
-    assert(facing_after_move(-1, visual_facingst::west) == visual_facingst::west);
+    assert(facing_after_move(1, visual_facing::east) == visual_facing::east);
+    assert(facing_after_move(-1, visual_facing::west) == visual_facing::west);
     // Pure vertical and idle carry the previous facing (sticky).
-    assert(facing_after_move(0, visual_facingst::west) == visual_facingst::west);
-    assert(facing_after_move(0, visual_facingst::east) == visual_facingst::east);
+    assert(facing_after_move(0, visual_facing::west) == visual_facing::west);
+    assert(facing_after_move(0, visual_facing::east) == visual_facing::east);
 
     constexpr int32_t mirror_anchor_x = 5;
     constexpr int32_t mirror_right_x = mirror_anchor_x + 1;
@@ -141,7 +141,7 @@ int main() {
 
         // Moving west sets west facing on the target tile.
         {
-            visual_animation_managerst manager;
+            visual_animation_manager manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
             run_frame(manager, input, initial_frame_ms);
@@ -149,30 +149,30 @@ int main() {
             set_layer(input, viewport_visual_layer::center, west_after, before);
             run_frame(manager, input, initial_frame_ms + frame_interval_ms);
             assert(manager.has_active_movement(viewport));
-            assert(manager.get_facing(viewport, 1, 2) == visual_facingst::west);
+            assert(manager.get_facing(viewport, 1, 2) == visual_facing::west);
         }
 
         // Moving east sets east facing.
         // East is neither the grid default nor the source facing, so the assertion
         // is not vacuous.
         {
-            visual_animation_managerst manager;
+            visual_animation_manager manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
             run_frame(manager, input, initial_frame_ms);
             set_layer(input, viewport_visual_layer::center, west_after, before);
             run_frame(manager, input, initial_frame_ms + frame_interval_ms);
-            assert(manager.get_facing(viewport, 1, 2) == visual_facingst::west);
+            assert(manager.get_facing(viewport, 1, 2) == visual_facing::west);
             set_layer(input, viewport_visual_layer::center, before, west_after);
             run_frame(manager, input, initial_frame_ms + 2 * frame_interval_ms);
-            assert(manager.get_facing(viewport, 2, 2) == visual_facingst::east);
+            assert(manager.get_facing(viewport, 2, 2) == visual_facing::east);
         }
 
         // The mirrored flag gates the render path's early return.
         // It must rise only for a genuinely mirrored creature and fall when that
         // tile empties.
         {
-            visual_animation_managerst manager;
+            visual_animation_manager manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
             run_frame(manager, input, initial_frame_ms);
@@ -180,12 +180,12 @@ int main() {
             // Moving west matches the art, so nothing is mirrored yet.
             set_layer(input, viewport_visual_layer::center, west_after, before);
             run_frame(manager, input, initial_frame_ms + frame_interval_ms);
-            assert(manager.get_facing(viewport, 1, 2) == visual_facingst::west);
+            assert(manager.get_facing(viewport, 1, 2) == visual_facing::west);
             assert(!manager.has_mirrored_facing(viewport));
             // Moving east faces away from the art and raises the flag.
             set_layer(input, viewport_visual_layer::center, before, west_after);
             run_frame(manager, input, initial_frame_ms + 2 * frame_interval_ms);
-            assert(manager.get_facing(viewport, 2, 2) == visual_facingst::east);
+            assert(manager.get_facing(viewport, 2, 2) == visual_facing::east);
             assert(manager.has_mirrored_facing(viewport));
             // The creature leaves: the tile clears and so does the flag.
             set_layer(input, viewport_visual_layer::center, empty, before);
@@ -197,23 +197,23 @@ int main() {
 
         // Pure vertical movement carries the existing facing to the new tile.
         {
-            visual_animation_managerst manager;
+            visual_animation_manager manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
             run_frame(manager, input, initial_frame_ms);
             set_layer(input, viewport_visual_layer::center, west_after, before);
             run_frame(manager, input, initial_frame_ms + frame_interval_ms);
-            assert(manager.get_facing(viewport, 1, 2) == visual_facingst::west);
+            assert(manager.get_facing(viewport, 1, 2) == visual_facing::west);
             int32_t up[dim * dim] = {};
             up[1 * dim + 1] = creature_texpos; // north: (1,2) -> (1,1), no horizontal component
             set_layer(input, viewport_visual_layer::center, up, west_after);
             run_frame(manager, input, initial_frame_ms + 2 * frame_interval_ms);
-            assert(manager.get_facing(viewport, 1, 1) == visual_facingst::west);
+            assert(manager.get_facing(viewport, 1, 1) == visual_facing::west);
         }
 
         // Out-of-range and unknown viewports fall back to the native facing.
         {
-            visual_animation_managerst manager;
+            visual_animation_manager manager;
             auto input = make_input(viewport, dim, empty);
             set_layer(input, viewport_visual_layer::center, before, empty);
             run_frame(manager, input, initial_frame_ms);
@@ -229,7 +229,7 @@ int main() {
             const int main_token = 0;
             const void *lower_viewport = &lower_token;
             const void *main_viewport = &main_token;
-            visual_animation_managerst z_levels;
+            visual_animation_manager z_levels;
             auto lower_input = make_input(lower_viewport, dim, empty);
             auto main_input = make_input(main_viewport, dim, empty);
             set_layer(lower_input, viewport_visual_layer::center, before, empty);
@@ -274,7 +274,7 @@ int main() {
         south_east[3 * diag_dim + 3] = creature_texpos; // (2,2) -> (3,3): dx +1, dy +1
         north_west[2 * diag_dim + 2] = creature_texpos; // (3,3) -> (2,2): dx -1, dy -1
 
-        visual_animation_managerst diagonal;
+        visual_animation_manager diagonal;
         auto input = make_input(diag_viewport, diag_dim, diag_empty);
         set_layer(input, viewport_visual_layer::center, start, diag_empty);
         run_frame(diagonal, input, initial_frame_ms);
@@ -282,7 +282,7 @@ int main() {
 
         set_layer(input, viewport_visual_layer::center, north_east, start);
         run_frame(diagonal, input, initial_frame_ms + frame_interval_ms);
-        assert(diagonal.get_facing(diag_viewport, 3, 1) == visual_facingst::east);
+        assert(diagonal.get_facing(diag_viewport, 3, 1) == visual_facing::east);
 
         // West is the grid default, so the westward legs also assert a movement was
         // registered. Otherwise an untracked step leaving the tile at its default
@@ -290,16 +290,16 @@ int main() {
         set_layer(input, viewport_visual_layer::center, south_west, north_east);
         run_frame(diagonal, input, initial_frame_ms + 2 * frame_interval_ms);
         assert(diagonal.get_movement(diag_viewport, viewport_visual_layer::center, 2, 2).active);
-        assert(diagonal.get_facing(diag_viewport, 2, 2) == visual_facingst::west);
+        assert(diagonal.get_facing(diag_viewport, 2, 2) == visual_facing::west);
 
         set_layer(input, viewport_visual_layer::center, south_east, south_west);
         run_frame(diagonal, input, initial_frame_ms + 3 * frame_interval_ms);
-        assert(diagonal.get_facing(diag_viewport, 3, 3) == visual_facingst::east);
+        assert(diagonal.get_facing(diag_viewport, 3, 3) == visual_facing::east);
 
         set_layer(input, viewport_visual_layer::center, north_west, south_east);
         run_frame(diagonal, input, initial_frame_ms + 4 * frame_interval_ms);
         assert(diagonal.get_movement(diag_viewport, viewport_visual_layer::center, 2, 2).active);
-        assert(diagonal.get_facing(diag_viewport, 2, 2) == visual_facingst::west);
+        assert(diagonal.get_facing(diag_viewport, 2, 2) == visual_facing::west);
     }
 
     // Facing is keyed by SCREEN tile, so a scroll moves the creatures out from
@@ -325,26 +325,26 @@ int main() {
 
         // LANDED: the shift is recognized, so facing follows the buffers.
         {
-            visual_animation_managerst landed;
+            visual_animation_manager landed;
             auto input = make_input(pan_viewport, pan_empty);
             set_layer(input, viewport_visual_layer::center, at_one, pan_empty);
             run_frame(landed, input, 1000);
             set_layer(input, viewport_visual_layer::center, at_two, at_one);
             run_frame(landed, input, 1000 + frame_interval_ms);
-            assert(landed.get_facing(pan_viewport, 2, 1) == visual_facingst::east);
+            assert(landed.get_facing(pan_viewport, 2, 1) == visual_facing::east);
             assert(landed.has_mirrored_facing(pan_viewport));
 
             // Frame A: the scroll is announced but the buffers have not moved yet.
             input.pan = df::coord2d(1, 0);
             set_layer(input, viewport_visual_layer::center, at_two, at_two);
             run_frame(landed, input, 1000 + 2 * frame_interval_ms);
-            assert(landed.get_facing(pan_viewport, 2, 1) == visual_facingst::east);
+            assert(landed.get_facing(pan_viewport, 2, 1) == visual_facing::east);
 
             // Frame B: the buffers shift east by one and the majority-match test
             // recognizes it.
             set_layer(input, viewport_visual_layer::center, at_one, at_two);
             run_frame(landed, input, 1000 + 3 * frame_interval_ms);
-            assert(landed.get_facing(pan_viewport, 1, 1) == visual_facingst::east);
+            assert(landed.get_facing(pan_viewport, 1, 1) == visual_facing::east);
             assert(landed.get_facing(pan_viewport, 2, 1) == native_sprite_facing);
             assert(landed.has_mirrored_facing(pan_viewport));
         }
@@ -354,13 +354,13 @@ int main() {
         // OCCUPIED. The empty-tile sweep cannot reach that case, so only an
         // explicit reset clears it.
         {
-            visual_animation_managerst abandoned;
+            visual_animation_manager abandoned;
             auto input = make_input(pan_viewport, pan_empty);
             set_layer(input, viewport_visual_layer::center, at_one, pan_empty);
             run_frame(abandoned, input, 2000);
             set_layer(input, viewport_visual_layer::center, at_two, at_one);
             run_frame(abandoned, input, 2000 + frame_interval_ms);
-            assert(abandoned.get_facing(pan_viewport, 2, 1) == visual_facingst::east);
+            assert(abandoned.get_facing(pan_viewport, 2, 1) == visual_facing::east);
 
             // Changed buffers keep the failed majority-match test running every
             // frame. It tolerates four before giving up on the fifth.
@@ -373,7 +373,7 @@ int main() {
                 // Still pending, so the facing survives.
                 // The assertion after the giving-up frame therefore tests the reset,
                 // not an empty grid.
-                assert(abandoned.get_facing(pan_viewport, 2, 1) == visual_facingst::east);
+                assert(abandoned.get_facing(pan_viewport, 2, 1) == visual_facing::east);
                 assert(abandoned.has_mirrored_facing(pan_viewport));
             }
             set_layer(input, viewport_visual_layer::center, at_two, unmatched_a);
@@ -409,18 +409,18 @@ int main() {
         frame_c[2 * chase_dim + 2] = creature_texpos; // A: (2,1) -> (2,2)
         frame_c[2 * chase_dim + 3] = companion_texpos; // B: (2,2) -> (2,3)
 
-        visual_animation_managerst manager;
+        visual_animation_manager manager;
         auto input = make_input(chase_viewport, chase_dim, chase_empty);
         set_layer(input, viewport_visual_layer::center, frame_a, chase_empty);
         run_frame(manager, input, 1000);
         set_layer(input, viewport_visual_layer::center, frame_b, frame_a);
         run_frame(manager, input, 1016);
-        assert(manager.get_facing(chase_viewport, 2, 1) == visual_facingst::east);
+        assert(manager.get_facing(chase_viewport, 2, 1) == visual_facing::east);
         assert(manager.get_facing(chase_viewport, 2, 2) == native_sprite_facing);
 
         set_layer(input, viewport_visual_layer::center, frame_c, frame_b);
         run_frame(manager, input, 1032);
-        assert(manager.get_facing(chase_viewport, 2, 2) == visual_facingst::east);
+        assert(manager.get_facing(chase_viewport, 2, 2) == visual_facing::east);
         // B carries its own default forward, not A's, though A wrote (2,2) earlier
         // in the same pass.
         assert(manager.get_facing(chase_viewport, 2, 3) == native_sprite_facing);
@@ -459,13 +459,13 @@ int main() {
         frame_c[2 * gap_dim + 3] = companion_texpos; // E: (2,2) -> (2,3)
         frame_c[2 * gap_dim + 1] = untracked_texpos; // F appears at (2,1), untracked
 
-        visual_animation_managerst manager;
+        visual_animation_manager manager;
         auto input = make_input(gap_viewport, gap_dim, gap_empty);
         set_layer(input, viewport_visual_layer::center, frame_a, gap_empty);
         run_frame(manager, input, 1000);
         set_layer(input, viewport_visual_layer::center, frame_b, frame_a);
         run_frame(manager, input, 1016);
-        assert(manager.get_facing(gap_viewport, 2, 1) == visual_facingst::east);
+        assert(manager.get_facing(gap_viewport, 2, 1) == visual_facing::east);
 
         set_layer(input, viewport_visual_layer::center, frame_c, frame_b);
         run_frame(manager, input, 1032);
@@ -473,7 +473,7 @@ int main() {
         // F must not inherit D's stale east facing, though the tile is occupied
         // rather than empty.
         assert(manager.get_facing(gap_viewport, 2, 1) == native_sprite_facing);
-        assert(manager.get_facing(gap_viewport, 2, 2) == visual_facingst::east);
+        assert(manager.get_facing(gap_viewport, 2, 2) == visual_facing::east);
         assert(manager.get_facing(gap_viewport, 2, 3) == native_sprite_facing);
     }
 
@@ -510,7 +510,7 @@ int main() {
         after.at(neighbor_target.x, neighbor_target.y) = neighbor_texpos;
         const int viewport_token = 0;
         const void *crowded_viewport = &viewport_token;
-        visual_animation_managerst crowded;
+        visual_animation_manager crowded;
         auto crowded_input = make_input(crowded_viewport, empty);
         set_layer(crowded_input, viewport_visual_layer::center, before, empty);
         run_frame(crowded, crowded_input, initial_time_ms);
@@ -540,7 +540,7 @@ int main() {
     auto input = make_input(viewport, empty);
     set_layer(input, viewport_visual_layer::center, current, previous);
 
-    visual_animation_managerst movement;
+    visual_animation_manager movement;
     constexpr uint32_t movement_start_time_ms = 2000;
     run_frame(movement, input, movement_start_time_ms - 10);
     assert(!movement.requires_full_redraw());
@@ -568,7 +568,7 @@ int main() {
     run_frame(movement, input, movement_start_time_ms + animation_duration_ms + 20);
     assert(!movement.requires_full_redraw());
 
-    visual_animation_managerst ambiguous;
+    visual_animation_manager ambiguous;
     run_frame(ambiguous, input, 2990);
     previous.fill(0);
     previous[0 * 3 + 1] = 42;
@@ -579,7 +579,7 @@ int main() {
 
     // A handler and led animal form an occupied chain: each enters the other's
     // old space.
-    visual_animation_managerst convoy;
+    visual_animation_manager convoy;
     current.fill(0);
     previous.fill(0);
     run_frame(convoy, input, 3490);
@@ -607,7 +607,7 @@ int main() {
         assert(!moved_between_tiles(layer, current, previous, {0, 1}, {1, 1}));
     }
 
-    visual_animation_managerst context;
+    visual_animation_manager context;
     current.fill(0);
     previous.fill(0);
     run_frame(context, input, 4000);
@@ -634,7 +634,7 @@ int main() {
     // shift at frame B. Frame B's buffers look exactly like a real move
     // ((1,1)->(0,1) with a unique source) — the manager must recognize it as the
     // pending pan and create NO movement.
-    visual_animation_managerst floaty;
+    visual_animation_manager floaty;
     pan_previous[1 * 3 + 1] = 42;
     pan_current[1 * 3 + 1] = 42;
     run_frame(floaty, pan_input, 4990);
@@ -650,7 +650,7 @@ int main() {
     // FOLLOW: an in-flight movement survives the announce frame untouched and is
     // translated on the frame the buffers shift, so the sprite tracks the
     // scrolled world.
-    visual_animation_managerst panner;
+    visual_animation_manager panner;
     pan_current.fill(0);
     pan_previous.fill(0);
     pan_input.pan = df::coord2d(0, 0);
@@ -677,7 +677,7 @@ int main() {
 
     // SAME-FRAME: pan announced and buffers shifted in the same call — translated
     // immediately.
-    visual_animation_managerst same_frame;
+    visual_animation_manager same_frame;
     pan_current.fill(0);
     pan_previous.fill(0);
     pan_input.pan = df::coord2d(0, 0);
@@ -696,7 +696,7 @@ int main() {
 
     // A change that is NOT a pure pan (context revision bump) still resets, even
     // with in-flight work.
-    visual_animation_managerst reset_on_zoom;
+    visual_animation_manager reset_on_zoom;
     pan_current.fill(0);
     pan_previous.fill(0);
     pan_input.pan = df::coord2d(0, 0);
@@ -721,7 +721,7 @@ int main() {
     set_layer(input, viewport_visual_layer::center, current, previous);
     set_layer(input, viewport_visual_layer::item, status_current, status_previous);
     set_layer(input, viewport_visual_layer::designation, status_current, status_previous);
-    visual_animation_managerst companion;
+    visual_animation_manager companion;
     constexpr uint32_t companion_start_time_ms = 9000;
     run_frame(companion, input, companion_start_time_ms - 10);
     previous[0 * 3 + 1] = 42;
@@ -757,7 +757,7 @@ int main() {
     previous.fill(0);
     status_current.fill(0);
     status_previous.fill(0);
-    visual_animation_managerst crowd;
+    visual_animation_manager crowd;
     run_frame(crowd, input, 9990);
     previous[0 * 3 + 0] = 41;
     current[0 * 3 + 1] = 41;
@@ -780,7 +780,7 @@ int main() {
     previous.fill(0);
     clear_layers(input, empty);
     set_layer(input, viewport_visual_layer::item, current, previous);
-    visual_animation_managerst item;
+    visual_animation_manager item;
     run_frame(item, input, 10990);
     previous[0 * 3 + 1] = 77;
     current[1 * 3 + 1] = 77;
@@ -794,7 +794,7 @@ int main() {
     previous.fill(0);
     clear_layers(input, empty);
     set_layer(input, viewport_visual_layer::vehicle, current, previous);
-    visual_animation_managerst vehicle;
+    visual_animation_manager vehicle;
     constexpr int32_t vehicle_texpos_before = 77;
     constexpr int32_t vehicle_texpos_during_move = 78;
     constexpr int32_t vehicle_texpos_stationary = 79;

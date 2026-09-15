@@ -43,7 +43,7 @@ REQUIRE_GLOBAL(window_z);
 
 namespace {
 
-using tile_coveragest = std::set<df::coord2d>;
+using tile_coverage = std::set<df::coord2d>;
 
 // Runtime harness for the engine-owned visual state; gameplay data is never
 // read.
@@ -53,11 +53,11 @@ decltype(&SDL_RenderFillRect) render_fill_rect = nullptr;
 decltype(&SDL_GetRenderDrawColor) get_render_draw_color = nullptr;
 decltype(&SDL_SetRenderDrawColor) set_render_draw_color = nullptr;
 
-visual_animation_managerst animation_manager;
-tile_coveragest previous_coverage;
+visual_animation_manager animation_manager;
+tile_coverage previous_coverage;
 uint64_t visual_context_revision = 0;
 const void *previous_viewport = nullptr;
-struct visual_contextst {
+struct visual_context {
     int32_t z_level;
     df::coord2d viewport_dimensions;
     df::coord2d clip_min;
@@ -66,10 +66,10 @@ struct visual_contextst {
     df::coord2d origin;
     df::coord2d screen_dimensions;
 
-    bool operator==(const visual_contextst &) const = default;
+    bool operator==(const visual_context &) const = default;
 };
 
-visual_contextst previous_visual_context{};
+visual_context previous_visual_context{};
 bool has_visual_context = false;
 // Map scroll (window_x/window_y) is tracked separately from the reset
 // signature: a pure pan is followed (movements are translated) instead of
@@ -88,7 +88,7 @@ void update_visual_context(const df::renderer_2d_base *renderer, const df::graph
     // window_x/window_y are deliberately excluded: a horizontal/vertical scroll
     // is followed, not reset. window_z (z-level) stays, since a z change is not
     // followable.
-    const visual_contextst context = {
+    const visual_context context = {
         .z_level = window_z ? *window_z : 0,
         .viewport_dimensions = df::coord2d(vp->dim_x, vp->dim_y),
         // DF clip arrays hold inclusive minimum and maximum coordinates.
@@ -118,39 +118,39 @@ void update_visual_context(const df::renderer_2d_base *renderer, const df::graph
     has_pan_context = true;
 }
 
-using viewport_layer_memberst = int32_t *df::graphic_viewportst::*;
+using viewport_layer_member = int32_t *df::graphic_viewportst::*;
 
-struct visual_layer_bufferst {
+struct visual_layer_buffer {
     viewport_visual_layer layer;
-    viewport_layer_memberst current;
-    viewport_layer_memberst previous;
+    viewport_layer_member current;
+    viewport_layer_member previous;
 };
 
 constexpr size_t visual_layer_count = static_cast<size_t>(viewport_visual_layer::count);
 constexpr std::array visual_layer_buffers = {
-    visual_layer_bufferst{viewport_visual_layer::right,
+    visual_layer_buffer{viewport_visual_layer::right,
                           &df::graphic_viewportst::screentexpos_right_creature,
                           &df::graphic_viewportst::screentexpos_right_creature_old},
-    visual_layer_bufferst{viewport_visual_layer::center, &df::graphic_viewportst::screentexpos,
+    visual_layer_buffer{viewport_visual_layer::center, &df::graphic_viewportst::screentexpos,
                           &df::graphic_viewportst::screentexpos_old},
-    visual_layer_bufferst{viewport_visual_layer::left,
+    visual_layer_buffer{viewport_visual_layer::left,
                           &df::graphic_viewportst::screentexpos_left_creature,
                           &df::graphic_viewportst::screentexpos_left_creature_old},
-    visual_layer_bufferst{viewport_visual_layer::upright,
+    visual_layer_buffer{viewport_visual_layer::upright,
                           &df::graphic_viewportst::screentexpos_upright_creature,
                           &df::graphic_viewportst::screentexpos_upright_creature_old},
-    visual_layer_bufferst{viewport_visual_layer::up,
+    visual_layer_buffer{viewport_visual_layer::up,
                           &df::graphic_viewportst::screentexpos_up_creature,
                           &df::graphic_viewportst::screentexpos_up_creature_old},
-    visual_layer_bufferst{viewport_visual_layer::upleft,
+    visual_layer_buffer{viewport_visual_layer::upleft,
                           &df::graphic_viewportst::screentexpos_upleft_creature,
                           &df::graphic_viewportst::screentexpos_upleft_creature_old},
-    visual_layer_bufferst{viewport_visual_layer::vehicle,
+    visual_layer_buffer{viewport_visual_layer::vehicle,
                           &df::graphic_viewportst::screentexpos_vehicle,
                           &df::graphic_viewportst::screentexpos_vehicle_old},
-    visual_layer_bufferst{viewport_visual_layer::item, &df::graphic_viewportst::screentexpos_item,
+    visual_layer_buffer{viewport_visual_layer::item, &df::graphic_viewportst::screentexpos_item,
                           &df::graphic_viewportst::screentexpos_item_old},
-    visual_layer_bufferst{viewport_visual_layer::designation,
+    visual_layer_buffer{viewport_visual_layer::designation,
                           &df::graphic_viewportst::screentexpos_designation,
                           &df::graphic_viewportst::screentexpos_designation_old}};
 
@@ -176,7 +176,7 @@ template <typename Viewport> auto visual_layers(Viewport *vp, bool previous = fa
     return layers;
 }
 
-viewport_visual_animation_inputst animation_input(df::graphic_viewportst *vp) {
+viewport_visual_animation_input animation_input(df::graphic_viewportst *vp) {
     const df::graphic_viewportst *const_viewport = vp;
     return {vp,
             df::coord2d(vp->dim_x, vp->dim_y),
@@ -239,7 +239,7 @@ void with_zeroed_values(const Callback &callback, T &value, Values &...values) {
     with_zeroed_values(callback, values...);
 }
 
-struct render_proxyst {
+struct render_proxy {
     viewport_visual_layer layer;
     DFHack::Coord2d<float> source;
     df::coord2d target;
@@ -248,20 +248,20 @@ struct render_proxyst {
     SDL_Texture *texture;
     bool mirrored = false;
     int32_t mirror_shift = 0;
-    tile_coveragest coverage;
-    visual_movement_idst movement_id = no_visual_movement;
+    tile_coverage coverage;
+    visual_movement_id movement_id = no_visual_movement;
 };
 
-struct render_coveragest {
-    tile_coveragest all;
-    std::array<tile_coveragest, static_cast<size_t>(visual_render_groupst::count)> groups;
+struct render_coverage {
+    tile_coverage all;
+    std::array<tile_coverage, static_cast<size_t>(visual_render_group::count)> groups;
     std::unordered_map<int32_t, uint16_t> selected;
 };
 
-struct viewport_renderst {
+struct viewport_render {
     df::graphic_viewportst *viewport;
-    std::vector<render_proxyst> proxies;
-    render_coveragest coverage;
+    std::vector<render_proxy> proxies;
+    render_coverage coverage;
 };
 
 constexpr uint16_t visual_layer_bit(viewport_visual_layer layer) {
@@ -309,7 +309,7 @@ void with_upper_suppressed(df::graphic_viewportst *vp, int32_t index, const Call
     });
 }
 
-void redraw_viewport_tile(df::renderer_2d_base *renderer, const viewport_renderst &viewport,
+void redraw_viewport_tile(df::renderer_2d_base *renderer, const viewport_render &viewport,
                           int32_t x, int32_t y, bool defer_interface) {
     df::graphic_viewportst *vp = viewport.viewport;
     const int32_t index = x * vp->dim_y + y;
@@ -363,12 +363,12 @@ void draw_interface_only(df::renderer_2d_base *renderer, df::graphic_viewportst 
 }
 
 void redraw_world_tile(df::renderer_2d_base *renderer,
-                       const std::vector<viewport_renderst> &viewports,
-                       const tile_coveragest &staged, int32_t x, int32_t y) {
+                       const std::vector<viewport_render> &viewports,
+                       const tile_coverage &staged, int32_t x, int32_t y) {
     // The stage pass repaints everything above the lowest across the staged
     // tiles, after the proxies.
     const bool staged_tile = staged.count(df::coord2d(x, y)) != 0;
-    for (const viewport_renderst &viewport : viewports) {
+    for (const viewport_render &viewport : viewports) {
         if (inside_clip(viewport.viewport, x, y))
             redraw_viewport_tile(renderer, viewport, x, y, staged_tile);
         if (staged_tile)
@@ -376,17 +376,17 @@ void redraw_world_tile(df::renderer_2d_base *renderer,
     }
 }
 
-constexpr uint16_t visual_layers_through_group(visual_render_groupst group) {
+constexpr uint16_t visual_layers_through_group(visual_render_group group) {
     uint16_t mask = 0;
     for (const auto &descriptor : visual_layer_descriptors)
-        if (descriptor.render_group != visual_render_groupst::designation &&
+        if (descriptor.render_group != visual_render_group::designation &&
             static_cast<uint8_t>(descriptor.render_group) <= static_cast<uint8_t>(group))
             mask |= visual_layer_bit(descriptor.layer);
     return mask;
 }
 
 void redraw_above(df::renderer_2d_base *renderer, df::graphic_viewportst *vp, int32_t x, int32_t y,
-                  visual_render_groupst group,
+                  visual_render_group group,
                   const std::unordered_map<int32_t, uint16_t> &selected) {
     const int32_t index = x * vp->dim_y + y;
     const auto redraw = [&] { renderer->update_viewport_tile(vp, x, y); };
@@ -403,9 +403,9 @@ void redraw_above(df::renderer_2d_base *renderer, df::graphic_viewportst *vp, in
         else
             with_zeroed_values(stage, vp->screentexpos_interface[index]);
     };
-    if (group == visual_render_groupst::item || group == visual_render_groupst::vehicle)
+    if (group == visual_render_group::item || group == visual_render_group::vehicle)
         with_base_suppressed(vp, index, suppress_visuals);
-    else if (group == visual_render_groupst::main)
+    else if (group == visual_render_group::main)
         with_main_suppressed(vp, index, suppress_visuals);
     else
         with_upper_suppressed(vp, index, suppress_visuals);
@@ -440,7 +440,7 @@ void render_copy_maybe_mirrored(SDL_Renderer *renderer, SDL_Texture *texture,
     render_copy_f(renderer, texture, nullptr, &destination);
 }
 
-void draw_proxy(df::renderer_2d_base *renderer, const render_proxyst &proxy) {
+void draw_proxy(df::renderer_2d_base *renderer, const render_proxy &proxy) {
     const int32_t zoom = renderer->viewport_zoom_factor;
     const DFHack::Coord2d<int32_t> target{
         tile_pixel(proxy.target.x, renderer->origin_x, zoom),
@@ -456,9 +456,9 @@ void draw_proxy(df::renderer_2d_base *renderer, const render_proxyst &proxy) {
                                destination, proxy.mirrored);
 }
 
-std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
+std::vector<render_proxy> collect_proxies(df::renderer_2d_base *renderer,
                                             df::graphic_viewportst *vp, bool movement_enabled) {
-    std::vector<render_proxyst> proxies;
+    std::vector<render_proxy> proxies;
     auto layers = visual_layers(vp);
     auto previous_layers = visual_layers(vp, true);
     for (const auto visual_layer : visual_layer_draw_order) {
@@ -484,7 +484,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                     inherited_source_y >= 0 && inherited_source_y < vp->dim_y;
                 if (!visual_layer_moves_independently(visual_layer)) {
                     bool anchored = false;
-                    for (const render_proxyst &anchor : proxies) {
+                    for (const render_proxy &anchor : proxies) {
                         // Creature fragments lie no more than one tile from their center layer.
                         if (anchor.layer == viewport_visual_layer::center &&
                             std::abs(anchor.target.x - x) <= 1 &&
@@ -524,7 +524,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                         const auto &descriptor = visual_layer_descriptor(visual_layer);
                         const DFHack::Coord2d<int32_t> fragment_target{x, y};
                         bool owns_fragment = false;
-                        for (const render_proxyst &anchor : proxies)
+                        for (const render_proxy &anchor : proxies)
                             if (anchor.layer == viewport_visual_layer::center &&
                                 DFHack::Coord2d<int32_t>{anchor.target.x, anchor.target.y} ==
                                     fragment_target +
@@ -538,10 +538,10 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
 
                 // Items, vehicles and designations keep their vanilla orientation.
                 const auto &mirror_descriptor = visual_layer_descriptor(visual_layer);
-                const visual_render_groupst group = visual_render_group(visual_layer);
+                const visual_render_group group = get_visual_render_group(visual_layer);
                 const bool mirror_eligible =
                     flip_enabled &&
-                    (group == visual_render_groupst::main || group == visual_render_groupst::upper);
+                    (group == visual_render_group::main || group == visual_render_group::upper);
                 // Facing is read from the anchor tile so every fragment of one creature
                 // agrees.
                 const df::coord2d anchor(x + mirror_descriptor.anchor_offset.x,
@@ -551,7 +551,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                 // The anchor's own layer has no offset, so it flips in place.
                 const int32_t mirror_shift =
                     mirrored ? mirrored_tile_x(x, x + mirror_descriptor.anchor_offset.x) - x : 0;
-                render_proxyst proxy = {static_cast<viewport_visual_layer>(layer),
+                render_proxy proxy = {static_cast<viewport_visual_layer>(layer),
                                         movement.source,
                                         df::coord2d(x, y),
                                         texpos,
@@ -573,7 +573,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                             blocked = true;
                             break;
                         }
-                        if (visual_render_group(proxy.layer) == visual_render_groupst::main &&
+                        if (get_visual_render_group(proxy.layer) == visual_render_group::main &&
                             has_fire(vp, coverage_x, coverage_y)) {
                             blocked = true;
                             break;
@@ -586,7 +586,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                 if (blocked)
                     continue;
                 if (proxy.mirror_shift != 0) {
-                    tile_coveragest mirrored_coverage;
+                    tile_coverage mirrored_coverage;
                     for (const auto &tile : proxy.coverage)
                         mirrored_coverage.emplace(tile.x + proxy.mirror_shift, tile.y);
                     for (const auto &tile : mirrored_coverage) {
@@ -594,7 +594,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                             blocked = true;
                             break;
                         }
-                        if (visual_render_group(proxy.layer) == visual_render_groupst::main &&
+                        if (get_visual_render_group(proxy.layer) == visual_render_group::main &&
                             has_fire(vp, tile.x, tile.y)) {
                             blocked = true;
                             break;
@@ -625,9 +625,9 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                 if (animation_manager.get_facing(vp, anchor) == native_sprite_facing)
                     continue;
                 for (const auto visual_layer : visual_layer_draw_order) {
-                    const visual_render_groupst group = visual_render_group(visual_layer);
-                    if (group != visual_render_groupst::main &&
-                        group != visual_render_groupst::upper)
+                    const visual_render_group group = get_visual_render_group(visual_layer);
+                    if (group != visual_render_group::main &&
+                        group != visual_render_group::upper)
                         continue;
                     const auto &descriptor = visual_layer_descriptor(visual_layer);
                     const int32_t x = anchor.x - descriptor.anchor_offset.x;
@@ -639,7 +639,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                     if (texpos == 0)
                         continue;
                     bool already_drawn = false;
-                    for (const render_proxyst &existing : proxies)
+                    for (const render_proxy &existing : proxies)
                         if (existing.layer == visual_layer && existing.target.x == x &&
                             existing.target.y == y)
                             already_drawn = true;
@@ -648,7 +648,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
 
                     // source == target at progress 1.0 draws in place, moved only by
                     // mirror_shift.
-                    render_proxyst proxy = {visual_layer,
+                    render_proxy proxy = {visual_layer,
                                             {float(x), float(y)},
                                             df::coord2d(x, y),
                                             texpos,
@@ -666,7 +666,7 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
                     for (int32_t coverage_x = coverage_first; coverage_x <= coverage_last;
                          ++coverage_x) {
                         if (!inside_clip(vp, coverage_x, y) ||
-                            (group == visual_render_groupst::main && has_fire(vp, coverage_x, y))) {
+                            (group == visual_render_group::main && has_fire(vp, coverage_x, y))) {
                             blocked = true;
                             break;
                         }
@@ -686,13 +686,13 @@ std::vector<render_proxyst> collect_proxies(df::renderer_2d_base *renderer,
     return proxies;
 }
 
-render_coveragest collect_coverage(const std::vector<render_proxyst> &proxies, int32_t dim_y) {
-    render_coveragest coverage;
-    for (const render_proxyst &proxy : proxies) {
+render_coverage collect_coverage(const std::vector<render_proxy> &proxies, int32_t dim_y) {
+    render_coverage coverage;
+    for (const render_proxy &proxy : proxies) {
         coverage.all.insert(proxy.coverage.begin(), proxy.coverage.end());
         // TODO: use std::mdspan when C++23 available
         coverage.selected[proxy.target.x * dim_y + proxy.target.y] |= visual_layer_bit(proxy.layer);
-        auto &group = coverage.groups[static_cast<size_t>(visual_render_group(proxy.layer))];
+        auto &group = coverage.groups[static_cast<size_t>(get_visual_render_group(proxy.layer))];
         group.insert(proxy.coverage.begin(), proxy.coverage.end());
     }
     return coverage;
@@ -712,44 +712,44 @@ std::vector<df::graphic_viewportst *> active_viewports() {
     return viewports;
 }
 
-std::vector<viewport_renderst>
+std::vector<viewport_render>
 collect_viewport_renders(df::renderer_2d_base *renderer,
                          const std::vector<df::graphic_viewportst *> &viewports) {
-    std::vector<viewport_renderst> renders;
+    std::vector<viewport_render> renders;
     renders.reserve(viewports.size());
     for (df::graphic_viewportst *vp : viewports) {
         const bool movement_enabled = zlevel_enabled || vp == gps->main_viewport;
-        viewport_renderst render = {vp, collect_proxies(renderer, vp, movement_enabled), {}};
+        viewport_render render = {vp, collect_proxies(renderer, vp, movement_enabled), {}};
         render.coverage = collect_coverage(render.proxies, vp->dim_y);
         renders.push_back(std::move(render));
     }
     return renders;
 }
 
-tile_coveragest collect_viewport_coverage(const std::vector<viewport_renderst> &viewports) {
-    tile_coveragest coverage;
-    for (const viewport_renderst &viewport : viewports)
+tile_coverage collect_viewport_coverage(const std::vector<viewport_render> &viewports) {
+    tile_coverage coverage;
+    for (const viewport_render &viewport : viewports)
         coverage.insert(viewport.coverage.all.begin(), viewport.coverage.all.end());
     return coverage;
 }
 
 void draw_interpolation_stages(df::renderer_2d_base *renderer, df::graphic_viewportst *vp,
-                               const std::vector<render_proxyst> &proxies,
-                               const render_coveragest &coverage) {
+                               const std::vector<render_proxy> &proxies,
+                               const render_coverage &coverage) {
     for (size_t index = 0; index < coverage.groups.size(); ++index) {
-        const auto group = static_cast<visual_render_groupst>(index);
-        for (const render_proxyst &proxy : proxies)
-            if (visual_render_group(proxy.layer) == group)
+        const auto group = static_cast<visual_render_group>(index);
+        for (const render_proxy &proxy : proxies)
+            if (get_visual_render_group(proxy.layer) == group)
                 draw_proxy(renderer, proxy);
-        if (group == visual_render_groupst::designation)
+        if (group == visual_render_group::designation)
             continue;
         for (const auto &[x, y] : coverage.groups[index])
             redraw_above(renderer, vp, x, y, group, coverage.selected);
     }
 }
 
-void redraw_viewport_tiles(df::renderer_2d_base *renderer, const viewport_renderst &viewport,
-                           const tile_coveragest &coverage) {
+void redraw_viewport_tiles(df::renderer_2d_base *renderer, const viewport_render &viewport,
+                           const tile_coverage &coverage) {
     df::graphic_viewportst *vp = viewport.viewport;
     for (const df::coord2d &tile : coverage) {
         if (!inside_clip(vp, tile))
@@ -759,15 +759,15 @@ void redraw_viewport_tiles(df::renderer_2d_base *renderer, const viewport_render
 }
 
 void draw_viewport_interpolation_stages(df::renderer_2d_base *renderer,
-                                        const std::vector<viewport_renderst> &viewports,
-                                        const tile_coveragest &coverage) {
+                                        const std::vector<viewport_render> &viewports,
+                                        const tile_coverage &coverage) {
     for (size_t index = 0; index < viewports.size(); ++index) {
         // A lower z-level's proxy must be covered by the next viewport's fog and
         // terrain. Reapply that viewport before its own proxies, matching DF's
         // lower-to-main draw order.
         if (index > 0)
             redraw_viewport_tiles(renderer, viewports[index], coverage);
-        const viewport_renderst &viewport = viewports[index];
+        const viewport_render &viewport = viewports[index];
         draw_interpolation_stages(renderer, viewport.viewport, viewport.proxies, viewport.coverage);
         // A viewport shades everything drawn beneath it, so this covers every
         // staged tile. Restricting it to the tiles this viewport has sprites on
@@ -806,14 +806,14 @@ void render_interpolated_world(df::renderer_2d_base *renderer) {
     if (!animation_redraw && (!flip_enabled || !has_mirrored_viewport_facing(viewports)))
         return;
 
-    std::vector<viewport_renderst> viewport_renders = collect_viewport_renders(renderer, viewports);
-    tile_coveragest coverage = collect_viewport_coverage(viewport_renders);
+    std::vector<viewport_render> viewport_renders = collect_viewport_renders(renderer, viewports);
+    tile_coverage coverage = collect_viewport_coverage(viewport_renders);
 
     SDL_Renderer *sdl_renderer = static_cast<SDL_Renderer *>(renderer->sdl_renderer);
     const int32_t zoom = renderer->viewport_zoom_factor;
     const int32_t tile_size = ::tile_size(zoom);
 
-    tile_coveragest redraw_coverage = coverage;
+    tile_coverage redraw_coverage = coverage;
     redraw_coverage.insert(previous_coverage.begin(), previous_coverage.end());
     Uint8 old_r = 0, old_g = 0, old_b = 0, old_a = 255;
     get_render_draw_color(sdl_renderer, &old_r, &old_g, &old_b, &old_a);
@@ -877,7 +877,7 @@ bool load_sdl(color_ostream &out) {
 }
 
 void reset_state() {
-    animation_manager = visual_animation_managerst();
+    animation_manager = visual_animation_manager();
     previous_coverage.clear();
     visual_context_revision = 0;
     previous_viewport = nullptr;

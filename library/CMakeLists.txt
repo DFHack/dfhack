@@ -77,6 +77,7 @@ set(MAIN_HEADERS
     include/RemoteTools.h
     include/Signal.hpp
     include/TileTypes.h
+    include/TransHash.h
     include/Types.h
     include/VersionInfo.h
     include/VersionInfoFactory.h

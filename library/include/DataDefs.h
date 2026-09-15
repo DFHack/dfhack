@@ -37,7 +37,7 @@ distribution.
 #include "BitArray.h"
 #include "Export.h"
 #include "Format.h"
-#include "TransHash.h"
+#include "HashUtil.h"
 
 struct lua_State;
 

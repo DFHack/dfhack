@@ -99,6 +99,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+#include <optional>
 
 using std::string;
 using std::vector;
@@ -1065,6 +1066,33 @@ bool Gui::any_job_hotkey(df::viewscreen *top)
             || workshop_job_hotkey(top);
 }
 
+// Resolves the selection reported by a DFHack viewscreen, if it can be
+// queried safely on this thread. Returns the selection (possibly null) when
+// the question is answered, or std::nullopt when the caller should continue
+// to the native UI checks.
+//
+// getSelected*() on a lua-backed screen enters Lua through CoreSuspender,
+// which asserts or deadlocks on the render thread, where hotkey guards run.
+// A focused lua screen owns the selection, so we must report none; a
+// defocused lua screen is transparent to the UI below, so the native checks
+// still apply.
+template<typename T>
+static std::optional<T *> dfscreen_selection(df::viewscreen *top,
+        T * (dfhack_viewscreen::*method)())
+{
+    auto dfscreen = dfhack_viewscreen::try_cast(top);
+    if (!dfscreen)
+        return std::nullopt;
+
+    if (!dfscreen->is_lua_screen() || !Core::getInstance().isRenderThread())
+        return (dfscreen->*method)();
+
+    if (dfscreen->isFocused())
+        return nullptr;
+
+    return std::nullopt;
+}
+
 df::job *Gui::getAnyWorkshopJob(df::viewscreen *top) {
     auto bld = getAnyBuilding(top);
     if (!bld)
@@ -1084,8 +1112,8 @@ df::job *Gui::getSelectedWorkshopJob(color_ostream &out, bool quiet) {
 }
 
 df::job *Gui::getAnyJob(df::viewscreen *top) {
-    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedJob();
+    if (auto sel = dfscreen_selection(top, &dfhack_viewscreen::getSelectedJob))
+        return *sel;
 
     if (matchFocusString("dwarfmode/Info/JOBS")) {
         auto &cri_job = game->main_interface.info.jobs.cri_job;
@@ -1124,8 +1152,8 @@ df::job *Gui::getSelectedJob(color_ostream &out, bool quiet)
 
 df::unit *Gui::getAnyUnit(df::viewscreen *top)
 {
-    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedUnit();
+    if (auto sel = dfscreen_selection(top, &dfhack_viewscreen::getSelectedUnit))
+        return *sel;
 
     if (game->main_interface.view_sheets.open
             && game->main_interface.view_sheets.active_sheet == view_sheet_type::UNIT)
@@ -1417,8 +1445,8 @@ df::item *Gui::getAnyItem(df::viewscreen *top)
 {
     using df::global::game;
 
-    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedItem();
+    if (auto sel = dfscreen_selection(top, &dfhack_viewscreen::getSelectedItem))
+        return *sel;
 
     if (game->main_interface.view_sheets.open
             && game->main_interface.view_sheets.active_sheet == view_sheet_type::ITEM)
@@ -1568,8 +1596,8 @@ bool Gui::any_stockpile_hotkey(df::viewscreen* top)
 }
 
 df::building_stockpilest* Gui::getAnyStockpile(df::viewscreen* top) {
-    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedStockpile();
+    if (auto sel = dfscreen_selection(top, &dfhack_viewscreen::getSelectedStockpile))
+        return *sel;
 
     if (game->main_interface.bottom_mode_selected == main_bottom_mode_type::STOCKPILE)
         return game->main_interface.stockpile.cur_bld;
@@ -1591,8 +1619,8 @@ bool Gui::any_civzone_hotkey(df::viewscreen* top) {
 }
 
 df::building_civzonest *Gui::getAnyCivZone(df::viewscreen* top) {
-    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedCivZone();
+    if (auto sel = dfscreen_selection(top, &dfhack_viewscreen::getSelectedCivZone))
+        return *sel;
 
     if (game->main_interface.bottom_mode_selected == main_bottom_mode_type::ZONE)
         return game->main_interface.civzone.cur_bld;
@@ -1611,8 +1639,8 @@ df::building_civzonest *Gui::getSelectedCivZone(color_ostream &out, bool quiet) 
 
 df::building *Gui::getAnyBuilding(df::viewscreen *top)
 {
-    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedBuilding();
+    if (auto sel = dfscreen_selection(top, &dfhack_viewscreen::getSelectedBuilding))
+        return *sel;
 
     if (game->main_interface.view_sheets.open
             && game->main_interface.view_sheets.active_sheet == view_sheet_type::BUILDING)
@@ -1686,8 +1714,8 @@ df::plant *Gui::getAnyPlant(df::viewscreen *top)
 {
     using df::global::cursor;
 
-    if (auto dfscreen = dfhack_viewscreen::try_cast(top))
-        return dfscreen->getSelectedPlant();
+    if (auto sel = dfscreen_selection(top, &dfhack_viewscreen::getSelectedPlant))
+        return *sel;
 
     if (Gui::dwarfmode_hotkey(top) && has_cursor())
     {

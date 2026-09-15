@@ -61,6 +61,7 @@ set(MAIN_HEADERS
     include/Error.h
     include/Export.h
     include/Format.h
+    include/HashUtil.h
     include/Hooks.h
     include/LuaTools.h
     include/LuaWrapper.h
@@ -77,7 +78,6 @@ set(MAIN_HEADERS
     include/RemoteTools.h
     include/Signal.hpp
     include/TileTypes.h
-    include/TransHash.h
     include/Types.h
     include/VersionInfo.h
     include/VersionInfoFactory.h

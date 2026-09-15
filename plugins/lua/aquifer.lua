@@ -135,11 +135,11 @@ function parse_commandline(args)
     local modified = 0
 
     if action == 'drain' then
-        modified = aquifer_drain(aq_type or 'all', pos1, pos2, opts.skip_top, opts.levels, opts.leaky)
+        modified = aquifer_drain(aq_type or 'all', pos1, pos2, opts.skip_top, opts.levels, opts.leaky, opts.all)
     elseif action == 'convert' then
-        modified = aquifer_convert(aq_type, pos1, pos2, opts.skip_top, opts.levels, opts.leaky)
+        modified = aquifer_convert(aq_type, pos1, pos2, opts.skip_top, opts.levels, opts.leaky, opts.all)
     elseif action == 'add' then
-        modified = aquifer_add(aq_type, pos1, pos2, opts.skip_top, opts.levels, opts.leaky)
+        modified = aquifer_add(aq_type, pos1, pos2, opts.skip_top, opts.levels, opts.leaky, opts.all)
     else
         qerror(('invalid action: %s'):format(action))
     end

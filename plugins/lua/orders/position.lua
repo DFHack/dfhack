@@ -68,8 +68,8 @@ function move(current_position, new_value)
         df.global.world.manager_orders.all, current_position, new_value)
 end
 
-unit_test_hooks = {
-    move_in_vector = move_in_vector,
+unitTestHooks = {
+    moveInVector = move_in_vector,
 }
 
 return _ENV

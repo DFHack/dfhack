@@ -59,13 +59,13 @@ local active_position_overlay
 
 --- Registers the search field that should lose focus when position editing begins.
 ---@param field widgets.EditField|nil
-function bind_orders_search_field(field)
+function bindOrdersSearchField(field)
     orders_search_field = field
 end
 
 --- Cancels the active position edit when the Orders search field gains focus.
-function clear_active_edit()
-    if active_position_overlay then active_position_overlay:clear_selection() end
+function clearActiveEdit()
+    if active_position_overlay then active_position_overlay:clearSelection() end
 end
 
 local function unfocus_orders_search()
@@ -137,7 +137,7 @@ end
 ---@class plugins.orders.position_overlay.PositionOverlay: dfhack.class, widgets.Panel
 ---@field super widgets.Panel
 ---@field edit plugins.orders.position_overlay.PositionEdit|nil
----@field clear_selection fun(self: plugins.orders.position_overlay.PositionOverlay)
+---@field clearSelection fun(self: plugins.orders.position_overlay.PositionOverlay)
 ---@overload fun(init_table: table): self
 PositionOverlay = defclass(PositionOverlay, overlay.OverlayWidget)
 PositionOverlay.ATTRS {
@@ -183,13 +183,13 @@ function PositionOverlay:init()
                     text_pen = COLOR_WHITE,
                     text_hpen = POSITION_HOVER_PEN,
                     auto_width = true,
-                    on_click = self:callback('toggle_positions'),
+                    on_click = self:callback('togglePositions'),
                 },
                 widgets.RadioButton {
                     view_id = 'positions_toggle',
                     frame = { l = 10, t = 0 },
                     initial_state = true,
-                    on_change = self:callback('set_positions_visible'),
+                    on_change = self:callback('setPositionsVisible'),
                 },
             },
         },
@@ -220,7 +220,7 @@ function PositionOverlay:init()
                         bg = COLOR_GREY,
                     },
                     text_hpen = POSITION_HOVER_PEN,
-                    on_click = self:callback('toggle_panel_minimized'),
+                    on_click = self:callback('togglePanelMinimized'),
                 },
                 widgets.Label {
                     frame = { r = 0, w = 1, h = 1 },
@@ -231,13 +231,13 @@ function PositionOverlay:init()
             },
         },
     }
-    self:ensure_position_field_count(viewport_size)
+    self:ensurePositionFieldCount(viewport_size)
     self.syncing_fields = false
 end
 
 --- Adds fields when a larger interface makes more order rows visible.
 ---@param count integer
-function PositionOverlay:ensure_position_field_count(count)
+function PositionOverlay:ensurePositionFieldCount(count)
     while #self.position_fields < count do
         local slot = #self.position_fields + 1
         local field
@@ -252,16 +252,16 @@ function PositionOverlay:ensure_position_field_count(count)
             end,
             text_pen = EDITOR_TEXT_PEN,
             on_char = accept_position_digit,
-            on_change = function(text) self:on_field_change(slot, text) end,
-            on_focus = function() self:on_field_focus(slot) end,
+            on_change = function(text) self:onFieldChange(slot, text) end,
+            on_focus = function() self:onFieldFocus(slot) end,
             on_unfocus = function()
                 local position_field = self.position_fields[slot]
                 if position_field then
                     clear_field_text_selection(position_field)
                 end
             end,
-            on_submit = function() self:on_field_submit(slot) end,
-            on_submit2 = function() self:on_field_submit(slot) end,
+            on_submit = function() self:onFieldSubmit(slot) end,
+            on_submit2 = function() self:onFieldSubmit(slot) end,
         }
         local position_label = widgets.Label {
             frame = {
@@ -317,28 +317,28 @@ function PositionOverlay:ensure_position_field_count(count)
 end
 
 --- Toggles whether the position rows are visible.
-function PositionOverlay:toggle_positions()
+function PositionOverlay:togglePositions()
     local toggle = self.subviews.positions_toggle
     toggle:setState(not toggle.toggle_state)
 end
 
 --- Shows or hides the position rows.
 ---@param visible boolean
-function PositionOverlay:set_positions_visible(visible)
+function PositionOverlay:setPositionsVisible(visible)
     if self.positions_visible == visible then return end
-    if not visible then self:clear_selection() end
+    if not visible then self:clearSelection() end
     self.positions_visible = visible
-    self:sync_position_fields()
+    self:syncPositionFields()
 end
 
 --- Shows or hides the bottom control panel.
-function PositionOverlay:toggle_panel_minimized()
+function PositionOverlay:togglePanelMinimized()
     self.panel_minimized = not self.panel_minimized
 end
 
 --- Starts editing the order currently assigned to a visible row field.
 ---@param slot integer
-function PositionOverlay:on_field_focus(slot)
+function PositionOverlay:onFieldFocus(slot)
     if self.syncing_fields then return end
 
     local order_id = self.slot_order_ids[slot]
@@ -355,7 +355,7 @@ end
 --- Records text only from the field that owns the active edit.
 ---@param slot integer
 ---@param text string
-function PositionOverlay:on_field_change(slot, text)
+function PositionOverlay:onFieldChange(slot, text)
     local edit = self.edit
     if self.syncing_fields or not edit
         or self.slot_order_ids[slot] ~= edit.order_id then
@@ -367,13 +367,13 @@ end
 
 --- Moves the selected order to the entered one-based position.
 ---@param slot integer
-function PositionOverlay:on_field_submit(slot)
+function PositionOverlay:onFieldSubmit(slot)
     local edit = self.edit
     if not edit or self.slot_order_ids[slot] ~= edit.order_id then return end
 
     local current_order_idx = find_order_index(edit.order_id)
     if current_order_idx == nil then
-        self:clear_selection()
+        self:clearSelection()
         dialogs.showMessage('Error',
             'orders: The selected manager order no longer exists.',
             COLOR_LIGHTRED)
@@ -391,11 +391,11 @@ function PositionOverlay:on_field_submit(slot)
         return
     end
 
-    self:clear_selection()
+    self:clearSelection()
 end
 
 ---@return widgets.EditField|nil field
-function PositionOverlay:get_selected_field()
+function PositionOverlay:getSelectedField()
     local edit = self.edit
     if not edit or self.slot_order_ids[edit.slot] ~= edit.order_id then
         return nil
@@ -404,7 +404,7 @@ function PositionOverlay:get_selected_field()
 end
 
 --- Cancels the current proposal and clears its field focus.
-function PositionOverlay:clear_selection()
+function PositionOverlay:clearSelection()
     local field = self.edit and self.position_fields[self.edit.slot] or nil
     self.edit = nil
 
@@ -415,11 +415,11 @@ function PositionOverlay:clear_selection()
 end
 
 function PositionOverlay:overlay_ondisable()
-    self:clear_selection()
+    self:clearSelection()
 end
 
 --- Synchronizes the fixed row fields with the current scroll position.
-function PositionOverlay:sync_position_fields()
+function PositionOverlay:syncPositionFields()
     local viewport_size = workOrderList.getViewportSize()
     local viewport_start, viewport_end =
         workOrderList.getVisibleOrderIndices()
@@ -431,7 +431,7 @@ function PositionOverlay:sync_position_fields()
         and old_selected_field.focus or false
 
     self.syncing_fields = true
-    self:ensure_position_field_count(viewport_size)
+    self:ensurePositionFieldCount(viewport_size)
 
     local interface_rect = gui.get_interface_rect()
     local overlay_frame = {
@@ -490,7 +490,7 @@ function PositionOverlay:sync_position_fields()
         if field.text ~= text then field:setText(text) end
     end
 
-    local selected_field = self:get_selected_field()
+    local selected_field = self:getSelectedField()
     if selected_was_focused and selected_field then
         selected_field:setFocus(true)
     elseif selected_was_focused and old_selected_field then
@@ -504,29 +504,29 @@ end
 ---@return boolean
 function PositionOverlay:onInput(keys)
     if are_order_details_open() then
-        self:clear_selection()
+        self:clearSelection()
         return false
     end
 
-    self:sync_position_fields()
+    self:syncPositionFields()
     local previous_order_id = self.edit and self.edit.order_id or nil
 
     if self.edit and (keys._MOUSE_R or keys.LEAVESCREEN) then
-        self:clear_selection()
+        self:clearSelection()
         return true
     end
 
     -- Position fields only need unmodified numeric editing keys. Cancel the
     -- proposal and let DFHack or vanilla DF handle any modified shortcut.
     if self.edit and is_modifier_active() then
-        self:clear_selection()
+        self:clearSelection()
         return false
     end
 
     -- Let an existing row field receive the complete click sequence. This is
     -- the same widget-first ordering used by OrdersSearchOverlay.
     if PositionOverlay.super.onInput(self, keys) then
-        local selected_field = self:get_selected_field()
+        local selected_field = self:getSelectedField()
         if keys._MOUSE_L and self.edit
             and self.edit.order_id ~= previous_order_id
             and selected_field then
@@ -543,13 +543,13 @@ function PositionOverlay:onInput(keys)
     -- Cancel an active proposal on an outside click, but let vanilla handle
     -- the click itself.
     if keys._MOUSE_L or keys._MOUSE_L_DOWN then
-        if self.edit then self:clear_selection() end
+        if self.edit then self:clearSelection() end
         return false
     end
 
     -- Keep keyboard input in the focused field while allowing all mouse and
     -- Work Orders scrolling events through to vanilla.
-    local selected_field = self:get_selected_field()
+    local selected_field = self:getSelectedField()
     if selected_field and selected_field.focus
         and not is_mouse_or_scroll_key(keys) then
         return true
@@ -561,11 +561,11 @@ end
 ---@param dc gui.Painter
 function PositionOverlay:render(dc)
     if are_order_details_open() then
-        self:clear_selection()
+        self:clearSelection()
         return
     end
 
-    self:sync_position_fields()
+    self:syncPositionFields()
     PositionOverlay.super.render(self, dc)
 end
 

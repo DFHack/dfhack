@@ -3,7 +3,7 @@ config.target = 'orders'
 
 local workOrderList = require('plugins.orders.work_order_list')
 local position = require('plugins.orders.position')
-local position_overlay = require('plugins.orders.position_overlay')
+local positionOverlay = require('plugins.orders.position_overlay')
 local gui = require('gui')
 local json = require('json')
 
@@ -338,7 +338,7 @@ function test.position_move_vector_preserves_pointer()
     local vector = make_vector()
     local first = vector[0]
     local order, error_message =
-        position.unit_test_hooks.move_in_vector(vector, 1, 3)
+        position.unitTestHooks.moveInVector(vector, 1, 3)
     if not order then expect.fail(error_message) return end
 
     expect.eq(first, order)
@@ -346,7 +346,7 @@ function test.position_move_vector_preserves_pointer()
     expect.table_eq({ 20, 30, 10 }, get_vector_ids(vector))
 
     order, error_message =
-        position.unit_test_hooks.move_in_vector(vector, 3, 1)
+        position.unitTestHooks.moveInVector(vector, 3, 1)
     if not order then expect.fail(error_message) return end
     expect.eq(first, order)
     expect.eq(first, vector[0])
@@ -357,7 +357,7 @@ function test.position_move_vector_rejects_invalid_and_noop_is_atomic()
     local invalid_values = { 'one', '1.5', 0 }
     for _, value in ipairs(invalid_values) do
         local vector = make_vector()
-        local result = position.unit_test_hooks.move_in_vector(vector, 1, value)
+        local result = position.unitTestHooks.moveInVector(vector, 1, value)
         expect.nil_(result, ('value %q should be rejected'):format(value))
         expect.table_eq({ 10, 20, 30 }, get_vector_ids(vector))
     end
@@ -365,17 +365,17 @@ function test.position_move_vector_rejects_invalid_and_noop_is_atomic()
     local vector = make_vector()
     local second = vector[1]
     local order, error_message =
-        position.unit_test_hooks.move_in_vector(vector, 2, 2)
+        position.unitTestHooks.moveInVector(vector, 2, 2)
     if not order then expect.fail(error_message) return end
     expect.eq(second, order)
     expect.table_eq({ 10, 20, 30 }, get_vector_ids(vector))
 
-    order = position.unit_test_hooks.move_in_vector(vector, 1, 4)
+    order = position.unitTestHooks.moveInVector(vector, 1, 4)
     expect.nil_(order)
     expect.table_eq({ 10, 20, 30 }, get_vector_ids(vector))
 
     vector = make_vector()
-    local ok, result = pcall(position.unit_test_hooks.move_in_vector,
+    local ok, result = pcall(position.unitTestHooks.moveInVector,
         vector, 'one', 2)
     expect.true_(ok, 'a malformed source position should not throw')
     expect.nil_(result)
@@ -383,7 +383,7 @@ function test.position_move_vector_rejects_invalid_and_noop_is_atomic()
 end
 
 function test.position_overlay_focus_lifecycle()
-    local position_widget = position_overlay.PositionOverlay {}
+    local position_widget = positionOverlay.PositionOverlay {}
     local screen_rect = gui.mkdims_wh(0, 0, dfhack.screen.getWindowSize())
     position_widget:updateLayout(gui.ViewRect { rect = screen_rect })
 
@@ -393,12 +393,12 @@ function test.position_overlay_focus_lifecycle()
     first_field:setFocus(true)
     expect.eq(123, position_widget.edit.order_id)
 
-    position_overlay.clear_active_edit()
+    positionOverlay.clearActiveEdit()
     expect.nil_(position_widget.edit)
     expect.false_(first_field.focus)
 
     first_field:setFocus(true)
-    position_widget:set_positions_visible(false)
+    position_widget:setPositionsVisible(false)
     expect.nil_(position_widget.edit)
     expect.false_(first_field.focus)
     expect.false_(first_row.visible())
@@ -430,11 +430,11 @@ function test.position_overlay_edit_follows_reordered_order()
         end,
         function()
             work_orders.scroll_position_work_orders = 0
-            local position_widget = position_overlay.PositionOverlay {}
+            local position_widget = positionOverlay.PositionOverlay {}
             local screen_rect =
                 gui.mkdims_wh(0, 0, dfhack.screen.getWindowSize())
             position_widget:updateLayout(gui.ViewRect { rect = screen_rect })
-            position_widget:sync_position_fields()
+            position_widget:syncPositionFields()
 
             local orders = df.global.world.manager_orders.all
             local edited_order = orders[0]
@@ -444,9 +444,9 @@ function test.position_overlay_edit_follows_reordered_order()
 
             local moved_order, error_message = position.move(1, 2)
             if not moved_order then expect.fail(error_message) return end
-            position_widget:sync_position_fields()
+            position_widget:syncPositionFields()
 
-            local selected_field = position_widget:get_selected_field()
+            local selected_field = position_widget:getSelectedField()
             expect.eq(edited_order, orders[1])
             expect.eq(position_widget.position_fields[2], selected_field)
             expect.eq('3', selected_field.text)

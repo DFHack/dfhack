@@ -63,6 +63,7 @@ Template for new versions:
 
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
+- Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused
 - In ``Screen`` module, Fix out-of-bounds color table access when Lua pens use ``COLOR_RESET``
 - `3dveins`: fix failure on embarks that cross midmap tiles
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored

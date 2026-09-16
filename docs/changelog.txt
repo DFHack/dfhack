@@ -64,6 +64,7 @@ Template for new versions:
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
 - In ``Screen`` module, Fix out-of-bounds color table access when Lua pens use ``COLOR_RESET``
+- `3dveins`: fix failure on embarks that cross midmap tiles
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
 - `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
 - `timestream`: deal properly with units who have breathing difficulties

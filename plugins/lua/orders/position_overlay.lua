@@ -4,7 +4,7 @@ local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local position = require('plugins.orders.position')
 local overlay = require('plugins.overlay')
-local work_order_list = require('plugins.orders.work_order_list')
+local workOrderList = require('plugins.orders.work_order_list')
 local widgets = require('gui.widgets')
 
 -- Keep the bracketed positions in the left-side gutter beside each order.
@@ -23,7 +23,7 @@ local TOGGLE_PANEL_BOTTOM = 6
 local TOGGLE_PANEL_WIDTH = 15
 local TOGGLE_PANEL_HEIGHT = 3
 
-local ORDER_HEIGHT = work_order_list.ORDER_HEIGHT
+local ORDER_HEIGHT = workOrderList.ORDER_HEIGHT
 
 ---@param order_id integer
 ---@return integer|nil order_idx
@@ -163,7 +163,7 @@ function PositionOverlay:init()
     local interface_rect = gui.get_interface_rect()
     self.frame.w = interface_rect.width
     self.frame.h = interface_rect.height
-    local viewport_size = work_order_list.get_viewport_size()
+    local viewport_size = workOrderList.getViewportSize()
     self:addviews {
         widgets.Panel {
             view_id = 'positions_panel',
@@ -282,7 +282,7 @@ function PositionOverlay:ensure_position_field_count(count)
         local row = widgets.Panel {
             frame = {
                 l = POSITION_X - 1,
-                t = work_order_list.get_list_start_y()
+                t = workOrderList.getListStartY()
                     + (slot - 1) * ORDER_HEIGHT,
                 w = get_editor_width() + FIELD_BRACKETS_WIDTH,
                 h = 1,
@@ -420,9 +420,9 @@ end
 
 --- Synchronizes the fixed row fields with the current scroll position.
 function PositionOverlay:sync_position_fields()
-    local viewport_size = work_order_list.get_viewport_size()
+    local viewport_size = workOrderList.getViewportSize()
     local viewport_start, viewport_end =
-        work_order_list.get_visible_order_indices()
+        workOrderList.getVisibleOrderIndices()
     local editor_width = get_editor_width()
     local old_selected_slot = self.edit and self.edit.slot or nil
     local old_selected_field = old_selected_slot
@@ -446,7 +446,7 @@ function PositionOverlay:sync_position_fields()
     for slot, row in ipairs(self.position_rows) do
         local row_frame = {
             l = POSITION_X - 1,
-            t = work_order_list.get_list_start_y()
+            t = workOrderList.getListStartY()
                 + (slot - 1) * ORDER_HEIGHT,
             w = editor_width + FIELD_BRACKETS_WIDTH,
             h = 1,

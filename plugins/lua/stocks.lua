@@ -27,6 +27,17 @@ function expand_all()
     stocks.i_height = (num_items + num_sections) * 3
 end
 
+function all_collapsed()
+    for idx=0,#stocks.current_type_a_expanded-1 do
+        if stocks.current_type_a_expanded[idx] then return false end
+    end
+    return true
+end
+
+function toggle_all()
+    if all_collapsed() then expand_all() else collapse_all() end
+end
+
 function remove_empty()
     local empties = {}
     for itype,v in ipairs(stocks.storeamount) do
@@ -65,9 +76,11 @@ function StocksOverlay:init()
     self:addviews{
         widgets.HotkeyLabel{
             frame={t=0, l=0},
-            label='collapse all',
+            label=function()
+                return all_collapsed() and 'expand all' or 'collapse all'
+            end,
             key='CUSTOM_CTRL_X',
-            on_activate=collapse_all,
+            on_activate=toggle_all,
         },
         widgets.HotkeyLabel{
             frame={t=1, l=0},

@@ -60,6 +60,7 @@ Template for new versions:
 
 ## New Features
 - `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
+- `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
 
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``

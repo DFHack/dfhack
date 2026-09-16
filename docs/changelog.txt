@@ -65,6 +65,7 @@ Template for new versions:
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
 - `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
 - `timestream`: deal properly with units who have breathing difficulties
+- rename the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

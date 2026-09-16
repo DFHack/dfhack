@@ -6,8 +6,10 @@ local widgets = require('gui.widgets')
 
 local stocks = df.global.game.main_interface.stocks
 
--- module-level so unit tests can exercise them
-function collapse_all()
+-- these are only safe to call while the stocks page is open; guard against
+-- stray activations as the page closes
+local function collapse_all()
+    if not stocks.open then return end
     local num_sections = #stocks.current_type_a_expanded
     for idx=0,num_sections-1 do
         stocks.current_type_a_expanded[idx] = false
@@ -18,7 +20,8 @@ function collapse_all()
     stocks.scroll_position_item = 0
 end
 
-function expand_all()
+local function expand_all()
+    if not stocks.open then return end
     local num_sections = #stocks.current_type_a_expanded
     for idx=0,num_sections-1 do
         stocks.current_type_a_expanded[idx] = true
@@ -27,18 +30,21 @@ function expand_all()
     stocks.i_height = (num_items + num_sections) * 3
 end
 
-function all_collapsed()
+local function all_collapsed()
+    if not stocks.open then return true end
     for idx=0,#stocks.current_type_a_expanded-1 do
         if stocks.current_type_a_expanded[idx] then return false end
     end
     return true
 end
 
-function toggle_all()
+local function toggle_all()
+    if not stocks.open then return end
     if all_collapsed() then expand_all() else collapse_all() end
 end
 
-function remove_empty()
+local function remove_empty()
+    if not stocks.open then return end
     local empties = {}
     for itype,v in ipairs(stocks.storeamount) do
         if v == 0 and stocks.badamount[itype] == 0 then

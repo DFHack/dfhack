@@ -238,8 +238,14 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
 
     get_char_field(L, &pen.ch, idx, "ch", 0);
 
+    // COLOR_RESET only has meaning on text consoles; substitute the Pen
+    // defaults so out-of-range colors can't reach the screen buffers
     get_int_field(L, &pen.fg, idx, "fg", 7);
+    if (pen.fg < 0 || pen.fg > COLOR_MAX)
+        pen.fg = COLOR_GREY;
     get_int_field(L, &pen.bg, idx, "bg", 0);
+    if (pen.bg < 0 || pen.bg > COLOR_MAX)
+        pen.bg = COLOR_BLACK;
 
     lua_getfield(L, idx, "bold");
     if (lua_isnil(L, -1))
@@ -253,7 +259,11 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
     get_int_or_closure_field(L, &pen.tile, idx, "tile", 0);
 
     bool tcolor = get_int_field(L, &pen.tile_fg, idx, "tile_fg", 7);
+    if (pen.tile_fg < 0 || pen.tile_fg > COLOR_MAX)
+        pen.tile_fg = COLOR_GREY;
     tcolor = get_int_field(L, &pen.tile_bg, idx, "tile_bg", 0) || tcolor;
+    if (pen.tile_bg < 0 || pen.tile_bg > COLOR_MAX)
+        pen.tile_bg = COLOR_BLACK;
 
     if (tcolor)
         pen.tile_mode = Pen::TileColor;

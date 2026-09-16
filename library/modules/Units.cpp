@@ -42,6 +42,7 @@ distribution.
 #include "df/caste_raw.h"
 #include "df/creature_interaction_effect_display_namest.h"
 #include "df/creature_raw.h"
+#include "df/creature_raw_flags.h"
 #include "df/curse_attr_change.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
@@ -777,12 +778,28 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     if (!old_occ || !new_occ)
         return false;
 
+    // EQUIPMENT units (e.g. wagons) occupy a 3x3 footprint centered on their
+    // position; all other units occupy just their position tile
+    int extent = 0;
+    if (auto craw = df::creature_raw::find(unit->race); craw &&
+        craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON))
+        extent = 1;
+
+    auto for_each_occupied_tile = [&](df::coord center, auto &&fn) {
+        for (int dy = -extent; dy <= extent; ++dy)
+            for (int dx = -extent; dx <= extent; ++dx)
+                if (auto occ = Maps::getTileOccupancy(center.x+dx, center.y+dy, center.z))
+                    fn(*occ);
+    };
+
     // Clear appropriate occupancy flags at old tile
-    if (unit->flags1.bits.on_ground)
-        // This is potentially wrong, but the game will recompute this as needed
-        old_occ->bits.unit_grounded = false;
-    else
-        old_occ->bits.unit = false;
+    for_each_occupied_tile(unit->pos, [&](df::tile_occupancy &occ) {
+        if (unit->flags1.bits.on_ground)
+            // This is potentially wrong, but the game will recompute this as needed
+            occ.bits.unit_grounded = false;
+        else
+            occ.bits.unit = false;
+    });
 
     // Clear unit projectile info
     if (unit->flags1.bits.projectile) {
@@ -801,10 +818,12 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         unit->flags1.bits.on_ground = true;
 
     // Set appropriate occupancy flags at new tile
-    if (unit->flags1.bits.on_ground)
-        new_occ->bits.unit_grounded = true;
-    else
-        new_occ->bits.unit = true;
+    for_each_occupied_tile(target_pos, [&](df::tile_occupancy &occ) {
+        if (unit->flags1.bits.on_ground)
+            occ.bits.unit_grounded = true;
+        else
+            occ.bits.unit = true;
+    });
 
     // Move unit to destination
     unit->pos = target_pos;

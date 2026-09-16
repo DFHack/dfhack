@@ -217,8 +217,15 @@ df::unit * World::getAdventurer() {
 int32_t World::GetCurrentSiteId() {
     if (!plotinfo)
         return -1;
-    if (isFortressMode())
-        return plotinfo->site_id;
+    if (isFortressMode()) {
+        // on a reclaimed fortress, site_id isn't assigned until the first
+        // save; fortress_site is set at embark, so use it as a fallback
+        if (plotinfo->site_id >= 0)
+            return plotinfo->site_id;
+        if (auto site = plotinfo->main.fortress_site)
+            return site->id;
+        return -1;
+    }
     if (auto adv = getAdventurer(); adv && world->world_data) {
         DEBUG(world).print("searching for adventure site\n");
         auto & world_map = world->map;

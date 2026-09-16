@@ -73,6 +73,7 @@ Template for new versions:
 - `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 - `timestream`: deal properly with units who have breathing difficulties
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
+- Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

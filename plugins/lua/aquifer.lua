@@ -84,7 +84,7 @@ function parse_commandline(args)
         {'z', 'cur-zlevel', handler=function() opts.curz = true end},
     })
 
-    if help or positionals[1] == 'help' then
+    if opts.help or positionals[1] == 'help' then
         print(dfhack.script_help())
         return false
     end

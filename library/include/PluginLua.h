@@ -14,6 +14,6 @@
     DFhackCExport const DFHack::EventReg plugin_lua_events[] =
 
 #define DFHACK_LUA_COMMAND(name) { #name, name }
-#define DFHACK_LUA_FUNCTION(name) { #name, df::wrap_function(name,true) }
+#define DFHACK_LUA_FUNCTION(name) { #name, df::wrap_function(name,#name,true) }
 #define DFHACK_LUA_EVENT(name) { #name, &name##_event }
 #define DFHACK_LUA_END { NULL, NULL }

@@ -37,6 +37,7 @@ distribution.
 #include "BitArray.h"
 #include "Export.h"
 #include "Format.h"
+#include "HashUtil.h"
 
 struct lua_State;
 
@@ -363,30 +364,6 @@ namespace DFHack
 
         virtual void build_metatable(lua_State *state) const;
     };
-
-    namespace
-    {
-        template<typename ... Bases>
-        struct overload : Bases ...
-        {
-            using is_transparent = void;
-            using Bases::operator() ...;
-        };
-
-        struct char_pointer_hash
-        {
-            auto operator()(const char* ptr) const noexcept
-            {
-                return std::hash<std::string_view>{}(ptr);
-            }
-        };
-
-        using transparent_string_hash = overload<
-            std::hash<std::string>,
-            std::hash<std::string_view>,
-            char_pointer_hash
-        >;
-    }
 
 #ifdef _MSC_VER
     using virtual_ptr = void*;

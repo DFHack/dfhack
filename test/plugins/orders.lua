@@ -1,7 +1,7 @@
 config.mode = 'fortress'
 config.target = 'orders'
 
-local work_order_list = require('plugins.orders.work_order_list')
+local workOrderList = require('plugins.orders.work_order_list')
 
 local FILE_PATH_PATTERN = dfhack.getConfigPath() .. '/orders/%s.json'
 
@@ -270,29 +270,29 @@ function test.list()
 end
 
 function test.work_order_list_geometry()
-    local hooks = work_order_list.unit_test_hooks
+    local hooks = workOrderList.unitTestHooks
 
-    expect.eq(10, hooks.calculate_list_start_y(154))
-    expect.eq(8, hooks.calculate_list_start_y(155))
-    expect.eq(4, hooks.calculate_viewport_size(30, 8))
+    expect.eq(10, hooks.calculateListStartY(154))
+    expect.eq(8, hooks.calculateListStartY(155))
+    expect.eq(4, hooks.calculateViewportSize(30, 8))
 
     local viewport_start, viewport_end =
-        hooks.calculate_visible_order_indices(0, 4, 0)
+        hooks.calculateVisibleOrderIndices(0, 4, 0)
     expect.eq(0, viewport_start)
     expect.eq(-1, viewport_end)
 
     viewport_start, viewport_end =
-        hooks.calculate_visible_order_indices(10, 4, 2)
+        hooks.calculateVisibleOrderIndices(10, 4, 2)
     expect.eq(2, viewport_start)
     expect.eq(5, viewport_end)
 
     viewport_start, viewport_end =
-        hooks.calculate_visible_order_indices(10, 4, 8)
+        hooks.calculateVisibleOrderIndices(10, 4, 8)
     expect.eq(6, viewport_start)
     expect.eq(9, viewport_end)
 
     viewport_start, viewport_end =
-        hooks.calculate_visible_order_indices(10, 20, 8)
+        hooks.calculateVisibleOrderIndices(10, 20, 8)
     expect.eq(0, viewport_start)
     expect.eq(9, viewport_end)
 end

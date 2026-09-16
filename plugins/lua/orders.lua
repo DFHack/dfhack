@@ -3,7 +3,7 @@ local _ENV = mkmodule('plugins.orders')
 local dialogs = require('gui.dialogs')
 local gui = require('gui')
 local overlay = require('plugins.overlay')
-local work_order_list = require('plugins.orders.work_order_list')
+local workOrderList = require('plugins.orders.work_order_list')
 local textures = require('gui.textures')
 local utils = require('utils')
 local widgets = require('gui.widgets')
@@ -892,7 +892,7 @@ function OrdersSearchOverlay:cycle_match(direction)
     -- Scroll to the selected match only if not already visible
     local order_idx = self.matched_indices[self.current_match_idx]
     local viewport_start, viewport_end =
-        work_order_list.get_visible_order_indices()
+        workOrderList.getVisibleOrderIndices()
     if order_idx < viewport_start or order_idx > viewport_end then
         mi.info.work_orders.scroll_position_work_orders = order_idx
     end
@@ -970,7 +970,7 @@ function OrdersSearchOverlay:render_highlights(dc)
                                self.matched_indices[self.current_match_idx] or nil
 
     for _, match_order_idx in ipairs(self.matched_indices) do
-        local match_y = work_order_list.get_order_y(match_order_idx)
+        local match_y = workOrderList.getOrderY(match_order_idx)
 
         if match_y then
             local pen = (match_order_idx == selected_order_idx) and SELECTED_PEN or MATCH_PEN

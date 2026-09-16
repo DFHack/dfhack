@@ -34,15 +34,21 @@ intended for use as a keybinding.
 
 ``autodump-destroy-item`` marks the currently viewed item for destruction.
 The pending destruction can be canceled if the command is run again before
-unpausing. (Does not work on items marked by ``autodump destroy``.)
+unpausing, or by running ``autodump undestroy``.
 
 Options
 -------
 
 ``destroy``
-    Destroy instead of dumping. Doesn't require a cursor.
+    Destroy instead of dumping. Doesn't require a cursor. Items held by units
+    (e.g. equipped or in a carried container) are skipped, and the contents of
+    destroyed containers are destroyed along with the container.
 ``destroy-here``
     Destroy items under the cursor that are marked for dumping.
+``undestroy``
+    Revert pending destruction of items marked by ``destroy``,
+    ``destroy-here``, or ``autodump-destroy-item``. Only works while the game
+    is still paused; once a frame passes, the items may already be gone.
 ``visible``
     Only process items that are not hidden.
 ``hidden``
@@ -63,3 +69,5 @@ Examples
     Destroys unforbidden items on the selected tile that are marked for dumping.
 ``autodump-destroy-item``
     Destroys the item currently being viewed, or reverts its pending destruction.
+``autodump undestroy``
+    Reverts pending destruction of all marked items.

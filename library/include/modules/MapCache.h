@@ -616,6 +616,7 @@ private:
     uint32_t y_tmax;
     uint32_t z_max;
     std::vector<BiomeInfo> biomes;
+    std::map<df::coord2d, int> biome_index;
     std::map<df::coord2d, df::world_region_details*> region_details;
     std::map<DFCoord, Block *> blocks;
 };

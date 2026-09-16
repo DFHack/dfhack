@@ -143,7 +143,12 @@ class DFHackToolDirectiveBase(sphinx.directives.ObjectDescription):
         if 'unavailable' not in tags:
             self.env.domaindata['all']['objects'].append(indexdata)
         for tag in tags:
-            self.env.domaindata[tag]['objects'].append(indexdata)
+            # tolerate tags missing from Tags.rst: the scripts submodule pin
+            # can lag behind tag renames in either repo
+            if tag in self.env.domaindata:
+                self.env.domaindata[tag]['objects'].append(indexdata)
+            else:
+                logger.info('%s: ignoring unregistered tag: %s', docname, tag)
 
     @staticmethod
     def wrap_box(*children: List[nodes.Node]) -> nodes.Admonition:
@@ -173,16 +178,22 @@ class DFHackToolDirective(DFHackToolDirectiveBase):
         tags = self.options.get('tags', [])
         self.env.domaindata['tag-repo']['doctags'][self.env.docname] = tags
         for tag in tags:
-            tag_paragraph += [
-                addnodes.pending_xref(tag, nodes.inline(text=tag), **{
-                    'reftype': 'ref',
-                    'refdomain': 'std',
-                    'reftarget': tag + '-tag-index',
-                    'refexplicit': True,
-                    'refwarn': True,
-                }),
-                nodes.inline(text=' | '),
-            ]
+            # link only tags registered in Tags.rst; the scripts submodule
+            # pin can lag behind tag renames in either repo
+            if tag in self.env.domaindata:
+                tag_paragraph += addnodes.pending_xref(tag,
+                    nodes.inline(text=tag), **{
+                        'reftype': 'ref',
+                        'refdomain': 'std',
+                        'reftarget': tag + '-tag-index',
+                        'refexplicit': True,
+                        'refwarn': True,
+                    })
+            else:
+                logger.info('%s: ignoring unregistered tag: %s',
+                        self.env.docname, tag)
+                tag_paragraph += nodes.inline(text=tag)
+            tag_paragraph += nodes.inline(text=' | ')
         tag_paragraph.pop()
 
         ret_nodes = [tag_paragraph]

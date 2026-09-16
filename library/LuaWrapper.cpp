@@ -35,6 +35,8 @@ distribution.
 // must be last due to MS stupidity
 #include "DataDefs.h"
 #include "DataIdentity.h"
+#include "Debug.h"
+#include "HashUtil.h"
 #include "LuaWrapper.h"
 #include "LuaTools.h"
 
@@ -45,6 +47,11 @@ distribution.
 
 using namespace DFHack;
 using namespace DFHack::LuaWrapper;
+
+namespace DFHack
+{
+    DBG_DECLARE(lua, deprecation, DebugCategory::LWARNING);
+}
 
 /**
  * Report an error while accessing a field (index = field name).
@@ -1867,6 +1874,51 @@ void LuaWrapper::AttachDFGlobals(lua_State *state)
     }
 
     lua_pop(state, 1);
+}
+
+namespace
+{
+    struct deprecation_notification
+    {
+        std::string name;
+        std::string source;
+        int line;
+
+        bool operator==(const deprecation_notification& other) const = default;
+
+        struct hash
+        {
+            std::size_t operator()(const deprecation_notification& n) const noexcept
+            {
+                return hash_value(n.name, n.source, n.line);
+            }
+        };
+    };
+
+    static std::unordered_set<deprecation_notification, deprecation_notification::hash> deprecation_notification_history;
+}
+
+void LuaWrapper::notify_deprecated(lua_State* state, std::string_view name, std::string_view message)
+{
+    lua_Debug ar;
+    std::optional<deprecation_notification> notify;
+
+    for (int depth = 0; lua_getstack(state, depth, &ar); depth++)
+    {
+        if (lua_getinfo(state, "nSl", &ar) && std::strcmp(ar.what, "Lua") == 0)
+        {
+            notify = deprecation_notification{std::string(name),ar.short_src,ar.currentline};
+            break;
+        }
+    }
+
+    if (!notify) return;
+
+    if (!deprecation_notification_history.contains(*notify))
+    {
+        WARN(deprecation).print("Deprecated function {} called from {} at line {}: {}\n", notify->name, notify->source, notify->line, message);
+        deprecation_notification_history.insert(*notify);
+    }
 }
 
 namespace DFHack { namespace LuaWrapper {

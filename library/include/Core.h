@@ -163,6 +163,9 @@ namespace DFHack
 
         /// check if the activity lock is owned by this thread
         bool isSuspended(void);
+        /// check if this is DF's render thread, which can never acquire the
+        /// activity lock and therefore can never call into Lua
+        bool isRenderThread() { return df_render_thread == std::this_thread::get_id(); }
         /// Is everything OK?
         bool isValid(void) { return !errorstate; }
 

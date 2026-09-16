@@ -38,7 +38,9 @@ end
 _registeredStuff={}
 local function unregall(state)
     if state==SC_WORLD_UNLOADED then
+        onReactionCompleting._library=nil
         onReactionComplete._library=nil
+        onWorkshopFillSidebarMenu._library=nil
         postWorkshopFillSidebarMenu._library=nil
         dfhack.onStateChange.eventful= nil
         _registeredStuff={}

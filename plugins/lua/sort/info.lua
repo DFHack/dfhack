@@ -611,12 +611,18 @@ end
 
 local function get_unit_list(which)
     local tabs = dfhack.gui.getWidget(justice, 'Tabs')
-    return dfhack.gui.getWidget(tabs, 'Open cases', 'Right panel', which) or
-        dfhack.gui.getWidget(tabs, 'Cold cases', 'Right panel', which)
+    for _,tab in ipairs(dfhack.gui.getWidgetChildren(tabs)) do
+        if tab.flag.VISIBILITY_VISIBLE then
+            return dfhack.gui.getWidget(tab, 'Right panel', which)
+        end
+    end
 end
 
 local function poke_list(which)
-    get_unit_list(which).sort_flags.NEEDS_RESORTED = true
+    local list = get_unit_list(which)
+    if list then
+        list.sort_flags.NEEDS_RESORTED = true
+    end
 end
 
 JusticeOverlay = defclass(JusticeOverlay, overlay.OverlayWidget)

@@ -70,10 +70,12 @@ Template for new versions:
 - ``Units::teleport``: update unit occupancy on the full 3x3 footprint of EQUIPMENT units (e.g. wagons) instead of only their center tile
 - `3dveins`: fix failure on embarks that cross midmap tiles
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
+- `aquifer`: make ``--help``/``-h`` actually print help instead of running a map-wide ``list``
 - `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
 - `buildingplan`: fix roller material estimate asking for one chain per tile instead of one chain total
 - `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 - `tiletypes`: remove plants (including trees) rooted on a tile that is painted into something that cannot host them, so cleared ground no longer regrows floating trees
+- `burrow`: fix ``tiles clear`` and other tile operations silently failing because burrow block z-coordinates were stored incorrectly in the `Burrows` module
 - `timestream`: deal properly with units who have breathing difficulties
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
 - Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save

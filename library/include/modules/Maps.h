@@ -361,6 +361,10 @@ DFHACK_EXPORT df::coord2d addRegionBiomeOffset(df::coord2d world_pos, int8_t off
 // Returns biome info about the specified world region.
 DFHACK_EXPORT df::region_map_entry *getRegionBiome(df::coord2d rgn_pos);
 
+// Returns world region coordinates of the BiomeOffset neighbor of a world
+// region cell, clipped to the world boundaries. Idx must be in 0-8.
+DFHACK_EXPORT df::coord2d getBiomeRgnPos(df::coord2d rgn_pos, int idx);
+
 // Returns biome world region coordinates for the given tile within given block.
 DFHACK_EXPORT df::coord2d getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos);
 

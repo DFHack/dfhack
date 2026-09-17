@@ -1,0 +1,136 @@
+config.mode = 'fortress'
+config.target = 'core'
+
+local function tile_occupancy(pos)
+    local block = dfhack.maps.getTileBlock(pos)
+    return block and block.occupancy[pos.x % 16][pos.y % 16]
+end
+
+local function two_citizens()
+    local a, b
+    for _, unit in ipairs(df.global.world.units.active) do
+        if dfhack.units.isCitizen(unit) then
+            if not a then
+                a = unit
+            else
+                b = unit
+                break
+            end
+        end
+    end
+    return a, b
+end
+
+-- find an allocated tile with no unit occupancy near pos
+local function free_tile_near(pos)
+    for dx = -4, 4 do for dy = -4, 4 do
+        if dx ~= 0 or dy ~= 0 then
+            local other = xyz2pos(pos.x + dx, pos.y + dy, pos.z)
+            local occ = tile_occupancy(other)
+            if occ and not occ.unit and not occ.unit_grounded
+                    and occ.building == df.tile_building_occ.None
+                    and dfhack.maps.getTileType(other) then
+                return other
+            end
+        end
+    end end
+end
+
+-- recompute the unit occupancy flags of the given tiles from the given
+-- units, so fabricated flag states do not leak into later tests
+local function resync_occupancy(tiles, units)
+    for _, pos in ipairs(tiles) do
+        local occ = tile_occupancy(pos)
+        if occ then
+            occ.unit = false
+            occ.unit_grounded = false
+        end
+    end
+    for _, unit in ipairs(units) do
+        local occ = tile_occupancy(unit.pos)
+        if occ then
+            if unit.flags1.on_ground then
+                occ.unit_grounded = true
+            else
+                occ.unit = true
+            end
+        end
+    end
+end
+
+-- teleporting one of two grounded units off a shared tile must keep the
+-- unit_grounded flag, since the other unit is still there (#5938)
+function test.teleport_keeps_grounded_flag_with_other_grounded_unit()
+    local a, b = two_citizens()
+    expect.ne(nil, b, 'need at least two citizens')
+    if not a or not b then return end
+
+    local shared, dest = copyall(b.pos), free_tile_near(b.pos)
+    expect.ne(nil, dest, 'no free tile near the shared tile')
+    if not dest then return end
+
+    local orig_a_pos, orig_a_ground = copyall(a.pos), a.flags1.on_ground
+    local orig_b_ground = b.flags1.on_ground
+
+    return dfhack.with_finalize(function()
+        dfhack.units.teleport(a, orig_a_pos)
+        dfhack.units.teleport(b, shared)
+        a.flags1.on_ground = orig_a_ground
+        b.flags1.on_ground = orig_b_ground
+        resync_occupancy({orig_a_pos, shared, dest}, {a, b})
+    end, function()
+        -- teleporting onto a standing unit forces the mover to lie down
+        expect.true_(dfhack.units.teleport(a, shared))
+        expect.true_(a.flags1.on_ground)
+        expect.true_(tile_occupancy(shared).unit_grounded)
+
+        -- fabricate a second grounded unit on the shared tile
+        b.flags1.on_ground = true
+
+        expect.true_(dfhack.units.teleport(a, dest))
+        -- b is still grounded on the shared tile, so the flag must remain
+        expect.true_(tile_occupancy(shared).unit_grounded)
+        expect.true_(tile_occupancy(dest).unit_grounded)
+
+        -- removing the last grounded unit still clears the flag
+        expect.true_(dfhack.units.teleport(b, orig_a_pos))
+        expect.false_(tile_occupancy(shared).unit_grounded)
+    end)
+end
+
+-- the same invariant applies to the standing 'unit' flag
+function test.teleport_keeps_unit_flag_with_other_standing_unit()
+    local a, b = two_citizens()
+    expect.ne(nil, b, 'need at least two citizens')
+    if not a or not b then return end
+
+    local shared, dest = copyall(b.pos), free_tile_near(b.pos)
+    expect.ne(nil, dest, 'no free tile near the shared tile')
+    if not dest then return end
+
+    local orig_a_pos, orig_a_ground = copyall(a.pos), a.flags1.on_ground
+    local orig_b_ground = b.flags1.on_ground
+
+    return dfhack.with_finalize(function()
+        dfhack.units.teleport(a, orig_a_pos)
+        dfhack.units.teleport(b, shared)
+        a.flags1.on_ground = orig_a_ground
+        b.flags1.on_ground = orig_b_ground
+        resync_occupancy({orig_a_pos, shared, dest}, {a, b})
+    end, function()
+        expect.true_(dfhack.units.teleport(a, shared))
+        expect.true_(a.flags1.on_ground)
+
+        -- make a stand again so both units are standing on the shared tile
+        a.flags1.on_ground = false
+        tile_occupancy(shared).unit_grounded = false
+
+        expect.true_(dfhack.units.teleport(a, dest))
+        expect.true_(tile_occupancy(shared).unit)
+        expect.true_(tile_occupancy(dest).unit)
+
+        -- removing the last standing unit still clears the flag
+        expect.true_(dfhack.units.teleport(b, orig_a_pos))
+        expect.false_(tile_occupancy(shared).unit)
+    end)
+end

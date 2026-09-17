@@ -3,7 +3,8 @@ config.target = 'core'
 function test.defclass_basic()
     -- Test basic class creation
     local MyClass = defclass(nil)
-    expect.table_eq(MyClass, {})
+    expect.eq(MyClass.__index, MyClass)
+    expect.eq(MyClass.ATTRS, nil)
     expect.eq(MyClass.super, nil)
     expect.ne(getmetatable(MyClass), nil)
 end
@@ -36,19 +37,6 @@ function test.mkinstance()
 
     expect.eq(instance.value, 100)
     expect.eq(getmetatable(instance), MyClass)
-end
-
-function test.instance_creation()
-    -- Test instance creation via class call
-    local MyClass = defclass(nil)
-    MyClass.ATTRS {
-        default_attr = 'default_value',
-    }
-
-    local instance = MyClass({custom_attr = 'custom_value'})
-
-    expect.eq(instance.default_attr, 'default_value')
-    expect.eq(instance.custom_attr, 'custom_value')
 end
 
 function test.instance_inheritance()

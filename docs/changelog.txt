@@ -69,6 +69,7 @@ Template for new versions:
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
 - `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
 - `timestream`: deal properly with units who have breathing difficulties
+- `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

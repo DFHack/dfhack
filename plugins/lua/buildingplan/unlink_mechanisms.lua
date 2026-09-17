@@ -402,8 +402,17 @@ function MechLinkOverlay:ask_unlink_all()
         local free_src = (saved_mode % 2 == 1)
         local free_dst = (saved_mode // 2 > 0)
 
+        -- freeing a mechanism removes it from contained_items and shifts the
+        -- indices of the entries after it, so resolve items before mutating
+        local items = {}
         for _, idx in ipairs(self.links) do
-            local item = self.building.contained_items[idx].item
+            local entry = self.building.contained_items[idx]
+            if entry then
+                table.insert(items, entry.item)
+            end
+        end
+
+        for _, item in ipairs(items) do
             local target = get_mech_target(item)
 
             if target then

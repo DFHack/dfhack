@@ -24,15 +24,27 @@ end
 
 function test.parse_inset()
     -- Test with table
-    local inset = { gui.parse_inset({l = 5, r = 10, t = 3, b = 7}) }
-    expect.eq(inset, {5, 3, 10, 7})
+    local l,t,r,b = gui.parse_inset({l = 5, r = 10, t = 3, b = 7})
+    expect.eq(l, 5);
+    expect.eq(t, 3)
+    expect.eq(r, 10)
+    expect.eq(b, 7)
 
     -- Test with single value
-    local inset2 = { gui.parse_inset(8) }
-    expect.eq(inset2, {8, 8, 8, 8})
+    local l,t,r,b = gui.parse_inset(8)
+    expect.eq(l, 8)
+    expect.eq(t, 8)
+    expect.eq(r, 8)
+    expect.eq(b, 8)
 
     -- Test with x/y shorthand
-    local inset3 = { gui.parse_inset({x = 4, y = 6}) }
+    local l,t,r,b = gui.parse_inset({x = 4, y = 6})
+    expect.eq(l, 4)
+    expect.eq(t, 6)
+    expect.eq(r, 4)
+    expect.eq(b, 6)
+
+
     expect.eq(inset3, {4, 6, 4, 6})
 end
 
@@ -247,16 +259,18 @@ function test.View_callback()
 end
 
 function test.View_cb_getfield()
-    local view = gui.View{test_field = 'test_value'}
-    local getter = view:cb_getfield('test_field')
+    local view = gui.View{}
+    view.test_field = 'test_value'
 
+    local getter = view:cb_getfield('test_field')
     expect.eq(getter(), 'test_value')
 end
 
 function test.View_cb_setfield()
-    local view = gui.View{test_field = 'initial'}
-    local setter = view:cb_setfield('test_field')
+    local view = gui.View{}
+    view.test_field = 'initial'
 
+    local setter = view:cb_setfield('test_field')
     setter('updated')
     expect.eq(view.test_field, 'updated')
 end

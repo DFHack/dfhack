@@ -132,13 +132,13 @@ local function test_string_extensions()
     expect.true_(("test"):endswith("test"))
 
     -- Test split
-    local parts = "a,b,c":split(",")
+    local parts = ("a,b,c"):split(",")
     expect.eq(parts[1], "a")
     expect.eq(parts[2], "b")
     expect.eq(parts[3], "c")
 
     -- Test split with default delimiter
-    local words = "hello world test":split()
+    local words = ("hello world test"):split()
     expect.eq(words[1], "hello")
     expect.eq(words[2], "world")
     expect.eq(words[3], "test")
@@ -148,11 +148,11 @@ local function test_string_extensions()
     expect.eq(("\t\nworld\n\t"):trim(), "world")
 
     -- Test wrap
-    local wrapped = "This is a long string that needs to be wrapped":wrap(20)
+    local wrapped = ("This is a long string that needs to be wrapped"):wrap(20)
     expect.true_(#wrapped > 20) -- Should be multiple lines
 
     -- Test escape_pattern
-    local escaped = "a+b*c":escape_pattern()
+    local escaped = ("a+b*c"):escape_pattern()
     expect.true_(escaped:find("%+"))
     expect.true_(escaped:find("%*"))
 end

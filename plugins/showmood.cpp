@@ -283,10 +283,7 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                     if (job->items[j]->job_item_idx == int32_t(i))
                         count_got += 1;
                 }
-                // quantity is in raw units (150 to a bar, 10000 to a bolt); an item's whole
-                // dimension counts against it, so any quantity below one item's worth is
-                // satisfied by a single item. It used to be printed verbatim in that case,
-                // reporting "got 1 of 3" for a mood that had all the bars it needed.
+                // quantity requested is in raw units (150 to a bar, 10000 to a bolt)
                 int needed = (item->quantity + divisor - 1) / divisor;
                 if (needed < 1)
                     needed = 1;

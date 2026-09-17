@@ -19,6 +19,9 @@ When enabled, ``suspendmanager`` will watch your active jobs and:
   which would cause the designation to be lost.
 - suspend construction jobs that would cave in immediately on completion,
   such as when building walls or floors next to grates/bars.
+- suspend deconstruction jobs on machine components (gears, axles,
+  waterwheels, etc.) whose removal would leave part of the machine without
+  support and collapse it.
 
 See `gui/suspendmanager` for a graphical configuration interface.
 

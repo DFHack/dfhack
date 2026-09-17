@@ -277,12 +277,20 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                     divisor = 150;
                 else if (item->item_type == item_type::CLOTH)
                     divisor = 10000;
+                else if (item->item_type == item_type::THREAD)
+                    divisor = 15000;
                 for (size_t j = 0; j < job->items.size(); j++) {
                     if (job->items[j]->job_item_idx == int32_t(i))
                         count_got += 1;
                 }
-                out.print(", got {} of {}\n", count_got,
-                    item->quantity < divisor ? item->quantity : item->quantity/divisor);
+                // quantity is in raw units (150 to a bar, 10000 to a bolt); an item's whole
+                // dimension counts against it, so any quantity below one item's worth is
+                // satisfied by a single item. It used to be printed verbatim in that case,
+                // reporting "got 1 of 3" for a mood that had all the bars it needed.
+                int needed = (item->quantity + divisor - 1) / divisor;
+                if (needed < 1)
+                    needed = 1;
+                out.print(", got {} of {}\n", count_got, needed);
             }
         }
     }

@@ -59,6 +59,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `showmood`: a bar/cloth/thread requirement below one item's worth (e.g. "3" units of metal bars) is now reported as needing 1 item instead of the raw unit count, and thread is converted at 15000 units per spool
 
 ## Misc Improvements
 

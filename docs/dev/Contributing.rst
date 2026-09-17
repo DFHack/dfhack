@@ -91,7 +91,7 @@ them with a ``DF-MITIGATION:`` comment where they live in the code, e.g.::
 Briefly describe the defect being worked around and include a reference to the
 DF bug or DFHack issue/PR when one exists. The markers are collected by
 :source:`ci/list-df-mitigations.py` into a checklist that is reviewed on every
-new DF release; see `release-process-df-mitigations`_. The ``fix/*`` scripts are
+new DF release; see `release-process-df-mitigations`. The ``fix/*`` scripts are
 all DF bug mitigations by definition and are listed automatically, so they do
 not need markers.
 

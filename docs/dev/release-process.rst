@@ -14,7 +14,7 @@ New DF releases
 When Bay 12 releases a new version of DF, the mitigations we maintain for
 defects in DF itself may need to be adjusted or removed. These mitigations are
 marked with ``DF-MITIGATION:`` comments in the code (see
-`contributing`_ for the convention) and the ``fix/*`` scripts in
+`contributing` for the convention) and the ``fix/*`` scripts in
 the scripts repo are all mitigations by definition.
 
 To review them:

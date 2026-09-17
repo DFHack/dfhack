@@ -60,6 +60,7 @@ Template for new versions:
 
 ## New Features
 - `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
+- `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
 
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
@@ -71,6 +72,7 @@ Template for new versions:
 - `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
 - `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 - `timestream`: deal properly with units who have breathing difficulties
+- `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

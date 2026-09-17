@@ -79,3 +79,12 @@ div.dfhack-tool-summary p:last-child,
 aside.dfhack-tool-summary p:last-child {
    margin-bottom: 0;
 }
+
+table.dfhack-param-table {
+    table-layout: fixed;
+    width: 110%;
+}
+
+table.dfhack-param-table span.pre {
+    white-space: wrap;
+}

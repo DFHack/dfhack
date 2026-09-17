@@ -285,8 +285,6 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                 }
                 // quantity requested is in raw units (150 to a bar, 10000 to a bolt)
                 int needed = (item->quantity + divisor - 1) / divisor;
-                if (needed < 1)
-                    needed = 1;
                 out.print(", got {} of {}\n", count_got, needed);
             }
         }

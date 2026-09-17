@@ -76,9 +76,9 @@ function test.destroy_and_undestroy()
     local item = find_dumpable_item()
     expect.ne(nil, item, 'test needs a dumpable item')
 
-    local was_paused = df.global.pause_state
+    local was_paused = dfhack.world.ReadPauseState()
     return dfhack.with_finalize(function()
-        df.global.pause_state = was_paused
+        dfhack.world.SetPauseState(was_paused)
         dfhack.run_command_silent('autodump', 'undestroy')
         item.flags.dump = false
         item.flags.garbage_collect = false
@@ -88,7 +88,7 @@ function test.destroy_and_undestroy()
         item.flags.dump = true
         -- undestroy only restores marks made in the same frame, so the
         -- game must stay paused between destroy and undestroy
-        df.global.pause_state = true
+        dfhack.world.SetPauseState(true)
 
         local _, status = dfhack.run_command_silent('autodump', 'destroy')
         expect.eq(CR_OK, status)

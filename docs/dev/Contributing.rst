@@ -88,8 +88,10 @@ them with a ``DF-MITIGATION:`` comment where they live in the code, e.g.::
 
     // DF-MITIGATION: site_id is not assigned on reclaim until the first save
 
-Briefly describe the defect being worked around and include a reference to the
-DF bug or DFHack issue/PR when one exists. The markers are collected by
+The marker is also appropriate for code whose behavior depends on a DF defect
+without working around it, e.g. comments explaining why a field we set has no
+effect. Briefly describe the defect and include a reference to the DF bug or
+DFHack issue/PR when one exists. The markers are collected by
 :source:`ci/list-df-mitigations.py` into a checklist that is reviewed on every
 new DF release; see `release-process-df-mitigations`. The ``fix/*`` scripts are
 all DF bug mitigations by definition and are listed automatically, so they do

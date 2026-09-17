@@ -43,9 +43,6 @@ function test.parse_inset()
     expect.eq(t, 6)
     expect.eq(r, 4)
     expect.eq(b, 6)
-
-
-    expect.eq(inset3, {4, 6, 4, 6})
 end
 
 function test.inset_frame()

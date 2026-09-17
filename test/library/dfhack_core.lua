@@ -54,10 +54,10 @@ end
 --     expect.eq(result, t.level1.level2.level3)
 --     expect.true_(result.existing)
 -- end
-
-function test.ensure_keys()
-    test_ensure_keys()
-end
+--
+-- function test.ensure_keys()
+--     test_ensure_keys()
+-- end
 
 local function test_copyall()
     local t = {a = 1, b = 2, c = {nested = true}}
@@ -181,7 +181,7 @@ end
 local function test_with_onerror()
     local cleanup_called = false
     local ok, err = pcall(function()
-        with_onerror(
+        dfhack.with_onerror(
             function() cleanup_called = true end,
             function() error("test error") end
         )

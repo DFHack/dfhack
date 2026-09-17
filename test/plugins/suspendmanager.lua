@@ -6,6 +6,11 @@ local function is_enabled()
     return output:find('is enabled') ~= nil
 end
 
+local function prevents_blocking()
+    local output = dfhack.run_command_silent('suspendmanager')
+    return output:find('but not suspending') == nil
+end
+
 function test.status_reflects_enable_state()
     local was_enabled = is_enabled()
 
@@ -29,9 +34,11 @@ function test.now_runs_cycle()
 end
 
 function test.set_preventblocking()
+    local was_preventing = prevents_blocking()
+
     return dfhack.with_finalize(function()
         dfhack.run_command_silent('suspendmanager', 'set',
-            'preventblocking', 'true')
+            'preventblocking', was_preventing and 'true' or 'false')
     end, function()
         local _, status = dfhack.run_command_silent('suspendmanager', 'set',
             'preventblocking', 'false')

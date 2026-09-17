@@ -76,8 +76,9 @@ function test.destroy_and_undestroy()
     local item = find_dumpable_item()
     expect.ne(nil, item, 'test needs a dumpable item')
 
+    local was_paused = df.global.pause_state
     return dfhack.with_finalize(function()
-        df.global.pause_state = false
+        df.global.pause_state = was_paused
         dfhack.run_command_silent('autodump', 'undestroy')
         item.flags.dump = false
         item.flags.garbage_collect = false

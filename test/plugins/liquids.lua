@@ -35,10 +35,11 @@ function test.liquids_here_spawns_magma_at_cursor()
     local x, y, z = find_floor_pos()
     expect.ne(nil, x, 'test needs a revealed dry floor tile')
 
+    local was_paused = df.global.pause_state
     return dfhack.with_finalize(function()
         local des = des_at(x, y, z)
         des.flow_size = 0
-        df.global.pause_state = false
+        df.global.pause_state = was_paused
         clear_cursor()
     end, function()
         -- pause so the magma cannot spread before we clean it up

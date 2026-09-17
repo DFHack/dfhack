@@ -55,6 +55,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `smooth-movement`: smoothly animate creature, item, and vehicle movement in the fortress viewport
 - `export-world-map`: Export world map data for GIS and other external tools.
 
 ## New Features
@@ -62,10 +63,14 @@ Template for new versions:
 
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
+- Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused
+- In ``Screen`` module, Fix out-of-bounds color table access when Lua pens use ``COLOR_RESET``
+- rename the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
+- `3dveins`: fix failure on embarks that cross midmap tiles
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
 - `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
+- `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 - `timestream`: deal properly with units who have breathing difficulties
-- rename the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

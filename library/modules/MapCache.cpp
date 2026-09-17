@@ -1112,7 +1112,7 @@ void MapExtras::BlockInfo::SquashGrass(df::map_block *mb, t_blockmaterials &mate
 
 int MapExtras::Block::biomeIndexAt(df::coord2d p)
 {
-    if (!block)
+    if (!block || !world->world_data)
         return -1;
 
     auto des = index_tile(designation,p);
@@ -1120,9 +1120,15 @@ int MapExtras::Block::biomeIndexAt(df::coord2d p)
     if (idx >= 9)
         return -1;
     idx = block->region_offset[idx];
-    if (idx >= parent->biomes.size())
+    if (idx >= 9)
         return -1;
-    return idx;
+    // Biome indices are relative to the block's own region_pos, which may
+    // differ from the map's anchor region on embarks that cross midmap
+    // cell boundaries.
+    auto it = parent->biome_index.find(Maps::getBiomeRgnPos(block->region_pos, idx));
+    if (it == parent->biome_index.end())
+        return -1;
+    return it->second;
 }
 
 const BiomeInfo &Block::biomeInfoAt(df::coord2d p)
@@ -1244,57 +1250,95 @@ MapExtras::MapCache::MapCache()
     valid = 0;
     Maps::getSize(x_bmax, y_bmax, z_max);
     x_tmax = x_bmax*16; y_tmax = y_bmax*16;
-    std::vector<df::coord2d> geoidx;
-    std::vector<std::vector<int16_t> > layer_mats;
-    validgeo = Maps::ReadGeology(&layer_mats, &geoidx);
     valid = true;
+    validgeo = false;
 
     if (auto data = df::global::world->world_data)
     {
+        validgeo = true;
+
         for (size_t i = 0; i < data->midmap_data.region_details.size(); i++)
         {
             auto info = data->midmap_data.region_details[i];
             region_details[info->pos] = info;
         }
-    }
 
-    biomes.resize(layer_mats.size());
+        // Biome indices in map block designations are relative to each
+        // block's own region_pos, so the biome list must cover the
+        // neighborhood of every cell the map touches: embarks can span
+        // multiple midmap cells. The set of reachable cells is the
+        // neighborhood rectangle of all block cells, clipped to the world.
+        df::coord2d lo(data->world_width, data->world_height);
+        df::coord2d hi(-1, -1);
 
-    for (size_t i = 0; i < layer_mats.size(); i++)
-    {
-        biomes[i].pos = geoidx[i];
-        biomes[i].biome = Maps::getRegionBiome(geoidx[i]);
-        biomes[i].details = region_details[geoidx[i]];
-
-        biomes[i].geo_index = biomes[i].biome ? biomes[i].biome->geo_index : -1;
-        biomes[i].geobiome = df::world_geo_biome::find(biomes[i].geo_index);
-
-        biomes[i].lava_stone = -1;
-        biomes[i].default_soil = -1;
-        biomes[i].default_stone = -1;
-
-        if (biomes[i].details)
-            biomes[i].lava_stone = biomes[i].details->lava_stone;
-
-        memset(biomes[i].layer_stone, -1, sizeof(biomes[i].layer_stone));
-
-        for (size_t j = 0; j < std::min<size_t>(BiomeInfo::MAX_LAYERS,layer_mats[i].size()); j++)
+        for (auto block : world->map.map_blocks)
         {
-            biomes[i].layer_stone[j] = layer_mats[i][j];
-
-            auto raw = df::inorganic_raw::find(layer_mats[i][j]);
-            if (!raw)
+            if (!block)
                 continue;
-
-            bool is_soil = raw->flags.is_set(inorganic_flags::SOIL_ANY);
-            if (is_soil)
-                biomes[i].default_soil = layer_mats[i][j];
-            else if (biomes[i].default_stone == -1)
-                biomes[i].default_stone = layer_mats[i][j];
+            lo.x = std::min<int>(lo.x, block->region_pos.x - 1);
+            lo.y = std::min<int>(lo.y, block->region_pos.y - 1);
+            hi.x = std::max<int>(hi.x, block->region_pos.x + 1);
+            hi.y = std::max<int>(hi.y, block->region_pos.y + 1);
         }
 
-        while (layer_mats[i].size() < 16)
-            layer_mats[i].push_back(-1);
+        if (hi.x < 0)
+        {
+            // no map blocks; fall back to the map anchor region
+            lo.x = world->map.region_x / 16 - 1;
+            lo.y = world->map.region_y / 16 - 1;
+            hi.x = lo.x + 2;
+            hi.y = lo.y + 2;
+        }
+
+        lo.x = std::max<int>(lo.x, 0);
+        lo.y = std::max<int>(lo.y, 0);
+        hi.x = std::min<int>(hi.x, data->world_width - 1);
+        hi.y = std::min<int>(hi.y, data->world_height - 1);
+
+        for (int16_t y = lo.y; y <= hi.y; y++)
+        {
+            for (int16_t x = lo.x; x <= hi.x; x++)
+            {
+                df::coord2d pos(x, y);
+                biome_index[pos] = (int)biomes.size();
+                biomes.push_back(BiomeInfo());
+
+                auto &info = biomes.back();
+                info.pos = pos;
+                info.biome = Maps::getRegionBiome(pos);
+                info.details = region_details[pos];
+
+                info.geo_index = info.biome ? info.biome->geo_index : -1;
+                info.geobiome = df::world_geo_biome::find(info.geo_index);
+
+                info.lava_stone = info.details ? info.details->lava_stone : -1;
+                info.default_soil = -1;
+                info.default_stone = -1;
+
+                memset(info.layer_stone, -1, sizeof(info.layer_stone));
+
+                if (info.geobiome)
+                {
+                    auto &geolayers = info.geobiome->layers;
+
+                    for (size_t j = 0; j < std::min<size_t>(BiomeInfo::MAX_LAYERS, geolayers.size()); j++)
+                    {
+                        int16_t mat = geolayers[j]->mat_index;
+                        info.layer_stone[j] = mat;
+
+                        auto raw = df::inorganic_raw::find(mat);
+                        if (!raw)
+                            continue;
+
+                        bool is_soil = raw->flags.is_set(inorganic_flags::SOIL_ANY);
+                        if (is_soil)
+                            info.default_soil = mat;
+                        else if (info.default_stone == -1)
+                            info.default_stone = mat;
+                    }
+                }
+            }
+        }
     }
 }
 

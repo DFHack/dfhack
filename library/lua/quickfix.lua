@@ -27,4 +27,21 @@ function set_entity_race_references()
     print(('quickfix: fixed %d unset entity race reference(s)'):format(count))
 end
 
+-- on reclaimed fortresses DF fails to assign plotinfo.site_id until the
+-- first save, breaking anything that needs the site id; fortress_site is
+-- set at embark, so restore the invariant from it
+-- called from onMapLoad.default.init
+function repair_site_id()
+    local plotinfo = df.global.plotinfo
+    if plotinfo.site_id ~= -1 then
+        return
+    end
+    local site = plotinfo.main.fortress_site
+    if not site then
+        return
+    end
+    plotinfo.site_id = site.id
+    print(('quickfix: repaired unassigned site_id (now %d)'):format(site.id))
+end
+
 return _ENV

@@ -62,6 +62,8 @@ Template for new versions:
 - `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
 - `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
 
+- `orders`: add an inline overlay for viewing and changing manager-order positions
+
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
 - Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused
@@ -91,6 +93,8 @@ Template for new versions:
 - Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``
 
 ## Lua
+
+- `orders`: make work-order list geometry available to Lua overlays
 
 ## Removed
 

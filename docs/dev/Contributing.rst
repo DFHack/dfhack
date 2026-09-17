@@ -60,6 +60,11 @@ Code format
   * Braces placed at original indent level if on their own lines
   * ``#include`` directives should be sorted: C++ libraries first, then DFHack modules, then ``df/`` headers,
     then local includes. Within each category they should be sorted alphabetically.
+  * Avoid naming a type with a name that ends in ``st`` unless the structure is being named intentionally the same as a structure in Dwarf Fortress. If you are defining a new structure, avoid using a name that ends in ``st`` to avoid any risk of confusion.
+
+* For Lua:
+
+  * Identifiers for publicly visible functions and variables should be in ``camelCase``.
 
 General C++ code guidelines
 ---------------------------

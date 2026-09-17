@@ -963,8 +963,11 @@ static df::coord2d biome_offsets[9] = {
     df::coord2d(-1,1), df::coord2d(0,1), df::coord2d(1,1)
 };
 
-inline df::coord2d getBiomeRgnPos(df::coord2d base, int idx)
+df::coord2d Maps::getBiomeRgnPos(df::coord2d base, int idx)
 {
+    if (!world->world_data || idx < 0 || idx >= eBiomeCount)
+        return df::coord2d();
+
     auto r = base + biome_offsets[idx];
 
     int world_width = world->world_data->world_width;

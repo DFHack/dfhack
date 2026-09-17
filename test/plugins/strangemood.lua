@@ -78,7 +78,9 @@ local function pick_moodable_unit()
         if not u.flags1.had_mood and not u.flags1.has_mood and
                 u.mood == df.mood_type.None and not u.job.current_job and
                 u.status2.limbs_grasp_count > 0 and
-                df.profession.attrs[u.profession].moodable then
+                df.profession.attrs[u.profession].moodable and
+                dfhack.units.casteFlagSet(u.race, u.caste,
+                        df.caste_raw_flags.STRANGE_MOODS) then
             return u
         end
     end

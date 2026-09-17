@@ -64,6 +64,7 @@ namespace DFHack {
         // returns true on success or if directory already exists
         DFHACK_EXPORT bool mkdir_recursive(std::filesystem::path path) noexcept;
         DFHACK_EXPORT bool rmdir(std::filesystem::path path) noexcept;
+        DFHACK_EXPORT bool rmdir_recursive(std::filesystem::path path) noexcept;
         DFHACK_EXPORT bool stat(std::filesystem::path path, std::filesystem::file_status& info) noexcept;
         DFHACK_EXPORT bool exists(std::filesystem::path path) noexcept;
         DFHACK_EXPORT bool isfile(std::filesystem::path path) noexcept;

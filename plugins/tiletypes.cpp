@@ -818,7 +818,7 @@ static bool plantTileSupported(df::plant *plant, df::tiletype tt)
 // remaining tiles are left as-is for the user to paint over or collapse
 static void removePlant(df::plant *plant)
 {
-    vector<df::plant *> *vec = NULL;
+    vector<df::plant *> *vec = nullptr;
     switch (plant->type)
     {   // Remove from the per-type vector
         case plant_type::DRY_TREE: vec = &world->plants.tree_dry; break;
@@ -827,29 +827,11 @@ static void removePlant(df::plant *plant)
         case plant_type::WET_PLANT: vec = &world->plants.shrub_wet; break;
     }
     if (vec)
-    {
-        for (size_t i = vec->size(); i-- > 0;)
-        {
-            if ((*vec)[i] == plant)
-            {
-                vec->erase(vec->begin() + i);
-                break;
-            }
-        }
-    }
+        std::erase(*vec, plant);
 
     auto col = Maps::getBlockColumn((plant->pos.x / 48) * 3, (plant->pos.y / 48) * 3);
     if (col)
-    {
-        for (size_t i = col->plants.size(); i-- > 0;)
-        {
-            if (col->plants[i] == plant)
-            {
-                col->plants.erase(col->plants.begin() + i);
-                break;
-            }
-        }
-    }
+        std::erase(col->plants, plant);
 
     if (plant->tree_info)
     {
@@ -858,15 +840,7 @@ static void removePlant(df::plant *plant)
         delete plant->tree_info;
     }
 
-    auto &all = world->plants.all;
-    for (size_t i = all.size(); i-- > 0;)
-    {
-        if (all[i] == plant)
-        {
-            all.erase(all.begin() + i);
-            break;
-        }
-    }
+    std::erase(world->plants.all, plant);
     delete plant;
 }
 
@@ -1165,7 +1139,7 @@ static PaintResult paintArea(MapExtras::MapCache& map, const df::coord& pos1, co
                         for (int16_t y = lo.y; y <= hi.y; y++)
                         {
                             df::coord pos(x, y, z);
-                            if (filter(pos, NULL))
+                            if (filter(pos, nullptr))
                                 removePlantIfUnsupported(pos);
                         }
 

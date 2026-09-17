@@ -69,6 +69,7 @@ Template for new versions:
 - rename the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
 - ``Units::teleport``: update unit occupancy on the full 3x3 footprint of EQUIPMENT units (e.g. wagons) instead of only their center tile
 - Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save
+- `3dveins`: fix crash when a tile's biome cannot be resolved
 - `3dveins`: fix failure on embarks that cross midmap tiles
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
 - `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items

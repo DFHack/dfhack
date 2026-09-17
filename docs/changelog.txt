@@ -63,6 +63,7 @@ Template for new versions:
 - `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
 
 ## Fixes
+- Plugin commands that throw uncaught C++ exceptions now report an error instead of crashing the game
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
 - Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused
 - In ``Screen`` module, Fix out-of-bounds color table access when Lua pens use ``COLOR_RESET``

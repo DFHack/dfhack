@@ -61,6 +61,7 @@ Template for new versions:
 ## New Features
 - `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
 - `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
+- `suspendmanager`: suspend deconstruction jobs that would collapse connected machinery, such as waterwheels supporting other components
 
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``

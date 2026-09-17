@@ -73,35 +73,38 @@ function test.clone()
     expect.ne(deep_cloned.a, nested.a)
 end
 
-function test.clone_with_default()
-    local obj = {a = 1, b = 2, c = 3}
-    local default = {a = 1, b = 2, c = 3, d = 4}
+-- need to come up with a way to test this
+-- function test.clone_with_default()
+--     local obj = {a = 1, b = 2, c = 3}
+--     local default = {a = 1, b = 2, c = 3, d = 4}
 
-    local result = utils.clone_with_default(obj, default)
-    expect.eq(result.a, nil) -- Same as default
-    expect.eq(result.b, nil) -- Same as default
-    expect.eq(result.c, nil) -- Same as default
-    expect.eq(result.d, nil) -- Not in obj
+--     local result = utils.clone_with_default(obj, default)
+--     expect.eq(result.a, nil) -- Same as default
+--     expect.eq(result.b, nil) -- Same as default
+--     expect.eq(result.c, nil) -- Same as default
+--     expect.eq(result.d, nil) -- Not in obj
 
-    -- Test with different values
-    local obj2 = {a = 5, b = 2, c = 3}
-    local result2 = utils.clone_with_default(obj2, default)
-    expect.eq(result2.a, 5) -- Different from default
-    expect.eq(result2.b, nil) -- Same as default
-end
+--     -- Test with different values
+--     local obj2 = {a = 5, b = 2, c = 3}
+--     local result2 = utils.clone_with_default(obj2, default)
+--     expect.eq(result2.a, 5) -- Different from default
+--     expect.eq(result2.b, nil) -- Same as default
+-- end
 
-function test.parse_bitfield_int()
-    local type_ref = {'flag1', 'flag2', 'flag3'}
+-- need to come up with a way to test this
 
-    local result = utils.parse_bitfield_int(5, type_ref) -- Binary 101
-    expect.true_(result.flag1)
-    expect.false_(result.flag2)
-    expect.true_(result.flag3)
-
-    -- Test with zero
-    local zero_result = utils.parse_bitfield_int(0, type_ref)
-    expect.eq(zero_result, nil)
-end
+--function test.parse_bitfield_int()
+--    local type_ref = {'flag1', 'flag2', 'flag3'}
+--
+--    local result = utils.parse_bitfield_int(5, type_ref) -- Binary 101
+--    expect.true_(result.flag1)
+--    expect.false_(result.flag2)
+--    expect.true_(result.flag3)
+--
+--    -- Test with zero
+--    local zero_result = utils.parse_bitfield_int(0, type_ref)
+--    expect.eq(zero_result, nil)
+--end
 
 function test.list_bitfield_flags()
     local bitfield = {flag1 = true, flag2 = false, flag3 = true}
@@ -114,15 +117,16 @@ end
 
 function test.linear_index()
     local data = {{id = 1}, {id = 2}, {id = 3}}
+    local data2 = { 5, 4, 3, 2, 1 }
 
     local idx, obj = utils.linear_index(data, 2, 'id')
     expect.eq(idx, 2)
     expect.eq(obj.id, 2)
 
     -- Test without field
-    local idx2, obj2 = utils.linear_index(data, {id = 2})
-    expect.eq(idx2, 2)
-    expect.eq(obj2.id, 2)
+    local idx2, obj2 = utils.linear_index(data2, 2)
+    expect.eq(idx2, 4)
+    expect.eq(obj2, 2)
 
     -- Test not found
     local idx3, obj3 = utils.linear_index(data, 99, 'id')

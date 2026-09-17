@@ -153,7 +153,8 @@ end
 function test.cb_getfield()
     -- Test cb_getfield method
     local MyClass = defclass(nil)
-    local instance = MyClass({value = 42})
+    local instance = MyClass()
+    instance.value = 42
 
     local getter = instance:cb_getfield('value')
     expect.eq(getter(), 42)
@@ -162,7 +163,8 @@ end
 function test.cb_setfield()
     -- Test cb_setfield method
     local MyClass = defclass(nil)
-    local instance = MyClass({value = 42})
+    local instance = MyClass()
+    instance.value = 42
 
     local setter = instance:cb_setfield('value')
     setter(100)

@@ -77,6 +77,7 @@ Template for new versions:
 - `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 - `tiletypes`: remove plants (including trees) rooted on a tile that is painted into something that cannot host them, so cleared ground no longer regrows floating trees
 - `timestream`: deal properly with units who have breathing difficulties
+- `export-world-map`: fix crash exporting site data for a site whose owner has an undefined race
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
 - `strangemood`: fix crash when ``--id`` is given a non-numeric unit id
 - `suspendmanager`: fix out-of-bounds parameter read when ``set`` is given too few arguments

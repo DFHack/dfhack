@@ -79,6 +79,22 @@ General C++ code guidelines
 * Prefer range for loops to traditional for loops when iterating over a container.
 * Avoid macros when possible; prefer ``constexpr`` variables for constants and functions or templates for code generation.
 
+Marking mitigations for DF bugs
+-------------------------------
+DFHack works around a number of defects in Dwarf Fortress itself. When Bay 12
+fixes one of these defects in a new DF release, the corresponding mitigation
+may need to be adjusted or removed. To keep track of these mitigations, mark
+them with a ``DF-MITIGATION:`` comment where they live in the code, e.g.::
+
+    // DF-MITIGATION: site_id is not assigned on reclaim until the first save
+
+Briefly describe the defect being worked around and include a reference to the
+DF bug or DFHack issue/PR when one exists. The markers are collected by
+:source:`ci/list-df-mitigations.py` into a checklist that is reviewed on every
+new DF release; see `release-process-df-mitigations`_. The ``fix/*`` scripts are
+all DF bug mitigations by definition and are listed automatically, so they do
+not need markers.
+
 .. _contributing-pr-guidelines:
 
 Pull request guidelines

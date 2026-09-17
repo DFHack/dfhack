@@ -531,7 +531,8 @@ void MapExtras::Block::ParseTiles(TileInfo *tiles)
 
                     tt = con->original_tile;
 
-                    // Ice under construction is buggy:
+                    // DF-MITIGATION: DF bug 6330 makes ice under constructions
+                    // behave incorrectly:
                     // http://www.bay12games.com/dwarves/mantisbt/view.php?id=6330
                     // Therefore we just pretend it wasn't there (if it isn't too late),
                     // and overwrite it if/when we write the base layer.

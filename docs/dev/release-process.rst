@@ -6,6 +6,30 @@ This page details the process we follow for beta and stable releases.
 For documentation on the related GitHub workflows, see
 `workflows-release-automation`.
 
+.. _release-process-df-mitigations:
+
+New DF releases
+---------------
+
+When Bay 12 releases a new version of DF, the mitigations we maintain for
+defects in DF itself may need to be adjusted or removed. These mitigations are
+marked with ``DF-MITIGATION:`` comments in the code (see
+`contributing`_ for the convention) and the ``fix/*`` scripts in
+the scripts repo are all mitigations by definition.
+
+To review them:
+
+1. Run ``ci/list-df-mitigations.py`` in a DFHack checkout (with submodules) to
+   generate the checklist. The Watch DF Releases workflow also appends the
+   checklist to its job summary when it detects a new release.
+
+2. For each entry, determine whether the new DF version still exhibits the
+   defect. Some entries can be checked by code inspection; others need a save
+   that reproduces the defect.
+
+3. Remove or adjust mitigations that are no longer needed, and remove their
+   ``DF-MITIGATION`` markers. Keep entries that still apply.
+
 Beta release
 ------------
 

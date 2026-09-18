@@ -12,26 +12,6 @@ local function get_building_filters()
             bld:getType(), bld:getSubtype(), bld:getCustomType())
 end
 
-local function get_do_now()
-    local bld = dfhack.gui.getSelectedBuilding(true)
-    return require('plugins.buildingplan').getDoNow(bld)
-end
-
--- while the construction job is active, the prioritize overlay provides the
--- do_now toggle; only offer ours while the job is suspended (or when the
--- prioritize overlay isn't in play at all)
-local function should_show_do_now()
-    local bld = dfhack.gui.getSelectedBuilding(true)
-    if not bld or #bld.jobs == 0 or bld.jobs[0].flags.suspend then
-        return true
-    end
-    local state = overlay.get_state()
-    local name = 'prioritize.enroute'
-    if not state.db[name] then return true end
-    local cfg = state.config[name]
-    return cfg ~= nil and cfg.enabled == false
-end
-
 --------------------------------
 -- InspectorLine
 --
@@ -113,19 +93,6 @@ function InspectorOverlay:init()
             label='make top priority',
             key='CUSTOM_CTRL_T',
             on_activate=self:callback('make_top_priority'),
-        },
-        widgets.HotkeyLabel{
-            frame={t=13, l=0},
-            label=function()
-                return ('do now: %s'):format(get_do_now() and 'on' or 'off')
-            end,
-            key='CUSTOM_CTRL_N',
-            visible=should_show_do_now,
-            on_activate=function()
-                local buildingplan = require('plugins.buildingplan')
-                local bld = dfhack.gui.getSelectedBuilding(true)
-                buildingplan.setDoNow(bld, not get_do_now())
-            end,
         },
     }
 end

@@ -81,7 +81,6 @@ Template for new versions:
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
 - `strangemood`: fix crash when ``--id`` is given a non-numeric unit id
 - `suspendmanager`: fix out-of-bounds parameter read when ``set`` is given too few arguments
-- `timestream`: deal properly with units who have breathing difficulties
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

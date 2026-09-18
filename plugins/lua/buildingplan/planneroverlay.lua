@@ -208,7 +208,8 @@ local function get_quantity(filter, hollow, bounds)
         end
         return quantity * count
     end
-    return quantity * get_selected_volume(bounds)
+    -- job item quantities are totals for the whole building, not per-tile
+    return quantity
 end
 
 local function cur_building_has_no_area()

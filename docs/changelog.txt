@@ -60,7 +60,7 @@ Template for new versions:
 
 ## New Features
 - `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
-- `buildingplan`: new "Do now" option marks the jobs of subsequently placed buildings as high priority; placed buildings can also be flagged or unflagged from the building's info sheet
+- `buildingplan`: new "Do now" option marks the jobs of subsequently placed buildings as high priority
 - `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
 
 ## Fixes

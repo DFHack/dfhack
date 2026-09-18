@@ -236,7 +236,9 @@ bump the items for this building to the front of their respective queues.
 You can also click on the "do now" button (or hit :kbd:`Ctrl`:kbd:`N`) to flag
 the building's job as high priority, so dwarves will prefer it over their
 regular work once the building is unsuspended. Click again (or hit the key
-again) to remove the flag.
+again) to remove the flag. This option is only shown while the job is
+suspended; once the job becomes active, the `prioritize` overlay provides the
+same toggle as "Make top priority".
 
 Note that each item type and filter configuration has its own queue, so even if
 an item is in queue position 1, there may be other queues that snag the needed

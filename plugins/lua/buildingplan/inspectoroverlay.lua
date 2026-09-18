@@ -12,6 +12,11 @@ local function get_building_filters()
             bld:getType(), bld:getSubtype(), bld:getCustomType())
 end
 
+local function get_do_now()
+    local bld = dfhack.gui.getSelectedBuilding(true)
+    return require('plugins.buildingplan').getDoNow(bld)
+end
+
 --------------------------------
 -- InspectorLine
 --
@@ -93,6 +98,18 @@ function InspectorOverlay:init()
             label='make top priority',
             key='CUSTOM_CTRL_T',
             on_activate=self:callback('make_top_priority'),
+        },
+        widgets.HotkeyLabel{
+            frame={t=13, l=0},
+            label=function()
+                return ('do now: %s'):format(get_do_now() and 'on' or 'off')
+            end,
+            key='CUSTOM_CTRL_N',
+            on_activate=function()
+                local buildingplan = require('plugins.buildingplan')
+                local bld = dfhack.gui.getSelectedBuilding(true)
+                buildingplan.setDoNow(bld, not get_do_now())
+            end,
         },
     }
 end

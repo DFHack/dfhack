@@ -146,6 +146,12 @@ Some building types will have other options available as well, such as a
 selector for how many weapons you want in weapon traps or whether you want to
 only build engraved slabs.
 
+If you want placed buildings to be built as soon as possible, you can toggle
+the "Do now" option (or hit :kbd:`n`). While it is on, the job for each placed
+building is flagged as high priority, so dwarves will prefer it over their
+regular work once the building is unsuspended. The option stays on until you
+toggle it off again, and it is saved with your configuration.
+
 Setting quality and material filters
 ++++++++++++++++++++++++++++++++++++
 
@@ -226,6 +232,11 @@ fulfillment queue. You need to manufacture these items for them to be attached
 to the building. If there is a particular building that you need built ASAP,
 you can click on the "make top priority" button (or hit :kbd:`Ctrl`:kbd:`T`) to
 bump the items for this building to the front of their respective queues.
+
+You can also click on the "do now" button (or hit :kbd:`Ctrl`:kbd:`N`) to flag
+the building's job as high priority, so dwarves will prefer it over their
+regular work once the building is unsuspended. Click again (or hit the key
+again) to remove the flag.
 
 Note that each item type and filter configuration has its own queue, so even if
 an item is in queue position 1, there may be other queues that snag the needed

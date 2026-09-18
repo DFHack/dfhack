@@ -818,6 +818,17 @@ function PlannerOverlay:init()
                 buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'empty', val)
             end,
         },
+        widgets.ToggleHotkeyLabel{
+            view_id='do_now',
+            frame={b=4, l=1, w=22},
+            key='CUSTOM_N',
+            label='Do now:',
+            initial_option=self.state.do_now or false,
+            on_change=function(val)
+                self.state.do_now = val
+                config:write()
+            end,
+        },
         widgets.Panel{
             visible=function() return #get_cur_filters() > 0 end,
             subviews={
@@ -1512,6 +1523,11 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
             end
         end
         buildingplan.addPlannedBuilding(bld)
+        -- the job already exists at designation time; flagging it now means it
+        -- is posted with do_now whenever it gets unsuspended
+        if self.state.do_now then
+            buildingplan.setDoNow(bld, true)
+        end
     end
     buildingplan.scheduleCycle()
     uibs.selection_pos:clear()

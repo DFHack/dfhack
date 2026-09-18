@@ -820,7 +820,9 @@ function PlannerOverlay:init()
         },
         widgets.ToggleHotkeyLabel{
             view_id='do_now',
-            frame={b=4, l=1, w=22},
+            -- b=4 in the left column is the favorites divider row; the first
+            -- free row of the options block is b=3 in the right column
+            frame={b=3, l=24, w=25},
             key='CUSTOM_N',
             label='Do now:',
             initial_option=self.state.do_now or false,

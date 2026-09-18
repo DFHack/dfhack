@@ -16,7 +16,7 @@ local function show_stress_units(category)
                 dfhack.units.getStressCategory(unit) == category then
             table.insert(choices, {
                 text=dfhack.units.getReadableName(unit),
-                unit=unit,
+                unit_id=unit.id,
             })
         end
     end
@@ -31,8 +31,10 @@ local function show_stress_units(category)
         with_filter=true,
         choices=choices,
         on_select=function(_, choice)
-            local pos = choice.unit.pos
-            dfhack.gui.revealInDwarfmodeMap(pos.x, pos.y, pos.z, true, true)
+            -- re-resolve in case the unit died while the list was open
+            local unit = df.unit.find(choice.unit_id)
+            if not unit then return end
+            dfhack.gui.revealInDwarfmodeMap(unit.pos.x, unit.pos.y, unit.pos.z, true, true)
         end,
     }:show()
 end

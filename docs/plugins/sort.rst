@@ -185,3 +185,10 @@ World overlay
 
 Searching is supported for the Artifacts list when viewing the world map (where
 you can initiate raids).
+
+Stress icons overlay
+--------------------
+
+The stress/happiness icons in the top bar are clickable. Clicking an icon opens
+a searchable list of the citizens in that stress category, and selecting a
+citizen from the list centers the map on them.

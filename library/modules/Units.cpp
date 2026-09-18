@@ -774,7 +774,10 @@ df::coord Units::getPosition(df::unit *unit) {
 
 bool Units::teleport(df::unit *unit, df::coord target_pos)
 {   // Make sure source and dest map blocks are valid
-    auto old_occ = Maps::getTileOccupancy(unit->pos);
+    // getPosition resolves through a containing cage, so the source tile is
+    // correct even for caged units
+    const df::coord src_pos = getPosition(unit);
+    auto old_occ = Maps::getTileOccupancy(src_pos);
     auto new_occ = Maps::getTileOccupancy(target_pos);
     if (!old_occ || !new_occ)
         return false;
@@ -803,7 +806,10 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     // game itself updates the flags when a unit leaves a tile
     std::unordered_set<df::coord> grounded_tiles, standing_tiles;
     for (auto other : world->units.active) {
-        if (other == unit)
+        // caged units and in-flight projectiles don't set tile occupancy, so
+        // they must not keep occupancy flags alive on their pos tile
+        if (other == unit || other->flags1.bits.caged ||
+            other->flags1.bits.projectile)
             continue;
         auto &tiles = other->flags1.bits.on_ground ? grounded_tiles : standing_tiles;
         const int other_extent = unit_extent(other);
@@ -813,7 +819,7 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     }
 
     // Clear appropriate occupancy flags at old tile
-    for_each_occupied_tile(unit->pos, [&](df::coord tile, df::tile_occupancy &occ) {
+    for_each_occupied_tile(src_pos, [&](df::coord tile, df::tile_occupancy &occ) {
         if (unit->flags1.bits.on_ground) {
             if (!grounded_tiles.contains(tile))
                 occ.bits.unit_grounded = false;

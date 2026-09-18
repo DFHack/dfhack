@@ -2,8 +2,7 @@ config.mode = 'fortress'
 config.target = 'core'
 
 local function tile_occupancy(pos)
-    local block = dfhack.maps.getTileBlock(pos)
-    return block and block.occupancy[pos.x % 16][pos.y % 16]
+    return select(2, dfhack.maps.getTileFlags(pos))
 end
 
 local function two_citizens()
@@ -21,7 +20,7 @@ local function two_citizens()
     return a, b
 end
 
--- find an allocated tile with no unit occupancy near pos
+-- find an allocated, walkable tile with no unit occupancy near pos
 local function free_tile_near(pos)
     for dx = -4, 4 do for dy = -4, 4 do
         if dx ~= 0 or dy ~= 0 then
@@ -29,11 +28,14 @@ local function free_tile_near(pos)
             local occ = tile_occupancy(other)
             if occ and not occ.unit and not occ.unit_grounded
                     and occ.building == df.tile_building_occ.None
-                    and dfhack.maps.getTileType(other) then
+                    and df.tiletype_shape.attrs[
+                        df.tiletype.attrs[
+                            dfhack.maps.getTileType(other)].shape].walkable then
                 return other
             end
         end
     end end
+    return nil, 'no free tile near the shared tile'
 end
 
 -- recompute the unit occupancy flags of the given tiles from the given
@@ -65,8 +67,9 @@ function test.teleport_keeps_grounded_flag_with_other_grounded_unit()
     expect.ne(nil, b, 'need at least two citizens')
     if not a or not b then return end
 
-    local shared, dest = copyall(b.pos), free_tile_near(b.pos)
-    expect.ne(nil, dest, 'no free tile near the shared tile')
+    local shared = copyall(b.pos)
+    local dest, err = free_tile_near(b.pos)
+    expect.ne(nil, dest, err)
     if not dest then return end
 
     local orig_a_pos, orig_a_ground = copyall(a.pos), a.flags1.on_ground
@@ -104,8 +107,9 @@ function test.teleport_keeps_unit_flag_with_other_standing_unit()
     expect.ne(nil, b, 'need at least two citizens')
     if not a or not b then return end
 
-    local shared, dest = copyall(b.pos), free_tile_near(b.pos)
-    expect.ne(nil, dest, 'no free tile near the shared tile')
+    local shared = copyall(b.pos)
+    local dest, err = free_tile_near(b.pos)
+    expect.ne(nil, dest, err)
     if not dest then return end
 
     local orig_a_pos, orig_a_ground = copyall(a.pos), a.flags1.on_ground

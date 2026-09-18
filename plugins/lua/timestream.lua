@@ -15,7 +15,7 @@ local function do_set(setting_name, arg)
     if setting_name ~= 'fps' or not numarg then
         qerror('must specify setting and value')
     end
-    timestream_setFps(arg)
+    timestream_setFps(numarg)
     print(('set %s to %s'):format(setting_name, timestream_getFps()))
 end
 

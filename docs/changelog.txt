@@ -74,6 +74,7 @@ Template for new versions:
 - `buildingplan`: fix roller material estimate asking for one chain per tile instead of one chain total
 - `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 - `tiletypes`: remove plants (including trees) rooted on a tile that is painted into something that cannot host them, so cleared ground no longer regrows floating trees
+- `gui/quickfort`: show smoothing designations immediately after applying a blueprint
 - `timestream`: deal properly with units who have breathing difficulties
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
 - Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save

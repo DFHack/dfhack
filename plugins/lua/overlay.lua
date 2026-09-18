@@ -486,6 +486,10 @@ local function matches_focus_strings(db_entry, vs_name, vs)
             if dfhack.gui.matchFocusString(fs, vs) then
                 return true
             end
+            local lua_focus = fs:match('^[^/]+/(dfhack/lua/.*)$')
+            if lua_focus and dfhack.gui.matchFocusString(lua_focus) then
+                return true
+            end
         end
     end
     return matched

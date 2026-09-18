@@ -365,6 +365,7 @@ DesignatedOverlay.ATTRS{
         'dwarfmode/Designate/TRACK',
         'dwarfmode/Designate/FORTIFY',
         'dwarfmode/Designate/ERASE',
+        'dwarfmode/dfhack/lua/quickfort',
     },
     default_enabled=true,
     frame={w=0, h=0},

@@ -69,7 +69,7 @@ Template for new versions:
 - In ``Screen`` module, Fix out-of-bounds color table access when Lua pens use ``COLOR_RESET``
 - rename the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
 - ``Units::teleport``: update unit occupancy on the full 3x3 footprint of EQUIPMENT units (e.g. wagons) instead of only their center tile
-- Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save
+- ``Units::teleport``: only clear tile unit occupancy flags when no other unit of the same kind remains on the tile
 - `3dveins`: fix crash when a tile's biome cannot be resolved
 - `3dveins`: fix failure on embarks that cross midmap tiles
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored

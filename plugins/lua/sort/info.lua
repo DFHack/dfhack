@@ -29,6 +29,10 @@ local function get_task_search_key(cri_unit)
             table.insert(result, bld.name)
             local btype = bld:getType()
             if btype == df.building_type.Workshop then
+                -- the display name may differ from the enum item name (e.g.
+                -- Masons -> "Stoneworker's Workshop") and is the raw-defined
+                -- name for custom workshops
+                table.insert(result, dfhack.buildings.getName(bld))
                 table.insert(result, df.workshop_type.attrs[bld.type].name or '')
                 table.insert(result, df.workshop_type[bld.type])
             elseif btype == df.building_type.Furnace then

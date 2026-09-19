@@ -277,12 +277,15 @@ command_result df_showmood (color_ostream &out, vector <string> & parameters)
                     divisor = 150;
                 else if (item->item_type == item_type::CLOTH)
                     divisor = 10000;
+                else if (item->item_type == item_type::THREAD)
+                    divisor = 15000;
                 for (size_t j = 0; j < job->items.size(); j++) {
                     if (job->items[j]->job_item_idx == int32_t(i))
                         count_got += 1;
                 }
-                out.print(", got {} of {}\n", count_got,
-                    item->quantity < divisor ? item->quantity : item->quantity/divisor);
+                // quantity requested is in raw units (150 to a bar, 10000 to a bolt)
+                int needed = (item->quantity + divisor - 1) / divisor;
+                out.print(", got {} of {}\n", count_got, needed);
             }
         }
     }

@@ -76,6 +76,7 @@ Template for new versions:
 - `sort`: fix the Places/Workshops and task searches missing workshops by their current display names (e.g. "Stoneworker's Workshop", "Screw Press")
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
 - `tiletypes`: remove plants (including trees) rooted on a tile that is painted into something that cannot host them, so cleared ground no longer regrows floating trees
+- `gui/quickfort`: show smoothing designations immediately after applying a blueprint
 - `timestream`: deal properly with units who have breathing difficulties
 - Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save
 

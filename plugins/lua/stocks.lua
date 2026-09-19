@@ -6,15 +6,45 @@ local widgets = require('gui.widgets')
 
 local stocks = df.global.game.main_interface.stocks
 
+-- these are only safe to call while the stocks page is open; guard against
+-- stray activations as the page closes
 local function collapse_all()
+    if not stocks.open then return end
     local num_sections = #stocks.current_type_a_expanded
     for idx=0,num_sections-1 do
         stocks.current_type_a_expanded[idx] = false
     end
     stocks.i_height = num_sections * 3
+    -- the collapsed list is much shorter; reset the scroll position so the
+    -- view isn't left pointing past the end of the list
+    stocks.scroll_position_item = 0
+end
+
+local function expand_all()
+    if not stocks.open then return end
+    local num_sections = #stocks.current_type_a_expanded
+    for idx=0,num_sections-1 do
+        stocks.current_type_a_expanded[idx] = true
+    end
+    local num_items = #stocks.current_type_i_list
+    stocks.i_height = (num_items + num_sections) * 3
+end
+
+local function all_collapsed()
+    if not stocks.open then return true end
+    for idx=0,#stocks.current_type_a_expanded-1 do
+        if stocks.current_type_a_expanded[idx] then return false end
+    end
+    return true
+end
+
+local function toggle_all()
+    if not stocks.open then return end
+    if all_collapsed() then expand_all() else collapse_all() end
 end
 
 local function remove_empty()
+    if not stocks.open then return end
     local empties = {}
     for itype,v in ipairs(stocks.storeamount) do
         if v == 0 and stocks.badamount[itype] == 0 then
@@ -26,6 +56,10 @@ local function remove_empty()
     end
     for idx=#stocks.filtered_type_list-1,0,-1 do
         if empties[stocks.filtered_type_list[idx]] then stocks.filtered_type_list:erase(idx) end
+    end
+    -- removing types shortens the type list; keep the scroll position in bounds
+    if stocks.scroll_position_type >= #stocks.filtered_type_list then
+        stocks.scroll_position_type = math.max(0, #stocks.filtered_type_list - 1)
     end
 end
 
@@ -48,9 +82,17 @@ function StocksOverlay:init()
     self:addviews{
         widgets.HotkeyLabel{
             frame={t=0, l=0},
-            label='collapse all',
+            label=function()
+                return all_collapsed() and 'expand all' or 'collapse all'
+            end,
             key='CUSTOM_CTRL_X',
-            on_activate=collapse_all,
+            on_activate=toggle_all,
+        },
+        widgets.HotkeyLabel{
+            frame={t=1, l=0},
+            label='expand all',
+            key='CUSTOM_CTRL_Z',
+            on_activate=expand_all,
         },
         widgets.HotkeyLabel{
             frame={t=2, l=0},

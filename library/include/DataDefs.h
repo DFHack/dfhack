@@ -37,6 +37,7 @@ distribution.
 #include "BitArray.h"
 #include "Export.h"
 #include "Format.h"
+#include "HashUtil.h"
 
 struct lua_State;
 
@@ -143,11 +144,12 @@ namespace DFHack
         static std::vector<const compound_identity*>* top_scope;
 
         const char *dfhack_name;
-        const compound_identity *const scope_parent;
 
         static void ensure_compound_identity_init();
 
     protected:
+        const compound_identity *const scope_parent;
+
         compound_identity(size_t size, TAllocateFn alloc,
             const compound_identity *scope_parent, const char *dfhack_name);
 
@@ -163,6 +165,9 @@ namespace DFHack
         static const std::vector<const compound_identity*> &getTopScope() { return *top_scope; }
 
         static void Init(Core *core);
+
+        bool is_equivalent(const compound_identity* other) const;
+
     };
 
     // Bitfields
@@ -297,6 +302,7 @@ namespace DFHack
         const struct_field_info *fields;
 
         static void ensure_struct_identity_init();
+        struct_identity* parent;
 
     protected:
         virtual void doInit(Core *core) const override;
@@ -317,6 +323,8 @@ namespace DFHack
         bool is_subclass(const struct_identity *subtype) const;
 
         virtual void build_metatable(lua_State *state) const;
+
+        bool is_equivalent(const struct_identity* other) const;
     };
 
     class DFHACK_EXPORT global_identity : public struct_identity {
@@ -356,30 +364,6 @@ namespace DFHack
 
         virtual void build_metatable(lua_State *state) const;
     };
-
-    namespace
-    {
-        template<typename ... Bases>
-        struct overload : Bases ...
-        {
-            using is_transparent = void;
-            using Bases::operator() ...;
-        };
-
-        struct char_pointer_hash
-        {
-            auto operator()(const char* ptr) const noexcept
-            {
-                return std::hash<std::string_view>{}(ptr);
-            }
-        };
-
-        using transparent_string_hash = overload<
-            std::hash<std::string>,
-            std::hash<std::string_view>,
-            char_pointer_hash
-        >;
-    }
 
 #ifdef _MSC_VER
     using virtual_ptr = void*;
@@ -997,6 +981,7 @@ namespace DFHack {
     DFHACK_EXPORT const struct_field_info *find_union_tag(const struct_identity *structure, const struct_field_info *union_field);
 }
 
+
 #define ENUM_ATTR(enum,attr,val) (df::enum_traits<df::enum>::attrs(val).attr)
 #define ENUM_ATTR_STR(enum,attr,val) DFHack::ifnull(ENUM_ATTR(enum,attr,val),"?")
 #define ENUM_KEY_STR(enum,val) (DFHack::enum_item_key<df::enum>(val))
@@ -1013,42 +998,5 @@ namespace DFHack {
  */
 
 // Global object pointers
-#include "df/global_objects.h"
-
 #define DF_GLOBAL_VALUE(name,defval) (df::global::name ? *df::global::name : defval)
 #define DF_GLOBAL_FIELD(name,fname,defval) (df::global::name ? df::global::name->fname : defval)
-
-// A couple of headers that have to be included at once
-#include "df/coord2d.h"
-#include "df/coord.h"
-
-namespace std {
-    template <>
-    struct hash<df::coord> {
-        std::size_t operator()(const df::coord& c) const {
-            return c();
-        }
-    };
-}
-
-template <>
-struct fmt::formatter<df::coord> : fmt::formatter<std::string_view>
-{
-    template <typename FormatContext>
-    auto format(const df::coord& c, FormatContext& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(
-            fmt::format("({}, {}, {})", c.x, c.y, c.z), ctx);
-    }
-};
-
-template <>
-struct fmt::formatter<df::coord2d> : fmt::formatter<std::string_view>
-{
-    template <typename FormatContext>
-    auto format(const df::coord2d& c, FormatContext& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(
-            fmt::format("({}, {})", c.x, c.y), ctx);
-    }
-};

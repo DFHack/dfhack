@@ -238,8 +238,14 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
 
     get_char_field(L, &pen.ch, idx, "ch", 0);
 
+    // COLOR_RESET only has meaning on text consoles; substitute the Pen
+    // defaults so out-of-range colors can't reach the screen buffers
     get_int_field(L, &pen.fg, idx, "fg", 7);
+    if (pen.fg < 0 || pen.fg > COLOR_MAX)
+        pen.fg = COLOR_GREY;
     get_int_field(L, &pen.bg, idx, "bg", 0);
+    if (pen.bg < 0 || pen.bg > COLOR_MAX)
+        pen.bg = COLOR_BLACK;
 
     lua_getfield(L, idx, "bold");
     if (lua_isnil(L, -1))
@@ -253,7 +259,11 @@ static void decode_pen(lua_State *L, Pen &pen, int idx)
     get_int_or_closure_field(L, &pen.tile, idx, "tile", 0);
 
     bool tcolor = get_int_field(L, &pen.tile_fg, idx, "tile_fg", 7);
+    if (pen.tile_fg < 0 || pen.tile_fg > COLOR_MAX)
+        pen.tile_fg = COLOR_GREY;
     tcolor = get_int_field(L, &pen.tile_bg, idx, "tile_bg", 0) || tcolor;
+    if (pen.tile_bg < 0 || pen.tile_bg > COLOR_MAX)
+        pen.tile_bg = COLOR_BLACK;
 
     if (tcolor)
         pen.tile_mode = Pen::TileColor;
@@ -1320,10 +1330,20 @@ static void OpenModule(lua_State *state, const char *mname, const luaL_Reg *reg2
     lua_pop(state, 1);
 }
 
-#define WRAPM(module, function) { #function, df::wrap_function(module::function,true) }
-#define WRAP(function) { #function, df::wrap_function(function,true) }
-#define WRAPN(name, function) { #name, df::wrap_function(function,true) }
+#define WRAPM(module, function) { #function, df::wrap_function(module::function, #function, true) }
+#define WRAP(function) { #function, df::wrap_function(function, #function, true) }
+#define WRAPN(name, function) { #name, df::wrap_function(function, #function, true) }
 #define CWRAP(name, function) { #name, &Lua::CallWithCatchWrapper<function> }
+
+// The _D variants are used to indicate that a wrapped function is deprecated.
+// Deprecated functions will still function but will emit a warning to the DFHack console.
+// This warning is displayed only once for each distinct appearance in a script (by script path and line number).
+// The additional "message" argument is displayed with the warning; it is recommended that this message
+// indicate the recommended replacement or substitution. The message must not be empty.
+
+#define WRAPM_D(module, function, message) { #function, df::wrap_function(module::function, #function, true, message) }
+#define WRAP_D(function, message) { #function, df::wrap_function(function, #function, true, message) }
+#define WRAPN_D(name, function, message) { #name, df::wrap_function(function, #function, true, message) }
 
 /***** DFHack module *****/
 
@@ -2134,6 +2154,8 @@ static const luaL_Reg dfhack_textures_funcs[] = {
 
 /***** Units module *****/
 
+static int getBreathingState(df::unit* u) { return (int)Units::getBreathingState(u); }
+
 static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, isActive),
     WRAPM(Units, isVisible),
@@ -2186,6 +2208,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, hasExtravision),
     WRAPM(Units, isOpposedToLife),
     WRAPM(Units, isBloodsucker),
+    WRAPM(Units, breathes),
     WRAPM(Units, isDwarf),
     WRAPM(Units, isAnimal),
     WRAPM(Units, isMerchant),
@@ -2258,6 +2281,7 @@ static const LuaWrapper::FunctionReg dfhack_units_module[] = {
     WRAPM(Units, unassignTrainer),
     WRAPM(Units, hasUnbailableSocialActivity),
     WRAPM(Units, isJobAvailable),
+    WRAPN(getBreathingState, getBreathingState),
     { NULL, NULL }
 };
 
@@ -2724,6 +2748,18 @@ static int maps_getTileBiomeRgn(lua_State *L)
     return Lua::PushPosXY(L, Maps::getTileBiomeRgn(pos));
 }
 
+static int maps_getCurrentWeather(lua_State *L)
+{
+    if (lua_gettop(L) == 0)
+    {
+        lua_pushinteger(L, Maps::getCurrentWeather());
+    } else {
+        auto pos = CheckCoordXYZ(L, 1, true);
+        lua_pushinteger(L, Maps::getCurrentWeather(pos));
+    }
+    return 1;
+}
+
 static int maps_getPlantAtTile(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
@@ -2830,6 +2866,7 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "getTileFlags", maps_getTileFlags },
     { "getRegionBiome", maps_getRegionBiome },
     { "getTileBiomeRgn", maps_getTileBiomeRgn },
+    { "getCurrentWeather", maps_getCurrentWeather },
     { "getPlantAtTile", maps_getPlantAtTile },
     { "getBiomeType", maps_getBiomeType },
     { "isTileAquifer", maps_isTileAquifer },

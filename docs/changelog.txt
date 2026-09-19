@@ -55,17 +55,44 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `smooth-movement`: smoothly animate creature, item, and vehicle movement in the fortress viewport
+- `export-world-map`: Export world map data for GIS and other external tools.
 
 ## New Features
+- `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
+- `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
 
 ## Fixes
 - `showmood`: bars, cloth, and thread accurately report they need 1 item instead of 3, due to material sizes.
+- Fix broken weather lookup in ``World::ReadCurrentWeather``
+- Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused
+- In ``Screen`` module, Fix out-of-bounds color table access when Lua pens use ``COLOR_RESET``
+- rename the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
+- ``Units::teleport``: update unit occupancy on the full 3x3 footprint of EQUIPMENT units (e.g. wagons) instead of only their center tile
+- `3dveins`: fix failure on embarks that cross midmap tiles
+- `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
+- `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
+- `buildingplan`: fix roller material estimate asking for one chain per tile instead of one chain total
+- `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
+- `tiletypes`: remove plants (including trees) rooted on a tile that is painted into something that cannot host them, so cleared ground no longer regrows floating trees
+- `timestream`: deal properly with units who have breathing difficulties
+- `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
+- Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save
 
 ## Misc Improvements
+- Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type
 
 ## Documentation
+- Document ``autodump-destroy-here``. Remove mention of ``autodump destroy`` able to revert destruction.
 
 ## API
+- Added ``MiscUtils::print_range`` to print ranges with prefix, separator, and suffix
+- Added ``Maps::getSiteTypeName`` to print the sites classification as a string (e.g. "mountain halls")
+- Added ``Maps::addRegionBiomeOffset`` to shift world region coordinate by region_details biome reference
+- Added ``Maps::describeSurroundings`` to get surroundings classification from savagery and evilness
+- Added ``Maps::getCurrentWeather`` to determine the current weather on the map.
+- Added ``Units::breathes`` and ``Units::getBreathingState``
+- Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``
 
 ## Lua
 
@@ -141,6 +168,7 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `stocks`: add button/hotkey for expanding all categories on stocks interface
 - `buildingplan`: add a ``Pull`` button next to linked levers on a building's "Show linked buildings" tab so you can queue a high-priority pull-lever job (or cancel a queued one) without navigating to the lever
 
 ## Fixes

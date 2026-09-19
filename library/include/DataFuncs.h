@@ -174,21 +174,33 @@ namespace df {
     template<typename T>
     class function_identity : public function_identity_base {
         T ptr;
+        const std::string name;
+        const bool depr;
+        const std::string depr_message;
 
     public:
         using wrapper = function_wrapper<T>;
 
-        function_identity(T ptr, bool vararg)
-            : function_identity_base(wrapper::num_args, vararg), ptr(ptr) {};
+        function_identity(T ptr, std::string_view name, bool vararg, std::string_view depr = {})
+            : function_identity_base(wrapper::num_args, vararg), ptr(ptr), name(name), depr(!depr.empty()), depr_message(depr)
+        {};
 
-        virtual void invoke(lua_State *state, int base) const { wrapper::execute(state, base, ptr); }
+        virtual void invoke(lua_State *state, int base) const
+        {
+            if (depr)
+            {
+                DFHack::LuaWrapper::notify_deprecated(state, name, depr_message);
+            }
+            wrapper::execute(state, base, ptr);
+        }
     };
 
     template<typename T>
-    inline function_identity_base *wrap_function(T ptr, bool vararg = false) {
+    inline function_identity_base* wrap_function(T ptr, std::string_view name = {}, bool vararg = false, std::string_view depr = {})
+    {
         using RT = return_type<T>::type;
         if constexpr (isPrimitive<RT>)
-            return new function_identity<T>(ptr, vararg);
+            return new function_identity<T>(ptr, name, vararg, depr);
         else
             return nullptr;
     }}

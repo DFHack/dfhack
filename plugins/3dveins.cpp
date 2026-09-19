@@ -8,6 +8,7 @@
 #include "modules/Random.h"
 #include "modules/World.h"
 
+#include "df/global_objects.h"
 #include "df/inorganic_raw.h"
 #include "df/map_block.h"
 #include "df/world.h"

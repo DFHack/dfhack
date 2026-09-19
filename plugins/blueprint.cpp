@@ -118,10 +118,10 @@ struct blueprint_options {
 };
 static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "help",                   offsetof(blueprint_options, help),                  &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::SUBSTRUCT, "start",                  offsetof(blueprint_options, start),                 &df::coord::_identity,                   0, 0 },
+    { struct_field_info::SUBSTRUCT, "start",                  offsetof(blueprint_options, start),                  df::identity_traits<df::coord>::get(),  0, 0},
     { struct_field_info::PRIMITIVE, "format",                 offsetof(blueprint_options, format),                 df::identity_traits<string>::get(),     0, 0 },
     { struct_field_info::PRIMITIVE, "nometa",                 offsetof(blueprint_options, nometa),                &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::SUBSTRUCT, "playback_start",         offsetof(blueprint_options, playback_start),        &df::coord2d::_identity,                 0, 0 },
+    { struct_field_info::SUBSTRUCT, "playback_start",         offsetof(blueprint_options, playback_start),         df::identity_traits<df::coord2d>::get(),0, 0 },
     { struct_field_info::PRIMITIVE, "playback_start_comment", offsetof(blueprint_options, playback_start_comment), df::identity_traits<string>::get(),     0, 0 },
     { struct_field_info::PRIMITIVE, "split_strategy",         offsetof(blueprint_options, split_strategy),         df::identity_traits<string>::get(),     0, 0 },
     { struct_field_info::PRIMITIVE, "width",                  offsetof(blueprint_options, width),                 &df::identity_traits<int32_t>::identity, 0, 0 },

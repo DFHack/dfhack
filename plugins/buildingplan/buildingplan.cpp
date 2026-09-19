@@ -13,6 +13,7 @@
 
 #include "df/construction_type.h"
 #include "df/burrow.h"
+#include "df/global_objects.h"
 #include "df/item.h"
 #include "df/job_item.h"
 #include "df/organic_mat_category.h"

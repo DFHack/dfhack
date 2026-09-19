@@ -1646,6 +1646,7 @@ Units module
 * ``dfhack.units.hasExtravision(unit)``
 * ``dfhack.units.isOpposedToLife(unit)``
 * ``dfhack.units.isBloodsucker(unit)``
+* ``dfhack.units.breathes(unit)``
 
   Simple checks of caste attributes that can be modified by curses.
 
@@ -2004,6 +2005,13 @@ Units module
 
   Returns a table of the cutoffs used by the above stress level functions.
 
+* ``dfhack.units.getBreathingState(unit)``
+
+  Returns a value indicating the unit's current breathing state, which can be one of the following:
+    * ``CANT`` (0) - The unit cannot breathe and is at risk of suffocation.
+    * ``TROUBLE`` (1) - The unit is having trouble breathing but is not in immediate danger.
+    * ``FINE`` (2) - The unit is breathing normally.
+
 Action Timer API
 ~~~~~~~~~~~~~~~~
 
@@ -2342,7 +2350,8 @@ World module
 
 * ``dfhack.world.ReadCurrentWeather()``
 
-  Returns the current game weather (``df.weather_type``).
+  Returns the current game weather (``df.weather_type``). Deprecated: use
+  ``dfhack.maps.getCurrentWeather()`` instead.
 
 * ``dfhack.world.SetCurrentWeather(weather)``
 
@@ -2440,6 +2449,13 @@ Maps module
 * ``dfhack.maps.getTileBiomeRgn(coords)``, or ``getTileBiomeRgn(x,y,z)``
 
   Returns *x, y* for use with ``getRegionBiome`` and ``getBiomeType``.
+
+* ``dfhack.maps.getCurrentWeather(coords)``
+  ``dfhack.maps.getCurrentWeather(x,y,z)``
+  ``dfhack.maps.getCurrentWeather()``
+
+  Returns the current game weather (``df.weather_type``) at the specified tile
+  or at the center of the map if no argument is provided.
 
 * ``dfhack.maps.getPlantAtTile(pos)``, or ``getPlantAtTile(x,y,z)``
 

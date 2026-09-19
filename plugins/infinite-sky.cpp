@@ -11,6 +11,7 @@
 #include "df/block_column_print_infost.h"
 #include "df/construction.h"
 #include "df/entity_plot_invasion_mapst.h"
+#include "df/global_objects.h"
 #include "df/historical_entity.h"
 #include "df/invasion_info.h"
 #include "df/map_block.h"

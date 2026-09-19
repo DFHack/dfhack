@@ -397,11 +397,20 @@ static bool detect_caravans()
         });
 }
 
+static bool breathing_difficulties()
+{
+    auto& units = df::global::world->units.all;
+    return std::any_of(units.begin(), units.end(), [] (auto u) { return Units::getBreathingState(u) != Units::breathing_state::FINE; });
+}
+
 static int32_t clamp_timeskip(int32_t timeskip) {
     if (timeskip <= 0)
         return 0;
     // timeskip cannot be applied when caravans are loading/unloading because we don't know how to jog that timer
     if (detect_caravans())
+        return 0;
+    // timeskip cannot be applied when any unit has breathing difficulties
+    if (breathing_difficulties())
         return 0;
     int32_t next_tick = *cur_year_tick + 1;
     timeskip = std::min(timeskip, get_next_trigger_year_tick(next_tick) - next_tick);
@@ -418,22 +427,21 @@ static void increment_counter(T *obj, FT T::*field, int32_t timeskip) {
 }
 
 template <typename FT, typename T>
-static void decrement_counter(T *obj, FT T::*field, int32_t timeskip) {
+static void decrement_counter(T *obj, FT T::*field, int32_t timeskip, int32_t floor = 1) {
     if (obj->*field <= 0)
         return;
     // TODO: check for overflow/underflow
     int32_t cur_val = static_cast<int32_t>(obj->*field);
-    obj->*field = static_cast<FT>(std::max(1, cur_val - timeskip));
+    obj->*field = static_cast<FT>(std::max(floor, cur_val - timeskip));
 }
 
 static void adjust_unit_counters(df::unit * unit, int32_t timeskip) {
     auto * c1 = &unit->counters;
+
     decrement_counter(c1, &df::unit::T_counters::job_counter, timeskip);
     decrement_counter(c1, &df::unit::T_counters::swap_counter, timeskip);
-    decrement_counter(c1, &df::unit::T_counters::winded, timeskip);
     decrement_counter(c1, &df::unit::T_counters::stunned, timeskip);
-    decrement_counter(c1, &df::unit::T_counters::unconscious, timeskip);
-    decrement_counter(c1, &df::unit::T_counters::suffocation, timeskip);
+    decrement_counter(c1, &df::unit::T_counters::unconscious, timeskip, 2);
     decrement_counter(c1, &df::unit::T_counters::webbed, timeskip);
     decrement_counter(c1, &df::unit::T_counters::soldier_mood_countdown, timeskip);
     decrement_counter(c1, &df::unit::T_counters::pain, timeskip);

@@ -3,7 +3,7 @@ stockpiles
 
 .. dfhack-tool::
     :summary: Import, export, or modify stockpile settings.
-    :tags: fort design productivity stockpiles
+    :tags: fort design productivity stockpile
 
 Commands act upon the stockpile selected in the UI unless another stockpile
 identifier is specified on the commandline.

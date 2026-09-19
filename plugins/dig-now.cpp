@@ -200,11 +200,11 @@ struct dig_now_options {
     static struct_identity _identity;
 };
 static const struct_field_info dig_now_options_fields[] = {
-    { struct_field_info::PRIMITIVE, "help",             offsetof(dig_now_options, help),             &df::identity_traits<bool>::identity, 0, 0 },
-    { struct_field_info::SUBSTRUCT, "start",            offsetof(dig_now_options, start),            &df::coord::_identity,                0, 0 },
-    { struct_field_info::SUBSTRUCT, "end",              offsetof(dig_now_options, end),              &df::coord::_identity,                0, 0 },
-    { struct_field_info::SUBSTRUCT, "boulder_percents", offsetof(dig_now_options, boulder_percents), &boulder_percent_options::_identity,  0, 0 },
-    { struct_field_info::SUBSTRUCT, "dump_pos",         offsetof(dig_now_options, dump_pos),         &df::coord::_identity,                0, 0 },
+    { struct_field_info::PRIMITIVE, "help",             offsetof(dig_now_options, help),             &df::identity_traits<bool>::identity,   0, 0 },
+    { struct_field_info::SUBSTRUCT, "start",            offsetof(dig_now_options, start),             df::identity_traits<df::coord>::get(), 0, 0 },
+    { struct_field_info::SUBSTRUCT, "end",              offsetof(dig_now_options, end),               df::identity_traits<df::coord>::get(), 0, 0 },
+    { struct_field_info::SUBSTRUCT, "boulder_percents", offsetof(dig_now_options, boulder_percents), &boulder_percent_options::_identity,    0, 0 },
+    { struct_field_info::SUBSTRUCT, "dump_pos",         offsetof(dig_now_options, dump_pos),          df::identity_traits<df::coord>::get(), 0, 0 },
     { struct_field_info::END }
 };
 struct_identity dig_now_options::_identity(sizeof(dig_now_options), &df::allocator_fn<dig_now_options>, NULL, "dig_now_options", NULL, dig_now_options_fields);

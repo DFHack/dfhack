@@ -42,6 +42,7 @@ distribution.
 #include "df/caste_raw.h"
 #include "df/creature_interaction_effect_display_namest.h"
 #include "df/creature_raw.h"
+#include "df/creature_raw_flags.h"
 #include "df/curse_attr_change.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
@@ -89,6 +90,7 @@ distribution.
 #include "df/unit_wound_layerst.h"
 #include "df/world.h"
 #include "df/world_site.h"
+#include "df/wrestle_state_type.h"
 
 #include <algorithm>
 #include <bitset>
@@ -549,6 +551,12 @@ bool Units::isBloodsucker(df::unit *unit) {
     CHECK_NULL_POINTER(unit);
     return IS_ACTIVE_CASTE_FLAG(BLOODSUCKER);
 }
+
+bool Units::breathes(df::unit* unit)
+{
+    CHECK_NULL_POINTER(unit);
+    return !IS_ACTIVE_CASTE_FLAG(NOBREATHE);
+}
 #undef IS_ACTIVE_CASTE_FLAG
 
 bool Units::isDwarf(df::unit *unit) {
@@ -770,12 +778,28 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     if (!old_occ || !new_occ)
         return false;
 
+    // EQUIPMENT units (e.g. wagons) occupy a 3x3 footprint centered on their
+    // position; all other units occupy just their position tile
+    int extent = 0;
+    if (auto craw = df::creature_raw::find(unit->race); craw &&
+        craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON))
+        extent = 1;
+
+    auto for_each_occupied_tile = [&](df::coord center, auto &&fn) {
+        for (int dy = -extent; dy <= extent; ++dy)
+            for (int dx = -extent; dx <= extent; ++dx)
+                if (auto occ = Maps::getTileOccupancy(center.x+dx, center.y+dy, center.z))
+                    fn(*occ);
+    };
+
     // Clear appropriate occupancy flags at old tile
-    if (unit->flags1.bits.on_ground)
-        // This is potentially wrong, but the game will recompute this as needed
-        old_occ->bits.unit_grounded = false;
-    else
-        old_occ->bits.unit = false;
+    for_each_occupied_tile(unit->pos, [&](df::tile_occupancy &occ) {
+        if (unit->flags1.bits.on_ground)
+            // This is potentially wrong, but the game will recompute this as needed
+            occ.bits.unit_grounded = false;
+        else
+            occ.bits.unit = false;
+    });
 
     // Clear unit projectile info
     if (unit->flags1.bits.projectile) {
@@ -794,10 +818,12 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         unit->flags1.bits.on_ground = true;
 
     // Set appropriate occupancy flags at new tile
-    if (unit->flags1.bits.on_ground)
-        new_occ->bits.unit_grounded = true;
-    else
-        new_occ->bits.unit = true;
+    for_each_occupied_tile(target_pos, [&](df::tile_occupancy &occ) {
+        if (unit->flags1.bits.on_ground)
+            occ.bits.unit_grounded = true;
+        else
+            occ.bits.unit = true;
+    });
 
     // Move unit to destination
     unit->pos = target_pos;
@@ -2326,4 +2352,19 @@ df::unit* Units::get_cached_unit_by_global_id(int32_t id, int32_t& index)
     }
     index = binsearch_index(vector, &df::unit::id, id);
     return index != -1 ? vector[index] : nullptr;
+}
+
+// reverse engineered from df's unitst::breathingstate
+Units::breathing_state Units::getBreathingState(df::unit* unit)
+{
+    using enum breathing_state;
+
+    if (!Units::breathes(unit)) return FINE;
+    if (unit->flags1.bits.drowning) return CANT;
+
+    auto& wrestle_items = unit->status.wrestle_items;
+    if (std::any_of(wrestle_items.begin(), wrestle_items.end(), [] (auto w) { return w->advantage < 0 && w->state == df::wrestle_state_type::Choke; }))
+        return CANT;
+
+    return unit->flags2.bits.breathing_problem ? ( unit->flags2.bits.breathing_good ? TROUBLE : CANT ) : FINE;
 }

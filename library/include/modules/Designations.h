@@ -1,5 +1,7 @@
 #pragma once
 
+#include "df/coord.h"
+
 namespace df {
     struct plant;
 }

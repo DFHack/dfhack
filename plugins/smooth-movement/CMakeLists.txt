@@ -1,0 +1,5 @@
+dfhack_plugin(smooth-movement smooth-movement.cpp LINK_LIBRARIES lua)
+if(BUILD_PLUGINS)
+    target_include_directories(smooth-movement PRIVATE ${SDL2_INCLUDE_DIRS})
+endif()
+dfhack_test(smooth-movement-test test_visual_animation_manager.cpp)

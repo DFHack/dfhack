@@ -14,6 +14,7 @@
 #include "VTableInterpose.h"
 
 #include "df/enabler.h"
+#include "df/global_objects.h"
 #include "df/viewscreen_adopt_regionst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_arenast.h"

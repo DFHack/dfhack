@@ -1,6 +1,8 @@
 config.mode = 'fortress'
 config.target = 'filltraffic'
 
+local dwarfmode = require('gui.dwarfmode')
+
 local function find_floor_pos()
     for _, block in ipairs(df.global.world.map.map_blocks) do
         for x = 0, 15 do
@@ -24,11 +26,11 @@ local function traffic_at(x, y, z)
 end
 
 local function set_cursor(x, y, z)
-    df.global.cursor:assign{x=x, y=y, z=z}
+    dwarfmode.setCursorPos(xyz2pos(x, y, z))
 end
 
 local function clear_cursor()
-    df.global.cursor:assign{x=-30000, y=-30000, z=-30000}
+    dwarfmode.clearCursorPos()
 end
 
 function test.fill_high_then_restore()

@@ -39,11 +39,31 @@ local function find_dumpable_item()
     end
 end
 
+local function block_has_item(block, id)
+    for _, bid in ipairs(block.items) do
+        if bid == id then return true end
+    end
+    return false
+end
+
+local function items_sorted(block)
+    local prev = -1
+    for _, id in ipairs(block.items) do
+        if id <= prev then return false end
+        prev = id
+    end
+    return true
+end
+
 function test.dump_moves_item_to_cursor()
     local x, y, z = find_floor_pos()
     local item = find_dumpable_item()
     expect.ne(nil, x, 'test needs a revealed floor tile')
     expect.ne(nil, item, 'test needs a dumpable item')
+    local ix, iy, iz = dfhack.items.getPosition(item)
+    expect.ne(nil, ix, 'test item needs a real position')
+    local old_block = dfhack.maps.getTileBlock(ix, iy, iz)
+    local new_block = dfhack.maps.getTileBlock(x, y, z)
 
     return dfhack.with_finalize(function()
         item.flags.dump = false
@@ -60,6 +80,22 @@ function test.dump_moves_item_to_cursor()
         expect.eq(z, item.pos.z)
         expect.false_(item.flags.dump)
         expect.true_(item.flags.forbid)
+        expect.true_(item.flags.on_ground)
+        expect.false_(item.flags.in_inventory)
+        expect.false_(item.flags.in_building)
+
+        -- the destination tile's occupancy and the map_block item
+        -- vectors must reflect the move
+        local _, occ = dfhack.maps.getTileFlags(x, y, z)
+        expect.true_(occ.item)
+        expect.true_(block_has_item(new_block, item.id),
+            'item id should be in the new map_block.items')
+        if old_block ~= new_block then
+            expect.false_(block_has_item(old_block, item.id),
+                'item id should be removed from the old map_block.items')
+        end
+        expect.true_(items_sorted(new_block),
+            'map_block.items should remain sorted')
     end)
 end
 

@@ -1,6 +1,8 @@
 config.mode = 'fortress'
 config.target = 'changelayer'
 
+local dwarfmode = require('gui.dwarfmode')
+
 function test.no_material_is_wrong_usage()
     local output, status = dfhack.run_command_silent('changelayer')
     expect.eq(CR_WRONG_USAGE, status)
@@ -15,9 +17,9 @@ end
 
 function test.no_cursor_is_failure()
     return dfhack.with_finalize(function()
-        df.global.cursor:assign{x=-30000, y=-30000, z=-30000}
+        dwarfmode.clearCursorPos()
     end, function()
-        df.global.cursor:assign{x=-30000, y=-30000, z=-30000}
+        dwarfmode.clearCursorPos()
         local output, status = dfhack.run_command_silent('changelayer',
             'GRANITE')
         expect.eq(CR_FAILURE, status)

@@ -1,6 +1,8 @@
 config.mode = 'fortress'
 config.target = 'changeitem'
 
+local dwarfmode = require('gui.dwarfmode')
+
 local function find_floor_item_pos()
     for _, item in ipairs(df.global.world.items.other.IN_PLAY) do
         if not item.flags.hidden and not item.flags.in_inventory
@@ -12,11 +14,11 @@ local function find_floor_item_pos()
 end
 
 local function set_cursor(x, y, z)
-    df.global.cursor:assign{x=x, y=y, z=z}
+    dwarfmode.setCursorPos(xyz2pos(x, y, z))
 end
 
 local function clear_cursor()
-    df.global.cursor:assign{x=-30000, y=-30000, z=-30000}
+    dwarfmode.clearCursorPos()
 end
 
 function test.here_quality_changes_item()

@@ -1,6 +1,8 @@
 config.mode = 'fortress'
 config.target = 'liquids'
 
+local dwarfmode = require('gui.dwarfmode')
+
 local function find_floor_pos()
     for _, block in ipairs(df.global.world.map.map_blocks) do
         for x = 0, 15 do
@@ -20,15 +22,15 @@ local function find_floor_pos()
 end
 
 local function set_cursor(x, y, z)
-    df.global.cursor:assign{x=x, y=y, z=z}
+    dwarfmode.setCursorPos(xyz2pos(x, y, z))
 end
 
 local function clear_cursor()
-    df.global.cursor:assign{x=-30000, y=-30000, z=-30000}
+    dwarfmode.clearCursorPos()
 end
 
 local function des_at(x, y, z)
-    return dfhack.maps.getTileBlock(x, y, z).designation[x % 16][y % 16]
+    return select(1, dfhack.maps.getTileFlags(x, y, z))
 end
 
 function test.liquids_here_spawns_magma_at_cursor()

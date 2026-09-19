@@ -1,6 +1,8 @@
 config.mode = 'fortress'
 config.target = 'createitem'
 
+local dwarfmode = require('gui.dwarfmode')
+
 local function find_floor_pos()
     for _, block in ipairs(df.global.world.map.map_blocks) do
         for x = 0, 15 do
@@ -19,17 +21,19 @@ local function find_floor_pos()
 end
 
 local function set_cursor(x, y, z)
-    df.global.cursor:assign{x=x, y=y, z=z}
+    dwarfmode.setCursorPos(xyz2pos(x, y, z))
 end
 
 local function clear_cursor()
-    df.global.cursor:assign{x=-30000, y=-30000, z=-30000}
+    dwarfmode.clearCursorPos()
 end
 
 local function count_items_at(x, y, z)
     local n = 0
     for _, item in ipairs(df.global.world.items.other.IN_PLAY) do
-        if item.pos.x == x and item.pos.y == y and item.pos.z == z then
+        -- item.pos is unreliable for contained items; getPosition is not
+        local ix, iy, iz = dfhack.items.getPosition(item)
+        if ix == x and iy == y and iz == z then
             n = n + 1
         end
     end
@@ -54,7 +58,8 @@ function test.creates_item_at_cursor()
         expect.eq(before + 1, count_items_at(x, y, z))
 
         for _, item in ipairs(df.global.world.items.other.IN_PLAY) do
-            if item.pos.x == x and item.pos.y == y and item.pos.z == z
+            local ix, iy, iz = dfhack.items.getPosition(item)
+            if ix == x and iy == y and iz == z
                     and item:getType() == df.item_type.BOULDER then
                 created = item
                 break

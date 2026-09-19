@@ -655,7 +655,9 @@ bool GeoBiome::init_layers()
 GeoLayer *VeinGenerator::mapLayer(Block *pb, df::coord2d tile)
 {
     int idx = pb->biomeIndexAt(tile);
-    GeoBiome *biome = biome_by_idx.at(idx);
+    if (idx < 0)
+        return NULL;
+    GeoBiome *biome = biome_by_idx[idx];
 
     int lidx = pb->layerIndexAt(tile);
     if (unsigned(lidx) >= biome->layers.size())

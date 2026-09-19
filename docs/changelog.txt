@@ -68,6 +68,8 @@ Template for new versions:
 - In ``Screen`` module, Fix out-of-bounds color table access when Lua pens use ``COLOR_RESET``
 - rename the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
 - ``Units::teleport``: update unit occupancy on the full 3x3 footprint of EQUIPMENT units (e.g. wagons) instead of only their center tile
+- Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save
+- `3dveins`: fix crash when a tile's biome cannot be resolved
 - `3dveins`: fix failure on embarks that cross midmap tiles
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
 - `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
@@ -75,8 +77,10 @@ Template for new versions:
 - `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 - `tiletypes`: remove plants (including trees) rooted on a tile that is painted into something that cannot host them, so cleared ground no longer regrows floating trees
 - `timestream`: deal properly with units who have breathing difficulties
+- `export-world-map`: fix crash exporting site data for a site whose owner has an undefined race
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
-- Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save
+- `strangemood`: fix crash when ``--id`` is given a non-numeric unit id
+- `suspendmanager`: fix out-of-bounds parameter read when ``set`` is given too few arguments
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

@@ -65,11 +65,10 @@ local BASE_ITEMS = {
 }
 
 -- every item_type a fey/secretive/possessed mood may ever request
--- (bars/wafers and cloth are the only dimensional demands; thread is
--- never requested)
+-- (bars/wafers, cloth, and thread are the only dimensional demands)
 local ALLOWED_ITEM_TYPES = {
     BOULDER=true, WOOD=true, SKIN_TANNED=true, CLOTH=true, BAR=true,
-    ROUGH=true, SMALLGEM=true, BLOCKS=true, NONE=true,
+    ROUGH=true, SMALLGEM=true, BLOCKS=true, NONE=true, THREAD=true,
 }
 
 -- mirrors isUnitMoodable in strangemood.cpp, plus "not already mid-job"
@@ -115,6 +114,9 @@ local function check_dimension(item, expected_type)
     elseif item.item_type == df.item_type.CLOTH then
         expect.eq(10000, item.min_dimension)
         expect.eq(0, item.quantity % 10000)
+    elseif item.item_type == df.item_type.THREAD then
+        expect.eq(15000, item.min_dimension)
+        expect.eq(0, item.quantity % 15000)
     else
         expect.eq(-1, item.min_dimension)
     end
@@ -136,7 +138,6 @@ function test.base_items_match_skill()
                 'base item for ' .. skill)
             check_dimension(base)
             for _, item in ipairs(job.job_items.elements) do
-                expect.ne(df.item_type.THREAD, item.item_type)
                 expect.true_(ALLOWED_ITEM_TYPES[df.item_type[item.item_type]],
                     ('unexpected %s item for %s'):format(
                         df.item_type[item.item_type], skill))

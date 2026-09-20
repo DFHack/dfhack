@@ -240,59 +240,45 @@ namespace df
     };
 
     template<class T>
-    class integer_identity : public number_identity_base {
+    class number_identity : public number_identity_base {
     public:
-        integer_identity(const char *name) : number_identity_base(sizeof(T), name) {}
+        number_identity(const char *name) : number_identity_base(sizeof(T), name) {}
 
-        virtual bool isInteger() const override { return true; }
+        virtual bool isInteger() const override {
+            return std::is_integral_v<T> && !std::is_same_v<T, bool>;
+        }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override {
-            lua_pushinteger(state, int64_t(*(T*)ptr));
+            if constexpr (std::is_same_v<T, bool>) {
+                lua_pushboolean(state, *(T*)ptr);
+            } else if constexpr (std::is_floating_point_v<T>) {
+                lua_pushnumber(state, double(*(T*)ptr));
+            } else {
+                lua_pushinteger(state, int64_t(*(T*)ptr));
+            }
         }
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override {
-            int is_num = 0;
-            auto value = lua_tointegerx(state, val_index, &is_num);
-            if (!is_num)
-                DFHack::LuaWrapper::field_error(state, fname_idx, "integer expected", "write");
-            *(T*)ptr = T(value);
-        }
-    };
+            if constexpr (std::is_same_v<T, bool>) {
+                char *pb = (char*)ptr;
 
-    template<class T>
-    class float_identity : public number_identity_base {
-    public:
-        float_identity(const char *name) : number_identity_base(sizeof(T), name) {}
+                if (lua_isboolean(state, val_index) || lua_isnil(state, val_index))
+                    *pb = lua_toboolean(state, val_index);
+                else if (lua_isnumber(state, val_index))
+                    *pb = lua_tointeger(state, val_index);
+                else
+                    DFHack::LuaWrapper::field_error(state, fname_idx, "boolean or number expected", "write");
+            } else if constexpr (std::is_floating_point_v<T>) {
+                if (!lua_isnumber(state, val_index))
+                    DFHack::LuaWrapper::field_error(state, fname_idx, "number expected", "write");
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override {
-            lua_pushnumber(state, double(*(T*)ptr));
-        }
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override {
-            if (!lua_isnumber(state, val_index))
-                DFHack::LuaWrapper::field_error(state, fname_idx, "number expected", "write");
-
-            *(T*)ptr = T(lua_tonumber(state, val_index));
-        }
-    };
-
-    template<typename T>
-    class bool_identity : public primitive_identity<T> {
-    public:
-        bool_identity() : primitive_identity<T>() {};
-
-        const std::string getFullName() const override { return "bool"; }
-
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override {
-            lua_pushboolean(state, *(T*)ptr);
-        }
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override {
-            char *pb = (char*)ptr;
-
-            if (lua_isboolean(state, val_index) || lua_isnil(state, val_index))
-                *pb = lua_toboolean(state, val_index);
-            else if (lua_isnumber(state, val_index))
-                *pb = lua_tointeger(state, val_index);
-            else
-                DFHack::LuaWrapper::field_error(state, fname_idx, "boolean or number expected", "write");
+                *(T*)ptr = T(lua_tonumber(state, val_index));
+            } else {
+                int is_num = 0;
+                auto value = lua_tointegerx(state, val_index, &is_num);
+                if (!is_num)
+                    DFHack::LuaWrapper::field_error(state, fname_idx, "integer expected", "write");
+                *(T*)ptr = T(value);
+            }
         }
     };
 
@@ -618,15 +604,12 @@ namespace df
     };
 #endif
 
-#define NUMBER_IDENTITY_TRAITS(category, type) \
+#define NUMBER_IDENTITY_TRAITS(type) \
     template<> struct DFHACK_EXPORT identity_traits<type> { \
         static const bool is_primitive = true; \
-        static const category##_identity<type> identity; \
-        static const category##_identity<type> *get() { return &identity; } \
+        static const number_identity<type> identity; \
+        static const number_identity<type> *get() { return &identity; } \
     };
-
-#define INTEGER_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(integer, type)
-#define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type)
 
 // the space after the use of "type" in OPAQUE_IDENTITY_TRAITS is _required_
 // without it the macro generates a syntax error when type is a template specification
@@ -637,20 +620,21 @@ namespace df
         static const opaque_identity *get() { return &identity; } \
     };
 
-    INTEGER_IDENTITY_TRAITS(char);
-    INTEGER_IDENTITY_TRAITS(signed char);
-    INTEGER_IDENTITY_TRAITS(unsigned char);
-    INTEGER_IDENTITY_TRAITS(short);
-    INTEGER_IDENTITY_TRAITS(unsigned short);
-    INTEGER_IDENTITY_TRAITS(int);
-    INTEGER_IDENTITY_TRAITS(unsigned int);
-    INTEGER_IDENTITY_TRAITS(long);
-    INTEGER_IDENTITY_TRAITS(unsigned long);
-    INTEGER_IDENTITY_TRAITS(long long);
-    INTEGER_IDENTITY_TRAITS(unsigned long long);
-    INTEGER_IDENTITY_TRAITS(wchar_t);
-    FLOAT_IDENTITY_TRAITS(float);
-    FLOAT_IDENTITY_TRAITS(double);
+    NUMBER_IDENTITY_TRAITS(char);
+    NUMBER_IDENTITY_TRAITS(signed char);
+    NUMBER_IDENTITY_TRAITS(unsigned char);
+    NUMBER_IDENTITY_TRAITS(short);
+    NUMBER_IDENTITY_TRAITS(unsigned short);
+    NUMBER_IDENTITY_TRAITS(int);
+    NUMBER_IDENTITY_TRAITS(unsigned int);
+    NUMBER_IDENTITY_TRAITS(long);
+    NUMBER_IDENTITY_TRAITS(unsigned long);
+    NUMBER_IDENTITY_TRAITS(long long);
+    NUMBER_IDENTITY_TRAITS(unsigned long long);
+    NUMBER_IDENTITY_TRAITS(wchar_t);
+    NUMBER_IDENTITY_TRAITS(float);
+    NUMBER_IDENTITY_TRAITS(double);
+    NUMBER_IDENTITY_TRAITS(bool);
     OPAQUE_IDENTITY_TRAITS(wchar_t*);
     OPAQUE_IDENTITY_TRAITS(std::condition_variable);
     OPAQUE_IDENTITY_TRAITS(std::fstream);
@@ -676,12 +660,6 @@ namespace df
         }
     };
 #endif
-
-    template<> struct DFHACK_EXPORT identity_traits<bool> {
-        static const bool is_primitive = true;
-        static const bool_identity<bool> identity;
-        static const bool_identity<bool> *get() { return &identity; }
-    };
 
     template<> struct DFHACK_EXPORT identity_traits<std::string> {
         static const bool is_primitive = true;
@@ -723,8 +701,6 @@ namespace df
     };
 
 #undef NUMBER_IDENTITY_TRAITS
-#undef INTEGER_IDENTITY_TRAITS
-#undef FLOAT_IDENTITY_TRAITS
 #undef OPAQUE_IDENTITY_TRAITS
 
     // Container declarations

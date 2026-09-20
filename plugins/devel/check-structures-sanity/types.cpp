@@ -156,13 +156,13 @@ bool CheckedStructure::has_type_at_offset(const CheckedStructure & type, size_t 
 
 const type_identity *Checker::wrap_in_stl_ptr_vector(const type_identity *base)
 {
-    static std::map<const type_identity *, std::unique_ptr<const df::stl_ptr_vector_identity>> wrappers;
+    static std::map<const type_identity *, std::unique_ptr<const df::type_identity_for<std::vector<void*>>>> wrappers;
     auto it = wrappers.find(base);
     if (it != wrappers.end())
     {
         return it->second.get();
     }
-    return (wrappers[base] = std::make_unique<df::stl_ptr_vector_identity>(base, nullptr)).get();
+    return (wrappers[base] = std::make_unique<df::type_identity_for<std::vector<void*>>>(base, nullptr)).get();
 }
 
 const type_identity *Checker::wrap_in_pointer(const type_identity *base)

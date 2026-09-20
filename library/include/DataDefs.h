@@ -77,6 +77,8 @@ namespace DFHack
 
     using TAllocateFn = void *(*)(void*, const void*);
 
+    template<typename T> class type_identity_for;
+
     class DFHACK_EXPORT type_identity {
         const size_t size;
 
@@ -327,15 +329,13 @@ namespace DFHack
         bool is_equivalent(const struct_identity* other) const;
     };
 
-    class DFHACK_EXPORT global_identity : public struct_identity {
-    public:
-        global_identity(const struct_field_info *fields)
-            : struct_identity(0,NULL,NULL,"global",NULL,fields) {}
-
-        virtual identity_type type() const override { return IDTYPE_GLOBAL; }
-
-        virtual void build_metatable(lua_State *state) const override;
+    // Placeholder type wrapped by the identity of the global "object",
+    // which does not correspond to an actual C++ type.
+    struct global_object {
+        using df_identity_base = struct_identity;
     };
+
+    using global_identity = type_identity_for<global_object>;
 
     class DFHACK_EXPORT union_identity : public struct_identity {
     public:
@@ -516,6 +516,7 @@ inline int linear_index(const DFHack::enum_list_attr<const char*> &lst, const st
 
 namespace df
 {
+    using DFHack::type_identity_for;
     using DFHack::type_identity;
     using DFHack::compound_identity;
     using DFHack::virtual_ptr;
@@ -603,8 +604,16 @@ namespace df
     template<class T>
     struct identity_traits {};
 
+    /*
+     * Compound types (structs, unions, classes) are recognized either by an
+     * explicit df_identity_base typedef that derives from compound_identity
+     * (emitted by the code generator), or by the _identity member itself
+     * being convertible to a compound identity.
+     */
     template<class T>
-        requires requires () { { &T::_identity } -> std::convertible_to<const compound_identity*>; }
+        requires (requires { typename T::df_identity_base; } &&
+                  std::is_base_of_v<compound_identity, typename T::df_identity_base>) ||
+                 requires () { { &T::_identity } -> std::convertible_to<const compound_identity*>; }
     struct identity_traits<T> {
         static const bool is_primitive = false;
         static const compound_identity *get() { return &T::_identity; }

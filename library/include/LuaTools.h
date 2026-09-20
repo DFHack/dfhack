@@ -38,6 +38,7 @@ distribution.
 #include "Core.h"
 #include "ColorText.h"
 #include "DataDefs.h"
+#include "DataIdentity.h"
 
 #include "df/coord.h"
 #include "df/coord2d.h"

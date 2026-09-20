@@ -17,6 +17,13 @@ contains both a pointer to the C++ object itself and a pointer to a ``type_ident
 by that pointer. Note that the userdata object does not own the objects pointed to by these pointers, and the Lua engine is
 never responsible for managing their lifetimes.
 
+Most identities are instances of the single template class ``type_identity_for<T>``, which wraps the C++ type ``T``.
+``type_identity_for<T>`` derives from a runtime base class selected at compile time by inspection of ``T``
+(via ``std::is_enum``, ``std::is_pointer``, ``std::is_arithmetic``, container traits, and similar checks),
+and implements the applicable virtual methods with ``if constexpr`` dispatch on the properties of ``T``.
+A type can override the selection by defining a ``df_identity_base`` typedef naming the desired base;
+the code generator emits this typedef for all generated compound types.
+
 ``type_identity`` defines the following public methods:
 
 - ``byte_size``: returns the size, in bytes, of the object held
@@ -33,7 +40,7 @@ never responsible for managing their lifetimes.
 
 - ``is_primitive``: indicates that ``lua_read`` will store a *copy* of the object on the Lua stack instead of a non-owning reference to it. Used for types that have direct representations in Lua: numbers, booleans, simple strings
 
-- ``is_constructed``: indicates that creating a C++ instance of this type requires the use of a possibly nontrivial constructor. A type identity that is both primitive and constructed cannot be inserted into a container. At the moment the only type identity that is both primitive and constructed is ``stl_string_identity``, which wraps the C++ ``std::string`` type.
+- ``is_constructed``: indicates that creating a C++ instance of this type requires the use of a possibly nontrivial constructor. A type identity that is both primitive and constructed cannot be inserted into a container. At the moment the only type identity that is both primitive and constructed is ``type_identity_for<std::string>``, which wraps the C++ ``std::string`` type.
 
 - ``is_container``: indicates that the type is a container and thus implements the methods specific to ``container_identity``
 
@@ -41,7 +48,9 @@ never responsible for managing their lifetimes.
 
 - ``copy``: copy the object at ``src`` onto ``tgt``. This uses ``memmove`` for primitive types, and C++ copy-assignment (when possible) for other types
 
-There are plethora of subclasses of ``type_identity``:
+The identity class tree is divided into two layers: the *runtime base classes*, which are ordinary
+(non-template) classes used for polymorphic dispatch, and the single leaf template ``type_identity_for<T>``,
+which derives from the appropriate runtime base for the C++ type ``T`` that it wraps:
 
 * ``type_identity`` the abstract base class of all type identities
 
@@ -55,15 +64,11 @@ There are plethora of subclasses of ``type_identity``:
 
       * ``struct_identity`` C++ ``class`` or ``structure``
 
-        * ``global_identity`` holds, as a quasiobject, handles for all of the known Dwarf Fortress program-scope static objects as if they were fields of an object called ``global``
-
         * ``union_identity`` C++ ``union``
 
         * ``other_vectors_identity`` special-case identity for the categorized subvectors of objects that appears in many of Dwarf Fortress's "handler" classes
 
         * ``virtual_identity`` polymorphic C++ ``class`` or ``structure`` having a virtual table to handle virtual dispatch
-
-      * ``stl_string_identity`` ``std::string``
 
       * ``xlsx_file_handle_identity`` special case
 
@@ -71,29 +76,13 @@ There are plethora of subclasses of ``type_identity``:
 
     * ``container_identity`` "containers" generally. note that all container types are homogeneous (that is, the elements of the container must all be of the same type). abstract base class
 
-      * ``bit_container_identity`` for containers that contain bools stored one element per *bit* (rather than per byte)
-
-        * ``bit_array_identity`` Dwarf Fortress's ``BitArray`` type
-
-        * ``stl_bit_vector_identity`` ``std::vector<bool>``
+      * ``bit_container_identity`` for containers that contain bools stored one element per *bit* (rather than per byte); also provides the ``get_item``/``set_item`` virtual interface
 
       * ``buffer_container_identity`` C++ static arrays and raw C++ pointers acting as arrays of unspecified bound
 
-      * ``enum_list_attr_identity`` (template) metaobject with metadata about a C++ enumeration; may also include additional metadata
-
       * ``ptr_container_identity`` containers that contain pointers
 
-        *  ``stl_ptr_container_identity`` containers that are of the form ``std::vector<T*>`` for some ``T``
-
-      * ``ro_stl_container_identity`` (template) "read only containers"
-
-        * ``ro_stl_assoc_container_identity`` (template) ``std::map<KT,T>`` and ``std::unordered_map<KT,T>``
-
-      * ``stl_container_identity`` (template) ``std::vector<T>`` where ``T`` is *not* a pointer (and not ``bool``)
-
     * ``opaque_identity`` opaque wrapper around any type, provides no functionality
-
-    * ``stl_string_identity`` ``std::string``
 
   * ``function_identity_base`` abstract base class for ``function_identity``
 
@@ -101,19 +90,19 @@ There are plethora of subclasses of ``type_identity``:
 
   * ``primitive_identity_base`` abstract base class for primitive types. primitive types are fixed-length objects with no internal structure
 
-    * ``primitive_identity`` (template) wrapper around a primitive type
+    * ``number_identity_base`` abstract base for numeric types (and ``bool``); provides the ``isInteger`` discriminator
 
-      * ``ptr_string_identity`` (template) C-style (``char *``) string
+    * ``pointer_identity_base`` abstract base class for pointer identities; provides ``getTarget``
 
-    * ``number_identity_base`` abstract base for numeric types (and ``bool``)
+* ``type_identity_for<T>`` the leaf template that provides the identity of the C++ type ``T``. Its runtime
+  base class is selected by compile-time inspection of ``T`` (or by a ``df_identity_base`` typedef in ``T``),
+  covering all of the categories above: enums, bitfields, structs, unions, virtual classes, numbers,
+  pointers, C strings, ``std::string``, ``std::filesystem::path``, static arrays, STL containers,
+  ``BitArray``, ``DfArray``, ``enum_list_attr``, ``std::vector<T*>``, bit containers, and opaque types.
 
-      * ``number_identity`` (template) ``bool``, ``int8_t``, ``int16_t``, ``int32_t``, ``size_t``, ``float``, ``double``, etc. lots of these
-
-    * ``pointer_identity_base`` abstract base class for pointer identities
-
-      * ``pointer_identity`` (template) any arbitrary C++ pointer (other than ``char*``)
-
-Types marked with "(template)" are C++ template types, all parameterized by a single typename.
+  ``global_identity`` is an alias for ``type_identity_for<global_object>``, where ``global_object`` is an
+  empty placeholder type: it holds, as a quasiobject, handles for all of the known Dwarf Fortress
+  program-scope static objects as if they were fields of an object called ``global``.
 
 Type identity object lifetime and mutability
 ============================================

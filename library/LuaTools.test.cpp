@@ -46,6 +46,9 @@ TEST_F(LuaPushTest, PushVectorPointer)
 {
     std::vector<int32_t> vec{ 7, 42 };
 
+    // NB: intentionally avoids df_object-constrained calls below so that
+    // this test still compiles if the constraint regresses - in that case
+    // Push() falls back to the bool overload and the checks fail at runtime
     DFHack::Lua::Push(L, &vec);
 
     // the pointer must arrive as a wrapped DF object, not a boolean
@@ -53,7 +56,8 @@ TEST_F(LuaPushTest, PushVectorPointer)
     ASSERT_EQ(DFHack::Lua::OBJ_REF, DFHack::Lua::IsDFObject(L, -1));
 
     // the same pointer must round-trip back out of Lua
-    EXPECT_EQ(&vec, DFHack::Lua::GetDFObject<std::vector<int32_t>>(L, -1));
+    EXPECT_EQ(static_cast<void*>(&vec),
+        DFHack::Lua::GetDFObject(L, df::identity_traits<std::vector<int32_t>>::get(), -1));
 
     // and the pushed object must behave like the vector it wraps
     lua_len(L, -1);

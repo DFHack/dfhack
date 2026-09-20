@@ -44,12 +44,12 @@ namespace df {
     FLOAT_IDENTITY_TRAITS(float);
     FLOAT_IDENTITY_TRAITS(double);
 
-    const bool_identity identity_traits<bool>::identity;
+    const bool_identity<bool> identity_traits<bool>::identity;
     const stl_string_identity identity_traits<std::string>::identity;
     const path_identity identity_traits<std::filesystem::path>::identity;
-    const ptr_string_identity identity_traits<char*>::identity;
-    const ptr_string_identity identity_traits<const char*>::identity;
-    const pointer_identity identity_traits<void*>::identity;
+    const ptr_string_identity<char*> identity_traits<char*>::identity;
+    const ptr_string_identity<const char*> identity_traits<const char*>::identity;
+    const pointer_identity<void*> identity_traits<void*>::identity(NULL);
     const stl_ptr_vector_identity identity_traits<std::vector<void*> >::identity;
     const stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
     const bit_array_identity identity_traits<BitArray<int> >::identity;

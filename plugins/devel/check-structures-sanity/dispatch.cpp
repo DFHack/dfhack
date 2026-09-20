@@ -303,14 +303,12 @@ void Checker::dispatch_primitive(const QueueItem & item, const CheckedStructure 
             FAIL("invalid value for bool: " << int(val));
         }
     }
-    else if (dynamic_cast<const df::integer_identity_base *>(cs.identity))
+    else if (auto num_identity = dynamic_cast<const df::number_identity_base *>(cs.identity))
     {
-        check_possible_pointer(item, cs);
+        if (num_identity->isInteger())
+            check_possible_pointer(item, cs);
 
         // TODO check ints?
-    }
-    else if (dynamic_cast<const df::float_identity_base *>(cs.identity))
-    {
         // TODO check floats?
     }
     else
@@ -336,7 +334,7 @@ void Checker::dispatch_pointer(const QueueItem & item, const CheckedStructure & 
     }
 
     QueueItem target_item(item.path, target_ptr);
-    auto target = static_cast<const pointer_identity *>(cs.identity)->getTarget();
+    auto target = static_cast<const pointer_identity_base *>(cs.identity)->getTarget();
     if (!target)
     {
         check_unknown_pointer(target_item);

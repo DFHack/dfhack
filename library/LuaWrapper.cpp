@@ -283,8 +283,8 @@ bool LuaWrapper::is_type_compatible(lua_State *state, const type_identity *type1
     {
     case IDTYPE_POINTER:
         return is_type_compatible(state,
-                                  ((const pointer_identity*)type1)->getTarget(), 0,
-                                  ((const pointer_identity*)type2)->getTarget(), 0,
+                                  ((const pointer_identity_base*)type1)->getTarget(), 0,
+                                  ((const pointer_identity_base*)type2)->getTarget(), 0,
                                   exact_equal);
         break;
 

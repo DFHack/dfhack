@@ -61,24 +61,24 @@ namespace DFHack
         function_identity_base(int num_args, bool vararg = false)
             : type_identity(0), num_args(num_args), vararg(vararg) {};
 
-        virtual identity_type type() const { return IDTYPE_FUNCTION; }
+        virtual identity_type type() const override { return IDTYPE_FUNCTION; }
 
         int getNumArgs() const { return num_args; }
         bool adjustArgs() const { return vararg; }
 
-        const std::string getFullName() const { return "function"; }
+        const std::string getFullName() const override { return "function"; }
 
         virtual void invoke(lua_State *state, int base) const = 0;
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
     class DFHACK_EXPORT primitive_identity : public type_identity {
     public:
         primitive_identity(size_t size) : type_identity(size) {};
 
-        virtual identity_type type() const { return IDTYPE_PRIMITIVE; }
+        virtual identity_type type() const override { return IDTYPE_PRIMITIVE; }
     };
 
     class DFHACK_EXPORT opaque_identity : public constructed_identity {
@@ -88,8 +88,8 @@ namespace DFHack
         opaque_identity(size_t size, TAllocateFn alloc, const std::string &name)
           : constructed_identity(size, alloc), name(name) {};
 
-        virtual const std::string getFullName() const { return name; }
-        virtual identity_type type() const { return IDTYPE_OPAQUE; }
+        virtual const std::string getFullName() const override { return name; }
+        virtual identity_type type() const override { return IDTYPE_OPAQUE; }
     };
 
     class DFHACK_EXPORT pointer_identity : public primitive_identity {
@@ -99,17 +99,17 @@ namespace DFHack
         pointer_identity(const type_identity *target = NULL)
             : primitive_identity(sizeof(void*)), target(target) {};
 
-        virtual identity_type type() const { return IDTYPE_POINTER; }
+        virtual identity_type type() const override { return IDTYPE_POINTER; }
 
         const type_identity *getTarget() const { return target; }
 
-        const std::string getFullName() const;
+        const std::string getFullName() const override;
 
         static void lua_read(lua_State *state, int fname_idx, void *ptr, const type_identity *target);
         static void lua_write(lua_State *state, int fname_idx, void *ptr, const type_identity *target, int val_index);
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
     class DFHACK_EXPORT container_identity : public constructed_identity {
@@ -121,12 +121,12 @@ namespace DFHack
         container_identity(size_t size, const TAllocateFn alloc, const type_identity *item, const enum_identity *ienum = NULL)
             : constructed_identity(size, alloc), item(item), ienum(ienum) {};
 
-        virtual identity_type type() const { return IDTYPE_CONTAINER; }
+        virtual identity_type type() const override { return IDTYPE_CONTAINER; }
 
-        const std::string getFullName() const { return getFullName(item); }
+        const std::string getFullName() const override { return getFullName(item); }
 
-        virtual void build_metatable(lua_State *state) const;
-        virtual bool isContainer() const { return true; }
+        virtual void build_metatable(lua_State *state) const override;
+        virtual bool isContainer() const override { return true; }
 
         const type_identity *getItemType() const { return item; }
         const type_identity *getIndexEnumType() const { return ienum; }
@@ -162,15 +162,15 @@ namespace DFHack
             const type_identity *item, const enum_identity *ienum = NULL)
             : container_identity(size, alloc, item, ienum) {};
 
-        virtual identity_type type() const { return IDTYPE_PTR_CONTAINER; }
+        virtual identity_type type() const override { return IDTYPE_PTR_CONTAINER; }
 
-        const std::string getFullName(const type_identity *item) const;
+        const std::string getFullName(const type_identity *item) const override;
 
-        virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx) const;
-        virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx) const;
-        virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index) const;
+        virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx) const override;
+        virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx) const override;
+        virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index) const override;
 
-        virtual bool lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index) const;
+        virtual bool lua_insert2(lua_State *state, int fname_idx, void *ptr, int idx, int val_index) const override;
     };
 
     class DFHACK_EXPORT bit_container_identity : public container_identity {
@@ -178,16 +178,16 @@ namespace DFHack
         bit_container_identity(size_t size, TAllocateFn alloc, const enum_identity *ienum = NULL)
             : container_identity(size, alloc, NULL, ienum) {};
 
-        virtual identity_type type() const { return IDTYPE_BIT_CONTAINER; }
+        virtual identity_type type() const override { return IDTYPE_BIT_CONTAINER; }
 
-        const std::string getFullName(const type_identity *item) const;
+        const std::string getFullName(const type_identity *item) const override;
 
-        virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx) const;
-        virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx) const;
-        virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index) const;
+        virtual void lua_item_reference(lua_State *state, int fname_idx, void *ptr, int idx) const override;
+        virtual void lua_item_read(lua_State *state, int fname_idx, void *ptr, int idx) const override;
+        virtual void lua_item_write(lua_State *state, int fname_idx, void *ptr, int idx, int val_index) const override;
 
     protected:
-        virtual void *item_pointer(const type_identity *, void *, int) const { return NULL; }
+        virtual void *item_pointer(const type_identity *, void *, int) const override { return NULL; }
 
         virtual bool get_item(void *ptr, int idx) const = 0;
         virtual void set_item(void *ptr, int idx, bool val) const = 0;
@@ -211,10 +211,10 @@ namespace df
         number_identity_base(size_t size, const char *name)
             : primitive_identity(size), name(name) {};
 
-        const std::string getFullName() const { return name; }
+        const std::string getFullName() const override { return name; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const = 0;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const = 0;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override = 0;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override = 0;
 
     };
 
@@ -223,8 +223,8 @@ namespace df
         integer_identity_base(size_t size, const char *name)
             : number_identity_base(size, name) {}
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
 
     protected:
         virtual int64_t read(void *ptr) const = 0;
@@ -236,8 +236,8 @@ namespace df
         float_identity_base(size_t size, const char *name)
             : number_identity_base(size, name) {}
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
 
     protected:
         virtual double read(void *ptr) const = 0;
@@ -250,8 +250,8 @@ namespace df
         integer_identity(const char *name) : integer_identity_base(sizeof(T), name) {}
 
     protected:
-        virtual int64_t read(void *ptr) const { return int64_t(*(T*)ptr); }
-        virtual void write(void *ptr, int64_t val) const { *(T*)ptr = T(val); }
+        virtual int64_t read(void *ptr) const override { return int64_t(*(T*)ptr); }
+        virtual void write(void *ptr, int64_t val) const override { *(T*)ptr = T(val); }
     };
 
     template<class T>
@@ -260,28 +260,28 @@ namespace df
         float_identity(const char *name) : float_identity_base(sizeof(T), name) {}
 
     protected:
-        virtual double read(void *ptr) const { return double(*(T*)ptr); }
-        virtual void write(void *ptr, double val) const { *(T*)ptr = T(val); }
+        virtual double read(void *ptr) const override { return double(*(T*)ptr); }
+        virtual void write(void *ptr, double val) const override { *(T*)ptr = T(val); }
     };
 
     class DFHACK_EXPORT bool_identity : public primitive_identity {
     public:
         bool_identity() : primitive_identity(sizeof(bool)) {};
 
-        const std::string getFullName() const { return "bool"; }
+        const std::string getFullName() const override { return "bool"; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
     class DFHACK_EXPORT ptr_string_identity : public primitive_identity {
     public:
         ptr_string_identity() : primitive_identity(sizeof(char*)) {};
 
-        const std::string getFullName() const { return "char*"; }
+        const std::string getFullName() const override { return "char*"; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
     class DFHACK_EXPORT stl_string_identity : public DFHack::constructed_identity {
@@ -290,14 +290,14 @@ namespace df
             : constructed_identity(sizeof(std::string), &allocator_fn<std::string>)
         {};
 
-        const std::string getFullName() const { return "string"; }
+        const std::string getFullName() const override { return "string"; }
 
-        virtual DFHack::identity_type type() const { return DFHack::IDTYPE_PRIMITIVE; }
+        virtual DFHack::identity_type type() const override { return DFHack::IDTYPE_PRIMITIVE; }
 
-        virtual bool isPrimitive() const { return true; }
+        virtual bool isPrimitive() const override { return true; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
     class DFHACK_EXPORT path_identity : public DFHack::constructed_identity {
@@ -307,14 +307,14 @@ namespace df
         {
         };
 
-        const std::string getFullName() const { return "path"; }
+        const std::string getFullName() const override { return "path"; }
 
-        virtual DFHack::identity_type type() const { return DFHack::IDTYPE_PRIMITIVE; }
+        virtual DFHack::identity_type type() const override { return DFHack::IDTYPE_PRIMITIVE; }
 
-        virtual bool isPrimitive() const { return true; }
+        virtual bool isPrimitive() const override { return true; }
 
-        virtual void lua_read(lua_State* state, int fname_idx, void* ptr) const;
-        virtual void lua_write(lua_State* state, int fname_idx, void* ptr, int val_index) const;
+        virtual void lua_read(lua_State* state, int fname_idx, void* ptr) const override;
+        virtual void lua_write(lua_State* state, int fname_idx, void* ptr, int val_index) const override;
     };
 
 
@@ -331,32 +331,32 @@ namespace df
             : ptr_container_identity(sizeof(container), &df::allocator_fn<container>, item, ienum)
         {};
 
-        const std::string getFullName(const type_identity *item) const {
+        const std::string getFullName(const type_identity *item) const override {
             return "vector" + ptr_container_identity::getFullName(item);
         }
 
-        virtual DFHack::identity_type type() const { return DFHack::IDTYPE_STL_PTR_VECTOR; }
+        virtual DFHack::identity_type type() const override { return DFHack::IDTYPE_STL_PTR_VECTOR; }
 
-        virtual bool resize(void *ptr, int size) const {
+        virtual bool resize(void *ptr, int size) const override {
             (*(container*)ptr).resize(size);
             return true;
         }
-        virtual bool erase(void *ptr, int size) const {
+        virtual bool erase(void *ptr, int size) const override {
             auto &ct = *(container*)ptr;
             ct.erase(ct.begin()+size);
             return true;
         }
-        virtual bool insert(void *ptr, int idx, void *item) const {
+        virtual bool insert(void *ptr, int idx, void *item) const override {
             auto &ct = *(container*)ptr;
             ct.insert(ct.begin()+idx, item);
             return true;
         }
 
     protected:
-        virtual int item_count(void *ptr, CountMode) const {
+        virtual int item_count(void *ptr, CountMode) const override {
             return (int)((container*)ptr)->size();
         };
-        virtual void *item_pointer(const type_identity *, void *ptr, int idx) const {
+        virtual void *item_pointer(const type_identity *, void *ptr, int idx) const override {
             return &(*(container*)ptr)[idx];
         }
     };
@@ -375,18 +375,18 @@ namespace df
             : container_identity(0, NULL, item, ienum), size(size)
         {}
 
-        size_t byte_size() const { return getItemType()->byte_size()*size; }
+        size_t byte_size() const override { return getItemType()->byte_size()*size; }
 
-        const std::string getFullName(const type_identity *item) const;
+        const std::string getFullName(const type_identity *item) const override;
         int getSize() const { return size; }
 
-        virtual DFHack::identity_type type() const { return DFHack::IDTYPE_BUFFER; }
+        virtual DFHack::identity_type type() const override { return DFHack::IDTYPE_BUFFER; }
 
         static const buffer_container_identity base_instance;
 
     protected:
-        virtual int item_count(void *ptr, CountMode) const { return size; }
-        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const {
+        virtual int item_count(void *ptr, CountMode) const override { return size; }
+        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
             return ((uint8_t*)ptr) + idx * item->byte_size();
         }
     };
@@ -401,25 +401,25 @@ namespace df
             : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
         {}
 
-        const std::string getFullName(const type_identity *item) const {
+        const std::string getFullName(const type_identity *item) const override {
             return name + container_identity::getFullName(item);
         }
 
-        virtual bool resize(void *ptr, int size) const {
+        virtual bool resize(void *ptr, int size) const override {
             (*(T*)ptr).resize(size);
             return true;
         }
-        virtual bool erase(void *ptr, int size) const {
+        virtual bool erase(void *ptr, int size) const override {
             auto &ct = *(T*)ptr;
             ct.erase(ct.begin()+size);
             return true;
         }
-        virtual bool insert(void *ptr, int idx, void *item) const {
+        virtual bool insert(void *ptr, int idx, void *item) const override {
             auto &ct = *(T*)ptr;
             ct.insert(ct.begin()+idx, *(typename T::value_type*)item);
             return true;
         }
-        virtual bool lua_insert2(lua_State* state, int fname_idx, void* ptr, int idx, int val_index) const
+        virtual bool lua_insert2(lua_State* state, int fname_idx, void* ptr, int idx, int val_index) const override
         {
             using VT = typename T::value_type;
             VT tmp{};
@@ -440,8 +440,8 @@ namespace df
         }
 
     protected:
-        virtual int item_count(void *ptr, CountMode) const { return (int)((T*)ptr)->size(); }
-        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const {
+        virtual int item_count(void *ptr, CountMode) const override { return (int)((T*)ptr)->size(); }
+        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
             return &(*(T*)ptr)[idx];
         }
     };
@@ -457,18 +457,18 @@ namespace df
             : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
         {}
 
-        const std::string getFullName(const type_identity *item) const {
+        const std::string getFullName(const type_identity *item) const override {
             return name + container_identity::getFullName(item);
         }
 
-        virtual bool is_readonly() const { return true; }
-        virtual bool resize(void *ptr, int size) const { return false; }
-        virtual bool erase(void *ptr, int size) const { return false; }
-        virtual bool insert(void *ptr, int idx, void *item) const { return false; }
+        virtual bool is_readonly() const override { return true; }
+        virtual bool resize(void *ptr, int size) const override { return false; }
+        virtual bool erase(void *ptr, int size) const override { return false; }
+        virtual bool insert(void *ptr, int idx, void *item) const override { return false; }
 
     protected:
-        virtual int item_count(void *ptr, CountMode) const { return (int)((T*)ptr)->size(); }
-        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const {
+        virtual int item_count(void *ptr, CountMode) const override { return (int)((T*)ptr)->size(); }
+        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
             auto iter = (*(T*)ptr).begin();
             for (; idx > 0; idx--) ++iter;
             return (void*)&*iter;
@@ -512,23 +512,23 @@ namespace df
             : bit_container_identity(sizeof(container), &allocator_fn<container>, ienum)
         {}
 
-        virtual const std::string getFullName(const type_identity *item) const {
+        virtual const std::string getFullName(const type_identity *item) const override {
             return "BitArray<>";
         }
 
-        virtual bool resize(void *ptr, int size) const {
+        virtual bool resize(void *ptr, int size) const override {
             ((container*)ptr)->resize((size+7)/8);
             return true;
         }
 
     protected:
-        virtual int item_count(void *ptr, CountMode cnt) const {
+        virtual int item_count(void *ptr, CountMode cnt) const override {
             return cnt == COUNT_LEN ? ((container*)ptr)->size() * 8 : -1;
         }
-        virtual bool get_item(void *ptr, int idx) const {
+        virtual bool get_item(void *ptr, int idx) const override {
             return ((container*)ptr)->is_set(idx);
         }
-        virtual void set_item(void *ptr, int idx, bool val) const {
+        virtual void set_item(void *ptr, int idx, bool val) const override {
             ((container*)ptr)->set(idx, val);
         }
     };
@@ -542,23 +542,23 @@ namespace df
             : bit_container_identity(sizeof(container), &df::allocator_fn<container>, ienum)
         {}
 
-        const std::string getFullName(const type_identity *item) const {
+        const std::string getFullName(const type_identity *item) const override {
             return "vector" + bit_container_identity::getFullName(item);
         }
 
-        virtual bool resize(void *ptr, int size) const {
+        virtual bool resize(void *ptr, int size) const override {
             (*(container*)ptr).resize(size);
             return true;
         }
 
     protected:
-        virtual int item_count(void *ptr, CountMode) const {
+        virtual int item_count(void *ptr, CountMode) const override {
             return (int)((container*)ptr)->size();
         }
-        virtual bool get_item(void *ptr, int idx) const {
+        virtual bool get_item(void *ptr, int idx) const override {
             return (*(container*)ptr)[idx];
         }
-        virtual void set_item(void *ptr, int idx, bool val) const {
+        virtual void set_item(void *ptr, int idx, bool val) const override {
             (*(container*)ptr)[idx] = val;
         }
     };
@@ -573,15 +573,15 @@ namespace df
             : container_identity(sizeof(container), NULL, item, NULL)
         {}
 
-        const std::string getFullName(const type_identity *item) const {
+        const std::string getFullName(const type_identity *item) const override {
             return "enum_list_attr" + container_identity::getFullName(item);
         }
 
     protected:
-        virtual int item_count(void *ptr, CountMode cm) const {
+        virtual int item_count(void *ptr, CountMode cm) const override {
             return cm == COUNT_WRITE ? 0 : (int)((container*)ptr)->size;
         }
-        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const {
+        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
             return (void*)&((container*)ptr)->items[idx];
         }
     };

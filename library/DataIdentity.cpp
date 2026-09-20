@@ -22,9 +22,9 @@
 
 namespace df {
 #define NUMBER_IDENTITY_TRAITS(type, name) \
-    const number_identity<type> identity_traits<type>::identity(name);
+    const type_identity_for<type> identity_traits<type>::identity(name);
 #define OPAQUE_IDENTITY_TRAITS_NAME(name, ...) \
-    const opaque_identity identity_traits<__VA_ARGS__ >::identity(sizeof(__VA_ARGS__), allocator_fn<__VA_ARGS__ >, name)
+    const type_identity_for<__VA_ARGS__ > identity_traits<__VA_ARGS__ >::identity(sizeof(__VA_ARGS__), allocator_fn<__VA_ARGS__ >, name)
 #define OPAQUE_IDENTITY_TRAITS(...) OPAQUE_IDENTITY_TRAITS_NAME(#__VA_ARGS__, __VA_ARGS__ )
 
     NUMBER_IDENTITY_TRAITS(char,               "char");
@@ -42,14 +42,14 @@ namespace df {
     NUMBER_IDENTITY_TRAITS(float,              "float");
     NUMBER_IDENTITY_TRAITS(double,             "double");
     NUMBER_IDENTITY_TRAITS(bool,               "bool");
-    const stl_string_identity identity_traits<std::string>::identity;
-    const path_identity identity_traits<std::filesystem::path>::identity;
-    const ptr_string_identity<char*> identity_traits<char*>::identity;
-    const ptr_string_identity<const char*> identity_traits<const char*>::identity;
-    const pointer_identity<void*> identity_traits<void*>::identity(NULL);
-    const stl_ptr_vector_identity identity_traits<std::vector<void*> >::identity;
-    const stl_bit_vector_identity identity_traits<std::vector<bool> >::identity;
-    const bit_array_identity identity_traits<BitArray<int> >::identity;
+    const type_identity_for<std::string> identity_traits<std::string>::identity;
+    const type_identity_for<std::filesystem::path> identity_traits<std::filesystem::path>::identity;
+    const type_identity_for<char*> identity_traits<char*>::identity;
+    const type_identity_for<const char*> identity_traits<const char*>::identity;
+    const type_identity_for<void*> identity_traits<void*>::identity(nullptr);
+    const type_identity_for<std::vector<void*> > identity_traits<std::vector<void*> >::identity;
+    const type_identity_for<std::vector<bool> > identity_traits<std::vector<bool> >::identity;
+    const type_identity_for<BitArray<int> > identity_traits<BitArray<int> >::identity;
 
     OPAQUE_IDENTITY_TRAITS(std::condition_variable);
     OPAQUE_IDENTITY_TRAITS(std::fstream);
@@ -67,6 +67,6 @@ namespace df {
 
     const buffer_container_identity buffer_container_identity::base_instance;
 
-    const stl_container_identity<std::vector<int32_t> > stl_vector_int32_t_identity("vector", identity_traits<int32_t>::get());
-    const stl_container_identity<std::vector<int16_t> > stl_vector_int16_t_identity("vector", identity_traits<int16_t>::get());
+    const type_identity_for<std::vector<int32_t> > stl_vector_int32_t_identity("vector", identity_traits<int32_t>::get());
+    const type_identity_for<std::vector<int16_t> > stl_vector_int16_t_identity("vector", identity_traits<int16_t>::get());
 }

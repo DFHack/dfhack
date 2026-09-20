@@ -115,30 +115,14 @@ void enum_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int va
     base_type->lua_write(state, fname_idx, ptr, val_index);
 }
 
-void df::stl_string_identity::lua_read(lua_State *state, int fname_idx, void *ptr) const
-{
-    auto pstr = (std::string*)ptr;
-    lua_pushlstring(state, pstr->data(), pstr->size());
-}
-
-void df::stl_string_identity::lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const
-{
-    size_t size;
-    const char *bytes = lua_tolstring(state, val_index, &size);
-    if (!bytes)
-        field_error(state, fname_idx, "string expected", "write");
-
-    *(std::string*)ptr = std::string(bytes, size);
-}
-
-void df::path_identity::lua_read(lua_State* state, int fname_idx, void* ptr) const
+void DFHack::lua_read_path(lua_State* state, void* ptr)
 {
     auto ppath = (std::filesystem::path*)ptr;
     auto str = DFHack::Filesystem::as_string(*ppath);
     lua_pushlstring(state, (char*)str.data(), str.size());
 }
 
-void df::path_identity::lua_write(lua_State* state, int fname_idx, void* ptr, int val_index) const
+void DFHack::lua_write_path(lua_State* state, int fname_idx, void* ptr, int val_index)
 {
     size_t size;
     const char* bytes = lua_tolstring(state, val_index, &size);
@@ -1713,10 +1697,10 @@ void other_vectors_identity::build_metatable(lua_State *state) const
     SetPtrMethods(state, base+1, base+2);
 }
 
-void global_identity::build_metatable(lua_State *state) const
+void DFHack::build_global_metatable(lua_State *state, const struct_identity *id)
 {
     int base = lua_gettop(state);
-    MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex, meta_struct_next, true);
+    MakeFieldMetatable(state, id, meta_global_index, meta_global_newindex, meta_struct_next, true);
     SetStructMethod(state, base+1, base+2, meta_global_field_reference, "_field");
     SetPtrMethods(state, base+1, base+2);
 }

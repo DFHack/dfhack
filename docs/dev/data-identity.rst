@@ -103,15 +103,11 @@ There are plethora of subclasses of ``type_identity``:
 
     * ``primitive_identity`` (template) wrapper around a primitive type
 
-      * ``bool_identity`` (template) ``bool``
-
       * ``ptr_string_identity`` (template) C-style (``char *``) string
 
-    * ``number_identity_base`` abstract base for numeric types
+    * ``number_identity_base`` abstract base for numeric types (and ``bool``)
 
-      * ``float_identity`` (template) ``double`` and ``float``
-
-      * ``integer_identity`` (template) ``int8_t``, ``int16_t``, ``int32_t``, ``size_t``, etc. lots of these
+      * ``number_identity`` (template) ``bool``, ``int8_t``, ``int16_t``, ``int32_t``, ``size_t``, ``float``, ``double``, etc. lots of these
 
     * ``pointer_identity_base`` abstract base class for pointer identities
 

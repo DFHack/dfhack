@@ -225,7 +225,7 @@ namespace df
      * Unlike other container identities the item count is fixed,
      * so instances can also serve as the identity of ad-hoc buffers.
      */
-    class buffer_container_identity : public container_identity {
+    class DFHACK_EXPORT buffer_container_identity : public container_identity {
         int size;
 
     public:

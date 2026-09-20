@@ -139,13 +139,13 @@ namespace LuaWrapper {
     /**
     * Report an error while accessing a field (index = field name).
     */
-    [[noreturn]] void field_error(lua_State *state, int index, const char *err, const char *mode);
+    [[noreturn]] DFHACK_EXPORT void field_error(lua_State *state, int index, const char *err, const char *mode);
 
     /*
      * If is_method is true, these use UPVAL_TYPETABLE to save a hash lookup.
      */
     void push_object_internal(lua_State *state, const type_identity *type, void *ptr, bool in_method = true);
-    void *get_object_internal(lua_State *state, const type_identity *type, int val_index, bool exact_type, bool in_method = true);
+    DFHACK_EXPORT void *get_object_internal(lua_State *state, const type_identity *type, int val_index, bool exact_type, bool in_method = true);
 
     void push_adhoc_pointer(lua_State *state, void *ptr, const type_identity *target);
 

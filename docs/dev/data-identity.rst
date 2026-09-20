@@ -99,23 +99,23 @@ There are plethora of subclasses of ``type_identity``:
 
     * ``function_identity`` (template) wrapper around a C++ function that can be invoked from Lua
 
-  * ``primitive_identity`` wrapper around a primitive type. primitive types are fixed-length objects with no internal structure
+  * ``primitive_identity_base`` abstract base class for primitive types. primitive types are fixed-length objects with no internal structure
 
-    * ``bool_identity`` ``bool``
+    * ``primitive_identity`` (template) wrapper around a primitive type
+
+      * ``bool_identity`` (template) ``bool``
+
+      * ``ptr_string_identity`` (template) C-style (``char *``) string
 
     * ``number_identity_base`` abstract base for numeric types
 
-      * ``float_identity_base`` abstract base for floating point types
+      * ``float_identity`` (template) ``double`` and ``float``
 
-        * ``float_identity`` (template) ``double`` and ``float``
+      * ``integer_identity`` (template) ``int8_t``, ``int16_t``, ``int32_t``, ``size_t``, etc. lots of these
 
-      * ``integer_identity_base`` abstract base for integral types
+    * ``pointer_identity_base`` abstract base class for pointer identities
 
-        * ``integer_identity`` (template) ``int8_t``, ``int16_t``, ``int32_t``, ``size_t``, etc. lots of these
-
-    * ``pointer_identity`` any arbitrary C++ pointer (other than ``char*``)
-
-    * ``ptr_string_identity`` C-style (``char *``) string
+      * ``pointer_identity`` (template) any arbitrary C++ pointer (other than ``char*``)
 
 Types marked with "(template)" are C++ template types, all parameterized by a single typename.
 

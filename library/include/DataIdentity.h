@@ -950,7 +950,7 @@ namespace df
     template<class T, size_t sz>
     inline const container_identity* identity_traits<std::array<T,sz>>::get()
     {
-        static const type_identity_for<std::array<T,sz> > identity(int(sz), df::identity_traits<T>::get());
+        static const type_identity_for<std::array<T,sz> > identity(static_cast<int>(sz), df::identity_traits<T>::get());
         return &identity;
     }
 

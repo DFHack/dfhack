@@ -64,6 +64,7 @@ Template for new versions:
 - `getplants`: new ``--dry-run`` option counts affected plants without designating, and new ``--brewable``/``--edible``/``--oil``/``--cloth``/``--dye`` trait filters restrict the selection by plant use
 
 ## Fixes
+- `showmood`: bars, cloth, and thread accurately report they need 1 item instead of 3, due to material sizes.
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
 - Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused
 - In ``Screen`` module, Fix out-of-bounds color table access when Lua pens use ``COLOR_RESET``

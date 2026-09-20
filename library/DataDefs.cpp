@@ -272,7 +272,7 @@ bool struct_identity::is_equivalent(const struct_identity* other) const
     return true;
 }
 
-const std::string pointer_identity::getFullName() const
+const std::string pointer_identity_base::getFullName() const
 {
     return (target ? target->getFullName() : std::string("void")) + "*";
 }

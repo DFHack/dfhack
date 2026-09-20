@@ -29,6 +29,7 @@ distribution.
 #include <optional>
 #include <string>
 #include <set>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>
@@ -74,11 +75,18 @@ namespace DFHack
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
-    class DFHACK_EXPORT primitive_identity : public type_identity {
-    public:
-        primitive_identity(size_t size) : type_identity(size) {};
+    class DFHACK_EXPORT primitive_identity_base : public type_identity {
+    protected:
+        primitive_identity_base(size_t size) : type_identity(size) {};
 
+    public:
         virtual identity_type type() const override { return IDTYPE_PRIMITIVE; }
+    };
+
+    template<typename T>
+    class primitive_identity : public primitive_identity_base {
+    public:
+        primitive_identity() : primitive_identity_base(sizeof(T)) {};
     };
 
     class DFHACK_EXPORT opaque_identity : public constructed_identity {
@@ -92,12 +100,12 @@ namespace DFHack
         virtual identity_type type() const override { return IDTYPE_OPAQUE; }
     };
 
-    class DFHACK_EXPORT pointer_identity : public primitive_identity {
+    class DFHACK_EXPORT pointer_identity_base : public primitive_identity_base {
         const type_identity *target;
 
     public:
-        pointer_identity(const type_identity *target = NULL)
-            : primitive_identity(sizeof(void*)), target(target) {};
+        pointer_identity_base(const type_identity *target = NULL)
+            : primitive_identity_base(sizeof(void*)), target(target) {};
 
         virtual identity_type type() const override { return IDTYPE_POINTER; }
 
@@ -110,6 +118,15 @@ namespace DFHack
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
+    };
+
+    template<typename T>
+        requires std::is_pointer_v<T>
+    class pointer_identity : public pointer_identity_base {
+    public:
+        pointer_identity()
+            : pointer_identity_base(df::identity_traits<std::remove_pointer_t<T>>::get()) {};
+        explicit pointer_identity(const type_identity *target) : pointer_identity_base(target) {};
     };
 
     class DFHACK_EXPORT container_identity : public constructed_identity {
@@ -197,91 +214,105 @@ namespace DFHack
 namespace df
 {
     using DFHack::function_identity_base;
+    using DFHack::primitive_identity_base;
     using DFHack::primitive_identity;
     using DFHack::opaque_identity;
+    using DFHack::pointer_identity_base;
     using DFHack::pointer_identity;
     using DFHack::container_identity;
     using DFHack::ptr_container_identity;
     using DFHack::bit_container_identity;
 
-    class DFHACK_EXPORT number_identity_base : public primitive_identity {
+    class DFHACK_EXPORT number_identity_base : public primitive_identity_base {
         const char *name;
 
     public:
         number_identity_base(size_t size, const char *name)
-            : primitive_identity(size), name(name) {};
+            : primitive_identity_base(size), name(name) {};
 
         const std::string getFullName() const override { return name; }
+
+        virtual bool isInteger() const { return false; }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override = 0;
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override = 0;
 
     };
 
-    class DFHACK_EXPORT integer_identity_base : public number_identity_base {
+    template<class T>
+    class integer_identity : public number_identity_base {
     public:
-        integer_identity_base(size_t size, const char *name)
-            : number_identity_base(size, name) {}
+        integer_identity(const char *name) : number_identity_base(sizeof(T), name) {}
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
+        virtual bool isInteger() const override { return true; }
 
-    protected:
-        virtual int64_t read(void *ptr) const = 0;
-        virtual void write(void *ptr, int64_t val) const = 0;
-    };
-
-    class DFHACK_EXPORT float_identity_base : public number_identity_base {
-    public:
-        float_identity_base(size_t size, const char *name)
-            : number_identity_base(size, name) {}
-
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
-
-    protected:
-        virtual double read(void *ptr) const = 0;
-        virtual void write(void *ptr, double val) const = 0;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override {
+            lua_pushinteger(state, int64_t(*(T*)ptr));
+        }
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override {
+            int is_num = 0;
+            auto value = lua_tointegerx(state, val_index, &is_num);
+            if (!is_num)
+                DFHack::LuaWrapper::field_error(state, fname_idx, "integer expected", "write");
+            *(T*)ptr = T(value);
+        }
     };
 
     template<class T>
-    class integer_identity : public integer_identity_base {
+    class float_identity : public number_identity_base {
     public:
-        integer_identity(const char *name) : integer_identity_base(sizeof(T), name) {}
+        float_identity(const char *name) : number_identity_base(sizeof(T), name) {}
 
-    protected:
-        virtual int64_t read(void *ptr) const override { return int64_t(*(T*)ptr); }
-        virtual void write(void *ptr, int64_t val) const override { *(T*)ptr = T(val); }
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override {
+            lua_pushnumber(state, double(*(T*)ptr));
+        }
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override {
+            if (!lua_isnumber(state, val_index))
+                DFHack::LuaWrapper::field_error(state, fname_idx, "number expected", "write");
+
+            *(T*)ptr = T(lua_tonumber(state, val_index));
+        }
     };
 
-    template<class T>
-    class float_identity : public float_identity_base {
+    template<typename T>
+    class bool_identity : public primitive_identity<T> {
     public:
-        float_identity(const char *name) : float_identity_base(sizeof(T), name) {}
-
-    protected:
-        virtual double read(void *ptr) const override { return double(*(T*)ptr); }
-        virtual void write(void *ptr, double val) const override { *(T*)ptr = T(val); }
-    };
-
-    class DFHACK_EXPORT bool_identity : public primitive_identity {
-    public:
-        bool_identity() : primitive_identity(sizeof(bool)) {};
+        bool_identity() : primitive_identity<T>() {};
 
         const std::string getFullName() const override { return "bool"; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override {
+            lua_pushboolean(state, *(T*)ptr);
+        }
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override {
+            char *pb = (char*)ptr;
+
+            if (lua_isboolean(state, val_index) || lua_isnil(state, val_index))
+                *pb = lua_toboolean(state, val_index);
+            else if (lua_isnumber(state, val_index))
+                *pb = lua_tointeger(state, val_index);
+            else
+                DFHack::LuaWrapper::field_error(state, fname_idx, "boolean or number expected", "write");
+        }
     };
 
-    class DFHACK_EXPORT ptr_string_identity : public primitive_identity {
+    template<typename T>
+    class ptr_string_identity : public primitive_identity<T> {
     public:
-        ptr_string_identity() : primitive_identity(sizeof(char*)) {};
+        ptr_string_identity() : primitive_identity<T>() {};
 
         const std::string getFullName() const override { return "char*"; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override {
+            auto pstr = *(T*)ptr;
+            if (pstr)
+                lua_pushstring(state, pstr);
+            else
+                lua_pushnil(state);
+        }
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override {
+            DFHack::LuaWrapper::field_error(state, fname_idx, "raw pointer string", "write");
+        }
     };
 
     class DFHACK_EXPORT stl_string_identity : public DFHack::constructed_identity {
@@ -591,7 +622,7 @@ namespace df
     template<> struct DFHACK_EXPORT identity_traits<type> { \
         static const bool is_primitive = true; \
         static const category##_identity<type> identity; \
-        static const category##_identity_base *get() { return &identity; } \
+        static const category##_identity<type> *get() { return &identity; } \
     };
 
 #define INTEGER_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(integer, type)
@@ -648,8 +679,8 @@ namespace df
 
     template<> struct DFHACK_EXPORT identity_traits<bool> {
         static const bool is_primitive = true;
-        static const bool_identity identity;
-        static const bool_identity *get() { return &identity; }
+        static const bool_identity<bool> identity;
+        static const bool_identity<bool> *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<std::string> {
@@ -665,20 +696,20 @@ namespace df
     };
     template<> struct DFHACK_EXPORT identity_traits<char*> {
         static const bool is_primitive = true;
-        static const ptr_string_identity identity;
-        static const ptr_string_identity *get() { return &identity; }
+        static const ptr_string_identity<char*> identity;
+        static const ptr_string_identity<char*> *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<const char*> {
         static const bool is_primitive = true;
-        static const ptr_string_identity identity;
-        static const ptr_string_identity *get() { return &identity; }
+        static const ptr_string_identity<const char*> identity;
+        static const ptr_string_identity<const char*> *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<void*> {
         static const bool is_primitive = true;
-        static const pointer_identity identity;
-        static const pointer_identity *get() { return &identity; }
+        static const pointer_identity<void*> identity;
+        static const pointer_identity<void*> *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<std::vector<void*> > {
@@ -706,7 +737,7 @@ namespace df
 
     template<class T> struct identity_traits<T *> {
         static const bool is_primitive = true;
-        static const pointer_identity *get();
+        static const pointer_identity<T*> *get();
     };
 
 #ifdef BUILD_DFHACK_LIB
@@ -791,8 +822,8 @@ namespace df
 #endif
 
     template<class T>
-    inline const pointer_identity *identity_traits<T *>::get() {
-        static const pointer_identity identity(identity_traits<T>::get());
+    inline const pointer_identity<T*> *identity_traits<T *>::get() {
+        static const pointer_identity<T*> identity;
         return &identity;
     }
 

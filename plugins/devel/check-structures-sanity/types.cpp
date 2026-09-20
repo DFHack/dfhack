@@ -167,13 +167,13 @@ const type_identity *Checker::wrap_in_stl_ptr_vector(const type_identity *base)
 
 const type_identity *Checker::wrap_in_pointer(const type_identity *base)
 {
-    static std::map<const type_identity *, std::unique_ptr<const df::pointer_identity>> wrappers;
+    static std::map<const type_identity *, std::unique_ptr<const df::pointer_identity_base>> wrappers;
     auto it = wrappers.find(base);
     if (it != wrappers.end())
     {
         return it->second.get();
     }
-    return (wrappers[base] = std::make_unique<const df::pointer_identity>(base)).get();
+    return (wrappers[base] = std::make_unique<const df::pointer_identity_base>(base)).get();
 }
 
 std::map<size_t, std::vector<std::string>> known_types_by_size;

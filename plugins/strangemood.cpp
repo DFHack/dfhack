@@ -3,10 +3,10 @@
 #include "Console.h"
 #include "DataDefs.h"
 #include "Export.h"
+#include "MiscUtils.h"
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
-#include "MiscUtils.h"
 #include "modules/Units.h"
 #include "modules/Items.h"
 #include "modules/Job.h"

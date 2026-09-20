@@ -80,6 +80,7 @@ Template for new versions:
 - `gui/quickfort`: show smoothing designations immediately after applying a blueprint
 - `timestream`: deal properly with units who have breathing difficulties
 - Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save
+- Fix ``dfhack.items.createItem`` making glob items of an incorrect size
 
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type

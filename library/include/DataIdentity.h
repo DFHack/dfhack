@@ -264,31 +264,11 @@ namespace DFHack
          * the appropriate behavior for the wrapped C++ type.
          */
 
-        template<typename T> struct is_std_vector : std::false_type {};
-        template<typename E, typename A> struct is_std_vector<std::vector<E, A>> : std::true_type {};
-
-        template<typename T> struct is_std_deque : std::false_type {};
-        template<typename E, typename A> struct is_std_deque<std::deque<E, A>> : std::true_type {};
-
         template<typename T> struct is_std_array : std::false_type {};
         template<typename E, size_t N> struct is_std_array<std::array<E, N>> : std::true_type {};
 
-        template<typename T> struct is_std_set : std::false_type {};
-        template<typename E, typename... Rest> struct is_std_set<std::set<E, Rest...>> : std::true_type {};
-        template<typename E, typename... Rest> struct is_std_set<std::unordered_set<E, Rest...>> : std::true_type {};
-
-        template<typename T> struct is_std_map : std::false_type {};
-        template<typename K, typename V, typename... Rest> struct is_std_map<std::map<K, V, Rest...>> : std::true_type {};
-        template<typename K, typename V, typename... Rest> struct is_std_map<std::unordered_map<K, V, Rest...>> : std::true_type {};
-
         template<typename T> struct is_bit_array : std::false_type {};
         template<typename E> struct is_bit_array<BitArray<E>> : std::true_type {};
-
-        template<typename T> struct is_df_array : std::false_type {};
-        template<typename E> struct is_df_array<DfArray<E>> : std::true_type {};
-
-        template<typename T> struct is_enum_list_attr : std::false_type {};
-        template<typename E> struct is_enum_list_attr<enum_list_attr<E>> : std::true_type {};
 
         template<typename T> struct is_enum_field : std::false_type {};
         template<typename E, typename I> struct is_enum_field<df::enum_field<E, I>> : std::true_type {};
@@ -297,29 +277,95 @@ namespace DFHack
         template<typename T>
         concept c_string = std::is_same_v<T, char*> || std::is_same_v<T, const char*>;
 
-        // a std::vector of pointers; stored internally as std::vector<void*>
+        /*
+         * Container capability probes. These describe the behavioral axes
+         * that the container identity implementation dispatches on, so any
+         * type with a vector-like, array-like, bit-like, or associative
+         * interface is handled without being listed explicitly.
+         */
         template<typename T>
-        concept ptr_vector = is_std_vector<T>::value && std::is_pointer_v<typename T::value_type>;
+        concept has_value_type = requires { typename T::value_type; };
 
-        // std::vector<bool> and BitArray<T> are bit containers
+        // element count is available either as size() or as a size member
         template<typename T>
-        concept bit_container = is_bit_array<T>::value ||
-            (is_std_vector<T>::value && std::is_same_v<typename T::value_type, bool>);
+        concept sized = requires(const T& t) { { t.size() } -> std::convertible_to<size_t>; }
+                     || requires(const T& t) { { t.size } -> std::convertible_to<size_t>; };
 
-        // sequence containers with mutable insert/erase/resize
+        // dense random-access storage: t[i] yields a reference whose
+        // address is a value_type* (the vector/array contract)
         template<typename T>
-        concept seq_container =
-            (is_std_vector<T>::value && !std::is_same_v<typename T::value_type, bool> &&
-                !std::is_pointer_v<typename T::value_type>) ||
-            is_std_deque<T>::value || is_df_array<T>::value;
+        concept random_access = has_value_type<T> && sized<T> && requires(T& t, int i) {
+            { &t[i] } -> std::convertible_to<typename T::value_type*>;
+        };
 
-        // read-only containers without random access (associative types)
+        // indexable bit elements through a proxy object (vector<bool> and similar)
         template<typename T>
-        concept assoc_container = is_std_set<T>::value || is_std_map<T>::value;
+        concept bit_indexable = has_value_type<T> && sized<T> && !random_access<T> &&
+            requires(T& t, int i, bool v) {
+                { t[i] } -> std::convertible_to<bool>;
+                t[i] = v;
+            };
+
+        // bit elements through explicit accessors; by convention such
+        // containers report byte counts from size() and resize() (BitArray).
+        // BitArray<Enum> indexes by the enum type and is matched by name.
+        template<typename T>
+        concept bit_accessors = is_bit_array<T>::value ||
+            (sized<T> && requires(T& t, int i, bool v) {
+                { t.is_set(i) } -> std::convertible_to<bool>;
+                t.set(i, v);
+            });
+
+        // key-mapped iteration (std::map, std::unordered_map, and similar)
+        template<typename T>
+        concept mapped = has_value_type<T> && requires { typename T::mapped_type; } &&
+            requires(T& t) { t.begin(); t.end(); };
+
+        // iterable but not index-addressable: read-only sequential access
+        // (std::set and similar)
+        template<typename T>
+        concept ro_sequence = has_value_type<T> && sized<T> &&
+            requires(T& t) { t.begin(); t.end(); } &&
+            !random_access<T> && !bit_indexable<T> && !mapped<T>;
+
+        // an aggregate exposing a fixed { size, items[] } table (enum_list_attr)
+        template<typename T>
+        concept item_list = sized<T> && requires(const T& t, int i) { t.items[i]; };
+
+        // bit containers of either flavor; mapped types that happen to
+        // satisfy the proxy probes (e.g. map<int,bool>) are excluded
+        template<typename T>
+        concept bit_container = (bit_indexable<T> || bit_accessors<T>) && !mapped<T>;
+
+        // sequence containers with mutable, index-addressable elements
+        template<typename T>
+        concept seq_container = random_access<T> &&
+            !std::is_pointer_v<typename T::value_type>;
+
+        // containers of pointer elements use pointer-container semantics
+        // and are stored internally as containers of void*
+        template<typename T>
+        concept ptr_container = random_access<T> &&
+            std::is_pointer_v<typename T::value_type>;
+
+        // read-only containers accessed by iteration
+        template<typename T>
+        concept assoc_container = ro_sequence<T> || mapped<T>;
 
         template<typename T>
-        concept any_container = seq_container<T> || assoc_container<T> ||
-            bit_container<T> || ptr_vector<T> || is_enum_list_attr<T>::value;
+        concept any_container = seq_container<T> || ptr_container<T> ||
+            bit_container<T> || assoc_container<T> || item_list<T>;
+
+        // mutable-sequence operations
+        template<typename T>
+        concept resizable = requires(T& t, int n) { t.resize(n); };
+
+        template<typename T>
+        concept index_erasable = requires(T& t, int i) { t.erase(t.begin() + i); };
+
+        template<typename T>
+        concept index_insertable = has_value_type<T> &&
+            requires(T& t, int i, typename T::value_type v) { t.insert(t.begin() + i, v); };
 
         template<typename T>
         concept stl_string = std::is_same_v<T, std::string>;
@@ -346,11 +392,14 @@ namespace DFHack
         concept has_explicit_base = requires { typename T::df_identity_base; };
 
         // The underlying storage actually manipulated by a container identity.
-        // std::vector<T*> uses std::vector<void*>, and BitArray<T> uses
-        // BitArray<int>, matching the assumptions of the original code.
+        // Pointer-element containers are manipulated as containers of void*,
+        // and BitArray<T> is assumed layout-equivalent to BitArray<int>,
+        // matching the assumptions of the original code.
         template<typename T> struct container_storage { using type = T; };
-        template<typename E, typename A> struct container_storage<std::vector<E*, A>> { using type = std::vector<void*>; };
         template<typename E> struct container_storage<BitArray<E>> { using type = BitArray<int>; };
+        template<template<typename...> class C, typename E, typename... A>
+            requires (sizeof(C<void*>) > 0)
+        struct container_storage<C<E*, A...>> { using type = C<void*>; };
         template<typename T> using container_storage_t = typename container_storage<T>::type;
 
         template<typename B> struct base_tag { using type = B; };
@@ -362,27 +411,35 @@ namespace DFHack
         template<typename T>
         class container_impl : public std::conditional_t<
                 bit_container<T>, bit_container_identity,
-                std::conditional_t<ptr_vector<T>, ptr_container_identity, container_identity>> {
+                std::conditional_t<ptr_container<T>, ptr_container_identity, container_identity>> {
             using cbase = std::conditional_t<
                 bit_container<T>, bit_container_identity,
-                std::conditional_t<ptr_vector<T>, ptr_container_identity, container_identity>>;
+                std::conditional_t<ptr_container<T>, ptr_container_identity, container_identity>>;
             using storage = container_storage_t<T>;
 
             const char *name;
             const type_identity *key_id;
 
-            // enum_list_attr is a static attribute table and has no allocator
+            // item tables like enum_list_attr describe static external
+            // data and have no allocator
             static constexpr TAllocateFn alloc_fn() {
-                if constexpr (is_enum_list_attr<T>::value)
+                if constexpr (item_list<T>)
                     return NULL;
                 else
                     return &df::allocator_fn<storage>;
             }
 
+            static size_t element_count(const storage &ct) {
+                if constexpr (requires { { ct.size() } -> std::convertible_to<size_t>; })
+                    return (size_t)ct.size();
+                else
+                    return (size_t)ct.size;
+            }
+
         public:
             // sequence and read-only containers
             container_impl(const char *name, const type_identity *item, const enum_identity *ienum = NULL)
-                requires (!bit_container<T> && !is_std_map<T>::value)
+                requires (!bit_container<T> && !mapped<T>)
                 : cbase(sizeof(storage), alloc_fn(), item, ienum), name(name), key_id(NULL)
             {}
 
@@ -392,16 +449,16 @@ namespace DFHack
                 : cbase(sizeof(storage), alloc_fn(), ienum), name(name), key_id(NULL)
             {}
 
-            // associative containers additionally take a key identity
+            // mapped containers additionally take a key identity
             container_impl(const char *name, const type_identity *key, const type_identity *item)
-                requires is_std_map<T>::value
+                requires mapped<T>
                 : cbase(sizeof(storage), alloc_fn(), item, NULL), name(name), key_id(key)
             {}
 
             const std::string getFullName() const override { return getFullName(this->item); }
 
             const std::string getFullName(const type_identity *item) const override {
-                if constexpr (is_std_map<T>::value)
+                if constexpr (mapped<T>)
                     return std::string(name) + "<" + key_id->getFullName() + ", " + item->getFullName() + ">";
                 else if constexpr (is_bit_array<T>::value)
                     return "BitArray<>";
@@ -414,12 +471,11 @@ namespace DFHack
             }
 
             virtual bool resize(void *ptr, int size) const override {
-                if constexpr (is_bit_array<T>::value) {
+                if constexpr (bit_accessors<T>) {
                     ((storage*)ptr)->resize((size+7)/8);
                     return true;
                 }
-                else if constexpr (std::is_same_v<T, std::vector<bool>> ||
-                        seq_container<T> || ptr_vector<T>) {
+                else if constexpr (resizable<storage>) {
                     (*(storage*)ptr).resize(size);
                     return true;
                 }
@@ -427,7 +483,7 @@ namespace DFHack
                     return false;
             }
             virtual bool erase(void *ptr, int index) const override {
-                if constexpr (seq_container<T> || ptr_vector<T>) {
+                if constexpr (index_erasable<storage>) {
                     auto &ct = *(storage*)ptr;
                     ct.erase(ct.begin()+index);
                     return true;
@@ -436,12 +492,12 @@ namespace DFHack
                     return false;
             }
             virtual bool insert(void *ptr, int index, void *pitem) const override {
-                if constexpr (ptr_vector<T>) {
+                if constexpr (ptr_container<T> && index_insertable<storage>) {
                     auto &ct = *(storage*)ptr;
                     ct.insert(ct.begin()+index, pitem);
                     return true;
                 }
-                else if constexpr (seq_container<T>) {
+                else if constexpr (!bit_container<T> && index_insertable<storage>) {
                     auto &ct = *(storage*)ptr;
                     ct.insert(ct.begin()+index, *(typename T::value_type*)pitem);
                     return true;
@@ -450,7 +506,7 @@ namespace DFHack
                     return false;
             }
             virtual bool lua_insert2(lua_State* state, int fname_idx, void* ptr, int idx, int val_index) const override {
-                if constexpr (seq_container<T>) {
+                if constexpr (seq_container<T> && index_insertable<storage>) {
                     using VT = typename T::value_type;
                     VT tmp{};
                     auto id = (type_identity*)lua_touserdata(state, DFHack::LuaWrapper::UPVAL_ITEM_ID);
@@ -474,24 +530,24 @@ namespace DFHack
 
         protected:
             virtual int item_count(void *ptr, container_identity::CountMode cnt) const override {
-                if constexpr (is_bit_array<T>::value)
-                    return cnt == container_identity::COUNT_LEN ? (int)((storage*)ptr)->size() * 8 : -1;
-                else if constexpr (is_enum_list_attr<T>::value)
-                    return cnt == container_identity::COUNT_WRITE ? 0 : (int)((storage*)ptr)->size;
+                if constexpr (bit_accessors<T>)
+                    return cnt == container_identity::COUNT_LEN ? (int)(element_count(*(storage*)ptr) * 8) : -1;
+                else if constexpr (item_list<T>)
+                    return cnt == container_identity::COUNT_WRITE ? 0 : (int)element_count(*(storage*)ptr);
                 else
-                    return (int)((storage*)ptr)->size();
+                    return (int)element_count(*(storage*)ptr);
             }
             virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
                 if constexpr (bit_container<T>)
                     return NULL;
-                else if constexpr (is_enum_list_attr<T>::value)
+                else if constexpr (item_list<T>)
                     return (void*)&((storage*)ptr)->items[idx];
-                else if constexpr (is_std_map<T>::value) {
+                else if constexpr (mapped<T>) {
                     auto iter = (*(storage*)ptr).begin();
                     for (; idx > 0; idx--) ++iter;
                     return (void*)&iter->second;
                 }
-                else if constexpr (assoc_container<T>) {
+                else if constexpr (ro_sequence<T>) {
                     auto iter = (*(storage*)ptr).begin();
                     for (; idx > 0; idx--) ++iter;
                     return (void*)&*iter;
@@ -503,17 +559,17 @@ namespace DFHack
             // other bases these are ordinary (unused) member functions, and
             // they implicitly override the virtuals for bit containers.
             bool get_item(void *ptr, int idx) const {
-                if constexpr (is_bit_array<T>::value)
+                if constexpr (bit_accessors<T>)
                     return ((storage*)ptr)->is_set(idx);
-                else if constexpr (bit_container<T>)
+                else if constexpr (bit_indexable<T>)
                     return (*(storage*)ptr)[idx];
                 else
                     return false;
             }
             void set_item(void *ptr, int idx, bool val) const {
-                if constexpr (is_bit_array<T>::value)
+                if constexpr (bit_accessors<T>)
                     ((storage*)ptr)->set(idx, val);
-                else if constexpr (bit_container<T>)
+                else if constexpr (bit_indexable<T>)
                     (*(storage*)ptr)[idx] = val;
             }
         };
@@ -605,17 +661,17 @@ namespace DFHack
         // named sequence/set containers
         type_identity_for(const char *name, const type_identity *item, const enum_identity *ienum = NULL)
             requires (std::is_same_v<base, detail::container_impl<T>> &&
-                      !detail::bit_container<T> && !detail::is_std_map<T>::value)
+                      !detail::bit_container<T> && !detail::mapped<T>)
             : base(name, item, ienum) {}
 
-        // named associative containers additionally take a key identity
+        // named mapped containers additionally take a key identity
         type_identity_for(const char *name, const type_identity *key, const type_identity *item)
-            requires detail::is_std_map<T>::value
+            requires detail::mapped<T>
             : base(name, key, item) {}
 
-        // std::vector<T*>
+        // containers of pointer elements
         type_identity_for(const type_identity *item = NULL, const enum_identity *ienum = NULL)
-            requires detail::ptr_vector<T>
+            requires detail::ptr_container<T>
             : base("vector", item, ienum) {}
 
         // std::vector<bool> and BitArray<T>
@@ -631,7 +687,7 @@ namespace DFHack
         virtual identity_type type() const override {
             if constexpr (detail::stl_string<T> || detail::fs_path<T>)
                 return IDTYPE_PRIMITIVE;
-            else if constexpr (detail::ptr_vector<T>)
+            else if constexpr (detail::ptr_container<T>)
                 return IDTYPE_STL_PTR_VECTOR;
             else if constexpr (std::is_same_v<T, global_object>)
                 return IDTYPE_GLOBAL;

@@ -97,8 +97,12 @@ which derives from the appropriate runtime base for the C++ type ``T`` that it w
 * ``type_identity_for<T>`` the leaf template that provides the identity of the C++ type ``T``. Its runtime
   base class is selected by compile-time inspection of ``T`` (or by a ``df_identity_base`` typedef in ``T``),
   covering all of the categories above: enums, bitfields, structs, unions, virtual classes, numbers,
-  pointers, C strings, ``std::string``, ``std::filesystem::path``, static arrays, STL containers,
-  ``BitArray``, ``DfArray``, ``enum_list_attr``, ``std::vector<T*>``, bit containers, and opaque types.
+  pointers, C strings, ``std::string``, ``std::filesystem::path``, static arrays, containers, and opaque
+  types. Container categories are detected by capability rather than by type name: any type that provides
+  index-addressable elements (``t[i]`` yielding a ``T&``), bit-element access (a bool proxy or
+  ``is_set``/``set`` accessors), mapped iteration (``mapped_type`` plus ``begin``/``end``), read-only
+  iteration, or a ``{ size, items[] }`` table (``enum_list_attr``) is treated as the corresponding kind of
+  container without being listed explicitly.
 
   ``global_identity`` is an alias for ``type_identity_for<global_object>``, where ``global_object`` is an
   empty placeholder type: it holds, as a quasiobject, handles for all of the known Dwarf Fortress

@@ -64,6 +64,7 @@ Template for new versions:
 - `getplants`: new ``--dry-run`` option counts affected plants without designating, and new ``--brewable``/``--edible``/``--oil``/``--cloth``/``--dye`` trait filters restrict the selection by plant use
 - ``quickfix``: repair ``plotinfo.site_id`` on load when DF leaves it unassigned on reclaimed fortresses
 - `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
+- `sort`: the stress/happiness icons in the top bar are now clickable, opening a list of the citizens in that stress category; selecting a citizen centers the map on them
 
 ## Fixes
 - Plugin commands that throw uncaught C++ exceptions now report an error instead of crashing the game

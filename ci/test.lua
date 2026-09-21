@@ -2,7 +2,6 @@
 --@ module = true
 
 local expect = require('test_util.expect')
-local gui = require('gui')
 local helpdb = require('helpdb')
 local json = require('json')
 local mock = require('test_util.mock')
@@ -213,38 +212,6 @@ local function ensure_ci_save(scr)
     end
 end
 
-local function click_top_title_button(scr)
-    local sw, sh = dfhack.screen.getWindowSize()
-    df.global.gps.mouse_x = sw // 2
-    df.global.gps.precise_mouse_x = df.global.gps.mouse_x * df.global.gps.tile_pixel_x
-    if sh < 60 then
-        df.global.gps.mouse_y = 25
-    else
-        df.global.gps.mouse_y = (sh // 2) + 3
-    end
-    df.global.gps.precise_mouse_y = df.global.gps.mouse_y * df.global.gps.tile_pixel_y
-    gui.simulateInput(scr, '_MOUSE_L')
-end
-
-local function load_first_save(scr)
-    if #scr.savegame_header == 0 then
-        qerror('no savegames available to load')
-    end
-
-    click_top_title_button(scr)
-    wait_for(1000, 'world list', function()
-        return scr.mode == 2
-    end)
-    click_top_title_button(scr)
-    wait_for(1000, 'savegame list', function()
-        return scr.mode == 3
-    end)
-    click_top_title_button(scr)
-    wait_for(1000, 'loadgame progress bar', function()
-        return dfhack.gui.matchFocusString('loadgame')
-    end)
-end
-
 -- Requires that a fortress game is already loaded or is ready to be loaded via
 -- the "Continue active game" option in the title screen. Otherwise the function
 -- will time out and/or exit with error.
@@ -259,13 +226,11 @@ local function ensure_fortress(config)
         local scr = dfhack.gui.getCurViewscreen()
         if dfhack.gui.matchFocusString('title/Default', scr) then
             print('Attempting to load the test fortress')
-            -- TODO: reinstate loading of a specified save dir; for now
-            -- just load the first possible save, which will at least let us
-            -- run fortress tests in CI
-            -- qerror()'s on falure
-            -- dfhack.run_script('load-save', config.save_dir)
             ensure_ci_save(scr)
-            load_first_save(scr)
+            -- drives the title screen in a script coroutine; returns
+            -- immediately and the load proceeds asynchronously, so the
+            -- screen-change wait below still applies
+            dfhack.run_script('load-save', config.save_dir)
         elseif not dfhack.gui.matchFocusString('loadgame', scr) then
             -- if we're not actively loading a game, hope we're in
             -- a screen where hitting ESC will get us to the game map

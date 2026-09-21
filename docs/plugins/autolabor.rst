@@ -5,6 +5,16 @@ autolabor
     :summary: Automatically manage dwarf labors.
     :tags: fort auto labors
 
+The ``autolabor`` command runs the plugin's *legacy* engine, which writes the
+labor matrix directly and bypasses the work detail system. The same plugin
+also provides the `labormanager` command, a modern engine that works through
+the work detail system instead. A third *monitor* mode watches the job
+board and shows task starvation warnings without managing labors at all.
+Only one mode can be active at a time;
+``autolabor mode [legacy|modern|monitor]`` or the overlay on the work
+details screen switches between them, and the selected mode persists
+across save/load.
+
 Autolabor attempts to keep as many dwarves as possible busy while allowing
 dwarves to specialize in specific skills.
 
@@ -32,24 +42,21 @@ untouched by autolabor.
     logging level using the `debugfilter<debug>` command (setting either ``debug`` or ``trace`` level for the
     ``cycle`` mode) but be warned that this may generate a large amount of console spam, especially in a large fort.
 
-    When it is enabled, autolabor automatically disables the work detail system. You cannot
-    use autolabor and work details at the same time. If you attempt to open the work detail screen while
-    autolabor is active, a warning box should appear advising you that autolabor is managing labors and preventing
-    you from making any changes on that screen.
+    When it is enabled in legacy mode, autolabor automatically disables the work detail system. You cannot
+    use legacy autolabor and work details at the same time. The DFHack overlay panel on the work details
+    screen (the same panel that provides the `gui/settings-manager` save/load buttons) shows the active
+    mode and warns you when legacy mode is preventing changes on that screen from taking effect.
 
-    Finally, should you disable autolabor, autolabor will automatically reenable the vanilla work detail system.
-    However, the work detail system only updates labors when the work detail screen is open and some change is
-    made on that screen. Therefore, if you choose to disable autolabor, you should probably immediately
-    thereafter open the work details screen and make some change to force the game to recompute all labor
-    assignments based on the vanilla algorithm. At this time, it is not possible for autolabor to do this
-    automatically.
+    Should you disable autolabor or switch to modern mode, the vanilla work
+    detail system is automatically reenabled and all citizens' labors are
+    recomputed from the work details.
 
 Usage
 -----
 
 ::
 
-    enable autolabor
+    autolabor enable
 
 Anything beyond this is optional - autolabor works well with the default
 settings. Once you have enabled it in a fortress, it stays enabled until you
@@ -114,5 +121,9 @@ Advanced usage
     Turn off autolabor for a specific labor.
 ``autolabor reset-all|<labor> reset``
     Return a labor (or all labors) to the default handling.
+``autolabor mode [legacy|modern|monitor]``
+    Show or change which engine runs when the plugin is enabled. Monitor
+    mode performs no labor management; it only watches the job board and
+    reports starving job postings via the DFHack notification panel.
 
 See `autolabor-artisans` for a differently-tuned setup.

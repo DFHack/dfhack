@@ -63,8 +63,9 @@ Template for new versions:
 - `buildingplan`: new "Do now" option marks the jobs of subsequently placed buildings as high priority
 - `getplants`: new ``--dry-run`` option counts affected plants without designating, and new ``--brewable``/``--edible``/``--oil``/``--cloth``/``--dye`` trait filters restrict the selection by plant use
 - ``quickfix``: repair ``plotinfo.site_id`` on load when DF leaves it unassigned on reclaimed fortresses
-- `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
 - `sort`: the stress/happiness icons in the top bar are now clickable, opening a list of the citizens in that stress category; selecting a citizen centers the map on them
+- `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
+- `stockpiles`: the overlay now also attaches to the minecart hauling stop conditions panel, offering import/export of route stop conditions
 
 ## Fixes
 - Plugin commands that throw uncaught C++ exceptions now report an error instead of crashing the game

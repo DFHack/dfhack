@@ -2539,6 +2539,9 @@ Maps module
   tiles. This is dramatically faster than iterating tiles in Lua, since the
   entire scan runs in a single C++ call.
 
+  .. note::
+     This API is experimental and may change in future releases.
+
   The *bounds* argument may be given as a ``{x1,y1,z1,x2,y2,z2}`` table, as
   two coordinate values ``(pos1, pos2)``, or as six integers
   ``(x1,y1,z1,x2,y2,z2)``. The cuboid is clamped to the loaded map and tiles

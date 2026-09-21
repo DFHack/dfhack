@@ -76,6 +76,7 @@ distribution.
 #include "df/burrow.h"
 #include "df/caravan_state.h"
 #include "df/construction.h"
+#include "df/construction_flags.h"
 #include "df/creature_raw.h"
 #include "df/dfhack_material_category.h"
 #include "df/enabler.h"
@@ -119,6 +120,7 @@ distribution.
 #include <map>
 #include <numeric>
 #include <string>
+#include <unordered_set>
 #include <vector>
 #include <filesystem>
 #include <stdexcept>
@@ -2857,6 +2859,233 @@ static int maps_addItemSpatter(lua_State *L)
     return 1;
 }
 
+/*
+ * Spec-table parsing helpers for maps_forEachTile.
+ */
+
+// Resolve an enum value given as a number or as a DFHack enum item name.
+template<typename E>
+static int check_enum_int(lua_State *L, int idx, const char *context)
+{
+    if (lua_isnumber(L, idx))
+        return (int)lua_tointeger(L, idx);
+    if (lua_isstring(L, idx)) {
+        E val;
+        if (find_enum_item(&val, lua_tostring(L, idx)))
+            return (int)val;
+        luaL_error(L, "forEachTile: unknown %s '%s'", context, lua_tostring(L, idx));
+    }
+    luaL_error(L, "forEachTile: %s must be a number or enum name", context);
+    return 0;
+}
+
+// spec[key]: a single enum value or an array of them; inserted into out.
+template<typename E, typename V>
+static void parse_enum_set(lua_State *L, int tbl, const char *key,
+                           std::unordered_set<V> &out)
+{
+    lua_getfield(L, tbl, key);
+    if (lua_istable(L, -1)) {
+        int spec = lua_absindex(L, -1);
+        int n = (int)luaL_len(L, spec);
+        for (int i = 1; i <= n; i++) {
+            lua_rawgeti(L, spec, i);
+            out.insert((V)check_enum_int<E>(L, -1, key));
+            lua_pop(L, 1);
+        }
+    }
+    else if (!lua_isnil(L, -1))
+        out.insert((V)check_enum_int<E>(L, -1, key));
+    lua_pop(L, 1);
+}
+
+// spec[key]: a table of bitfield field name -> required value. Compiles to a
+// (value & mask) == bits test accumulated into mask and bits.
+template<typename BF>
+static void parse_bitfield_spec(lua_State *L, int tbl, const char *key,
+                                uint32_t &mask, uint32_t &bits)
+{
+    lua_getfield(L, tbl, key);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        return;
+    }
+    luaL_checktype(L, -1, LUA_TTABLE);
+    int spec = lua_absindex(L, -1);
+    lua_pushnil(L);
+    while (lua_next(L, spec)) {
+        if (lua_type(L, -2) != LUA_TSTRING)
+            luaL_error(L, "forEachTile: %s field names must be strings", key);
+        const char *name = lua_tostring(L, -2);
+        unsigned idx;
+        if (!find_bitfield_field(&idx, name, (BF*)NULL))
+            luaL_error(L, "forEachTile: unknown %s field '%s'", key, name);
+        int width = df::bitfield_traits<BF>::bits[idx].size;
+        int value;
+        if (lua_isboolean(L, -1))
+            value = lua_toboolean(L, -1) ? 1 : 0;
+        else
+            value = (int)luaL_checkinteger(L, -1);
+        if (value < 0 || value >= (1 << width))
+            luaL_error(L, "forEachTile: %s.%s value %d out of range", key, name, value);
+        uint32_t fmask = ((1u << width) - 1) << idx;
+        mask |= fmask;
+        bits |= (uint32_t)value << idx & fmask;
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+}
+
+// Wrap the Lua function at stack index fn as a per-tile predicate/callback.
+// The function is invoked as fn(x, y, z, block, tiletype). If truthy is set,
+// the wrapper returns whether the function returned a truthy value (for
+// filters); otherwise only a return value of exactly false stops the scan
+// (for callbacks).
+static std::function<bool(df::map_block *, df::coord2d, df::coord)>
+wrap_lua_tile_fn(lua_State *L, int fn, bool truthy = false)
+{
+    return [L, fn, truthy](df::map_block *block, df::coord2d local, df::coord pos) {
+        lua_pushvalue(L, fn);
+        lua_pushinteger(L, pos.x);
+        lua_pushinteger(L, pos.y);
+        lua_pushinteger(L, pos.z);
+        Lua::PushDFObject(L, block);
+        lua_pushinteger(L, (int)block->tiletype[local.x][local.y]);
+        lua_call(L, 5, 1);
+        bool cont = truthy ? lua_toboolean(L, -1) != 0
+                           : !(lua_isboolean(L, -1) && !lua_toboolean(L, -1));
+        lua_pop(L, 1);
+        return cont;
+    };
+}
+
+// If spec[key] is a function, leave it on the stack and return its absolute
+// index wrapped as a tile function; otherwise return an empty std::function.
+static std::function<bool(df::map_block *, df::coord2d, df::coord)>
+opt_lua_tile_fn(lua_State *L, int tbl, const char *key, bool truthy = false)
+{
+    lua_getfield(L, tbl, key);
+    if (lua_isfunction(L, -1))
+        return wrap_lua_tile_fn(L, lua_absindex(L, -1), truthy);
+    lua_pop(L, 1);
+    return {};
+}
+
+static int maps_forEachTile(lua_State *L)
+{
+    // Bounds forms: {x1,y1,z1,x2,y2,z2} | pos1, pos2 | x1,y1,z1,x2,y2,z2
+    cuboid bounds;
+    int spec_base;
+    if (lua_isnumber(L, 1)) {
+        bounds = cuboid(
+            (int16_t)luaL_checkinteger(L, 1), (int16_t)luaL_checkinteger(L, 2),
+            (int16_t)luaL_checkinteger(L, 3), (int16_t)luaL_checkinteger(L, 4),
+            (int16_t)luaL_checkinteger(L, 5), (int16_t)luaL_checkinteger(L, 6));
+        spec_base = 7;
+    }
+    else if (lua_istable(L, 1) && luaL_len(L, 1) == 6) {
+        int16_t v[6];
+        for (int i = 0; i < 6; i++) {
+            lua_rawgeti(L, 1, i + 1);
+            v[i] = (int16_t)luaL_checkinteger(L, -1);
+            lua_pop(L, 1);
+        }
+        bounds = cuboid(v[0], v[1], v[2], v[3], v[4], v[5]);
+        spec_base = 2;
+    }
+    else {
+        df::coord p1, p2;
+        Lua::CheckDFAssign(L, &p1, 1);
+        Lua::CheckDFAssign(L, &p2, 2);
+        bounds = cuboid(p1, p2);
+        spec_base = 3;
+    }
+
+    Maps::TileFilter filter;
+    Maps::TileActions actions;
+
+    // Any Lua functions found in the spec tables are left on the stack so the
+    // wrapped references stay valid for the duration of the scan.
+    int base = lua_gettop(L);
+
+    int fidx = spec_base, aidx = spec_base + 1;
+    if (lua_isfunction(L, fidx))
+        filter.extra = wrap_lua_tile_fn(L, fidx, true);
+    else if (lua_istable(L, fidx)) {
+        parse_enum_set<df::tiletype>(L, fidx, "tiletype", filter.tiletypes);
+        parse_enum_set<df::tiletype>(L, fidx, "tiletypes", filter.tiletypes);
+        parse_enum_set<df::tiletype_material>(L, fidx, "material", filter.materials);
+        parse_enum_set<df::tiletype_shape>(L, fidx, "shape", filter.shapes);
+        parse_enum_set<df::tiletype_shape_basic>(L, fidx, "shape_basic", filter.shapes_basic);
+        parse_enum_set<df::tiletype_special>(L, fidx, "special", filter.specials);
+        parse_enum_set<df::tiletype_variant>(L, fidx, "variant", filter.variants);
+        parse_bitfield_spec<df::tile_designation>(L, fidx, "designation",
+            filter.designation_mask, filter.designation_bits);
+        parse_bitfield_spec<df::tile_occupancy>(L, fidx, "occupancy",
+            filter.occupancy_mask, filter.occupancy_bits);
+        filter.extra = opt_lua_tile_fn(L, fidx, "filter", true);
+    }
+    else if (!lua_isnoneornil(L, fidx))
+        return luaL_error(L, "forEachTile: filter must be a table or function");
+
+    if (lua_isfunction(L, aidx))
+        actions.callback = wrap_lua_tile_fn(L, aidx);
+    else if (lua_istable(L, aidx)) {
+        lua_getfield(L, aidx, "set_tiletype");
+        if (!lua_isnil(L, -1))
+            actions.set_tiletype = (df::tiletype)check_enum_int<df::tiletype>(L, -1, "set_tiletype");
+        lua_pop(L, 1);
+
+        parse_bitfield_spec<df::tile_designation>(L, aidx, "designation",
+            actions.designation_clear, actions.designation_set);
+        parse_bitfield_spec<df::tile_occupancy>(L, aidx, "occupancy",
+            actions.occupancy_clear, actions.occupancy_set);
+
+        lua_getfield(L, aidx, "construct");
+        if (lua_istable(L, -1)) {
+            int spec = lua_absindex(L, -1);
+            actions.construct = true;
+            lua_getfield(L, spec, "item_type");
+            if (!lua_isnil(L, -1))
+                actions.construct_item_type = (df::item_type)check_enum_int<df::item_type>(L, -1, "construct.item_type");
+            lua_pop(L, 1);
+            get_int_field(L, &actions.construct_item_subtype, spec, "item_subtype", -1);
+            get_int_field(L, &actions.construct_mat_type, spec, "mat_type", -1);
+            get_int_field(L, &actions.construct_mat_index, spec, "mat_index", -1);
+            lua_getfield(L, spec, "tiletype");
+            if (!lua_isnil(L, -1))
+                actions.construct_tiletype = (df::tiletype)check_enum_int<df::tiletype>(L, -1, "construct.tiletype");
+            lua_pop(L, 1);
+            uint32_t fmask = 0, fbits = 0;
+            parse_bitfield_spec<df::construction_flags>(L, spec, "flags", fmask, fbits);
+            actions.construct_flags = (uint8_t)fbits;
+        }
+        else if (!lua_isnil(L, -1))
+            return luaL_error(L, "forEachTile: construct must be a table");
+        lua_pop(L, 1);
+
+        actions.callback = opt_lua_tile_fn(L, aidx, "callback");
+    }
+    else if (!lua_isnoneornil(L, aidx))
+        return luaL_error(L, "forEachTile: actions must be a table or function");
+
+    auto result = Maps::forEachTile(bounds, filter, actions);
+
+    lua_settop(L, base); // drop wrapped spec functions
+    lua_newtable(L);
+    lua_pushinteger(L, result.tiles_scanned);
+    lua_setfield(L, -2, "scanned");
+    lua_pushinteger(L, result.tiles_matched);
+    lua_setfield(L, -2, "matched");
+    lua_pushinteger(L, result.tiletypes_changed);
+    lua_setfield(L, -2, "changed");
+    lua_pushinteger(L, result.constructions_added);
+    lua_setfield(L, -2, "constructed");
+    lua_pushboolean(L, result.aborted);
+    lua_setfield(L, -2, "aborted");
+    return 1;
+}
+
 static const luaL_Reg dfhack_maps_funcs[] = {
     { "isValidTilePos", maps_isValidTilePos },
     { "isTileVisible", maps_isTileVisible },
@@ -2875,6 +3104,7 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "removeTileAquifer", maps_removeTileAquifer },
     { "addMaterialSpatter", maps_addMaterialSpatter },
     { "addItemSpatter", maps_addItemSpatter },
+    { "forEachTile", maps_forEachTile },
     { NULL, NULL }
 };
 

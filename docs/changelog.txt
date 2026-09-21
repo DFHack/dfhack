@@ -65,6 +65,7 @@ Template for new versions:
 - ``quickfix``: repair ``plotinfo.site_id`` on load when DF leaves it unassigned on reclaimed fortresses
 - `sort`: the stress/happiness icons in the top bar are now clickable, opening a list of the citizens in that stress category; selecting a citizen centers the map on them
 - `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
+- `stockpiles`: the overlay now also attaches to the minecart hauling stop conditions panel, offering import/export of route stop conditions
 - `suspendmanager`: suspend deconstruction jobs that would collapse connected machinery, such as waterwheels supporting other components
 
 ## Fixes
@@ -91,6 +92,7 @@ Template for new versions:
 - `tiletypes`: remove plants (including trees) rooted on a tile that is painted into something that cannot host them, so cleared ground no longer regrows floating trees
 - `gui/quickfort`: show smoothing designations immediately after applying a blueprint
 - `timestream`: deal properly with units who have breathing difficulties
+- `timestream`: pass the validated numeric value to the fps setter so ``set fps`` with unusual numeric strings (e.g. ``60.9``) can't be silently misapplied
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
 - `strangemood`: fix crash when ``--id`` is given a non-numeric unit id
 - `suspendmanager`: fix out-of-bounds parameter read when ``set`` is given too few arguments

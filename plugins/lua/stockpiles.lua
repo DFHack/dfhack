@@ -252,15 +252,14 @@ local function get_import_choices()
     return filenames
 end
 
-local function do_import()
-    local sp = dfhack.gui.getSelectedStockpile(true)
+local function do_import(make_opts, title)
     local dlg
     local function get_dlg() return dlg end
     dlg = dialogs.ListBox{
-        frame_title='Import/Delete Stockpile Settings',
+        frame_title=title or 'Import/Delete Stockpile Settings',
         with_filter=true,
         choices=get_import_choices(),
-        on_select=function(_, choice) import_settings(choice.text, {id=sp and sp.id}) end,
+        on_select=function(_, choice) import_settings(choice.text, make_opts()) end,
         dismiss_on_select2=false,
         on_select2=function(_, choice)
             if choice.text:startswith('library/') then return end
@@ -281,13 +280,35 @@ local function do_import()
     }:show()
 end
 
-local function do_export()
-    local sp = dfhack.gui.getSelectedStockpile(true)
+local function do_export(make_opts, title)
     dialogs.InputBox{
-        frame_title='Export Stockpile Settings',
+        frame_title=title or 'Export Stockpile Settings',
         text='Please enter a filename',
-        on_input=function(text) export_settings(text, {id=sp and sp.id}) end,
+        on_input=function(text) export_settings(text, make_opts()) end,
     }:show()
+end
+
+local function do_stockpile_import()
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    do_import(function() return {id=sp and sp.id} end)
+end
+
+local function do_stockpile_export()
+    local sp = dfhack.gui.getSelectedStockpile(true)
+    do_export(function() return {id=sp and sp.id} end)
+end
+
+local function get_route_target()
+    local hsc = df.global.game.main_interface.hauling_stop_conditions
+    return {route_id=hsc.route_id, stop_id=hsc.stop_id}
+end
+
+local function do_route_import()
+    do_import(get_route_target, 'Import/Delete Stop Settings')
+end
+
+local function do_route_export()
+    do_export(get_route_target, 'Export Stop Settings')
 end
 
 --------------------
@@ -448,13 +469,13 @@ function StockpilesOverlay:init()
                 label='import',
                 auto_width=true,
                 key='CUSTOM_CTRL_I',
-                on_activate=do_import,
+                on_activate=do_stockpile_import,
             }, widgets.HotkeyLabel{
                 frame={t=0, l=16},
                 label='export',
                 auto_width=true,
                 key='CUSTOM_CTRL_E',
-                on_activate=do_export,
+                on_activate=do_stockpile_export,
             },
             widgets.Panel{
                 frame={t=1, l=0},
@@ -592,6 +613,45 @@ function StockpilesOverlay:onInput(keys)
     return StockpilesOverlay.super.onInput(self, keys)
 end
 
-OVERLAY_WIDGETS = {overlay=StockpilesOverlay}
+--------------------
+-- HaulingOverlay
+--------------------
+
+HaulingOverlay = defclass(HaulingOverlay, overlay.OverlayWidget)
+HaulingOverlay.ATTRS{
+    desc='Shows a panel when minecart route stop conditions are being edited.',
+    default_pos={x=5, y=40},
+    default_enabled=true,
+    version=1,
+    viewscreens='dwarfmode/HaulingStopConditions',
+    frame={w=49, h=3},
+}
+
+function HaulingOverlay:init()
+    self:addviews{
+        widgets.Panel{
+            view_id='main',
+            frame_style=gui.MEDIUM_FRAME,
+            frame_background=gui.CLEAR_PEN,
+            subviews={
+                widgets.HotkeyLabel{
+                    frame={t=0, l=0},
+                    label='import',
+                    auto_width=true,
+                    key='CUSTOM_CTRL_I',
+                    on_activate=do_route_import,
+                }, widgets.HotkeyLabel{
+                    frame={t=0, l=16},
+                    label='export',
+                    auto_width=true,
+                    key='CUSTOM_CTRL_E',
+                    on_activate=do_route_export,
+                },
+            },
+        },
+    }
+end
+
+OVERLAY_WIDGETS = {overlay=StockpilesOverlay, hauling=HaulingOverlay}
 
 return _ENV

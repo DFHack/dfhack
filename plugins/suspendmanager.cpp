@@ -890,7 +890,7 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
         return plugin_enable(out,true);
     } else if (parameters[0] == "disable") {
         return plugin_enable(out,false);
-    } else if (parameters[0] == "set" && parameters[1] == "preventblocking") {
+    } else if (parameters.size() == 3 && parameters[0] == "set" && parameters[1] == "preventblocking") {
         if (parameters[2] == "true") {
             suspendmanager_instance->prevent_blocking = true;
             config.set_bool(CONFIG_PREVENT_BLOCKING, true);

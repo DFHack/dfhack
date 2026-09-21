@@ -125,16 +125,16 @@ namespace DFHack
         constructed_identity(size_t size, const TAllocateFn alloc)
             : type_identity(size), allocator(alloc) {};
 
-        virtual bool can_allocate() const { return (allocator != nullptr); }
-        virtual void *do_allocate() const { return allocator(nullptr,nullptr); }
-        virtual bool do_copy(void *tgt, const void *src) const { return allocator(tgt,src) == tgt; }
-        virtual bool do_destroy(void *obj) const { return allocator(nullptr,obj) == obj; }
+        virtual bool can_allocate() const override { return (allocator != nullptr); }
+        virtual void *do_allocate() const override { return allocator(nullptr,nullptr); }
+        virtual bool do_copy(void *tgt, const void *src) const override { return allocator(tgt,src) == tgt; }
+        virtual bool do_destroy(void *obj) const override { return allocator(nullptr,obj) == obj; }
     public:
-        virtual bool isPrimitive() const { return false; }
-        virtual bool isConstructed() const { return true; }
+        virtual bool isPrimitive() const override { return false; }
+        virtual bool isConstructed() const override { return true; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
     class DFHACK_EXPORT compound_identity : public constructed_identity {
@@ -158,7 +158,7 @@ namespace DFHack
     public:
         const char *getName() const { return dfhack_name; }
 
-        virtual const std::string getFullName() const;
+        virtual const std::string getFullName() const override;
 
         const compound_identity *getScopeParent() const { return (*parent_map)[this]; }
         const std::vector<const compound_identity*> &getScopeChildren() const { return (*children_map)[this]; }
@@ -186,24 +186,24 @@ namespace DFHack
         const int num_bits;
 
     protected:
-        virtual bool can_allocate() const { return true; }
-        virtual void *do_allocate() const { return do_allocate_pod(); }
-        virtual bool do_copy(void *tgt, const void *src) const { do_copy_pod(tgt, src); return true; }
-        virtual bool do_destroy(void *obj) const { return do_destroy_pod(obj); }
+        virtual bool can_allocate() const override { return true; }
+        virtual void *do_allocate() const override { return do_allocate_pod(); }
+        virtual bool do_copy(void *tgt, const void *src) const override { do_copy_pod(tgt, src); return true; }
+        virtual bool do_destroy(void *obj) const override { return do_destroy_pod(obj); }
 
     public:
         bitfield_identity(size_t size,
             const compound_identity *scope_parent, const char *dfhack_name,
                           int num_bits, const bitfield_item_info *bits);
 
-        virtual identity_type type() const { return IDTYPE_BITFIELD; }
+        virtual identity_type type() const override { return IDTYPE_BITFIELD; }
 
-        virtual bool isConstructed() const { return false; }
+        virtual bool isConstructed() const override { return false; }
 
         int getNumBits() const { return num_bits; }
         const bitfield_item_info *getBits() const { return bits; }
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
     };
 
     class struct_identity;
@@ -232,10 +232,10 @@ namespace DFHack
         const struct_identity *attr_type;
 
     protected:
-        virtual bool can_allocate() const { return true; }
-        virtual void *do_allocate() const;
-        virtual bool do_copy(void *tgt, const void *src) const { do_copy_pod(tgt, src); return true; }
-        virtual bool do_destroy(void *obj) const { return do_destroy_pod(obj); }
+        virtual bool can_allocate() const override { return true; }
+        virtual void *do_allocate() const override;
+        virtual bool do_copy(void *tgt, const void *src) const override { do_copy_pod(tgt, src); return true; }
+        virtual bool do_destroy(void *obj) const override { return do_destroy_pod(obj); }
 
     public:
         enum_identity(size_t size,
@@ -247,7 +247,7 @@ namespace DFHack
                       const void *attrs, const struct_identity *attr_type);
         enum_identity(const enum_identity *enum_type, const type_identity *override_base_type);
 
-        virtual identity_type type() const { return IDTYPE_ENUM; }
+        virtual identity_type type() const override { return IDTYPE_ENUM; }
 
         int64_t getFirstItem() const { return first_item_value; }
         int64_t getLastItem() const { return last_item_value; }
@@ -259,11 +259,11 @@ namespace DFHack
         const void *getAttrs() const { return attrs; }
         const struct_identity *getAttrType() const { return attr_type; }
 
-        virtual bool isPrimitive() const { return true; }
-        virtual bool isConstructed() const { return false; }
+        virtual bool isPrimitive() const override { return true; }
+        virtual bool isConstructed() const override { return false; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
     struct struct_field_info_extra {
@@ -312,7 +312,7 @@ namespace DFHack
             const compound_identity *scope_parent, const char *dfhack_name,
             const struct_identity *parent, const struct_field_info *fields);
 
-        virtual identity_type type() const { return IDTYPE_STRUCT; }
+        virtual identity_type type() const override { return IDTYPE_STRUCT; }
 
         const struct_identity *getParent() const { return (*parent_map)[this]; }
         const std::vector<const struct_identity*> &getChildren() const { return (*children_map)[this]; }
@@ -322,7 +322,7 @@ namespace DFHack
 
         bool is_subclass(const struct_identity *subtype) const;
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
 
         bool is_equivalent(const struct_identity* other) const;
     };
@@ -332,9 +332,9 @@ namespace DFHack
         global_identity(const struct_field_info *fields)
             : struct_identity(0,NULL,NULL,"global",NULL,fields) {}
 
-        virtual identity_type type() const { return IDTYPE_GLOBAL; }
+        virtual identity_type type() const override { return IDTYPE_GLOBAL; }
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
     };
 
     class DFHACK_EXPORT union_identity : public struct_identity {
@@ -343,9 +343,9 @@ namespace DFHack
                 const compound_identity *scope_parent, const char *dfhack_name,
                 const struct_identity *parent, const struct_field_info *fields);
 
-        virtual identity_type type() const { return IDTYPE_UNION; }
+        virtual identity_type type() const override { return IDTYPE_UNION; }
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
     };
 
     class DFHACK_EXPORT other_vectors_identity : public struct_identity {
@@ -362,7 +362,7 @@ namespace DFHack
 
         const enum_identity *getIndexEnum() const { return index_enum; }
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
     };
 
 #ifdef _MSC_VER
@@ -405,7 +405,7 @@ namespace DFHack
             return it != lst.end() ? it->second : nullptr;
         }
 
-        bool can_allocate() const { return struct_identity::can_allocate() && (vtable_ptr() != nullptr); }
+        bool can_allocate() const override { return struct_identity::can_allocate() && (vtable_ptr() != nullptr); }
 
         void *get_vmethod_ptr(int index) const;
         bool set_vmethod_ptr(MemoryPatcher &patcher, int index, void *ptr) const;
@@ -429,9 +429,9 @@ namespace DFHack
                          const char *dfhack_name, const char *original_name,
             const virtual_identity *parent, const struct_field_info *fields,
                          bool is_plugin = false);
-        ~virtual_identity();
+        ~virtual_identity() override;
 
-        virtual identity_type type() const { return IDTYPE_CLASS; }
+        virtual identity_type type() const override { return IDTYPE_CLASS; }
 
         const char *getOriginalName() const { return original_name ? original_name : getName(); }
 

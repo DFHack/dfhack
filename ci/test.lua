@@ -727,6 +727,10 @@ local function main(args)
         qerror(('Invalid test folder: "%s"'):format(config.test_dir))
     end
 
+    if config.done_command then
+        print(('Will run "%s" after tests complete'):format(config.done_command))
+    end
+
     local counts = {
         tests = 0,
         tests_ok = 0,

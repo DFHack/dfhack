@@ -1,6 +1,8 @@
 config.mode = 'fortress'
 config.target = 'tiletypes'
 
+local tiletypes = require('plugins.tiletypes')
+
 local function set_cursor(pos)
     df.global.cursor.x = pos.x
     df.global.cursor.y = pos.y
@@ -115,4 +117,49 @@ end
 function test.here_point_bad_option_is_failure()
     local _, status = dfhack.run_command_silent('tiletypes-here-point --bogus')
     expect.eq(CR_FAILURE, status)
+end
+
+local function parse(args)
+    local opts = {cursor = xyz2pos(0, 0, 0)}
+    tiletypes.parse_commandline(opts, args)
+    return opts
+end
+
+function test.help_flag()
+    expect.true_(parse({'--help'}).help)
+    expect.true_(parse({'-h'}).help)
+    expect.true_(parse({'help'}).help)
+    expect.true_(parse({'?'}).help)
+end
+
+function test.quiet_flag()
+    expect.true_(parse({'-q'}).quiet)
+    expect.true_(parse({'--quiet'}).quiet)
+end
+
+function test.cursor_option()
+    local opts = parse({'-c', '5,7,99'})
+    expect.eq(5, opts.cursor.x)
+    expect.eq(7, opts.cursor.y)
+    expect.eq(99, opts.cursor.z)
+end
+
+function test.cursor_option_long_form()
+    local opts = parse({'--cursor', '1,2,3'})
+    expect.eq(1, opts.cursor.x)
+    expect.eq(2, opts.cursor.y)
+    expect.eq(3, opts.cursor.z)
+end
+
+function test.bad_cursor_errors()
+    expect.error(function()
+        tiletypes.parse_commandline({cursor = xyz2pos(0, 0, 0)},
+            {'-c', 'not-a-coord'})
+    end)
+end
+
+function test.positionals_do_not_set_flags()
+    local opts = parse({'paint', 'stone', 'microcline'})
+    expect.nil_(opts.help)
+    expect.nil_(opts.quiet)
 end

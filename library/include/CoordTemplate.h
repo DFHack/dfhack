@@ -7,6 +7,7 @@
 #include "DataDefs.h"
 #include "DataFuncs.h"
 #include "Export.h"
+#include "HashUtil.h"
 
 namespace DFHack
 {
@@ -74,11 +75,7 @@ namespace DFHack
 
         std::size_t operator()() const
         {
-            size_t r = 17;
-            const size_t m = 65537;
-            r = m * (r + x);
-            r = m * (r + y);
-            return r;
+            return hash_value(x, y);
         }
 
         // dot product
@@ -181,12 +178,7 @@ namespace DFHack
 
         std::size_t operator()() const
         {
-            size_t r = 17;
-            const size_t m = 65537;
-            r = m * (r + x);
-            r = m * (r + y);
-            r = m * (r + z);
-            return r;
+            return hash_value(x, y, z);
         }
 
         // special weirdness used by the dig plugin

@@ -716,13 +716,6 @@ static bool is_quality_skill(df::job_skill skill)
         sizeof(quality_labors)/sizeof(df::unit_labor), skill);
 }
 
-// strange moods can advance these skills to legendary
-static bool is_moodable_skill(df::job_skill skill)
-{
-    return is_labor_skill(moodable_labors,
-        sizeof(moodable_labors)/sizeof(df::unit_labor), skill);
-}
-
 static bool has_moodable_skill(df::unit *u)
 {
     for (auto l : moodable_labors)
@@ -1104,9 +1097,8 @@ void ModernEngine::update(color_ostream &out)
     // Care: safety labors for all specialized units
     auto *wd_care = wdm->ensure_detail(CARE_DETAIL,
         work_detail_icon_type::ORDERLIES, work_detail_mode::EverybodyDoesThis);
-    for (auto l : {unit_labor::RECOVER_WOUNDED, unit_labor::FEED_WATER_CIVILIANS,
-                   unit_labor::HAUL_WATER})
-        if (managed_labor_cache[l])
+    FOR_ENUM_ITEMS(unit_labor, l)
+        if (l != unit_labor::NONE && is_care_labor(l) && managed_labor_cache[l])
             wdm->cover(wd_care, l, true);
     reconcile(wdm, wd_care, specialized_ids);
 

@@ -66,6 +66,7 @@ Template for new versions:
 - `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
 
 ## Fixes
+- Plugin commands that throw uncaught C++ exceptions now report an error instead of crashing the game
 - Fix broken weather lookup in ``World::ReadCurrentWeather``
 - Fix ``dfhack.items.createItem`` making glob items of an incorrect size
 - Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused

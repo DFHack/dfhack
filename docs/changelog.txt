@@ -60,9 +60,10 @@ Template for new versions:
 
 ## New Features
 - `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
+- `buildingplan`: new "Do now" option marks the jobs of subsequently placed buildings as high priority
+- `getplants`: new ``--dry-run`` option counts affected plants without designating, and new ``--brewable``/``--edible``/``--oil``/``--cloth``/``--dye`` trait filters restrict the selection by plant use
 - ``quickfix``: repair ``plotinfo.site_id`` on load when DF leaves it unassigned on reclaimed fortresses
 - `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
-- `getplants`: new ``--dry-run`` option counts affected plants without designating, and new ``--brewable``/``--edible``/``--oil``/``--cloth``/``--dye`` trait filters restrict the selection by plant use
 
 ## Fixes
 - Fix broken weather lookup in ``World::ReadCurrentWeather``

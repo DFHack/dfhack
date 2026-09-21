@@ -185,7 +185,7 @@ namespace df {
             : function_identity_base(wrapper::num_args, vararg), ptr(ptr), name(name), depr(!depr.empty()), depr_message(depr)
         {};
 
-        virtual void invoke(lua_State *state, int base) const
+        virtual void invoke(lua_State *state, int base) const override
         {
             if (depr)
             {

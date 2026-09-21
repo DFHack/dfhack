@@ -1326,6 +1326,7 @@ OVERLAY_WIDGETS = {
     places=require('plugins.sort.places').PlacesOverlay,
     elevate_barony=require('plugins.sort.diplomacy').DiplomacyOverlay,
     elevate_barony_preferences=require('plugins.sort.diplomacy').PreferenceOverlay,
+    stress_icons=require('plugins.sort.stressicons').StressIconsOverlay,
 }
 
 dfhack.onStateChange[GLOBAL_KEY] = function(sc)

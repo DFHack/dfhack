@@ -4,6 +4,7 @@
 #include "Console.h"
 #include "DataDefs.h"
 #include "Export.h"
+#include "MiscUtils.h"
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
@@ -174,7 +175,13 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 out.printerr("No unit id specified!\n");
                 return CR_WRONG_USAGE;
             }
-            unit = df::unit::find(std::stoi(parameters[i]));
+            int id = string_to_int(parameters[i], -1);
+            if (id < 0)
+            {
+                out.printerr("Invalid unit id: '{}'\n", parameters[i]);
+                return CR_WRONG_USAGE;
+            }
+            unit = df::unit::find(id);
             if (!unit)
                 return CR_FAILURE;
         }

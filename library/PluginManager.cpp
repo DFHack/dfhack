@@ -494,6 +494,19 @@ command_result Plugin::invoke(color_ostream &out, const std::string & command, s
         if (auto cmdIt = std::ranges::find_if(commands, [&](const PluginCommand &cmd) { return cmd.name == command; });
             commands.end() != cmdIt)
         {
+            // an uncaught exception from a plugin command would propagate
+            // through runCommand and terminate the game; report it instead
+            auto call = [&]() -> command_result {
+                try {
+                    return cmdIt->function(out, parameters);
+                } catch (const std::exception &e) {
+                    out.printerr("Exception in {} command '{}': {}\n", name, command, e.what());
+                    return CR_FAILURE;
+                } catch (...) {
+                    out.printerr("Exception in {} command '{}'\n", name, command);
+                    return CR_FAILURE;
+                }
+            };
             // running interactive things from some other source than the console would break it
             if (!out.is_console() && cmdIt->interactive)
                 cr = CR_NEEDS_CONSOLE;
@@ -504,15 +517,15 @@ command_result Plugin::invoke(color_ostream &out, const std::string & command, s
                     cr = CR_WRONG_USAGE;
                 }
                 else {
-                    cr = cmdIt->function(out, parameters);
+                    cr = call();
                 }
             }
             else if (cmdIt->unlocked) {
-                cr = cmdIt->function(out, parameters);
+                cr = call();
             }
             else {
                 CoreSuspender suspend;
-                cr = cmdIt->function(out, parameters);
+                cr = call();
             }
         }
     }

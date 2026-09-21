@@ -1804,6 +1804,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
         case POWDER_MISC:
         case LIQUID_MISC:
         case DRINK:
+        case GLOB:
             prod->product_dimension = 150;
             break;
         case THREAD:

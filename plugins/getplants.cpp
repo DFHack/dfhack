@@ -50,6 +50,77 @@ enum class selectability {
     Unselected
 };
 
+//  Trait categories for the --brewable/--edible/--oil/--cloth/--dye filters.
+//  Brewable and oil-bearing materials are identified by the reaction products
+//  that the vanilla brewing and pressing reactions require (DRINK_MAT and
+//  PRESS_LIQUID_MAT respectively).
+enum plant_trait {
+    trait_none     = 0,
+    trait_brewable = 1 << 0,
+    trait_edible   = 1 << 1,
+    trait_oil      = 1 << 2,
+    trait_cloth    = 1 << 3,
+    trait_dye      = 1 << 4,
+};
+
+static bool materialHasProduct(const df::material *mat, const std::string &name) {
+    if (!mat)
+        return false;
+    for (const auto &id : mat->reaction_product.id) {
+        if (*id == name)
+            return true;
+    }
+    return false;
+}
+
+static df::material *plantMatDef(const df::plant_raw *plant, int16_t def) {
+    const DFHack::MaterialInfo mi(plant->material_defs.type[def], plant->material_defs.idx[def]);
+    return mi.isValid() ? mi.material : nullptr;
+}
+
+static bool growthMatchesTraits(const df::plant_growth *growth, unsigned traits) {
+    const DFHack::MaterialInfo mat(growth->mat_type, growth->mat_index);
+    if (!mat.isValid())
+        return false;
+    return ((traits & trait_brewable) && materialHasProduct(mat.material, "DRINK_MAT")) ||
+           ((traits & trait_oil) && materialHasProduct(mat.material, "PRESS_LIQUID_MAT")) ||
+           ((traits & trait_edible) && mat.material->flags.is_set(material_flags::EDIBLE_RAW)) ||
+           ((traits & trait_dye) && mat.material->flags.is_set(material_flags::IS_DYE));
+}
+
+//  Does the plant have a part matching any of the given trait categories?
+static bool plantMatchesTraits(const df::plant_raw *plant, unsigned traits) {
+    if ((traits & trait_cloth) && plant->flags.is_set(plant_raw_flags::THREAD))
+        return true;
+
+    df::material *basic = plantMatDef(plant, plant_material_def::basic_mat);
+    if (basic &&
+        (((traits & trait_brewable) && materialHasProduct(basic, "DRINK_MAT")) ||
+         ((traits & trait_edible) && basic->flags.is_set(material_flags::EDIBLE_RAW)) ||
+         ((traits & trait_dye) && basic->flags.is_set(material_flags::IS_DYE))))
+        return true;
+
+    //  Seeds and nuts are milled into paste when their material yields a press liquid
+    if ((traits & trait_oil) &&
+        materialHasProduct(plantMatDef(plant, plant_material_def::seed), "PRESS_LIQUID_MAT"))
+        return true;
+
+    if (traits & trait_dye) {
+        for (int16_t def : {plant_material_def::mill, plant_material_def::extract_vial,
+                plant_material_def::extract_barrel, plant_material_def::extract_still_vial}) {
+            df::material *mat = plantMatDef(plant, def);
+            if (mat && mat->flags.is_set(material_flags::IS_DYE))
+                return true;
+        }
+    }
+
+    for (auto *growth : plant->growths) {
+        if (growthMatchesTraits(growth, traits))
+            return true;
+    }
+    return false;
+}
+
 //  Determination of whether seeds can be collected is somewhat messy:
 //    - Growths of type SEEDS are collected only if they are edible either raw or cooked.
 //    - Growths of type PLANT_GROWTH are collected provided the STOCKPILE_PLANT_GROWTH
@@ -247,13 +318,15 @@ bool picked(const df::plant* plant, int32_t growth_subtype, int32_t growth_densi
     return false;
 }
 
-bool designate(color_ostream& out, const df::plant* plant, bool farming) {
+bool designate(color_ostream& out, const df::plant* plant, bool farming, bool dry_run) {
     TRACE(log, out).print("Attempting to designate {} at ({}, {}, {})\n", world->raws.plants.all[plant->material]->id, plant->pos.x, plant->pos.y, plant->pos.z);
+
+    auto mark = dry_run ? Designations::canMarkPlant : Designations::markPlant;
 
     if (!farming) {
         bool istree = (tileMaterial(Maps::getTileBlock(plant->pos)->tiletype[plant->pos.x % 16][plant->pos.y % 16]) == tiletype_material::TREE);
         if (istree)
-            return Designations::markPlant(plant);
+            return mark(plant);
     }
 
     df::plant_raw* plant_raw = world->raws.plants.all[plant->material];
@@ -261,7 +334,7 @@ bool designate(color_ostream& out, const df::plant* plant, bool farming) {
 
     if (basic_mat.material->flags.is_set(material_flags::EDIBLE_RAW) ||
         basic_mat.material->flags.is_set(material_flags::EDIBLE_COOKED)) {
-        return Designations::markPlant(plant);
+        return mark(plant);
     }
 
     if (plant_raw->flags.is_set(plant_raw_flags::THREAD) ||
@@ -270,14 +343,14 @@ bool designate(color_ostream& out, const df::plant* plant, bool farming) {
         plant_raw->flags.is_set(plant_raw_flags::EXTRACT_BARREL) ||
         plant_raw->flags.is_set(plant_raw_flags::EXTRACT_STILL_VIAL)) {
         if (!farming) {
-            return Designations::markPlant(plant);
+            return mark(plant);
         }
     }
 
     if (basic_mat.material->reaction_product.id.size() > 0 ||
         basic_mat.material->reaction_class.size() > 0) {
         if (!farming) {
-            return Designations::markPlant(plant);
+            return mark(plant);
         }
     }
 
@@ -315,7 +388,7 @@ bool designate(color_ostream& out, const df::plant* plant, bool farming) {
         if ((!farming || seedSource) &&
             ripe(plant->pos.x, plant->pos.y, plant->pos.z, plant_raw->growths[i]->timing_1, plant_raw->growths[i]->timing_2) &&
             !picked(plant, i, plant_raw->growths[i]->density))
-            return Designations::markPlant(plant);
+            return mark(plant);
     }
 
     return false;
@@ -326,7 +399,8 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
     std::vector<selectability> plantSelections;
     std::vector<size_t> collectionCount;
     set<string> plantNames;
-    bool deselect = false, exclude = false, treesonly = false, shrubsonly = false, all = false, verbose = false, farming = false;
+    bool deselect = false, exclude = false, treesonly = false, shrubsonly = false, all = false, verbose = false, farming = false, dry_run = false;
+    unsigned traits = trait_none;
     size_t maxCount = 999999;
     int count = 0;
 
@@ -357,6 +431,18 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
             verbose = true;
         else if (parameters[i] == "-f")
             farming = true;
+        else if (parameters[i] == "-d" || parameters[i] == "--dry-run")
+            dry_run = true;
+        else if (parameters[i] == "--brewable")
+            traits |= trait_brewable;
+        else if (parameters[i] == "--edible")
+            traits |= trait_edible;
+        else if (parameters[i] == "--oil")
+            traits |= trait_oil;
+        else if (parameters[i] == "--cloth")
+            traits |= trait_cloth;
+        else if (parameters[i] == "--dye")
+            traits |= trait_dye;
         else if (parameters[i] == "-n") {
             if (parameters.size() > i + 1) {
                 maxCount = atoi(parameters[i + 1].c_str());
@@ -393,14 +479,30 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
         return CR_WRONG_USAGE;
     }
 
+    std::vector<bool> traitMatches(world->raws.plants.all.size(), false);
+    if (traits != trait_none) {
+        for (size_t i = 0; i < world->raws.plants.all.size(); i++)
+            traitMatches[i] = plantMatchesTraits(world->raws.plants.all[i], traits);
+    }
+
     for (size_t i = 0; i < world->raws.plants.all.size(); i++) {
         df::plant_raw* plant = world->raws.plants.all[i];
         if (all) {
             plantSelections[i] = selectablePlant(out, plant, farming);
+            if (traits != trait_none && !traitMatches[i])
+                plantSelections[i] = selectability::Nonselectable;
         }
         else if (plantNames.find(plant->id) != plantNames.end()) {
             plantNames.erase(plant->id);
             plantSelections[i] = selectablePlant(out, plant, farming);
+            if (traits != trait_none && !traitMatches[i] &&
+                (plantSelections[i] == selectability::Selectable ||
+                 plantSelections[i] == selectability::OutOfSeason))
+            {
+                out.printerr("{} does not match the specified trait filters\n", plant->id);
+                plantSelections[i] = selectability::Nonselectable;
+                continue;
+            }
             switch (plantSelections[i]) {
             case selectability::Grass:
                 out.printerr("{} is a grass and cannot be gathered\n", plant->id);
@@ -447,6 +549,8 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
         out.print("Valid plant IDs:\n");
         for (size_t i = 0; i < world->raws.plants.all.size(); i++) {
             df::plant_raw* plant = world->raws.plants.all[i];
+            if (traits != trait_none && !traitMatches[i])
+                continue;
             switch (selectablePlant(out, plant, farming)) {
             case selectability::Grass:
             case selectability::Nonselectable:
@@ -506,6 +610,8 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
             if (!exclude)
                 continue;
         }
+        if (traits != trait_none && !traitMatches[mat])
+            continue;
         df::tiletype tt = cur->tiletype[x][y];
         df::tiletype_material tile_mat = tileMaterial(tt);
         if ((treesonly || tt != tiletype::Shrub) && ENUM_ATTR(plant_type, is_shrub, plant->type))
@@ -516,12 +622,12 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
             continue;
         if (collectionCount[mat] >= maxCount)
             continue;
-        if (deselect && Designations::unmarkPlant(plant))
+        if (deselect && (dry_run ? Designations::canUnmarkPlant(plant) : Designations::unmarkPlant(plant)))
         {
             collectionCount[mat]++;
             ++count;
         }
-        if (!deselect && designate(out, plant, farming))
+        if (!deselect && designate(out, plant, farming, dry_run))
         {
             DEBUG(log, out).print("Designated {} at ({}, {}, {})\n", world->raws.plants.all[mat]->id, plant->pos.x, plant->pos.y, plant->pos.z);
             collectionCount[mat]++;
@@ -531,11 +637,11 @@ command_result df_getplants(color_ostream& out, vector <string>& parameters) {
     if (count && verbose) {
         for (size_t i = 0; i < plantSelections.size(); i++) {
             if (collectionCount[i] > 0)
-                out.print("Updated {} {} designations.\n", collectionCount[i], world->raws.plants.all[i]->id);
+                out.print("{} {} {} designations.\n", dry_run ? "Would update" : "Updated", collectionCount[i], world->raws.plants.all[i]->id);
         }
         out.print("\n");
     }
-    out.print("Updated {} plant designations.\n", count);
+    out.print("{} {} plant designations.\n", dry_run ? "Would update" : "Updated", count);
 
     return CR_OK;
 }

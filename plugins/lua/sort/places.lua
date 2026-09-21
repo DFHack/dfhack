@@ -153,6 +153,12 @@ local function get_workshop_search_key(workshop)
     end
 
     table.insert(result, workshop.name)
+
+    -- the display name may differ from the enum item name (e.g. Masons ->
+    -- "Stoneworker's Workshop") and is the raw-defined name for custom
+    -- workshops
+    table.insert(result, dfhack.buildings.getName(workshop))
+
     table.insert(result, df.workshop_type.attrs[workshop.type].name or '')
     table.insert(result, df.workshop_type[workshop.type])
 

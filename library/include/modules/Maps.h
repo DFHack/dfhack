@@ -35,6 +35,7 @@ distribution.
 #include "modules/Materials.h"
 
 #include <optional>
+#include <unordered_map>
 #include <unordered_set>
 
 #include "df/biome_type.h"
@@ -484,8 +485,14 @@ struct DFHACK_EXPORT TileFilter {
  * \ingroup grp_maps
  */
 struct DFHACK_EXPORT TileActions {
-    /// If set, matching tiles are changed to this tiletype.
+    /// If set, matching tiles are changed to this tiletype, unless their
+    /// current tiletype is listed in tiletype_map (which takes precedence).
     std::optional<df::tiletype> set_tiletype;
+    /// Per-tiletype replacements: a matching tile whose current tiletype is
+    /// a key in this map is changed to the mapped value instead of
+    /// set_tiletype. Tiles with unmapped tiletypes fall back to
+    /// set_tiletype if it is set, and are otherwise left unchanged.
+    std::unordered_map<df::tiletype, df::tiletype> tiletype_map;
     /// Designation update: whole = (whole & ~clear) | set.
     uint32_t designation_set = 0;
     uint32_t designation_clear = 0;

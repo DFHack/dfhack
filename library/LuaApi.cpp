@@ -2937,10 +2937,11 @@ static void parse_bitfield_spec(lua_State *L, int tbl, const char *key,
 }
 
 // Wrap the Lua function at stack index fn as a per-tile predicate/callback.
-// The function is invoked as fn(x, y, z, block, tiletype). If truthy is set,
-// the wrapper returns whether the function returned a truthy value (for
-// filters); otherwise only a return value of exactly false stops the scan
-// (for callbacks).
+// The function is invoked as fn(x, y, z, block, localx, localy, tiletype),
+// where localx/localy are the tile's coordinates within the block. If truthy
+// is set, the wrapper returns whether the function returned a truthy value
+// (for filters); otherwise only a return value of exactly false stops the
+// scan (for callbacks).
 static std::function<bool(df::map_block *, df::coord2d, df::coord)>
 wrap_lua_tile_fn(lua_State *L, int fn, bool truthy = false)
 {
@@ -2950,8 +2951,10 @@ wrap_lua_tile_fn(lua_State *L, int fn, bool truthy = false)
         lua_pushinteger(L, pos.y);
         lua_pushinteger(L, pos.z);
         Lua::PushDFObject(L, block);
+        lua_pushinteger(L, local.x);
+        lua_pushinteger(L, local.y);
         lua_pushinteger(L, (int)block->tiletype[local.x][local.y]);
-        lua_call(L, 5, 1);
+        lua_call(L, 7, 1);
         bool cont = truthy ? lua_toboolean(L, -1) != 0
                            : !(lua_isboolean(L, -1) && !lua_toboolean(L, -1));
         lua_pop(L, 1);
@@ -3032,7 +3035,21 @@ static int maps_forEachTile(lua_State *L)
         actions.callback = wrap_lua_tile_fn(L, aidx);
     else if (lua_istable(L, aidx)) {
         lua_getfield(L, aidx, "set_tiletype");
-        if (!lua_isnil(L, -1))
+        if (lua_istable(L, -1)) {
+            // {[tiletype] = replacement_tiletype} map; keys and values may
+            // be numbers or enum names
+            int spec = lua_absindex(L, -1);
+            lua_pushnil(L);
+            while (lua_next(L, spec)) {
+                df::tiletype from = (df::tiletype)check_enum_int<df::tiletype>(
+                    L, -2, "set_tiletype key");
+                df::tiletype to = (df::tiletype)check_enum_int<df::tiletype>(
+                    L, -1, "set_tiletype value");
+                actions.tiletype_map[from] = to;
+                lua_pop(L, 1);
+            }
+        }
+        else if (!lua_isnil(L, -1))
             actions.set_tiletype = (df::tiletype)check_enum_int<df::tiletype>(L, -1, "set_tiletype");
         lua_pop(L, 1);
 

@@ -1864,9 +1864,17 @@ Maps::TileScanResult Maps::forEachTile(
                     continue;
                 result.tiles_matched++;
 
-                if (actions.set_tiletype) {
-                    block->tiletype[lx][ly] = *actions.set_tiletype;
-                    result.tiletypes_changed++;
+                if (actions.set_tiletype || !actions.tiletype_map.empty()) {
+                    df::tiletype &cur = block->tiletype[lx][ly];
+                    auto it = actions.tiletype_map.find(cur);
+                    if (it != actions.tiletype_map.end()) {
+                        cur = it->second;
+                        result.tiletypes_changed++;
+                    }
+                    else if (actions.set_tiletype) {
+                        cur = *actions.set_tiletype;
+                        result.tiletypes_changed++;
+                    }
                 }
 
                 if (actions.designation_set || actions.designation_clear) {

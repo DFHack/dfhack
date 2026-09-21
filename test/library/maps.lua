@@ -64,6 +64,31 @@ function test.forEachTile_set_tiletype()
     end)
 end
 
+function test.forEachTile_tiletype_map()
+    local block = first_block()
+    local p = block.map_pos
+    local orig = block.tiletype[0][0]
+    return dfhack.with_finalize(function()
+        block.tiletype[0][0] = orig
+    end, function()
+        -- a map entry for a different tiletype must not touch this tile
+        local res = dfhack.maps.forEachTile(
+            {p.x, p.y, p.z, p.x, p.y, p.z}, nil,
+            {set_tiletype = {[df.tiletype.ConstructedWallLRUD] =
+                df.tiletype.OpenSpace}})
+        expect.eq(1, res.matched)
+        expect.eq(0, res.changed)
+        expect.eq(orig, block.tiletype[0][0])
+
+        -- matching key rewrites the tile
+        local res2 = dfhack.maps.forEachTile(
+            {p.x, p.y, p.z, p.x, p.y, p.z}, nil,
+            {set_tiletype = {[orig] = df.tiletype.OpenSpace}})
+        expect.eq(1, res2.changed)
+        expect.eq(df.tiletype.OpenSpace, block.tiletype[0][0])
+    end)
+end
+
 function test.forEachTile_designation_action_and_predicate()
     local block = first_block()
     local p = block.map_pos
@@ -90,10 +115,12 @@ function test.forEachTile_callback()
     local block = first_block()
     local seen = 0
     local res = dfhack.maps.forEachTile(block_bounds(block), nil,
-        function(x, y, z, block_arg, tt)
+        function(x, y, z, block_arg, localx, localy, tt)
             seen = seen + 1
             expect.eq(block.map_pos.x, block_arg.map_pos.x)
-            expect.eq(block.tiletype[x % 16][y % 16], tt)
+            expect.eq(x % 16, localx)
+            expect.eq(y % 16, localy)
+            expect.eq(block.tiletype[localx][localy], tt)
         end)
     expect.eq(256, seen)
     expect.eq(256, res.matched)

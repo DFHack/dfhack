@@ -2561,16 +2561,20 @@ Maps module
     required values, e.g. ``{hidden=false, subterranean=true}``.
     Multi-bit fields such as ``dig`` or ``flow_size`` take integer values.
   - ``occupancy``: same, for ``df.tile_occupancy`` fields.
-  - ``filter``: a function ``fn(x, y, z, block, tiletype)`` evaluated last
-    for each candidate tile; the tile matches only if it returns a truthy
-    value.
+  - ``filter``: a function ``fn(x, y, z, block, localx, localy, tiletype)``
+    evaluated last for each candidate tile; the tile matches only if it
+    returns a truthy value. ``localx``/``localy`` are the tile's
+    coordinates within ``block`` (0-15).
 
   The *actions* argument says what to do with each matching tile. It may be
   a table with the following keys (all optional), a function (equivalent to
   ``{callback=fn}``), or *nil* to just count matches:
 
   - ``set_tiletype``: a tiletype (number or name) to write to matching
-    tiles.
+    tiles, or a table mapping tiletypes to replacement tiletypes (keys and
+    values may be numbers or names). Tiles whose current tiletype is a key
+    in the table are rewritten to the mapped value, taking precedence over
+    a plain ``set_tiletype`` value; unmapped tiles fall back to it.
   - ``designation``: a table of ``df.tile_designation`` field names to
     values, assigned on each matching tile (e.g. ``{hidden=false}`` clears
     the hidden flag).
@@ -2585,9 +2589,9 @@ Maps module
     present before that write). Constructions are buffered during the scan
     and merged into ``world.event.constructions`` in one sorted pass, so
     bulk spawning is cheap.
-  - ``callback``: a function ``fn(x, y, z, block, tiletype)`` invoked for
-    each matching tile after the other actions are applied. Returning
-    exactly ``false`` aborts the scan.
+  - ``callback``: a function ``fn(x, y, z, block, localx, localy,
+    tiletype)`` invoked for each matching tile after the other actions are
+    applied. Returning exactly ``false`` aborts the scan.
 
   Returns a table with counts: ``scanned`` (tiles visited), ``matched``
   (tiles passing the filter), ``changed`` (tiles whose tiletype was

@@ -4,31 +4,22 @@
  * or set AUTOENABLE to true.
  */
 
-#include "uicommon.h"
 #include "LuaTools.h"
+#include "PluginManager.h"
 
-#include "df/building_stockpilest.h"
-#include "df/job.h"
-#include "df/viewscreen_dwarfmodest.h"
-
-#include "modules/Gui.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
 
-using namespace DFHack;
-using namespace std;
+#include "df/global_objects.h"
+#include "df/world.h"
 
-using df::building_stockpilest;
+using namespace DFHack;
 
 DFHACK_PLUGIN("stockflow");
 #define AUTOENABLE false
 DFHACK_PLUGIN_IS_ENABLED(enabled);
 
-REQUIRE_GLOBAL(gps);
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(plotinfo);
-
-bool fast = false;
 
 /*
  * Lua interface.
@@ -37,50 +28,18 @@ bool fast = false;
 class LuaHelper {
 public:
     void cycle(color_ostream &out) {
-        bool found = false;
-
-        if (fast) {
-            // Ignore the bookkeeper; either gather or enqueue orders every cycle.
-            found = !bookkeeping;
-        } else {
-            // Gather orders when the bookkeeper starts updating stockpile records,
-            // and enqueue them when the job is done.
-            for (df::job_list_link* link = &world->jobs.list; link != NULL; link = link->next) {
-                if (link->item == NULL) continue;
-                if (link->item->job_type == job_type::UpdateStockpileRecords) {
-                    found = true;
-                    break;
-                }
-            }
-        }
-
-        if (found) {
-            // Entice the bookkeeper to spend less time update records.
-            plotinfo->nobles.bookkeeper_precision += plotinfo->nobles.bookkeeper_precision >> 3;
-            if (!bookkeeping) {
-                command_method("start_bookkeeping", out);
-                bookkeeping = true;
-            }
-        } else {
-            // Entice the bookkeeper to update records more often.
-            plotinfo->nobles.bookkeeper_precision -= plotinfo->nobles.bookkeeper_precision >> 5;
-            plotinfo->nobles.bookkeeper_cooldown -= plotinfo->nobles.bookkeeper_cooldown >> 2;
-            if (bookkeeping) {
-                command_method("finish_bookkeeping", out);
-                bookkeeping = false;
-            }
-        }
+        // Gather orders and enqueue them in a single pass. This used to be
+        // gated on the bookkeeper's UpdateStockpileRecords job, but that job
+        // does not run reliably due to a base game bug.
+        command_method("start_bookkeeping", out);
+        command_method("finish_bookkeeping", out);
     }
 
     void init() {
-        stockpile_id = -1;
         initialized = false;
-        bookkeeping = false;
     }
 
     bool reset(color_ostream &out, bool load) {
-        stockpile_id = -1;
-        bookkeeping = false;
         if (load) {
             return initialized = command_method("initialize_world", out);
         } else if (initialized) {
@@ -93,122 +52,18 @@ public:
 
     bool command_method(const char *method, color_ostream &out) {
         // Calls a lua function with no parameters.
-
-        auto L = Lua::Core::State;
-        Lua::StackUnwinder top(L);
-
-        if (!lua_checkstack(L, 1))
-            return false;
-
-        if (!Lua::PushModulePublic(out, L, "plugins.stockflow", method))
-            return false;
-
-        if (!Lua::SafeCall(out, L, 0, 0))
-            return false;
-
-        return true;
+        return Lua::CallLuaModuleFunction(out, "plugins.stockflow", method);
     }
-
-    bool stockpile_method(const char *method, building_stockpilest *sp) {
-        // Combines the select_order and toggle_trigger method calls,
-        // because they share the same signature.
-        auto L = Lua::Core::State;
-        color_ostream_proxy out(Core::getInstance().getConsole());
-
-        Lua::StackUnwinder top(L);
-
-        if (!lua_checkstack(L, 2))
-            return false;
-
-        if (!Lua::PushModulePublic(out, L, "plugins.stockflow", method))
-            return false;
-
-        Lua::Push(L, sp);
-
-        if (!Lua::SafeCall(out, L, 1, 0))
-            return false;
-
-        // Invalidate the string cache.
-        stockpile_id = -1;
-
-        return true;
-    }
-
-    bool collect_settings(building_stockpilest *sp) {
-        // Find strings representing the job to order, and the trigger condition.
-        // There might be a memory leak here; C++ is odd like that.
-        auto L = Lua::Core::State;
-        color_ostream_proxy out(Core::getInstance().getConsole());
-
-        CoreSuspender suspend;
-        Lua::StackUnwinder top(L);
-
-        if (!lua_checkstack(L, 2))
-            return false;
-
-        if (!Lua::PushModulePublic(out, L, "plugins.stockflow", "stockpile_settings"))
-            return false;
-
-        Lua::Push(L, sp);
-
-        if (!Lua::SafeCall(out, L, 1, 2))
-            return false;
-
-        if (!lua_isstring(L, -1))
-            return false;
-
-        current_trigger = lua_tostring(L, -1);
-        lua_pop(L, 1);
-
-        if (!lua_isstring(L, -1))
-            return false;
-
-        current_job = lua_tostring(L, -1);
-        lua_pop(L, 1);
-
-        stockpile_id = sp->id;
-
-        return true;
-    }
-
-    void draw(building_stockpilest *sp) {
-        if (sp->id != stockpile_id) {
-            if (!collect_settings(sp)) {
-                Core::printerr("Stockflow job collection failed!\n");
-                return;
-            }
-        }
-
-        auto dims = Gui::getDwarfmodeViewDims();
-        int left_margin = dims.menu_x1 + 1;
-        int x = left_margin;
-        int y = dims.y2 - 2; // below autodump, automelt, autotrade, stocks, stockpiles
-
-        int links = 0;
-        links += sp->links.give_to_pile.size();
-        links += sp->links.take_from_pile.size();
-        links += sp->links.give_to_workshop.size();
-        links += sp->links.take_from_workshop.size();
-        if (links + 12 >= y)
-           y += 1;
-
-        OutputHotkeyString(x, y, current_job, "j", true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
-        if (*current_trigger)
-            OutputHotkeyString(x, y, current_trigger, "   J", true, left_margin, COLOR_WHITE, COLOR_LIGHTRED);
-    }
-
 
 private:
-    long stockpile_id;
     bool initialized;
-    bool bookkeeping;
-    const char *current_job;
-    const char *current_trigger;
 };
 
 static LuaHelper helper;
 
-#define DELTA_TICKS 600
+// Once per in-game day, more or less. A prime number is used so that
+// periodic tools don't all fire on the same tick.
+constexpr auto DELTA_TICKS = 1187;
 
 DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     if (!Maps::IsValid())
@@ -225,69 +80,7 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out) {
     return CR_OK;
 }
 
-
-/*
- * Interface hooks
- */
-struct stockflow_hook : public df::viewscreen_dwarfmodest {
-    typedef df::viewscreen_dwarfmodest interpose_base;
-
-    bool handleInput(set<df::interface_key> *input) {
-        if (Gui::inRenameBuilding())
-            return false;
-
-        building_stockpilest *sp = get_selected_stockpile();
-        if (!sp)
-            return false;
-
-        if (input->count(interface_key::CUSTOM_J)) {
-            // Select a new order for this stockpile.
-            if (!helper.stockpile_method("select_order", sp)) {
-                Core::printerr("Stockflow order selection failed!\n");
-            }
-
-            return true;
-        } else if (input->count(interface_key::CUSTOM_SHIFT_J)) {
-            // Toggle the order trigger for this stockpile.
-            if (!helper.stockpile_method("toggle_trigger", sp)) {
-                Core::printerr("Stockflow trigger toggle failed!\n");
-            }
-
-            return true;
-        }
-
-        return false;
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, feed, (set<df::interface_key> *input)) {
-        if (!handleInput(input))
-            INTERPOSE_NEXT(feed)(input);
-    }
-
-    DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
-        INTERPOSE_NEXT(render)();
-
-        building_stockpilest *sp = get_selected_stockpile();
-        if (sp)
-            helper.draw(sp);
-    }
-};
-
-IMPLEMENT_VMETHOD_INTERPOSE(stockflow_hook, feed);
-IMPLEMENT_VMETHOD_INTERPOSE(stockflow_hook, render);
-
-
-static bool apply_hooks(color_ostream &out, bool enabling) {
-    if (enabling && !gps) {
-        out.printerr("Stockflow needs graphics.\n");
-        return false;
-    }
-
-    if (!INTERPOSE_HOOK(stockflow_hook, feed).apply(enabling) || !INTERPOSE_HOOK(stockflow_hook, render).apply(enabling)) {
-        out.printerr("Could not {} stockflow hooks!\n", enabling? "insert": "remove");
-        return false;
-    }
-
+static bool apply_state(color_ostream &out, bool enabling) {
     if (!helper.reset(out, enabling && Maps::IsValid())) {
         out.printerr("Could not reset stockflow world data!\n");
         return false;
@@ -296,18 +89,13 @@ static bool apply_hooks(color_ostream &out, bool enabling) {
     return true;
 }
 
-static command_result stockflow_cmd(color_ostream &out, vector <string> & parameters) {
+static command_result stockflow_cmd(color_ostream &out, std::vector<std::string> & parameters) {
     bool desired = enabled;
     if (parameters.size() == 1) {
         if (parameters[0] == "enable" || parameters[0] == "on" || parameters[0] == "1") {
             desired = true;
-            fast = false;
         } else if (parameters[0] == "disable" || parameters[0] == "off" || parameters[0] == "0") {
             desired = false;
-            fast = false;
-        } else if (parameters[0] == "fast" || parameters[0] == "always" || parameters[0] == "2") {
-            desired = true;
-            fast = true;
         } else if (parameters[0] == "usage" || parameters[0] == "help" || parameters[0] == "?") {
             return CR_WRONG_USAGE;
         } else if (parameters[0] == "list") {
@@ -331,12 +119,12 @@ static command_result stockflow_cmd(color_ostream &out, vector <string> & parame
     }
 
     if (desired != enabled) {
-        if (!apply_hooks(out, desired)) {
+        if (!apply_state(out, desired)) {
             return CR_FAILURE;
         }
     }
 
-    out.print("Stockflow is {} {}{}.\n", (desired == enabled)? "currently": "now", desired? "enabled": "disabled", fast? ", in fast mode": "");
+    out.print("Stockflow is {} {}.\n", (desired == enabled)? "currently": "now", desired? "enabled": "disabled");
     enabled = desired;
     return CR_OK;
 }
@@ -362,7 +150,7 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
     /* Accept the "enable stockflow"/"disable stockflow" syntax, where available. */
     /* Same as "stockflow enable"/"stockflow disable" except without the status line. */
     if (enable != enabled) {
-        if (!apply_hooks(out, enable)) {
+        if (!apply_state(out, enable)) {
             return CR_FAILURE;
         }
 
@@ -375,7 +163,7 @@ DFhackCExport command_result plugin_enable(color_ostream& out, bool enable) {
 DFhackCExport command_result plugin_init(color_ostream &out, std::vector <PluginCommand> &commands) {
     helper.init();
     if (AUTOENABLE) {
-        if (!apply_hooks(out, true)) {
+        if (!apply_state(out, true)) {
             return CR_FAILURE;
         }
 

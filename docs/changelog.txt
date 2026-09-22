@@ -69,6 +69,7 @@ Template for new versions:
 - `sort`: the stress/happiness icons in the top bar are now clickable, opening a list of the citizens in that stress category; selecting a citizen centers the map on them
 - `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
 - `stockpiles`: the overlay now also attaches to the minecart hauling stop conditions panel, offering import/export of route stop conditions
+- `suspendmanager`: suspend deconstruction jobs that would collapse connected machinery, such as waterwheels supporting other components
 
 ## Fixes
 - Plugin commands that throw uncaught C++ exceptions now report an error instead of crashing the game

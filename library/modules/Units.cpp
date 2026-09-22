@@ -42,6 +42,7 @@ distribution.
 #include "df/caste_raw.h"
 #include "df/creature_interaction_effect_display_namest.h"
 #include "df/creature_raw.h"
+#include "df/creature_raw_flags.h"
 #include "df/curse_attr_change.h"
 #include "df/entity_position.h"
 #include "df/entity_position_assignment.h"
@@ -99,6 +100,7 @@ distribution.
 #include <numeric>
 #include <stddef.h>
 #include <string>
+#include <unordered_set>
 #include <vector>
 
 using std::max;
@@ -772,17 +774,59 @@ df::coord Units::getPosition(df::unit *unit) {
 
 bool Units::teleport(df::unit *unit, df::coord target_pos)
 {   // Make sure source and dest map blocks are valid
-    auto old_occ = Maps::getTileOccupancy(unit->pos);
+    // getPosition resolves through a containing cage, so the source tile is
+    // correct even for caged units
+    const df::coord src_pos = getPosition(unit);
+    auto old_occ = Maps::getTileOccupancy(src_pos);
     auto new_occ = Maps::getTileOccupancy(target_pos);
     if (!old_occ || !new_occ)
         return false;
 
+    // EQUIPMENT units (e.g. wagons) occupy a 3x3 footprint centered on their
+    // position; all other units occupy just their position tile
+    auto unit_extent = [](df::unit *u) {
+        if (auto craw = df::creature_raw::find(u->race); craw &&
+            craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON))
+            return 1;
+        return 0;
+    };
+    const int extent = unit_extent(unit);
+
+    auto for_each_occupied_tile = [&](df::coord center, auto &&fn) {
+        for (int dy = -extent; dy <= extent; ++dy)
+            for (int dx = -extent; dx <= extent; ++dx) {
+                df::coord tile(center.x+dx, center.y+dy, center.z);
+                if (auto occ = Maps::getTileOccupancy(tile))
+                    fn(tile, *occ);
+            }
+    };
+
+    // Occupancy flags are per-tile, not per-unit: only clear a flag when no
+    // other unit of the same kind still occupies the tile, matching how the
+    // game itself updates the flags when a unit leaves a tile
+    std::unordered_set<df::coord> grounded_tiles, standing_tiles;
+    for (auto other : world->units.active) {
+        // caged units and in-flight projectiles don't set tile occupancy, so
+        // they must not keep occupancy flags alive on their pos tile
+        if (other == unit || other->flags1.bits.caged ||
+            other->flags1.bits.projectile)
+            continue;
+        auto &tiles = other->flags1.bits.on_ground ? grounded_tiles : standing_tiles;
+        const int other_extent = unit_extent(other);
+        for (int dy = -other_extent; dy <= other_extent; ++dy)
+            for (int dx = -other_extent; dx <= other_extent; ++dx)
+                tiles.emplace(other->pos.x+dx, other->pos.y+dy, other->pos.z);
+    }
+
     // Clear appropriate occupancy flags at old tile
-    if (unit->flags1.bits.on_ground)
-        // This is potentially wrong, but the game will recompute this as needed
-        old_occ->bits.unit_grounded = false;
-    else
-        old_occ->bits.unit = false;
+    for_each_occupied_tile(src_pos, [&](df::coord tile, df::tile_occupancy &occ) {
+        if (unit->flags1.bits.on_ground) {
+            if (!grounded_tiles.contains(tile))
+                occ.bits.unit_grounded = false;
+        } else if (!standing_tiles.contains(tile)) {
+            occ.bits.unit = false;
+        }
+    });
 
     // Clear unit projectile info
     if (unit->flags1.bits.projectile) {
@@ -801,10 +845,12 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         unit->flags1.bits.on_ground = true;
 
     // Set appropriate occupancy flags at new tile
-    if (unit->flags1.bits.on_ground)
-        new_occ->bits.unit_grounded = true;
-    else
-        new_occ->bits.unit = true;
+    for_each_occupied_tile(target_pos, [&](df::coord, df::tile_occupancy &occ) {
+        if (unit->flags1.bits.on_ground)
+            occ.bits.unit_grounded = true;
+        else
+            occ.bits.unit = true;
+    });
 
     // Move unit to destination
     unit->pos = target_pos;

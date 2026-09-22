@@ -218,9 +218,10 @@ static command_result export_sites(color_ostream &out)
         df::creature_raw *race = nullptr;
         if (owner){
             race = df::creature_raw::find(owner->race);
-            DEBUG(warning, out).print("owner ({}) of site ({}) has undefined race ({})", owner->id, site->id, owner->race);
             if (!race)            {
-                df::creature_raw::find(civ->race);
+                DEBUG(warning, out).print("owner ({}) of site ({}) has undefined race ({})\n", owner->id, site->id, owner->race);
+                if (civ)
+                    race = df::creature_raw::find(civ->race);
             }
         }
 

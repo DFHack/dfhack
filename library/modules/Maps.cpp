@@ -31,9 +31,11 @@ distribution.
 #include "Error.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
+#include "TileTypes.h"
 #include "VersionInfo.h"
 
 #include "modules/Buildings.h"
+#include "modules/Constructions.h"
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 
@@ -49,6 +51,7 @@ distribution.
 #include "df/building.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
+#include "df/construction.h"
 #include "df/entity_plot_invasion_mapst.h"
 #include "df/feature_init.h"
 #include "df/feature_map_shellst.h"
@@ -1791,4 +1794,135 @@ const char* Maps::getSiteTypeName(df::world_site *site) {
         default:
             return "site";
     }
+}
+
+/*
+ * Filtered tile scan
+ */
+
+bool Maps::TileFilter::matches(df::map_block *block, df::coord2d local, df::coord pos) const
+{
+    df::tiletype tt = block->tiletype[local.x][local.y];
+
+    if (!tiletypes.empty() && !tiletypes.count(tt))
+        return false;
+    if (!materials.empty() && !materials.count(int16_t(tileMaterial(tt))))
+        return false;
+    if (!shapes.empty() && !shapes.count(int16_t(tileShape(tt))))
+        return false;
+    if (!shapes_basic.empty() &&
+        !shapes_basic.count(int16_t(tileShapeBasic(tileShape(tt)))))
+        return false;
+    if (!specials.empty() && !specials.count(int16_t(tileSpecial(tt))))
+        return false;
+    if (!variants.empty() && !variants.count(int16_t(tileVariant(tt))))
+        return false;
+
+    if (designation_mask &&
+        (block->designation[local.x][local.y].whole & designation_mask) != designation_bits)
+        return false;
+    if (occupancy_mask &&
+        (block->occupancy[local.x][local.y].whole & occupancy_mask) != occupancy_bits)
+        return false;
+
+    if (extra && !extra(block, local, pos))
+        return false;
+
+    return true;
+}
+
+Maps::TileScanResult Maps::forEachTile(
+    const cuboid &bounds, const TileFilter &filter, const TileActions &actions)
+{
+    TileScanResult result;
+    if (!IsValid())
+        return result;
+
+    // Construction records are buffered during the scan and merged at the
+    // end, so a bulk spawn costs one sorted merge instead of one insertion
+    // per tile. The records are plain data; no df::construction objects are
+    // allocated until the merge.
+    struct PendingConstruction {
+        df::coord pos;
+        df::tiletype original_tile;
+    };
+    std::vector<PendingConstruction> pending;
+    bool aborted = false;
+
+    bounds.forBlock([&](df::map_block *block, cuboid area) {
+        int bx = block->map_pos.x, by = block->map_pos.y, bz = block->map_pos.z;
+        int lx1 = area.x_min - bx, lx2 = area.x_max - bx;
+        int ly1 = area.y_min - by, ly2 = area.y_max - by;
+
+        for (int lx = lx1; lx <= lx2 && !aborted; lx++) {
+            for (int ly = ly1; ly <= ly2 && !aborted; ly++) {
+                df::coord2d local(lx, ly);
+                df::coord pos(bx + lx, by + ly, bz);
+                result.tiles_scanned++;
+
+                if (!filter.matches(block, local, pos))
+                    continue;
+                result.tiles_matched++;
+
+                if (actions.set_tiletype || !actions.tiletype_map.empty()) {
+                    df::tiletype &cur = block->tiletype[lx][ly];
+                    auto it = actions.tiletype_map.find(cur);
+                    if (it != actions.tiletype_map.end()) {
+                        cur = it->second;
+                        result.tiletypes_changed++;
+                    }
+                    else if (actions.set_tiletype) {
+                        cur = *actions.set_tiletype;
+                        result.tiletypes_changed++;
+                    }
+                }
+
+                if (actions.designation_set || actions.designation_clear) {
+                    auto &des = block->designation[lx][ly];
+                    des.whole = (des.whole & ~actions.designation_clear) | actions.designation_set;
+                }
+                if (actions.occupancy_set || actions.occupancy_clear) {
+                    auto &occ = block->occupancy[lx][ly];
+                    occ.whole = (occ.whole & ~actions.occupancy_clear) | actions.occupancy_set;
+                }
+
+                if (actions.construct && !Constructions::findAtTile(pos)) {
+                    pending.push_back({ pos, block->tiletype[lx][ly] });
+                    if (actions.construct_tiletype) {
+                        block->tiletype[lx][ly] = *actions.construct_tiletype;
+                        result.tiletypes_changed++;
+                    }
+                }
+
+                if (actions.callback && !actions.callback(block, local, pos))
+                    aborted = true;
+            }
+        }
+        return !aborted;
+    });
+    result.aborted = aborted;
+
+    if (!pending.empty()) {
+        auto &vec = world->event.constructions;
+        auto pos_less = [](const df::construction *a, const df::construction *b) {
+            return a->pos < b->pos;
+        };
+        size_t old_size = vec.size();
+        for (auto &p : pending) {
+            auto *con = new df::construction();
+            con->pos           = p.pos;
+            con->item_type     = actions.construct_item_type;
+            con->item_subtype  = actions.construct_item_subtype;
+            con->mat_type      = actions.construct_mat_type;
+            con->mat_index     = actions.construct_mat_index;
+            con->flags.whole   = actions.construct_flags;
+            con->original_tile = p.original_tile;
+            vec.push_back(con);
+        }
+        std::sort(vec.begin() + old_size, vec.end(), pos_less);
+        std::inplace_merge(vec.begin(), vec.begin() + old_size, vec.end(), pos_less);
+        result.constructions_added = (int64_t)pending.size();
+    }
+
+    return result;
 }

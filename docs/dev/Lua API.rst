@@ -2532,6 +2532,86 @@ Maps module
   For plant growths, specifying a print_variant of -1 will automatically
   choose an appropriate value. For other item types, this field is ignored.
 
+* ``dfhack.maps.forEachTile(bounds[, filter[, actions]])``
+
+  Scans every tile inside a cuboid of map tiles in native code, tests each
+  tile against a filter, and applies one or more actions to the matching
+  tiles. This is dramatically faster than iterating tiles in Lua, since the
+  entire scan runs in a single C++ call.
+
+  .. note::
+     This API is experimental and may change in future releases.
+
+  The *bounds* argument may be given as a ``{x1,y1,z1,x2,y2,z2}`` table, as
+  two coordinate values ``(pos1, pos2)``, or as six integers
+  ``(x1,y1,z1,x2,y2,z2)``. The cuboid is clamped to the loaded map and tiles
+  in unallocated map blocks are skipped.
+
+  The *filter* argument selects which tiles are acted on. It may be a table
+  with the following keys (all optional; a tile must satisfy every given
+  criterion to match), or a function (see below), or *nil* to match all
+  tiles:
+
+  - ``tiletype``/``tiletypes``: a tiletype or array of tiletypes (numbers or
+    ``df.tiletype`` names). The tile's tiletype must be one of them.
+  - ``material``, ``shape``, ``shape_basic``, ``special``, ``variant``: a
+    tiletype attribute value or array of values (numbers or names from
+    ``df.tiletype_material``, ``df.tiletype_shape``,
+    ``df.tiletype_shape_basic``, ``df.tiletype_special``, or
+    ``df.tiletype_variant`` respectively). The tile's tiletype must have one
+    of the listed values for that attribute.
+  - ``designation``: a table of ``df.tile_designation`` field names to
+    required values, e.g. ``{hidden=false, subterranean=true}``.
+    Multi-bit fields such as ``dig`` or ``flow_size`` take integer values.
+  - ``occupancy``: same, for ``df.tile_occupancy`` fields.
+  - ``filter``: a function ``fn(x, y, z, block, localx, localy, tiletype)``
+    evaluated last for each candidate tile; the tile matches only if it
+    returns a truthy value. ``localx``/``localy`` are the tile's
+    coordinates within ``block`` (0-15).
+
+  The *actions* argument says what to do with each matching tile. It may be
+  a table with the following keys (all optional), a function (equivalent to
+  ``{callback=fn}``), or *nil* to just count matches:
+
+  - ``set_tiletype``: a tiletype (number or name) to write to matching
+    tiles, or a table mapping tiletypes to replacement tiletypes (keys and
+    values may be numbers or names). Tiles whose current tiletype is a key
+    in the table are rewritten to the mapped value, taking precedence over
+    a plain ``set_tiletype`` value; unmapped tiles fall back to it.
+  - ``designation``: a table of ``df.tile_designation`` field names to
+    values, assigned on each matching tile (e.g. ``{hidden=false}`` clears
+    the hidden flag).
+  - ``occupancy``: same, for ``df.tile_occupancy`` fields.
+  - ``construct``: spawn a ``df.construction`` record on each matching tile
+    that does not already have one. The value is a table with keys
+    ``item_type`` (number or ``df.item_type`` name), ``item_subtype``,
+    ``mat_type``, ``mat_index``, ``flags`` (a table of
+    ``df.construction_flags`` field names to values, e.g.
+    ``{no_build_item=true}``), and ``tiletype`` (a tiletype to write to the
+    map tile; the construction's ``original_tile`` records the tiletype
+    present before that write). Constructions are buffered during the scan
+    and merged into ``world.event.constructions`` in one sorted pass, so
+    bulk spawning is cheap.
+  - ``callback``: a function ``fn(x, y, z, block, localx, localy,
+    tiletype)`` invoked for each matching tile after the other actions are
+    applied. Returning exactly ``false`` aborts the scan.
+
+  Returns a table with counts: ``scanned`` (tiles visited), ``matched``
+  (tiles passing the filter), ``changed`` (tiles whose tiletype was
+  rewritten), ``constructed`` (construction records created), and
+  ``aborted`` (true if a callback stopped the scan early).
+
+  Example::
+
+    local res = dfhack.maps.forEachTile({x1,y1,z1,x2,y2,z2}, {
+        material = {df.tiletype_material.STONE, df.tiletype_material.MINERAL},
+        shape_basic = df.tiletype_shape_basic.Floor,
+        designation = {hidden = false},
+    }, {
+        set_tiletype = df.tiletype.StoneFloorSmooth,
+    })
+    print(res.matched)
+
 Burrows module
 --------------
 

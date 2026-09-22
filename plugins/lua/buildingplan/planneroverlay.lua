@@ -208,7 +208,8 @@ local function get_quantity(filter, hollow, bounds)
         end
         return quantity * count
     end
-    return quantity * get_selected_volume(bounds)
+    -- job item quantities are totals for the whole building, not per-tile
+    return quantity
 end
 
 local function cur_building_has_no_area()
@@ -815,6 +816,19 @@ function PlannerOverlay:init()
             visible=is_cage,
             on_change=function(val)
                 buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'empty', val)
+            end,
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='do_now',
+            -- b=4 in the left column is the favorites divider row; the first
+            -- free row of the options block is b=3 in the right column
+            frame={b=3, l=24, w=25},
+            key='CUSTOM_N',
+            label='Do now:',
+            initial_option=self.state.do_now or false,
+            on_change=function(val)
+                self.state.do_now = val
+                config:write()
             end,
         },
         widgets.Panel{
@@ -1511,6 +1525,11 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
             end
         end
         buildingplan.addPlannedBuilding(bld)
+        -- the job already exists at designation time; flagging it now means it
+        -- is posted with do_now whenever it gets unsuspended
+        if self.state.do_now then
+            buildingplan.setDoNow(bld, true)
+        end
     end
     buildingplan.scheduleCycle()
     uibs.selection_pos:clear()

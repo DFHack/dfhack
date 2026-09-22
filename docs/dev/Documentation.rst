@@ -163,7 +163,7 @@ And documentation for the ``autodump`` plugin might look like::
 
     .. dfhack-tool::
         :summary: Automatically set items in a stockpile to be dumped.
-        :tags: fort armok fps productivity items stockpiles
+        :tags: fort armok fps productivity items stockpile
         :no-command:
 
     .. dfhack-command:: autodump

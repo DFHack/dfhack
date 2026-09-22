@@ -38,6 +38,9 @@ local function do_set_burrow_config(var_name, val, burrows)
     end
     for _,bspec in ipairs(burrows) do
         local config = autochop_getBurrowConfig(bspec)
+        if not config then
+            qerror(('burrow not found: %s'):format(bspec))
+        end
         config[var_name] = val
         autochop_setBurrowConfig(config.id, config.chop, config.clearcut,
                 config.protect_brewable, config.protect_edible,

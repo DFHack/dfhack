@@ -37,7 +37,9 @@ local function getSelectedBuildingJob()
 
     -- Find if the building is being constructed
     for _, job in ipairs(building.jobs) do
-        if job.job_type == df.job_type.ConstructBuilding then
+        if job.job_type == df.job_type.ConstructBuilding
+                or (job.job_type == df.job_type.DestroyBuilding
+                    and job.flags.suspend) then
             return job
         end
     end

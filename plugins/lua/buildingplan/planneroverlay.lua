@@ -208,7 +208,8 @@ local function get_quantity(filter, hollow, bounds)
         end
         return quantity * count
     end
-    return quantity * get_selected_volume(bounds)
+    -- job item quantities are totals for the whole building, not per-tile
+    return quantity
 end
 
 local function cur_building_has_no_area()
@@ -700,7 +701,7 @@ function PlannerOverlay:init()
         self:addviews{
             widgets.CycleHotkeyLabel{
                 view_id='weapons_hotkey',
-                frame={b=4, l=1, w=28},
+                frame={b=5, l=1, w=28},
                 key='CUSTOM_T',
                 key_back='CUSTOM_SHIFT_T',
                 label='Number of weapons:',
@@ -713,7 +714,7 @@ function PlannerOverlay:init()
 
             widgets.Slider{
                 view_id='weapons_slider',
-                frame={b=6, l=4, w=35},
+                frame={b=7, l=4, w=35},
                 num_stops=#self.options,
                 get_idx_fn=function() return weapon_quantity end,
                 on_change=function(val)
@@ -749,7 +750,7 @@ function PlannerOverlay:init()
                  on_clear_filter=self:callback('clear_filter')},
         widgets.CycleHotkeyLabel{
             view_id='hollow',
-            frame={b=4, l=1, w=21},
+            frame={b=5, l=1, w=21},
             key='CUSTOM_H',
             label='Hollow area:',
             visible=is_construction,
@@ -760,7 +761,7 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel{
             view_id='stairs_top_subtype',
-            frame={b=7, l=1, w=30},
+            frame={b=8, l=1, w=30},
             key='CUSTOM_R',
             label='Top stair type:   ',
             visible=is_multi_level_stairs,
@@ -772,7 +773,7 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel {
             view_id='stairs_bottom_subtype',
-            frame={b=6, l=1, w=30},
+            frame={b=7, l=1, w=30},
             key='CUSTOM_B',
             label='Bottom Stair Type:',
             visible=is_multi_level_stairs,
@@ -784,7 +785,7 @@ function PlannerOverlay:init()
         },
         widgets.CycleHotkeyLabel{
             view_id='stairs_only_subtype',
-            frame={b=7, l=1, w=30},
+            frame={b=8, l=1, w=30},
             key='CUSTOM_R',
             label='Single level stair:',
             visible=is_single_level_stairs,
@@ -799,7 +800,7 @@ function PlannerOverlay:init()
 
         widgets.ToggleHotkeyLabel {
             view_id='engraved',
-            frame={b=4, l=1, w=22},
+            frame={b=5, l=1, w=22},
             key='CUSTOM_T',
             label='Engraved only:',
             visible=is_slab,
@@ -809,12 +810,25 @@ function PlannerOverlay:init()
         },
         widgets.ToggleHotkeyLabel {
             view_id='empty',
-            frame={b=4, l=1, w=22},
+            frame={b=5, l=1, w=22},
             key='CUSTOM_T',
             label='Empty only:',
             visible=is_cage,
             on_change=function(val)
                 buildingplan.setSpecial(uibs.building_type, uibs.building_subtype, uibs.custom_type, 'empty', val)
+            end,
+        },
+        widgets.ToggleHotkeyLabel{
+            view_id='do_now',
+            -- b=4 in the left column is the favorites divider row; the first
+            -- free row of the options block is b=3 in the right column
+            frame={b=3, l=24, w=25},
+            key='CUSTOM_N',
+            label='Do now:',
+            initial_option=self.state.do_now or false,
+            on_change=function(val)
+                self.state.do_now = val
+                config:write()
             end,
         },
         widgets.Panel{
@@ -1511,6 +1525,11 @@ function PlannerOverlay:place_building(placement_data, chosen_items)
             end
         end
         buildingplan.addPlannedBuilding(bld)
+        -- the job already exists at designation time; flagging it now means it
+        -- is posted with do_now whenever it gets unsuspended
+        if self.state.do_now then
+            buildingplan.setDoNow(bld, true)
+        end
     end
     buildingplan.scheduleCycle()
     uibs.selection_pos:clear()

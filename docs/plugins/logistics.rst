@@ -3,7 +3,7 @@ logistics
 
 .. dfhack-tool::
     :summary: Automatically mark and route items in monitored stockpiles.
-    :tags: fort auto animals items stockpiles
+    :tags: fort auto animals items stockpile
 
 Commands act upon the stockpile selected in the UI unless another stockpile
 identifier is specified on the commandline.

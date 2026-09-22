@@ -46,15 +46,17 @@ SOFTWARE.
 */
 
 #include <algorithm>
-#include <string>
-#include <filesystem>
 #include <chrono>
+#include <filesystem>
 #include <iostream>
+#include <string>
 
 #include "modules/DFSDL.h"
 #include "modules/Filesystem.h"
 
+#include "df/global_objects.h"
 #include "df/init.h"
+
 
 using namespace DFHack;
 

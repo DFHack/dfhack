@@ -34,13 +34,23 @@ distribution.
 
 #include "modules/Materials.h"
 
+#include <optional>
+#include <unordered_map>
+#include <unordered_set>
+
 #include "df/biome_type.h"
 #include "df/block_flags.h"
+#include "df/coord.h"
+#include "df/coord2d.h"
 #include "df/feature_type.h"
+#include "df/flow_info.h"
 #include "df/flow_type.h"
+#include "df/item_type.h"
 #include "df/matter_state.h"
 #include "df/tile_dig_designation.h"
 #include "df/tiletype.h"
+#include "df/weather_type.h"
+#include "df/world_site.h"
 
 namespace df {
     struct block_square_event;
@@ -126,28 +136,32 @@ enum BiomeOffset {
  */
 typedef df::block_flags t_blockflags;
 
+template <typename T>
+using arr40d = std::array<std::array<T, 16>, 16>;
+
 /**
  * 16x16 array of tile types
  * \ingroup grp_maps
  */
-typedef df::tiletype tiletypes40d [16][16];
+using tiletypes40d = arr40d<df::tiletype>;
 /**
  * 16x16 array used for squashed block materials
  * \ingroup grp_maps
  */
-typedef int16_t t_blockmaterials [16][16];
+using t_blockmaterials = arr40d<int16_t>;
 /**
  * 16x16 array of designation flags
  * \ingroup grp_maps
  */
 typedef df::tile_designation t_designation;
-typedef t_designation designations40d [16][16];
+using designations40d = arr40d<t_designation>;
+
 /**
  * 16x16 array of occupancy flags
  * \ingroup grp_maps
  */
 typedef df::tile_occupancy t_occupancy;
-typedef t_occupancy occupancies40d [16][16];
+using occupancies40d = arr40d<t_occupancy>;
 /**
  * array of 16 biome indexes valid for the block
  * \ingroup grp_maps
@@ -157,7 +171,7 @@ typedef uint8_t biome_indices40d [9];
  * 16x16 array of temperatures
  * \ingroup grp_maps
  */
-typedef uint16_t t_temperatures [16][16];
+using t_temperatures = arr40d<uint16_t>;
 
 /**
  * Index a tile array by a 2D coordinate, clipping it to mod 16.
@@ -347,13 +361,22 @@ inline df::tiletype *getTileType(df::coord pos) { return getTileType(pos.x, pos.
 inline df::tile_designation *getTileDesignation(df::coord pos) { return getTileDesignation(pos.x, pos.y, pos.z); }
 inline df::tile_occupancy *getTileOccupancy(df::coord pos) { return getTileOccupancy(pos.x, pos.y, pos.z); }
 
+// shift world region coordinate by region_details biome reference
+DFHACK_EXPORT df::coord2d addRegionBiomeOffset(df::coord2d world_pos, int8_t offset_dir);
 // Returns biome info about the specified world region.
 DFHACK_EXPORT df::region_map_entry *getRegionBiome(df::coord2d rgn_pos);
+
+// Returns world region coordinates of the BiomeOffset neighbor of a world
+// region cell, clipped to the world boundaries. Idx must be in 0-8.
+DFHACK_EXPORT df::coord2d getBiomeRgnPos(df::coord2d rgn_pos, int idx);
 
 // Returns biome world region coordinates for the given tile within given block.
 DFHACK_EXPORT df::coord2d getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos);
 
 inline df::coord2d getTileBiomeRgn(df::coord pos) { return getBlockTileBiomeRgn(getTileBlock(pos), pos); }
+
+DFHACK_EXPORT df::weather_type getCurrentWeather(df::coord pos);
+DFHACK_EXPORT df::weather_type getCurrentWeather();
 
 // Enables per-frame updates for liquid flow and/or temperature.
 DFHACK_EXPORT void enableBlockUpdates(df::map_block *blk, bool flow = false, bool temperature = false);
@@ -407,6 +430,123 @@ DFHACK_EXPORT int removeAreaAquifer(df::coord pos1, df::coord pos2,
     std::function<bool(df::coord, df::map_block *)> filter = [](df::coord pos, df::map_block *block) { return true; });
 
 DFHACK_EXPORT void addBlockColumns(int32_t new_height);
+
+// Get surroundings classification from savagery and evilness
+DFHACK_EXPORT const char* describeSurroundings(int savagery, int evilness);
+
+/**
+ * A single function does not merit a "Sites" module, hence we collect site functions here in the meantime.
+ */
+
+// Get the classification string (e.g. "town", "hillocs", "tower", etc.) for a site
+DFHACK_EXPORT const char* getSiteTypeName(df::world_site *site);
+
+/**
+ * Filter used by Maps::forEachTile to decide which tiles are acted on.
+ * A tile matches iff it satisfies every criterion that is enabled (non-empty
+ * set, non-zero mask, or a custom predicate that accepts it). A filter with
+ * no enabled criteria matches every tile.
+ * \ingroup grp_maps
+ */
+struct DFHACK_EXPORT TileFilter {
+    /// Allowed tiletypes; empty means any tiletype matches.
+    std::unordered_set<df::tiletype> tiletypes;
+    /// Allowed df::tiletype_material attribute values; empty means any.
+    std::unordered_set<int16_t> materials;
+    /// Allowed df::tiletype_shape attribute values; empty means any.
+    std::unordered_set<int16_t> shapes;
+    /// Allowed df::tiletype_shape_basic attribute values; empty means any.
+    std::unordered_set<int16_t> shapes_basic;
+    /// Allowed df::tiletype_special attribute values; empty means any.
+    std::unordered_set<int16_t> specials;
+    /// Allowed df::tiletype_variant attribute values; empty means any.
+    std::unordered_set<int16_t> variants;
+    /// Designation requirement: (designation.whole & mask) == bits.
+    /// A zero mask matches any designation.
+    uint32_t designation_mask = 0;
+    uint32_t designation_bits = 0;
+    /// Occupancy requirement: (occupancy.whole & mask) == bits.
+    /// A zero mask matches any occupancy.
+    uint32_t occupancy_mask = 0;
+    uint32_t occupancy_bits = 0;
+    /// Optional extra predicate, evaluated last for each candidate tile.
+    /// Arguments are the map block, the tile-local coordinates, and the
+    /// global coordinates.
+    std::function<bool(df::map_block *block, df::coord2d local, df::coord pos)> extra;
+
+    /// Check whether the given tile matches this filter.
+    bool matches(df::map_block *block, df::coord2d local, df::coord pos) const;
+};
+
+/**
+ * Actions applied by Maps::forEachTile to every tile that passes the filter.
+ * All enabled actions run for each matching tile, in the order the fields
+ * are declared below; the callback runs last.
+ * \ingroup grp_maps
+ */
+struct DFHACK_EXPORT TileActions {
+    /// If set, matching tiles are changed to this tiletype, unless their
+    /// current tiletype is listed in tiletype_map (which takes precedence).
+    std::optional<df::tiletype> set_tiletype;
+    /// Per-tiletype replacements: a matching tile whose current tiletype is
+    /// a key in this map is changed to the mapped value instead of
+    /// set_tiletype. Tiles with unmapped tiletypes fall back to
+    /// set_tiletype if it is set, and are otherwise left unchanged.
+    std::unordered_map<df::tiletype, df::tiletype> tiletype_map;
+    /// Designation update: whole = (whole & ~clear) | set.
+    uint32_t designation_set = 0;
+    uint32_t designation_clear = 0;
+    /// Occupancy update: whole = (whole & ~clear) | set.
+    uint32_t occupancy_set = 0;
+    uint32_t occupancy_clear = 0;
+    /// If true, a df::construction record is spawned at each matching tile
+    /// that does not already have one, using the fields below as a template.
+    bool construct = false;
+    /// Template fields for spawned constructions.
+    df::item_type construct_item_type = df::item_type::NONE;
+    int16_t construct_item_subtype = -1;
+    int16_t construct_mat_type = -1;
+    int32_t construct_mat_index = -1;
+    /// Raw value copied to df::construction::flags.whole.
+    uint8_t construct_flags = 0;
+    /// If set, the map tile's tiletype is rewritten to this when its
+    /// construction is spawned. The construction's original_tile records
+    /// the tiletype present immediately before this write.
+    std::optional<df::tiletype> construct_tiletype;
+    /// Called for each matching tile after the other actions are applied.
+    /// Return false to abort the scan early.
+    std::function<bool(df::map_block *block, df::coord2d local, df::coord pos)> callback;
+};
+
+/**
+ * Statistics produced by Maps::forEachTile.
+ * \ingroup grp_maps
+ */
+struct DFHACK_EXPORT TileScanResult {
+    /// Tiles examined inside allocated map blocks.
+    int64_t tiles_scanned = 0;
+    /// Tiles that matched the filter.
+    int64_t tiles_matched = 0;
+    /// Tiles whose tiletype was rewritten.
+    int64_t tiletypes_changed = 0;
+    /// Construction records created.
+    int64_t constructions_added = 0;
+    /// True if the scan stopped early because the callback returned false.
+    bool aborted = false;
+};
+
+/**
+ * Iterate every tile inside a cuboid of map tiles, test each one against a
+ * filter, and apply the enabled actions to the matching tiles.
+ *
+ * The cuboid is clamped to the loaded map; tiles in unallocated blocks are
+ * skipped. Iteration is block-major for speed. Constructions are buffered
+ * during the scan and merged into world.event.constructions in a single
+ * sorted pass at the end. TileScanResult::tiles_matched doubles as a
+ * count of matching tiles when no other action is enabled.
+ */
+DFHACK_EXPORT TileScanResult forEachTile(
+    const cuboid &bounds, const TileFilter &filter, const TileActions &actions);
 }
 }
 #endif

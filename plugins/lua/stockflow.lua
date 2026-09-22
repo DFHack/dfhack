@@ -1,10 +1,30 @@
 local _ENV = mkmodule('plugins.stockflow')
 
 local gui = require "gui"
+local overlay = require('plugins.overlay')
+local widgets = require('gui.widgets')
 
 reaction_list = reaction_list or {}
 saved_orders = saved_orders or {}
 jobs_to_create = jobs_to_create or {}
+
+local PERSIST_KEY = 'stockflow/orders'
+
+local function serialize_orders(orders)
+    local stored = {}
+    for spid, spec in pairs(orders) do
+        stored[tostring(spid)] = {
+            name = spec.name,
+            order_number = spec.order_number,
+            trigger_number = spec.trigger_number,
+        }
+    end
+    return stored
+end
+
+local function persist_orders()
+    dfhack.persistent.saveSiteData(PERSIST_KEY, serialize_orders(saved_orders))
+end
 
 triggers = {
     {filled = false, divisor = 1, name = "Per empty space"},
@@ -16,12 +36,6 @@ triggers = {
     {filled = false, divisor = 4, name = "Per four empty spaces"},
     {filled = true,  divisor = 4, name = "Per four stored items"},
     {name = "Never"},
-}
-
-entry_ints = {
-    stockpile_id = 1,
-    order_number = 2,
-    trigger_number = 3,
 }
 
 FirstRow = 3
@@ -49,8 +63,8 @@ function clear_caches()
     jobs_to_create = {}
 end
 
-function trigger_name(cache)
-    local trigger = triggers[cache.entry.ints[entry_ints.trigger_number]]
+function trigger_name(spec)
+    local trigger = triggers[spec.trigger_number]
     return trigger and trigger.name or "Never"
 end
 
@@ -58,7 +72,7 @@ function list_orders()
     local listed = false
     for _, spec in pairs(saved_orders) do
         local num = spec.stockpile.stockpile_number
-        local name = spec.entry.value
+        local name = spec.name
         local trigger = trigger_name(spec)
         print("Stockpile #"..num, name, trigger)
         listed = true
@@ -66,12 +80,12 @@ function list_orders()
 
     if not listed then
         print("No manager jobs have been set for your stockpiles.")
-        print("Use j in a stockpile menu to create one...")
+        print("Select a stockpile and use the stockflow overlay to create one...")
     end
 end
 
--- Save the stockpile jobs for later creation.
--- Called when the bookkeeper starts updating stockpile records.
+-- Gather the stockpile jobs for later creation.
+-- Called at the start of each periodic update.
 function start_bookkeeping()
     local result = {}
     for reaction_id, quantity in pairs(check_stockpiles()) do
@@ -84,8 +98,8 @@ function start_bookkeeping()
     jobs_to_create = result
 end
 
--- Insert any saved jobs.
--- Called when the bookkeeper finishes updating stockpile records.
+-- Insert the gathered jobs.
+-- Called at the end of each periodic update.
 function finish_bookkeeping()
     for reaction, amount in pairs(jobs_to_create) do
         create_orders(reaction_list[reaction].order, amount)
@@ -100,63 +114,73 @@ function stockpile_settings(sp)
         return "No job selected", ""
     end
 
-    return order.entry.value, trigger_name(order)
+    return order.name, trigger_name(order)
 end
 
 -- Toggle the trigger condition for a stockpile.
 function toggle_trigger(sp)
     local saved = saved_orders[sp.id]
     if saved then
-        saved.entry.ints[entry_ints.trigger_number] = (saved.entry.ints[entry_ints.trigger_number] % #triggers) + 1
-        saved.entry:save()
+        saved.trigger_number = (saved.trigger_number % #triggers) + 1
+        persist_orders()
     end
 end
 
 function collect_orders()
     local result = {}
-    local entries = dfhack.persistent.get_all("stockflow/entry", true)
-    if entries then
-        for _, entry in ipairs(entries) do
-            local spid = entry.ints[entry_ints.stockpile_id]
-            local stockpile = df.building.find(spid)
-            if stockpile then
-                local order_number = entry.ints[entry_ints.order_number]
-                if reaction_list[order_number] and entry.value == reaction_list[order_number].name then
-                    result[spid] = {
-                        stockpile = stockpile,
-                        entry = entry,
-                    }
-                else
-                    -- Todo: Search reaction_list for the name.
-                    -- This can happen when loading an old save in a new version.
-                    -- It's even possible that the reaction has been removed.
-                    local found = false
-                    for number, reaction in ipairs(reaction_list) do
-                        if reaction.name == entry.value then
-                            print("Adjusting stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number.." => "..number..")")
-                            entry.ints[entry_ints.order_number] = number
-                            entry:save()
-                            result[spid] = {
-                                stockpile = stockpile,
-                                entry = entry,
-                            }
+    local dirty = false
+    local stored = dfhack.persistent.getSiteData(PERSIST_KEY) or {}
+    for spid_str, spec in pairs(stored) do
+        local spid = tonumber(spid_str)
+        local stockpile = spid and df.building.find(spid)
+        if stockpile and not df.building_stockpilest:is_instance(stockpile) then
+            stockpile = nil
+        end
+        if stockpile then
+            local order_number = spec.order_number
+            local trigger_number = spec.trigger_number or 1
+            if reaction_list[order_number] and spec.name == reaction_list[order_number].name then
+                result[spid] = {
+                    stockpile = stockpile,
+                    name = spec.name,
+                    order_number = order_number,
+                    trigger_number = trigger_number,
+                }
+            else
+                -- Search reaction_list for the name.
+                -- This can happen when loading an old save in a new version.
+                -- It's even possible that the reaction has been removed.
+                local found = false
+                for number, reaction in ipairs(reaction_list) do
+                    if reaction.name == spec.name then
+                        print("Adjusting stockflow entry for stockpile #"..stockpile.stockpile_number..": "..spec.name.." ("..tostring(order_number).." => "..number..")")
+                        result[spid] = {
+                            stockpile = stockpile,
+                            name = spec.name,
+                            order_number = number,
+                            trigger_number = trigger_number,
+                        }
 
-                            found = true
-                            break
-                        end
-                    end
-
-                    if not found then
-                        print("Unmatched stockflow entry for stockpile #"..stockpile.stockpile_number..": "..entry.value.." ("..order_number..")")
+                        dirty = true
+                        found = true
+                        break
                     end
                 end
-            else
-                -- The stockpile no longer exists.
-                -- Perhaps it has been deleted, or perhaps this is a different fortress.
-                -- print("Missing stockflow pile "..spid)
-                entry:delete()
+
+                if not found then
+                    print("Unmatched stockflow entry for stockpile #"..stockpile.stockpile_number..": "..tostring(spec.name).." ("..tostring(order_number)..")")
+                    dirty = true
+                end
             end
+        else
+            -- The stockpile no longer exists.
+            -- Perhaps it has been deleted, or perhaps this is a different fortress.
+            dirty = true
         end
+    end
+
+    if dirty then
+        dfhack.persistent.saveSiteData(PERSIST_KEY, serialize_orders(result))
     end
 
     return result
@@ -178,6 +202,7 @@ function reaction_entry(reactions, job_type, values, name)
     local order = df.manager_order:new()
     -- These defaults differ from the newly created order's.
     order:assign{
+        frequency = df.workquota_frequency_type.OneTime,
         job_type = job_type,
         item_type = -1,
         item_subtype = -1,
@@ -819,7 +844,7 @@ function screen:onRenderBody(dc)
     dc:string(": Select", COLOR_WHITE)
 
     dc:seek(CenterCol, FirstRow + self.page_size + 2)
-    dc:key("SETUPGAME_SAVE_PROFILE_ABORT"):string(": No order", COLOR_WHITE)
+    dc:key("CUSTOM_SHIFT_N"):string(": No order", COLOR_WHITE)
 
     -- Reaction lines.
     for _, item in ipairs(self.displayed) do
@@ -836,7 +861,7 @@ function screen:onInput(keys)
         if selected then
             store_order(self.stockpile, selected.index)
         end
-    elseif keys.SETUPGAME_SAVE_PROFILE_ABORT then
+    elseif keys.CUSTOM_SHIFT_N then
         self:dismiss()
         clear_order(self.stockpile)
     elseif keys.STANDARDSCROLL_UP then
@@ -986,10 +1011,9 @@ function screen:refilter()
 end
 
 function clear_order(stockpile)
-    local saved = saved_orders[stockpile.id]
-    if saved then
-        saved.entry:delete()
+    if saved_orders[stockpile.id] then
         saved_orders[stockpile.id] = nil
+        persist_orders()
     end
 end
 
@@ -998,23 +1022,17 @@ function store_order(stockpile, order_number)
     -- print("Setting stockpile #"..stockpile.stockpile_number.." to "..name.." (#"..order_number..")")
     local saved = saved_orders[stockpile.id]
     if saved then
-        saved.entry.value = name
-        saved.entry.ints[entry_ints.order_number] = order_number
-        saved.entry:save()
+        saved.name = name
+        saved.order_number = order_number
     else
         saved_orders[stockpile.id] = {
             stockpile = stockpile,
-            entry = dfhack.persistent.save{
-                key = "stockflow/entry/"..stockpile.id,
-                value = name,
-                ints = {
-                    stockpile.id,
-                    order_number,
-                    1,
-                },
-            },
+            name = name,
+            order_number = order_number,
+            trigger_number = 1,
         }
     end
+    persist_orders()
 end
 
 -- Compare the job specification of two orders.
@@ -1066,6 +1084,7 @@ end
 -- Place a new copy of the order onto the manager's queue.
 function create_orders(order, amount)
     local new_order = order:new()
+    new_order.frequency = df.workquota_frequency_type.OneTime
     amount = math.floor(amount)
     new_order.amount_left = amount
     new_order.amount_total = amount
@@ -1104,9 +1123,9 @@ end
 function check_stockpiles(verbose)
     local result = {}
     for _, spec in pairs(saved_orders) do
-        local trigger = triggers[spec.entry.ints[entry_ints.trigger_number]]
+        local trigger = triggers[spec.trigger_number]
         if trigger and trigger.divisor then
-            local reaction = spec.entry.ints[entry_ints.order_number]
+            local reaction = spec.order_number
             local filled, empty = check_pile(spec.stockpile, verbose)
             local amount = math.floor((trigger.filled and filled or empty) / trigger.divisor)
             result[reaction] = (result[reaction] or 0) + amount
@@ -1200,5 +1219,67 @@ function matches_stockpile(item, settings)
 
     return true
 end
+
+--------------------
+-- Overlay
+--------------------
+
+local function selected_stockpile()
+    return dfhack.gui.getSelectedStockpile(true)
+end
+
+StockflowOverlay = defclass(StockflowOverlay, overlay.OverlayWidget)
+StockflowOverlay.ATTRS{
+    desc='Displays and adjusts stockflow work order settings for the selected stockpile.',
+    default_pos={x=5, y=-7},
+    default_enabled=true,
+    version=1,
+    viewscreens='dwarfmode/Stockpile/Some/Default',
+    visible=isEnabled,
+    frame={w=55, h=4},
+}
+
+function StockflowOverlay:init()
+    self:addviews{
+        widgets.Panel{
+            frame={t=0, l=0, r=0, b=0},
+            frame_style=gui.MEDIUM_FRAME,
+            frame_title='Stockflow',
+            frame_background=gui.CLEAR_PEN,
+            subviews={
+                widgets.HotkeyLabel{
+                    frame={t=0, l=0, r=0},
+                    key='CUSTOM_J',
+                    label=function()
+                        local sp = selected_stockpile()
+                        local name = sp and stockpile_settings(sp) or 'No job selected'
+                        return 'Order: '..name
+                    end,
+                    on_activate=function()
+                        local sp = selected_stockpile()
+                        if sp then select_order(sp) end
+                    end,
+                },
+                widgets.HotkeyLabel{
+                    frame={t=1, l=0, r=0},
+                    key='CUSTOM_SHIFT_J',
+                    label=function()
+                        local sp = selected_stockpile()
+                        if not sp then return 'Trigger: Never' end
+                        local _, trigger = stockpile_settings(sp)
+                        if #trigger == 0 then trigger = 'Never' end
+                        return 'Trigger: '..trigger
+                    end,
+                    on_activate=function()
+                        local sp = selected_stockpile()
+                        if sp then toggle_trigger(sp) end
+                    end,
+                },
+            },
+        },
+    }
+end
+
+OVERLAY_WIDGETS = {stockflow=StockflowOverlay}
 
 return _ENV

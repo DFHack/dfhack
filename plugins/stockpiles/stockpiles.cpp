@@ -9,6 +9,7 @@
 
 #include "df/building.h"
 #include "df/building_stockpilest.h"
+#include "df/global_objects.h"
 #include "df/hauling_route.h"
 #include "df/hauling_stop.h"
 

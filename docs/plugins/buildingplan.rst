@@ -146,6 +146,12 @@ Some building types will have other options available as well, such as a
 selector for how many weapons you want in weapon traps or whether you want to
 only build engraved slabs.
 
+If you want placed buildings to be built as soon as possible, you can toggle
+the "Do now" option (or hit :kbd:`n`). While it is on, the job for each placed
+building is flagged as high priority, so dwarves will prefer it over their
+regular work once the building is unsuspended. The option stays on until you
+toggle it off again, and it is saved with your configuration.
+
 Setting quality and material filters
 ++++++++++++++++++++++++++++++++++++
 
@@ -227,6 +233,9 @@ to the building. If there is a particular building that you need built ASAP,
 you can click on the "make top priority" button (or hit :kbd:`Ctrl`:kbd:`T`) to
 bump the items for this building to the front of their respective queues.
 
+To rush the construction job itself once the building is underway, use the
+"Make top priority" toggle in the `prioritize` overlay.
+
 Note that each item type and filter configuration has its own queue, so even if
 an item is in queue position 1, there may be other queues that snag the needed
 item first.
@@ -249,3 +258,8 @@ usual) unless freed via the ``Free`` buttons on the ``Show items`` tab on both
 buildings. This will remove the mechanism from the building and drop it onto the
 ground, allowing it to be reused elsewhere. There is an option to auto-free
 mechanisms when unlinking to perform this step automatically.
+
+For any linked building that is a lever, a ``Pull`` button also appears next to it
+on the ``Show linked buildings`` tab, with a glyph showing the lever's current
+position. Clicking it queues a high-priority ("do now") pull-lever job without
+having to navigate to the lever itself; click it again to cancel the job.

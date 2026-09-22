@@ -145,19 +145,22 @@ struct ClothingRequirement {
             return std::nullopt;
         }
 
-        if (auto req = setItem(parameters[idx+1]); !req)
+        auto req = setItem(parameters[idx + 1]);
+
+        if (!req)
         {
             out << "Unrecognized item name or token: " << parameters[idx+1] << endl;
             return std::nullopt;
         }
 
-        else if (!validateMaterialCategory(*req)) {
+        req->material_category = material_category;
+
+        if (!validateMaterialCategory(*req)) {
             out << parameters[idx] << " is not a valid material category for " << parameters[idx+1] << endl;
             return std::nullopt;
         }
         else
         {
-            req->material_category = material_category;
             return req;
         }
     }

@@ -1,3 +1,7 @@
+#include <stack>
+#include <stdexcept>
+#include <array>
+
 #include "LuaTools.h"
 #include "PluginManager.h"
 #include "PluginLua.h"
@@ -9,6 +13,7 @@
 #include "df/building_furnacest.h"
 #include "df/building_workshopst.h"
 #include "df/construction.h"
+#include "df/global_objects.h"
 #include "df/item.h"
 #include "df/item_actual.h"
 #include "df/job.h"
@@ -21,11 +26,6 @@
 #include "df/unit_inventory_item.h"
 #include "df/unit_wound.h"
 #include "df/world.h"
-
-#include <stack>
-#include <string.h>
-#include <stdexcept>
-#include <array>
 
 using std::vector;
 using std::string;

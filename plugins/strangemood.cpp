@@ -1,8 +1,10 @@
 // Triggers a strange mood using (mostly) the same logic used in-game
+// Last updated 2026/09/17 against version 53.16
 
 #include "Console.h"
 #include "DataDefs.h"
 #include "Export.h"
+#include "MiscUtils.h"
 #include "PluginManager.h"
 
 #include "modules/Gui.h"
@@ -21,6 +23,7 @@
 #include "df/entity_raw.h"
 #include "df/general_ref_unit_workerst.h"
 #include "df/historical_entity.h"
+#include "df/history_event_change_hf_moodst.h"
 #include "df/inorganic_raw.h"
 #include "df/item.h"
 #include "df/job.h"
@@ -172,7 +175,13 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 out.printerr("No unit id specified!\n");
                 return CR_WRONG_USAGE;
             }
-            unit = df::unit::find(std::stoi(parameters[i]));
+            int id = string_to_int(parameters[i], -1);
+            if (id < 0)
+            {
+                out.printerr("Invalid unit id: '{}'\n", parameters[i]);
+                return CR_WRONG_USAGE;
+            }
+            unit = df::unit::find(id);
             if (!unit)
                 return CR_FAILURE;
         }
@@ -500,6 +509,32 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
     unit->mood = type;
     unit->mood_copy = unit->mood;
     Gui::showAutoAnnouncement(announcement_type::STRANGE_MOOD, unit->pos, msg, color, bright);
+    unit->create_nemesis(0, 1, false);
+
+    if (df::global::hist_event_next_id && df::global::cur_year && df::global::cur_year_tick)
+    {
+        auto histevent = df::allocate<df::history_event_change_hf_moodst>();
+        if (!world->worldgen.worldgen_parms.reveal_all_history)
+            histevent->flags.set(df::history_event_flags::hidden);
+        histevent->id = (*df::global::hist_event_next_id)++;
+        histevent->reason = df::history_event_reason::none;
+        histevent->histfig = unit->hist_figure_id;
+        histevent->mood = unit->mood;
+        histevent->site = plotinfo->site_id;
+        if (auto cur_site = df::world_site::find(plotinfo->site_id))
+        {
+            histevent->region_pos.x = cur_site->pos.x;
+            histevent->region_pos.y = cur_site->pos.y;
+        }
+        histevent->region = -1;
+        histevent->layer = -1;
+        histevent->year = *df::global::cur_year;
+        histevent->seconds = *df::global::cur_year_tick;
+        insert_into_vector(world->history.events, &df::history_event::id, (df::history_event *)histevent);
+        // TODO: add to active history event collections if necessary
+        // TODO: add to active mission report if necessary
+        histevent->add_to_classes();
+    }
 
     // TODO: make sure unit drops any wrestle items
     unit->job.mood_timeout = 50000;
@@ -697,7 +732,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     filter = NULL;
                     continue;
                 }
-                if (filter->getMaterial() != 0)
+                if (filter->getMaterial() != builtin_mats::INORGANIC)
                 {
                     filter = NULL;
                     continue;
@@ -708,7 +743,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     continue;
                 }
                 MaterialInfo mat(filter->getMaterial(), filter->getMaterialIndex());
-                if (!mat.inorganic->flags.is_set(inorganic_flags::DEEP_SPECIAL))
+                if (!mat.inorganic || !mat.inorganic->flags.is_set(inorganic_flags::DEEP_SPECIAL))
                 {
                     filter = NULL;
                     continue;
@@ -719,8 +754,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             {
                 job->job_items.elements.push_back(item = new df::job_item());
                 item->item_type = item_type::CLOTH;
-                item->mat_type = filter->getMaterial();
-                item->mat_index = filter->getMaterialIndex();
+                item->mat_type = filter->getActualMaterial();
+                item->mat_index = filter->getActualMaterialIndex();
                 item->quantity = base_item_count * 10000;
                 item->min_dimension = 10000;
             }
@@ -784,13 +819,18 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                     filter = NULL;
                     continue;
                 }
-                if (filter->getMaterial() != 0)
+                if (filter->getMaterial() != builtin_mats::INORGANIC)
                 {
                     filter = NULL;
                     continue;
                 }
                 MaterialInfo mat(filter->getMaterial(), filter->getMaterialIndex());
-                if (!mat.inorganic->flags.is_set(inorganic_flags::DEEP_SPECIAL))
+                if (!mat.material || !mat.material->flags.is_set(material_flags::IS_METAL))
+                {
+                    filter = NULL;
+                    continue;
+                }
+                if (!mat.inorganic || !mat.inorganic->flags.is_set(inorganic_flags::DEEP_SPECIAL))
                 {
                     filter = NULL;
                     continue;
@@ -801,8 +841,8 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             {
                 job->job_items.elements.push_back(item = new df::job_item());
                 item->item_type = item_type::BAR;
-                item->mat_type = filter->getMaterial();
-                item->mat_index = filter->getMaterialIndex();
+                item->mat_type = filter->getActualMaterial();
+                item->mat_index = filter->getActualMaterialIndex();
                 item->quantity = base_item_count * 150; // BUGFIX - the game does not adjust here!
                 item->min_dimension = 150;
             }
@@ -810,7 +850,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
             {
                 job->job_items.elements.push_back(item = new df::job_item());
                 item->item_type = item_type::BAR;
-                item->mat_type = 0;
+                item->mat_type = builtin_mats::INORGANIC;
                 vector<int32_t> mats;
                 if (soul)
                 {
@@ -819,8 +859,12 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                         df::unit_preference *pref = soul->preferences[i];
                         if (pref->flags.bits.visible &&
                             pref->type == df::unitpref_type::LikeMaterial &&
-                            pref->mattype == 0 && getCreatedMetalBars(pref->matindex) > 0)
-                            mats.push_back(pref->matindex);
+                            pref->mattype == builtin_mats::INORGANIC)
+                        {
+                            MaterialInfo mat(pref->mattype, pref->matindex);
+                            if (mat.material && mat.material->flags.is_set(material_flags::IS_METAL) && getCreatedMetalBars(pref->matindex))
+                                mats.push_back(pref->matindex);
+                        }
                     }
                 }
                 if (mats.size())
@@ -834,7 +878,7 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
         case job_skill::ENCRUSTGEM:
             job->job_items.elements.push_back(item = new df::job_item());
             item->item_type = item_type::ROUGH;
-            item->mat_type = 0;
+            item->mat_type = builtin_mats::INORGANIC;
             item->quantity = base_item_count;
             break;
 
@@ -1081,15 +1125,23 @@ command_result df_strangemood (color_ostream &out, vector <string> & parameters)
                 item->mat_type = mat_type;
                 item->flags2.whole = flags2.whole;
                 item->quantity = 1;
-                if (item_type == item_type::BAR)
+                switch(item_type)
                 {
-                    item->quantity *= 150; // BUGFIX - the game does not adjust here!
+                case item_type::BAR:
                     item->min_dimension = 150;
-                }
-                if (item_type == item_type::CLOTH)
-                {
-                    item->quantity *= 10000; // BUGFIX - the game does not adjust here!
+                    item->quantity *= 150; // BUGFIX - the game does not adjust here!
+                    break;
+                case item_type::THREAD: // yes, the game actually checks this item type
+                    item->min_dimension = 15000;
+                    item->quantity *= 15000; // but it doesn't adjust quantity
+                    break;
+                case item_type::CLOTH:
                     item->min_dimension = 10000;
+                    item->quantity *= 10000; // BUGFIX - the game does not adjust here!
+                    break;
+                default:
+                    // no adjustment
+                    break;
                 }
             }
         }

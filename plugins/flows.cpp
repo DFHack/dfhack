@@ -5,6 +5,7 @@
 #include "PluginManager.h"
 
 #include "DataDefs.h"
+#include "df/global_objects.h"
 #include "df/world.h"
 #include "df/map_block.h"
 #include "df/tile_liquid.h"

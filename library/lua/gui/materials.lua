@@ -8,8 +8,9 @@ local dlg = require('gui.dialogs')
 
 ARROW = string.char(26)
 
-CREATURE_BASE = 19
-PLANT_BASE = 419
+-- For backwards compatibility with older scripts
+CREATURE_BASE = df.builtin_mats.CREATURE_1
+PLANT_BASE = df.builtin_mats.PLANT_1
 
 MaterialDialog = defclass(MaterialDialog, gui.FramedScreen)
 
@@ -127,7 +128,7 @@ function MaterialDialog:initCreatureMode()
     local choices = {}
 
     for i,v in ipairs(df.global.world.raws.creatures.all) do
-        self:addObjectChoice(choices, v, v.name[0], CREATURE_BASE, i)
+        self:addObjectChoice(choices, v, v.name[0], df.builtin_mats.CREATURE_1, i)
     end
 
     self:pushContext('Creature materials', choices)
@@ -137,7 +138,7 @@ function MaterialDialog:initPlantMode()
     local choices = {}
 
     for i,v in ipairs(df.global.world.raws.plants.all) do
-        self:addObjectChoice(choices, v, v.name, PLANT_BASE, i)
+        self:addObjectChoice(choices, v, v.name, df.builtin_mats.PLANT_1, i)
     end
 
     self:pushContext('Plant materials', choices)

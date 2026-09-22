@@ -5,6 +5,7 @@
 
 #include "df/creature_raw.h"
 #include "df/caste_raw.h"
+#include "df/global_objects.h"
 #include "df/world.h"
 
 using namespace DFHack;

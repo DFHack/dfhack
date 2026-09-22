@@ -320,7 +320,7 @@ static void unserialize_list_itemdef(color_ostream& out, const char* subcat, boo
 }
 
 static bool serialize_list_quality(color_ostream& out, FuncWriteExport add_value,
-        const bool(&quality_list)[7]) {
+        const std::array<bool,7> &quality_list) {
     using df::enums::item_quality::item_quality;
     using quality_traits = df::enum_traits<item_quality>;
 
@@ -337,12 +337,12 @@ static bool serialize_list_quality(color_ostream& out, FuncWriteExport add_value
     return all;
 }
 
-static void quality_clear(bool(&pile_list)[7]) {
-    std::fill(pile_list, pile_list + 7, false);
+static void quality_clear(std::array<bool,7> &pile_list) {
+    pile_list.fill(false);
 }
 
 static void unserialize_list_quality(color_ostream& out, const char* subcat, bool all, bool val, const vector<string>& filters,
-        FuncReadImport read_value, int32_t list_size, bool(&pile_list)[7]) {
+        FuncReadImport read_value, int32_t list_size, std::array<bool,7> &pile_list) {
     if (all) {
         for (auto idx = 0; idx < 7; ++idx) {
             string id = ENUM_KEY_STR(item_quality, (df::item_quality)idx);
@@ -1984,24 +1984,24 @@ void StockpileSettingsSerializer::read_gems(color_ostream& out, DeserializeMode 
         std::bind(&StockpileSettings::gems, mBuffer),
         mSettings->flags.whole,
         mSettings->flags.mask_gems,
-        [&]() {
+        [&] () {
             pgems.cut_other_mats.clear();
             pgems.cut_mats.clear();
             pgems.rough_other_mats.clear();
             pgems.rough_mats.clear();
         },
-        [&](bool all, char val) {
-            auto & bgems = mBuffer.gems();
+        [&] (bool all, char val) {
+            auto& bgems = mBuffer.gems();
 
             unserialize_list_material(out, "mats/rough", all, val, filters, gem_mat_is_allowed,
-                [&](const size_t& idx) -> const string& { return bgems.rough_mats(idx); },
+                [&] (const size_t& idx) -> const string& { return bgems.rough_mats(idx); },
                 bgems.rough_mats_size(), pgems.rough_mats);
 
             unserialize_list_material(out, "mats/cut", all, val, filters, gem_cut_mat_is_allowed,
-                [&](const size_t& idx) -> const string& { return bgems.cut_mats(idx); },
+                [&] (const size_t& idx) -> const string& { return bgems.cut_mats(idx); },
                 bgems.cut_mats_size(), pgems.cut_mats);
 
-            const size_t builtin_size = std::extent<decltype(world->raws.mat_table.builtin)>::value;
+            const size_t builtin_size = world->raws.mat_table.builtin.size();
             pgems.rough_other_mats.resize(builtin_size, '\0');
             pgems.cut_other_mats.resize(builtin_size, '\0');
             if (all) {

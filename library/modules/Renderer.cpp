@@ -2,6 +2,8 @@
 #include "MiscUtils.h"
 #include "modules/Renderer.h"
 
+#include "df/global_objects.h"
+
 using namespace DFHack;
 using df::global::enabler;
 using df::global::gps;

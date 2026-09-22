@@ -37,6 +37,7 @@ distribution.
 #include "BitArray.h"
 #include "Export.h"
 #include "Format.h"
+#include "HashUtil.h"
 
 struct lua_State;
 
@@ -124,16 +125,16 @@ namespace DFHack
         constructed_identity(size_t size, const TAllocateFn alloc)
             : type_identity(size), allocator(alloc) {};
 
-        virtual bool can_allocate() const { return (allocator != nullptr); }
-        virtual void *do_allocate() const { return allocator(nullptr,nullptr); }
-        virtual bool do_copy(void *tgt, const void *src) const { return allocator(tgt,src) == tgt; }
-        virtual bool do_destroy(void *obj) const { return allocator(nullptr,obj) == obj; }
+        virtual bool can_allocate() const override { return (allocator != nullptr); }
+        virtual void *do_allocate() const override { return allocator(nullptr,nullptr); }
+        virtual bool do_copy(void *tgt, const void *src) const override { return allocator(tgt,src) == tgt; }
+        virtual bool do_destroy(void *obj) const override { return allocator(nullptr,obj) == obj; }
     public:
-        virtual bool isPrimitive() const { return false; }
-        virtual bool isConstructed() const { return true; }
+        virtual bool isPrimitive() const override { return false; }
+        virtual bool isConstructed() const override { return true; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
     class DFHACK_EXPORT compound_identity : public constructed_identity {
@@ -143,11 +144,12 @@ namespace DFHack
         static std::vector<const compound_identity*>* top_scope;
 
         const char *dfhack_name;
-        const compound_identity *const scope_parent;
 
         static void ensure_compound_identity_init();
 
     protected:
+        const compound_identity *const scope_parent;
+
         compound_identity(size_t size, TAllocateFn alloc,
             const compound_identity *scope_parent, const char *dfhack_name);
 
@@ -156,13 +158,16 @@ namespace DFHack
     public:
         const char *getName() const { return dfhack_name; }
 
-        virtual const std::string getFullName() const;
+        virtual const std::string getFullName() const override;
 
         const compound_identity *getScopeParent() const { return (*parent_map)[this]; }
         const std::vector<const compound_identity*> &getScopeChildren() const { return (*children_map)[this]; }
         static const std::vector<const compound_identity*> &getTopScope() { return *top_scope; }
 
         static void Init(Core *core);
+
+        bool is_equivalent(const compound_identity* other) const;
+
     };
 
     // Bitfields
@@ -181,24 +186,24 @@ namespace DFHack
         const int num_bits;
 
     protected:
-        virtual bool can_allocate() const { return true; }
-        virtual void *do_allocate() const { return do_allocate_pod(); }
-        virtual bool do_copy(void *tgt, const void *src) const { do_copy_pod(tgt, src); return true; }
-        virtual bool do_destroy(void *obj) const { return do_destroy_pod(obj); }
+        virtual bool can_allocate() const override { return true; }
+        virtual void *do_allocate() const override { return do_allocate_pod(); }
+        virtual bool do_copy(void *tgt, const void *src) const override { do_copy_pod(tgt, src); return true; }
+        virtual bool do_destroy(void *obj) const override { return do_destroy_pod(obj); }
 
     public:
         bitfield_identity(size_t size,
             const compound_identity *scope_parent, const char *dfhack_name,
                           int num_bits, const bitfield_item_info *bits);
 
-        virtual identity_type type() const { return IDTYPE_BITFIELD; }
+        virtual identity_type type() const override { return IDTYPE_BITFIELD; }
 
-        virtual bool isConstructed() const { return false; }
+        virtual bool isConstructed() const override { return false; }
 
         int getNumBits() const { return num_bits; }
         const bitfield_item_info *getBits() const { return bits; }
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
     };
 
     class struct_identity;
@@ -227,10 +232,10 @@ namespace DFHack
         const struct_identity *attr_type;
 
     protected:
-        virtual bool can_allocate() const { return true; }
-        virtual void *do_allocate() const;
-        virtual bool do_copy(void *tgt, const void *src) const { do_copy_pod(tgt, src); return true; }
-        virtual bool do_destroy(void *obj) const { return do_destroy_pod(obj); }
+        virtual bool can_allocate() const override { return true; }
+        virtual void *do_allocate() const override;
+        virtual bool do_copy(void *tgt, const void *src) const override { do_copy_pod(tgt, src); return true; }
+        virtual bool do_destroy(void *obj) const override { return do_destroy_pod(obj); }
 
     public:
         enum_identity(size_t size,
@@ -242,7 +247,7 @@ namespace DFHack
                       const void *attrs, const struct_identity *attr_type);
         enum_identity(const enum_identity *enum_type, const type_identity *override_base_type);
 
-        virtual identity_type type() const { return IDTYPE_ENUM; }
+        virtual identity_type type() const override { return IDTYPE_ENUM; }
 
         int64_t getFirstItem() const { return first_item_value; }
         int64_t getLastItem() const { return last_item_value; }
@@ -254,11 +259,11 @@ namespace DFHack
         const void *getAttrs() const { return attrs; }
         const struct_identity *getAttrType() const { return attr_type; }
 
-        virtual bool isPrimitive() const { return true; }
-        virtual bool isConstructed() const { return false; }
+        virtual bool isPrimitive() const override { return true; }
+        virtual bool isConstructed() const override { return false; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const;
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
     struct struct_field_info_extra {
@@ -297,6 +302,7 @@ namespace DFHack
         const struct_field_info *fields;
 
         static void ensure_struct_identity_init();
+        struct_identity* parent;
 
     protected:
         virtual void doInit(Core *core) const override;
@@ -306,7 +312,7 @@ namespace DFHack
             const compound_identity *scope_parent, const char *dfhack_name,
             const struct_identity *parent, const struct_field_info *fields);
 
-        virtual identity_type type() const { return IDTYPE_STRUCT; }
+        virtual identity_type type() const override { return IDTYPE_STRUCT; }
 
         const struct_identity *getParent() const { return (*parent_map)[this]; }
         const std::vector<const struct_identity*> &getChildren() const { return (*children_map)[this]; }
@@ -316,7 +322,9 @@ namespace DFHack
 
         bool is_subclass(const struct_identity *subtype) const;
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
+
+        bool is_equivalent(const struct_identity* other) const;
     };
 
     class DFHACK_EXPORT global_identity : public struct_identity {
@@ -324,9 +332,9 @@ namespace DFHack
         global_identity(const struct_field_info *fields)
             : struct_identity(0,NULL,NULL,"global",NULL,fields) {}
 
-        virtual identity_type type() const { return IDTYPE_GLOBAL; }
+        virtual identity_type type() const override { return IDTYPE_GLOBAL; }
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
     };
 
     class DFHACK_EXPORT union_identity : public struct_identity {
@@ -335,9 +343,9 @@ namespace DFHack
                 const compound_identity *scope_parent, const char *dfhack_name,
                 const struct_identity *parent, const struct_field_info *fields);
 
-        virtual identity_type type() const { return IDTYPE_UNION; }
+        virtual identity_type type() const override { return IDTYPE_UNION; }
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
     };
 
     class DFHACK_EXPORT other_vectors_identity : public struct_identity {
@@ -354,32 +362,8 @@ namespace DFHack
 
         const enum_identity *getIndexEnum() const { return index_enum; }
 
-        virtual void build_metatable(lua_State *state) const;
+        virtual void build_metatable(lua_State *state) const override;
     };
-
-    namespace
-    {
-        template<typename ... Bases>
-        struct overload : Bases ...
-        {
-            using is_transparent = void;
-            using Bases::operator() ...;
-        };
-
-        struct char_pointer_hash
-        {
-            auto operator()(const char* ptr) const noexcept
-            {
-                return std::hash<std::string_view>{}(ptr);
-            }
-        };
-
-        using transparent_string_hash = overload<
-            std::hash<std::string>,
-            std::hash<std::string_view>,
-            char_pointer_hash
-        >;
-    }
 
 #ifdef _MSC_VER
     using virtual_ptr = void*;
@@ -421,7 +405,7 @@ namespace DFHack
             return it != lst.end() ? it->second : nullptr;
         }
 
-        bool can_allocate() const { return struct_identity::can_allocate() && (vtable_ptr() != nullptr); }
+        bool can_allocate() const override { return struct_identity::can_allocate() && (vtable_ptr() != nullptr); }
 
         void *get_vmethod_ptr(int index) const;
         bool set_vmethod_ptr(MemoryPatcher &patcher, int index, void *ptr) const;
@@ -445,9 +429,9 @@ namespace DFHack
                          const char *dfhack_name, const char *original_name,
             const virtual_identity *parent, const struct_field_info *fields,
                          bool is_plugin = false);
-        ~virtual_identity();
+        ~virtual_identity() override;
 
-        virtual identity_type type() const { return IDTYPE_CLASS; }
+        virtual identity_type type() const override { return IDTYPE_CLASS; }
 
         const char *getOriginalName() const { return original_name ? original_name : getName(); }
 
@@ -869,7 +853,7 @@ namespace DFHack {
     template<class T>
     inline bool find_bitfield_field(unsigned *idx, const std::string &name, const T* = NULL) {
         typedef df::bitfield_traits<T> traits;
-        return findBitfieldField(&idx, name, traits::bit_count, traits::bits);
+        return findBitfieldField(idx, name, traits::bit_count, traits::bits);
     }
 
     /**
@@ -997,6 +981,7 @@ namespace DFHack {
     DFHACK_EXPORT const struct_field_info *find_union_tag(const struct_identity *structure, const struct_field_info *union_field);
 }
 
+
 #define ENUM_ATTR(enum,attr,val) (df::enum_traits<df::enum>::attrs(val).attr)
 #define ENUM_ATTR_STR(enum,attr,val) DFHack::ifnull(ENUM_ATTR(enum,attr,val),"?")
 #define ENUM_KEY_STR(enum,val) (DFHack::enum_item_key<df::enum>(val))
@@ -1013,42 +998,5 @@ namespace DFHack {
  */
 
 // Global object pointers
-#include "df/global_objects.h"
-
 #define DF_GLOBAL_VALUE(name,defval) (df::global::name ? *df::global::name : defval)
 #define DF_GLOBAL_FIELD(name,fname,defval) (df::global::name ? df::global::name->fname : defval)
-
-// A couple of headers that have to be included at once
-#include "df/coord2d.h"
-#include "df/coord.h"
-
-namespace std {
-    template <>
-    struct hash<df::coord> {
-        std::size_t operator()(const df::coord& c) const {
-            return c();
-        }
-    };
-}
-
-template <>
-struct fmt::formatter<df::coord> : fmt::formatter<std::string_view>
-{
-    template <typename FormatContext>
-    auto format(const df::coord& c, FormatContext& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(
-            fmt::format("({}, {}, {})", c.x, c.y, c.z), ctx);
-    }
-};
-
-template <>
-struct fmt::formatter<df::coord2d> : fmt::formatter<std::string_view>
-{
-    template <typename FormatContext>
-    auto format(const df::coord2d& c, FormatContext& ctx) const
-    {
-        return fmt::formatter<std::string_view>::format(
-            fmt::format("({}, {})", c.x, c.y), ctx);
-    }
-};

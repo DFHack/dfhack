@@ -16,6 +16,9 @@
 #include "df/item.h"
 #include "df/job.h"
 #include "df/job_item_ref.h"
+#include "df/machine.h"
+#include "df/machine_info.h"
+#include "df/machine_nodest.h"
 #include "df/map_block.h"
 #include "df/tile_designation.h"
 #include "df/tile_occupancy.h"
@@ -23,10 +26,12 @@
 
 #include <bitset>
 #include <functional>
+#include <numeric>
 #include <ranges>
 #include <sstream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <vector>
 
 using std::string;
@@ -79,6 +84,8 @@ enum Reason {
     UNSUPPORTED = 6,
     // Has an unmovable item on top of the building job
     ITEM_IN_JOB = 7,
+    // Removing the building would orphan machine components
+    DANGER_OF_COLLAPSE = 8,
 };
 
 inline bool isExternalReason(Reason reason) {
@@ -101,6 +108,8 @@ static string reasonToString(Reason reason) {
         return "Would collapse immediately";
     case Reason::ITEM_IN_JOB:
         return "Blocked by an unmovable item";
+    case Reason::DANGER_OF_COLLAPSE:
+        return "Would collapse machinery";
     default:
         return "External reason";
     }
@@ -541,6 +550,73 @@ private:
         return true;
     }
 
+    // A machine node is anchored only if its entire footprint sits on
+    // non-open tiles. Nodes hanging over open space survive only through
+    // graph connectivity to an anchored node; the stability pass destroys
+    // any connected component with no anchor (verified in-game).
+    static bool isAnchoredToTerrain(df::building *bld) {
+        for (auto x = bld->x1; x <= bld->x2; ++x) {
+            for (auto y = bld->y1; y <= bld->y2; ++y) {
+                auto tile_type = Maps::getTileType(x, y, bld->z);
+                if (!tile_type || tileShape(*tile_type) == df::enums::tiletype_shape::EMPTY)
+                    return false;
+            }
+        }
+        return true;
+    }
+
+    // Would removing this building's node leave a connected component of
+    // its machine with no anchored node?
+    static bool wouldOrphanMachine(df::building *bld) {
+        auto machine_info = bld->getMachineInfo();
+        if (!machine_info)
+            return false;
+        auto machine = df::machine::find(machine_info->machine_id);
+        if (!machine)
+            return false;
+
+        auto &nodes = machine->components;
+        int target = -1;
+        for (size_t i = 0; i < nodes.size(); ++i) {
+            if (nodes[i] && nodes[i]->building_id == bld->id) {
+                target = i;
+                break;
+            }
+        }
+        if (target < 0 || nodes.size() == 1)
+            return false;
+
+        // union-find over the remaining nodes
+        vector<int> parent(nodes.size());
+        std::iota(parent.begin(), parent.end(), 0);
+        std::function<int(int)> root = [&](int i) {
+            while (parent[i] != i) {
+                parent[i] = parent[parent[i]];
+                i = parent[i];
+            }
+            return i;
+        };
+        for (size_t i = 0; i < nodes.size(); ++i) {
+            if ((int)i == target || !nodes[i])
+                continue;
+            for (auto c : nodes[i]->connections) {
+                if (c < 0 || c >= (int)nodes.size() || c == target || !nodes[c])
+                    continue;
+                parent[root(i)] = root(c);
+            }
+        }
+
+        std::unordered_map<int, bool> anchored;
+        for (size_t i = 0; i < nodes.size(); ++i) {
+            if ((int)i == target || !nodes[i])
+                continue;
+            auto other = df::building::find(nodes[i]->building_id);
+            int r = root(i);
+            anchored[r] = anchored[r] || (other && isAnchoredToTerrain(other));
+        }
+        return std::ranges::any_of(anchored, [](auto &p) { return !p.second; });
+    }
+
     void suspendBuilding(df::building *building, Reason reason){
         for (auto job : building->jobs)
             if (job->job_type == df::job_type::ConstructBuilding)
@@ -657,6 +733,13 @@ public:
             // check carving/detailing jobs and suspend buildings over them
             preserveDesigations(job);
 
+            if (job->job_type == df::job_type::DestroyBuilding) {
+                auto building = Job::getHolder(job);
+                if (building && wouldOrphanMachine(building))
+                    suspensions[job->id] = Reason::DANGER_OF_COLLAPSE;
+                continue;
+            }
+
             // remaining checks only apply to construction jobs
             if (!isConstructionJob(job)) continue;
 
@@ -708,7 +791,7 @@ public:
         Reason reason;
 
 
-        for (auto job : df::global::world->jobs.list | std::views::filter(isConstructionJob))
+        for (auto job : df::global::world->jobs.list | std::views::filter(isSuspendableJob))
         {
             if (job->flags.bits.suspend && !suspensions.contains(job->id)) {
                 unsuspend(job); // suspended for no reason
@@ -726,6 +809,10 @@ public:
 
     static bool isConstructionJob(df::job *job) {
         return job->job_type == job_type::ConstructBuilding;
+    }
+
+    static bool isSuspendableJob(df::job *job) {
+        return isConstructionJob(job) || job->job_type == job_type::DestroyBuilding;
     }
 
     bool keptSuspended(df::job *job) {
@@ -890,25 +977,20 @@ static command_result do_command(color_ostream &out, vector<string> &parameters)
         return plugin_enable(out,true);
     } else if (parameters[0] == "disable") {
         return plugin_enable(out,false);
-    } else if (parameters[0] == "set" && parameters[1] == "preventblocking") {
+    } else if (parameters.size() == 3 && parameters[0] == "set" && parameters[1] == "preventblocking") {
         if (parameters[2] == "true") {
             suspendmanager_instance->prevent_blocking = true;
             config.set_bool(CONFIG_PREVENT_BLOCKING, true);
-            if (is_enabled) {
-                do_cycle(out);
-                out.print("{}", suspendmanager_instance->getStatus(out));
-            }
-            return CR_OK;
         } else if (parameters[2] == "false") {
             suspendmanager_instance->prevent_blocking = false;
             config.set_bool(CONFIG_PREVENT_BLOCKING, false);
-            if (is_enabled) {
-                do_cycle(out);
-                out.print("{}", suspendmanager_instance->getStatus(out));
-            }
-            return CR_OK;
         } else
             return CR_WRONG_USAGE;
+        if (is_enabled) {
+            do_cycle(out);
+            out.print("{}", suspendmanager_instance->getStatus(out));
+        }
+        return CR_OK;
     } else {
         return CR_WRONG_USAGE;
     }

@@ -7,8 +7,8 @@ cmake_policy(SET CMP0074 NEW)
 set(CMAKE_INSTALL_MESSAGE "LAZY")
 
 # set up versioning.
-set(DF_VERSION "53.15")
-set(DFHACK_RELEASE "r1")
+set(DF_VERSION "53.16")
+set(DFHACK_RELEASE "r1.1")
 set(DFHACK_PRERELEASE FALSE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
@@ -33,7 +33,7 @@ else(CMAKE_CONFIGURATION_TYPES)
     set(DFHACK_TYPE_HELP "Choose the type of build, options are: Release and RelWithDebInfo")
     # Prevent cmake C module attempts to overwrite our help string
     if(NOT CMAKE_BUILD_TYPE)
-        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "${DFHACK_TYPE_HELP}")
+        set(CMAKE_BUILD_TYPE "Release" CACHE STRING "${DFHACK_TYPE_HELP}" FORCE)
     else(NOT CMAKE_BUILD_TYPE)
         set(CMAKE_BUILD_TYPE "${CMAKE_BUILD_TYPE}" CACHE STRING "${DFHACK_TYPE_HELP}")
     endif(NOT CMAKE_BUILD_TYPE)
@@ -49,6 +49,12 @@ macro(CHECK_GCC compiler_path)
     string(STRIP "${GCC_VERSION_OUT}" GCC_VERSION_OUT)
     if(${GCC_VERSION_OUT} VERSION_LESS "11")
         message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 11 or later")
+    endif()
+    # GCC 16 currently has a defect that prevents it from compiling DFHack
+    # -Warray-bounds is broken in GCC 16 and we'd rather disable the compiler than remove this warning
+    # will reconsider when this defect is fixed in a future GCC release
+    if(${GCC_VERSION_OUT} VERSION_GREATER_EQUAL "16")
+        message(SEND_ERROR "${compiler_path} version ${GCC_VERSION_OUT} cannot be used - use GCC 15 or earlier")
     endif()
 endmacro()
 
@@ -437,7 +443,7 @@ macro(dfhack_test name files)
 if(BUILD_LIBRARY AND UNIX AND NOT APPLE) # remove this once our MSVC build env has been updated
     add_executable(${name} ${files})
     target_include_directories(${name} PUBLIC depends/googletest/googletest/include)
-    target_link_libraries(${name} dfhack ${FMTLIB} gtest)
+    target_link_libraries(${name} dfhack lua ${FMTLIB} gtest)
     add_test(NAME ${name} COMMAND ${name})
 endif()
 endmacro()

@@ -66,9 +66,6 @@ void DebugManager::unregisterCategory(DebugCategory& cat)
 
 DebugRegisterBase::DebugRegisterBase(DebugCategory* cat)
 {
-    // Make sure Core lives at least as long any DebugCategory to
-    // allow debug prints until all Debugcategories has been destructed
-    Core::getInstance();
     DebugManager::getInstance().registerCategory(*cat);
 }
 

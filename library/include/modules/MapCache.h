@@ -68,8 +68,8 @@ struct BiomeInfo {
     int16_t layer_stone[MAX_LAYERS];
 };
 
-typedef uint8_t t_veintype[16][16];
-typedef df::tiletype t_tilearr[16][16];
+using t_veintype = arr40d<uint8_t>;
+using t_tilearr = arr40d<df::tiletype>;
 
 class BlockInfo
 {
@@ -616,6 +616,7 @@ private:
     uint32_t y_tmax;
     uint32_t z_max;
     std::vector<BiomeInfo> biomes;
+    std::map<df::coord2d, int> biome_index;
     std::map<df::coord2d, df::world_region_details*> region_details;
     std::map<DFCoord, Block *> blocks;
 };

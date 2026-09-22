@@ -55,11 +55,151 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `stockflow`: (reinstated) queue manager jobs based on free space in stockpiles
+- `smooth-movement`: smoothly animate creature, item, and vehicle movement in the fortress viewport
+- `export-world-map`: Export world map data for GIS and other external tools.
+
+## New Features
+- `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
+- `buildingplan`: new "Do now" option marks the jobs of subsequently placed buildings as high priority
+- `getplants`: new ``--dry-run`` option counts affected plants without designating, and new ``--brewable``/``--edible``/``--oil``/``--cloth``/``--dye`` trait filters restrict the selection by plant use
+- `labormanager`: the `autolabor` plugin now provides a second command that manages labors through the work detail system instead of writing the labor matrix; use ``<cmd> mode legacy|modern`` or the work details overlay to switch
+- `labormanager`: track job posting age and show a "task starvation" notification in the DFHack warning panel when any posting sits unclaimed for over a day
+- `sort`: the stress/happiness icons in the top bar are now clickable, opening a list of the citizens in that stress category; selecting a citizen centers the map on them
+- `stocks`: the overlay's ``collapse all`` hotkey now toggles, expanding all categories again when everything is collapsed
+- `stockpiles`: the overlay now also attaches to the minecart hauling stop conditions panel, offering import/export of route stop conditions
+- `suspendmanager`: suspend deconstruction jobs that would collapse connected machinery, such as waterwheels supporting other components
+- ``quickfix``: repair ``plotinfo.site_id`` on load when DF leaves it unassigned on reclaimed fortresses
+
+## Fixes
+- Plugin commands that throw uncaught C++ exceptions now report an error instead of crashing the game
+- Fixed broken weather lookup in ``World::ReadCurrentWeather``
+- Fixed ``dfhack.items.createItem`` making glob items of an incorrect size
+- Fixed a possible hang or assertion failure when pressing a hotkey while a DFHack GUI window was open but unfocused
+- Fixed persistent site data API (``dfhack.persistent.saveSiteData``/``getSiteData``) failing on newly reclaimed fortresses until the first save
+- Fixed out-of-bounds color table access in ``Screen`` module when Lua pens use ``COLOR_RESET``
+- ``Units::teleport``: update unit occupancy on the full 3x3 footprint of EQUIPMENT units (e.g. wagons) instead of only their center tile
+- ``Units::teleport``: only clear tile unit occupancy flags when no other unit of the same kind remains on the tile
+- `3dveins`: fix crash when a tile's biome cannot be resolved
+- `3dveins`: fix failure on embarks that cross midmap tiles
+- `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
+- `aquifer`: make ``--help``/``-h`` actually print help instead of running a map-wide ``list``
+- `autochop`: fix crash when a burrow-based command names a burrow that doesn't exist
+- `autodump`: ``destroy`` no longer leaves the contents of destroyed containers in limbo or crashes when destroying unit-held items
+- `buildingplan`: fix roller material estimate asking for one chain per tile instead of one chain total
+- `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
+- `burrow`: fix ``tiles clear`` and other tile operations silently failing because burrow block z-coordinates were stored incorrectly in the ``Burrows`` module
+- `export-world-map`: fix crash exporting site data for a site whose owner has an undefined race
+- `gui/quickfort`: show smoothing designations immediately after applying a blueprint
+- `overlay`: overlay hotkeys no longer steal typed characters while the game is capturing text input, e.g. when renaming a building
+- `sort`: fix the Places/Workshops and task searches missing workshops by their current display names (e.g. "Stoneworker's Workshop", "Screw Press")
+- `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
+- `strangemood`: updated to match behavior of current DF version
+- `tiletypes`: remove plants (including trees) rooted on a tile that is painted into something that cannot host them, so cleared ground no longer regrows floating trees
+- `timestream`: deal properly with units who have breathing difficulties
+- `timestream`: pass the validated numeric value to the fps setter so ``set fps`` with unusual numeric strings (e.g. ``60.9``) can't be silently misapplied
+- `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
+- `strangemood`: fix crash when ``--id`` is given a non-numeric unit id
+- `suspendmanager`: fix out-of-bounds parameter read when ``set`` is given too few arguments
+
+## Misc Improvements
+- Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type
+- Renamed the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
+
+## Documentation
+- Document ``autodump-destroy-here``. Remove mention of ``autodump destroy`` able to revert destruction.
+
+## API
+- Added ``Maps::getSiteTypeName`` to print the sites classification as a string (e.g. "mountain halls")
+- Added ``Maps::addRegionBiomeOffset`` to shift world region coordinate by region_details biome reference
+- Added ``Maps::describeSurroundings`` to get surroundings classification from savagery and evilness
+- Added ``Maps::getCurrentWeather`` to determine the current weather on the map.
+- Added ``Maps::forEachTile`` with ``Maps::TileFilter``/``Maps::TileActions`` to scan a cuboid of tiles, matching tiles by tiletype, tiletype attributes, and designation/occupancy bits, and counting, rewriting tiletypes, editing designation/occupancy bits, spawning constructions, or invoking a callback on matching tiles
+- Added ``MiscUtils::print_range`` to print ranges with prefix, separator, and suffix
+- Added ``Units::breathes`` and ``Units::getBreathingState``
+- Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``
+
+## Lua
+- Added ``dfhack.maps.forEachTile`` to scan a cuboid of tiles with a declarative filter and apply actions (count, set tiletype or per-tiletype replacements, set designation/occupancy fields, spawn constructions, Lua callback) in a single native call
+- ``widgets.Slider`` and ``widgets.RangeSlider``: fix sliders allowing values outside their number of stops (``num_stops``) when clicked or dragged with the mouse
+
+## Removed
+
+# 53.16-r1.1
+
+## New Tools
 
 ## New Features
 
 ## Fixes
-- ``widgets.Slider`` and ``widgets.RangeSlider``: fix sliders allowing values outside their number of stops (``num_stops``) when clicked or dragged with the mouse
+- `stockpiles` will no longer incorrectly size the "rough gem" and "cut gem" vectors, which avoids a crash when viewing stockpile settings. This potentially affects anything that uses blueprints to create a stockpile, including `gui/quantum`
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.16-r1
+
+## New Tools
+
+## New Features
+
+## Fixes
+- ``TextArea`` widget corrected to use ``COLOR_BLACK`` instead of ``COLOR_RESET`` as default background color
+
+## Misc Improvements
+- a safety check was added to ``Screen::doSetTile_char`` for out of bound pen color values
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.15-r3
+
+## New Tools
+
+## New Features
+
+## Fixes
+- `buildingplan`: restore planner UI elements: hollow constructions, only engraved slabs, only empty cages, weapon count
+
+## Misc Improvements
+- `EventManager`: add safety check to potentially avoid a DFHack crash when DF's ``reports`` table is out of order
+
+## Documentation
+
+## API
+- ``DFSDL``: added ``obtain_library_handle`` and ``obtain_image_library_handle`` so that a plugin can obtain DFHack's already-open handle to these libs instead of having to do it itself.
+- ``Screen``: new functions ``paintMapPortTile`` and ``readMapPortTile`` to write and read world and region map tiles.
+- ``Materials``: ``MaterialInfo`` constants ``NUM_BUILTIN``, ``GROUP_SIZE``, ``CREATURE_BASE``, ``FIGURE_BASE``, ``PLANT_BASE``, and ``END_BASE`` removed. New plugins should use appropriate members of the ``df::builtin_mats`` enum.
+
+## Lua
+- Added ``Screen::paintMapPortTile`` as ``dfhack.screen.paintMapPortTile``
+- Added ``Screen::readMapPortTile`` as ``dfhack.screen.readMapPortTile``
+- Deprecated ``gui.materials.CREATURE_BASE`` and ``gui.materials.PLANT_BASE`` - scripts should instead use ``df.builtin_mats.CREATURE_1`` and ``df.builtin_mats.PLANT_1``, respectively.
+
+## Removed
+
+# 53.15-r2
+
+## New Tools
+
+## New Features
+- `stocks`: add button/hotkey for expanding all categories on stocks interface
+- `buildingplan`: add a ``Pull`` button next to linked levers on a building's "Show linked buildings" tab so you can queue a high-priority pull-lever job (or cancel a queued one) without navigating to the lever
+
+## Fixes
+- `autoclothing`: correct defect in validating material specification on command line
 - `autolabor`: Fix running 1 tick less frequently than intended.
 - `buildingplan`: fixed non-clickable pressure plates's triggers (issue #5736)
 - `getplants`: added protective code to avoid misoperation when a plant has an invalid material (which should never happen, but...)
@@ -67,12 +207,17 @@ Template for new versions:
 ## Misc Improvements
 - `buildingplan`: added a slider on the weapontrap overlay
 - `buildingplan`: added a small tooltip text about renaming favorites in the UI
+- `buildingplan`: buildingplan can now generate work orders
+- `orders`: exported orders now include a human-readable ``name`` field
 
 ## Documentation
 
 ## API
+- Core: added ``getConfigPath()`` API for obtaining the path to user-specific configuration files
+- ``widgets.RadioButton``: New button widget resembling those used in ``gui/control-panel``
 
 ## Lua
+- Added ``dfhack.getConfigPath()`` API, proxying ``Core::getConfigPath``
 
 ## Removed
 
@@ -91,10 +236,8 @@ Template for new versions:
 ## Documentation
 
 ## API
-- Core: added ``getConfigPath()`` API for obtaining the path to user-specific configuration files
 
 ## Lua
-- Added ``dfhack.getConfigPath()`` API, proxying ``Core::getConfigPath``
 
 ## Removed
 
@@ -108,7 +251,6 @@ Template for new versions:
 
 ## Misc Improvements
 - Core: attempts to delete a pool-allocated DF object will now throw an exception instead of corrupting the heap
-- `buildingplan`: buildingplan can now generate work orders
 
 ## Documentation
 
@@ -265,7 +407,6 @@ Template for new versions:
 
 ## New Features
 - `orders`: added search overlay to find and navigate to matching manager orders with arrow indicators
-- `orders`: exported orders now include a human-readable ``name`` field
 - `sort`: added ``Uniformed`` filter to squad assignment screen to filter dwarves with mining, woodcutting, or hunting labors
 - `sort`: Add death cause button to dead/missing tab in the creatures screen
 

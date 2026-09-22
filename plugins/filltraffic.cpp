@@ -27,9 +27,10 @@ command_result restrictLiquid(color_ostream &out, std::vector<std::string> & par
 command_result restrictIce(color_ostream &out, std::vector<std::string> & params);
 
 //Forward Declarations for Utility Functions
+constexpr auto coord_max = std::numeric_limits<decltype(DFCoord::x)>::max();
 command_result setAllMatching(color_ostream &out, checkTile checkProc,
                               DFCoord minCoord = DFCoord(0, 0, 0),
-                              DFCoord maxCoord = DFCoord(0xFFFF, 0xFFFF, 0xFFFF));
+                              DFCoord maxCoord = DFCoord(coord_max, coord_max, coord_max));
 
 void allHigh(DFCoord coord, MapExtras::MapCache & map);
 void allNormal(DFCoord coord, MapExtras::MapCache & map);

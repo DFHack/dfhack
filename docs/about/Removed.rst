@@ -28,7 +28,8 @@ autohauler
 ==========
 An automated labor management tool that only addressed hauling labors, leaving the assignment
 of skilled labors entirely up to the player. Fundamentally incompatible with the work detail
-system of labor management in v50 of Dwarf Fortress.
+system of labor management in v50 of Dwarf Fortress. A dedicated laborer pool for unskilled
+jobs (including hauling) is now provided by the `labormanager` command of `autolabor`.
 
 .. _automaterial:
 

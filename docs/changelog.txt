@@ -59,6 +59,8 @@ Template for new versions:
 - `export-world-map`: Export world map data for GIS and other external tools.
 
 ## New Features
+- `labormanager`: the `autolabor` plugin now provides a second command that manages labors through the work detail system instead of writing the labor matrix; use ``<cmd> mode legacy|modern`` or the work details overlay to switch
+- `labormanager`: track job posting age and show a "task starvation" notification in the DFHack warning panel when any posting sits unclaimed for over a day
 - `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused
 - `buildingplan`: new "Do now" option marks the jobs of subsequently placed buildings as high priority
 - `getplants`: new ``--dry-run`` option counts affected plants without designating, and new ``--brewable``/``--edible``/``--oil``/``--cloth``/``--dye`` trait filters restrict the selection by plant use

@@ -50,6 +50,7 @@ set(MAIN_HEADERS
     include/ColorText.h
     include/Commands.h
     include/Console.h
+    include/CoordTemplate.h
     include/Core.h
     include/CoreDefs.h
     include/DataDefs.h
@@ -60,6 +61,7 @@ set(MAIN_HEADERS
     include/Error.h
     include/Export.h
     include/Format.h
+    include/HashUtil.h
     include/Hooks.h
     include/LuaTools.h
     include/LuaWrapper.h
@@ -394,7 +396,7 @@ else()
 endif()
 
 add_library(dfhooks_dfhack SHARED Hooks.cpp)
-target_link_libraries(dfhooks_dfhack PUBLIC dfhack ${FMTLIB})
+target_link_libraries(dfhooks_dfhack PUBLIC dfhack lua ${FMTLIB})
 
 # effectively disables debug builds...
 set_target_properties(dfhack PROPERTIES DEBUG_POSTFIX "-debug" )

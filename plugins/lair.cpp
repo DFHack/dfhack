@@ -3,6 +3,7 @@
 
 #include "modules/Maps.h"
 
+#include "df/global_objects.h"
 #include "df/map_block.h"
 #include "df/world.h"
 

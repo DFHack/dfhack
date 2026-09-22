@@ -15,8 +15,18 @@
  */
 
 
+#include "joblabormapper.h"
+
+#include <cstdio>
+#include <fmt/format.h>
+#include <set>
+#include <vector>
+
+#include "Core.h"
 #include "DataDefs.h"
+#include "Debug.h"
 #include "MiscUtils.h"
+
 #include "modules/Materials.h"
 
 #include <df/building.h>
@@ -26,30 +36,22 @@
 #include <df/building_furnacest.h>
 #include <df/building_type.h>
 #include <df/building_workshopst.h>
-
+#include <df/buildingitemst.h>
 #include <df/furnace_type.h>
-
 #include <df/general_ref.h>
 #include <df/general_ref_building_holderst.h>
 #include <df/general_ref_contains_itemst.h>
-
+#include <df/global_objects.h>
 #include <df/item.h>
 #include <df/item_type.h>
-
 #include <df/job.h>
 #include <df/job_item.h>
 #include <df/job_item_ref.h>
-
+#include <df/material.h>
 #include <df/material_flags.h>
-
 #include <df/reaction.h>
-
 #include <df/unit_labor.h>
-
 #include <df/world.h>
-
-#include <vector>
-#include <set>
 
 using namespace std;
 using std::string;
@@ -59,8 +61,19 @@ using namespace df::enums;
 using df::global::plotinfo;
 using df::global::world;
 
-#include "labormanager.h"
-#include "joblabormapper.h"
+namespace DFHack {
+    DBG_DECLARE(autolabor, mapper, DebugCategory::LWARNING);
+}
+
+// stand-ins for the old labormanager debug hooks; these only fire on
+// failure-to-map paths that indicate a gap in the labor tables
+template<typename... Args>
+static void jlm_debug(fmt::format_string<Args...> fmt, Args&&... args)
+{
+    WARN(mapper, Core::getInstance().getConsole()).print("{}",
+        fmt::format(fmt, std::forward<Args>(args)...));
+}
+static void jlm_debug_pause() {}
 
 static df::unit_labor hauling_labor_map[] =
 {
@@ -302,8 +315,6 @@ public:
         case df::building_type::Workshop:
         {
             df::building_workshopst* ws = (df::building_workshopst*) bld;
-            if (ws->design && !ws->design->flags.bits.designed)
-                return df::unit_labor::ARCHITECT;
             if (ws->type == df::workshop_type::Custom)
             {
                 df::building_def* def = df::building_def::find(ws->custom_type);
@@ -316,8 +327,6 @@ public:
         case df::building_type::Furnace:
         {
             df::building_furnacest* frn = (df::building_furnacest*) bld;
-            if (frn->design && !frn->design->flags.bits.designed)
-                return df::unit_labor::ARCHITECT;
             if (frn->type == df::furnace_type::Custom)
             {
                 df::building_def* def = df::building_def::find(frn->custom_type);
@@ -343,8 +352,6 @@ public:
         case df::building_type::Windmill:
         {
             df::building_actual* b = (df::building_actual*) bld;
-            if (b->design && !b->design->flags.bits.designed)
-                return df::unit_labor::ARCHITECT;
             return construction_build_labor(b);
         }
         break;
@@ -397,9 +404,9 @@ public:
             return df::unit_labor::BUILD_ROAD;
         }
 
-        debug("LABORMANAGER: Cannot deduce labor for construct building job of type %s\n",
-            ENUM_KEY_STR(building_type, bld->getType()).c_str());
-        debug_pause();
+        jlm_debug("LABORMANAGER: Cannot deduce labor for construct building job of type {}\n",
+            ENUM_KEY_STR(building_type, bld->getType()));
+        jlm_debug_pause();
 
         return df::unit_labor::NONE;
     }
@@ -512,9 +519,9 @@ public:
             return df::unit_labor::SIEGECRAFT;
         }
 
-        debug("LABORMANAGER: Cannot deduce labor for destroy building job of type %s\n",
-            ENUM_KEY_STR(building_type, type).c_str());
-        debug_pause();
+        jlm_debug("LABORMANAGER: Cannot deduce labor for destroy building job of type {}\n",
+            ENUM_KEY_STR(building_type, type));
+        jlm_debug_pause();
 
         return df::unit_labor::NONE;
     }
@@ -550,8 +557,8 @@ public:
                         return df::unit_labor::BONE_CARVE;
                     else
                     {
-                        debug("LABORMANAGER: Cannot deduce labor for make crafts job (not bone)\n");
-                        debug_pause();
+                        jlm_debug("LABORMANAGER: Cannot deduce labor for make crafts job (not bone)\n");
+                        jlm_debug_pause();
                         return df::unit_labor::NONE;
                     }
                 case df::item_type::WOOD:
@@ -561,9 +568,9 @@ public:
                 case df::item_type::SKIN_TANNED:
                     return df::unit_labor::LEATHER;
                 default:
-                    debug("LABORMANAGER: Cannot deduce labor for make crafts job, item type %s\n",
-                        ENUM_KEY_STR(item_type, jobitem).c_str());
-                    debug_pause();
+                    jlm_debug("LABORMANAGER: Cannot deduce labor for make crafts job, item type {}\n",
+                        ENUM_KEY_STR(item_type, jobitem));
+                    jlm_debug_pause();
                     return df::unit_labor::NONE;
                 }
             }
@@ -581,9 +588,9 @@ public:
             case df::workshop_type::MetalsmithsForge:
                 return metaltype;
             default:
-                debug("LABORMANAGER: Cannot deduce labor for make job, workshop type %s\n",
-                    ENUM_KEY_STR(workshop_type, type).c_str());
-                debug_pause();
+                jlm_debug("LABORMANAGER: Cannot deduce labor for make job, workshop type {}\n",
+                    ENUM_KEY_STR(workshop_type, type));
+                jlm_debug_pause();
                 return df::unit_labor::NONE;
             }
         }
@@ -596,16 +603,16 @@ public:
             case df::furnace_type::GlassFurnace:
                 return df::unit_labor::GLASSMAKER;
             default:
-                debug("LABORMANAGER: Cannot deduce labor for make job, furnace type %s\n",
-                    ENUM_KEY_STR(furnace_type, type).c_str());
-                debug_pause();
+                jlm_debug("LABORMANAGER: Cannot deduce labor for make job, furnace type {}\n",
+                    ENUM_KEY_STR(furnace_type, type));
+                jlm_debug_pause();
                 return df::unit_labor::NONE;
             }
         }
 
-        debug("LABORMANAGER: Cannot deduce labor for make job, building type %s\n",
-            ENUM_KEY_STR(building_type, bld->getType()).c_str());
-        debug_pause();
+        jlm_debug("LABORMANAGER: Cannot deduce labor for make job, building type {}\n",
+            ENUM_KEY_STR(building_type, bld->getType()));
+        jlm_debug_pause();
 
         return df::unit_labor::NONE;
     }
@@ -685,9 +692,9 @@ JobLaborMapper::JobLaborMapper()
 
     jlfunc* jlf_no_labor = jlf_const(df::unit_labor::NONE);
 
-    job_to_labor_table[df::job_type::CarveFortification] = jlf_const(df::unit_labor::DETAIL);
-    job_to_labor_table[df::job_type::DetailWall] = jlf_const(df::unit_labor::DETAIL);
-    job_to_labor_table[df::job_type::DetailFloor] = jlf_const(df::unit_labor::DETAIL);
+    job_to_labor_table[df::job_type::CarveFortification] = jlf_const(df::unit_labor::ENGRAVER);
+    job_to_labor_table[df::job_type::DetailWall] = jlf_const(df::unit_labor::ENGRAVER);
+    job_to_labor_table[df::job_type::DetailFloor] = jlf_const(df::unit_labor::ENGRAVER);
     job_to_labor_table[df::job_type::Dig] = jlf_const(df::unit_labor::MINE);
     job_to_labor_table[df::job_type::CarveUpwardStaircase] = jlf_const(df::unit_labor::MINE);
     job_to_labor_table[df::job_type::CarveDownwardStaircase] = jlf_const(df::unit_labor::MINE);
@@ -719,19 +726,16 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::CatchLiveLandAnimal] = jlf_const(df::unit_labor::HUNT);
     job_to_labor_table[df::job_type::CatchLiveFish] = jlf_const(df::unit_labor::FISH);
     job_to_labor_table[df::job_type::ReturnKill] = jlf_no_labor;
-    job_to_labor_table[df::job_type::CheckChest] = jlf_no_labor;
     job_to_labor_table[df::job_type::StoreOwnedItem] = jlf_no_labor;
     job_to_labor_table[df::job_type::PlaceItemInTomb] = jlf_const(df::unit_labor::HAUL_BODY);
     job_to_labor_table[df::job_type::StoreItemInStockpile] = jlf_hauling;
     job_to_labor_table[df::job_type::StoreItemInBag] = jlf_hauling;
-    job_to_labor_table[df::job_type::StoreItemInHospital] = jlf_hauling;
     job_to_labor_table[df::job_type::StoreWeapon] = jlf_hauling;
     job_to_labor_table[df::job_type::StoreArmor] = jlf_hauling;
     job_to_labor_table[df::job_type::StoreItemInBarrel] = jlf_hauling;
     job_to_labor_table[df::job_type::StoreItemInBin] = jlf_hauling;
     job_to_labor_table[df::job_type::SeekArtifact] = jlf_no_labor;
     job_to_labor_table[df::job_type::SeekInfant] = jlf_no_labor;
-    job_to_labor_table[df::job_type::AttendParty] = jlf_no_labor;
     job_to_labor_table[df::job_type::GoShopping] = jlf_no_labor;
     job_to_labor_table[df::job_type::GoShoppingSpecific] = jlf_no_labor;
     job_to_labor_table[df::job_type::Clean] = jlf_const(df::unit_labor::CLEAN);
@@ -828,7 +832,6 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::LoadStoneTrap] = jlf_const(df::unit_labor::MECHANIC);
     job_to_labor_table[df::job_type::LoadWeaponTrap] = jlf_const(df::unit_labor::MECHANIC);
     job_to_labor_table[df::job_type::CleanTrap] = jlf_const(df::unit_labor::MECHANIC);
-    job_to_labor_table[df::job_type::CastSpell] = jlf_no_labor;
     job_to_labor_table[df::job_type::LinkBuildingToTrigger] = jlf_const(df::unit_labor::MECHANIC);
     job_to_labor_table[df::job_type::PullLever] = jlf_const(df::unit_labor::PULL_LEVER);
     job_to_labor_table[df::job_type::ExtractFromPlants] = jlf_const(df::unit_labor::HERBALIST);
@@ -893,7 +896,7 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::ApplyCast] = jlf_const(df::unit_labor::BONE_SETTING);
     job_to_labor_table[df::job_type::CustomReaction] = new jlfunc_custom();
     job_to_labor_table[df::job_type::ConstructSlab] = jlf_make_furniture;
-    job_to_labor_table[df::job_type::EngraveSlab] = jlf_const(df::unit_labor::DETAIL);
+    job_to_labor_table[df::job_type::EngraveSlab] = jlf_const(df::unit_labor::ENGRAVER);
     job_to_labor_table[df::job_type::ShearCreature] = jlf_const(df::unit_labor::SHEARER);
     job_to_labor_table[df::job_type::SpinThread] = jlf_const(df::unit_labor::SPINNER);
     job_to_labor_table[df::job_type::PenLargeAnimal] = jlf_const(df::unit_labor::HAUL_ANIMALS);
@@ -907,7 +910,7 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::ReportCrime] = jlf_no_labor;
     job_to_labor_table[df::job_type::ExecuteCriminal] = jlf_no_labor;
     job_to_labor_table[df::job_type::TrainAnimal] = jlf_const(df::unit_labor::ANIMALTRAIN);
-    job_to_labor_table[df::job_type::CarveTrack] = jlf_const(df::unit_labor::DETAIL);
+    job_to_labor_table[df::job_type::CarveTrack] = jlf_const(df::unit_labor::ENGRAVER);
     job_to_labor_table[df::job_type::PushTrackVehicle] = jlf_const(df::unit_labor::HANDLE_VEHICLES);
     job_to_labor_table[df::job_type::PlaceTrackVehicle] = jlf_const(df::unit_labor::HANDLE_VEHICLES);
     job_to_labor_table[df::job_type::StoreItemInVehicle] = jlf_hauling;
@@ -927,7 +930,44 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::HeistItem] = jlf_no_labor; // added for 47.04 - see #1561
     job_to_labor_table[df::job_type::InterrogateSubject] = jlf_no_labor; // added for 47.04 - see #1561
     job_to_labor_table[df::job_type::AcceptHeistItem] = jlf_no_labor; // added for 47.04 - see #1561
+
+    // v50 additions
+    job_to_labor_table[df::job_type::SmoothWall] = jlf_const(df::unit_labor::ENGRAVER);
+    job_to_labor_table[df::job_type::SmoothFloor] = jlf_const(df::unit_labor::ENGRAVER);
+    job_to_labor_table[df::job_type::PolishStones] = jlf_const(df::unit_labor::STONE_CRAFT);
+    job_to_labor_table[df::job_type::ConstructBag] = jlf_const(df::unit_labor::LEATHER);
+    job_to_labor_table[df::job_type::EncrustWithStones] = jlf_const(df::unit_labor::ENCRUST_GEM);
+    job_to_labor_table[df::job_type::StoreSquadEquipmentItem] = jlf_no_labor;
+    job_to_labor_table[df::job_type::MixDye] = jlf_const(df::unit_labor::DYER);
+    job_to_labor_table[df::job_type::DyeLeather] = jlf_const(df::unit_labor::DYER);
+    job_to_labor_table[df::job_type::ConstructBoltThrowerParts] = jlf_const(df::unit_labor::SIEGECRAFT);
+    job_to_labor_table[df::job_type::LoadBoltThrower] = jlf_const(df::unit_labor::SIEGEOPERATE);
+    job_to_labor_table[df::job_type::FireBoltThrower] = jlf_const(df::unit_labor::SIEGEOPERATE);
+    job_to_labor_table[df::job_type::UNUSED_31] = jlf_no_labor;
+    job_to_labor_table[df::job_type::UNUSED_32] = jlf_no_labor;
+    job_to_labor_table[df::job_type::UNUSED_33] = jlf_no_labor;
+    job_to_labor_table[df::job_type::UNUSED_34] = jlf_no_labor;
+    job_to_labor_table[df::job_type::UNUSED_35] = jlf_no_labor;
+    job_to_labor_table[df::job_type::UNUSED_36] = jlf_no_labor;
+    job_to_labor_table[df::job_type::UNUSED_37] = jlf_no_labor;
+    job_to_labor_table[df::job_type::UNUSED_38] = jlf_no_labor;
+    job_to_labor_table[df::job_type::UNUSED_39] = jlf_no_labor;
+    job_to_labor_table[df::job_type::UNUSED_40] = jlf_no_labor;
 };
+
+void JobLaborMapper::job_coverage(std::vector<std::string> &missing)
+{
+    FOR_ENUM_ITEMS(job_type, jt)
+    {
+        if (jt < 0)
+            continue;
+        // a job type with no table entry is invisible to labor management;
+        // DF releases that add job types must add a mapping (or jlf_no_labor)
+        if (!job_to_labor_table.count(jt))
+            missing.push_back(ENUM_KEY_STR(job_type, jt) +
+                ": no entry in job to labor table");
+    }
+}
 
 df::unit_labor JobLaborMapper::find_job_labor(df::job* j)
 {
@@ -948,8 +988,8 @@ df::unit_labor JobLaborMapper::find_job_labor(df::job* j)
     df::unit_labor labor;
     if (job_to_labor_table.count(j->job_type) == 0)
     {
-        debug("LABORMANAGER: job has no job to labor table entry: %s (%d)\n", ENUM_KEY_STR(job_type, j->job_type).c_str(), j->job_type);
-        debug_pause();
+        jlm_debug("LABORMANAGER: job has no job to labor table entry: {} ({})\n", ENUM_KEY_STR(job_type, j->job_type), int(j->job_type));
+        jlm_debug_pause();
         labor = df::unit_labor::NONE;
     }
     else {

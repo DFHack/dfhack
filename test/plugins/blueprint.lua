@@ -243,16 +243,16 @@ end
 
 function test.get_filename()
     local opts = {name='a', split_strategy='none'}
-    expect.eq('dfhack-config/blueprints/a.csv', b.get_filename(opts, 'dig', 1))
+    expect.eq(dfhack.getConfigPath() .. '/blueprints/a.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a/', split_strategy='none'}
-    expect.eq('dfhack-config/blueprints/a/a.csv', b.get_filename(opts, 'dig', 1))
+    expect.eq(dfhack.getConfigPath() .. '/blueprints/a/a.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a', split_strategy='phase'}
-    expect.eq('dfhack-config/blueprints/a-1-dig.csv', b.get_filename(opts, 'dig', 1))
+    expect.eq(dfhack.getConfigPath() .. '/blueprints/a-1-dig.csv', b.get_filename(opts, 'dig', 1))
 
     opts = {name='a/', split_strategy='phase'}
-    expect.eq('dfhack-config/blueprints/a/a-5-dig.csv', b.get_filename(opts, 'dig', 5))
+    expect.eq(dfhack.getConfigPath() .. '/blueprints/a/a-5-dig.csv', b.get_filename(opts, 'dig', 5))
 
     expect.error_match('could not parse basename', function()
             b.get_filename({name='', split_strategy='none'})

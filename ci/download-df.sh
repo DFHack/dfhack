@@ -14,7 +14,7 @@ fi
 df_url="https://www.bay12games.com/dwarves/df_${minor}_${patch}"
 if test "$OS_TARGET" = "windows"; then
     WGET="C:/msys64/usr/bin/wget.exe"
-    df_url="${df_url}_win_s.zip"
+    df_url="${df_url}_win.zip"
     df_archive_name="df.zip"
     df_extract_cmd="unzip -d ${DF_FOLDER}"
 elif test "$OS_TARGET" = "ubuntu"; then

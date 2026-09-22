@@ -204,7 +204,9 @@ df::block_burrow *Burrows::getBlockMask(df::burrow *burrow, df::map_block *block
         prev->next = link;
 
         df::coord base(world->map.region_x*3,world->map.region_y*3,world->map.region_z);
-        df::coord pos = base + block->map_pos/16;
+        // map_pos x/y are tile coordinates while z is already a z-level
+        df::coord pos(base.x + block->map_pos.x/16,
+                base.y + block->map_pos.y/16, base.z + block->map_pos.z);
 
         burrow->block_x.push_back(pos.x);
         burrow->block_y.push_back(pos.y);
@@ -225,7 +227,9 @@ bool Burrows::deleteBlockMask(df::burrow *burrow, df::map_block *block, df::bloc
         return false;
 
     df::coord base(world->map.region_x*3,world->map.region_y*3,world->map.region_z);
-    df::coord pos = base + block->map_pos/16;
+    // map_pos x/y are tile coordinates while z is already a z-level
+    df::coord pos(base.x + block->map_pos.x/16,
+            base.y + block->map_pos.y/16, base.z + block->map_pos.z);
 
     destroyBurrowMask(mask);
 

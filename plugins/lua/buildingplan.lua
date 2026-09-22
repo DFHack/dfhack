@@ -59,6 +59,19 @@ function is_suspendmanager_enabled()
     return require('plugins.suspendmanager').isEnabled()
 end
 
+-- The flag lives on the job, which exists as soon as the building is
+-- designated, so it can be set before the job is unsuspended and it persists
+-- with the save like any other job flag.
+function setDoNow(bld, val)
+    if not bld or #bld.jobs == 0 then return false end
+    bld.jobs[0].flags.do_now = val
+    return true
+end
+
+function getDoNow(bld)
+    return bld ~= nil and #bld.jobs > 0 and bld.jobs[0].flags.do_now
+end
+
 function get_num_filters(btype, subtype, custom)
     local filters = dfhack.buildings.getFiltersByType({}, btype, subtype, custom)
     return filters and #filters or 0

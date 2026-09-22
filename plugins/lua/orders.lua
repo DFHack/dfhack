@@ -38,7 +38,7 @@ local function do_import()
         dismiss_on_select2=false,
         on_select2=function(_, choice)
             if choice.text:startswith('library/') then return end
-            local fname = 'dfhack-config/orders/'..choice.text..'.json'
+            local fname = dfhack.getConfigPath() .. '/orders/' .. choice.text .. '.json'
             if not dfhack.filesystem.isfile(fname) then return end
             dialogs.showYesNoPrompt('Delete orders file?',
                 'Are you sure you want to delete "' .. fname .. '"?', nil,

@@ -45,6 +45,11 @@ using std::set;
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 
+#include "df/coord2d.h"
+#include "df/map_block_column.h"
+#include "df/plant.h"
+#include "df/plant_tree_info.h"
+#include "df/plant_type.h"
 #include "df/tile_dig_designation.h"
 #include "df/world.h"
 
@@ -68,9 +73,9 @@ struct tiletypes_options {
     static struct_identity _identity;
 };
 static const struct_field_info tiletypes_options_fields[] = {
-    { struct_field_info::PRIMITIVE, "help",   offsetof(tiletypes_options, help),   &df::identity_traits<bool>::identity, 0, 0 },
-    { struct_field_info::PRIMITIVE, "quiet",  offsetof(tiletypes_options, quiet),  &df::identity_traits<bool>::identity, 0, 0 },
-    { struct_field_info::SUBSTRUCT, "cursor", offsetof(tiletypes_options, cursor), &df::coord::_identity,                0, 0 },
+    { struct_field_info::PRIMITIVE, "help",   offsetof(tiletypes_options, help),   &df::identity_traits<bool>::identity,   0, 0 },
+    { struct_field_info::PRIMITIVE, "quiet",  offsetof(tiletypes_options, quiet),  &df::identity_traits<bool>::identity,   0, 0 },
+    { struct_field_info::SUBSTRUCT, "cursor", offsetof(tiletypes_options, cursor),  df::identity_traits<df::coord>::get(), 0, 0},
     { struct_field_info::END }
 };
 struct_identity tiletypes_options::_identity(sizeof(tiletypes_options), &df::allocator_fn<tiletypes_options>, NULL, "tiletypes_options", NULL, tiletypes_options_fields);
@@ -82,7 +87,8 @@ static const std::map<std::pair<df::tiletype_shape, df::tiletype_shape>, df::til
 };
 static const uint16_t UNDERGROUND_TEMP = 10015;
 
-static const char * HISTORY_FILE = "dfhack-config/tiletypes.history";
+static const std::filesystem::path get_history_file() { return Core::getInstance().getConfigPath() / "tiletypes.history"; }
+
 CommandHistory tiletypes_hist;
 
 command_result df_tiletypes (color_ostream &out, vector <string> & parameters);
@@ -92,7 +98,7 @@ command_result df_tiletypes_here_point (color_ostream &out, vector <string> & pa
 
 DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <PluginCommand> &commands)
 {
-    tiletypes_hist.load(HISTORY_FILE);
+    tiletypes_hist.load(get_history_file());
     commands.push_back(PluginCommand("tiletypes", "Paints tiles of specified types onto the map.", df_tiletypes, true, true));
     commands.push_back(PluginCommand("tiletypes-command", "Run tiletypes commands (seperated by ' ; ')", df_tiletypes_command));
     commands.push_back(PluginCommand("tiletypes-here", "Repeat tiletypes command at cursor (with brush)", df_tiletypes_here));
@@ -102,7 +108,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
 
 DFhackCExport command_result plugin_shutdown ( color_ostream &out )
 {
-    tiletypes_hist.save(HISTORY_FILE);
+    tiletypes_hist.save(get_history_file());
     return CR_OK;
 }
 
@@ -791,6 +797,64 @@ bool processTileType(color_ostream & out, TileType &paint, std::vector<std::stri
     return found;
 }
 
+// whether a plant rooted at a tile survives the tile being painted to 'tt'
+static bool plantTileSupported(df::plant *plant, df::tiletype tt)
+{
+    auto shape = tileShape(tt);
+    auto material = tileMaterial(tt);
+    if (plant->tree_info) // grown tree; pos is the trunk base
+        return material == tiletype_material::TREE
+            || material == tiletype_material::ROOT
+            || material == tiletype_material::MUSHROOM;
+    if (plant->type == plant_type::DRY_TREE || plant->type == plant_type::WET_TREE)
+        // unsprouted tree; lives on a ground tile until it grows
+        return shape != tiletype_shape::NONE && shape != tiletype_shape::EMPTY
+            && material != tiletype_material::AIR;
+    // shrubs and saplings
+    return shape == tiletype_shape::SHRUB || shape == tiletype_shape::SAPLING;
+}
+
+// delete a plant record, including tree_info for grown trees; the tree's
+// remaining tiles are left as-is for the user to paint over or collapse
+static void removePlant(df::plant *plant)
+{
+    vector<df::plant *> *vec = nullptr;
+    switch (plant->type)
+    {   // Remove from the per-type vector
+        case plant_type::DRY_TREE: vec = &world->plants.tree_dry; break;
+        case plant_type::WET_TREE: vec = &world->plants.tree_wet; break;
+        case plant_type::DRY_PLANT: vec = &world->plants.shrub_dry; break;
+        case plant_type::WET_PLANT: vec = &world->plants.shrub_wet; break;
+    }
+    if (vec)
+        std::erase(*vec, plant);
+
+    auto col = Maps::getBlockColumn((plant->pos.x / 48) * 3, (plant->pos.y / 48) * 3);
+    if (col)
+        std::erase(col->plants, plant);
+
+    if (plant->tree_info)
+    {
+        delete plant->tree_info->body;
+        delete plant->tree_info->roots;
+        delete plant->tree_info;
+    }
+
+    std::erase(world->plants.all, plant);
+    delete plant;
+}
+
+// remove the plant rooted at pos if the painted tile can no longer host it
+static void removePlantIfUnsupported(const df::coord &pos)
+{
+    auto plant = Maps::getPlantAtTile(pos);
+    if (!plant)
+        return;
+    auto tt = Maps::getTileType(pos);
+    if (!tt || !plantTileSupported(plant, *tt))
+        removePlant(plant);
+}
+
 static bool paintTileProcessing(MapExtras::Block* block, const df::coord2d& blockPos, const TileType& target) {
     df::tiletype source = block->tiletypeAt(blockPos);
     df::tile_designation des = block->DesignationAt(blockPos);
@@ -1068,6 +1132,17 @@ static PaintResult paintArea(MapExtras::MapCache& map, const df::coord& pos1, co
                 else if (target.aquifer > 0)
                     Maps::setAreaAquifer(pos1, pos2, target.aquifer == 2, filter);
 
+                df::coord lo(std::min(pos1.x, pos2.x), std::min(pos1.y, pos2.y), std::min(pos1.z, pos2.z));
+                df::coord hi(std::max(pos1.x, pos2.x), std::max(pos1.y, pos2.y), std::max(pos1.z, pos2.z));
+                for (int16_t z = lo.z; z <= hi.z; z++)
+                    for (int16_t x = lo.x; x <= hi.x; x++)
+                        for (int16_t y = lo.y; y <= hi.y; y++)
+                        {
+                            df::coord pos(x, y, z);
+                            if (filter(pos, nullptr))
+                                removePlantIfUnsupported(pos);
+                        }
+
                 // force the game to recompute its walkability cache on the next tick
                 world->reindex_pathfinding = true;
             }
@@ -1113,6 +1188,8 @@ static PaintResult paintTile(MapExtras::MapCache &map, const df::coord &pos,
                     Maps::removeTileAquifer(pos);
                 else if (target.aquifer > 0)
                     Maps::setTileAquifer(pos, target.aquifer == 2);
+
+                removePlantIfUnsupported(pos);
 
                 // force the game to recompute its walkability cache on the next tick
                 world->reindex_pathfinding = true;

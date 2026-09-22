@@ -6,6 +6,7 @@
  */
 
 #include "Console.h"
+#include "Core.h"
 #include "DataDefs.h"
 #include "DataFuncs.h"
 #include "DataIdentity.h"
@@ -58,8 +59,6 @@ using namespace DFHack;
 
 DFHACK_PLUGIN("blueprint");
 REQUIRE_GLOBAL(world);
-
-static const string BLUEPRINT_USER_DIR = "dfhack-config/blueprints/";
 
 namespace DFHack {
     DBG_DECLARE(blueprint,log);
@@ -119,10 +118,10 @@ struct blueprint_options {
 };
 static const struct_field_info blueprint_options_fields[] = {
     { struct_field_info::PRIMITIVE, "help",                   offsetof(blueprint_options, help),                  &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::SUBSTRUCT, "start",                  offsetof(blueprint_options, start),                 &df::coord::_identity,                   0, 0 },
+    { struct_field_info::SUBSTRUCT, "start",                  offsetof(blueprint_options, start),                  df::identity_traits<df::coord>::get(),  0, 0},
     { struct_field_info::PRIMITIVE, "format",                 offsetof(blueprint_options, format),                 df::identity_traits<string>::get(),     0, 0 },
     { struct_field_info::PRIMITIVE, "nometa",                 offsetof(blueprint_options, nometa),                &df::identity_traits<bool>::identity,    0, 0 },
-    { struct_field_info::SUBSTRUCT, "playback_start",         offsetof(blueprint_options, playback_start),        &df::coord2d::_identity,                 0, 0 },
+    { struct_field_info::SUBSTRUCT, "playback_start",         offsetof(blueprint_options, playback_start),         df::identity_traits<df::coord2d>::get(),0, 0 },
     { struct_field_info::PRIMITIVE, "playback_start_comment", offsetof(blueprint_options, playback_start_comment), df::identity_traits<string>::get(),     0, 0 },
     { struct_field_info::PRIMITIVE, "split_strategy",         offsetof(blueprint_options, split_strategy),         df::identity_traits<string>::get(),     0, 0 },
     { struct_field_info::PRIMITIVE, "width",                  offsetof(blueprint_options, width),                 &df::identity_traits<int32_t>::identity, 0, 0 },
@@ -1370,9 +1369,9 @@ static const char * get_tile_zone(color_ostream &out, const df::coord &pos, cons
 
 static bool create_output_dir(color_ostream &out,
                               const blueprint_options &opts) {
-    string basename = BLUEPRINT_USER_DIR + opts.name;
-    size_t last_slash = basename.find_last_of("/");
-    string parent_path = basename.substr(0, last_slash);
+    std::filesystem::path BLUEPRINT_USER_DIR = Core::getInstance().getConfigPath() / "blueprints";
+    std::filesystem::path basename = BLUEPRINT_USER_DIR / opts.name;
+    std::filesystem::path parent_path = basename.parent_path();
 
     // create output directory if it doesn't already exist
     if (!Filesystem::mkdir_recursive(parent_path)) {

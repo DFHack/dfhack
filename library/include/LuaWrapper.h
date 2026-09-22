@@ -236,5 +236,7 @@ namespace LuaWrapper {
 
     void IndexStatics(lua_State *state, int meta_idx, int ftable_idx, struct_identity *pstruct);
 
-    void AttachDFGlobals(lua_State *state);
+    DFHACK_EXPORT void AttachDFGlobals(lua_State *state);
+
+    DFHACK_EXPORT void notify_deprecated(lua_State* state, std::string_view name, std::string_view message);
 }}

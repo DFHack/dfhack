@@ -1,7 +1,7 @@
 config.mode = 'fortress'
 config.target = 'orders'
 
-local FILE_PATH_PATTERN = 'dfhack-config/orders/%s.json'
+local FILE_PATH_PATTERN = dfhack.getConfigPath() .. '/orders/%s.json'
 
 local BACKUP_FILE_NAME = 'tmp-backup'
 local BACKUP_FILE_PATH = FILE_PATH_PATTERN:format(BACKUP_FILE_NAME)
@@ -190,6 +190,7 @@ function test.import_export_reaction_condition()
                     }
                 ],
                 "job" : "CustomReaction",
+                "name" : "Make soap from tallow",
                 "reaction" : "MAKE_SOAP_FROM_TALLOW"
             }
         ]

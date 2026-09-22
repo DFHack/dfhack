@@ -194,7 +194,7 @@ function GetTreeMat(x, y, z)
     for _, tree in ipairs(df.global.world.plants.all) do
         if tree.tree_info ~= nil then
             if coordInTree(pos, tree) then
-                return dfhack.matinfo.decode(419, tree.material)
+                return dfhack.matinfo.decode(df.builtin_mats.PLANT_1, tree.material)
             end
         end
     end
@@ -209,7 +209,7 @@ function GetShrubMat(x, y, z)
     for _, shrub in ipairs(df.global.world.plants.all) do
         if shrub.tree_info == nil then
             if shrub.pos.x == pos.x and shrub.pos.y == pos.y and shrub.pos.z == pos.z then
-                return dfhack.matinfo.decode(419, shrub.material)
+                return dfhack.matinfo.decode(df.builtin_mats.PLANT_1, shrub.material)
             end
         end
     end

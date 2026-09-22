@@ -75,7 +75,7 @@ end
 
 local function load_state()
     local state = get_default_state()
-    local config_file = json.open('dfhack-config/spectate.json')
+    local config_file = json.open(dfhack.getConfigPath() .. '/spectate.json')
     for key in pairs(config_file.data) do
         if state[key] == nil then
             config_file.data[key] = nil

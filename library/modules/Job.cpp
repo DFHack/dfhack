@@ -58,6 +58,7 @@ distribution.
 #include <string>
 #include <vector>
 #include <map>
+#include <functional>
 #include <cassert>
 
 using namespace DFHack;
@@ -402,27 +403,23 @@ bool DFHack::Job::disconnectJobGeneralRef(df::job *job, df::general_ref *ref) {
 }
 
 bool DFHack::Job::removeJob(df::job* job) {
-    using df::global::world;
     CHECK_NULL_POINTER(job);
 
-    // cancel_job below does not clean up all refs, so we have to do some work
+    // remove_job below does not clean up all refs, so we have to do some work
     for (auto &item_ref : job->items) {
         disconnectJobItem(job, item_ref);
         if (item_ref) delete item_ref;
     }
     job->items.resize(0);
 
-    // call the job cancel vmethod graciously provided by The Toady One.
-    // job_handler::cancel_job calls job::~job, and then deletes job (this has
+    // job_handlerst_remove_job calls job::~job, and then deletes job (this has
     // been confirmed by disassembly).
+    auto fp = df::global::job_handlerst_remove_job;
+    CHECK_NULL_POINTER(fp);
 
-    // HACK: GCC (starting around GCC 10 targeting C++20 as of v50.09) optimizes
-    // out the vmethod call here regardless of optimization level, so we need to
-    // invoke the vmethod manually through a pointer, as the Lua wrapper does.
-    // `volatile` does not seem to be necessary but is included for good
-    // measure.
-    volatile auto cancel_job_method = &df::job_handler::cancel_job;
-    (world->jobs.*cancel_job_method)(job);
+    using FT = std::function<void(df::job* job)>;
+    auto f = reinterpret_cast<FT*>(fp);
+    (*f)(job);
 
     return true;
 }

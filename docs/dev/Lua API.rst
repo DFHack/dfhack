@@ -938,7 +938,17 @@ can be omitted.
 
 * ``dfhack.getHackPath()``
 
-  Returns the dfhack directory path, i.e., ``".../df/hack/"``.
+  Returns the DFHack installation directory path (the folder where DFHack is installed).
+  This may be the ``hack`` folder within the DF installation, but you should not rely on this.
+  Specifically, the installation folder is extremely likely to be somewhere else when DFHack is installed from Steam.
+  Always use this function to get the DFHack installation directory path instead of hardcoding it.
+
+* ``dfhack.getConfigPath()``
+
+  Returns the DFHack config directory path (the folder where user-specific configuration files are stored).
+  This is currently the ``dfhack-config`` folder within the DF installation, but you should not rely on this as it is likely to change in the future.
+  Always use this function to get the DFHack config directory path instead of hardcoding it.
+  Avoid storing this value in a long-lived variable, as it's possible that in future versions of DFHack, it may be possible for the config directory to be changed at runtime.
 
 * ``dfhack.getSavePath()``
 
@@ -1636,6 +1646,7 @@ Units module
 * ``dfhack.units.hasExtravision(unit)``
 * ``dfhack.units.isOpposedToLife(unit)``
 * ``dfhack.units.isBloodsucker(unit)``
+* ``dfhack.units.breathes(unit)``
 
   Simple checks of caste attributes that can be modified by curses.
 
@@ -1994,6 +2005,13 @@ Units module
 
   Returns a table of the cutoffs used by the above stress level functions.
 
+* ``dfhack.units.getBreathingState(unit)``
+
+  Returns a value indicating the unit's current breathing state, which can be one of the following:
+    * ``CANT`` (0) - The unit cannot breathe and is at risk of suffocation.
+    * ``TROUBLE`` (1) - The unit is having trouble breathing but is not in immediate danger.
+    * ``FINE`` (2) - The unit is breathing normally.
+
 Action Timer API
 ~~~~~~~~~~~~~~~~
 
@@ -2332,7 +2350,8 @@ World module
 
 * ``dfhack.world.ReadCurrentWeather()``
 
-  Returns the current game weather (``df.weather_type``).
+  Returns the current game weather (``df.weather_type``). Deprecated: use
+  ``dfhack.maps.getCurrentWeather()`` instead.
 
 * ``dfhack.world.SetCurrentWeather(weather)``
 
@@ -2431,6 +2450,13 @@ Maps module
 
   Returns *x, y* for use with ``getRegionBiome`` and ``getBiomeType``.
 
+* ``dfhack.maps.getCurrentWeather(coords)``
+  ``dfhack.maps.getCurrentWeather(x,y,z)``
+  ``dfhack.maps.getCurrentWeather()``
+
+  Returns the current game weather (``df.weather_type``) at the specified tile
+  or at the center of the map if no argument is provided.
+
 * ``dfhack.maps.getPlantAtTile(pos)``, or ``getPlantAtTile(x,y,z)``
 
   Returns the plant struct that owns the tile at the specified position.
@@ -2505,6 +2531,86 @@ Maps module
 
   For plant growths, specifying a print_variant of -1 will automatically
   choose an appropriate value. For other item types, this field is ignored.
+
+* ``dfhack.maps.forEachTile(bounds[, filter[, actions]])``
+
+  Scans every tile inside a cuboid of map tiles in native code, tests each
+  tile against a filter, and applies one or more actions to the matching
+  tiles. This is dramatically faster than iterating tiles in Lua, since the
+  entire scan runs in a single C++ call.
+
+  .. note::
+     This API is experimental and may change in future releases.
+
+  The *bounds* argument may be given as a ``{x1,y1,z1,x2,y2,z2}`` table, as
+  two coordinate values ``(pos1, pos2)``, or as six integers
+  ``(x1,y1,z1,x2,y2,z2)``. The cuboid is clamped to the loaded map and tiles
+  in unallocated map blocks are skipped.
+
+  The *filter* argument selects which tiles are acted on. It may be a table
+  with the following keys (all optional; a tile must satisfy every given
+  criterion to match), or a function (see below), or *nil* to match all
+  tiles:
+
+  - ``tiletype``/``tiletypes``: a tiletype or array of tiletypes (numbers or
+    ``df.tiletype`` names). The tile's tiletype must be one of them.
+  - ``material``, ``shape``, ``shape_basic``, ``special``, ``variant``: a
+    tiletype attribute value or array of values (numbers or names from
+    ``df.tiletype_material``, ``df.tiletype_shape``,
+    ``df.tiletype_shape_basic``, ``df.tiletype_special``, or
+    ``df.tiletype_variant`` respectively). The tile's tiletype must have one
+    of the listed values for that attribute.
+  - ``designation``: a table of ``df.tile_designation`` field names to
+    required values, e.g. ``{hidden=false, subterranean=true}``.
+    Multi-bit fields such as ``dig`` or ``flow_size`` take integer values.
+  - ``occupancy``: same, for ``df.tile_occupancy`` fields.
+  - ``filter``: a function ``fn(x, y, z, block, localx, localy, tiletype)``
+    evaluated last for each candidate tile; the tile matches only if it
+    returns a truthy value. ``localx``/``localy`` are the tile's
+    coordinates within ``block`` (0-15).
+
+  The *actions* argument says what to do with each matching tile. It may be
+  a table with the following keys (all optional), a function (equivalent to
+  ``{callback=fn}``), or *nil* to just count matches:
+
+  - ``set_tiletype``: a tiletype (number or name) to write to matching
+    tiles, or a table mapping tiletypes to replacement tiletypes (keys and
+    values may be numbers or names). Tiles whose current tiletype is a key
+    in the table are rewritten to the mapped value, taking precedence over
+    a plain ``set_tiletype`` value; unmapped tiles fall back to it.
+  - ``designation``: a table of ``df.tile_designation`` field names to
+    values, assigned on each matching tile (e.g. ``{hidden=false}`` clears
+    the hidden flag).
+  - ``occupancy``: same, for ``df.tile_occupancy`` fields.
+  - ``construct``: spawn a ``df.construction`` record on each matching tile
+    that does not already have one. The value is a table with keys
+    ``item_type`` (number or ``df.item_type`` name), ``item_subtype``,
+    ``mat_type``, ``mat_index``, ``flags`` (a table of
+    ``df.construction_flags`` field names to values, e.g.
+    ``{no_build_item=true}``), and ``tiletype`` (a tiletype to write to the
+    map tile; the construction's ``original_tile`` records the tiletype
+    present before that write). Constructions are buffered during the scan
+    and merged into ``world.event.constructions`` in one sorted pass, so
+    bulk spawning is cheap.
+  - ``callback``: a function ``fn(x, y, z, block, localx, localy,
+    tiletype)`` invoked for each matching tile after the other actions are
+    applied. Returning exactly ``false`` aborts the scan.
+
+  Returns a table with counts: ``scanned`` (tiles visited), ``matched``
+  (tiles passing the filter), ``changed`` (tiles whose tiletype was
+  rewritten), ``constructed`` (construction records created), and
+  ``aborted`` (true if a callback stopped the scan early).
+
+  Example::
+
+    local res = dfhack.maps.forEachTile({x1,y1,z1,x2,y2,z2}, {
+        material = {df.tiletype_material.STONE, df.tiletype_material.MINERAL},
+        shape_basic = df.tiletype_shape_basic.Floor,
+        designation = {hidden = false},
+    }, {
+        set_tiletype = df.tiletype.StoneFloorSmooth,
+    })
+    print(res.matched)
 
 Burrows module
 --------------
@@ -2862,12 +2968,9 @@ Common parameters to these functions include:
 * ``x``, ``y``: screen coordinates in tiles; the upper left corner of the screen
   is ``x = 0, y = 0``
 * ``pen``: a `pen object <lua-screen-pen>`
-* ``map``: a boolean indicating whether to draw to a separate map buffer
-  (defaults to false, which is suitable for off-map text or a screen that hides
-  the map entirely). Note that only third-party plugins like TWBT currently
-  implement a separate map buffer. If no such plugins are enabled, passing
-  ``true`` has no effect. However, this parameter should still be used to ensure
-  that scripts work properly with such plugins.
+* ``map``: a boolean (defaults to false) indicating whether to draw to a
+  separate map buffer. The Steam version uses separate map buffers with square
+  tiles for for all types of maps (i.e. fort, region, and world).
 
 Functions:
 
@@ -2893,14 +2996,30 @@ Functions:
 * ``dfhack.screen.paintTile(pen,x,y[,char[,tile[,map]]])``
 
   Paints a tile using given parameters. `See below <lua-screen-pen>` for a
-  description of ``pen``.
+  description of ``pen``. The map argument is only supported for local maps
+  (i.e. fort mode and adventure mode outside of fast travel). The ``char`` and
+  ``tile`` arguments allow overriding the respective parts of the ``pen``
+  without constructing a new pen beforehand.
 
   Returns *false* on error, e.g., if coordinates are out of bounds
+
+* ``dfhack.screen.paintMapPortTile(pen,x,y[,char[,tile]])``
+
+  Paints a tile using given parameters onto the interface texpos layer of a map
+  port (e.g., the world map or the zoomed-in map for embark selection). The
+  ``char`` and ``tile`` arguments work as above.
 
 * ``dfhack.screen.readTile(x,y[,map])``
 
   Retrieves the contents of the specified tile from the screen buffers.
   Returns a `pen object <lua-screen-pen>`, or *nil* if invalid or TrueType.
+
+* ``dfhack.screen.readMapPortTile(x,y)``
+
+  Retrieves the contents of the specified tile from the screen buffers. Returns
+  a `pen object <lua-screen-pen>`, or *nil* if invalid.
+
+  For now only looks at the ``sites`` textpos layer.
 
 * ``dfhack.screen.paintString(pen,x,y,text[,map])``
 
@@ -3734,6 +3853,9 @@ environment by the mandatory init file dfhack.lua:
 
   ``COLOR_GREY`` and ``COLOR_DARKGREY`` can also be spelled ``COLOR_GRAY`` and
   ``COLOR_DARKGRAY``.
+
+  Note: ``COLOR_RESET`` is not valid in a `Pen <lua-screen-pen>`, and using it in a Pen color field
+  will result in runtime warnings and may result in color flashing or other unexpected results.
 
 * State change event codes, used by ``dfhack.onStateChange``
 
@@ -5761,7 +5883,7 @@ TextArea Functions:
 * ``textarea:getText()``
 
     Returns the current text content of the ``TextArea`` widget as a string.
-    "\n" characters (``string.char(10)``) should be interpreted as new lines
+    ``\n`` characters (``string.char(10)``) should be interpreted as new lines
 
 * ``textarea:setText(text)``
 
@@ -6350,12 +6472,27 @@ This is a specialized subclass of CycleHotkeyLabel that has two options:
 ``On`` (with a value of ``true``) and ``Off`` (with a value of ``false``). The
 ``On`` option is rendered in green.
 
+ConfigureButton class
+---------------------
+
+A 3x1 tile button with a gear symbol on it, intended to represent a configure
+icon. Clicking on the icon will run the given callback. The graphics can also
+be overridden to create custom buttons.
+
+It has the following attributes:
+
+:on_click: The function to run when the icon is clicked.
+:pen_left: Pen or function returning a pen to overwrite the left tile of the button.
+:pen_center: As above, but for the center tile (gear symbol).
+:pen_right: As above, but for the right tile.
+
 HelpButton class
 ----------------
 
-A 3x1 tile button with a question mark on it, intended to represent a help
-icon. Clicking on the icon will launch `gui/launcher` with a given command
-string, showing the help text for that command.
+Subclass of ConfigureButton; a 3x1 tile button with a question mark on it,
+intended to represent a help icon. Clicking on the icon will launch
+`gui/launcher` with a given command string, showing the help text for that
+command.
 
 It has the following attributes:
 
@@ -6365,15 +6502,23 @@ It also sets the ``frame`` attribute so the button appears in the upper right
 corner of the parent, but you can override this to your liking if you want a
 different position.
 
-ConfigureButton class
----------------------
+RadioButton class
+-----------------
 
-A 3x1 tile button with a gear mark on it, intended to represent a configure
-icon. Clicking on the icon will run the given callback.
+Subclass of ConfigureButton; a 3x1 tile button that resembles a radio button
+(or check box in ASCII mode), identical to the ones found in
+`gui/control-panel`. Clicking on the button will toggle its enabled state.
 
 It has the following attributes:
 
-:on_click: The function on run when the icon is clicked.
+:initial_state: Whether to start in the ``true`` or ``false`` state. Defaults to ``true``.
+:on_change: Callback to call when state changes, including initialization. Called as ``on_change(val)``.
+
+It implements the following method:
+
+* ``RadioButton:setState(val)``
+
+  Sets the state to boolean ``val`` and calls ``on_change`` (if defined).
 
 BannerPanel class
 -----------------
@@ -6530,7 +6675,8 @@ Filter behavior:
 
 By default, the filter matches substrings that start at the beginning of a word
 (or after any punctuation). You can instead configure filters to match any
-substring across the full text with a command like::
+substring across the full text by setting ``FILTER_FULL_TEXT`` in `gui/control-panel`
+or set it for the session by running a command like::
 
   :lua require('utils').FILTER_FULL_TEXT=true
 

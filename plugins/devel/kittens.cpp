@@ -53,6 +53,7 @@ uint64_t timeLast = 0;
 
 command_result kittens (color_ostream &out, vector <string> & parameters);
 command_result ktimer (color_ostream &out, vector <string> & parameters);
+command_result throwtest (color_ostream &out, vector <string> & parameters);
 command_result trackmenu (color_ostream &out, vector <string> & parameters);
 command_result trackpos (color_ostream &out, vector <string> & parameters);
 command_result trackstate (color_ostream &out, vector <string> & parameters);
@@ -68,6 +69,7 @@ DFhackCExport command_result plugin_init ( color_ostream &out, std::vector <Plug
     commands.push_back(PluginCommand("trackstate","Track world and map state (toggle).",trackstate));
     commands.push_back(PluginCommand("colormods","Dump colormod vectors.",colormods));
     commands.push_back(PluginCommand("sharedsignal","Test Signal with signal_shared_tag",sharedsignal));
+    commands.push_back(PluginCommand("throwtest","Throw an exception to test command error handling.",throwtest));
     return CR_OK;
 }
 
@@ -375,6 +377,13 @@ command_result sharedsignal (color_ostream &out, vector <string> & parameters)
             t[i].join();
     }
     return CR_OK;
+}
+
+command_result throwtest (color_ostream &out, vector <string> & parameters)
+{
+    if (!parameters.empty() && parameters[0] == "nonstd")
+        throw 42;
+    throw std::runtime_error("throwtest: test exception");
 }
 
 command_result kittens (color_ostream &out, vector <string> & parameters)

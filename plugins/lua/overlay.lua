@@ -6,7 +6,7 @@ local scriptmanager = require('script-manager')
 local utils = require('utils')
 local widgets = require('gui.widgets')
 
-local OVERLAY_CONFIG_FILE = 'dfhack-config/overlay.json'
+local OVERLAY_CONFIG_FILE = dfhack.getConfigPath() .. '/overlay.json'
 local OVERLAY_WIDGETS_VAR = 'OVERLAY_WIDGETS'
 local GLOBAL_KEY = 'OVERLAY'
 
@@ -486,6 +486,10 @@ local function matches_focus_strings(db_entry, vs_name, vs)
             if dfhack.gui.matchFocusString(fs, vs) then
                 return true
             end
+            local lua_focus = fs:match('^[^/]+/(dfhack/lua/.*)$')
+            if lua_focus and dfhack.gui.matchFocusString(lua_focus) then
+                return true
+            end
         end
     end
     return matched
@@ -530,7 +534,25 @@ local function _feed_viewscreen_widgets(vs_name, vs, keys)
     return false
 end
 
+-- when the native UI is capturing text input (renaming a building, editing a
+-- workshop job filter, etc.), overlay widgets must not consume keys, since
+-- their bound hotkeys would otherwise steal typed characters (#5764)
+local function is_native_text_entry_active()
+    local mi = df.global.game.main_interface
+    local vs = mi.view_sheets
+    return mi.entering_building_name or
+        vs.building_entering_nickname or
+        vs.unit_overview_entering_nickname or
+        vs.unit_overview_entering_profession_nickname or
+        vs.entering_building_job_filter or
+        vs.entering_gen_work_order_num or
+        vs.entering_wq_number
+end
+
 function feed_viewscreen_widgets(vs_name, vs, keys)
+    if is_native_text_entry_active() then
+        return false
+    end
     if not _feed_viewscreen_widgets(vs_name, vs, keys) and
             not _feed_viewscreen_widgets('all', nil, keys) then
         return false

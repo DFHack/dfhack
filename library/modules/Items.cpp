@@ -1756,7 +1756,7 @@ int32_t Items::pickGrowthPrint(int16_t subtype, int16_t mat, int32_t matg)
 {
     int growth_print = -1;
     // Make sure it's made of a valid plant material, then grab its definition
-    if (mat >= 419 && mat <= 618 && matg >= 0 && (unsigned)matg < world->raws.plants.all.size())
+    if (mat >= df::builtin_mats::PLANT_1 && mat <= df::builtin_mats::PLANT_200 && matg >= 0 && (unsigned)matg < world->raws.plants.all.size())
     {
         auto plant_def = world->raws.plants.all[matg];
         // Make sure it subtype is also valid
@@ -1804,6 +1804,7 @@ bool Items::createItem(vector<df::item *> &out_items, df::unit *unit, df::item_t
         case POWDER_MISC:
         case LIQUID_MISC:
         case DRINK:
+        case GLOB:
             prod->product_dimension = 150;
             break;
         case THREAD:

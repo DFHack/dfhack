@@ -154,6 +154,7 @@ DFHACK_EXPORT bool isPet(df::unit *unit);
 DFHACK_EXPORT bool hasExtravision(df::unit *unit);
 DFHACK_EXPORT bool isOpposedToLife(df::unit *unit);
 DFHACK_EXPORT bool isBloodsucker(df::unit *unit);
+DFHACK_EXPORT bool breathes(df::unit* unit);
 
 // Same race as fort (even if active werebeast).
 DFHACK_EXPORT bool isDwarf(df::unit *unit);
@@ -365,5 +366,8 @@ DFHACK_EXPORT void setActionTimers(color_ostream &out, df::unit *unit, int32_t a
 DFHACK_EXPORT void setGroupActionTimers(color_ostream &out, df::unit *unit, int32_t amount, df::unit_action_type_group affectedActionTypeGroup);
 
 DFHACK_EXPORT df::unit* get_cached_unit_by_global_id(int32_t id, int32_t& index);
+
+enum class breathing_state { CANT = 0, TROUBLE, FINE };
+DFHACK_EXPORT breathing_state getBreathingState(df::unit* unit);
 }
 }

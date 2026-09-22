@@ -30,7 +30,7 @@ using namespace df::enums;
 
 const int NUM_STATE = 6;
 
-char const* state_names[] {
+static char const* const state_names[] {
     "IDLE",
     "BUSY",
     "EXCLUSIVE",

@@ -31,46 +31,62 @@ distribution.
 #include "Error.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
+#include "TileTypes.h"
 #include "VersionInfo.h"
 
 #include "modules/Buildings.h"
+#include "modules/Constructions.h"
 #include "modules/MapCache.h"
 #include "modules/Maps.h"
 
 #include "df/biome_type.h"
-#include "df/block_burrow.h"
 #include "df/block_burrow_link.h"
+#include "df/block_burrow.h"
+#include "df/block_column_print_infost.h"
 #include "df/block_square_event_grassst.h"
 #include "df/block_square_event_item_spatterst.h"
 #include "df/block_square_event_material_spatterst.h"
 #include "df/block_square_event_spoorst.h"
-#include "df/building.h"
 #include "df/building_type.h"
+#include "df/building.h"
 #include "df/builtin_mats.h"
 #include "df/burrow.h"
+#include "df/construction.h"
+#include "df/entity_plot_invasion_mapst.h"
 #include "df/feature_init.h"
 #include "df/feature_map_shellst.h"
 #include "df/feature_mapst.h"
 #include "df/flow_info.h"
-#include "df/map_block.h"
+#include "df/historical_entity.h"
+#include "df/invasion_info.h"
 #include "df/map_block_column.h"
+#include "df/map_block.h"
 #include "df/material.h"
-#include "df/plant.h"
 #include "df/plant_root_tile.h"
 #include "df/plant_tree_info.h"
 #include "df/plant_tree_tile.h"
+#include "df/plant.h"
+#include "df/plot_invasion_mapst.h"
+#include "df/plotinfost.h"
 #include "df/region_map_entry.h"
-#include "df/world.h"
+#include "df/site_map_infost.h"
+#include "df/weather_type.h"
 #include "df/world_data.h"
 #include "df/world_geo_biome.h"
 #include "df/world_geo_layer.h"
 #include "df/world_region_details.h"
+#include "df/world_site_type.h"
+#include "df/world_site.h"
 #include "df/world_underground_region.h"
+#include "df/world.h"
 #include "df/z_level_flags.h"
 
+
+#include <array>
 #include <string>
 #include <vector>
 #include <map>
+#include <ranges>
 #include <set>
 #include <cstdlib>
 #include <iostream>
@@ -424,6 +440,22 @@ df::tile_occupancy *Maps::getTileOccupancy(int32_t x, int32_t y, int32_t z)
     return block ? &block->occupancy[x&15][y&15] : NULL;
 }
 
+df::coord2d Maps::addRegionBiomeOffset(df::coord2d world_pos, int8_t offset_dir) {
+    // Note 1: textual order of offfsets is upside down compared to the keypad order used by the biome offset
+    // Note 2: also upside down compared to (fort) map block region offsets
+    constexpr auto biome_offset = std::to_array<std::pair<int16_t, int16_t>>({
+        {-1, 1}, {0, 1}, {1, 1},
+        {-1, 0}, {0, 0}, {1, 0},
+        {-1,-1}, {0,-1}, {1,-1}
+    });
+
+    auto [diff_x, diff_y] = biome_offset[std::clamp(offset_dir, (int8_t)1, (int8_t)9) - 1];
+    return {
+        (int16_t)std::clamp(world_pos.x + diff_x,0,world->world_data->world_width - 1),
+        (int16_t)std::clamp(world_pos.y + diff_y,0,world->world_data->world_height - 1)
+    };
+}
+
 df::region_map_entry *Maps::getRegionBiome(df::coord2d rgn_pos)
 {
     auto data = world->world_data;
@@ -747,7 +779,7 @@ int32_t Maps::addMaterialSpatter (df::coord pos, int16_t mat, int32_t matg, df::
         spatter->mat_type = mat;
         spatter->mat_index = matg;
         spatter->mat_state = state;
-        memset(spatter->amount, 0, sizeof(spatter->amount));
+        spatter->amount.fill({});
         spatter->min_temperature = spatter->max_temperature = 60001;
 
         uint16_t melt = matinfo.material->heat.melting_point;
@@ -867,8 +899,8 @@ int32_t Maps::addItemSpatter (df::coord pos, df::item_type i_type, int16_t i_sub
         spatter->mattype = i_subcat1;
         spatter->matindex = i_subcat2;
         spatter->print_variant = print_variant;
-        memset(spatter->amount, 0, sizeof(spatter->amount));
-        memset(spatter->flag, 0, sizeof(spatter->flag));
+        spatter->amount.fill({});
+        spatter->flag.fill({});
         spatter->min_temperature = spatter->max_temperature = 60001;
 
         if (Items::usesStandardMaterial(i_type))
@@ -934,8 +966,11 @@ static df::coord2d biome_offsets[9] = {
     df::coord2d(-1,1), df::coord2d(0,1), df::coord2d(1,1)
 };
 
-inline df::coord2d getBiomeRgnPos(df::coord2d base, int idx)
+df::coord2d Maps::getBiomeRgnPos(df::coord2d base, int idx)
 {
+    if (!world->world_data || idx < 0 || idx >= eBiomeCount)
+        return df::coord2d();
+
     auto r = base + biome_offsets[idx];
 
     int world_width = world->world_data->world_width;
@@ -959,6 +994,28 @@ df::coord2d Maps::getBlockTileBiomeRgn(df::map_block *block, df::coord2d pos)
     }
 
     return df::coord2d();
+}
+
+df::weather_type Maps::getCurrentWeather(df::coord pos)
+{
+    if (df::global::current_weather){
+        auto &map = world->map;
+        auto [biome_x, biome_y] = Maps::getTileBiomeRgn(pos);
+        const int weather_x = biome_x - map.region_x / 16 + 1;
+        const int weather_y = biome_y - map.region_y / 16 + 1;
+        return (*df::global::current_weather)[weather_x][weather_y];
+    }
+    return df::weather_type::None;
+}
+
+df::weather_type Maps::getCurrentWeather()
+{
+    auto &map = world->map;
+    if (map.x_count > 0 && map.y_count > 0 && map.z_count > 0) {
+        return Maps::getCurrentWeather(df::coord( map.x_count / 2, map.y_count / 2, map.z_count / 2 ));
+    } else {
+        return df::weather_type::None;
+    }
 }
 
 /*
@@ -1521,4 +1578,351 @@ int Maps::removeAreaAquifer(df::coord pos1, df::coord pos2, std::function<bool(d
     });
 
     return totalAffectedCount;
+}
+
+const char* Maps::describeSurroundings(int savagery, int evilness) {
+    constexpr std::array<const char*,9>surroundings{
+        "Serene",   "Mirthful",     "Joyous Wilds",
+        "Calm",     "Wilderness",   "Untamed Wilds",
+        "Sinister", "Haunted",      "Terrifying"
+    };
+    auto savagery_index = savagery < 33 ? 0 : (savagery > 65 ? 2 : 1);
+    auto evilness_index = evilness < 33 ? 0 : (evilness > 65 ? 2 : 1);
+    return surroundings[3 * evilness_index + savagery_index];
+}
+
+void Maps::addBlockColumns(int32_t new_height)
+{
+    auto quantity = new_height - world->map.z_count_block;
+    if (quantity <= 0)
+        return;
+
+    auto world = df::global::world;
+    int32_t z_count_block = world->map.z_count_block;
+    df::map_block**** block_index = world->map.block_index;
+
+    cuboid last_air_layer(
+        0, 0, world->map.z_count_block - 1,
+        world->map.x_count_block - 1, world->map.y_count_block - 1, world->map.z_count_block - 1);
+
+    last_air_layer.forCoord([&] (df::coord bpos) {
+        // Allocate a new block column and copy over data from the old
+        df::map_block** blockColumn =
+            new df::map_block * [z_count_block + quantity];
+        std::memcpy(blockColumn, block_index[bpos.x][bpos.y],
+            z_count_block * sizeof(df::map_block*));
+        delete[] block_index[bpos.x][bpos.y];
+        block_index[bpos.x][bpos.y] = blockColumn;
+
+        df::map_block* last_air_block = blockColumn[bpos.z];
+        for (int32_t count = 0; count < quantity; count++)
+        {
+            df::map_block* air_block = new df::map_block();
+            std::fill(&air_block->tiletype[0][0],
+                &air_block->tiletype[0][0] + (16 * 16),
+                df::tiletype::OpenSpace);
+
+            // Set block positions properly (based on prior air layer)
+            air_block->map_pos = last_air_block->map_pos + df::coord{0, 0, int16_t(count + 1)};
+            air_block->region_pos = last_air_block->region_pos;
+
+            // Copy other potentially important metadata from prior air
+            // layer
+            air_block->lighting = last_air_block->lighting;
+            air_block->temperature_1 = last_air_block->temperature_1;
+            air_block->temperature_2 = last_air_block->temperature_2;
+            air_block->region_offset = last_air_block->region_offset;
+
+            // Create tile designations to inform lighting and
+            // outside markers
+            df::tile_designation designation{};
+            designation.bits.light = true;
+            designation.bits.outside = true;
+            std::fill(&air_block->designation[0][0],
+                &air_block->designation[0][0] + (16 * 16), designation);
+
+            blockColumn[z_count_block + count] = air_block;
+            world->map.map_blocks.push_back(air_block);
+
+            // deal with map_block_column stuff even though it'd probably be
+            // fine
+            df::map_block_column* column =
+                world->map.column_index[bpos.x][bpos.y];
+            if (!column)
+            {
+                continue;
+            }
+            df::block_column_print_infost* glyphs = new df::block_column_print_infost;
+            glyphs->x = {0,1,2,3};
+            glyphs->y = {0,0,0,0};
+            glyphs->tile = {'e','x','p','^'};
+            column->unmined_glyphs.push_back(glyphs);
+        }
+        return true;
+        });
+
+    // Update global z level flags
+    df::z_level_flags* flags = new df::z_level_flags[z_count_block + quantity];
+    memcpy(flags, world->map_extras.z_level_flags,
+        z_count_block * sizeof(df::z_level_flags));
+    for (int32_t count = 0; count < quantity; count++)
+    {
+        flags[z_count_block + count].whole = 0;
+        flags[z_count_block + count].bits.update = 1;
+    }
+    world->map.z_count_block += quantity;
+    world->map.z_count += quantity;
+    delete[] world->map_extras.z_level_flags;
+    world->map_extras.z_level_flags = flags;
+
+    auto updateInvasionMap = [](int32_t new_height, df::plot_invasion_mapst & map) -> void
+    {
+        if (map.blockz == 0)
+            return; // Unused invasion map
+        if (map.blockz >= new_height)
+            return; // No change required
+
+        cuboid blocks(0, 0, 0, map.blockx - 1, map.blocky - 1, 0);
+        blocks.forCoord([&] (df::coord bpos) {
+            // Create new vertical block
+            df::pim_blockst** new_block = new df::pim_blockst * [new_height]();
+            std::memcpy(new_block, map.block_index[bpos.x][bpos.y], map.blockz * sizeof(df::pim_blockst*));
+            // Fill new block with nullptr (no information)
+            std::fill_n(&new_block[map.blockz], new_height - map.blockz, nullptr);
+            delete[] map.block_index[bpos.x][bpos.y];
+            map.block_index[bpos.x][bpos.y] = new_block;
+            return true;
+            });
+
+        map.blockz = new_height;
+    };
+
+    auto plotinfo = df::global::plotinfo;
+
+    for (auto& invasion : plotinfo->invasions.list)
+    {
+        updateInvasionMap(world->map.z_count, invasion->map);
+    }
+    for (auto& entity : world->entities.all)
+    {
+        for (auto& map : entity->plot_invasion_map | std::views::filter([&](df::entity_plot_invasion_mapst* map) { return map->site_id == plotinfo->site_id; }))
+        {
+            updateInvasionMap(world->map.z_count, map->map);
+        }
+    }
+}
+
+
+
+// reverse engineered from DF 50.13 (FUN_140d82ca0, likely sitest::get_site_type_name)
+const char* Maps::getSiteTypeName(df::world_site *site) {
+    using wst = df::enums::world_site_type::world_site_type;
+    switch (site->type) {
+        case wst::PlayerFortress:
+        case wst::MountainHalls:
+            if (site->min_depth == 0 && (0 < site->max_depth)){
+                return "fortress";
+            }
+            if (site->min_depth > 0) {
+                return "mountain halls";
+            }
+            return "hillocks";
+
+        case wst::DarkFortress: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "fortress" : "pits";
+        }
+
+        case wst::Cave:
+            return "cave";
+
+        case wst::ForestRetreat:
+            return "forest retreat";
+
+        case wst::Town: {
+            bool has_market = site->flag.is_set(df::enums::site_flag_type::HAS_MARKET);
+            return has_market ? "town" : "hamlet";
+        }
+
+        case wst::ImportantLocation:
+            return "important location";
+
+        case wst::LairShrine:
+            if (site->subtype_info) {
+                switch (site->subtype_info->lair_type) {
+                    case df::enums::lair_type::LABYRINTH:
+                        return "labyrinth";
+                    case df::enums::lair_type::SHRINE:
+                        return "shrine";
+                    default:
+                        break;
+                }
+            }
+            return "lair";
+
+        case wst::Fortress:
+            if (site->subtype_info) {
+                switch (site->subtype_info->fortress_type) {
+                    case df::enums::fortress_type::TOWER:
+                        return "tower";
+                    case df::enums::fortress_type::MONASTERY:
+                        return "monastery";
+                    case df::enums::fortress_type::FORT:
+                        return "fort";
+                    default:
+                        return "castle";
+                }
+            }
+            return "fortress";
+
+        case wst::Camp:
+            return "camp";
+
+        case wst::Monument:
+            if (site->subtype_info) {
+                switch (site->subtype_info->monument_type) {
+                    case df::enums::monument_type::TOMB:
+                        return "tomb";
+                    case df::enums::monument_type::VAULT:
+                        return "vault";
+                    default:
+                        break;
+                }
+            }
+            return "monument";
+
+        default:
+            return "site";
+    }
+}
+
+/*
+ * Filtered tile scan
+ */
+
+bool Maps::TileFilter::matches(df::map_block *block, df::coord2d local, df::coord pos) const
+{
+    df::tiletype tt = block->tiletype[local.x][local.y];
+
+    if (!tiletypes.empty() && !tiletypes.count(tt))
+        return false;
+    if (!materials.empty() && !materials.count(int16_t(tileMaterial(tt))))
+        return false;
+    if (!shapes.empty() && !shapes.count(int16_t(tileShape(tt))))
+        return false;
+    if (!shapes_basic.empty() &&
+        !shapes_basic.count(int16_t(tileShapeBasic(tileShape(tt)))))
+        return false;
+    if (!specials.empty() && !specials.count(int16_t(tileSpecial(tt))))
+        return false;
+    if (!variants.empty() && !variants.count(int16_t(tileVariant(tt))))
+        return false;
+
+    if (designation_mask &&
+        (block->designation[local.x][local.y].whole & designation_mask) != designation_bits)
+        return false;
+    if (occupancy_mask &&
+        (block->occupancy[local.x][local.y].whole & occupancy_mask) != occupancy_bits)
+        return false;
+
+    if (extra && !extra(block, local, pos))
+        return false;
+
+    return true;
+}
+
+Maps::TileScanResult Maps::forEachTile(
+    const cuboid &bounds, const TileFilter &filter, const TileActions &actions)
+{
+    TileScanResult result;
+    if (!IsValid())
+        return result;
+
+    // Construction records are buffered during the scan and merged at the
+    // end, so a bulk spawn costs one sorted merge instead of one insertion
+    // per tile. The records are plain data; no df::construction objects are
+    // allocated until the merge.
+    struct PendingConstruction {
+        df::coord pos;
+        df::tiletype original_tile;
+    };
+    std::vector<PendingConstruction> pending;
+    bool aborted = false;
+
+    bounds.forBlock([&](df::map_block *block, cuboid area) {
+        int bx = block->map_pos.x, by = block->map_pos.y, bz = block->map_pos.z;
+        int lx1 = area.x_min - bx, lx2 = area.x_max - bx;
+        int ly1 = area.y_min - by, ly2 = area.y_max - by;
+
+        for (int lx = lx1; lx <= lx2 && !aborted; lx++) {
+            for (int ly = ly1; ly <= ly2 && !aborted; ly++) {
+                df::coord2d local(lx, ly);
+                df::coord pos(bx + lx, by + ly, bz);
+                result.tiles_scanned++;
+
+                if (!filter.matches(block, local, pos))
+                    continue;
+                result.tiles_matched++;
+
+                if (actions.set_tiletype || !actions.tiletype_map.empty()) {
+                    df::tiletype &cur = block->tiletype[lx][ly];
+                    auto it = actions.tiletype_map.find(cur);
+                    if (it != actions.tiletype_map.end()) {
+                        cur = it->second;
+                        result.tiletypes_changed++;
+                    }
+                    else if (actions.set_tiletype) {
+                        cur = *actions.set_tiletype;
+                        result.tiletypes_changed++;
+                    }
+                }
+
+                if (actions.designation_set || actions.designation_clear) {
+                    auto &des = block->designation[lx][ly];
+                    des.whole = (des.whole & ~actions.designation_clear) | actions.designation_set;
+                }
+                if (actions.occupancy_set || actions.occupancy_clear) {
+                    auto &occ = block->occupancy[lx][ly];
+                    occ.whole = (occ.whole & ~actions.occupancy_clear) | actions.occupancy_set;
+                }
+
+                if (actions.construct && !Constructions::findAtTile(pos)) {
+                    pending.push_back({ pos, block->tiletype[lx][ly] });
+                    if (actions.construct_tiletype) {
+                        block->tiletype[lx][ly] = *actions.construct_tiletype;
+                        result.tiletypes_changed++;
+                    }
+                }
+
+                if (actions.callback && !actions.callback(block, local, pos))
+                    aborted = true;
+            }
+        }
+        return !aborted;
+    });
+    result.aborted = aborted;
+
+    if (!pending.empty()) {
+        auto &vec = world->event.constructions;
+        auto pos_less = [](const df::construction *a, const df::construction *b) {
+            return a->pos < b->pos;
+        };
+        size_t old_size = vec.size();
+        for (auto &p : pending) {
+            auto *con = new df::construction();
+            con->pos           = p.pos;
+            con->item_type     = actions.construct_item_type;
+            con->item_subtype  = actions.construct_item_subtype;
+            con->mat_type      = actions.construct_mat_type;
+            con->mat_index     = actions.construct_mat_index;
+            con->flags.whole   = actions.construct_flags;
+            con->original_tile = p.original_tile;
+            vec.push_back(con);
+        }
+        std::sort(vec.begin() + old_size, vec.end(), pos_less);
+        std::inplace_merge(vec.begin(), vec.begin() + old_size, vec.end(), pos_less);
+        result.constructions_added = (int64_t)pending.size();
+    }
+
+    return result;
 }

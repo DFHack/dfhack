@@ -105,6 +105,7 @@ Template for new versions:
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type
 - Renamed the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
+- Writes to ``stderr.log`` are no longer buffered on Windows, so log output is not lost if DF crashes
 
 ## Documentation
 - Document ``autodump-destroy-here``. Remove mention of ``autodump destroy`` able to revert destruction.

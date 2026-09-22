@@ -115,6 +115,7 @@ Template for new versions:
 - Added ``Maps::describeSurroundings`` to get surroundings classification from savagery and evilness
 - Added ``Maps::getCurrentWeather`` to determine the current weather on the map.
 - Added ``Maps::forEachTile`` with ``Maps::TileFilter``/``Maps::TileActions`` to scan a cuboid of tiles, matching tiles by tiletype, tiletype attributes, and designation/occupancy bits, and counting, rewriting tiletypes, editing designation/occupancy bits, spawning constructions, or invoking a callback on matching tiles
+- Added ``MapExtras::MapCache::propagateVerticalFlags`` to update the light/outside/subterranean flags of tiles below a tile that changed between an open and a solid shape
 - Added ``MiscUtils::print_range`` to print ranges with prefix, separator, and suffix
 - Added ``Units::breathes`` and ``Units::getBreathingState``
 - Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``

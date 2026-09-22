@@ -91,6 +91,8 @@ Template for new versions:
 - `burrow`: fix ``tiles clear`` and other tile operations silently failing because burrow block z-coordinates were stored incorrectly in the ``Burrows`` module
 - `export-world-map`: fix crash exporting site data for a site whose owner has an undefined race
 - `gui/quickfort`: show smoothing designations immediately after applying a blueprint
+- `liquids`: allow painting liquids and obsidian into unallocated sky blocks
+- `liquids`: update light/outside flags of covered tiles when painting obsidian or river sources
 - `overlay`: overlay hotkeys no longer steal typed characters while the game is capturing text input, e.g. when renaming a building
 - `sort`: fix the Places/Workshops and task searches missing workshops by their current display names (e.g. "Stoneworker's Workshop", "Screw Press")
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable

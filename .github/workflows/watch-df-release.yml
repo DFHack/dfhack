@@ -77,15 +77,6 @@ jobs:
       with:
         webhook-url: ${{ secrets.DISCORD_TEAM_PRIVATE_WEBHOOK_URL }}
         content: "<@&${{ secrets.DISCORD_TEAM_ROLE_ID }}> Steam ${{ matrix.df_steam_branch }} branch updated (build id: ${{ env.BUILDID }})"
-    - name: Check out dfhack develop for mitigation checklist
-      uses: actions/checkout@v4
-      if: env.BUILDID
-      with:
-        ref: develop
-        submodules: true
-    - name: Emit DF mitigation checklist to job summary
-      if: env.BUILDID
-      run: python3 ci/list-df-mitigations.py >> "$GITHUB_STEP_SUMMARY"
     - name: Launch symbol generation workflow
       if: env.BUILDID && matrix.dfhack_ref
       env:

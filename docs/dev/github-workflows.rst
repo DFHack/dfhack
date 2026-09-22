@@ -107,9 +107,7 @@ Watch DF Releases
 This workflow runs every 8 minutes and checks the Steam metadata, the Itch
 website, and the Bay 12 website for evidence of new releases. If a new release
 is found, it generates an announcement in a private channel on the DFHack
-Discord server and appends the `DF defect mitigation checklist
-<release-process-df-mitigations>`_ to the job summary for the release
-coordinator to review.
+Discord server.
 
 Inside the ``watch-df-releases.yml`` workflow, there are separate jobs for
 watching Steam branches and watching the websites. For the Steam watcher, it

@@ -24,11 +24,14 @@ distribution.
 
 #pragma once
 
+#include <array>
 #include <deque>
 #include <future>
+#include <map>
 #include <optional>
 #include <string>
 #include <set>
+#include <type_traits>
 #include <unordered_map>
 #include <unordered_set>
 #include <variant>
@@ -74,10 +77,11 @@ namespace DFHack
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
     };
 
-    class DFHACK_EXPORT primitive_identity : public type_identity {
-    public:
-        primitive_identity(size_t size) : type_identity(size) {};
+    class DFHACK_EXPORT primitive_identity_base : public type_identity {
+    protected:
+        primitive_identity_base(size_t size) : type_identity(size) {};
 
+    public:
         virtual identity_type type() const override { return IDTYPE_PRIMITIVE; }
     };
 
@@ -92,12 +96,12 @@ namespace DFHack
         virtual identity_type type() const override { return IDTYPE_OPAQUE; }
     };
 
-    class DFHACK_EXPORT pointer_identity : public primitive_identity {
+    class DFHACK_EXPORT pointer_identity_base : public primitive_identity_base {
         const type_identity *target;
 
     public:
-        pointer_identity(const type_identity *target = NULL)
-            : primitive_identity(sizeof(void*)), target(target) {};
+        pointer_identity_base(const type_identity *target = NULL)
+            : primitive_identity_base(sizeof(void*)), target(target) {};
 
         virtual identity_type type() const override { return IDTYPE_POINTER; }
 
@@ -197,173 +201,31 @@ namespace DFHack
 namespace df
 {
     using DFHack::function_identity_base;
-    using DFHack::primitive_identity;
+    using DFHack::primitive_identity_base;
     using DFHack::opaque_identity;
-    using DFHack::pointer_identity;
+    using DFHack::pointer_identity_base;
     using DFHack::container_identity;
     using DFHack::ptr_container_identity;
     using DFHack::bit_container_identity;
 
-    class DFHACK_EXPORT number_identity_base : public primitive_identity {
+    class DFHACK_EXPORT number_identity_base : public primitive_identity_base {
         const char *name;
 
     public:
         number_identity_base(size_t size, const char *name)
-            : primitive_identity(size), name(name) {};
+            : primitive_identity_base(size), name(name) {};
 
         const std::string getFullName() const override { return name; }
 
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override = 0;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override = 0;
-
+        virtual bool isInteger() const { return false; }
     };
 
-    class DFHACK_EXPORT integer_identity_base : public number_identity_base {
-    public:
-        integer_identity_base(size_t size, const char *name)
-            : number_identity_base(size, name) {}
-
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
-
-    protected:
-        virtual int64_t read(void *ptr) const = 0;
-        virtual void write(void *ptr, int64_t val) const = 0;
-    };
-
-    class DFHACK_EXPORT float_identity_base : public number_identity_base {
-    public:
-        float_identity_base(size_t size, const char *name)
-            : number_identity_base(size, name) {}
-
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
-
-    protected:
-        virtual double read(void *ptr) const = 0;
-        virtual void write(void *ptr, double val) const = 0;
-    };
-
-    template<class T>
-    class integer_identity : public integer_identity_base {
-    public:
-        integer_identity(const char *name) : integer_identity_base(sizeof(T), name) {}
-
-    protected:
-        virtual int64_t read(void *ptr) const override { return int64_t(*(T*)ptr); }
-        virtual void write(void *ptr, int64_t val) const override { *(T*)ptr = T(val); }
-    };
-
-    template<class T>
-    class float_identity : public float_identity_base {
-    public:
-        float_identity(const char *name) : float_identity_base(sizeof(T), name) {}
-
-    protected:
-        virtual double read(void *ptr) const override { return double(*(T*)ptr); }
-        virtual void write(void *ptr, double val) const override { *(T*)ptr = T(val); }
-    };
-
-    class DFHACK_EXPORT bool_identity : public primitive_identity {
-    public:
-        bool_identity() : primitive_identity(sizeof(bool)) {};
-
-        const std::string getFullName() const override { return "bool"; }
-
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
-    };
-
-    class DFHACK_EXPORT ptr_string_identity : public primitive_identity {
-    public:
-        ptr_string_identity() : primitive_identity(sizeof(char*)) {};
-
-        const std::string getFullName() const override { return "char*"; }
-
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
-    };
-
-    class DFHACK_EXPORT stl_string_identity : public DFHack::constructed_identity {
-    public:
-        stl_string_identity()
-            : constructed_identity(sizeof(std::string), &allocator_fn<std::string>)
-        {};
-
-        const std::string getFullName() const override { return "string"; }
-
-        virtual DFHack::identity_type type() const override { return DFHack::IDTYPE_PRIMITIVE; }
-
-        virtual bool isPrimitive() const override { return true; }
-
-        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override;
-        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override;
-    };
-
-    class DFHACK_EXPORT path_identity : public DFHack::constructed_identity {
-    public:
-        path_identity()
-            : constructed_identity(sizeof(std::filesystem::path), &allocator_fn<std::filesystem::path>)
-        {
-        };
-
-        const std::string getFullName() const override { return "path"; }
-
-        virtual DFHack::identity_type type() const override { return DFHack::IDTYPE_PRIMITIVE; }
-
-        virtual bool isPrimitive() const override { return true; }
-
-        virtual void lua_read(lua_State* state, int fname_idx, void* ptr) const override;
-        virtual void lua_write(lua_State* state, int fname_idx, void* ptr, int val_index) const override;
-    };
-
-
-    class DFHACK_EXPORT stl_ptr_vector_identity : public ptr_container_identity {
-    public:
-        using container = std::vector<void*>;
-
-        /*
-         * This class assumes that std::vector<T*> is equivalent
-         * in layout and behavior to std::vector<void*> for any T.
-         */
-
-        stl_ptr_vector_identity(const type_identity *item = NULL, const enum_identity *ienum = NULL)
-            : ptr_container_identity(sizeof(container), &df::allocator_fn<container>, item, ienum)
-        {};
-
-        const std::string getFullName(const type_identity *item) const override {
-            return "vector" + ptr_container_identity::getFullName(item);
-        }
-
-        virtual DFHack::identity_type type() const override { return DFHack::IDTYPE_STL_PTR_VECTOR; }
-
-        virtual bool resize(void *ptr, int size) const override {
-            (*(container*)ptr).resize(size);
-            return true;
-        }
-        virtual bool erase(void *ptr, int size) const override {
-            auto &ct = *(container*)ptr;
-            ct.erase(ct.begin()+size);
-            return true;
-        }
-        virtual bool insert(void *ptr, int idx, void *item) const override {
-            auto &ct = *(container*)ptr;
-            ct.insert(ct.begin()+idx, item);
-            return true;
-        }
-
-    protected:
-        virtual int item_count(void *ptr, CountMode) const override {
-            return (int)((container*)ptr)->size();
-        };
-        virtual void *item_pointer(const type_identity *, void *ptr, int idx) const override {
-            return &(*(container*)ptr)[idx];
-        }
-    };
-
-// Due to export issues, this stuff can only work in the main dll
-#ifdef BUILD_DFHACK_LIB
-    class buffer_container_identity : public container_identity {
+    /*
+     * Identity for statically-sized arrays (C arrays and std::array).
+     * Unlike other container identities the item count is fixed,
+     * so instances can also serve as the identity of ad-hoc buffers.
+     */
+    class DFHACK_EXPORT buffer_container_identity : public container_identity {
         int size;
 
     public:
@@ -377,6 +239,7 @@ namespace df
 
         size_t byte_size() const override { return getItemType()->byte_size()*size; }
 
+        using container_identity::getFullName;
         const std::string getFullName(const type_identity *item) const override;
         int getSize() const { return size; }
 
@@ -390,236 +253,581 @@ namespace df
             return ((uint8_t*)ptr) + idx * item->byte_size();
         }
     };
-#endif
+}
 
-    template<class T>
-    class stl_container_identity : public container_identity {
-        const char *name;
-
-    public:
-        stl_container_identity(const char *name, const type_identity *item, const enum_identity *ienum = NULL)
-            : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
-        {}
-
-        const std::string getFullName(const type_identity *item) const override {
-            return name + container_identity::getFullName(item);
-        }
-
-        virtual bool resize(void *ptr, int size) const override {
-            (*(T*)ptr).resize(size);
-            return true;
-        }
-        virtual bool erase(void *ptr, int size) const override {
-            auto &ct = *(T*)ptr;
-            ct.erase(ct.begin()+size);
-            return true;
-        }
-        virtual bool insert(void *ptr, int idx, void *item) const override {
-            auto &ct = *(T*)ptr;
-            ct.insert(ct.begin()+idx, *(typename T::value_type*)item);
-            return true;
-        }
-        virtual bool lua_insert2(lua_State* state, int fname_idx, void* ptr, int idx, int val_index) const override
-        {
-            using VT = typename T::value_type;
-            VT tmp{};
-            auto id = (type_identity*)lua_touserdata(state, DFHack::LuaWrapper::UPVAL_ITEM_ID);
-            auto pitem = DFHack::LuaWrapper::get_object_internal(state, id, val_index, false);
-            bool useTemporary = (!pitem && id->isPrimitive());
-
-            if (useTemporary)
-            {
-                pitem = &tmp;
-                id->lua_write(state, fname_idx, pitem, val_index);
-            }
-
-            if (id != item || !pitem)
-                DFHack::LuaWrapper::field_error(state, fname_idx, "incompatible object type", "insert");
-
-            return insert(ptr, idx, pitem);
-        }
-
-    protected:
-        virtual int item_count(void *ptr, CountMode) const override { return (int)((T*)ptr)->size(); }
-        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
-            return &(*(T*)ptr)[idx];
-        }
-    };
-
-#ifdef BUILD_DFHACK_LIB
-    template<class T>
-    class ro_stl_container_identity : public container_identity {
-    protected:
-        const char *name;
-
-    public:
-        ro_stl_container_identity(const char *name, const type_identity *item, const enum_identity *ienum = NULL)
-            : container_identity(sizeof(T), &allocator_fn<T>, item, ienum), name(name)
-        {}
-
-        const std::string getFullName(const type_identity *item) const override {
-            return name + container_identity::getFullName(item);
-        }
-
-        virtual bool is_readonly() const override { return true; }
-        virtual bool resize(void *ptr, int size) const override { return false; }
-        virtual bool erase(void *ptr, int size) const override { return false; }
-        virtual bool insert(void *ptr, int idx, void *item) const override { return false; }
-
-    protected:
-        virtual int item_count(void *ptr, CountMode) const override { return (int)((T*)ptr)->size(); }
-        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
-            auto iter = (*(T*)ptr).begin();
-            for (; idx > 0; idx--) ++iter;
-            return (void*)&*iter;
-        }
-    };
-
-    template<class T>
-    class ro_stl_assoc_container_identity : public ro_stl_container_identity<T> {
-        const type_identity *key_identity;
-        const type_identity *item_identity;
-
-    public:
-        ro_stl_assoc_container_identity(const char *name, const type_identity *key, const type_identity *item)
-            : ro_stl_container_identity<T>(name, item),
-              key_identity(key),
-              item_identity(item)
-        {}
-
-        virtual const std::string getFullName(const type_identity*) const override {
-            return std::string(ro_stl_assoc_container_identity<T>::name) + "<" + key_identity->getFullName() + ", " + item_identity->getFullName() + ">";
-        }
-
-    protected:
-        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
-            auto iter = (*(T*)ptr).begin();
-            for (; idx > 0; idx--) ++iter;
-            return (void*)&iter->second;
-        }
-    };
-
-    class bit_array_identity : public bit_container_identity {
-    public:
+namespace DFHack
+{
+    namespace detail
+    {
         /*
-         * This class assumes that BitArray<T> is equivalent
-         * in layout and behavior to BitArray<int> for any T.
+         * Compile-time type inspection used by type_identity_for<T> to pick
+         * the appropriate behavior for the wrapped C++ type.
          */
 
-        using container = BitArray<int>;
+        template<typename T> struct is_std_array : std::false_type {};
+        template<typename E, size_t N> struct is_std_array<std::array<E, N>> : std::true_type {};
 
-        bit_array_identity(const enum_identity *ienum = NULL)
-            : bit_container_identity(sizeof(container), &allocator_fn<container>, ienum)
-        {}
+        template<typename T> struct is_bit_array : std::false_type {};
+        template<typename E> struct is_bit_array<BitArray<E>> : std::true_type {};
 
-        virtual const std::string getFullName(const type_identity *item) const override {
-            return "BitArray<>";
-        }
+        template<typename T> struct is_enum_field : std::false_type {};
+        template<typename E, typename I> struct is_enum_field<df::enum_field<E, I>> : std::true_type {};
 
-        virtual bool resize(void *ptr, int size) const override {
-            ((container*)ptr)->resize((size+7)/8);
-            return true;
-        }
+        // C strings are represented by char* and const char*
+        template<typename T>
+        concept c_string = std::is_same_v<T, char*> || std::is_same_v<T, const char*>;
 
-    protected:
-        virtual int item_count(void *ptr, CountMode cnt) const override {
-            return cnt == COUNT_LEN ? ((container*)ptr)->size() * 8 : -1;
-        }
-        virtual bool get_item(void *ptr, int idx) const override {
-            return ((container*)ptr)->is_set(idx);
-        }
-        virtual void set_item(void *ptr, int idx, bool val) const override {
-            ((container*)ptr)->set(idx, val);
-        }
-    };
-#endif
+        /*
+         * Container capability probes. These describe the behavioral axes
+         * that the container identity implementation dispatches on, so any
+         * type with a vector-like, array-like, bit-like, or associative
+         * interface is handled without being listed explicitly.
+         */
+        template<typename T>
+        concept has_value_type = requires { typename T::value_type; };
 
-    class DFHACK_EXPORT stl_bit_vector_identity : public bit_container_identity {
+        // element count is available either as size() or as a size member
+        template<typename T>
+        concept sized = requires(const T& t) { { t.size() } -> std::convertible_to<size_t>; }
+                     || requires(const T& t) { { t.size } -> std::convertible_to<size_t>; };
+
+        // dense random-access storage: t[i] yields a reference whose
+        // address is a value_type* (the vector/array contract)
+        template<typename T>
+        concept random_access = has_value_type<T> && sized<T> && requires(T& t, int i) {
+            { &t[i] } -> std::convertible_to<typename T::value_type*>;
+        };
+
+        // indexable bit elements through a proxy object (vector<bool> and similar)
+        template<typename T>
+        concept bit_indexable = has_value_type<T> && sized<T> && !random_access<T> &&
+            requires(T& t, int i, bool v) {
+                { t[i] } -> std::convertible_to<bool>;
+                t[i] = v;
+            };
+
+        // bit elements through explicit accessors; by convention such
+        // containers report byte counts from size() and resize() (BitArray).
+        // BitArray<Enum> indexes by the enum type and is matched by name.
+        template<typename T>
+        concept bit_accessors = is_bit_array<T>::value ||
+            (sized<T> && requires(T& t, int i, bool v) {
+                { t.is_set(i) } -> std::convertible_to<bool>;
+                t.set(i, v);
+            });
+
+        // key-mapped iteration (std::map, std::unordered_map, and similar)
+        template<typename T>
+        concept mapped = has_value_type<T> && requires { typename T::mapped_type; } &&
+            requires(T& t) { t.begin(); t.end(); };
+
+        // iterable but not index-addressable: read-only sequential access
+        // (std::set and similar)
+        template<typename T>
+        concept ro_sequence = has_value_type<T> && sized<T> &&
+            requires(T& t) { t.begin(); t.end(); } &&
+            !random_access<T> && !bit_indexable<T> && !mapped<T>;
+
+        // an aggregate exposing a fixed { size, items[] } table (enum_list_attr)
+        template<typename T>
+        concept item_list = sized<T> && requires(const T& t, int i) { t.items[i]; };
+
+        // bit containers of either flavor; mapped types that happen to
+        // satisfy the proxy probes (e.g. map<int,bool>) are excluded
+        template<typename T>
+        concept bit_container = (bit_indexable<T> || bit_accessors<T>) && !mapped<T>;
+
+        // sequence containers with mutable, index-addressable elements
+        template<typename T>
+        concept seq_container = random_access<T> &&
+            !std::is_pointer_v<typename T::value_type>;
+
+        // containers of pointer elements use pointer-container semantics
+        // and are stored internally as containers of void*
+        template<typename T>
+        concept ptr_container = random_access<T> &&
+            std::is_pointer_v<typename T::value_type>;
+
+        // read-only containers accessed by iteration
+        template<typename T>
+        concept assoc_container = ro_sequence<T> || mapped<T>;
+
+        template<typename T>
+        concept any_container = seq_container<T> || ptr_container<T> ||
+            bit_container<T> || assoc_container<T> || item_list<T>;
+
+        // mutable-sequence operations
+        template<typename T>
+        concept resizable = requires(T& t, int n) { t.resize(n); };
+
+        template<typename T>
+        concept index_erasable = requires(T& t, int i) { t.erase(t.begin() + i); };
+
+        template<typename T>
+        concept index_insertable = has_value_type<T> &&
+            requires(T& t, int i, typename T::value_type v) { t.insert(t.begin() + i, v); };
+
+        template<typename T>
+        concept stl_string = std::is_same_v<T, std::string>;
+
+        template<typename T>
+        concept fs_path = std::is_same_v<T, std::filesystem::path>;
+
+        // df::bitfield_traits<T> exists only for generated bitfield types
+        template<typename T>
+        concept df_bitfield = requires { typename df::bitfield_traits<T>::base_type; };
+
+        // generated compound types (struct/union/class) carry a static
+        // _identity member
+        template<typename T>
+        concept has_identity_member = requires { T::_identity; };
+
+        // DfOtherVectors marks its descendants with a nested typedef
+        template<typename T>
+        concept other_vectors = requires { typename T::dfhack_other_vectors; };
+
+        // an explicit df_identity_base typedef always wins; this lets the
+        // code generator (and hand-written types) pick the base directly
+        template<typename T>
+        concept has_explicit_base = requires { typename T::df_identity_base; };
+
+        // The underlying storage actually manipulated by a container identity.
+        // Pointer-element containers are manipulated as containers of void*,
+        // and BitArray<T> is assumed layout-equivalent to BitArray<int>,
+        // matching the assumptions of the original code.
+        template<typename T> struct container_storage { using type = T; };
+        template<typename E> struct container_storage<BitArray<E>> { using type = BitArray<int>; };
+        template<template<typename...> class C, typename E, typename... A>
+            requires (sizeof(C<void*>) > 0)
+        struct container_storage<C<E*, A...>> { using type = C<void*>; };
+        template<typename T> using container_storage_t = typename container_storage<T>::type;
+
+        template<typename B> struct base_tag { using type = B; };
+
+        /*
+         * The intermediate base for container-like T; implements the
+         * container_identity virtuals using constexpr dispatch on T.
+         */
+        template<typename T>
+        class container_impl : public std::conditional_t<
+                bit_container<T>, bit_container_identity,
+                std::conditional_t<ptr_container<T>, ptr_container_identity, container_identity>> {
+            using cbase = std::conditional_t<
+                bit_container<T>, bit_container_identity,
+                std::conditional_t<ptr_container<T>, ptr_container_identity, container_identity>>;
+            using storage = container_storage_t<T>;
+
+            const char *name;
+            const type_identity *key_id;
+
+            // item tables like enum_list_attr describe static external
+            // data and have no allocator
+            static constexpr TAllocateFn alloc_fn() {
+                if constexpr (item_list<T>)
+                    return NULL;
+                else
+                    return &df::allocator_fn<storage>;
+            }
+
+            static size_t element_count(const storage &ct) {
+                if constexpr (requires { { ct.size() } -> std::convertible_to<size_t>; })
+                    return (size_t)ct.size();
+                else
+                    return (size_t)ct.size;
+            }
+
+        public:
+            // sequence and read-only containers
+            container_impl(const char *name, const type_identity *item, const enum_identity *ienum = NULL)
+                requires (!bit_container<T> && !mapped<T>)
+                : cbase(sizeof(storage), alloc_fn(), item, ienum), name(name), key_id(NULL)
+            {}
+
+            // bit containers take an index enum instead of an item identity
+            container_impl(const char *name, const enum_identity *ienum)
+                requires bit_container<T>
+                : cbase(sizeof(storage), alloc_fn(), ienum), name(name), key_id(NULL)
+            {}
+
+            // mapped containers additionally take a key identity
+            container_impl(const char *name, const type_identity *key, const type_identity *item)
+                requires mapped<T>
+                : cbase(sizeof(storage), alloc_fn(), item, NULL), name(name), key_id(key)
+            {}
+
+            const std::string getFullName() const override { return getFullName(this->item); }
+
+            const std::string getFullName(const type_identity *item) const override {
+                if constexpr (mapped<T>)
+                    return std::string(name) + "<" + key_id->getFullName() + ", " + item->getFullName() + ">";
+                else if constexpr (is_bit_array<T>::value)
+                    return "BitArray<>";
+                else
+                    return std::string(name) + cbase::getFullName(item);
+            }
+
+            virtual bool is_readonly() const override {
+                return assoc_container<T>;
+            }
+
+            virtual bool resize(void *ptr, int size) const override {
+                if constexpr (bit_accessors<T>) {
+                    ((storage*)ptr)->resize((size+7)/8);
+                    return true;
+                }
+                else if constexpr (resizable<storage>) {
+                    (*(storage*)ptr).resize(size);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            virtual bool erase(void *ptr, int index) const override {
+                if constexpr (index_erasable<storage>) {
+                    auto &ct = *(storage*)ptr;
+                    ct.erase(ct.begin()+index);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            virtual bool insert(void *ptr, int index, void *pitem) const override {
+                if constexpr (ptr_container<T> && index_insertable<storage>) {
+                    auto &ct = *(storage*)ptr;
+                    ct.insert(ct.begin()+index, pitem);
+                    return true;
+                }
+                else if constexpr (!bit_container<T> && index_insertable<storage>) {
+                    auto &ct = *(storage*)ptr;
+                    ct.insert(ct.begin()+index, *(typename T::value_type*)pitem);
+                    return true;
+                }
+                else
+                    return false;
+            }
+            virtual bool lua_insert2(lua_State* state, int fname_idx, void* ptr, int idx, int val_index) const override {
+                if constexpr (seq_container<T> && index_insertable<storage>) {
+                    using VT = typename T::value_type;
+                    VT tmp{};
+                    auto id = (type_identity*)lua_touserdata(state, DFHack::LuaWrapper::UPVAL_ITEM_ID);
+                    auto pitem = DFHack::LuaWrapper::get_object_internal(state, id, val_index, false);
+                    bool useTemporary = (!pitem && id->isPrimitive());
+
+                    if (useTemporary)
+                    {
+                        pitem = &tmp;
+                        id->lua_write(state, fname_idx, pitem, val_index);
+                    }
+
+                    if (id != this->item || !pitem)
+                        DFHack::LuaWrapper::field_error(state, fname_idx, "incompatible object type", "insert");
+
+                    return insert(ptr, idx, pitem);
+                }
+                else
+                    return cbase::lua_insert2(state, fname_idx, ptr, idx, val_index);
+            }
+
+        protected:
+            virtual int item_count(void *ptr, container_identity::CountMode cnt) const override {
+                if constexpr (bit_accessors<T>)
+                    return cnt == container_identity::COUNT_LEN ? (int)(element_count(*(storage*)ptr) * 8) : -1;
+                else if constexpr (item_list<T>)
+                    return cnt == container_identity::COUNT_WRITE ? 0 : (int)element_count(*(storage*)ptr);
+                else
+                    return (int)element_count(*(storage*)ptr);
+            }
+            virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
+                if constexpr (bit_container<T>)
+                    return NULL;
+                else if constexpr (item_list<T>)
+                    return (void*)&((storage*)ptr)->items[idx];
+                else if constexpr (mapped<T>) {
+                    auto iter = (*(storage*)ptr).begin();
+                    for (; idx > 0; idx--) ++iter;
+                    return (void*)&iter->second;
+                }
+                else if constexpr (ro_sequence<T>) {
+                    auto iter = (*(storage*)ptr).begin();
+                    for (; idx > 0; idx--) ++iter;
+                    return (void*)&*iter;
+                }
+                else
+                    return &(*(storage*)ptr)[idx];
+            }
+            // get_item/set_item only exist in bit_container_identity; for
+            // other bases these are ordinary (unused) member functions, and
+            // they implicitly override the virtuals for bit containers.
+            bool get_item(void *ptr, int idx) const {
+                if constexpr (bit_accessors<T>)
+                    return ((storage*)ptr)->is_set(idx);
+                else if constexpr (bit_indexable<T>)
+                    return (*(storage*)ptr)[idx];
+                else
+                    return false;
+            }
+            void set_item(void *ptr, int idx, bool val) const {
+                if constexpr (bit_accessors<T>)
+                    ((storage*)ptr)->set(idx, val);
+                else if constexpr (bit_indexable<T>)
+                    (*(storage*)ptr)[idx] = val;
+            }
+        };
+
+        template<typename T>
+        constexpr auto select_identity_base() {
+            if constexpr (has_explicit_base<T>)
+                return base_tag<typename T::df_identity_base>{};
+            else if constexpr (std::is_enum_v<T> || is_enum_field<T>::value)
+                return base_tag<enum_identity>{};
+            else if constexpr (df_bitfield<T>)
+                return base_tag<bitfield_identity>{};
+            else if constexpr (has_identity_member<T>) {
+                if constexpr (std::is_union_v<T>)
+                    return base_tag<union_identity>{};
+                else if constexpr (other_vectors<T>)
+                    return base_tag<other_vectors_identity>{};
+                else if constexpr (std::is_polymorphic_v<T>)
+                    return base_tag<virtual_identity>{};
+                else
+                    return base_tag<struct_identity>{};
+            }
+            else if constexpr (c_string<T>)
+                return base_tag<primitive_identity_base>{};
+            else if constexpr (std::is_same_v<T, wchar_t*>)
+                return base_tag<opaque_identity>{};
+            else if constexpr (std::is_pointer_v<T>)
+                return base_tag<pointer_identity_base>{};
+            else if constexpr (std::is_arithmetic_v<T>)
+                return base_tag<df::number_identity_base>{};
+            else if constexpr (stl_string<T> || fs_path<T>)
+                return base_tag<constructed_identity>{};
+            else if constexpr (std::is_array_v<T> || is_std_array<T>::value)
+                return base_tag<df::buffer_container_identity>{};
+            else if constexpr (any_container<T>)
+                return base_tag<container_impl<T>>{};
+            else if constexpr (std::is_class_v<T>)
+                return base_tag<opaque_identity>{};
+            else
+                static_assert(!sizeof(T*), "type_identity_for: no identity category for this type");
+        }
+    }
+
+    template<typename T>
+    using identity_base_of_t = typename decltype(detail::select_identity_base<T>())::type;
+
+    DFHACK_EXPORT void build_global_metatable(lua_State *state, const struct_identity *id);
+    DFHACK_EXPORT void lua_read_path(lua_State *state, void *ptr);
+    DFHACK_EXPORT void lua_write_path(lua_State *state, int fname_idx, void *ptr, int val_index);
+
+    /*
+     * The identity of the C++ type T. The base class is selected by
+     * compile-time inspection of T (or an explicit df_identity_base
+     * typedef in T), and the remaining behavior is implemented here
+     * with constexpr dispatch on the properties of T.
+     */
+    template<typename T>
+    class type_identity_for : public identity_base_of_t<T> {
+        using base = identity_base_of_t<T>;
+
     public:
-        using container = std::vector<bool>;
+        // forwards everything to the base class constructor; covers all
+        // compound identities, arrays, and opaque types
+        template<typename... Args>
+            requires (sizeof...(Args) > 0 && std::is_constructible_v<base, Args...>)
+        explicit type_identity_for(Args&&... args) : base(std::forward<Args>(args)...) {}
 
-        stl_bit_vector_identity(const enum_identity *ienum = NULL)
-            : bit_container_identity(sizeof(container), &df::allocator_fn<container>, ienum)
-        {}
+        // numbers take only a name; the size comes from T
+        explicit type_identity_for(const char *name)
+            requires std::is_same_v<base, df::number_identity_base>
+            : base(sizeof(T), name) {}
 
-        const std::string getFullName(const type_identity *item) const override {
-            return "vector" + bit_container_identity::getFullName(item);
+        // C strings
+        type_identity_for()
+            requires detail::c_string<T>
+            : base(sizeof(T)) {}
+
+        // std::string and std::filesystem::path
+        type_identity_for()
+            requires (detail::stl_string<T> || detail::fs_path<T>)
+            : base(sizeof(T), &df::allocator_fn<T>) {}
+
+        // pointers derive the target from identity_traits, or take an
+        // explicit target (used for void*)
+        type_identity_for()
+            requires (std::is_pointer_v<T> && std::is_same_v<base, pointer_identity_base>)
+            : base(df::identity_traits<std::remove_pointer_t<T>>::get()) {}
+
+        // named sequence/set containers
+        type_identity_for(const char *name, const type_identity *item, const enum_identity *ienum = NULL)
+            requires (std::is_same_v<base, detail::container_impl<T>> &&
+                      !detail::bit_container<T> && !detail::mapped<T>)
+            : base(name, item, ienum) {}
+
+        // named mapped containers additionally take a key identity
+        type_identity_for(const char *name, const type_identity *key, const type_identity *item)
+            requires detail::mapped<T>
+            : base(name, key, item) {}
+
+        // containers of pointer elements
+        type_identity_for(const type_identity *item = NULL, const enum_identity *ienum = NULL)
+            requires detail::ptr_container<T>
+            : base("vector", item, ienum) {}
+
+        // std::vector<bool> and BitArray<T>
+        type_identity_for(const enum_identity *ienum = NULL)
+            requires detail::bit_container<T>
+            : base("vector", ienum) {}
+
+        // the global object wraps no actual type
+        explicit type_identity_for(const struct_field_info *fields)
+            requires std::is_same_v<T, global_object>
+            : base(0, NULL, NULL, "global", NULL, fields) {}
+
+        virtual identity_type type() const override {
+            if constexpr (detail::stl_string<T> || detail::fs_path<T>)
+                return IDTYPE_PRIMITIVE;
+            else if constexpr (detail::ptr_container<T>)
+                return IDTYPE_STL_PTR_VECTOR;
+            else if constexpr (std::is_same_v<T, global_object>)
+                return IDTYPE_GLOBAL;
+            else
+                return base::type();
         }
 
-        virtual bool resize(void *ptr, int size) const override {
-            (*(container*)ptr).resize(size);
-            return true;
+        virtual const std::string getFullName() const override {
+            if constexpr (detail::c_string<T>)
+                return "char*";
+            else if constexpr (detail::stl_string<T>)
+                return "string";
+            else if constexpr (detail::fs_path<T>)
+                return "path";
+            else
+                return base::getFullName();
         }
 
-    protected:
-        virtual int item_count(void *ptr, CountMode) const override {
-            return (int)((container*)ptr)->size();
+        virtual bool isPrimitive() const override {
+            if constexpr (detail::stl_string<T> || detail::fs_path<T>)
+                return true;
+            else
+                return base::isPrimitive();
         }
-        virtual bool get_item(void *ptr, int idx) const override {
-            return (*(container*)ptr)[idx];
+
+        // isInteger only exists in number_identity_base; for other bases
+        // this is an ordinary member function, and it implicitly overrides
+        // the virtual for numbers.
+        bool isInteger() const {
+            return std::is_integral_v<T> && !std::is_same_v<T, bool>;
         }
-        virtual void set_item(void *ptr, int idx, bool val) const override {
-            (*(container*)ptr)[idx] = val;
+
+        virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override {
+            if constexpr (std::is_same_v<T, bool>)
+                lua_pushboolean(state, *(T*)ptr);
+            else if constexpr (std::is_floating_point_v<T>)
+                lua_pushnumber(state, double(*(T*)ptr));
+            else if constexpr (std::is_integral_v<T>)
+                lua_pushinteger(state, int64_t(*(T*)ptr));
+            else if constexpr (detail::c_string<T>) {
+                auto pstr = *(T*)ptr;
+                if (pstr)
+                    lua_pushstring(state, pstr);
+                else
+                    lua_pushnil(state);
+            }
+            else if constexpr (detail::stl_string<T>) {
+                auto pstr = (T*)ptr;
+                lua_pushlstring(state, pstr->data(), pstr->size());
+            }
+            else if constexpr (detail::fs_path<T>)
+                DFHack::lua_read_path(state, ptr);
+            else
+                base::lua_read(state, fname_idx, ptr);
+        }
+
+        virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override {
+            if constexpr (std::is_same_v<T, bool>) {
+                char *pb = (char*)ptr;
+
+                if (lua_isboolean(state, val_index) || lua_isnil(state, val_index))
+                    *pb = lua_toboolean(state, val_index);
+                else if (lua_isnumber(state, val_index))
+                    *pb = lua_tointeger(state, val_index);
+                else
+                    DFHack::LuaWrapper::field_error(state, fname_idx, "boolean or number expected", "write");
+            }
+            else if constexpr (std::is_floating_point_v<T>) {
+                if (!lua_isnumber(state, val_index))
+                    DFHack::LuaWrapper::field_error(state, fname_idx, "number expected", "write");
+
+                *(T*)ptr = T(lua_tonumber(state, val_index));
+            }
+            else if constexpr (std::is_integral_v<T>) {
+                int is_num = 0;
+                auto value = lua_tointegerx(state, val_index, &is_num);
+                if (!is_num)
+                    DFHack::LuaWrapper::field_error(state, fname_idx, "integer expected", "write");
+                *(T*)ptr = T(value);
+            }
+            else if constexpr (detail::c_string<T>)
+                DFHack::LuaWrapper::field_error(state, fname_idx, "raw pointer string", "write");
+            else if constexpr (detail::stl_string<T>) {
+                size_t size;
+                const char *bytes = lua_tolstring(state, val_index, &size);
+                if (!bytes)
+                    DFHack::LuaWrapper::field_error(state, fname_idx, "string expected", "write");
+
+                *(T*)ptr = std::string(bytes, size);
+            }
+            else if constexpr (detail::fs_path<T>)
+                DFHack::lua_write_path(state, fname_idx, ptr, val_index);
+            else
+                base::lua_write(state, fname_idx, ptr, val_index);
+        }
+
+        virtual void build_metatable(lua_State *state) const override {
+            if constexpr (std::is_same_v<T, global_object>)
+                DFHack::build_global_metatable(state, this);
+            else
+                base::build_metatable(state);
         }
     };
+}
 
-#ifdef BUILD_DFHACK_LIB
-    template<class T>
-    class enum_list_attr_identity : public container_identity {
-    public:
-        using container = enum_list_attr<T>;
+namespace df
+{
+    using DFHack::type_identity_for;
 
-        enum_list_attr_identity(const type_identity *item)
-            : container_identity(sizeof(container), NULL, item, NULL)
-        {}
-
-        const std::string getFullName(const type_identity *item) const override {
-            return "enum_list_attr" + container_identity::getFullName(item);
-        }
-
-    protected:
-        virtual int item_count(void *ptr, CountMode cm) const override {
-            return cm == COUNT_WRITE ? 0 : (int)((container*)ptr)->size;
-        }
-        virtual void *item_pointer(const type_identity *item, void *ptr, int idx) const override {
-            return (void*)&((container*)ptr)->items[idx];
-        }
-    };
-#endif
-
-#define NUMBER_IDENTITY_TRAITS(category, type) \
+#define NUMBER_IDENTITY_TRAITS(type) \
     template<> struct DFHACK_EXPORT identity_traits<type> { \
         static const bool is_primitive = true; \
-        static const category##_identity<type> identity; \
-        static const category##_identity_base *get() { return &identity; } \
+        static const type_identity_for<type> identity; \
+        static const type_identity_for<type> *get() { return &identity; } \
     };
-
-#define INTEGER_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(integer, type)
-#define FLOAT_IDENTITY_TRAITS(type) NUMBER_IDENTITY_TRAITS(float, type)
 
 // the space after the use of "type" in OPAQUE_IDENTITY_TRAITS is _required_
 // without it the macro generates a syntax error when type is a template specification
 
 #define OPAQUE_IDENTITY_TRAITS(...) \
     template<> struct DFHACK_EXPORT identity_traits<__VA_ARGS__ > { \
-        static const opaque_identity identity; \
-        static const opaque_identity *get() { return &identity; } \
+        static const type_identity_for<__VA_ARGS__ > identity; \
+        static const type_identity_for<__VA_ARGS__ > *get() { return &identity; } \
     };
 
-    INTEGER_IDENTITY_TRAITS(char);
-    INTEGER_IDENTITY_TRAITS(signed char);
-    INTEGER_IDENTITY_TRAITS(unsigned char);
-    INTEGER_IDENTITY_TRAITS(short);
-    INTEGER_IDENTITY_TRAITS(unsigned short);
-    INTEGER_IDENTITY_TRAITS(int);
-    INTEGER_IDENTITY_TRAITS(unsigned int);
-    INTEGER_IDENTITY_TRAITS(long);
-    INTEGER_IDENTITY_TRAITS(unsigned long);
-    INTEGER_IDENTITY_TRAITS(long long);
-    INTEGER_IDENTITY_TRAITS(unsigned long long);
-    INTEGER_IDENTITY_TRAITS(wchar_t);
-    FLOAT_IDENTITY_TRAITS(float);
-    FLOAT_IDENTITY_TRAITS(double);
+    NUMBER_IDENTITY_TRAITS(char);
+    NUMBER_IDENTITY_TRAITS(signed char);
+    NUMBER_IDENTITY_TRAITS(unsigned char);
+    NUMBER_IDENTITY_TRAITS(short);
+    NUMBER_IDENTITY_TRAITS(unsigned short);
+    NUMBER_IDENTITY_TRAITS(int);
+    NUMBER_IDENTITY_TRAITS(unsigned int);
+    NUMBER_IDENTITY_TRAITS(long);
+    NUMBER_IDENTITY_TRAITS(unsigned long);
+    NUMBER_IDENTITY_TRAITS(long long);
+    NUMBER_IDENTITY_TRAITS(unsigned long long);
+    NUMBER_IDENTITY_TRAITS(wchar_t);
+    NUMBER_IDENTITY_TRAITS(float);
+    NUMBER_IDENTITY_TRAITS(double);
+    NUMBER_IDENTITY_TRAITS(bool);
     OPAQUE_IDENTITY_TRAITS(wchar_t*);
     OPAQUE_IDENTITY_TRAITS(std::condition_variable);
     OPAQUE_IDENTITY_TRAITS(std::fstream);
@@ -646,54 +854,46 @@ namespace df
     };
 #endif
 
-    template<> struct DFHACK_EXPORT identity_traits<bool> {
-        static const bool is_primitive = true;
-        static const bool_identity identity;
-        static const bool_identity *get() { return &identity; }
-    };
-
     template<> struct DFHACK_EXPORT identity_traits<std::string> {
         static const bool is_primitive = true;
-        static const stl_string_identity identity;
-        static const stl_string_identity *get() { return &identity; }
+        static const type_identity_for<std::string> identity;
+        static const type_identity_for<std::string> *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<std::filesystem::path> {
         static const bool is_primitive = true;
-        static const path_identity identity;
-        static const path_identity* get() { return &identity; }
+        static const type_identity_for<std::filesystem::path> identity;
+        static const type_identity_for<std::filesystem::path>* get() { return &identity; }
     };
     template<> struct DFHACK_EXPORT identity_traits<char*> {
         static const bool is_primitive = true;
-        static const ptr_string_identity identity;
-        static const ptr_string_identity *get() { return &identity; }
+        static const type_identity_for<char*> identity;
+        static const type_identity_for<char*> *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<const char*> {
         static const bool is_primitive = true;
-        static const ptr_string_identity identity;
-        static const ptr_string_identity *get() { return &identity; }
+        static const type_identity_for<const char*> identity;
+        static const type_identity_for<const char*> *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<void*> {
         static const bool is_primitive = true;
-        static const pointer_identity identity;
-        static const pointer_identity *get() { return &identity; }
+        static const type_identity_for<void*> identity;
+        static const type_identity_for<void*> *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<std::vector<void*> > {
-        static const stl_ptr_vector_identity identity;
-        static const stl_ptr_vector_identity *get() { return &identity; }
+        static const type_identity_for<std::vector<void*> > identity;
+        static const type_identity_for<std::vector<void*> > *get() { return &identity; }
     };
 
     template<> struct DFHACK_EXPORT identity_traits<std::vector<bool> > {
-        static const stl_bit_vector_identity identity;
-        static const stl_bit_vector_identity *get() { return &identity; }
+        static const type_identity_for<std::vector<bool> > identity;
+        static const type_identity_for<std::vector<bool> > *get() { return &identity; }
     };
 
 #undef NUMBER_IDENTITY_TRAITS
-#undef INTEGER_IDENTITY_TRAITS
-#undef FLOAT_IDENTITY_TRAITS
 #undef OPAQUE_IDENTITY_TRAITS
 
     // Container declarations
@@ -706,7 +906,7 @@ namespace df
 
     template<class T> struct identity_traits<T *> {
         static const bool is_primitive = true;
-        static const pointer_identity *get();
+        static const pointer_identity_base *get();
     };
 
 #ifdef BUILD_DFHACK_LIB
@@ -725,7 +925,7 @@ namespace df
 #endif
 
     template<class T> struct identity_traits<std::vector<T*> > {
-        static const stl_ptr_vector_identity *get();
+        static const ptr_container_identity *get();
     };
 
     // explicit specializations for these two types
@@ -763,7 +963,7 @@ namespace df
     };
 
     template<> struct identity_traits<BitArray<int> > {
-        static const bit_array_identity identity;
+        static const type_identity_for<BitArray<int> > identity;
         static const bit_container_identity *get() { return &identity; }
     };
 
@@ -785,54 +985,53 @@ namespace df
 #ifdef BUILD_DFHACK_LIB
     template<class Enum, class FT>
     inline const enum_identity *identity_traits<enum_field<Enum,FT> >::get() {
-        static const enum_identity identity(identity_traits<Enum>::get(), identity_traits<FT>::get());
+        static const type_identity_for<enum_field<Enum,FT> > identity(identity_traits<Enum>::get(), identity_traits<FT>::get());
         return &identity;
     }
 #endif
 
     template<class T>
-    inline const pointer_identity *identity_traits<T *>::get() {
-        static const pointer_identity identity(identity_traits<T>::get());
+    inline const pointer_identity_base *identity_traits<T *>::get() {
+        static const type_identity_for<T*> identity;
         return &identity;
     }
 
 #ifdef BUILD_DFHACK_LIB
     template<class T, int sz>
     inline const container_identity *identity_traits<T [sz]>::get() {
-        static const buffer_container_identity identity(sz, identity_traits<T>::get());
+        static const type_identity_for<T[sz]> identity(sz, identity_traits<T>::get());
         return &identity;
     }
 
     template<class T, size_t sz>
     inline const container_identity* identity_traits<std::array<T,sz>>::get()
     {
-        static const buffer_container_identity identity(sz, identity_traits<T>::get());
+        static const type_identity_for<std::array<T,sz> > identity(static_cast<int>(sz), df::identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
     inline const container_identity *identity_traits<std::vector<T> >::get() {
-        using container = std::vector<T>;
-        static const stl_container_identity<container> identity("vector", identity_traits<T>::get());
+        static const type_identity_for<std::vector<T> > identity("vector", identity_traits<T>::get());
         return &identity;
     }
 #endif
 
     template<class T>
-    inline const stl_ptr_vector_identity *identity_traits<std::vector<T*> >::get() {
-        static const stl_ptr_vector_identity identity(identity_traits<T>::get());
+    inline const ptr_container_identity *identity_traits<std::vector<T*> >::get() {
+        static const type_identity_for<std::vector<T*> > identity(identity_traits<T>::get());
         return &identity;
     }
 
     // explicit specializations for these two types
     // for availability in plugins
 
-    extern const DFHACK_EXPORT stl_container_identity<std::vector<int32_t> > stl_vector_int32_t_identity;
+    extern const DFHACK_EXPORT type_identity_for<std::vector<int32_t> > stl_vector_int32_t_identity;
     inline const container_identity* identity_traits<std::vector<int32_t> >::get() {
         return &stl_vector_int32_t_identity;
     }
 
-    extern const DFHACK_EXPORT stl_container_identity<std::vector<int16_t> > stl_vector_int16_t_identity;
+    extern const DFHACK_EXPORT type_identity_for<std::vector<int16_t> > stl_vector_int16_t_identity;
     inline const container_identity* identity_traits<std::vector<int16_t> >::get() {
         return &stl_vector_int16_t_identity;
     }
@@ -840,56 +1039,50 @@ namespace df
 #ifdef BUILD_DFHACK_LIB
     template<class T>
     inline const container_identity *identity_traits<std::deque<T> >::get() {
-        using container = std::deque<T>;
-        static const stl_container_identity<container> identity("deque", identity_traits<T>::get());
+        static const type_identity_for<std::deque<T> > identity("deque", identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
     inline const container_identity *identity_traits<std::set<T> >::get() {
-        using container = std::set<T>;
-        static const ro_stl_container_identity<container> identity("set", identity_traits<T>::get());
+        static const type_identity_for<std::set<T> > identity("set", identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
     inline const container_identity* identity_traits<std::unordered_set<T> >::get()
     {
-        using container = std::unordered_set<T>;
-        static const ro_stl_container_identity<container> identity("unordered_set", identity_traits<T>::get());
+        static const type_identity_for<std::unordered_set<T> > identity("unordered_set", identity_traits<T>::get());
         return &identity;
     }
 
     template<class KT, class T>
     inline const container_identity *identity_traits<std::map<KT, T>>::get() {
-        using container = std::map<KT, T>;
-        static const ro_stl_assoc_container_identity<container> identity("map", identity_traits<KT>::get(), identity_traits<T>::get());
+        static const type_identity_for<std::map<KT, T> > identity("map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
 
     template<class KT, class T>
     inline const container_identity *identity_traits<std::unordered_map<KT, T>>::get() {
-        using container = std::unordered_map<KT, T>;
-        static const ro_stl_assoc_container_identity<container> identity("unordered_map", identity_traits<KT>::get(), identity_traits<T>::get());
+        static const type_identity_for<std::unordered_map<KT, T> > identity("unordered_map", identity_traits<KT>::get(), identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
     inline const bit_container_identity *identity_traits<BitArray<T> >::get() {
-        static const bit_array_identity identity(identity_traits<T>::get());
+        static const type_identity_for<BitArray<T> > identity(identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
     inline const container_identity *identity_traits<DfArray<T> >::get() {
-        using container = DfArray<T>;
-        static const stl_container_identity<container> identity("DfArray", identity_traits<T>::get());
+        static const type_identity_for<DfArray<T> > identity("DfArray", identity_traits<T>::get());
         return &identity;
     }
 
     template<class T>
     inline const container_identity *identity_traits<enum_list_attr<T> >::get() {
-        static const enum_list_attr_identity<T> identity(identity_traits<T>::get());
+        static const type_identity_for<enum_list_attr<T> > identity("enum_list_attr", identity_traits<T>::get());
         return &identity;
     }
 #endif

@@ -89,6 +89,7 @@ Template for new versions:
 - `buildingplan`: fix roller material estimate asking for one chain per tile instead of one chain total
 - `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 - `burrow`: fix ``tiles clear`` and other tile operations silently failing because burrow block z-coordinates were stored incorrectly in the ``Burrows`` module
+- `dfhack-run`: on Windows, no longer mutates, hides, and closes the console it inherits when run from an existing terminal (issue #3827)
 - `export-world-map`: fix crash exporting site data for a site whose owner has an undefined race
 - `gui/quickfort`: show smoothing designations immediately after applying a blueprint
 - `overlay`: overlay hotkeys no longer steal typed characters while the game is capturing text input, e.g. when renaming a building

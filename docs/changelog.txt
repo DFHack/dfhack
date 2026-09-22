@@ -117,8 +117,10 @@ Template for new versions:
 - Added ``Maps::getCurrentWeather`` to determine the current weather on the map.
 - Added ``Units::breathes`` and ``Units::getBreathingState``
 - Deprecated ``World::ReadCurrentWeather`` in favor of ``Maps::getCurrentWeather``
+- Added ``Maps::forEachTile`` with ``Maps::TileFilter``/``Maps::TileActions`` to scan a cuboid of tiles, matching tiles by tiletype, tiletype attributes, and designation/occupancy bits, and counting, rewriting tiletypes, editing designation/occupancy bits, spawning constructions, or invoking a callback on matching tiles
 
 ## Lua
+- Added ``dfhack.maps.forEachTile`` to scan a cuboid of tiles with a declarative filter and apply actions (count, set tiletype or per-tiletype replacements, set designation/occupancy fields, spawn constructions, Lua callback) in a single native call
 
 ## Removed
 

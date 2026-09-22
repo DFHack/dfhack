@@ -853,7 +853,7 @@ namespace DFHack {
     template<class T>
     inline bool find_bitfield_field(unsigned *idx, const std::string &name, const T* = NULL) {
         typedef df::bitfield_traits<T> traits;
-        return findBitfieldField(&idx, name, traits::bit_count, traits::bits);
+        return findBitfieldField(idx, name, traits::bit_count, traits::bits);
     }
 
     /**

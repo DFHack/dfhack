@@ -55,6 +55,15 @@ history shapes specialization:
   weaponsmithing or armorsmithing -- so a mood pays out in a useful
   legendary skill.
 
+Workshop restrictions are honored as well: when a job is posted at a
+workshop that has a permitted-worker list, the engine ensures at least
+one listed worker is assigned the job's labor, and when the workshop
+restricts jobs by skill level it ensures at least one worker within the
+allowed range holds that labor. Units on any workshop's permitted list
+are treated as reserved for that shop's work -- they are preferentially
+assigned the labors its jobs require and deprioritized for the laborer
+pool and unrelated specialties.
+
 Labormanager also reads each citizen's unmet personal needs and biases
 assignments toward work that satisfies them:
 

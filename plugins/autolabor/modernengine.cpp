@@ -23,6 +23,7 @@
 #include "MiscUtils.h"
 #include "PluginManager.h"
 
+#include "modules/Job.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
@@ -40,11 +41,13 @@
 #include <df/personality_needst.h>
 #include <df/plotinfost.h>
 #include <df/reaction.h>
+#include <df/skill_rating.h>
 #include <df/unit.h>
 #include <df/unit_health_info.h>
 #include <df/unit_skill.h>
 #include <df/unit_soul.h>
 #include <df/vehicle.h>
+#include <df/workshop_profile.h>
 #include <df/world.h>
 #include <df/world_site.h>
 
@@ -229,6 +232,22 @@ static df::coord stat_oldest_pos;        // oldest posting's job location
 static int stat_resolved = 0;            // postings that left the board
 static int64_t stat_resolved_ticks = 0;  // total ticks they spent on the board
 static int32_t stat_max_wait = 0;        // longest time on the board
+
+// workshop profile constraints collected during the demand scan: a job at
+// a shop with a permitted-worker list needs a listed worker assigned the
+// job's labor; a nondefault skill range needs an in-range worker
+struct ShopNeed {
+    df::unit_labor labor = df::unit_labor::NONE;
+    std::set<int32_t> permitted;         // empty = no worker restriction
+    int32_t min_level = 0;
+    int32_t max_level = df::skill_rating::Legendary5;
+};
+static std::vector<ShopNeed> shop_needs;
+// unit id -> skills exercised by jobs at shops where the unit is on the
+// permitted list; units on any list are dispreferred for other labors so
+// they stay available for their shop's work
+static std::map<int32_t, std::set<df::job_skill>> shop_reserved;
+static std::set<int32_t> permitted_anywhere;
 
 static bool has_worker(df::job *j)
 {
@@ -486,6 +505,20 @@ static void scan_demand(std::map<df::unit_labor, int> &backlog)
     stat_oldest_wait = 0;
     stat_oldest_job = df::job_type::NONE;
     stat_oldest_reaction.clear();
+    shop_needs.clear();
+    shop_reserved.clear();
+    permitted_anywhere.clear();
+
+    // every unit on a workshop's permitted list is reserved for that
+    // shop's work; the labors each shop actually needs come from the
+    // postings below
+    for (auto b : world->buildings.all)
+    {
+        df::workshop_profile *prof = b->getWorkshopProfile();
+        if (prof && !prof->permitted_workers.empty())
+            permitted_anywhere.insert(prof->permitted_workers.begin(),
+                prof->permitted_workers.end());
+    }
 
     std::set<int32_t> live_postings;
 
@@ -527,6 +560,28 @@ static void scan_demand(std::map<df::unit_labor, int> &backlog)
         if (labor < 0 || labor >= NUM_LABORS)
             continue;
         backlog[labor]++;
+
+        // a job at a shop with a permitted-worker list or a nondefault
+        // skill range needs a qualifying worker holding the labor
+        if (df::building *bld = Job::getHolder(j))
+        {
+            df::workshop_profile *prof = bld->getWorkshopProfile();
+            if (prof && (!prof->permitted_workers.empty() ||
+                prof->min_level > 0 ||
+                prof->max_level < df::skill_rating::Legendary5))
+            {
+                ShopNeed need;
+                need.labor = labor;
+                need.permitted.insert(prof->permitted_workers.begin(),
+                    prof->permitted_workers.end());
+                need.min_level = prof->min_level;
+                need.max_level = prof->max_level;
+                shop_needs.push_back(need);
+                if (labor_to_skill[labor] != job_skill::NONE)
+                    for (auto uid : prof->permitted_workers)
+                        shop_reserved[uid].insert(labor_to_skill[labor]);
+            }
+        }
     }
 
     // postings that left the board (assigned, cancelled, or suspended):
@@ -855,6 +910,9 @@ void ModernEngine::update(color_ostream &out)
         return;
 
     int n = units.size();
+    std::map<int32_t, int> unit_idx;
+    for (int i = 0; i < n; i++)
+        unit_idx[units[i].u->id] = i;
 
     // --- priority weights from the balance slider ---------------------------
 
@@ -911,6 +969,10 @@ void ModernEngine::update(color_ostream &out)
         // pulled in; units needing social downtime get pushed out
         score -= units[i].needs.laborer_pull * 4;
         score += units[i].needs.idle_pull * 4;
+        // permitted workers stay available for their shop's jobs rather
+        // than getting drafted into the laborer pool
+        if (permitted_anywhere.count(units[i].u->id))
+            score += 150;
         pool_score[i] = score;
         order.push_back(i);
     }
@@ -974,6 +1036,10 @@ void ModernEngine::update(color_ostream &out)
             int r = rating_in_skill(info.u, want);
             int score = r * 100 + bonus + usage_bonus(want) +
                 (is_quality_skill(want) ? r * 20 : 0);
+            // permitted workers are dispreferred for specialties their
+            // shop doesn't need and preferred for the ones it does
+            if (permitted_anywhere.count(info.u->id))
+                score += shop_reserved[info.u->id].count(want) ? 150 : -150;
             if (score > best_score)
             {
                 best_score = score;
@@ -1077,6 +1143,101 @@ void ModernEngine::update(color_ostream &out)
         {
             skill_members[want].push_back(info.u->id);
             specialist_ids.insert(info.u->id);  // restrict them to the detail
+        }
+    }
+
+    // --- workshop restrictions ----------------------------------------------
+    // a posting at a shop with a permitted-worker list needs a listed worker
+    // holding the job's labor; a nondefault skill range needs an in-range
+    // holder. only managed skilled labors need enforcement -- unskilled and
+    // unmanaged labors stay available to everyone via the EverybodyDoesThis
+    // details
+
+    for (auto &need : shop_needs)
+    {
+        df::unit_labor labor = need.labor;
+        if (labor < 0 || labor >= NUM_LABORS || !managed_labor_cache[labor] ||
+            is_unskilled(labor))
+            continue;
+        df::job_skill skill = labor_to_skill[labor];
+        if (skill == job_skill::NONE)
+            continue;
+
+        auto &members = skill_members[skill];
+        auto is_member = [&](int32_t uid) {
+            return std::find(members.begin(), members.end(), uid) !=
+                members.end();
+        };
+        auto in_range = [&](int i) {
+            int r = rating_in_skill(units[i].u, skill);
+            return r >= need.min_level && r <= need.max_level;
+        };
+
+        bool permit_ok = need.permitted.empty();
+        bool range_ok = need.min_level <= 0 &&
+            need.max_level >= df::skill_rating::Legendary5;
+        for (auto uid : members)
+        {
+            auto it = unit_idx.find(uid);
+            if (it == unit_idx.end())
+                continue;
+            if (!permit_ok && need.permitted.count(uid))
+                permit_ok = true;
+            if (!range_ok && in_range(it->second))
+                range_ok = true;
+        }
+        if (permit_ok && range_ok)
+            continue;
+
+        // pick the best qualifying citizen; satisfy each constraint with a
+        // unit that also covers the other one when possible
+        auto satisfy = [&](bool must_permit, bool must_range) {
+            int best = -1, best_i = -1;
+            for (int i = 0; i < n; i++)
+            {
+                if (units[i].excluded || is_member(units[i].u->id) ||
+                    !Units::isValidLabor(units[i].u, labor))
+                    continue;
+                if (must_permit && !need.permitted.count(units[i].u->id))
+                    continue;
+                if (must_range && !in_range(i))
+                    continue;
+                int score = rating_in_skill(units[i].u, skill) * 100;
+                if (need.permitted.count(units[i].u->id))
+                    score += 500;
+                if (in_range(i))
+                    score += 300;
+                if (score > best)
+                {
+                    best = score;
+                    best_i = i;
+                }
+            }
+            if (best_i < 0)
+                return;
+            int32_t uid = units[best_i].u->id;
+            members.push_back(uid);
+            specialist_ids.insert(uid);
+            // shop work takes priority over the laborer pool
+            laborer_ids.erase(uid);
+        };
+
+        if (!permit_ok)
+            satisfy(true, false);
+        // the permitted pick may have covered the range too
+        if (!range_ok)
+        {
+            for (auto uid : members)
+            {
+                auto it = unit_idx.find(uid);
+                if (it != unit_idx.end() && in_range(it->second))
+                {
+                    range_ok = true;
+                    break;
+                }
+            }
+            if (!range_ok)
+                satisfy(false, true);
         }
     }
 

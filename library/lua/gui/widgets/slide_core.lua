@@ -3,47 +3,47 @@ local Widget = require('gui.widgets.widget')
 local to_pen = dfhack.pen.parse
 
 --------------------------------
--- slide_core
+-- _SliderCore
 --------------------------------
 
----@class widgets.slide_core.attrs: widgets.Widget.attrs
+---@class widgets._SliderCore.attrs: widgets.Widget.attrs
 ---@field num_stops integer
 ---@field is_single boolean
 ---@field w integer
 
----@class widgets.slide_core.attrs.partial: widgets.slide_core.attrs
+---@class widgets._SliderCore.attrs.partial: widgets._SliderCore.attrs
 
----@class widgets.slide_core.initTable: widgets.slide_core.attrs
+---@class widgets._SliderCore.initTable: widgets._SliderCore.attrs
 ---@field num_stops integer
 
----@class widgets.slide_core: widgets.Widget, widgets.slide_core.attrs
+---@class widgets._SliderCore: widgets.Widget, widgets._SliderCore.attrs
 ---@field super widgets.Widget
----@field ATTRS widgets.slide_core.attrs|fun(attributes: widgets.slide_core.attrs.partial)
----@overload fun(init_table: widgets.slide_core.initTable): self
-slide_core = defclass(slide_core, Widget)
-slide_core.ATTRS{
+---@field ATTRS widgets._SliderCore.attrs|fun(attributes: widgets._SliderCore.attrs.partial)
+---@overload fun(init_table: widgets._SliderCore.initTable): self
+_SliderCore = defclass(_SliderCore, Widget)
+_SliderCore.ATTRS{
     num_stops=DEFAULT_NIL,
     is_single=DEFAULT_NIL,
     w=DEFAULT_NIL
 }
 
-function slide_core:preinit(init_table)
+function _SliderCore:preinit(init_table)
     init_table.frame = init_table.frame or {}
     init_table.frame.h = init_table.frame.h or 1
 end
 
-function slide_core:init()
+function _SliderCore:init()
     local min_stops = self:get_min_stops()
     if self.num_stops < min_stops then error(('too few stops, expected at least %s'):format(min_stops)) end
     self.is_dragging_target = nil -- 'left', 'right', or 'both'
     self.is_dragging_idx = nil -- offset from leftmost dragged tile
 end
 
-function slide_core:get_min_stops()
+function _SliderCore:get_min_stops()
     return self.is_single and 1 or 2
 end
 
-function slide_core:clamp_idx(idx)
+function _SliderCore:clamp_idx(idx)
     return math.max(1, math.min(self.num_stops, idx))
 end
 
@@ -101,7 +101,7 @@ local SLIDER_TAB_LEFT = to_pen{ch=60, fg=COLOR_BLACK, bg=COLOR_YELLOW}
 local SLIDER_TAB_CENTER = to_pen{ch=9, fg=COLOR_BLACK, bg=COLOR_YELLOW}
 local SLIDER_TAB_RIGHT = to_pen{ch=62, fg=COLOR_BLACK, bg=COLOR_YELLOW}
 
-function slide_core:onRenderBody(dc, rect)
+function _SliderCore:onRenderBody(dc, rect)
     local left_idx, right_idx
     if self.get_idx_fn ~= nil then
         left_idx = self.get_idx_fn()
@@ -165,4 +165,4 @@ function slide_core:onRenderBody(dc, rect)
     end
 end
 
-return slide_core
+return _SliderCore

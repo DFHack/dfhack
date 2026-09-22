@@ -1,4 +1,4 @@
-local core = require('gui.widgets.slide_core')
+local _SliderCore = require('gui.widgets.slide_core')
 
 --------------------------------
 -- Slider
@@ -15,11 +15,11 @@ local core = require('gui.widgets.slide_core')
 ---@class widgets.Slider.initTable: widgets.Slider.attrs
 ---@field num_stops integer
 
----@class widgets.Slider: widgets.Widget, widgets.Slider.attrs
----@field super widgets.Widget
+---@class widgets.Slider: widgets._SliderCore, widgets.Slider.attrs
+---@field super widgets._SliderCore
 ---@field ATTRS widgets.Slider.attrs|fun(attributes: widgets.Slider.attrs.partial)
 ---@overload fun(init_table: widgets.Slider.initTable): self
-Slider = defclass(Slider, core)
+Slider = defclass(Slider, _SliderCore)
 Slider.ATTRS{
     get_idx_fn=DEFAULT_NIL,
     on_change=DEFAULT_NIL,

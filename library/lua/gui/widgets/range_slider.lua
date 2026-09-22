@@ -1,4 +1,4 @@
-local core = require('gui.widgets.slide_core')
+local _SliderCore = require('gui.widgets.slide_core')
 
 --------------------------------
 -- RangeSlider
@@ -16,11 +16,11 @@ local core = require('gui.widgets.slide_core')
 ---@class widgets.RangeSlider.initTable: widgets.RangeSlider.attrs
 ---@field num_stops integer
 
----@class widgets.RangeSlider: widgets.Widget, widgets.RangeSlider.attrs
----@field super widgets.Widget
+---@class widgets.RangeSlider: widgets._SliderCore, widgets.RangeSlider.attrs
+---@field super widgets._SliderCore
 ---@field ATTRS widgets.RangeSlider.attrs|fun(attributes: widgets.RangeSlider.attrs.partial)
 ---@overload fun(init_table: widgets.RangeSlider.initTable): self
-RangeSlider = defclass(RangeSlider, slide_core)
+RangeSlider = defclass(RangeSlider, _SliderCore)
 RangeSlider.ATTRS{
     get_left_idx_fn=DEFAULT_NIL,
     get_right_idx_fn=DEFAULT_NIL,
@@ -44,7 +44,7 @@ function RangeSlider:onInput(keys)
     local left_pos = width_per_idx*(left_idx-1)
     local right_pos = width_per_idx*(right_idx-1) + 4
     if x < left_pos then
-        self.on_left_change(self.get_left_idx_fn() - 1)
+        self.on_left_change(self:clamp_idx(self.get_left_idx_fn() - 1))
     elseif x < left_pos+3 then
         self.is_dragging_target = 'left'
         self.is_dragging_idx = x - left_pos
@@ -55,7 +55,7 @@ function RangeSlider:onInput(keys)
         self.is_dragging_target = 'right'
         self.is_dragging_idx = x - right_pos
     else
-        self.on_right_change(self.get_right_idx_fn() + 1)
+        self.on_right_change(self:clamp_idx(self.get_right_idx_fn() + 1))
     end
     return true
 end

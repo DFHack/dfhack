@@ -195,7 +195,9 @@ struct Scanner
                                  MAX_REPORTS_PER_CATEGORY, category);
         }
         else if (count <= MAX_REPORTS_PER_CATEGORY)
+        {
             WARN(log, out).print("consistency-check: {}\n", msg);
+        }
     }
 
     template<typename... Args>

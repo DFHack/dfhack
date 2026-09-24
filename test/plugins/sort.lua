@@ -10,11 +10,9 @@ end
 
 local function get_citizen_counts()
     local counts = {}
-    for _,unit in ipairs(df.global.world.units.active) do
-        if dfhack.units.isCitizen(unit, true) then
-            local cat = dfhack.units.getStressCategory(unit)
-            counts[cat] = (counts[cat] or 0) + 1
-        end
+    for _,unit in ipairs(dfhack.units.getCitizens(true, true)) do
+        local cat = dfhack.units.getStressCategory(unit)
+        counts[cat] = (counts[cat] or 0) + 1
     end
     return counts
 end
@@ -153,9 +151,8 @@ function test.selecting_unit_centers_map()
     expect.ne(nil, called_with)
     -- the revealed position must be a real citizen's position in that bucket
     local matched = false
-    for _,unit in ipairs(df.global.world.units.active) do
-        if dfhack.units.isCitizen(unit, true) and
-                dfhack.units.getStressCategory(unit) == cat and
+    for _,unit in ipairs(dfhack.units.getCitizens(true, true)) do
+        if dfhack.units.getStressCategory(unit) == cat and
                 unit.pos.x == called_with.x and unit.pos.y == called_with.y and
                 unit.pos.z == called_with.z then
             matched = true

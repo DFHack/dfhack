@@ -297,20 +297,20 @@ struct Scanner
         if (auto r = virtual_cast<df::general_ref_unit>(ref))
         {
             if (!df::unit::find(r->unit_id))
-                report("{}: {} has dangling unit_id {} (not in world.units.all)",
+                report("{}: {} has dangling unit_id {} (not in world.unit.global)",
                        context, enum_item_key(ref->getType()), r->unit_id);
         }
         else if (auto r = virtual_cast<df::general_ref_item>(ref))
         {
             if (!df::item::find(r->item_id))
-                report("{}: {} has dangling item_id {} (not in world.items.all)",
+                report("{}: {} has dangling item_id {} (not in world.item.global)",
                        context, enum_item_key(ref->getType()), r->item_id);
         }
         else if (auto r = virtual_cast<df::general_ref_building>(ref))
         {
             auto target = df::building::find(r->building_id);
             if (!target)
-                report("{}: {} has dangling building_id {} (not in world.buildings.all)",
+                report("{}: {} has dangling building_id {} (not in world.building.global)",
                        context, enum_item_key(ref->getType()), r->building_id);
             else if (ref->getType() == df::general_ref_type::BUILDING_CIVZONE_ASSIGNED &&
                      !virtual_cast<df::building_civzonest>(target))
@@ -320,25 +320,25 @@ struct Scanner
         else if (auto r = virtual_cast<df::general_ref_artifact>(ref))
         {
             if (!df::artifact_record::find(r->artifact_id))
-                report("{}: {} has dangling artifact_id {}",
+                report("{}: {} has dangling artifact_id {} (not in world.artifact.global)",
                        context, enum_item_key(ref->getType()), r->artifact_id);
         }
         else if (auto r = virtual_cast<df::general_ref_nemesis>(ref))
         {
             if (!df::nemesis_record::find(r->nemesis_id))
-                report("{}: {} has dangling nemesis_id {}",
+                report("{}: {} has dangling nemesis_id {} (not in world.nemesis.global)",
                        context, enum_item_key(ref->getType()), r->nemesis_id);
         }
         else if (auto r = virtual_cast<df::general_ref_historical_figurest>(ref))
         {
             if (!df::historical_figure::find(r->hist_figure_id))
-                report("{}: {} has dangling hist_figure_id {}",
+                report("{}: {} has dangling hfid {}",
                        context, enum_item_key(ref->getType()), r->hist_figure_id);
         }
         else if (auto r = virtual_cast<df::general_ref_historical_eventst>(ref))
         {
             if (!df::history_event::find(r->event_id))
-                report("{}: {} has dangling event_id {}",
+                report("{}: {} has dangling heid {}",
                        context, enum_item_key(ref->getType()), r->event_id);
         }
         else if (auto r = virtual_cast<df::general_ref_entity>(ref))
@@ -356,7 +356,7 @@ struct Scanner
         else if (auto r = virtual_cast<df::general_ref_entity_popst>(ref))
         {
             if (r->pop_id != -1 && !df::entity_population::find(r->pop_id))
-                report("{}: {} has dangling pop_id {}",
+                report("{}: {} has dangling epid {}",
                        context, enum_item_key(ref->getType()), r->pop_id);
             if (r->race != -1 && !df::creature_raw::find(r->race))
                 report("{}: {} has dangling race {}",
@@ -375,55 +375,55 @@ struct Scanner
                 report("{}: {} has dangling race {}",
                        context, enum_item_key(ref->getType()), r->race);
             if (r->pop_id != -1 && !df::entity_population::find(r->pop_id))
-                report("{}: {} has dangling pop_id {}",
+                report("{}: {} has dangling epid {}",
                        context, enum_item_key(ref->getType()), r->pop_id);
         }
         else if (auto r = virtual_cast<df::general_ref_coinbatch>(ref))
         {
             if (!df::coin_batch::find(r->batch))
-                report("{}: {} has dangling coinbatch {}",
+                report("{}: {} has dangling cb_index {}",
                        context, enum_item_key(ref->getType()), r->batch);
         }
         else if (auto r = virtual_cast<df::general_ref_written_contentst>(ref))
         {
             if (!df::written_content::find(r->written_content_id))
-                report("{}: {} has dangling written_content_id {}",
+                report("{}: {} has dangling wc_id {}",
                        context, enum_item_key(ref->getType()), r->written_content_id);
         }
         else if (auto r = virtual_cast<df::general_ref_poetic_formst>(ref))
         {
             if (!df::poetic_form::find(r->poetic_form_id))
-                report("{}: {} has dangling poetic_form_id {}",
+                report("{}: {} has dangling form_id {} (poetic)",
                        context, enum_item_key(ref->getType()), r->poetic_form_id);
         }
         else if (auto r = virtual_cast<df::general_ref_musical_formst>(ref))
         {
             if (!df::musical_form::find(r->musical_form_id))
-                report("{}: {} has dangling musical_form_id {}",
+                report("{}: {} has dangling form_id {} (musical)",
                        context, enum_item_key(ref->getType()), r->musical_form_id);
         }
         else if (auto r = virtual_cast<df::general_ref_dance_formst>(ref))
         {
             if (!df::dance_form::find(r->dance_form_id))
-                report("{}: {} has dangling dance_form_id {}",
+                report("{}: {} has dangling form_id {} (dance)",
                        context, enum_item_key(ref->getType()), r->dance_form_id);
         }
         else if (auto r = virtual_cast<df::general_ref_sitest>(ref))
         {
             if (!df::world_site::find(r->site_id))
-                report("{}: {} has dangling site_id {}",
+                report("{}: {} has dangling stid {}",
                        context, enum_item_key(ref->getType()), r->site_id);
         }
         else if (auto r = virtual_cast<df::general_ref_subregionst>(ref))
         {
             if (!df::world_region::find(r->region_id))
-                report("{}: {} has dangling region_id {}",
+                report("{}: {} has dangling srid {}",
                        context, enum_item_key(ref->getType()), r->region_id);
         }
         else if (auto r = virtual_cast<df::general_ref_feature_layerst>(ref))
         {
             if (!df::world_underground_region::find(r->underground_region_id))
-                report("{}: {} has dangling underground_region_id {}",
+                report("{}: {} has dangling flid {}",
                        context, enum_item_key(ref->getType()), r->underground_region_id);
         }
         else if (auto r = virtual_cast<df::general_ref_activity_eventst>(ref))
@@ -439,7 +439,7 @@ struct Scanner
         {
             collect_projectiles();
             if (!projectile_ids.count(r->projectile_id))
-                report("{}: {} has dangling projectile_id {}",
+                report("{}: {} has dangling proj_id {}",
                        context, enum_item_key(ref->getType()), r->projectile_id);
         }
         else if (auto r = virtual_cast<df::general_ref_abstract_buildingst>(ref))
@@ -455,7 +455,7 @@ struct Scanner
                            r->site_id, site->buildings.size());
             }
             else
-                report("{}: {} has dangling site_id {}",
+                report("{}: {} has dangling stid {}",
                        context, enum_item_key(ref->getType()), r->site_id);
         }
         // remaining ref types have no simply-resolvable targets
@@ -473,14 +473,14 @@ struct Scanner
             case df::specific_ref_type::JOB:
                 collect_jobs();
                 if (!ref->data.job || !jobs.count(ref->data.job))
-                    report("{}: specific_ref JOB points at a job not in world.jobs.list",
+                    report("{}: specific_ref JOB points at a job not in world.job.global",
                            context);
                 break;
             case df::specific_ref_type::UNIT:
                 collect_units();
                 if (!ref->data.unit || !units.count(ref->data.unit))
-                    report("{}: specific_ref UNIT points at a unit not in world.units.all",
-                           context);
+                    report("{}: specific_ref UNIT_GENERAL points at a unit not in "
+                           "world.unit.global", context);
                 break;
             default:
                 break;
@@ -546,7 +546,7 @@ struct Scanner
             size_t i = 0;
             for (auto item : *vec)
             {
-                std::string path = fmt::format("world.items.other.{}[{}]", field->name, i++);
+                std::string path = fmt::format("world.item.other.{}[{}]", field->name, i++);
                 if (!item)
                 {
                     report("{}: null item", path);
@@ -555,7 +555,7 @@ struct Scanner
                 if (!items.count(item))
                 {
                     // may be dangling; don't dereference
-                    report("{}: item pointer {} not in world.items.all",
+                    report("{}: item pointer {} not in world.item.global",
                            path, static_cast<void*>(item));
                     continue;
                 }
@@ -592,7 +592,7 @@ struct Scanner
             size_t i = 0;
             for (auto bld : *vec)
             {
-                std::string path = fmt::format("world.buildings.other.{}[{}]", field->name, i++);
+                std::string path = fmt::format("world.building.other.{}[{}]", field->name, i++);
                 if (!bld)
                 {
                     report("{}: null building", path);
@@ -601,7 +601,7 @@ struct Scanner
                 if (!buildings.count(bld))
                 {
                     // may be dangling; don't dereference
-                    report("{}: building pointer {} not in world.buildings.all",
+                    report("{}: building pointer {} not in world.building.global",
                            path, static_cast<void*>(bld));
                     continue;
                 }
@@ -625,12 +625,12 @@ struct Scanner
             size_t i = 0;
             for (auto unit : *vec)
             {
-                std::string path = fmt::format("world.units.other.{}[{}]", field->name, i++);
+                std::string path = fmt::format("world.unit.other.{}[{}]", field->name, i++);
                 if (!unit)
                     report("{}: null unit", path);
                 else if (!units.count(unit))
                     // may be dangling; don't dereference
-                    report("{}: unit pointer {} not in world.units.all",
+                    report("{}: unit pointer {} not in world.unit.global",
                            path, static_cast<void*>(unit));
             }
         }
@@ -642,84 +642,84 @@ struct Scanner
         {
             if (!unit)
             {
-                report("world.units.active[{}] is null", i++);
+                report("world.unit.play[{}] is null", i++);
                 continue;
             }
             if (!units.count(unit))
             {
                 // may be dangling; don't dereference
-                report("world.units.active[{}]: unit pointer {} not in "
-                       "world.units.all", i++, static_cast<void*>(unit));
+                report("world.unit.play[{}]: unit pointer {} not in "
+                       "world.unit.global", i++, static_cast<void*>(unit));
                 continue;
             }
             if (!active_seen.insert(unit).second)
-                report("world.units.active[{}]: unit {} appears twice", i, unit->id);
+                report("world.unit.play[{}]: unit {} appears twice", i, unit->id);
             i++;
         }
     }
 
     void check_sorted_vectors()
     {
-        check_sorted_ids("world.units.all", world->units.all, df::global::unit_next_id);
-        check_sorted_ids("world.items.all", world->items.all, df::global::item_next_id);
-        check_sorted_ids("world.buildings.all", world->buildings.all, df::global::building_next_id);
-        check_sorted_ids("world.entities.all", world->entities.all, df::global::entity_next_id);
-        check_sorted_ids("world.nemesis.all", world->nemesis.all, df::global::nemesis_next_id);
-        check_sorted_ids("world.artifacts.all", world->artifacts.all, df::global::artifact_next_id);
-        check_sorted_ids("world.squads.all", world->squads.all, df::global::squad_next_id);
-        check_sorted_ids("world.armies.all", world->armies.all, df::global::army_next_id);
-        check_sorted_ids("world.army_controllers.all", world->army_controllers.all,
+        check_sorted_ids("world.unit.global", world->units.all, df::global::unit_next_id);
+        check_sorted_ids("world.item.global", world->items.all, df::global::item_next_id);
+        check_sorted_ids("world.building.global", world->buildings.all, df::global::building_next_id);
+        check_sorted_ids("world.entity.global", world->entities.all, df::global::entity_next_id);
+        check_sorted_ids("world.nemesis.global", world->nemesis.all, df::global::nemesis_next_id);
+        check_sorted_ids("world.artifact.global", world->artifacts.all, df::global::artifact_next_id);
+        check_sorted_ids("world.squad.global", world->squads.all, df::global::squad_next_id);
+        check_sorted_ids("world.army.global", world->armies.all, df::global::army_next_id);
+        check_sorted_ids("world.army_controller.global", world->army_controllers.all,
                          df::global::army_controller_next_id);
-        check_sorted_ids("world.activities.all", world->activities.all, df::global::activity_next_id);
-        check_sorted_ids("world.written_contents.all", world->written_contents.all,
+        check_sorted_ids("world.activity.global", world->activities.all, df::global::activity_next_id);
+        check_sorted_ids("world.written_content.global", world->written_contents.all,
                          df::global::written_content_next_id);
-        check_sorted_ids("world.crimes.all", world->crimes.all, df::global::crime_next_id);
-        check_sorted_ids("world.agreements.all", world->agreements.all, df::global::agreement_next_id);
-        check_sorted_ids("world.incidents.all", world->incidents.all, df::global::incident_next_id);
-        check_sorted_ids("world.identities.all", world->identities.all, df::global::identity_next_id);
-        check_sorted_ids("world.image_sets.all", world->image_sets.all, df::global::image_set_next_id);
-        check_sorted_ids("world.divination_sets.all", world->divination_sets.all,
+        check_sorted_ids("world.crime.global", world->crimes.all, df::global::crime_next_id);
+        check_sorted_ids("world.agreement.global", world->agreements.all, df::global::agreement_next_id);
+        check_sorted_ids("world.incident.global", world->incidents.all, df::global::incident_next_id);
+        check_sorted_ids("world.identity.global", world->identities.all, df::global::identity_next_id);
+        check_sorted_ids("world.image_set.global", world->image_sets.all, df::global::image_set_next_id);
+        check_sorted_ids("world.divination_set.global", world->divination_sets.all,
                          df::global::divination_set_next_id);
-        check_sorted_ids("world.belief_systems.all", world->belief_systems.all,
+        check_sorted_ids("world.belief_system.global", world->belief_systems.all,
                          df::global::belief_system_next_id);
-        check_sorted_ids("world.cultural_identities.all", world->cultural_identities.all,
+        check_sorted_ids("world.cultural_identity.global", world->cultural_identities.all,
                          df::global::cultural_identity_next_id);
-        check_sorted_ids("world.poetic_forms.all", world->poetic_forms.all,
+        check_sorted_ids("world.poetic_form.global", world->poetic_forms.all,
                          df::global::poetic_form_next_id);
-        check_sorted_ids("world.musical_forms.all", world->musical_forms.all,
+        check_sorted_ids("world.musical_form.global", world->musical_forms.all,
                          df::global::musical_form_next_id);
-        check_sorted_ids("world.dance_forms.all", world->dance_forms.all,
+        check_sorted_ids("world.dance_form.global", world->dance_forms.all,
                          df::global::dance_form_next_id);
-        check_sorted_ids("world.art_image_chunks.all", world->art_image_chunks.all,
+        check_sorted_ids("world.art_image_chunk.global", world->art_image_chunks.all,
                          df::global::art_image_chunk_next_id);
-        check_sorted_ids("world.unit_chunks.all", world->unit_chunks.all,
+        check_sorted_ids("world.unit_chunk.global", world->unit_chunks.all,
                          df::global::unit_chunk_next_id);
-        check_sorted_ids("world.machines.all", world->machines.all, df::global::machine_next_id);
-        check_sorted_ids("world.flow_guides.all", world->flow_guides.all,
+        check_sorted_ids("world.machine.global", world->machines.all, df::global::machine_next_id);
+        check_sorted_ids("world.flow_guide.global", world->flow_guides.all,
                          df::global::flow_guide_next_id);
-        check_sorted_ids("world.formations.all", world->formations.all,
+        check_sorted_ids("world.formation.global", world->formations.all,
                          df::global::formation_next_id);
-        check_sorted_ids("world.schedules.all", world->schedules.all,
+        check_sorted_ids("world.schedule.global", world->schedules.all,
                          df::global::schedule_next_id);
-        check_sorted_ids("world.occupations.all", world->occupations.all,
+        check_sorted_ids("world.occupation.global", world->occupations.all,
                          df::global::occupation_next_id);
-        check_sorted_ids("world.vehicles.all", world->vehicles.all, df::global::vehicle_next_id);
-        check_sorted_ids("world.scales.all", world->scales.all, df::global::scale_next_id);
-        check_sorted_ids("world.rhythms.all", world->rhythms.all, df::global::rhythm_next_id);
-        check_sorted_ids("world.interaction_instances.all", world->interaction_instances.all,
+        check_sorted_ids("world.vehicle.global", world->vehicles.all, df::global::vehicle_next_id);
+        check_sorted_ids("world.scale.global", world->scales.all, df::global::scale_next_id);
+        check_sorted_ids("world.rhythm.global", world->rhythms.all, df::global::rhythm_next_id);
+        check_sorted_ids("world.interaction_instance.global", world->interaction_instances.all,
                          df::global::interaction_instance_next_id);
-        check_sorted_ids("world.history.figures", world->history.figures,
+        check_sorted_ids("world.hist.figure", world->history.figures,
                          df::global::hist_figure_next_id);
-        check_sorted_ids("world.history.events", world->history.events,
+        check_sorted_ids("world.hist.event", world->history.events,
                          df::global::hist_event_next_id);
-        check_sorted_ids("world.history.event_collections.all", world->history.event_collections.all,
+        check_sorted_ids("world.hist.event_collection", world->history.event_collections.all,
                          df::global::hist_event_collection_next_id);
         if (plotinfo)
-            check_sorted_ids("plotinfo.burrows.list", plotinfo->burrows.list, nullptr);
+            check_sorted_ids("plotinfo.burrow_info.burrow", plotinfo->burrows.list, nullptr);
 
         // linked lists must be non-decreasing in id, acyclic, and self-consistent
-        check_linked_list("world.jobs.list", &world->jobs.list, df::global::job_next_id);
-        check_linked_list("world.projectiles.all", &world->projectiles.all,
+        check_linked_list("world.job.global", &world->jobs.list, df::global::job_next_id);
+        check_linked_list("world.proj.global", &world->projectiles.all,
                           df::global::proj_next_id);
     }
 
@@ -737,25 +737,27 @@ struct Scanner
                 break;
             }
             if (link->prev != prev_link)
-                report("{}: broken prev link near job id {}",
+                report("{}: broken prev link near job global_id {}",
                        path, link->item ? link->item->id : -1);
             if (auto job = link->item)
             {
                 if (job->list_link != link)
-                    report("{}: job {} list_link does not point back at its link",
+                    report("{}: job {} my_link does not point back at its link",
                            path, job->id);
                 if (job->id < prev_id)
-                    report("{}: job id {} is out of order (preceded by {}); "
-                           "job list is expected to be sorted", path, job->id, prev_id);
+                    report("{}: job global_id {} is out of order (preceded by "
+                           "{}); the job list is expected to be sorted",
+                           path, job->id, prev_id);
                 prev_id = job->id;
                 max_id = std::max(max_id, job->id);
             }
             else
-                report("{}: link with null item", path);
+                report("{}: link with null job", path);
             prev_link = link;
         }
         if (next_id && *next_id <= max_id)
-            report("{}: next_id {} but a job with id {} exists", path, *next_id, max_id);
+            report("{}: next_id {} but a job with global_id {} exists",
+                   path, *next_id, max_id);
     }
 
     void check_linked_list(const char *path, df::proj_list_link *head, int32_t *next_id)
@@ -771,21 +773,21 @@ struct Scanner
                 break;
             }
             if (link->prev != prev_link)
-                report("{}: broken prev link near projectile id {}",
+                report("{}: broken prev link near projectile global_id {}",
                        path, link->item ? link->item->id : -1);
             if (auto proj = link->item)
             {
                 if (proj->link != link)
-                    report("{}: projectile {} link does not point back at its link",
+                    report("{}: projectile {} my_link does not point back at its link",
                            path, proj->id);
                 max_id = std::max(max_id, proj->id);
             }
             else
-                report("{}: link with null item", path);
+                report("{}: link with null projectile", path);
             prev_link = link;
         }
         if (next_id && *next_id <= max_id)
-            report("{}: next_id {} but a projectile with id {} exists",
+            report("{}: next_id {} but a projectile with global_id {} exists",
                    path, *next_id, max_id);
     }
 
@@ -820,14 +822,14 @@ struct Scanner
                            ctx, unit->caste, unit->race, craw->caste.size());
             }
             else
-                report("{}: race {} not in world.raws.creatures.all", ctx, unit->race);
+                report("{}: race {} not in world.creature.creature", ctx, unit->race);
 
             if (unit->civ_id != -1 && !df::historical_entity::find(unit->civ_id))
-                report("{}: dangling civ_id {}", ctx, unit->civ_id);
+                report("{}: dangling quick_entity_id {}", ctx, unit->civ_id);
 
             if (unit->hist_figure_id != -1 &&
                 !df::historical_figure::find(unit->hist_figure_id))
-                report("{}: dangling hist_figure_id {}", ctx, unit->hist_figure_id);
+                report("{}: dangling hfid {}", ctx, unit->hist_figure_id);
 
             // corrupted jobs: current_job with id -1 or not in the job list
             // (issue #3861, fixed by fix/corrupt-jobs)
@@ -835,12 +837,12 @@ struct Scanner
             {
                 if (!jobs.count(job))
                     // may be dangling; don't dereference
-                    report("{}: current_job pointer {} not in world.jobs.list",
+                    report("{}: currentjob pointer {} not in world.job.global",
                            ctx, static_cast<void*>(job));
                 else if (job->id == -1)
-                    report("{}: current_job has id -1 (fix/corrupt-jobs)", ctx);
+                    report("{}: currentjob has global_id -1 (fix/corrupt-jobs)", ctx);
                 else if (!job_has_ref_to_unit(job, unit->id))
-                    report("{}: current_job {} lacks UNIT_WORKER back-reference",
+                    report("{}: currentjob {} lacks UNIT_WORKER back-reference",
                            ctx, job->id);
             }
 
@@ -849,30 +851,30 @@ struct Scanner
             if (ac)
             {
                 if (!army_controllers.count(ac))
-                    report("{}: enemy.army_controller pointer {} not in "
-                           "world.army_controllers.all", ctx,
+                    report("{}: army_controller pointer {} not in "
+                           "world.army_controller.global", ctx,
                            static_cast<void*>(ac));
                 else if (ac->id != unit->enemy.army_controller_id)
-                    report("{}: army_controller id mismatch ({} != {})",
+                    report("{}: army_controller_id mismatch ({} != {})",
                            ctx, unit->enemy.army_controller_id, ac->id);
             }
             else if (unit->enemy.army_controller_id != -1 &&
                      unit->enemy.army_controller_id != 0)
-                report("{}: enemy.army_controller_id is {} but pointer is null",
+                report("{}: army_controller_id is {} but pointer is null",
                        ctx, unit->enemy.army_controller_id);
 
             // inventory items must point back at the unit via UNIT_HOLDER
             size_t i = 0;
             for (auto inv : unit->inventory)
             {
-                std::string ictx = fmt::format("{}.inventory[{}]", ctx, i++);
+                std::string ictx = fmt::format("{}.inv[{}]", ctx, i++);
                 if (!inv || !inv->item)
                 {
                     report("{}: null inventory item", ictx);
                     continue;
                 }
                 if (!items.count(inv->item))
-                    report("{}: item pointer {} not in world.items.all",
+                    report("{}: item pointer {} not in world.item.global",
                            ictx, static_cast<void*>(inv->item));
                 else if (!item_has_unit_holder_ref(inv->item, unit->id))
                     report("{}: item {} lacks UNIT_HOLDER ref back to unit",
@@ -885,11 +887,11 @@ struct Scanner
             {
                 auto item = df::item::find(item_id);
                 if (!item)
-                    report("{}: owned_items entry {} not in world.items.all", ctx, item_id);
+                    report("{}: item_itemowner entry {} not in world.item.global", ctx, item_id);
                 else if (!item_has_unit_ref(item, df::general_ref_type::UNIT_ITEMOWNER,
                                             unit->id))
-                    report("{}: owned item {} lacks UNIT_ITEMOWNER back-reference",
-                           ctx, item_id);
+                    report("{}: item_itemowner item {} lacks UNIT_ITEMOWNER "
+                           "back-reference", ctx, item_id);
             }
 
             // a unit's zone-assignment ref must be mirrored in the zone's
@@ -907,8 +909,8 @@ struct Scanner
                     std::find(zone->assigned_units.begin(),
                               zone->assigned_units.end(),
                               unit->id) == zone->assigned_units.end())
-                    report("{}: BUILDING_CIVZONE_ASSIGNED ref to zone {} but the "
-                           "zone's assigned_units does not list the unit",
+                    report("{}: BUILDING_CIVZONE_ASSIGNED ref to zone {} but "
+                           "the zone's assigned_u does not list the unit",
                            ctx, bref->building_id);
             }
 
@@ -919,8 +921,8 @@ struct Scanner
                     continue;
                 collect_buildings();
                 if (!buildings.count(zone))
-                    report("{}: owned_buildings entry {} not in "
-                           "world.buildings.all", ctx, static_cast<void*>(zone));
+                    report("{}: zone_assigned entry {} not in "
+                           "world.building.global", ctx, static_cast<void*>(zone));
                 else if (zone->assigned_unit_id != unit->id &&
                          // permissible: zones usable as spouse rooms are also
                          // pushed to the spouse's owned_buildings
@@ -929,7 +931,8 @@ struct Scanner
                            zone->assigned_unit_id ==
                                unit->relationship_ids[
                                    df::unit_relationship_type::Spouse]))
-                    report("{}: owned zone {} has assigned_unit_id {} (expected {})",
+                    report("{}: zone_assigned zone {} has owner_unid {} "
+                           "(expected {})",
                            ctx, zone->id, zone->assigned_unit_id, unit->id);
             }
 
@@ -964,11 +967,11 @@ struct Scanner
             if (nemesis->save_file_id < -1 ||
                 (df::global::unit_chunk_next_id &&
                  nemesis->save_file_id >= *df::global::unit_chunk_next_id))
-                report("{}: invalid save_file_id {}", nctx,
+                report("{}: invalid unit_chunk_id {}", nctx,
                        nemesis->save_file_id);
             if (nemesis->save_file_id != -1 &&
                 (nemesis->member_idx < 0 || nemesis->member_idx >= 100))
-                report("{}: member_idx {} out of range", nctx,
+                report("{}: unit_chunk_member {} out of range", nctx,
                        nemesis->member_idx);
 
             df::unit *chunk_unit = nullptr;
@@ -981,7 +984,7 @@ struct Scanner
                     {
                         chunk_unit = chunk->units[nemesis->member_idx].unit;
                         if (chunk_unit && chunk_unit->id != nemesis->unit_id)
-                            report("{}: unit_id {} but offloaded slot {}[{}] "
+                            report("{}: unit_id {} but unit chunk {}[{}] "
                                    "holds unit {}", nctx, nemesis->unit_id,
                                    nemesis->save_file_id, nemesis->member_idx,
                                    chunk_unit->id);
@@ -990,7 +993,7 @@ struct Scanner
                     }
                 }
                 else if (nemesis->save_file_id == -1)
-                    report("{}: dangling unit_id {} (not in units.all, no "
+                    report("{}: dangling unit_id {} (not in unit.global, no "
                            "unit chunk)", nctx, nemesis->unit_id);
                 // otherwise the chunk simply isn't loaded; can't verify
             }
@@ -1002,18 +1005,18 @@ struct Scanner
                        nctx, nemesis->unit_id);
 
             if (nemesis->figure && !histfigs.count(nemesis->figure))
-                report("{}: figure pointer {} not in world.history.figures",
+                report("{}: hist_fig pointer {} not in world.hist.figure",
                        nctx, static_cast<void*>(nemesis->figure));
             if (nemesis->group_leader_id != -1 &&
                 !df::nemesis_record::find(nemesis->group_leader_id))
-                report("{}: dangling group_leader_id {}", nctx, nemesis->group_leader_id);
+                report("{}: dangling master_nemid {}", nctx, nemesis->group_leader_id);
             if (nemesis->travel_link_nemid != -1 &&
                 !df::nemesis_record::find(nemesis->travel_link_nemid))
                 report("{}: dangling travel_link_nemid {}", nctx,
                        nemesis->travel_link_nemid);
             for (auto nemid : nemesis->companions)
                 if (!df::nemesis_record::find(nemid))
-                    report("{}: dangling companions entry {}", nctx, nemid);
+                    report("{}: dangling subord_nemid entry {}", nctx, nemid);
         }
     }
 
@@ -1129,8 +1132,9 @@ struct Scanner
                                 if (ci && ci->item == item)
                                     found = true;
                             if (!found)
-                                report("{}: BUILDING_HOLDER ref to building {} but the "
-                                       "building does not contain the item",
+                                report("{}: BUILDING_HOLDER ref to building {} "
+                                       "but the building's inv does not "
+                                       "contain the item",
                                        ctx, bref->building_id);
                         }
                     }
@@ -1141,15 +1145,15 @@ struct Scanner
             // fix/stuck-instruments)
             if (item->flags.bits.in_building &&
                 !item_has_building_ref(item, df::general_ref_type::BUILDING_HOLDER, -2))
-                report("{}: flags.in_building set but no BUILDING_HOLDER ref "
+                report("{}: ITEMFLAG_BUILDING set but no BUILDING_HOLDER ref "
                        "(fix/general-strike)", ctx);
             if (item->flags.bits.in_inventory &&
                 !item_has_unit_ref(item, df::general_ref_type::UNIT_HOLDER, -2) &&
                 get_item_container_id(item) == -1)
-                report("{}: flags.in_inventory set but no UNIT_HOLDER or "
+                report("{}: ITEMFLAG_HELD set but no UNIT_HOLDER or "
                        "CONTAINED_IN_ITEM ref", ctx);
             if (item->flags.bits.in_job && !item_is_in_job(item))
-                report("{}: flags.in_job set but no live job references it "
+                report("{}: ITEMFLAG_TAGGED set but no live job references it "
                        "(fix/stuck-written-materials)", ctx);
 
             // containment chains must be acyclic
@@ -1225,14 +1229,14 @@ struct Scanner
             size_t i = 0;
             for (auto job : bld->jobs)
             {
-                std::string jctx = fmt::format("{}.jobs[{}]", ctx, i++);
+                std::string jctx = fmt::format("{}.currentjob[{}]", ctx, i++);
                 if (!job)
                 {
                     report("{}: null job", jctx);
                     continue;
                 }
                 if (!jobs.count(job))
-                    report("{}: job pointer {} not in world.jobs.list",
+                    report("{}: job pointer {} not in world.job.global",
                            jctx, static_cast<void*>(job));
                 else if (!job_has_building_ref(job, bld->id))
                     report("{}: job {} lacks BUILDING_HOLDER back-reference",
@@ -1245,14 +1249,14 @@ struct Scanner
                 i = 0;
                 for (auto ci : actual->contained_items)
                 {
-                    std::string cctx = fmt::format("{}.contained_items[{}]", ctx, i++);
+                    std::string cctx = fmt::format("{}.inv[{}]", ctx, i++);
                     if (!ci || !ci->item)
                     {
-                        report("{}: null contained item", cctx);
+                        report("{}: null inventory entry", cctx);
                         continue;
                     }
                     if (!items.count(ci->item))
-                        report("{}: item pointer {} not in world.items.all",
+                        report("{}: item pointer {} not in world.item.global",
                                cctx, static_cast<void*>(ci->item));
                     else if (!item_has_building_ref(
                                  ci->item, df::general_ref_type::BUILDING_HOLDER,
@@ -1269,7 +1273,7 @@ struct Scanner
                 {
                     auto unit = df::unit::find(zone->assigned_unit_id);
                     if (!unit)
-                        report("{}: dangling assigned_unit_id {}", ctx,
+                        report("{}: dangling owner_unid {}", ctx,
                                zone->assigned_unit_id);
                     else
                     {
@@ -1290,7 +1294,7 @@ struct Scanner
                         }
                         if (!found)
                             report("{}: assigned to unit {} but unit's "
-                                   "owned_buildings does not list it", ctx,
+                                   "zone_assigned does not list it", ctx,
                                    zone->assigned_unit_id);
                     }
                 }
@@ -1303,7 +1307,7 @@ struct Scanner
                     auto unit = df::unit::find(unit_id);
                     if (!unit)
                     {
-                        report("{}: dangling assigned_units entry {}", ctx,
+                        report("{}: dangling assigned_u entry {}", ctx,
                                unit_id);
                         continue;
                     }
@@ -1317,13 +1321,13 @@ struct Scanner
                                 found = true;
                     }
                     if (!found)
-                        report("{}: assigned_units contains unit {} but the unit "
-                               "lacks a BUILDING_CIVZONE_ASSIGNED ref back",
-                               ctx, unit_id);
+                        report("{}: assigned_u contains unit {} but the "
+                               "unit lacks a BUILDING_CIVZONE_ASSIGNED ref "
+                               "back", ctx, unit_id);
                 }
                 for (auto item_id : zone->assigned_items)
                     if (!df::item::find(item_id))
-                        report("{}: dangling assigned_items entry {}", ctx,
+                        report("{}: dangling assigned_i entry {}", ctx,
                                item_id);
             }
         }
@@ -1349,17 +1353,17 @@ struct Scanner
             size_t i = 0;
             for (auto jref : job->items)
             {
-                std::string ictx = fmt::format("{}.items[{}]", ctx, i++);
+                std::string ictx = fmt::format("{}.jobitem[{}]", ctx, i++);
                 if (!jref || !jref->item)
                 {
-                    report("{}: null item ref", ictx);
+                    report("{}: null jobitem ref", ictx);
                     continue;
                 }
                 if (!items.count(jref->item))
-                    report("{}: item pointer {} not in world.items.all",
+                    report("{}: item pointer {} not in world.item.global",
                            ictx, static_cast<void*>(jref->item));
                 else if (!jref->item->flags.bits.in_job)
-                    report("{}: item {} lacks flags.in_job", ictx, jref->item->id);
+                    report("{}: item {} lacks ITEMFLAG_TAGGED", ictx, jref->item->id);
             }
 
             // BUILDING_HOLDER -> building's jobs list must contain this job
@@ -1375,9 +1379,9 @@ struct Scanner
                             if (bj == job)
                                 found = true;
                         if (!found)
-                            report("{}: BUILDING_HOLDER ref to building {} but the "
-                                   "building's job list does not contain it",
-                                   ctx, bref->building_id);
+                            report("{}: BUILDING_HOLDER ref to building {} "
+                                   "but the building's currentjob does not "
+                                   "contain it", ctx, bref->building_id);
                     }
                 }
                 else
@@ -1388,7 +1392,7 @@ struct Scanner
                         if (auto unit = df::unit::find(uref->unit_id))
                             if (unit->job.current_job != job)
                                 report("{}: UNIT_WORKER ref to unit {} but "
-                                       "unit.job.current_job is {}", ctx,
+                                       "unit.currentjob is {}", ctx,
                                        uref->unit_id,
                                        unit->job.current_job
                                            ? unit->job.current_job->id : -1);
@@ -1418,10 +1422,10 @@ struct Scanner
                 for (auto item_id : vec)
                 {
                     auto item = df::item::find(item_id);
-                    std::string ctx = fmt::format("plotinfo.equipment.{}[{}][{}]",
+                    std::string ctx = fmt::format("plotinfo.equip_info.{}[{}][{}]",
                                                   vec_name, enum_item_key(type), i++);
                     if (!item)
-                        report("{}: item id {} not in world.items.all "
+                        report("{}: item id {} not in world.item.global "
                                "(fix/corrupt-equipment)", ctx, item_id);
                     else if (item->getType() != type)
                         report("{}: item {} has type {}, expected {}",
@@ -1432,26 +1436,26 @@ struct Scanner
             for (size_t t = 0; t < num_types; t++)
             {
                 auto type = df::item_type(t);
-                check_eq_vec(eq.items_unmanifested[t], "items_unmanifested", type);
-                check_eq_vec(eq.items_unassigned[t], "items_unassigned", type);
-                check_eq_vec(eq.items_assigned[t], "items_assigned", type);
+                check_eq_vec(eq.items_unmanifested[t], "unmanifested", type);
+                check_eq_vec(eq.items_unassigned[t], "unassigned", type);
+                check_eq_vec(eq.items_assigned[t], "assigned", type);
             }
             for (auto item_id : eq.work_weapons)
                 if (!df::item::find(item_id))
-                    report("plotinfo.equipment.work_weapons: dangling item id {}",
-                           item_id);
+                    report("plotinfo.equip_info.civilian_item_id: dangling "
+                           "item id {}", item_id);
             for (auto unit_id : eq.work_units)
                 if (!df::unit::find(unit_id))
-                    report("plotinfo.equipment.work_units: dangling unit id {}",
-                           unit_id);
+                    report("plotinfo.equip_info.civilian_unit_id: dangling "
+                           "unit global_id {}", unit_id);
             for (auto item_id : eq.ammo_items)
                 if (!df::item::find(item_id))
-                    report("plotinfo.equipment.ammo_items: dangling item id {}",
-                           item_id);
+                    report("plotinfo.equip_info.hunter_assigned_ammo_item_id: "
+                           "dangling item id {}", item_id);
             for (auto unit_id : eq.ammo_units)
                 if (!df::unit::find(unit_id))
-                    report("plotinfo.equipment.ammo_units: dangling unit id {}",
-                           unit_id);
+                    report("plotinfo.equip_info.hunter_assigned_ammo_unit_id: "
+                           "dangling unit global_id {}", unit_id);
         }
 
         // squads
@@ -1466,11 +1470,11 @@ struct Scanner
             size_t i = 0;
             for (auto pos : squad->positions)
             {
-                std::string pctx = fmt::format("{}.positions[{}]", ctx, i++);
+                std::string pctx = fmt::format("{}.position[{}]", ctx, i++);
                 if (!pos)
                     continue;
                 if (pos->occupant != -1 && !df::historical_figure::find(pos->occupant))
-                    report("{}: dangling occupant hfid {}", pctx, pos->occupant);
+                    report("{}: dangling hfid {}", pctx, pos->occupant);
                 // assigned items may legitimately be off-map during raids;
                 // only flag type mismatches for items that resolve
                 for (auto item_id : pos->equipment.assigned_items)
@@ -1493,8 +1497,8 @@ struct Scanner
                             case df::item_type::QUIVER:
                                 break;
                             default:
-                                report("{}: assigned item {} has unexpected type {} "
-                                       "(bug 11014)", pctx, item_id,
+                                report("{}: assigned item {} has unexpected "
+                                       "type {} (bug 11014)", pctx, item_id,
                                        enum_item_key(t));
                         }
                     }
@@ -1509,7 +1513,8 @@ struct Scanner
                 continue;
             for (auto squad_id : ent->squads)
                 if (!df::squad::find(squad_id))
-                    report("entity {}: dangling squad id {}", ent->id, squad_id);
+                    report("entity {}: dangling squad_id {}",
+                           ent->id, squad_id);
         }
 
         // army controller links (army-controller-sanity)
@@ -1524,12 +1529,12 @@ struct Scanner
                 if (!ac)
                     continue;
                 if (!army_controllers.count(ac))
-                    report("entity {}: army_controller pointer {} not in "
-                           "world.army_controllers.all", ent->id,
+                    report("entity {}: army_controller pointer {} "
+                           "not in world.army_controller.global", ent->id,
                            static_cast<void*>(ac));
                 else if (ac->entity_id != ent->id)
-                    report("entity {}: army_controller {} has entity_id {}",
-                           ent->id, ac->id, ac->entity_id);
+                    report("entity {}: army_controllerst {} has "
+                           "entity_id {}", ent->id, ac->id, ac->entity_id);
             }
         }
         for (auto army : world->armies.all)
@@ -1541,15 +1546,15 @@ struct Scanner
             if (ac)
             {
                 if (!army_controllers.count(ac))
-                    report("{}: controller pointer {} not in "
-                           "world.army_controllers.all", ctx,
+                    report("{}: army_controller pointer {} not in "
+                           "world.army_controller.global", ctx,
                            static_cast<void*>(ac));
                 else if (ac->id != army->controller_id)
-                    report("{}: controller id mismatch ({} != {})",
+                    report("{}: army_controller_id mismatch ({} != {})",
                            ctx, army->controller_id, ac->id);
             }
             else if (army->controller_id != -1 && army->controller_id != 0)
-                report("{}: controller_id {} but controller is null "
+                report("{}: army_controller_id {} but army_controller is null "
                        "(fix/stuck-squad)", ctx, army->controller_id);
         }
     }
@@ -1659,12 +1664,13 @@ struct Scanner
             for (auto item_id : block->items)
             {
                 if (item_id < prev_id)
-                    report("{}: item list is not sorted (id {} follows {})",
-                           bctx, item_id, prev_id);
+                    report("{}: ground_item_id list is not sorted (id {} "
+                           "follows {})", bctx, item_id, prev_id);
                 prev_id = item_id;
                 auto item = df::item::find(item_id);
                 if (!item)
-                    report("{}: item id {} not in world.items.all", bctx, item_id);
+                    report("{}: ground_item_id {} not in world.item.global",
+                           bctx, item_id);
                 else
                 {
                     auto pos = Items::getPosition(item);
@@ -1674,8 +1680,8 @@ struct Scanner
                          pos.y < block->map_pos.y ||
                          pos.y >= block->map_pos.y + 16 ||
                          pos.z != block->map_pos.z))
-                        report("{}: item {} is at ({}, {}, {}), outside this block",
-                               bctx, item_id, pos.x, pos.y, pos.z);
+                        report("{}: item {} is at ({}, {}, {}), outside this block"
+                               "block", bctx, item_id, pos.x, pos.y, pos.z);
                 }
             }
 
@@ -1685,11 +1691,12 @@ struct Scanner
             {
                 std::vector<int32_t> expected(it->second.begin(), it->second.end());
                 if (expected != block->items)
-                    report("{}: item list does not match the set of on-ground "
-                           "items (fix/occupancy)", bctx);
+                    report("{}: ground_item_id list does not match the set of "
+                           "on-ground item (fix/occupancy)", bctx);
             }
             else if (!block->items.empty())
-                report("{}: {} stale item references", bctx, block->items.size());
+                report("{}: {} stale ground_item_id references", bctx,
+                       block->items.size());
 
             // occupancy bits must match expectations
             int z = block->map_pos.z;
@@ -1711,28 +1718,28 @@ struct Scanner
                         (exp.whole & occ_mask) == (act.whole & occ_mask))
                         continue;
                     if (!exp.bits.item && act.bits.item)
-                        report("{}: tile ({}, {}, {}) has item occupancy but no "
+                        report("{}: tile ({}, {}, {}) has OCCUPANCY_ITEM but no "
                                "on-ground item", bctx, x, y, z);
                     if (exp.bits.item && !act.bits.item)
-                        report("{}: tile ({}, {}, {}) lacks item occupancy",
+                        report("{}: tile ({}, {}, {}) lacks OCCUPANCY_ITEM",
                                bctx, x, y, z);
                     if (!exp.bits.unit && act.bits.unit)
-                        report("{}: tile ({}, {}, {}) has unit occupancy but no "
+                        report("{}: tile ({}, {}, {}) has OCCUPANCY_UNIT but no "
                                "standing unit", bctx, x, y, z);
                     if (exp.bits.unit && !act.bits.unit)
-                        report("{}: tile ({}, {}, {}) lacks unit occupancy",
+                        report("{}: tile ({}, {}, {}) lacks OCCUPANCY_UNIT",
                                bctx, x, y, z);
                     if (!exp.bits.unit_grounded && act.bits.unit_grounded)
-                        report("{}: tile ({}, {}, {}) has grounded unit occupancy "
+                        report("{}: tile ({}, {}, {}) has OCCUPANCY_GROUNDED_UNIT "
                                "but no grounded unit", bctx, x, y, z);
                     if (exp.bits.unit_grounded && !act.bits.unit_grounded)
-                        report("{}: tile ({}, {}, {}) lacks grounded unit "
-                               "occupancy", bctx, x, y, z);
+                        report("{}: tile ({}, {}, {}) lacks OCCUPANCY_GROUNDED_UNIT",
+                               bctx, x, y, z);
                     if (!exp_bld && act_bld)
-                        report("{}: tile ({}, {}, {}) has building occupancy but "
+                        report("{}: tile ({}, {}, {}) has OCCUPANCY_BUILDING but "
                                "no building covers it", bctx, x, y, z);
                     if (exp_bld && !act_bld)
-                        report("{}: tile ({}, {}, {}) lacks building occupancy",
+                        report("{}: tile ({}, {}, {}) lacks OCCUPANCY_BUILDING",
                                bctx, x, y, z);
                 }
             }
@@ -1755,11 +1762,13 @@ struct Scanner
                 continue;
             }
             if (shape == df::tiletype_shape::FLOOR && !eng->flags.bits.floor)
-                report("engraving at ({}, {}, {}) is on a floor but flags.floor "
-                       "is unset", eng->pos.x, eng->pos.y, eng->pos.z);
+                report("engraving at ({}, {}, {}) is on a floor but "
+                       "EVENTDETAILFLAG_FLOOR is unset",
+                       eng->pos.x, eng->pos.y, eng->pos.z);
             else if (shape == df::tiletype_shape::WALL && eng->flags.bits.floor)
-                report("engraving at ({}, {}, {}) is on a wall but flags.floor "
-                       "is set", eng->pos.x, eng->pos.y, eng->pos.z);
+                report("engraving at ({}, {}, {}) is on a wall but "
+                       "EVENTDETAILFLAG_FLOOR is set",
+                       eng->pos.x, eng->pos.y, eng->pos.z);
         }
     }
 

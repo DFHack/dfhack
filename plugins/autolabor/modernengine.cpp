@@ -796,11 +796,13 @@ static void scan_demand(std::map<df::unit_labor, int> &backlog)
         else
             unclaimed_streak[l] = 0;
         if (backlog[l] > 0 || unclaimed_streak[l] > 0)
+        {
             TRACE(assign).print("labor {}: {} unclaimed, streak {}, managed={}, {}\n",
                 ENUM_KEY_STR(unit_labor, l), backlog[l], unclaimed_streak[l],
                 (int)(l >= 0 && l < NUM_LABORS && managed_labor_cache[l]),
                 is_unskilled(l) ? "unskilled" :
                     ENUM_KEY_STR(job_skill, labor_to_skill[l]));
+        }
     }
 }
 
@@ -1072,12 +1074,16 @@ void ModernEngine::update(color_ostream &out)
         auto &snap = tool_snapshot[wd];
         for (int32_t id : cur)
             if (!snap.count(id))
+            {
                 TRACE(tool_detail).print(
                     "tool detail {}: +unit {} EXTERNAL\n", wd->name, id);
+            }
         for (int32_t id : snap)
             if (!cur.count(id))
+            {
                 TRACE(tool_detail).print(
                     "tool detail {}: -unit {} EXTERNAL\n", wd->name, id);
+            }
     }
 
     // --- collect citizens ---------------------------------------------------
@@ -1116,12 +1122,14 @@ void ModernEngine::update(color_ostream &out)
                 tk->second.detail_skill : job_skill::NONE;
             bool member = tool_members.count(cre->id) > 0;
             if (member || is_tool_skill(pinned))
+            {
                 TRACE(tool_detail).print(
                     "unit {} ({}) PickupEquipment: detail_skill={} member={}\n",
                     cre->id, Units::getReadableName(cre),
                     pinned == job_skill::NONE ? "NONE" :
                         ENUM_KEY_STR(job_skill, pinned),
                     (int)member);
+            }
         }
 
         probe_labor_observation(cre);
@@ -1306,6 +1314,7 @@ void ModernEngine::update(color_ostream &out)
             if (demand)
                 chosen = prev;
             if (is_tool_skill(prev))
+            {
                 TRACE(tool_detail).print(
                     "unit {} ({}) tool pin {}: allowed=1 demand={} job={} -> {}\n",
                     info.u->id, Units::getReadableName(info.u),
@@ -1314,7 +1323,9 @@ void ModernEngine::update(color_ostream &out)
                         ENUM_KEY_STR(job_type,
                             info.u->job.current_job->job_type) : "none",
                     chosen == prev ? "kept" : "released");
+            }
             else
+            {
                 TRACE(assign).print(
                     "unit {} ({}) pin {}: demand={} job={} -> {}\n",
                     info.u->id, Units::getReadableName(info.u),
@@ -1323,6 +1334,7 @@ void ModernEngine::update(color_ostream &out)
                         ENUM_KEY_STR(job_type,
                             info.u->job.current_job->job_type) : "none",
                     chosen == prev ? "kept" : "released");
+            }
         }
 
         int best_score = -1;
@@ -1445,20 +1457,24 @@ void ModernEngine::update(color_ostream &out)
         if (info.excluded || specialist_ids.count(info.u->id))
         {
             if (any_starving)
+            {
                 TRACE(assign).print(
                     "unit {} ({}): apprentice skip, excluded={} specialist={}\n",
                     info.u->id, Units::getReadableName(info.u),
                     (int)info.excluded,
                     (int)specialist_ids.count(info.u->id));
+            }
             continue;
         }
         if (info.state != IDLE && info.state != BUSY)
         {
             if (any_starving)
+            {
                 TRACE(assign).print(
                     "unit {} ({}): apprentice skip, state={}\n",
                     info.u->id, Units::getReadableName(info.u),
                     (int)info.state);
+            }
             continue;
         }
 
@@ -1895,6 +1911,7 @@ void ModernEngine::update(color_ostream &out)
             std::string experiment = xcomma ? xs.str() : "none";
 
             if (worker && worker->status.labors[l])
+            {
                 // claimant holds the mapped labor: the mapping is fine and
                 // the starvation was eligibility/staffing, not a mis-map
                 INFO(labor_probe).print(
@@ -1904,7 +1921,9 @@ void ModernEngine::update(color_ostream &out)
                     esc.job_id, esc.job_name,
                     worker->id, Units::getReadableName(worker),
                     ENUM_KEY_STR(unit_labor, l), experiment, enabled);
+            }
             else if (worker)
+            {
                 WARN(labor_probe).print(
                     "labor mapping mismatch confirmed: job {} ({}) was "
                     "claimed by unit {} ({}) which does not hold the mapped "
@@ -1913,19 +1932,24 @@ void ModernEngine::update(color_ostream &out)
                     esc.job_id, esc.job_name,
                     worker->id, Units::getReadableName(worker),
                     ENUM_KEY_STR(unit_labor, l), enabled, experiment);
+            }
             else
+            {
                 INFO(labor_probe).print(
                     "job {} ({}) was claimed but its worker could not be "
                     "identified (mapped {})\n",
                     esc.job_id, esc.job_name,
                     ENUM_KEY_STR(unit_labor, l));
+            }
         }
         else
+        {
             WARN(labor_probe).print(
                 "job {} ({}) left the board unclaimed while probing its "
                 "mapped labor {}\n",
                 esc.job_id, esc.job_name,
                 ENUM_KEY_STR(unit_labor, l));
+        }
 
         revert_escalation(esc);
         it = labor_escalations.erase(it);
@@ -1957,9 +1981,11 @@ static void reconcile(WorkDetailManager *wdm, df::work_detail *wd,
             if (auto u = df::unit::find(id))
             {
                 if (trace)
+                {
                     TRACE(tool_detail).print(
                         "tool detail {}: -unit {} ({})\n",
                         wd->name, id, Units::getReadableName(u));
+                }
                 wdm->touch(u);
             }
         }
@@ -1974,9 +2000,11 @@ static void reconcile(WorkDetailManager *wdm, df::work_detail *wd,
         wdm->set_membership(wd, id, true);
         if (trace && !had)
             if (auto u = df::unit::find(id))
+            {
                 TRACE(tool_detail).print(
                     "tool detail {}: +unit {} ({})\n",
                     wd->name, id, Units::getReadableName(u));
+            }
     }
 }
 
@@ -2012,9 +2040,11 @@ static void reconcile_builtin(WorkDetailManager *wdm, df::work_detail *wd,
             wdm->set_membership(wd, id, true);
             wdm->borrow(wd, id);
             if (auto u = df::unit::find(id))
+            {
                 TRACE(tool_detail).print(
                     "tool detail {}: +unit {} ({})\n",
                     wd->name, id, Units::getReadableName(u));
+            }
         }
     }
 }

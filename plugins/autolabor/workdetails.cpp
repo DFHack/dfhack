@@ -33,9 +33,12 @@ void WorkDetailManager::reset()
 {
     dirty.clear();
     flagged.clear();
+    borrowed.clear();
     recompute_all = false;
     flagged_cfg = World::GetPersistentSiteData("autolabor/flagged");
+    borrowed_cfg = World::GetPersistentSiteData("autolabor/borrowed");
     load_flagged();
+    load_borrowed();
 }
 
 void WorkDetailManager::load_flagged()
@@ -64,6 +67,38 @@ void WorkDetailManager::save_flagged()
     flagged_cfg.val().resize(off);
 }
 
+void WorkDetailManager::load_borrowed()
+{
+    borrowed.clear();
+    if (!borrowed_cfg.isValid())
+        return;
+    size_t count = borrowed_cfg.data_size() / (2 * PersistentDataItem::int28_size);
+    for (size_t i = 0; i < count; i++)
+    {
+        int32_t icon = borrowed_cfg.get_int28(i * 2 * PersistentDataItem::int28_size);
+        int32_t uid = borrowed_cfg.get_int28((i * 2 + 1) * PersistentDataItem::int28_size);
+        borrowed[icon].insert(uid);
+    }
+}
+
+void WorkDetailManager::save_borrowed()
+{
+    if (!borrowed_cfg.isValid())
+        borrowed_cfg = World::AddPersistentSiteData("autolabor/borrowed");
+    if (!borrowed_cfg.isValid())
+        return;
+
+    size_t off = 0;
+    for (auto &kv : borrowed)
+        for (int32_t id : kv.second)
+        {
+            borrowed_cfg.set_int28(off, kv.first);
+            borrowed_cfg.set_int28(off + PersistentDataItem::int28_size, id);
+            off += 2 * PersistentDataItem::int28_size;
+        }
+    borrowed_cfg.val().resize(off);
+}
+
 std::vector<df::work_detail*> WorkDetailManager::managed_details()
 {
     std::vector<df::work_detail*> out;
@@ -77,6 +112,17 @@ df::work_detail *WorkDetailManager::find_detail(const std::string &name)
 {
     for (auto wd : details())
         if (is_managed(wd) && wd->name == name)
+            return wd;
+    return NULL;
+}
+
+df::work_detail *WorkDetailManager::find_builtin(df::work_detail_icon_type icon)
+{
+    // builtin details occupy a no_modify prefix run in the vector (the
+    // same convention the work-details screen uses); matching on icon
+    // distinguishes Miners/Woodcutters/Hunters from the other builtins
+    for (auto wd : details())
+        if (!is_managed(wd) && wd->flags.bits.no_modify && wd->icon == icon)
             return wd;
     return NULL;
 }
@@ -181,6 +227,24 @@ void WorkDetailManager::set_specialized(df::unit *u, bool on)
     }
 }
 
+bool WorkDetailManager::is_borrowed(df::work_detail *wd, int32_t unit_id) const
+{
+    auto it = borrowed.find(wd ? wd->icon : -1);
+    return it != borrowed.end() && it->second.count(unit_id);
+}
+
+void WorkDetailManager::borrow(df::work_detail *wd, int32_t unit_id)
+{
+    if (wd)
+        borrowed[wd->icon].insert(unit_id);
+}
+
+void WorkDetailManager::unborrow(df::work_detail *wd, int32_t unit_id)
+{
+    if (wd)
+        borrowed[wd->icon].erase(unit_id);
+}
+
 void WorkDetailManager::touch(df::unit *u)
 {
     if (u)
@@ -209,6 +273,7 @@ void WorkDetailManager::commit()
     dirty.clear();
 
     save_flagged();
+    save_borrowed();
 }
 
 void WorkDetailManager::shutdown()
@@ -216,6 +281,31 @@ void WorkDetailManager::shutdown()
     // remove all managed details
     for (auto wd : managed_details())
         delete_detail(wd);
+
+    // drop memberships we added to builtin details
+    for (auto wd : details())
+    {
+        if (is_managed(wd))
+            continue;
+        auto it = borrowed.find(wd->icon);
+        if (it == borrowed.end())
+            continue;
+        auto &vec = wd->assigned_units;
+        for (auto uit = vec.begin(); uit != vec.end();)
+        {
+            if (it->second.count(*uit))
+            {
+                int32_t id = *uit;
+                uit = vec.erase(uit);
+                if (auto u = df::unit::find(id))
+                    touch(u);
+            }
+            else
+                ++uit;
+        }
+    }
+    borrowed.clear();
+    save_borrowed();
 
     // clear specialization flags we set on any still-living unit
     for (int32_t id : flagged)

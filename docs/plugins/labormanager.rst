@@ -48,6 +48,18 @@ history shapes specialization:
   (smithing, crafting, cooking, mechanics, engraving, and so on) are
   preferred for higher-skilled workers -- both when choosing a specialty
   and when deciding who to keep out of the laborer pool.
+* **Assignment stickiness.** A unit assigned to a skill detail keeps the
+  assignment while any work for that skill remains -- including claimed
+  jobs, the fetch-materials phase, and breaks -- so jobs aren't aborted
+  by reassignment churn. For tool-carrying labors (mining, woodcutting,
+  hunting) this also prevents dropping and re-equipping tools between
+  cycles. Assignments are recorded in the save data and restored on load.
+* **Builtin tool details.** DF v50 only equips tools for members of the
+  game's predefined work details, so mining, woodcutting, and hunting
+  specialists are assigned to the builtin Miners, Woodcutters, and
+  Hunters details instead of plugin-created ones. Memberships added by
+  the plugin are tracked and removed cleanly on disable; members you
+  assigned yourself are never touched.
 * **Strange-mood shaping.** Dwarves that can still have a strange mood
   (their race has the ``STRANGE_MOODS`` token and they haven't had one
   yet) and that have already started a moodable craft are steered toward
@@ -155,6 +167,13 @@ Advanced usage
     command exists under `autolabor`. In monitor mode the plugin performs
     no labor management -- all work details are left to the player -- but
     still tracks the job board and shows the task starvation warning.
+``labormanager dump``
+    Print a diagnostic snapshot of everything the engine can see: every
+    job and posting on the board with its flags and resolved labor, the
+    per-labor demand and starvation streaks, skill usage, tool counts,
+    work detail memberships, and each citizen's state, pins, and enabled
+    labors. Intended for bug reports; also available as
+    ``autolabor dump``, and meaningful in monitor mode.
 
 Monitor mode (``labormanager mode monitor`` or the work details overlay)
 runs the same tracking without any labor management, for players who want

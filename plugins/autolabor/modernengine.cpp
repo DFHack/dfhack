@@ -37,6 +37,7 @@
 #include <df/itemdef_weaponst.h>
 #include <df/items_other_id.h>
 #include <df/job.h>
+#include <df/job_list_link.h>
 #include <df/job_postingst.h>
 #include <df/personality_needst.h>
 #include <df/plotinfost.h>
@@ -60,6 +61,9 @@ using df::global::game;
 
 namespace DFHack {
     DBG_DECLARE(autolabor, modern_cycle, DebugCategory::LINFO);
+    DBG_DECLARE(autolabor, tool_detail, DebugCategory::LINFO);
+    DBG_DECLARE(autolabor, assign, DebugCategory::LINFO);
+    DBG_EXTERN(autolabor, labor_probe);
 }
 
 using namespace autolabor;
@@ -105,6 +109,34 @@ static tools_enum labor_tool(df::unit_labor l)
     case unit_labor::CUTWOOD: return TOOL_AXE;
     case unit_labor::HUNT:    return TOOL_CROSSBOW;
     default:                  return TOOL_NONE;
+    }
+}
+
+// a skill whose labors include a tool labor (mining, woodcutting,
+// hunting); toggling these makes the unit drop and re-equip its tool
+static bool is_tool_skill(df::job_skill s)
+{
+    FOR_ENUM_ITEMS(unit_labor, l)
+        if (l != unit_labor::NONE && labor_to_skill[l] == s &&
+            is_exclusive_labor(l))
+            return true;
+    return false;
+}
+
+// a work detail whose icon marks it as one of the tool-carrying details:
+// the builtin Miners/Woodcutters/Hunters, or a managed fallback for one
+// of those skills (managed details reuse the same icons)
+static bool is_tool_detail(df::work_detail *wd)
+{
+    if (!wd)
+        return false;
+    switch (wd->icon) {
+    case work_detail_icon_type::MINERS:
+    case work_detail_icon_type::WOODCUTTERS:
+    case work_detail_icon_type::HUNTERS:
+        return true;
+    default:
+        return false;
     }
 }
 
@@ -197,6 +229,9 @@ struct UnitInfo {
 struct SpecTrack {
     int busy_streak = 0;
     int rest_left = 0;
+    // the skill detail the unit was last assigned to; tool labors stick to
+    // their holders so they don't drop and re-equip tools between cycles
+    df::job_skill detail_skill = df::job_skill::NONE;
 };
 
 static JobLaborMapper *labor_mapper = nullptr;
@@ -214,6 +249,28 @@ static std::map<int32_t, PostingTrack> posting_track;   // posting idx -> info
 // outweigh ones the fort abandoned
 static std::map<df::job_skill, double> skill_usage;
 static std::map<int32_t, int> unclaimed_streak;          // labor -> cycles
+// oldest unclaimed posting per labor; the job pointer is only valid within
+// the cycle that scan_demand filled it (jobs aren't stable across cycles)
+static std::map<df::unit_labor, df::job*> unclaimed_job;
+static std::map<df::unit_labor, int32_t> unclaimed_age;
+
+// labor-mismatch escalation state, keyed by the mapped labor. When a posting
+// starves despite eligible units holding its mapped labor, we warn and then
+// enable the disputed labors on idle dwarves one at a time; whichever labor
+// unlocks the job identifies the labor the game actually gates it on.
+struct LaborEscalation {
+    int32_t job_id = -1;
+    df::job_type jtype = df::job_type::NONE;
+    std::string job_name;
+    std::vector<df::unit_labor> candidates;
+    size_t next = 0;
+    std::map<int32_t, std::set<df::unit_labor>> writes; // unit -> labors we set
+};
+static std::map<df::unit_labor, LaborEscalation> labor_escalations;
+static std::map<df::unit_labor, int> labor_work;         // live postings per labor, claimed or not
+// tool-detail membership as of the end of the last applied cycle; diffs
+// flag assignments made outside our reconcile calls (game or player)
+static std::map<df::work_detail*, std::set<int32_t>> tool_snapshot;
 static std::map<int32_t, SpecTrack> unit_track;          // unit id -> tracking
 static std::vector<bool> managed_labor_cache;
 
@@ -266,6 +323,42 @@ static bool has_worker(df::job *j)
 // every cycle so it's included whenever the fort is saved, then restored
 // on enable after a load.
 
+// does work remain for the skill? any live posting (claimed or not) for
+// the skill's labors, the unit's own current job mapping to it, or a
+// PickupEquipment job (a tool job suspends into it while the unit fetches
+// its tool, and the claimed posting may not be visible to either other
+// test then)
+static bool skill_demand_remains(df::job_skill skill, df::unit *u)
+{
+    FOR_ENUM_ITEMS(unit_labor, l)
+        if (l != unit_labor::NONE && labor_to_skill[l] == skill &&
+            labor_work[l] > 0)
+            return true;
+    if (u->job.current_job)
+    {
+        if (u->job.current_job->job_type == df::job_type::PickupEquipment)
+            return true;
+        df::unit_labor jl = labor_mapper->find_job_labor(u->job.current_job);
+        if (jl >= 0 && jl < NUM_LABORS && labor_to_skill[jl] == skill)
+            return true;
+    }
+    return false;
+}
+
+// remove the labors an escalation experiment enabled and rebuild each
+// affected unit's labor matrix from its work details
+static void revert_escalation(LaborEscalation &esc)
+{
+    for (auto &kv : esc.writes)
+        if (auto u = df::unit::find(kv.first))
+        {
+            for (auto m : kv.second)
+                u->status.labors[m] = false;
+            Units::setAutomaticProfessions(u);
+        }
+    esc.writes.clear();
+}
+
 static std::vector<std::string> split_str(const std::string &s, char delim)
 {
     std::vector<std::string> out;
@@ -306,7 +399,8 @@ static void save_state()
     ss << ";track:";
     for (auto &kv : unit_track)
         ss << kv.first << ',' << kv.second.busy_streak << ','
-           << kv.second.rest_left << '|';
+           << kv.second.rest_left << ',' << (int)kv.second.detail_skill
+           << '|';
     p.val() = ss.str();
 }
 
@@ -372,11 +466,14 @@ static void restore_state()
             for (auto &e : split_str(body, '|'))
             {
                 auto f = split_str(e, ',');
-                if (f.size() == 3)
+                if (f.size() >= 3)
                 {
                     SpecTrack t;
                     t.busy_streak = atoi(f[1].c_str());
                     t.rest_left = atoi(f[2].c_str());
+                    if (f.size() > 3)
+                        t.detail_skill =
+                            (df::job_skill)atoi(f[3].c_str());
                     unit_track[atoi(f[0].c_str())] = t;
                 }
             }
@@ -402,6 +499,11 @@ void ModernEngine::enable(color_ostream &out)
     posting_track.clear();
     skill_usage.clear();
     unclaimed_streak.clear();
+    unclaimed_job.clear();
+    unclaimed_age.clear();
+    for (auto &kv : labor_escalations)
+        revert_escalation(kv.second);
+    labor_escalations.clear();
     unit_track.clear();
     cycle_timestamp = 0;
     stat_starving = 0;
@@ -420,6 +522,9 @@ void ModernEngine::enable(color_ostream &out)
 void ModernEngine::disable(color_ostream &out)
 {
     initialized = false;
+    for (auto &kv : labor_escalations)
+        revert_escalation(kv.second);
+    labor_escalations.clear();
     wdm->shutdown();
     out << "Disabling labormanager." << std::endl;
 }
@@ -430,6 +535,9 @@ void ModernEngine::map_unload()
     posting_track.clear();
     skill_usage.clear();
     unclaimed_streak.clear();
+    unclaimed_job.clear();
+    unclaimed_age.clear();
+    labor_escalations.clear();
     unit_track.clear();
     stat_starving = 0;
     stat_oldest_wait = 0;
@@ -462,15 +570,41 @@ df::coord ModernEngine::oldest_starving_pos()
                                             : df::coord();
 }
 
+// resolve a custom reaction's code to the reaction's own name; "" if the
+// code is empty or the reaction can't be found
+static std::string reaction_display_name(const std::string &code)
+{
+    if (!code.empty())
+        for (auto r : df::reaction::get_vector())
+            if (r->code == code && !r->name.empty())
+                return r->name;
+    return "";
+}
+
+// display name for a job: for custom reactions, resolve the job's reaction
+// code to the reaction's own name
+static std::string job_display_name(df::job *j)
+{
+    if (j->job_type == df::job_type::CustomReaction)
+    {
+        std::string name = reaction_display_name(j->reaction_name);
+        if (!name.empty())
+            return name;
+    }
+    const char *cap = ENUM_ATTR(job_type, caption, j->job_type);
+    return cap ? cap : ENUM_KEY_STR(job_type, j->job_type);
+}
+
 // display name for the oldest starving job: for custom reactions, resolve
 // the job's reaction code to the reaction's own name
 static std::string oldest_starving_name()
 {
-    if (stat_oldest_job == df::job_type::CustomReaction &&
-            !stat_oldest_reaction.empty())
-        for (auto r : df::reaction::get_vector())
-            if (r->code == stat_oldest_reaction && !r->name.empty())
-                return r->name;
+    if (stat_oldest_job == df::job_type::CustomReaction)
+    {
+        std::string name = reaction_display_name(stat_oldest_reaction);
+        if (!name.empty())
+            return name;
+    }
     const char *cap = ENUM_ATTR(job_type, caption, stat_oldest_job);
     return cap ? cap : ENUM_KEY_STR(job_type, stat_oldest_job);
 }
@@ -496,11 +630,16 @@ std::string ModernEngine::status_line()
 
 static void reconcile(WorkDetailManager *wdm, df::work_detail *wd,
     const std::set<int32_t> &desired);
+static void reconcile_builtin(WorkDetailManager *wdm, df::work_detail *wd,
+    const std::set<int32_t> &desired);
 static df::work_detail_icon_type skill_icon(df::job_skill skill);
 
 static void scan_demand(std::map<df::unit_labor, int> &backlog)
 {
     backlog.clear();
+    labor_work.clear();
+    unclaimed_job.clear();
+    unclaimed_age.clear();
     stat_starving = 0;
     stat_oldest_wait = 0;
     stat_oldest_job = df::job_type::NONE;
@@ -524,17 +663,38 @@ static void scan_demand(std::map<df::unit_labor, int> &backlog)
 
     for (auto jp : world->jobs.postings)
     {
-        if (jp->flags.bits.dead || !jp->job)
-            continue;
         df::job *j = jp->job;
-        if (j->flags.bits.suspend || j->flags.bits.item_lost)
+        if (jp->flags.bits.dead || !j)
+        {
+            TRACE(assign).print("posting {}: skipped, dead={} job={}\n",
+                jp->idx, (int)jp->flags.bits.dead, j ? "set" : "null");
             continue;
+        }
+        if (j->flags.bits.suspend || j->flags.bits.item_lost)
+        {
+            TRACE(assign).print("posting {}: {} skipped, suspend={} item_lost={}\n",
+                jp->idx, job_display_name(j),
+                (int)j->flags.bits.suspend, (int)j->flags.bits.item_lost);
+            continue;
+        }
+
+        // work exists for this labor even when every posting is claimed;
+        // tool-labor stickiness keys off this so a unit fetching its tool
+        // or taking a break doesn't lose the detail and drop the tool
+        df::unit_labor labor = labor_mapper->find_job_labor(j);
+        if (labor >= 0 && labor < NUM_LABORS)
+            labor_work[labor]++;
+
+        TRACE(assign).print("posting {}: {} -> labor {} ({})\n",
+            jp->idx, job_display_name(j),
+            labor >= 0 && labor < NUM_LABORS ?
+                ENUM_KEY_STR(unit_labor, labor) : "none",
+            has_worker(j) ? "claimed" : "unclaimed");
+
         if (has_worker(j))
             continue;
 
         live_postings.insert(jp->idx);
-
-        df::unit_labor labor = labor_mapper->find_job_labor(j);
 
         if (!posting_track.count(jp->idx))
         {
@@ -560,6 +720,11 @@ static void scan_demand(std::map<df::unit_labor, int> &backlog)
         if (labor < 0 || labor >= NUM_LABORS)
             continue;
         backlog[labor]++;
+        if (age >= unclaimed_age[labor])
+        {
+            unclaimed_age[labor] = age;
+            unclaimed_job[labor] = j;
+        }
 
         // a job at a shop with a permitted-worker list or a nondefault
         // skill range needs a qualifying worker holding the labor
@@ -630,6 +795,12 @@ static void scan_demand(std::map<df::unit_labor, int> &backlog)
             unclaimed_streak[l]++;
         else
             unclaimed_streak[l] = 0;
+        if (backlog[l] > 0 || unclaimed_streak[l] > 0)
+            TRACE(assign).print("labor {}: {} unclaimed, streak {}, managed={}, {}\n",
+                ENUM_KEY_STR(unit_labor, l), backlog[l], unclaimed_streak[l],
+                (int)(l >= 0 && l < NUM_LABORS && managed_labor_cache[l]),
+                is_unskilled(l) ? "unskilled" :
+                    ENUM_KEY_STR(job_skill, labor_to_skill[l]));
     }
 }
 
@@ -878,6 +1049,37 @@ void ModernEngine::update(color_ostream &out)
 
     auto guilded = guilded_professions();
 
+    // members of tool details before this cycle's changes, for logging
+    std::set<int32_t> tool_members;
+    std::vector<df::work_detail*> tool_details;
+    for (auto icon : {work_detail_icon_type::MINERS,
+            work_detail_icon_type::WOODCUTTERS,
+            work_detail_icon_type::HUNTERS})
+        if (auto *wd = wdm->find_builtin(icon))
+            tool_details.push_back(wd);
+    for (auto wd : wdm->managed_details())
+        if (is_tool_detail(wd))
+            tool_details.push_back(wd);
+    for (auto wd : tool_details)
+    {
+        tool_members.insert(wd->assigned_units.begin(),
+            wd->assigned_units.end());
+        // diff against the post-apply snapshot: our own changes were
+        // already logged by reconcile, so anything here is an external
+        // write (the game or the player) that we need to see
+        std::set<int32_t> cur(wd->assigned_units.begin(),
+            wd->assigned_units.end());
+        auto &snap = tool_snapshot[wd];
+        for (int32_t id : cur)
+            if (!snap.count(id))
+                TRACE(tool_detail).print(
+                    "tool detail {}: +unit {} EXTERNAL\n", wd->name, id);
+        for (int32_t id : snap)
+            if (!cur.count(id))
+                TRACE(tool_detail).print(
+                    "tool detail {}: -unit {} EXTERNAL\n", wd->name, id);
+    }
+
     // --- collect citizens ---------------------------------------------------
 
     std::vector<UnitInfo> units;
@@ -903,6 +1105,27 @@ void ModernEngine::update(color_ostream &out)
 
         info.needs = scan_needs(cre);
 
+        // observe units fetching a tool while the engine (or the player)
+        // has them in a tool detail; a member=0 line with a tool
+        // detail_skill means the detail assignment was already lost
+        if (cre->job.current_job &&
+            cre->job.current_job->job_type == df::job_type::PickupEquipment)
+        {
+            auto tk = unit_track.find(cre->id);
+            df::job_skill pinned = tk != unit_track.end() ?
+                tk->second.detail_skill : job_skill::NONE;
+            bool member = tool_members.count(cre->id) > 0;
+            if (member || is_tool_skill(pinned))
+                TRACE(tool_detail).print(
+                    "unit {} ({}) PickupEquipment: detail_skill={} member={}\n",
+                    cre->id, Units::getReadableName(cre),
+                    pinned == job_skill::NONE ? "NONE" :
+                        ENUM_KEY_STR(job_skill, pinned),
+                    (int)member);
+        }
+
+        probe_labor_observation(cre);
+
         units.push_back(info);
     }
 
@@ -918,6 +1141,54 @@ void ModernEngine::update(color_ostream &out)
 
     double starve_w = double(NUM_BALANCE_STOPS - 1 - balance()) / (NUM_BALANCE_STOPS - 1);
     double skill_w  = double(balance()) / (NUM_BALANCE_STOPS - 1);
+
+    // skills that map to a managed labor AND are actually used by the fort
+    // (per posting history); a citizen whose top skill has no labor (e.g.
+    // teaching) or whose skill is never exercised (gelders, animal
+    // dissectors in most forts) stays a generalist rather than getting a
+    // reserved detail
+    std::set<df::job_skill> viable_skills;
+    FOR_ENUM_ITEMS(unit_labor, l)
+        if (l != unit_labor::NONE && managed_labor_cache[l] && !is_unskilled(l) &&
+            skill_usage[labor_to_skill[l]] >= 0.5)
+            viable_skills.insert(labor_to_skill[l]);
+
+    {
+        std::string vs;
+        for (auto s : viable_skills)
+        {
+            if (!vs.empty())
+                vs += ", ";
+            vs += ENUM_KEY_STR(job_skill, s);
+        }
+        TRACE(assign).print("viable skills ({}): {}\n", viable_skills.size(), vs);
+    }
+
+    auto skill_allowed = [&](df::job_skill s) {
+        if (s == labor_to_skill[unit_labor::FISH])
+            return config_flag(CF_ALLOW_FISHING) && bscan.has_fishery;
+        if (s == labor_to_skill[unit_labor::HUNT])
+            return config_flag(CF_ALLOW_HUNTING) && bscan.has_butchers;
+        return true;
+    };
+
+    // units pinned to a skill detail keep the pin while work remains --
+    // the laborer pool must not pull them out of their detail and abort
+    // a claimed job (or make a tool user drop their tool). demand is the
+    // gate, not viability: a freshly drafted unit has no usage history yet
+    std::set<int32_t> pinned;
+    for (auto &kv : unit_track)
+    {
+        df::job_skill pin = kv.second.detail_skill;
+        if (pin == job_skill::NONE || !skill_allowed(pin))
+            continue;
+        auto it = unit_idx.find(kv.first);
+        if (it == unit_idx.end())
+            continue;
+        UnitInfo &info = units[it->second];
+        if (!info.excluded && skill_demand_remains(pin, info.u))
+            pinned.insert(kv.first);
+    }
 
     // --- laborer pool sizing ------------------------------------------------
 
@@ -981,40 +1252,36 @@ void ModernEngine::update(color_ostream &out)
 
     std::set<int32_t> laborer_ids;
     for (int i = 0; i < (int)order.size() && (int)laborer_ids.size() < laborer_target; i++)
-        laborer_ids.insert(units[order[i]].u->id);
+        if (!pinned.count(units[order[i]].u->id))
+            laborer_ids.insert(units[order[i]].u->id);
 
     // --- specialists --------------------------------------------------------
     // every remaining citizen with a usable skill gets pinned to that skill's
     // detail; guilded specialists rotate through rest periods
 
-    // skills that map to a managed labor AND are actually used by the fort
-    // (per posting history); a citizen whose top skill has no labor (e.g.
-    // teaching) or whose skill is never exercised (gelders, animal
-    // dissectors in most forts) stays a generalist rather than getting a
-    // reserved detail
-    std::set<df::job_skill> viable_skills;
-    FOR_ENUM_ITEMS(unit_labor, l)
-        if (l != unit_labor::NONE && managed_labor_cache[l] && !is_unskilled(l) &&
-            skill_usage[labor_to_skill[l]] >= 0.5)
-            viable_skills.insert(labor_to_skill[l]);
-
     std::map<df::job_skill, std::vector<int32_t>> skill_members; // skill -> unit ids
     std::set<int32_t> specialist_ids;
     stat_resting = 0;
 
-    auto skill_allowed = [&](df::job_skill s) {
-        if (s == labor_to_skill[unit_labor::FISH])
-            return config_flag(CF_ALLOW_FISHING) && bscan.has_fishery;
-        if (s == labor_to_skill[unit_labor::HUNT])
-            return config_flag(CF_ALLOW_HUNTING) && bscan.has_butchers;
-        return true;
-    };
-
     for (int i = 0; i < n; i++)
     {
         UnitInfo &info = units[i];
+
+        df::job_skill prev = job_skill::NONE;
+        auto tk = unit_track.find(info.u->id);
+        if (tk != unit_track.end())
+            prev = tk->second.detail_skill;
+
         if (info.excluded || laborer_ids.count(info.u->id))
+        {
+            if (tk != unit_track.end())
+                tk->second.detail_skill = job_skill::NONE;
+            TRACE(assign).print(
+                "unit {} ({}): skipped, excluded={} laborer={}\n",
+                info.u->id, Units::getReadableName(info.u),
+                (int)info.excluded, (int)laborer_ids.count(info.u->id));
             continue;
+        }
 
         // pick the specialty. normally the unit's top skill; need-favored
         // skills and fort usage stats can pull the pick elsewhere.
@@ -1028,6 +1295,36 @@ void ModernEngine::update(color_ostream &out)
             !info.u->flags1.bits.had_mood && has_moodable_skill(info.u);
 
         df::job_skill chosen = job_skill::NONE;
+
+        // assignment stickiness: a unit holding a skill detail keeps it
+        // while work for that skill remains, so claimed jobs aren't
+        // aborted by a rescore. the demand test covers the PickupEquipment
+        // window so tool users don't drop and re-equip mid-fetch
+        if (prev != job_skill::NONE && skill_allowed(prev))
+        {
+            bool demand = skill_demand_remains(prev, info.u);
+            if (demand)
+                chosen = prev;
+            if (is_tool_skill(prev))
+                TRACE(tool_detail).print(
+                    "unit {} ({}) tool pin {}: allowed=1 demand={} job={} -> {}\n",
+                    info.u->id, Units::getReadableName(info.u),
+                    ENUM_KEY_STR(job_skill, prev), (int)demand,
+                    info.u->job.current_job ?
+                        ENUM_KEY_STR(job_type,
+                            info.u->job.current_job->job_type) : "none",
+                    chosen == prev ? "kept" : "released");
+            else
+                TRACE(assign).print(
+                    "unit {} ({}) pin {}: demand={} job={} -> {}\n",
+                    info.u->id, Units::getReadableName(info.u),
+                    ENUM_KEY_STR(job_skill, prev), (int)demand,
+                    info.u->job.current_job ?
+                        ENUM_KEY_STR(job_type,
+                            info.u->job.current_job->job_type) : "none",
+                    chosen == prev ? "kept" : "released");
+        }
+
         int best_score = -1;
         auto consider = [&](df::job_skill want, int bonus) {
             if (want == job_skill::NONE || !viable_skills.count(want) ||
@@ -1047,30 +1344,47 @@ void ModernEngine::update(color_ostream &out)
             }
         };
 
-        if (mood_prot)
+        if (chosen == job_skill::NONE)
         {
-            // candidates restricted to moodable skills; quality-affecting
-            // skills get a large bonus so the pick trends toward valuable
-            // mood outcomes, and need-favored moodable skills still count
-            for (auto l : moodable_labors)
+            if (mood_prot)
             {
-                df::job_skill want = labor_to_skill[l];
-                int bonus = is_quality_skill(want) ? 300 : 100;
-                auto it = info.needs.favored.find(want);
-                if (it != info.needs.favored.end())
-                    bonus += it->second * 20;
-                consider(want, bonus);
+                // candidates restricted to moodable skills; quality-affecting
+                // skills get a large bonus so the pick trends toward valuable
+                // mood outcomes, and need-favored moodable skills still count
+                for (auto l : moodable_labors)
+                {
+                    df::job_skill want = labor_to_skill[l];
+                    int bonus = is_quality_skill(want) ? 300 : 100;
+                    auto it = info.needs.favored.find(want);
+                    if (it != info.needs.favored.end())
+                        bonus += it->second * 20;
+                    consider(want, bonus);
+                }
+            }
+            else
+            {
+                if (info.skill != job_skill::NONE && info.rating > 0)
+                    consider(info.skill, 0);
+                for (auto &kv : info.needs.favored)
+                    consider(kv.first, kv.second * 20);
             }
         }
-        else
-        {
-            if (info.skill != job_skill::NONE && info.rating > 0)
-                consider(info.skill, 0);
-            for (auto &kv : info.needs.favored)
-                consider(kv.first, kv.second * 20);
-        }
         if (chosen == job_skill::NONE)
+        {
+            // drop any stale tool-labor pin
+            if (tk != unit_track.end())
+                tk->second.detail_skill = job_skill::NONE;
+            TRACE(assign).print(
+                "unit {} ({}): no specialty (top={} rating={} mood_prot={})\n",
+                info.u->id, Units::getReadableName(info.u),
+                info.skill == job_skill::NONE ? "NONE" :
+                    ENUM_KEY_STR(job_skill, info.skill),
+                info.rating, (int)mood_prot);
             continue;
+        }
+        TRACE(assign).print("unit {} ({}): specialist {}\n",
+            info.u->id, Units::getReadableName(info.u),
+            ENUM_KEY_STR(job_skill, chosen));
 
         specialist_ids.insert(info.u->id);
 
@@ -1104,20 +1418,49 @@ void ModernEngine::update(color_ostream &out)
         }
 
         skill_members[chosen].push_back(info.u->id);
+        track.detail_skill = chosen;
     }
 
     // --- apprentices --------------------------------------------------------
     // sustained backlog on a skilled labor: pull in unskilled generalists so
     // the job gets done and they train up
 
+    bool any_starving = false;
+    FOR_ENUM_ITEMS(unit_labor, l)
+        if (l != unit_labor::NONE && unclaimed_streak[l] >= STARVE_CYCLES &&
+            managed_labor_cache[l] && !is_unskilled(l))
+        {
+            any_starving = true;
+            TRACE(assign).print("starving labor {}: streak {}, backlog {}, managed={}\n",
+                ENUM_KEY_STR(unit_labor, l), unclaimed_streak[l], backlog[l],
+                (int)(l < NUM_LABORS && managed_labor_cache[l]));
+        }
+
     for (int i = 0; i < n; i++)
     {
         UnitInfo &info = units[i];
-        if (info.excluded || laborer_ids.count(info.u->id) ||
-            specialist_ids.count(info.u->id))
+        // laborers are eligible: a starving skilled labor outranks hauling,
+        // and a big unskilled backlog could otherwise fill the pool with
+        // everyone and leave nobody to draft
+        if (info.excluded || specialist_ids.count(info.u->id))
+        {
+            if (any_starving)
+                TRACE(assign).print(
+                    "unit {} ({}): apprentice skip, excluded={} specialist={}\n",
+                    info.u->id, Units::getReadableName(info.u),
+                    (int)info.excluded,
+                    (int)specialist_ids.count(info.u->id));
             continue;
+        }
         if (info.state != IDLE && info.state != BUSY)
+        {
+            if (any_starving)
+                TRACE(assign).print(
+                    "unit {} ({}): apprentice skip, state={}\n",
+                    info.u->id, Units::getReadableName(info.u),
+                    (int)info.state);
             continue;
+        }
 
         // find the most-starving skilled labor this unit could learn
         df::job_skill want = job_skill::NONE;
@@ -1142,7 +1485,42 @@ void ModernEngine::update(color_ostream &out)
         if (want != job_skill::NONE)
         {
             skill_members[want].push_back(info.u->id);
+            laborer_ids.erase(info.u->id);
             specialist_ids.insert(info.u->id);  // restrict them to the detail
+            // record the pin so tool-labor drafts survive the fetch cycle:
+            // once they claim the posting it leaves the unclaimed backlog
+            // and this pass would not pick them again
+            unit_track[info.u->id].detail_skill = want;
+            TRACE(assign).print("unit {} ({}): apprentice {}\n",
+                info.u->id, Units::getReadableName(info.u),
+                ENUM_KEY_STR(job_skill, want));
+        }
+        else if (any_starving)
+        {
+            TRACE(assign).print(
+                "unit {} ({}): eligible but no draftable starving labor\n",
+                info.u->id, Units::getReadableName(info.u));
+        }
+    }
+
+    // starving labors that still have no members in their skill detail
+    FOR_ENUM_ITEMS(unit_labor, l)
+    {
+        if (l == unit_labor::NONE || unclaimed_streak[l] < STARVE_CYCLES ||
+            !managed_labor_cache[l] || is_unskilled(l))
+            continue;
+        df::job_skill sk = labor_to_skill[l];
+        if (skill_members[sk].empty())
+        {
+            int eligible = 0;
+            for (auto &u : units)
+                if (!u.excluded && Units::isValidLabor(u.u, l))
+                    eligible++;
+            TRACE(assign).print(
+                "starving labor {}: no units drafted into {} "
+                "({} eligible citizens)\n",
+                ENUM_KEY_STR(unit_labor, l), ENUM_KEY_STR(job_skill, sk),
+                eligible);
         }
     }
 
@@ -1176,6 +1554,10 @@ void ModernEngine::update(color_ostream &out)
         bool permit_ok = need.permitted.empty();
         bool range_ok = need.min_level <= 0 &&
             need.max_level >= df::skill_rating::Legendary5;
+        TRACE(assign).print(
+            "shop need: labor {}, permitted={}, range [{},{}], members={}\n",
+            ENUM_KEY_STR(unit_labor, labor), need.permitted.size(),
+            need.min_level, need.max_level, members.size());
         for (auto uid : members)
         {
             auto it = unit_idx.find(uid);
@@ -1214,10 +1596,20 @@ void ModernEngine::update(color_ostream &out)
                 }
             }
             if (best_i < 0)
+            {
+                TRACE(assign).print(
+                    "shop need {}: no qualifying citizen (permit={} range={})\n",
+                    ENUM_KEY_STR(unit_labor, labor), (int)must_permit,
+                    (int)must_range);
                 return;
+            }
             int32_t uid = units[best_i].u->id;
+            TRACE(assign).print("shop need {}: drafted unit {} ({})\n",
+                ENUM_KEY_STR(unit_labor, labor), uid,
+                Units::getReadableName(units[best_i].u));
             members.push_back(uid);
             specialist_ids.insert(uid);
+            unit_track[uid].detail_skill = skill;
             // shop work takes priority over the laborer pool
             laborer_ids.erase(uid);
         };
@@ -1272,9 +1664,23 @@ void ModernEngine::update(color_ostream &out)
         if (members.empty())
             continue;
 
+        // in v50 only the predefined details trigger tool equipping, so
+        // tool-skill specialists go into the builtin Miners/Woodcutters/
+        // Hunters detail rather than a managed one (falls back to a
+        // managed detail if the builtin is somehow missing)
+        if (is_tool_skill(skill))
+        {
+            if (auto *wd = wdm->find_builtin(skill_icon(skill)))
+            {
+                reconcile_builtin(wdm, wd, members);
+                continue;
+            }
+        }
+
         const char *cap = ENUM_ATTR(job_skill, caption_noun, skill);
         std::string name = SKILL_PREFIX + (cap ? cap : ENUM_KEY_STR(job_skill, skill));
         live_skill_details.insert(name);
+        TRACE(assign).print("detail {}: {} members\n", name, members.size());
 
         auto *wd = wdm->ensure_detail(name, skill_icon(skill),
             work_detail_mode::OnlySelectedDoesThis);
@@ -1302,6 +1708,229 @@ void ModernEngine::update(color_ostream &out)
 
     wdm->commit();
 
+    // snapshot tool-detail memberships post-apply so next cycle's diff
+    // only flags writes that happened outside the engine
+    for (auto wd : tool_details)
+        tool_snapshot[wd] = std::set<int32_t>(wd->assigned_units.begin(),
+            wd->assigned_units.end());
+
+    // --- labor mapping mismatch escalation ---------------------------------
+    // A posting that starves while an eligible unit holds its mapped labor
+    // suggests the mapping is wrong (or every enabled holder is somehow
+    // ineligible). Warn once, then enable labors on idle dwarves one per
+    // cycle until the job is claimed; whichever labor unlocks it exposes the
+    // labor the game actually gates the job on.
+
+    FOR_ENUM_ITEMS(unit_labor, l)
+    {
+        // tool labors are never probed: enabling one would send the unit
+        // chasing a pick/axe/crossbow it doesn't need. and a posting must be
+        // at least 50 ticks old before it can count as starved: some of the
+        // game's labor assignment passes only run on 50-tick boundaries
+        if (l == unit_labor::NONE || !managed_labor_cache[l] ||
+            is_unskilled(l) || is_exclusive_labor(l) || backlog[l] == 0 ||
+            unclaimed_streak[l] < STARVE_CYCLES || unclaimed_age[l] < 50 ||
+            labor_escalations.count(l) || !unclaimed_job.count(l))
+            continue;
+        // if every unit holding the labor is busy on another job, the
+        // posting is starved by staffing, not by a mapping problem --
+        // only probe when an enabled holder is actually free to take it
+        int enabled = 0, idle_enabled = 0;
+        for (auto &info : units)
+            if (!info.excluded && info.u->status.labors[l])
+            {
+                enabled++;
+                if (info.state == IDLE)
+                    idle_enabled++;
+            }
+        if (!idle_enabled)
+            continue;
+        df::job *j = unclaimed_job[l];
+        // custom reactions map through the reaction's declared skill, which
+        // the game always honors; there is nothing for probing to discover.
+        // PlantSeeds/HarvestPlants are likewise confirmed mappings (PLANT)
+        if (j->job_type == df::job_type::CustomReaction ||
+            j->job_type == df::job_type::PlantSeeds ||
+            j->job_type == df::job_type::HarvestPlants)
+            continue;
+        LaborEscalation esc;
+        esc.job_id = j->id;
+        esc.jtype = j->job_type;
+        esc.job_name = job_display_name(j);
+        // test the mapped labor on an idle dwarf first: distinguishes
+        // "wrong labor" from "right labor, but every holder was busy"
+        esc.candidates.push_back(l);
+        for (auto m : disputed_labors)
+            if (m != l && !is_exclusive_labor(m))
+                esc.candidates.push_back(m);
+        INFO(labor_probe).print(
+            "possible labor mapping mismatch: posting {} ({}) maps to {} "
+            "and {} eligible unit(s) have it enabled ({} idle), yet it has "
+            "gone unclaimed for {} cycles; probing labors on idle dwarves\n",
+            j->id, esc.job_name,
+            ENUM_KEY_STR(unit_labor, l), enabled, idle_enabled,
+            unclaimed_streak[l]);
+        labor_escalations[l] = esc;
+    }
+
+    for (auto it = labor_escalations.begin(); it != labor_escalations.end();)
+    {
+        df::unit_labor l = it->first;
+        LaborEscalation &esc = it->second;
+
+        // job pointers aren't stable across cycles; re-resolve each time
+        df::job *j = nullptr;
+        bool posted = false;
+        for (auto jp : world->jobs.postings)
+            if (jp->job && jp->job->id == esc.job_id && !jp->flags.bits.dead)
+            {
+                j = jp->job;
+                posted = true;
+                break;
+            }
+        if (!j)
+            for (auto jl = world->jobs.list.next; jl; jl = jl->next)
+                if (jl->item && jl->item->id == esc.job_id)
+                {
+                    j = jl->item;
+                    break;
+                }
+
+        if (posted && j && !has_worker(j))
+        {
+            // still waiting: re-assert experimental labors (a work-detail
+            // recompute can clear status.labors between our writes), then
+            // put the next untried candidate on its own idle dwarf so the
+            // labor that unlocks the job is unambiguous
+            for (auto wi = esc.writes.begin(); wi != esc.writes.end();)
+            {
+                if (auto u = df::unit::find(wi->first))
+                {
+                    for (auto m : wi->second)
+                        u->status.labors[m] = true;
+                    ++wi;
+                }
+                else
+                    wi = esc.writes.erase(wi);
+            }
+
+            if (esc.next < esc.candidates.size())
+            {
+                df::unit *idle = nullptr;
+                for (auto &info : units)
+                    if (info.state == IDLE && !info.excluded &&
+                        !esc.writes.count(info.u->id))
+                    {
+                        idle = info.u;
+                        break;
+                    }
+                // if no idle dwarf is free to experiment on, next stays put
+                // and we retry next cycle
+                if (idle)
+                {
+                    df::unit_labor m = esc.candidates[esc.next++];
+                    idle->status.labors[m] = true;
+                    esc.writes[idle->id].insert(m);
+                    TRACE(assign).print(
+                        "mismatch probe: enabled {} on unit {} ({}) for job "
+                        "{} (mapped {})\n",
+                        ENUM_KEY_STR(unit_labor, m), idle->id,
+                        Units::getReadableName(idle), esc.job_id,
+                        ENUM_KEY_STR(unit_labor, l));
+                }
+                ++it;
+            }
+            else
+            {
+                WARN(labor_probe).print(
+                    "job {} ({}) still unclaimed after probing all disputed "
+                    "labors (mapped {}); the gating labor may lie outside "
+                    "the probed set\n",
+                    esc.job_id, esc.job_name,
+                    ENUM_KEY_STR(unit_labor, l));
+                revert_escalation(esc);
+                it = labor_escalations.erase(it);
+            }
+            continue;
+        }
+
+        // resolved one way or another
+        if (j && has_worker(j))
+        {
+            df::unit *worker = nullptr;
+            for (auto ref : j->general_refs)
+                if (ref->getType() == df::general_ref_type::UNIT_WORKER)
+                {
+                    worker = df::unit::find(
+                        ((df::general_ref_unit_workerst*)ref)->unit_id);
+                    break;
+                }
+            std::set<df::unit_labor> exp;
+            if (worker && esc.writes.count(worker->id))
+                exp = esc.writes[worker->id];
+
+            std::stringstream es;
+            bool comma = false;
+            if (worker)
+                FOR_ENUM_ITEMS(unit_labor, wl)
+                {
+                    if (wl == unit_labor::NONE || !worker->status.labors[wl])
+                        continue;
+                    if (comma)
+                        es << ',';
+                    es << ENUM_KEY_STR(unit_labor, wl);
+                    comma = true;
+                }
+            std::string enabled = comma ? es.str() : "NONE";
+
+            std::stringstream xs;
+            bool xcomma = false;
+            for (auto m : exp)
+            {
+                if (xcomma)
+                    xs << ',';
+                xs << ENUM_KEY_STR(unit_labor, m);
+                xcomma = true;
+            }
+            std::string experiment = xcomma ? xs.str() : "none";
+
+            if (worker && worker->status.labors[l])
+                // claimant holds the mapped labor: the mapping is fine and
+                // the starvation was eligibility/staffing, not a mis-map
+                INFO(labor_probe).print(
+                    "job {} ({}) was claimed by unit {} ({}) holding the "
+                    "mapped labor {}; not a mismatch (experimental labors "
+                    "on claimant: {}; enabled: {{{}}})\n",
+                    esc.job_id, esc.job_name,
+                    worker->id, Units::getReadableName(worker),
+                    ENUM_KEY_STR(unit_labor, l), experiment, enabled);
+            else if (worker)
+                WARN(labor_probe).print(
+                    "labor mapping mismatch confirmed: job {} ({}) was "
+                    "claimed by unit {} ({}) which does not hold the mapped "
+                    "labor {}; enabled labors: {{{}}}, experimental labors "
+                    "on claimant: {}\n",
+                    esc.job_id, esc.job_name,
+                    worker->id, Units::getReadableName(worker),
+                    ENUM_KEY_STR(unit_labor, l), enabled, experiment);
+            else
+                INFO(labor_probe).print(
+                    "job {} ({}) was claimed but its worker could not be "
+                    "identified (mapped {})\n",
+                    esc.job_id, esc.job_name,
+                    ENUM_KEY_STR(unit_labor, l));
+        }
+        else
+            WARN(labor_probe).print(
+                "job {} ({}) left the board unclaimed while probing its "
+                "mapped labor {}\n",
+                esc.job_id, esc.job_name,
+                ENUM_KEY_STR(unit_labor, l));
+
+        revert_escalation(esc);
+        it = labor_escalations.erase(it);
+    }
+
     save_state();
 
     stat_laborers = laborer_ids.size();
@@ -1317,6 +1946,7 @@ void ModernEngine::update(color_ostream &out)
 static void reconcile(WorkDetailManager *wdm, df::work_detail *wd,
     const std::set<int32_t> &desired)
 {
+    bool trace = is_tool_detail(wd);
     // remove stale members
     for (auto it = wd->assigned_units.begin(); it != wd->assigned_units.end();)
     {
@@ -1325,14 +1955,68 @@ static void reconcile(WorkDetailManager *wdm, df::work_detail *wd,
             int32_t id = *it;
             it = wd->assigned_units.erase(it);
             if (auto u = df::unit::find(id))
+            {
+                if (trace)
+                    TRACE(tool_detail).print(
+                        "tool detail {}: -unit {} ({})\n",
+                        wd->name, id, Units::getReadableName(u));
                 wdm->touch(u);
+            }
         }
         else
             ++it;
     }
     // add new members
     for (int32_t id : desired)
+    {
+        bool had = std::binary_search(wd->assigned_units.begin(),
+            wd->assigned_units.end(), id);
         wdm->set_membership(wd, id, true);
+        if (trace && !had)
+            if (auto u = df::unit::find(id))
+                TRACE(tool_detail).print(
+                    "tool detail {}: +unit {} ({})\n",
+                    wd->name, id, Units::getReadableName(u));
+    }
+}
+
+// reconcile a builtin detail's membership with the desired id set, but
+// only ever remove memberships we created: player-assigned members of
+// builtin details are left alone
+static void reconcile_builtin(WorkDetailManager *wdm, df::work_detail *wd,
+    const std::set<int32_t> &desired)
+{
+    for (auto it = wd->assigned_units.begin(); it != wd->assigned_units.end();)
+    {
+        int32_t id = *it;
+        if (!desired.count(id) && wdm->is_borrowed(wd, id))
+        {
+            it = wd->assigned_units.erase(it);
+            wdm->unborrow(wd, id);
+            if (auto u = df::unit::find(id))
+            {
+                TRACE(tool_detail).print(
+                    "tool detail {}: -unit {} ({})\n",
+                    wd->name, id, Units::getReadableName(u));
+                wdm->touch(u);
+            }
+        }
+        else
+            ++it;
+    }
+    for (int32_t id : desired)
+    {
+        if (!std::binary_search(wd->assigned_units.begin(),
+            wd->assigned_units.end(), id))
+        {
+            wdm->set_membership(wd, id, true);
+            wdm->borrow(wd, id);
+            if (auto u = df::unit::find(id))
+                TRACE(tool_detail).print(
+                    "tool detail {}: +unit {} ({})\n",
+                    wd->name, id, Units::getReadableName(u));
+        }
+    }
 }
 
 static df::work_detail_icon_type skill_icon(df::job_skill skill)
@@ -1349,6 +2033,216 @@ static df::work_detail_icon_type skill_icon(df::job_skill skill)
     default:                    return work_detail_icon_type::CUSTOM_1;
     }
 }
+
+// ---------------------------------------------------------------------------
+// state dump ("labormanager dump") -- diagnostic snapshot for bug reports
+// ---------------------------------------------------------------------------
+
+namespace autolabor {
+
+void dump_engine_state(color_ostream &out)
+{
+    if (!world || !world->map.block_index)
+    {
+        out.print("no map loaded\n");
+        return;
+    }
+    if (!labor_mapper)
+        labor_mapper = new JobLaborMapper();
+    init_labor_to_skill();
+    if (managed_labor_cache.empty())
+    {
+        managed_labor_cache.assign(NUM_LABORS, true);
+        FOR_ENUM_ITEMS(unit_labor, l)
+            if (l != unit_labor::NONE)
+                managed_labor_cache[l] = labor_managed(l);
+    }
+
+    // -- config --------------------------------------------------------------
+    out.print("-- config --\n");
+    out.print("balance={} idle_reserve={} fishing={} hunting={}\n",
+        balance_stop_name(balance()), idle_reserve(),
+        (int)config_flag(CF_ALLOW_FISHING), (int)config_flag(CF_ALLOW_HUNTING));
+    out.print("automatic_professions_disabled={}\n",
+        (int)game->external_flag.bits.automatic_professions_disabled);
+
+    // -- every job on the board, whether or not it has a posting -------------
+    out.print("-- jobs.list --\n");
+    int njobs = 0;
+    for (df::job_list_link *link = world->jobs.list.next; link;
+        link = link->next)
+    {
+        df::job *j = link->item;
+        if (!j)
+            continue;
+        njobs++;
+        df::unit_labor labor = labor_mapper->find_job_labor(j);
+        std::string btype = "none";
+        if (df::building *bld = Job::getHolder(j))
+            btype = ENUM_KEY_STR(building_type, bld->getType());
+        out.print(
+            "  job {} {}: labor={} posting={} susp={} lost={} work={} "
+            "repeat={} worker={} at {}\n",
+            j->id, ENUM_KEY_STR(job_type, j->job_type),
+            labor >= 0 && labor < NUM_LABORS ?
+                ENUM_KEY_STR(unit_labor, labor) : "unmapped",
+            j->posting_index, (int)j->flags.bits.suspend,
+            (int)j->flags.bits.item_lost, (int)j->flags.bits.working,
+            (int)j->flags.bits.repeat, (int)has_worker(j), btype);
+    }
+    out.print("  {} jobs total\n", njobs);
+
+    // -- the auction board ----------------------------------------------------
+    out.print("-- postings --\n");
+    int live = 0, dead = 0;
+    for (auto jp : world->jobs.postings)
+    {
+        if (jp->flags.bits.dead || !jp->job)
+        {
+            dead++;
+            continue;
+        }
+        live++;
+        df::job *j = jp->job;
+        out.print("  posting {}: {} susp={} lost={} worker={} age={}\n",
+            jp->idx, ENUM_KEY_STR(job_type, j->job_type),
+            (int)j->flags.bits.suspend, (int)j->flags.bits.item_lost,
+            (int)has_worker(j),
+            posting_track.count(jp->idx) ?
+                world->frame_counter - posting_track[jp->idx].first_seen : -1);
+    }
+    out.print("  {} live, {} dead\n", live, dead);
+
+    // -- demand ---------------------------------------------------------------
+    out.print("-- demand --\n");
+    FOR_ENUM_ITEMS(unit_labor, l)
+    {
+        if (l == unit_labor::NONE)
+            continue;
+        int claimed = labor_work.count(l) ? labor_work.at(l) : 0;
+        if (claimed == 0 && unclaimed_streak[l] == 0)
+            continue;
+        out.print("  {}: live={}, streak={}, managed={} ({})\n",
+            ENUM_KEY_STR(unit_labor, l), claimed, unclaimed_streak[l],
+            (int)managed_labor_cache[l],
+            is_unskilled(l) ? "unskilled" :
+                ENUM_KEY_STR(job_skill, labor_to_skill[l]));
+    }
+    out.print("starving={} oldest={} ({} ticks), resolved={}, "
+        "avg_wait={}, max_wait={}\n",
+        stat_starving,
+        stat_oldest_job == df::job_type::NONE ? "none" :
+            ENUM_KEY_STR(job_type, stat_oldest_job),
+        stat_oldest_wait, stat_resolved,
+        stat_resolved ? stat_resolved_ticks / stat_resolved : 0,
+        stat_max_wait);
+
+    // -- skills ---------------------------------------------------------------
+    out.print("-- skills --\n");
+    out.print("usage:");
+    for (auto &kv : skill_usage)
+        if (kv.second >= 0.01)
+            out.print(" {}={:.1f}", ENUM_KEY_STR(job_skill, kv.first),
+                kv.second);
+    out.print("\n");
+
+    // -- shop constraints ------------------------------------------------------
+    if (!shop_needs.empty())
+    {
+        out.print("-- shop needs --\n");
+        for (auto &need : shop_needs)
+            out.print("  {}: permitted={} range=[{},{}]\n",
+                ENUM_KEY_STR(unit_labor, need.labor), need.permitted.size(),
+                need.min_level, need.max_level);
+    }
+
+    // -- tools ------------------------------------------------------------------
+    int tool_count[TOOLS_MAX];
+    count_tools(tool_count);
+    out.print("tools: picks={} axes={} crossbows={}\n",
+        tool_count[TOOL_PICK], tool_count[TOOL_AXE], tool_count[TOOL_CROSSBOW]);
+
+    // -- work details -------------------------------------------------------------
+    out.print("-- work details --\n");
+    for (auto wd : plotinfo->labor_info.work_details)
+    {
+        std::string members;
+        for (int32_t id : wd->assigned_units)
+        {
+            if (!members.empty())
+                members += ",";
+            members += std::to_string(id);
+        }
+        out.print("  '{}' icon={} mode={} no_modify={} managed={} "
+            "members=[{}]\n",
+            wd->name, ENUM_KEY_STR(work_detail_icon_type, wd->icon),
+            (int)wd->flags.bits.mode, (int)wd->flags.bits.no_modify,
+            (int)(wd->name.compare(0, 5, "auto:") == 0), members);
+    }
+
+    // -- citizens ------------------------------------------------------------------
+    out.print("-- citizens --\n");
+    for (auto cre : world->units.active)
+    {
+        if (!Units::isCitizen(cre))
+            continue;
+        // which details hold this unit
+        std::string det;
+        for (auto wd : plotinfo->labor_info.work_details)
+            if (std::binary_search(wd->assigned_units.begin(),
+                wd->assigned_units.end(), cre->id))
+            {
+                if (!det.empty())
+                    det += "|";
+                det += wd->name;
+            }
+        // enabled skilled labors
+        std::string labors;
+        FOR_ENUM_ITEMS(unit_labor, l)
+            if (l != unit_labor::NONE && cre->status.labors[l] &&
+                labor_to_skill[l] != job_skill::NONE)
+            {
+                if (!labors.empty())
+                    labors += "|";
+                labors += ENUM_KEY_STR(unit_labor, l);
+            }
+        auto tk = unit_track.find(cre->id);
+        out.print(
+            "  {} ({}): assignable={} burrows={} state={} specialized={} "
+            "pin={} busy={} rest={} job={} details=[{}] "
+            "skilled_labors=[{}]\n",
+            cre->id, Units::getReadableName(cre),
+            (int)is_assignable(cre), cre->burrows.size(),
+            (int)get_dwarf_state(cre),
+            (int)cre->flags4.bits.only_do_assigned_jobs,
+            tk != unit_track.end() && tk->second.detail_skill != job_skill::NONE ?
+                ENUM_KEY_STR(job_skill, tk->second.detail_skill) : "NONE",
+            tk != unit_track.end() ? tk->second.busy_streak : 0,
+            tk != unit_track.end() ? tk->second.rest_left : 0,
+            cre->job.current_job ?
+                ENUM_KEY_STR(job_type, cre->job.current_job->job_type) : "none",
+            det, labors);
+        if (!is_assignable(cre))
+            out.print(
+                "    not assignable: own_civ={} own_group={} active={} "
+                "visitor={} ghost={} can_assign={} profession={}\n",
+                (int)Units::isOwnCiv(cre), (int)Units::isOwnGroup(cre),
+                (int)Units::isActive(cre), (int)cre->flags2.bits.visitor,
+                (int)cre->flags3.bits.ghostly,
+                (int)ENUM_ATTR(profession, can_assign_labor, cre->profession),
+                ENUM_KEY_STR(profession, cre->profession));
+        else if (get_dwarf_state(cre) == dwarf_state::OTHER ||
+            get_dwarf_state(cre) == dwarf_state::CHILD)
+            out.print("    state detail: migrant={} specific_refs={} "
+                "profession={}\n",
+                (int)(Units::getMiscTrait(cre, misc_trait_type::Migrant) !=
+                    nullptr),
+                cre->specific_refs.size(),
+                ENUM_KEY_STR(profession, cre->profession));
+    }
+}
+
+} // namespace autolabor
 
 // ---------------------------------------------------------------------------
 // command dialect

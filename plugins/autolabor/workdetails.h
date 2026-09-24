@@ -40,6 +40,11 @@ public:
     // Find a managed detail by exact name (including prefix).
     df::work_detail *find_detail(const std::string &name);
 
+    // Find a builtin (predefined, non-managed) detail by icon type, e.g.
+    // the vanilla Miners detail. Needed because in DF v50 only the
+    // predefined details trigger tool equipping for their members.
+    df::work_detail *find_builtin(df::work_detail_icon_type icon);
+
     // Find or create a managed detail with the given name, icon, and mode.
     // Coverage (allowed_labors) is only set on creation; callers that change
     // coverage or mode afterwards must call touch_all() since pass 1 of the
@@ -78,14 +83,25 @@ public:
     // Unit ids we have flagged as only_do_assigned_jobs.
     const std::set<int32_t> &flagged_units() const { return flagged; }
 
+    // Track memberships we added to builtin (non-managed) details, keyed
+    // by the detail's icon type, so we only ever remove memberships we
+    // created and never strip a player's own assignments.
+    bool is_borrowed(df::work_detail *wd, int32_t unit_id) const;
+    void borrow(df::work_detail *wd, int32_t unit_id);
+    void unborrow(df::work_detail *wd, int32_t unit_id);
+
     bool is_managed(df::work_detail *wd);
 
 private:
     void load_flagged();
     void save_flagged();
+    void load_borrowed();
+    void save_borrowed();
 
     std::set<int32_t> dirty;
     std::set<int32_t> flagged;
+    std::map<int32_t, std::set<int32_t>> borrowed; // icon -> unit ids
     bool recompute_all = false;
     PersistentDataItem flagged_cfg;
+    PersistentDataItem borrowed_cfg;
 };

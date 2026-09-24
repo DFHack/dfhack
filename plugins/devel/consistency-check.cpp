@@ -188,10 +188,12 @@ struct Scanner
         total_report_count++;
         auto count = ++category_counts[category];
         if (count == MAX_REPORTS_PER_CATEGORY + 1)
+        {
             WARN(log, out).print("consistency-check: report limit ({}) reached "
                                  "for '{}'; further issues of this kind are "
                                  "suppressed for this run\n",
                                  MAX_REPORTS_PER_CATEGORY, category);
+        }
         else if (count <= MAX_REPORTS_PER_CATEGORY)
             WARN(log, out).print("consistency-check: {}\n", msg);
     }
@@ -757,7 +759,6 @@ struct Scanner
     void check_linked_list(const char *path, df::proj_list_link *head, int32_t *next_id)
     {
         std::unordered_set<df::proj_list_link*> seen_links;
-        int64_t prev_id = INT64_MIN;
         int32_t max_id = -1;
         df::proj_list_link *prev_link = head;
         for (auto link = head->next; link; link = link->next)
@@ -775,7 +776,6 @@ struct Scanner
                 if (proj->link != link)
                     report("{}: projectile {} link does not point back at its link",
                            path, proj->id);
-                prev_id = proj->id;
                 max_id = std::max(max_id, proj->id);
             }
             else
@@ -1938,9 +1938,11 @@ DFhackCExport command_result plugin_onupdate(color_ostream &out)
         scan_stage = 0;
     scanner.run_stage(scan_stage);
     if (scanner.errors)
+    {
         WARN(log, out).print("consistency-check: {} new issue(s) in {} stage "
                              "(see 'consistency-check reset' to re-report)\n",
                              scanner.errors, stage_names[scan_stage]);
+    }
     scan_stage = (scan_stage + 1) % scanner.num_stages();
     return CR_OK;
 }

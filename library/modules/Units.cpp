@@ -1029,6 +1029,7 @@ void Units::setAutomaticProfessions(df::unit* unit) {
 // functionality reverse-engineered from DF's unitst::set_goal
 void Units::setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
 {
+    CHECK_NULL_POINTER(unit);
     if (unit->path.dest != pos || unit->path.goal != goal)
     {
         unit->path.dest = pos;

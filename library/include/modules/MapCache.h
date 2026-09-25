@@ -433,6 +433,11 @@ class DFHACK_EXPORT MapCache
         return b ? b->Allocate() : false;
     }
 
+    /// Propagate the light, outside, and subterranean flags of the tile at
+    /// pos to the tiles below it. Call after the tile at pos changed
+    /// between an open and a solid shape.
+    void propagateVerticalFlags(DFCoord pos);
+
     /// delete the block from memory
     void discardBlock(Block *block);
 

@@ -89,6 +89,7 @@ Template for new versions:
 - `buildingplan`: fix roller material estimate asking for one chain per tile instead of one chain total
 - `buildingplan`: fix "Unlink all" only unlinking some mechanisms (or crashing) when freeing mechanisms from the building
 - `burrow`: fix ``tiles clear`` and other tile operations silently failing because burrow block z-coordinates were stored incorrectly in the ``Burrows`` module
+- `dfhack-run`: on Windows, no longer mutates, hides, and closes the console it inherits when run from an existing terminal (issue #3827)
 - `dig-now`: update light/outside flags of tiles below tiles that are dug into solid rather than open tiles
 - `export-world-map`: fix crash exporting site data for a site whose owner has an undefined race
 - `gui/quickfort`: show smoothing designations immediately after applying a blueprint
@@ -106,6 +107,7 @@ Template for new versions:
 ## Misc Improvements
 - Added ``Coord2d`` and ``Coord3d`` C++ templates, providing a standard set operations for 2-tuples and 3-tuples of any numeric type
 - Renamed the ``stockpiles`` tool tag to ``stockpile`` so it no longer collides with the `stockpiles` plugin in `gui/launcher`
+- Writes to ``stderr.log`` are no longer buffered on Windows, so log output is not lost if DF crashes
 
 ## Documentation
 - Document ``autodump-destroy-here``. Remove mention of ``autodump destroy`` able to revert destruction.
@@ -123,6 +125,7 @@ Template for new versions:
 
 ## Lua
 - Added ``dfhack.maps.forEachTile`` to scan a cuboid of tiles with a declarative filter and apply actions (count, set tiletype or per-tiletype replacements, set designation/occupancy fields, spawn constructions, Lua callback) in a single native call
+- Fixed ``ipairs()`` on enum attribute tables (e.g. ``df.item_type.attrs``) never terminating (issue #1860)
 
 ## Removed
 

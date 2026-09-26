@@ -1,6 +1,8 @@
 config.mode = 'fortress'
 config.target = 'orders'
 
+local workOrderList = require('plugins.orders.work_order_list')
+
 local FILE_PATH_PATTERN = dfhack.getConfigPath() .. '/orders/%s.json'
 
 local BACKUP_FILE_NAME = 'tmp-backup'
@@ -265,4 +267,32 @@ function test.list()
     local output, status = dfhack.run_command_silent('orders', 'list')
     expect.eq(CR_OK, status)
     expect.str_find(BACKUP_FILE_NAME:gsub('%-', '%%-'), output)
+end
+
+function test.work_order_list_geometry()
+    local hooks = workOrderList.unitTestHooks
+
+    expect.eq(10, hooks.calculateListStartY(154))
+    expect.eq(8, hooks.calculateListStartY(155))
+    expect.eq(4, hooks.calculateViewportSize(30, 8))
+
+    local viewport_start, viewport_end =
+        hooks.calculateVisibleOrderIndices(0, 4, 0)
+    expect.eq(0, viewport_start)
+    expect.eq(-1, viewport_end)
+
+    viewport_start, viewport_end =
+        hooks.calculateVisibleOrderIndices(10, 4, 2)
+    expect.eq(2, viewport_start)
+    expect.eq(5, viewport_end)
+
+    viewport_start, viewport_end =
+        hooks.calculateVisibleOrderIndices(10, 4, 8)
+    expect.eq(6, viewport_start)
+    expect.eq(9, viewport_end)
+
+    viewport_start, viewport_end =
+        hooks.calculateVisibleOrderIndices(10, 20, 8)
+    expect.eq(0, viewport_start)
+    expect.eq(9, viewport_end)
 end

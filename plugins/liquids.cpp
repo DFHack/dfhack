@@ -150,6 +150,64 @@ struct OperationMode {
 command_result df_liquids_execute(color_ostream &out);
 command_result df_liquids_execute(color_ostream &out, OperationMode &mode, df::coord pos);
 
+// allocate the map block containing pos if it doesn't exist yet; newly
+// allocated sky blocks are filled with open space tiles like natural sky
+static void ensure_block(MapExtras::MapCache &mcache, const DFCoord &pos)
+{
+    auto block = mcache.BlockAtTile(pos);
+    if (!block || block->is_valid())
+        return;
+    if (!block->Allocate())
+        return;
+    for (int x = 0; x < 16; x++)
+        for (int y = 0; y < 16; y++)
+            block->setTiletypeAt(df::coord2d(x, y), tiletype::OpenSpace);
+}
+
+// ensure the target map blocks exist so that liquids and obsidian can be
+// placed in unallocated sky blocks
+static void ensure_brush_blocks(MapExtras::MapCache &mcache,
+                                const OperationMode &mode, const DFCoord &cursor)
+{
+    switch (mode.brush)
+    {
+    case B_POINT:
+    case B_BLOCK:
+        ensure_block(mcache, cursor);
+        break;
+    case B_RANGE:
+        {
+            // RectangleBrush paints the size-sized box extending
+            // forward from the cursor; note that z is already in map
+            // block units so only x and y get scaled down
+            DFCoord lo = cursor / 16;
+            DFCoord hi = (cursor + mode.size - DFCoord(1,1,1)) / 16;
+            for (int32_t z = cursor.z; z < cursor.z + mode.size.z; z++)
+                for (int32_t x = lo.x; x <= hi.x; x++)
+                    for (int32_t y = lo.y; y <= hi.y; y++)
+                        ensure_block(mcache, DFCoord(x*16, y*16, z));
+        }
+        break;
+    case B_COLUMN:
+        // ensure blocks upward while the column stays open, mirroring
+        // ColumnBrush's stopping condition
+        for (int32_t z = cursor.z; z < (int32_t)mcache.maxZ(); z++)
+        {
+            DFCoord pos(cursor.x, cursor.y, z);
+            ensure_block(mcache, pos);
+            df::tiletype tt = mcache.tiletypeAt(pos);
+            if (!DFHack::LowPassable(tt) &&
+                !(z == cursor.z && DFHack::HighPassable(tt)))
+                break;
+        }
+        break;
+    case B_FLOOD:
+        // flood fill only travels through water tiles, which unallocated
+        // blocks can never contain
+        break;
+    }
+}
+
 static void print_prompt(std::ostream &str, OperationMode &cur_mode)
 {
     str <<"[" << paint_mode_name[cur_mode.paint] << ":" << brush_name[cur_mode.brush];
@@ -446,6 +504,11 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
     }
 
     MapCache mcache;
+
+    // allocate any unallocated target blocks so that liquids and obsidian
+    // can be placed in the sky
+    ensure_brush_blocks(mcache, cur_mode, cursor);
+
     coord_vec all_tiles = brush->points(mcache,cursor);
 
     // Force the game to recompute its walkability cache
@@ -465,6 +528,7 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
                 des.bits.flow_size = 0;
                 des.bits.flow_forbid = false;
                 mcache.setDesignationAt(*iter, des);
+                mcache.propagateVerticalFlags(*iter);
                 iter ++;
             }
             break;
@@ -475,6 +539,7 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
             while (iter != all_tiles.end())
             {
                 mcache.setTiletypeAt(*iter, findRandomVariant(tiletype::LavaFloor1));
+                mcache.propagateVerticalFlags(*iter);
                 iter ++;
             }
             break;
@@ -497,6 +562,7 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
                 Block * b = mcache.BlockAt((*iter)/16);
                 b->enableBlockUpdates(true);
 
+                mcache.propagateVerticalFlags(*iter);
                 iter++;
             }
             break;

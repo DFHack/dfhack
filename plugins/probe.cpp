@@ -127,7 +127,7 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
     uint32_t blockY = cursor.y / 16;
     uint32_t tileY = cursor.y % 16;
 
-    MapExtras::Block * b = mc.BlockAt(cursor/16);
+    MapExtras::Block * b = mc.BlockAtTile(cursor);
     if (!b || !b->is_valid()) {
         out.printerr("No data.\n");
         return CR_OK;

@@ -424,7 +424,7 @@ class DFHACK_EXPORT MapCache
     Block *BlockAt(DFCoord blockcoord);
     /// get the map block at a tile coord.
     Block *BlockAtTile(DFCoord coord) {
-        return BlockAt(df::coord(coord.x>>4,coord.y>>4,coord.z));
+        return BlockAt(Maps::getTileBlockCoord(coord));
     }
 
     bool ensureBlockAt(df::coord coord)

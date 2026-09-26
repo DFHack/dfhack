@@ -2471,6 +2471,23 @@ Maps module
 
   Like ``getTileBlock``, but if the block is not allocated, try creating it.
 
+* ``dfhack.maps.getTileBlockCoord(coords)``, or ``getTileBlockCoord(x,y,z)``
+
+  Returns the *x, y, z* block coordinates of the map block containing the
+  given tile position. The z coordinate is a level and is preserved, not
+  scaled.
+
+* ``dfhack.maps.getBlockOrigin(coords)``, or ``getBlockOrigin(x,y,z)``
+
+  Returns the *x, y, z* tile coordinates of the north-west corner of the map
+  block with the given block coordinates. The z coordinate is a level and is
+  preserved, not scaled.
+
+* ``dfhack.maps.getTileBlockOffset(coords)``, or ``getTileBlockOffset(x,y,z)``
+
+  Returns the *x, y* offset (0-15) of the given tile position within its
+  containing map block, along with the unchanged *z* coordinate.
+
 * ``dfhack.maps.getTileType(coords)``, or ``getTileType(x,y,z)``
 
   Returns the tile type at the given coordinates, or *nil* if invalid.

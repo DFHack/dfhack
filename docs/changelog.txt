@@ -119,6 +119,7 @@ Template for new versions:
 - Document ``autodump-destroy-here``. Remove mention of ``autodump destroy`` able to revert destruction.
 
 ## API
+- Added ``Maps::getTileBlockCoord``, ``Maps::getBlockOrigin``, and ``Maps::getTileBlockOffset`` to convert between tile and block coordinates
 - Added ``Maps::getSiteTypeName`` to print the sites classification as a string (e.g. "mountain halls")
 - Added ``Maps::addRegionBiomeOffset`` to shift world region coordinate by region_details biome reference
 - Added ``Maps::describeSurroundings`` to get surroundings classification from savagery and evilness
@@ -132,6 +133,7 @@ Template for new versions:
 ## Lua
 - Added ``dfhack.maps.forEachTile`` to scan a cuboid of tiles with a declarative filter and apply actions (count, set tiletype or per-tiletype replacements, set designation/occupancy fields, spawn constructions, Lua callback) in a single native call
 - Fixed ``ipairs()`` on enum attribute tables (e.g. ``df.item_type.attrs``) never terminating (issue #1860)
+- Added ``dfhack.maps.getTileBlockCoord``, ``dfhack.maps.getBlockOrigin``, and ``dfhack.maps.getTileBlockOffset`` to convert between tile and block coordinates
 
 ## Removed
 

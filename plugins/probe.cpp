@@ -256,7 +256,7 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
         out.print("  {:4}", block.local_feature);
         out.print(" ({:2})", static_cast<int>(local.type));
         out.print(" addr {}", static_cast<void*>(local.origin));
-        out.print(" {}", sa_feature(local.type));
+        out.print(" {}\n", sa_feature(local.type));
     }
     PRINT_FLAG( des, feature_global );
     if(global.type != -1)
@@ -265,7 +265,7 @@ static command_result df_probe(color_ostream &out, vector<string> & parameters) 
         out.print("  {:4}", block.global_feature);
         out.print(" ({:2})", static_cast<int>(global.type));
         out.print(" {}", static_cast<void*>(global.origin));
-        out.print(" {}", sa_feature(global.type));
+        out.print(" {}\n", sa_feature(global.type));
     }
     out << "local feature idx: " << block.local_feature
         << std::endl;

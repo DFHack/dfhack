@@ -33,6 +33,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- ``Units::setPathGoal``: no longer crashes when passed NULL as a unit.  Also fixes ``dfhack.units.setPathGoal()``.
 
 ## Misc Improvements
 

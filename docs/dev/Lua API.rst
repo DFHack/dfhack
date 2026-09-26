@@ -1565,12 +1565,14 @@ Units module
   same checks the game uses to decide game-over by extinction,
   with an additional sanity check. You can identify citizens,
   regardless of their sanity, by passing ``true`` as the optional
-  second parameter.
+  second parameter. Dead units are never considered citizens, even
+  when ``include_insane`` is set (though animate intelligent
+  undead citizens still count).
 
 * ``dfhack.units.isResident(unit[,include_insane])``
 
-  The unit is a resident of the fortress. Same ``include_insane`` semantics as
-  ``isCitizen``.
+  The unit is a non-dead resident of the fortress. Same
+  ``include_insane`` semantics as ``isCitizen``.
 
 * ``dfhack.units.isFortControlled(unit)``
 

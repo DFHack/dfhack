@@ -9,11 +9,17 @@ local STRESS_CATEGORY_NAMES = {
     'Ecstatic',
 }
 
+-- single-unit equivalent of the dfhack.units.getCitizens(true, true) filter
+local function is_listable(unit)
+    return dfhack.units.isCitizen(unit, true) and dfhack.units.isActive(unit)
+end
+
 local function show_stress_units(category)
     local choices = {}
-    for _,unit in ipairs(df.global.world.units.active) do
-        if dfhack.units.isCitizen(unit, true) and
-                dfhack.units.getStressCategory(unit) == category then
+    -- living, on-map citizens only (excluding residents), matching the game's
+    -- own stress icon counts
+    for _,unit in ipairs(dfhack.units.getCitizens(true, true)) do
+        if dfhack.units.getStressCategory(unit) == category then
             table.insert(choices, {
                 text=dfhack.units.getReadableName(unit),
                 unit_id=unit.id,
@@ -31,9 +37,10 @@ local function show_stress_units(category)
         with_filter=true,
         choices=choices,
         on_select=function(_, choice)
-            -- re-resolve in case the unit died while the list was open
+            -- re-resolve in case the unit died or left the map while the list
+            -- was open; df.unit.find still resolves dead units
             local unit = df.unit.find(choice.unit_id)
-            if not unit then return end
+            if not unit or not is_listable(unit) then return end
             dfhack.gui.revealInDwarfmodeMap(unit.pos.x, unit.pos.y, unit.pos.z, true, true)
         end,
     }:show()

@@ -80,6 +80,7 @@ Template for new versions:
 - Fixed out-of-bounds color table access in ``Screen`` module when Lua pens use ``COLOR_RESET``
 - ``Units::teleport``: update unit occupancy on the full 3x3 footprint of EQUIPMENT units (e.g. wagons) instead of only their center tile
 - ``Units::teleport``: only clear tile unit occupancy flags when no other unit of the same kind remains on the tile
+- ``Units::isCitizen`` and ``Units::isResident`` now exclude dead units even when ``include_insane`` is set; the flag previously skipped the sanity check that also happened to exclude the dead
 - `3dveins`: fix crash when a tile's biome cannot be resolved
 - `3dveins`: fix failure on embarks that cross midmap tiles
 - `aquifer`: make ``--skip-top`` and top-relative ``--levels`` take effect for the ``drain``, ``convert``, and ``add`` actions instead of being silently ignored
@@ -96,6 +97,8 @@ Template for new versions:
 - `liquids`: allow painting liquids and obsidian into unallocated sky blocks
 - `liquids`: update light/outside flags of covered tiles when painting obsidian or river sources
 - `overlay`: overlay hotkeys no longer steal typed characters while the game is capturing text input, e.g. when renaming a building
+- `preserve-rooms`: no longer assigns zones to dead units who still hold a noble position
+- `sort`: the clickable stress icon citizen lists no longer include dead or missing units (issue #5975)
 - `sort`: fix the Places/Workshops and task searches missing workshops by their current display names (e.g. "Stoneworker's Workshop", "Screw Press")
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
 - `strangemood`: updated to match behavior of current DF version

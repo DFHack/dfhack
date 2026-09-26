@@ -104,6 +104,7 @@ Template for new versions:
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable
 - `strangemood`: updated to match behavior of current DF version
 - `tiletypes`: remove plants (including trees) rooted on a tile that is painted into something that cannot host them, so cleared ground no longer regrows floating trees
+- Fixed gem and glass windows being unable to be made part of a room; they are the only buildings nobles can demand that could not be, whether the window or the room is placed first
 - `timestream`: deal properly with units who have breathing difficulties
 - `timestream`: pass the validated numeric value to the fps setter so ``set fps`` with unusual numeric strings (e.g. ``60.9``) can't be silently misapplied
 - `stocks`: overlay now resets scroll position when collapsing categories so the item list is no longer left blank and unscrollable

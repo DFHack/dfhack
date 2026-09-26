@@ -496,7 +496,7 @@ bool dig (MapExtras::MapCache & MCache,
     )
 {
     DFCoord at (x,y,z);
-    auto b = MCache.BlockAt(at/16);
+    auto b = MCache.BlockAtTile(at);
     if(!b || !b->is_valid())
         return false;
     if(x == 0 || x == x_max * 16 - 1)

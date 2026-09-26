@@ -178,14 +178,14 @@ static void ensure_brush_blocks(MapExtras::MapCache &mcache,
     case B_RANGE:
         {
             // RectangleBrush paints the size-sized box extending
-            // forward from the cursor; note that z is already in map
-            // block units so only x and y get scaled down
-            DFCoord lo = cursor / 16;
-            DFCoord hi = (cursor + mode.size - DFCoord(1,1,1)) / 16;
+            // forward from the cursor; note that z stays a map level
+            // so only x and y are converted to block units
+            DFCoord lo = Maps::getTileBlockCoord(cursor);
+            DFCoord hi = Maps::getTileBlockCoord(cursor + mode.size - DFCoord(1,1,1));
             for (int32_t z = cursor.z; z < cursor.z + mode.size.z; z++)
                 for (int32_t x = lo.x; x <= hi.x; x++)
                     for (int32_t y = lo.y; y <= hi.y; y++)
-                        ensure_block(mcache, DFCoord(x*16, y*16, z));
+                        ensure_block(mcache, Maps::getBlockOrigin(DFCoord(x, y, z)));
         }
         break;
     case B_COLUMN:
@@ -559,7 +559,7 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
                 mcache.setTemp2At(*iter,10015);
                 mcache.setDesignationAt(*iter,a);
 
-                Block * b = mcache.BlockAt((*iter)/16);
+                Block * b = mcache.BlockAtTile(*iter);
                 b->enableBlockUpdates(true);
 
                 mcache.propagateVerticalFlags(*iter);
@@ -590,9 +590,8 @@ command_result df_liquids_execute(color_ostream &out, OperationMode &cur_mode, d
             while (iter != all_tiles.end())
             {
                 DFHack::DFCoord current = *iter; // current tile coord
-                DFHack::DFCoord curblock = current /16; // current block coord
                 // check if the block is actually there
-                auto block = mcache.BlockAt(curblock);
+                auto block = mcache.BlockAtTile(current);
                 if(!block)
                 {
                     iter ++;

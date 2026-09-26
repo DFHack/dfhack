@@ -2718,6 +2718,24 @@ static int maps_ensureTileBlock(lua_State *L)
     return 1;
 }
 
+static int maps_getTileBlockCoord(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    return Lua::PushPosXYZ(L, Maps::getTileBlockCoord(pos));
+}
+
+static int maps_getBlockOrigin(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    return Lua::PushPosXYZ(L, Maps::getBlockOrigin(pos));
+}
+
+static int maps_getTileBlockOffset(lua_State *L)
+{
+    auto pos = CheckCoordXYZ(L, 1, true);
+    return Lua::PushPosXYZ(L, Maps::getTileBlockOffset(pos));
+}
+
 static int maps_getTileType(lua_State *L)
 {
     auto pos = CheckCoordXYZ(L, 1, true);
@@ -3108,6 +3126,9 @@ static const luaL_Reg dfhack_maps_funcs[] = {
     { "isTileVisible", maps_isTileVisible },
     { "getTileBlock", maps_getTileBlock },
     { "ensureTileBlock", maps_ensureTileBlock },
+    { "getTileBlockCoord", maps_getTileBlockCoord },
+    { "getBlockOrigin", maps_getBlockOrigin },
+    { "getTileBlockOffset", maps_getTileBlockOffset },
     { "getTileType", maps_getTileType },
     { "getTileFlags", maps_getTileFlags },
     { "getRegionBiome", maps_getRegionBiome },

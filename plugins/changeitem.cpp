@@ -211,7 +211,7 @@ command_result df_changeitem(color_ostream &out, vector <string> & parameters)
         // changeitem doesn't do stuff with map blocks...
         {
             MapCache MC;
-            Block * b = MC.BlockAt(pos_cursor / 16);
+            Block * b = MC.BlockAtTile(pos_cursor);
             if(!b)
             {
                 out.printerr("Cursor is in an invalid/uninitialized area. Place it over a floor.\n");

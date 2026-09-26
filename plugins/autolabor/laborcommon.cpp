@@ -1,5 +1,13 @@
 #include "laborcommon.h"
 
+#include <map>
+#include <set>
+#include <sstream>
+
+#include "joblabormapper.h"
+
+#include "Debug.h"
+
 #include "modules/Units.h"
 #include "modules/World.h"
 
@@ -26,6 +34,10 @@ using namespace df::enums;
 
 using df::global::plotinfo;
 using df::global::world;
+
+namespace DFHack {
+    DBG_DECLARE(autolabor, labor_probe, DebugCategory::LINFO);
+}
 
 namespace autolabor {
 
@@ -320,6 +332,120 @@ int total_skill(df::unit *u)
         }
     }
     return total;
+}
+
+// ---------------------------------------------------------------------------
+// labor probe
+//
+// The v50 stoneworker labor split (stonecutter / stone carver / mason /
+// engraver / stonecrafter) was re-derived from documentation rather than
+// verified against the game. The game only lets a unit claim a job if it
+// has the job's true gating labor enabled, so logging which of the disputed
+// labors are enabled on each observed worker lets A/B testing identify the
+// real mapping (e.g. a unit making rock blocks with STONECUTTER on and
+// MASON off confirms the mapping; an enabled mask that consistently
+// disagrees with `mapped` flags a wrong guess).
+// ---------------------------------------------------------------------------
+
+const std::vector<df::unit_labor> disputed_labors = {
+    df::unit_labor::STONECUTTER,
+    df::unit_labor::STONE_CARVER,
+    df::unit_labor::MASON,
+    df::unit_labor::ENGRAVER,
+    df::unit_labor::STONE_CRAFT,
+};
+
+static JobLaborMapper *probe_mapper = nullptr;
+// (job id, unit id) -> enabled-labor bitmask; only new or changed
+// combinations are logged so the channel doesn't spam every cycle
+static std::map<std::pair<int32_t, int32_t>, int> probe_seen;
+// (unit id, job type) pairs already warned about for a mapped-labor
+// mismatch; each unit/job-type combination warns once
+static std::set<std::pair<int32_t, int32_t>> probe_warned;
+
+void probe_labor_observation(df::unit *u)
+{
+    df::job *j = u->job.current_job;
+    if (!j)
+        return;
+    if (!probe_mapper)
+        probe_mapper = new JobLaborMapper();
+
+    df::unit_labor mapped = probe_mapper->find_job_labor(j);
+
+    // strong mismatch signal independent of the disputed set: the unit is
+    // doing the job without the labor we mapped it to. the game gates job
+    // claiming on the real labor, so either our mapping is wrong or the job
+    // accepts multiple labors and we picked the wrong one -- either way the
+    // unit's enabled labors hold the better candidate. (a claimed job can
+    // also outlive a labor removal, so this is only a *possible* mismatch)
+    if (mapped > unit_labor::NONE && mapped < NUM_LABORS &&
+        !u->status.labors[mapped])
+    {
+        auto wkey = std::make_pair(u->id, (int32_t)j->job_type);
+        if (!probe_warned.count(wkey))
+        {
+            probe_warned.insert(wkey);
+            std::stringstream es;
+            bool comma = false;
+            FOR_ENUM_ITEMS(unit_labor, l)
+            {
+                if (l == unit_labor::NONE || !u->status.labors[l])
+                    continue;
+                if (comma)
+                    es << ',';
+                es << ENUM_KEY_STR(unit_labor, l);
+                comma = true;
+            }
+            INFO(labor_probe).print(
+                "possible labor mapping mismatch: unit {} ({}) is doing job "
+                "{} {} (mapped {}) without that labor enabled; enabled "
+                "labors: {{{}}}\n",
+                u->id, Units::getReadableName(u), j->id,
+                ENUM_KEY_STR(job_type, j->job_type),
+                ENUM_KEY_STR(unit_labor, mapped),
+                comma ? es.str() : std::string("NONE"));
+        }
+    }
+
+    const int n_disputed = disputed_labors.size();
+    int mask = 0;
+    bool in_cluster = false;
+    for (int i = 0; i < n_disputed; i++)
+    {
+        if (disputed_labors[i] == mapped)
+            in_cluster = true;
+        if (u->status.labors[disputed_labors[i]])
+            mask |= 1 << i;
+    }
+    if (!in_cluster)
+        return;
+
+    auto key = std::make_pair(j->id, u->id);
+    auto seen = probe_seen.find(key);
+    if (seen != probe_seen.end() && seen->second == mask)
+        return;
+    probe_seen[key] = mask;
+
+    std::stringstream ss;
+    bool comma = false;
+    for (int i = 0; i < n_disputed; i++)
+    {
+        if (!(mask & (1 << i)))
+            continue;
+        if (comma)
+            ss << ',';
+        ss << ENUM_KEY_STR(unit_labor, disputed_labors[i]);
+        comma = true;
+    }
+    if (!comma)
+        ss << "NONE";
+
+    TRACE(labor_probe).print(
+        "unit {} ({}) job {} {}: mapped={} enabled={{{}}}\n",
+        u->id, Units::getReadableName(u), j->id,
+        ENUM_KEY_STR(job_type, j->job_type),
+        ENUM_KEY_STR(unit_labor, mapped), ss.str());
 }
 
 }

@@ -353,6 +353,18 @@ inline df::map_block *getBlock (df::coord pos) { return getBlock(pos.x, pos.y, p
 inline df::map_block *getTileBlock (df::coord pos) { return getTileBlock(pos.x, pos.y, pos.z); }
 inline df::map_block *ensureTileBlock (df::coord pos) { return ensureTileBlock(pos.x, pos.y, pos.z); }
 
+// Get the coordinate of the map block containing the given tile position.
+// The z coordinate is a level and is preserved, not scaled.
+inline df::coord getTileBlockCoord(df::coord pos) { return df::coord(pos.x >> 4, pos.y >> 4, pos.z); }
+
+// Get the tile position of a map block's origin (north-west corner), given the
+// block's coordinate. The z coordinate is a level and is preserved, not scaled.
+inline df::coord getBlockOrigin(df::coord pos) { return df::coord(pos.x << 4, pos.y << 4, pos.z); }
+
+// Get a tile position's offset within its containing map block. The returned
+// x and y are in the range 0-15; z is preserved (blocks span a single level).
+inline df::coord getTileBlockOffset(df::coord pos) { return df::coord(pos.x & 15, pos.y & 15, pos.z); }
+
 extern DFHACK_EXPORT df::tiletype *getTileType(int32_t x, int32_t y, int32_t z);
 extern DFHACK_EXPORT df::tile_designation *getTileDesignation(int32_t x, int32_t y, int32_t z);
 extern DFHACK_EXPORT df::tile_occupancy *getTileOccupancy(int32_t x, int32_t y, int32_t z);

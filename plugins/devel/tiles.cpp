@@ -111,8 +111,8 @@ public:
     coord_vec points(MapCache & mc, DFHack::DFCoord start)
     {
         coord_vec v;
-        DFHack::DFCoord blockc = start % 16;
-        DFHack::DFCoord iterc = blockc * 16;
+        DFHack::DFCoord blockc = Maps::getTileBlockCoord(start);
+        DFHack::DFCoord iterc = Maps::getBlockOrigin(blockc);
         if( !mc.testCoord(start) )
             return v;
 
@@ -445,7 +445,7 @@ command_result df_tiles (Core * c, vector <string> & parameters)
                     mcache.setTemp2At(*iter,10015);
                     mcache.setDesignationAt(*iter,a);
 
-                    Block * b = mcache.BlockAt((*iter)/16);
+                    Block * b = mcache.BlockAtTile(*iter);
                     DFHack::t_blockflags bf = b->BlockFlags();
                     bf.bits.liquid_1 = true;
                     bf.bits.liquid_2 = true;
@@ -506,7 +506,7 @@ command_result df_tiles (Core * c, vector <string> & parameters)
                         }
                         mcache.setDesignationAt(current,des);
                     }
-                    seen_blocks.insert(mcache.BlockAt((*iter) / 16));
+                    seen_blocks.insert(mcache.BlockAtTile(*iter));
                     iter++;
                 }
                 set <Block *>::iterator biter = seen_blocks.begin();

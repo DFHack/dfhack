@@ -209,38 +209,6 @@ static const struct_field_info dig_now_options_fields[] = {
 };
 struct_identity dig_now_options::_identity(sizeof(dig_now_options), &df::allocator_fn<dig_now_options>, NULL, "dig_now_options", NULL, dig_now_options_fields);
 
-// propagate light, outside, and subterranean flags to open tiles below this one
-static void propagate_vertical_flags(MapExtras::MapCache &map,
-                                     const DFCoord &pos) {
-    df::tile_designation td = map.designationAt(pos);
-
-    if (!map.ensureBlockAt(DFCoord(pos.x, pos.y, pos.z+1))) {
-        // only the sky above
-        td.bits.light = true;
-        td.bits.outside = true;
-        td.bits.subterranean = false;
-    }
-
-    int32_t zlevel = pos.z;
-    df::tiletype_shape shape =
-            tileShape(map.tiletypeAt(DFCoord(pos.x, pos.y, zlevel)));
-    while ((shape == df::tiletype_shape::EMPTY
-            || shape == df::tiletype_shape::RAMP_TOP)
-           && map.ensureBlockAt(DFCoord(pos.x, pos.y, --zlevel))) {
-        DFCoord pos_below(pos.x, pos.y, zlevel);
-        df::tile_designation td_below = map.designationAt(pos_below);
-        if (td_below.bits.light == td.bits.light
-                && td_below.bits.outside == td.bits.outside
-                && td_below.bits.subterranean == td.bits.subterranean)
-            break;
-        td_below.bits.light = td.bits.light;
-        td_below.bits.outside = td.bits.outside;
-        td_below.bits.subterranean = td.bits.subterranean;
-        map.setDesignationAt(pos_below, td_below);
-        shape = tileShape(map.tiletypeAt(pos_below));
-    }
-}
-
 static bool can_dig_default(df::tiletype tt) {
     df::tiletype_shape shape = tileShape(tt);
     return shape == df::tiletype_shape::WALL ||
@@ -496,7 +464,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                         dig_tile(out, map, pos_below, td_below, dug_tiles);
                     }
                     clean_ramps(map, pos);
-                    propagate_vertical_flags(map, pos);
+                    map.propagateVerticalFlags(pos);
                     return true;
                 }
             } else {
@@ -539,7 +507,7 @@ static bool dig_tile(color_ostream &out, MapExtras::MapCache &map,
                     map.setTiletypeAt(pos_above,
                             get_target_type(tt, df::tiletype_shape::RAMP_TOP));
                     remove_ramp_top(map, DFCoord(pos.x, pos.y, pos.z+2));
-                    propagate_vertical_flags(map, DFCoord(pos.x, pos.y, pos.z + 1));
+                    map.propagateVerticalFlags(DFCoord(pos.x, pos.y, pos.z + 1));
                 }
             }
             break;

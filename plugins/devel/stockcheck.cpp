@@ -79,7 +79,7 @@ public:
                     DFCoord cursor (x,y,z);
                     uint32_t tileX = x % 16;
                     uint32_t tileY = y % 16;
-                    MapExtras::Block * b = mc.BlockAt(cursor/16);
+                    MapExtras::Block * b = mc.BlockAtTile(cursor);
                     if(b && b->is_valid())
                     {
                         auto &block = *b->getRaw();

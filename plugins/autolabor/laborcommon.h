@@ -109,4 +109,16 @@ dwarf_state get_dwarf_state(df::unit *u);
 int top_skill(df::unit *u, df::job_skill *skill_out = nullptr);
 int total_skill(df::unit *u);
 
+// labors whose v50 job->labor mappings were re-derived rather than verified
+// against the game (the stoneworker split); the labor probe and the modern
+// engine's mismatch escalation both work from this list
+extern const std::vector<df::unit_labor> disputed_labors;
+
+// labor-probe instrumentation: if the unit is doing a job that maps to a
+// labor whose job->labor mapping is disputed, log which of the disputed
+// labors are enabled on the unit (via the "labor_probe" debug channel).
+// the true gating labor must be enabled on the worker, so comparing
+// observations across units identifies the labor the game actually uses.
+void probe_labor_observation(df::unit *u);
+
 }

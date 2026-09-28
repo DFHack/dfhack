@@ -48,3 +48,11 @@ private:
     WorkDetailManager *wdm;
     bool initialized = false;
 };
+
+namespace autolabor {
+
+// prints a snapshot of the engine's observed state to the console for
+// diagnostics (the 'dump' command); usable in modern or monitor mode
+void dump_engine_state(color_ostream &out);
+
+} // namespace autolabor

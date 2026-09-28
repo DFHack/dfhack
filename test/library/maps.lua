@@ -10,6 +10,64 @@ local function block_bounds(block)
     return {p.x, p.y, p.z, p.x + 15, p.y + 15, p.z}
 end
 
+function test.getTileBlockCoord()
+    local block = first_block()
+    local p = block.map_pos
+    local pos = xyz2pos(p.x + 5, p.y + 7, p.z)
+
+    local bx, by, bz = dfhack.maps.getTileBlockCoord(pos)
+    expect.eq(p.x // 16, bx)
+    expect.eq(p.y // 16, by)
+    -- z is a level, not scaled by the conversion
+    expect.eq(p.z, bz)
+
+    -- x,y,z positional argument form works too
+    local bx2, by2, bz2 = dfhack.maps.getTileBlockCoord(pos.x, pos.y, pos.z)
+    expect.eq(bx, bx2)
+    expect.eq(by, by2)
+    expect.eq(bz, bz2)
+
+    -- every tile in the block resolves to the same block coord, which agrees
+    -- with the block actually returned by the block lookups
+    for dx = 0, 15 do for dy = 0, 15 do
+        local tx, ty, tz = dfhack.maps.getTileBlockCoord(p.x + dx, p.y + dy, p.z)
+        expect.eq(bx, tx)
+        expect.eq(by, ty)
+        expect.eq(bz, tz)
+    end end
+    expect.eq(dfhack.maps.getTileBlock(pos),
+              dfhack.maps.getBlock(bx, by, bz))
+end
+
+function test.getBlockOrigin()
+    local block = first_block()
+    local p = block.map_pos
+
+    local ox, oy, oz = dfhack.maps.getBlockOrigin(p.x // 16, p.y // 16, p.z)
+    expect.eq(p.x, ox)
+    expect.eq(p.y, oy)
+    -- z is a level, not scaled by the conversion
+    expect.eq(p.z, oz)
+end
+
+function test.getTileBlockOffset()
+    local block = first_block()
+    local p = block.map_pos
+    local pos = xyz2pos(p.x + 5, p.y + 7, p.z)
+
+    local tx, ty, tz = dfhack.maps.getTileBlockOffset(pos)
+    expect.eq(5, tx)
+    expect.eq(7, ty)
+    expect.eq(p.z, tz)
+
+    -- block origin + offset reconstructs the tile position
+    local bx, by, bz = dfhack.maps.getTileBlockCoord(pos)
+    local ox, oy, oz = dfhack.maps.getBlockOrigin(bx, by, bz)
+    expect.eq(pos.x, ox + tx)
+    expect.eq(pos.y, oy + ty)
+    expect.eq(pos.z, oz + tz)
+end
+
 function test.forEachTile_counts_tiles()
     local block = first_block()
     local res = dfhack.maps.forEachTile(block_bounds(block))

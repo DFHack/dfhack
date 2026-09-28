@@ -78,7 +78,7 @@ DFHACK_EXPORT bool isActive(df::unit *unit);
 DFHACK_EXPORT bool isVisible(df::unit *unit);
 // Unit is a non-dead (optionally sane) citizen of fort.
 DFHACK_EXPORT bool isCitizen(df::unit *unit, bool include_insane = false);
-// Long-term resident, not the hostile type.
+// Long-term (non-dead) resident, not the hostile type.
 DFHACK_EXPORT bool isResident(df::unit *unit, bool include_insane = false);
 // Similar to isCitizen, but includes tame animals. Will reveal ambushers for the fort, etc.
 DFHACK_EXPORT bool isFortControlled(df::unit *unit);
@@ -200,10 +200,10 @@ DFHACK_EXPORT df::unit *getUnitByNobleRole(std::string noble);
 
 inline auto citizensRange(std::vector<df::unit *> &vec, bool exclude_residents = false, bool include_insane = false) {
     return vec | std::views::filter([=](df::unit *unit) {
-        if (isDead(unit) || !isActive(unit))
-            return false;
-        return isCitizen(unit, include_insane) ||
-            (!exclude_residents && isResident(unit, include_insane));
+        // isCitizen and isResident both reject dead units
+        return isActive(unit) &&
+            (isCitizen(unit, include_insane) ||
+                (!exclude_residents && isResident(unit, include_insane)));
     });
 }
 

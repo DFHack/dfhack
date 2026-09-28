@@ -543,6 +543,10 @@ public:
             {
             case df::workshop_type::Craftsdwarfs:
             {
+                // v50: stone blocks are stonecutting work, even when they are
+                // made at a craftsdwarf's workshop
+                if (j->job_type == df::job_type::ConstructBlocks)
+                    return df::unit_labor::STONECUTTER;
                 df::item_type jobitem = j->job_items.elements[0]->item_type;
                 switch (jobitem)
                 {
@@ -575,7 +579,13 @@ public:
                 }
             }
             case df::workshop_type::Masons:
-                return df::unit_labor::MASON;
+                // v50: the stoneworker's workshop no longer uses the masonry
+                // labor; stonecutters cut blocks there and stone carvers make
+                // everything else (masonry is now only for constructing
+                // buildings out of stone)
+                if (j->job_type == df::job_type::ConstructBlocks)
+                    return df::unit_labor::STONECUTTER;
+                return df::unit_labor::STONE_CARVER;
             case df::workshop_type::Carpenters:
                 return df::unit_labor::CARPENTER;
             case df::workshop_type::Leatherworks:
@@ -692,7 +702,7 @@ JobLaborMapper::JobLaborMapper()
 
     jlfunc* jlf_no_labor = jlf_const(df::unit_labor::NONE);
 
-    job_to_labor_table[df::job_type::CarveFortification] = jlf_const(df::unit_labor::ENGRAVER);
+    job_to_labor_table[df::job_type::CarveFortification] = jlf_const(df::unit_labor::STONECUTTER);
     job_to_labor_table[df::job_type::DetailWall] = jlf_const(df::unit_labor::ENGRAVER);
     job_to_labor_table[df::job_type::DetailFloor] = jlf_const(df::unit_labor::ENGRAVER);
     job_to_labor_table[df::job_type::Dig] = jlf_const(df::unit_labor::MINE);
@@ -910,7 +920,7 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::ReportCrime] = jlf_no_labor;
     job_to_labor_table[df::job_type::ExecuteCriminal] = jlf_no_labor;
     job_to_labor_table[df::job_type::TrainAnimal] = jlf_const(df::unit_labor::ANIMALTRAIN);
-    job_to_labor_table[df::job_type::CarveTrack] = jlf_const(df::unit_labor::ENGRAVER);
+    job_to_labor_table[df::job_type::CarveTrack] = jlf_const(df::unit_labor::STONECUTTER);
     job_to_labor_table[df::job_type::PushTrackVehicle] = jlf_const(df::unit_labor::HANDLE_VEHICLES);
     job_to_labor_table[df::job_type::PlaceTrackVehicle] = jlf_const(df::unit_labor::HANDLE_VEHICLES);
     job_to_labor_table[df::job_type::StoreItemInVehicle] = jlf_hauling;
@@ -932,8 +942,8 @@ JobLaborMapper::JobLaborMapper()
     job_to_labor_table[df::job_type::AcceptHeistItem] = jlf_no_labor; // added for 47.04 - see #1561
 
     // v50 additions
-    job_to_labor_table[df::job_type::SmoothWall] = jlf_const(df::unit_labor::ENGRAVER);
-    job_to_labor_table[df::job_type::SmoothFloor] = jlf_const(df::unit_labor::ENGRAVER);
+    job_to_labor_table[df::job_type::SmoothWall] = jlf_const(df::unit_labor::STONECUTTER);
+    job_to_labor_table[df::job_type::SmoothFloor] = jlf_const(df::unit_labor::STONECUTTER);
     job_to_labor_table[df::job_type::PolishStones] = jlf_const(df::unit_labor::STONE_CRAFT);
     job_to_labor_table[df::job_type::ConstructBag] = jlf_const(df::unit_labor::LEATHER);
     job_to_labor_table[df::job_type::EncrustWithStones] = jlf_const(df::unit_labor::ENCRUST_GEM);

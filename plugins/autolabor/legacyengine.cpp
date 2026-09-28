@@ -698,6 +698,8 @@ void LegacyEngine::update(color_ostream &out)
 
         state_count[dwarf_info[dwarf].state]++;
 
+        autolabor::probe_labor_observation(dwarfs[dwarf]);
+
         TRACE(legacy_cycle, out).print("Dwarf {} \"{}\": penalty {}, state {}\n",
             dwarf, dwarfs[dwarf]->name.first_name, dwarf_info[dwarf].mastery_penalty, state_names[dwarf_info[dwarf].state]);
     }

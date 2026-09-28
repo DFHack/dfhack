@@ -5,6 +5,8 @@
 #include <stack>
 #include <set>
 
+#include "modules/MapCache.h"
+
 typedef vector <df::coord> coord_vec;
 class Brush
 {
@@ -92,8 +94,8 @@ public:
     coord_vec points(MapExtras::MapCache & mc, DFHack::DFCoord start)
     {
         coord_vec v;
-        DFHack::DFCoord blockc = start / 16;
-        DFHack::DFCoord iterc = blockc * 16;
+        DFHack::DFCoord blockc = DFHack::Maps::getTileBlockCoord(start);
+        DFHack::DFCoord iterc = DFHack::Maps::getBlockOrigin(blockc);
         if( !mc.testCoord(start) )
             return v;
         auto starty = iterc.y;

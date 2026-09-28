@@ -8,8 +8,8 @@ set(CMAKE_INSTALL_MESSAGE "LAZY")
 
 # set up versioning.
 set(DF_VERSION "53.16")
-set(DFHACK_RELEASE "r1.1")
-set(DFHACK_PRERELEASE FALSE)
+set(DFHACK_RELEASE "r2rc2")
+set(DFHACK_PRERELEASE TRUE)
 
 set(DFHACK_VERSION "${DF_VERSION}-${DFHACK_RELEASE}")
 set(DFHACK_ABI_VERSION 2)
@@ -356,7 +356,7 @@ INCLUDE(FetchContent)
 FetchContent_Declare(
     fmt
     GIT_REPOSITORY https://github.com/fmtlib/fmt.git
-    GIT_TAG 790b9389ae99c4ddebdd2736a8602eca1fec684e # 12.1.0 + bugfix for MSVC warning + build time improvements
+    GIT_TAG 12.2.0
 )
 FetchContent_MakeAvailable(fmt)
 set(FMTLIB fmt)

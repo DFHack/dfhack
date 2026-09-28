@@ -1114,6 +1114,9 @@ bool Core::InitMainThread(std::filesystem::path path) {
     fprintf(stderr, "dfhack: redirecting stderr to stderr.log\n");
     if (!freopen("stderr.log", "w", stderr))
         std::cerr << "Could not redirect stderr to stderr.log" << std::endl;
+    // freopen makes stderr fully buffered on Windows; restore unbuffered
+    // writes so that stderr.log is up to date (e.g. in the event of a crash)
+    setvbuf(stderr, NULL, _IONBF, 0);
 
     std::cerr << "DFHack build: " << Version::git_description() << std::endl;
     if (strlen(Version::dfhack_run_url())) {

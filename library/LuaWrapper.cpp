@@ -1055,20 +1055,12 @@ static int meta_ptr_tostring(lua_State *state)
 }
 
 /**
- * Metamethod: __index for enum.attrs
+ * Push the attr entry for the given enum item value.
+ * Out-of-range values resolve to the default entry.
  */
-static int meta_enum_attr_index(lua_State *state)
+static void push_enum_attr(lua_State *state, enum_identity *id, int64_t idx)
 {
-    if (!lua_isnumber(state, 2))
-        lua_rawget(state, UPVAL_FIELDTABLE);
-    if (!lua_isnumber(state, 2))
-        luaL_error(state, "Invalid index in enum.attrs[]");
-
-    auto id = (enum_identity*)lua_touserdata(state, lua_upvalueindex(2));
-    auto *complex = id->getComplex();
-
-    int64_t idx = lua_tonumber(state, 2);
-    if (complex)
+    if (auto *complex = id->getComplex())
     {
         auto it = complex->value_index_map.find(idx);
         if (it != complex->value_index_map.end())
@@ -1087,6 +1079,20 @@ static int meta_enum_attr_index(lua_State *state)
     auto atype = id->getAttrType();
 
     push_object_internal(state, atype, ptr + unsigned(atype->byte_size()*idx));
+}
+
+/**
+ * Metamethod: __index for enum.attrs
+ */
+static int meta_enum_attr_index(lua_State *state)
+{
+    if (!lua_isnumber(state, 2))
+        lua_rawget(state, UPVAL_FIELDTABLE);
+    if (!lua_isnumber(state, 2))
+        luaL_error(state, "Invalid index in enum.attrs[]");
+
+    auto id = (enum_identity*)lua_touserdata(state, lua_upvalueindex(2));
+    push_enum_attr(state, id, lua_tonumber(state, 2));
     return 1;
 }
 
@@ -1462,6 +1468,83 @@ static int complex_enum_ipairs(lua_State *L)
     return 3;
 }
 
+/*
+ * enum.attrs ipairs() support
+ *
+ * enum.attrs[] returns a default entry for out-of-range indexes, so a plain
+ * ipairs() would never terminate. These iterators stop at the same place as
+ * ipairs() on the enum itself (DFHack/dfhack#1860).
+ *
+ * upvalues for the *_ipairs functions:
+ *  1: enum_identity
+ *  2: enum_identity::ComplexData (complex enums only)
+ *
+ * upvalues for the *_inext iterators (UPVAL_TYPETABLE is required by
+ * push_object_internal):
+ *  1: DFHACK_TYPETABLE
+ *  2: enum_identity (plain) or enum_identity::ComplexData (complex)
+ *  3: enum_identity (complex only)
+ */
+
+static int meta_enum_attr_inext(lua_State *L)
+{
+    auto id = (enum_identity*)lua_touserdata(L, lua_upvalueindex(2));
+    int64_t i = luaL_checkint(L, 2) + 1;
+    if (i <= id->getLastItem())
+    {
+        lua_pushinteger(L, i);
+        push_enum_attr(L, id, i);
+        return 2;
+    }
+    else
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+}
+
+static int meta_enum_attr_ipairs(lua_State *L)
+{
+    auto id = (enum_identity*)lua_touserdata(L, lua_upvalueindex(1));
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
+    lua_pushvalue(L, lua_upvalueindex(1));
+    lua_pushcclosure(L, meta_enum_attr_inext, 2);
+    lua_pushnil(L);
+    lua_pushinteger(L, id->getFirstItem() - 1);
+    return 3;
+}
+
+static int complex_enum_attr_inext(lua_State *L)
+{
+    bool is_first = lua_isuserdata(L, 2);
+    int64_t i = (is_first)
+        ? ((enum_identity::ComplexData*)lua_touserdata(L, lua_upvalueindex(2)))->index_value_map[0]
+        : luaL_checkint(L, 2);
+    if (is_first || complex_enum_next_item_helper(L, i))
+    {
+        auto id = (enum_identity*)lua_touserdata(L, lua_upvalueindex(3));
+        lua_pushinteger(L, i);
+        push_enum_attr(L, id, i);
+        return 2;
+    }
+    else
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+}
+
+static int complex_enum_attr_ipairs(lua_State *L)
+{
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TYPETABLE_TOKEN);
+    lua_pushvalue(L, lua_upvalueindex(2));
+    lua_pushvalue(L, lua_upvalueindex(1));
+    lua_pushcclosure(L, complex_enum_attr_inext, 3);
+    lua_pushnil(L);
+    lua_pushlightuserdata(L, (void*)1);
+    return 3;
+}
+
 
 static void RenderTypeChildren(lua_State *state, const std::vector<const compound_identity*> &children);
 
@@ -1562,7 +1645,21 @@ static void FillEnumKeys(lua_State *state, int ix_meta, int ftable, enum_identit
         lua_pushvalue(state, base+1);
         lua_pushcclosure(state, meta_enum_attr_index, 3);
 
-        freeze_table(state, false, (eid->getFullName()+".attrs").c_str());
+        freeze_table(state, true, (eid->getFullName()+".attrs").c_str());
+
+        lua_pushlightuserdata(state, eid);
+        if (complex)
+        {
+            lua_pushlightuserdata(state, (void*)complex);
+            lua_pushcclosure(state, complex_enum_attr_ipairs, 2);
+        }
+        else
+        {
+            lua_pushcclosure(state, meta_enum_attr_ipairs, 1);
+        }
+        lua_setfield(state, -2, "__ipairs");
+        lua_pop(state, 1);
+
         lua_setfield(state, ftable, "attrs");
     }
 

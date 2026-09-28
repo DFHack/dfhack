@@ -1412,6 +1412,50 @@ void MapExtras::MapCache::discardBlock(Block *block)
     delete block;
 }
 
+void MapExtras::MapCache::propagateVerticalFlags(DFCoord pos)
+{
+    df::tiletype_shape shape = tileShape(tiletypeAt(pos));
+    bool open = shape == tiletype_shape::EMPTY || shape == tiletype_shape::RAMP_TOP;
+
+    df::tile_designation td = designationAt(pos);
+    if (open)
+    {
+        if (!ensureBlockAt(DFCoord(pos.x, pos.y, pos.z+1))) {
+            // only the sky above
+            td.bits.light = true;
+            td.bits.outside = true;
+            td.bits.subterranean = false;
+        }
+    }
+    else
+    {
+        // a solid tile covers the column below; subterranean is a property
+        // of each tile and is preserved
+        td.bits.light = false;
+        td.bits.outside = false;
+    }
+
+    for (int32_t z = pos.z - 1;
+         z >= 0 && ensureBlockAt(DFCoord(pos.x, pos.y, z));
+         --z)
+    {
+        DFCoord pos_below(pos.x, pos.y, z);
+        df::tile_designation td_below = designationAt(pos_below);
+        bool sub = open ? td.bits.subterranean : td_below.bits.subterranean;
+        if (td_below.bits.light == td.bits.light
+                && td_below.bits.outside == td.bits.outside
+                && td_below.bits.subterranean == sub)
+            break;
+        td_below.bits.light = td.bits.light;
+        td_below.bits.outside = td.bits.outside;
+        td_below.bits.subterranean = sub;
+        setDesignationAt(pos_below, td_below);
+        shape = tileShape(tiletypeAt(pos_below));
+        if (shape != tiletype_shape::EMPTY && shape != tiletype_shape::RAMP_TOP)
+            break;
+    }
+}
+
 void MapExtras::MapCache::resetTags()
 {
     for (auto it = blocks.begin(); it != blocks.end(); ++it)

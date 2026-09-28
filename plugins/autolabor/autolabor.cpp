@@ -211,6 +211,14 @@ command_result autolabor_cmd(color_ostream &out, std::vector<std::string> &param
     if (mode_command(out, parameters))
         return CR_OK;
 
+    if (parameters.size() == 1 && parameters[0] == "dump")
+    {
+        out.print("=== autolabor state dump ===\n");
+        out.print("enabled={} mode={}\n", (int)is_enabled, engine_mode());
+        autolabor::dump_engine_state(out);
+        return CR_OK;
+    }
+
     if (parameters.size() == 1 &&
         (parameters[0] == "0" || parameters[0] == "enable" ||
          parameters[0] == "1" || parameters[0] == "disable"))
@@ -256,6 +264,14 @@ command_result labormanager_cmd(color_ostream &out, std::vector<std::string> &pa
                 activate_mode(out, MODE_MODERN);
         }
         return plugin_enable(out, enable);
+    }
+
+    if (parameters.size() == 1 && parameters[0] == "dump")
+    {
+        out.print("=== autolabor state dump ===\n");
+        out.print("enabled={} mode={}\n", (int)is_enabled, engine_mode());
+        autolabor::dump_engine_state(out);
+        return CR_OK;
     }
 
     // in monitor mode the monitor engine handles status/list; everything

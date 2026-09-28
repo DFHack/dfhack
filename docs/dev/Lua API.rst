@@ -1060,7 +1060,64 @@ Translation module
 
 * ``dfhack.translation.generateName(name,language,type,major_selector,minor_selector)``
 
-  Dynamically generate a name using the same logic the game itself uses.
+  Dynamically generate a random name using the same logic the game itself uses.
+
+  **Parameters:**
+
+  .. list-table::
+    :class: dfhack-param-table
+    :header-rows: 1
+    :widths: 21 60 19
+
+    * - Name
+      - Explanation
+      - Data Type
+    * - ``name``
+      - | ``name`` property of the object that will have its name generated. This is an output parameter.
+        |
+        | Example values:
+        | ``df.global.world.entities.all[0].name``
+        | ``df.unit.find(79).name``
+        | ``dfhack.gui.getSelectedUnit().name``
+        | ``df.language_name::new()``
+      - ``df.language_name``
+    * - ``language``
+      - | Integer index of the language used for generating the name within ``df.language_translation``.
+        |
+        | Example values:
+        | ``df.global.world.entities.all[0].name.language``
+        | ``df.unit.find(79).name.language``
+        | ``dfhack.gui.getSelectedUnit().name.language``
+        | ``0``
+      - ``int``
+    * - ``type``
+      - | Integer value of the name type. This ensures that the generated name will be appropriate for the given category of object. For allowed values see ``df.language_name_type`` enum.
+        |
+        | Example values:
+        | ``df.global.world.entities.all[100].name.type``
+        | ``df.unit.find(79).name.type``
+        | ``dfhack.gui.getSelectedUnit().name.type``
+        | ``df.language_name_type.Figure``
+        | ``13``
+      - ``df.language_name_type``
+    * - ``major_selector``
+      - | Section of the loaded game raws containing words used for generating the name.
+        |
+        | Example value for sites belonging to civ with id 100:
+        | ``df.historical_entity.find(100).entity_raw.symbols.symbols_major[df.entity_name_type.SITE]``
+        |
+        | Example value for units:
+        | ``df.global.world.raws.language.word_table[0][df.language_name_category.Unit]``
+      - ``df.language_word_table``
+    * - ``minor_selector``
+      - | Section of the loaded game raws containing words used for generating the name.
+        |
+        | Example value for sites belonging to civ with id 100:
+        | ``df.historical_entity.find(100).entity_raw.symbols.symbols_minor[df.entity_name_type.SITE]``
+        |
+        | Example value for units:
+        | ``df.global.world.raws.language.word_table[1][df.language_name_category.Unit]``
+      - ``df.language_word_table``
 
 Gui module
 ----------
@@ -1508,12 +1565,14 @@ Units module
   same checks the game uses to decide game-over by extinction,
   with an additional sanity check. You can identify citizens,
   regardless of their sanity, by passing ``true`` as the optional
-  second parameter.
+  second parameter. Dead units are never considered citizens, even
+  when ``include_insane`` is set (though animate intelligent
+  undead citizens still count).
 
 * ``dfhack.units.isResident(unit[,include_insane])``
 
-  The unit is a resident of the fortress. Same ``include_insane`` semantics as
-  ``isCitizen``.
+  The unit is a non-dead resident of the fortress. Same
+  ``include_insane`` semantics as ``isCitizen``.
 
 * ``dfhack.units.isFortControlled(unit)``
 
@@ -2411,6 +2470,23 @@ Maps module
 * ``dfhack.maps.ensureTileBlock(coords)``, or ``ensureTileBlock(x,y,z)``
 
   Like ``getTileBlock``, but if the block is not allocated, try creating it.
+
+* ``dfhack.maps.getTileBlockCoord(coords)``, or ``getTileBlockCoord(x,y,z)``
+
+  Returns the *x, y, z* block coordinates of the map block containing the
+  given tile position. The z coordinate is a level and is preserved, not
+  scaled.
+
+* ``dfhack.maps.getBlockOrigin(coords)``, or ``getBlockOrigin(x,y,z)``
+
+  Returns the *x, y, z* tile coordinates of the north-west corner of the map
+  block with the given block coordinates. The z coordinate is a level and is
+  preserved, not scaled.
+
+* ``dfhack.maps.getTileBlockOffset(coords)``, or ``getTileBlockOffset(x,y,z)``
+
+  Returns the *x, y* offset (0-15) of the given tile position within its
+  containing map block, along with the unchanged *z* coordinate.
 
 * ``dfhack.maps.getTileType(coords)``, or ``getTileType(x,y,z)``
 

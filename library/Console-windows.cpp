@@ -78,6 +78,9 @@ namespace DFHack
             state = con_unclaimed;
             in_batch = false;
             raw_cursor = 0;
+            console_owned = false;
+            saved_cp = 0;
+            saved_output_cp = 0;
         };
         virtual ~Private()
         {
@@ -396,6 +399,9 @@ namespace DFHack
         HWND ConsoleWindow;
         HWND MainWindow;
         WORD default_attributes;
+        bool console_owned;   // false if the console was inherited from a parent process
+        UINT saved_cp;        // code pages to restore on shutdown if the console is borrowed
+        UINT saved_output_cp;
         // current state
         enum console_state
         {
@@ -467,22 +473,32 @@ bool Console::init(bool)
     }
     d->MainWindow = h;
 
-    // Allocate a console!
-    AllocConsole();
+    // Allocate a console! If the process already has one (e.g. dfhack-run
+    // launched from an existing terminal), the console is borrowed and must
+    // not be mutated or freed.
+    d->console_owned = AllocConsole() != FALSE;
     d->ConsoleWindow = GetConsoleWindow();
     wlock = new std::recursive_mutex();
-    HMENU  hm = GetSystemMenu(d->ConsoleWindow,false);
-    DeleteMenu(hm, SC_CLOSE, MF_BYCOMMAND);
+    if (d->console_owned)
+    {
+        HMENU  hm = GetSystemMenu(d->ConsoleWindow,false);
+        DeleteMenu(hm, SC_CLOSE, MF_BYCOMMAND);
+    }
 
     // force console code pages to utf-8
+    d->saved_cp = GetConsoleCP();
+    d->saved_output_cp = GetConsoleOutputCP();
     SetConsoleCP(CP_UTF8);
     SetConsoleOutputCP(CP_UTF8);
 
     // set the screen buffer to be big enough to let us scroll text
     GetConsoleScreenBufferInfo(GetStdHandle(STD_OUTPUT_HANDLE), &coninfo);
     d->default_attributes = coninfo.wAttributes;
-    coninfo.dwSize.Y = MAX_CONSOLE_LINES;  // How many lines do you want to have in the console buffer
-    SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
+    if (d->console_owned)
+    {
+        coninfo.dwSize.Y = MAX_CONSOLE_LINES;  // How many lines do you want to have in the console buffer
+        SetConsoleScreenBufferSize(GetStdHandle(STD_OUTPUT_HANDLE), coninfo.dwSize);
+    }
 
     // redirect unbuffered STDOUT to the console
     d->console_out = GetStdHandle(STD_OUTPUT_HANDLE);
@@ -506,7 +522,10 @@ bool Console::init(bool)
 
     // make our own weird streams so our IO isn't redirected
     std::cin.tie(this);
-    clear();
+    if (d->console_owned)
+    {
+        clear();
+    }
     inited = true;
     // DOESN'T WORK - locks up DF!
     // ForceForegroundWindow(d->MainWindow);
@@ -518,7 +537,17 @@ bool Console::shutdown(void)
 {
     assert(inited);
     std::lock_guard<std::recursive_mutex> lock{*wlock};
-    FreeConsole();
+    if (d->console_owned)
+    {
+        FreeConsole();
+    }
+    else
+    {
+        // the console is borrowed from a parent process; restore the state
+        // we changed and leave it attached
+        SetConsoleCP(d->saved_cp);
+        SetConsoleOutputCP(d->saved_output_cp);
+    }
     inited = false;
     return true;
 }
@@ -611,12 +640,16 @@ void Console::msleep (unsigned int msec)
 
 bool Console::hide()
 {
+    if (!inited || !d->console_owned)
+        return false;
     ShowWindow( GetConsoleWindow(), SW_HIDE );
     return true;
 }
 
 bool Console::show()
 {
+    if (!inited || !d->console_owned)
+        return false;
     ShowWindow( GetConsoleWindow(), SW_RESTORE );
     return true;
 }

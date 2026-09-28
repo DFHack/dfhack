@@ -424,7 +424,7 @@ class DFHACK_EXPORT MapCache
     Block *BlockAt(DFCoord blockcoord);
     /// get the map block at a tile coord.
     Block *BlockAtTile(DFCoord coord) {
-        return BlockAt(df::coord(coord.x>>4,coord.y>>4,coord.z));
+        return BlockAt(Maps::getTileBlockCoord(coord));
     }
 
     bool ensureBlockAt(df::coord coord)
@@ -432,6 +432,11 @@ class DFHACK_EXPORT MapCache
         Block *b = BlockAtTile(coord);
         return b ? b->Allocate() : false;
     }
+
+    /// Propagate the light, outside, and subterranean flags of the tile at
+    /// pos to the tiles below it. Call after the tile at pos changed
+    /// between an open and a solid shape.
+    void propagateVerticalFlags(DFCoord pos);
 
     /// delete the block from memory
     void discardBlock(Block *block);

@@ -148,7 +148,10 @@ bool Units::isCitizen(df::unit *unit, bool include_insane) {
     // Copied from the conditions used to decide game over,
     // except that the game appears to let melancholy/raving
     // dwarves count as citizens.
-    if (unit->flags1.whole & exclude_flags1 ||
+    // include_insane relaxes only the sanity check; the dead are
+    // never citizens (intelligent undead are animate, not dead)
+    if (isDead(unit) ||
+        unit->flags1.whole & exclude_flags1 ||
         unit->flags2.whole & exclude_flags2 ||
         (!include_insane && !isSane(unit)))
         return false;
@@ -157,7 +160,7 @@ bool Units::isCitizen(df::unit *unit, bool include_insane) {
 
 bool Units::isResident(df::unit *unit, bool include_insane) {
     CHECK_NULL_POINTER(unit);
-    if (!include_insane && !isSane(unit))
+    if (isDead(unit) || (!include_insane && !isSane(unit)))
         return false;
 
     return isOwnCiv(unit) &&
@@ -1029,6 +1032,7 @@ void Units::setAutomaticProfessions(df::unit* unit) {
 // functionality reverse-engineered from DF's unitst::set_goal
 void Units::setPathGoal(df::unit *unit, df::coord pos, df::unit_path_goal goal)
 {
+    CHECK_NULL_POINTER(unit);
     if (unit->path.dest != pos || unit->path.goal != goal)
     {
         unit->path.dest = pos;

@@ -59,6 +59,7 @@ Template for new versions:
 - `stockflow`: (reinstated) queue manager jobs based on free space in stockpiles
 - `smooth-movement`: smoothly animate creature, item, and vehicle movement in the fortress viewport
 - `export-world-map`: Export world map data for GIS and other external tools.
+- ``devel/consistency-check``: periodically scan DF data structures for violated invariants and report possible discrepancies
 
 ## New Features
 - `autodump`: new ``undestroy`` option reverts pending item destruction while the game is still paused

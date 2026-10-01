@@ -190,6 +190,31 @@ function test.printall_recurse()
     end)
 end
 
+function test.printall_recurse_untagged_union()
+    local t = df.army_controller:new()
+    dfhack.with_temp_object(t, function()
+        printall_recurse(t.data)
+        expect.eq(3, mock_print.call_count)
+        validate_patterns(1,
+            {'^<army_controller.T_data: ',
+             '', '^<Untagged union'})
+    end)
+end
+
+function test.printall_recurse_tagged_union()
+    local EQ = '^%s+= $'
+    local t = df.unit_patient_profile_completed_jobst:new()
+    dfhack.with_temp_object(t, function()
+        -- RecoverWounded maps to the 'bed_id' member via tag_op_history
+        t.job_type = df.job_type.RecoverWounded
+        printall_recurse(t.info)
+        expect.eq(5, mock_print.call_count)
+        validate_patterns(1,
+            {'^<unit_patient_profile_completed_jobst.T_info: ',
+             '', '^bed_id$', EQ, '^%-1$'})
+    end)
+end
+
 function test.printall_recurse_cyclic_userdata()
     local t = df.job_list_link:new()
     dfhack.with_temp_object(t, function()

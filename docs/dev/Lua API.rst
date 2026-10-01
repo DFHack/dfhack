@@ -3960,6 +3960,9 @@ environment by the mandatory init file dfhack.lua:
 * ``printall_recurse(obj)``
 
   If the argument is a lua table or DF object reference, prints all fields recursively.
+  The fields of untagged unions are not printed since only one member of such a
+  union is live at a time and there is no way to identify which one, so
+  accessing any other member is undefined behavior.
 
 * ``copyall(obj)``
 

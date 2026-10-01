@@ -353,19 +353,52 @@ if(DFHACK_PRERELEASE)
 endif()
 
 configure_file(git-describe.cmake.in ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake @ONLY)
-if(EXISTS ${dfhack_SOURCE_DIR}/.git/index AND EXISTS ${dfhack_SOURCE_DIR}/.git/modules/library/xml/index)
-    add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
-    COMMAND ${CMAKE_COMMAND}
-        -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
-        -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
-        -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
-    COMMENT "Obtaining git commit information"
-    DEPENDS ${dfhack_SOURCE_DIR}/.git/index
-        ${dfhack_SOURCE_DIR}/.git/modules/library/xml/index
-        ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
-        include/git-describe.h.in
-    )
-endif()
+
+# .git is a directory in a normal repository, but a file containing
+# "gitdir: <path>" in git worktrees and submodules; resolve both.
+function(dfhack_find_git_dir repo_dir out_var)
+    set(${out_var} "" PARENT_SCOPE)
+    if(IS_DIRECTORY "${repo_dir}/.git")
+        set(${out_var} "${repo_dir}/.git" PARENT_SCOPE)
+    elseif(EXISTS "${repo_dir}/.git")
+        file(STRINGS "${repo_dir}/.git" gitdir_line REGEX "^gitdir:" LIMIT_COUNT 1)
+        if(gitdir_line MATCHES "^gitdir:[ \t]*(.+)")
+            string(STRIP "${CMAKE_MATCH_1}" gitdir)
+            if(NOT IS_ABSOLUTE "${gitdir}")
+                get_filename_component(gitdir "${repo_dir}/${gitdir}" ABSOLUTE)
+            endif()
+            set(${out_var} "${gitdir}" PARENT_SCOPE)
+        endif()
+    endif()
+endfunction()
+
+# Re-run git describe when HEAD or the index changes in the main repository or
+# in the library/xml submodule, when they are present. The header is generated
+# even outside a git checkout so the build works on plain source trees too.
+set(GIT_DESCRIBE_DEPS
+    ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
+    ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h.in
+)
+dfhack_find_git_dir("${dfhack_SOURCE_DIR}" DFHACK_GIT_DIR)
+dfhack_find_git_dir("${dfhack_SOURCE_DIR}/library/xml" DFHACK_XML_GIT_DIR)
+foreach(git_dir "${DFHACK_GIT_DIR}" "${DFHACK_XML_GIT_DIR}")
+    if(git_dir)
+        foreach(name HEAD index)
+            if(EXISTS "${git_dir}/${name}")
+                list(APPEND GIT_DESCRIBE_DEPS "${git_dir}/${name}")
+            endif()
+        endforeach()
+    endif()
+endforeach()
+
+add_custom_command(OUTPUT ${CMAKE_CURRENT_SOURCE_DIR}/include/git-describe.h
+COMMAND ${CMAKE_COMMAND}
+    -D dfhack_SOURCE_DIR:STRING=${dfhack_SOURCE_DIR}
+    -D GIT_EXECUTABLE:STRING=${GIT_EXECUTABLE}
+    -P ${CMAKE_CURRENT_SOURCE_DIR}/git-describe.cmake
+COMMENT "Obtaining git commit information"
+DEPENDS ${GIT_DESCRIBE_DEPS}
+)
 
 add_library(dfhack SHARED ${PROJECT_SOURCES})
 target_compile_definitions(dfhack PRIVATE BUILD_DFHACK_LIB)

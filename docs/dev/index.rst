@@ -21,6 +21,7 @@ These are pages relevant to people developing for DFHack.
    /docs/dev/github-workflows
    /docs/dev/release-process
    /docs/dev/Memory-research
+   /docs/dev/performance-plan
    /docs/dev/Binpatches
    /docs/dev/Remote
    /docs/NEWS-dev

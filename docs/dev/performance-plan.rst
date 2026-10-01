@@ -118,6 +118,7 @@ Structural: Lua heap layout
 ---------------------------
 
 9. Custom ``lua_Alloc`` with type/lifetime-segregated arenas.
+
    - All GC objects funnel through ``luaC_newobj(L, tt, sz)`` — one
      place to tag by type; other allocs via ``luaM_realloc_`` by
      size class.
@@ -158,6 +159,7 @@ Binding layer (the userdata proxy question)
     a fresh userdata (+ ``object_ref_header``: tag_ptr, tag_identity,
     tag_attr, field_info) for every nested struct/container access —
     ``unit.pos.x`` garbage-per-hop. Options, in increasing scope:
+
     a) arena allocation makes the churn cheap and local (item 9);
     b) memoize refs via weak-valued cache keyed ``(ptr, identity)``
        — adds a hash probe, only worth it for expensive chains;
@@ -170,7 +172,7 @@ Binding layer (the userdata proxy question)
 13. Keep the proxy model; make the ref cheaper. A full move away
     from userdata proxies isn't practical (scripts rely on
     reference identity, ``__index`` polymorphism, ``_field``), but
-    the identity-layer work in PR !5959 already removes one virtual
+    the identity-layer work in PR #5959 already removes one virtual
     dispatch from every primitive field read — that direction
     (more ``if constexpr`` static knowledge in the access path) is
     the right way to slim the proxy rather than replacing it.
@@ -238,7 +240,7 @@ The ``__ipairs`` blocker is narrower than it appears:
   revisit 5.4 as a GC-locality lever afterward. 5.5 is not yet a
   stable target; track it but don't plan against it.
 
-PR !5959 review (performance notes)
+PR #5959 review (performance notes)
 ===================================
 
 Net-positive for the hot path, with watch-items:

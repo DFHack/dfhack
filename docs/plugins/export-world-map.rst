@@ -91,4 +91,4 @@ As an alternative to separate Parquet files, all vector data exports might also 
 Or into a single Geopackage file:
 
 ::
-    ogr2ogr -a_srs 'EPSG:3857' -of Geopackage world-map.gpkg -oo 'GEOM_POSSIBLE_NAMES=*wkt' -oo 'KEEP_GEOM_COLUMNS=NO' -oo 'AUTODETECT_TYPE=YES' -update -overwrite regions.csv
+    ogr2ogr -a_srs 'EPSG:3857' -of GPKG world-map.gpkg -oo 'GEOM_POSSIBLE_NAMES=*wkt' -oo 'KEEP_GEOM_COLUMNS=NO' -oo 'AUTODETECT_TYPE=YES' -update -overwrite regions.csv

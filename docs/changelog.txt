@@ -37,6 +37,7 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
+- ``export-world-map``: added more format conversion examples.
 
 ## API
 

@@ -681,6 +681,10 @@ Miscellaneous
   both from the curry call and the closure call itself. I.e.,
   ``curry(func,a,b)(c,d)`` equals ``func(a,b,c,d)``.
 
+* ``dfhack.dump_interrupt_timing_data()``
+
+  Dumps the internal log of times between interrupt callbacks, as a table of integers.
+  Each entry is the difference between two consecutive interrupts, in microseconds.
 
 Locking and finalization
 ------------------------

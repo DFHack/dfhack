@@ -89,6 +89,8 @@ Template for new versions:
 - `stockpiles`: the overlay now also attaches to the minecart hauling stop conditions panel, offering import/export of route stop conditions
 - `suspendmanager`: suspend deconstruction jobs that would collapse connected machinery, such as waterwheels supporting other components
 
+- `orders`: add an inline overlay for viewing and changing manager-order positions
+
 ## Fixes
 - Fixed broken weather lookup in ``World::ReadCurrentWeather``
 - Fixed ``dfhack.items.createItem`` making glob items of an incorrect size
@@ -154,6 +156,8 @@ Template for new versions:
 - Added ``dfhack.maps.getTileBlockCoord``, ``dfhack.maps.getBlockOrigin``, and ``dfhack.maps.getTileBlockOffset`` to convert between tile and block coordinates
 - ``widgets.Slider`` and ``widgets.RangeSlider``: fix sliders allowing values outside their number of stops (``num_stops``) when clicked or dragged with the mouse
 - Fixed ``ipairs()`` on enum attribute tables (e.g. ``df.item_type.attrs``) never terminating (issue #1860)
+
+- `orders`: make work-order list geometry available to Lua overlays
 
 ## Removed
 

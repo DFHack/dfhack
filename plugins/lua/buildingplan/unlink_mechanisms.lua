@@ -224,7 +224,9 @@ function MechLinkOverlay:init()
             on_activate = self:callback("ask_unlink_all"),
             enabled = function() return next(self.links) end,
         },
-        widgets.Scrollbar --Work around for https://dwarffortressbugtracker.com/view.php?id=12721
+        -- DF-MITIGATION: extra scrollbar works around DF bug 12721
+        -- https://dwarffortressbugtracker.com/view.php?id=12721
+        widgets.Scrollbar
         {
             view_id = "scroll",
             frame = {t=0, r=0, h=24},

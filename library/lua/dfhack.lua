@@ -367,6 +367,26 @@ local function print_fields(value, seen, indent, prefix)
     return 0
 end
 
+-- Recursing into the members of an untagged union is unsafe: only one member
+-- is live at a time and there is no tag to identify which one, so accessing
+-- any of the others is undefined behavior and can crash the game. Tagged
+-- unions are safe to iterate since their iterators only produce the live
+-- member.
+local function is_untagged_union(value)
+    if df.isvalid(value) ~= 'ref' then
+        return false
+    end
+    local vtype = value._type
+    if type(vtype) ~= 'table' or not vtype._union then
+        return false
+    end
+    -- a tagged union's iterator produces at most the one live member; an
+    -- untagged union's iterator produces all of them
+    local count = 0
+    safe_iterate(value, pairs, function() count = count + 1 end)
+    return count > 1
+end
+
 -- This should be same as print_array but userdata doesn't compare equal even if
 -- they hold same pointer.
 local function print_userdata(printfn, value, seen, indent)
@@ -375,10 +395,15 @@ local function print_userdata(printfn, value, seen, indent)
     dfhack.println(strvalue)
     if seen[strvalue] then
         dfhack.print(prefix)
-        dfhack.println('<Cyclic reference! Skipping fields>\n')
+        dfhack.println('<Cyclic reference! Skipping fields>')
         return 0
     end
     seen[strvalue] = true
+    if is_untagged_union(value) then
+        dfhack.print(prefix)
+        dfhack.println('<Untagged union! Skipping fields>')
+        return 0
+    end
     return print_fields(value, seen, indent, prefix)
 end
 
@@ -387,7 +412,7 @@ local function print_array(printfn, value, seen, indent)
     dfhack.println(tostring(value))
     if seen[value] then
         dfhack.print(prefix)
-        dfhack.println('<Cyclic reference! skipping fields>\n')
+        dfhack.println('<Cyclic reference! skipping fields>')
         return 0
     end
     seen[value] = true

@@ -86,9 +86,11 @@ commands:
 As an alternative to separate Parquet files, all vector data exports might also be imported into a single Spatialite (SQLite) file:
 
 ::
+
     ogr2ogr -a_srs 'EPSG:3857' -of SQLite world-map.db -oo 'GEOM_POSSIBLE_NAMES=*wkt' -oo 'KEEP_GEOM_COLUMNS=NO' -oo 'AUTODETECT_TYPE=YES' -dsco 'SPATIALITE=YES' -update -overwrite regions.csv
 
 Or into a single Geopackage file:
 
 ::
+
     ogr2ogr -a_srs 'EPSG:3857' -of GPKG world-map.gpkg -oo 'GEOM_POSSIBLE_NAMES=*wkt' -oo 'KEEP_GEOM_COLUMNS=NO' -oo 'AUTODETECT_TYPE=YES' -update -overwrite regions.csv

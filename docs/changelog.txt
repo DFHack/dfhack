@@ -60,10 +60,14 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- ``World::getAdventurer``: properly detect adventurer in arena mode
+- ``Units::getProfessionName``, ``Units::getCasteProfessionName``: now detects arena adventurer for default race name
+- ``dwarfmode.lua``: properly handle adventure arena look cursor
 
 ## Misc Improvements
 
 ## Documentation
+- ``dfhack.world.isAdventureMode``: doesn't include adventurer arena, advise checking gamemode
 
 ## API
 

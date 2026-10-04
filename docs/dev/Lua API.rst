@@ -2427,7 +2427,12 @@ World module
 * ``dfhack.world.isLegends([gametype])``
 
   Without any arguments, returns *true* if the current gametype matches.
-  Optionally accepts a ``gametype`` id to match against.
+  Optionally accepts a ``gametype`` ID to match against.
+
+  Be advised that ``isAdventureMode()`` does not detect adventure arena (controlling
+  arena unit). It may be desirable to test ``gamemode == df.game_mode.ADVENTURE``
+  to allow for both, or ``gametype == df.game_type.ADVENTURE_ARENA`` to check for
+  just adventure arena, depending on your purpose.
 
 * ``dfhack.world.getCurrentSite()``
 
@@ -2435,7 +2440,7 @@ World module
 
 * ``dfhack.world.getAdventurer()``
 
-  Returns the current adventurer unit (if in adventure mode).
+  Returns the current adventurer unit (if in adventure mode or adventure arena) else ``nil``.
 
 .. _lua-maps:
 

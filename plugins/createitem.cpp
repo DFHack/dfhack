@@ -401,7 +401,7 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
     auto unit = Gui::getSelectedUnit(out, true);
     if (!unit) {
         auto pos = Gui::getCursorPos();
-        if (unit = World::getAdventurer())
+        if ( (unit = World::getAdventurer()) )
         {   // Use the adventurer unit
             move_to_cursor = pos.isValid();
         }

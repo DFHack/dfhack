@@ -39,7 +39,7 @@ end
 
 ---@return df.coord|nil
 function getCursorPos()
-    if gamemode == df.game_mode.ADVENTURE then
+    if df.global.gamemode == df.game_mode.ADVENTURE then
         if a_look.open then
             return copyall(a_look.cursor)
         end
@@ -49,7 +49,7 @@ function getCursorPos()
 end
 
 function setCursorPos(cursor)
-    if gamemode == df.game_mode.ADVENTURE then
+    if df.global.gamemode == df.game_mode.ADVENTURE then
         a_look.cursor = copyall(cursor)
     else
         df.global.cursor = copyall(cursor)
@@ -57,7 +57,7 @@ function setCursorPos(cursor)
 end
 
 function clearCursorPos()
-    if gamemode == df.game_mode.ADVENTURE then
+    if df.global.gamemode == df.game_mode.ADVENTURE then
         if not a_look.open then
             return
         end

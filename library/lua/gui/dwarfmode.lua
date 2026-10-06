@@ -65,8 +65,9 @@ function clearCursorPos()
             return
         end
         local u = dfhack.world.getAdventurer()
-        if u and u.pos:isValid() then -- recenter cursor on adventurer
-            a_look.cursor = copyall(u.pos)
+        local pos = u and dfhack.units.getPosition(u)
+        if pos then -- recenter cursor on adventurer
+            a_look.cursor = copyall(pos)
         end
     else
         df.global.cursor = xyz2pos(nil)

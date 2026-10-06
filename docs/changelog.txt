@@ -60,6 +60,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `prospect`: don't warn about a missing magma sea in the pre-embark estimate when the world was generated without one
 
 ## Misc Improvements
 

@@ -50,6 +50,9 @@ end
 
 function setCursorPos(cursor)
     if df.global.gamemode == df.game_mode.ADVENTURE then
+        if not a_look.open then
+            return
+        end
         a_look.cursor = copyall(cursor)
     else
         df.global.cursor = copyall(cursor)
@@ -62,7 +65,7 @@ function clearCursorPos()
             return
         end
         local u = dfhack.world.getAdventurer()
-        if u and u.pos:isValid() then -- recenter on adventurer
+        if u and u.pos:isValid() then -- recenter cursor on adventurer
             a_look.cursor = copyall(u.pos)
         end
     else

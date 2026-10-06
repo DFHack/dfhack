@@ -459,3 +459,101 @@ screen (by default, but the player can move it wherever).
             },
         }
     end
+
+Widget example 4: positioning relative to DF UI
+-----------------------------------------------
+
+The player-controllable positioning provided by the overlay framework is
+relative to a corner of the interface area (technically, the positioning is
+edge-relative, but the anchors are always two adjacent edges, so it is
+equivalent to corner-relative positioning). This corner-relative positioning
+works well to adapt overlay positions for interface areas of varying sizes (due
+to DF window size changes, or because the DF interface percentage has been
+reconfigured).
+
+However, some overlays are most useful when they are drawn near a DF UI element
+that does not maintain a fixed offset from any particular corner. For example,
+the central toolbar (i.e., the fort mode tools for designations, etc.) is not
+always at the same offset from either the left or the right interface edges (to
+maintain a centered position, its left and right offsets each (mostly) grow in
+proportion to the width of the interface area). The positions of the "secondary"
+toolbars (that "open from" the central toolbar) are similarly variable (but in a
+slightly more complicated way).
+
+Such an overlay could eschew player-customizable positioning, but giving up that
+flexibility should not be done lightly.
+
+Instead, with some clever manipulation, an overlay's corner-relative positioning
+can be "translated" to be relative to some other UI element.
+
+The ``gui.dflayout`` module provides the ``getOverlayPlacementInfo`` helper
+function that provides helper values that can automatically adapt an overlay's
+corner-relative, player-customizable position to be relative to a UI element
+while still being player-customizable::
+
+    local overlay = require('plugins.overlay')
+    local widgets = require('gui.widgets')
+    local dflayout = require('gui.dflayout')
+
+    local WIDTH, HEIGHT = 25, 1 -- whatever static size the overlay needs
+    local PLACEMENT = dflayout.getOverlayPlacementInfo{
+        name = 'dig indicator',
+        size = { w = WIDTH, h = HEIGHT },
+        ui_element = dflayout.elements.fort.secondary_toolbar_buttons.DIG.DIG_DIG,
+        h_placement = 'align left edges',
+        v_placement = 'above',
+    }
+
+    local dig_dig_button = dflayout.element_layouts.fort.secondary_toolbars.DIG.buttons.DIG_DIG
+
+    UIRelativeOverlay = defclass(UIRelativeOverlay, overlay.OverlayWidget)
+    UIRelativeOverlay.ATTRS{
+        name = 'dig indicator',
+        desc = 'A overlay that has UI-relative positioning.',
+        default_enabled = true,
+        default_pos = PLACEMENT.default_pos,
+        -- frame and frame_inset are managed in preUpdateLayout
+        viewscreens = { 'dwarfmode/Designate/DIG_DIG' },
+    }
+
+    function UIRelativeOverlay:init()
+        self:addviews{
+            widgets.Label{
+                text_pen = { fg = COLOR_BLACK, bg = COLOR_GREY },
+                text = string.char(25):rep(dig_dig_button.width) .. ' Digging starts here!',
+            },
+        }
+    end
+
+    UIRelativeOverlay.preUpdateLayout = PLACEMENT.preUpdateLayout_fn
+    UIRelativeOverlay.onRenderBody = PLACEMENT.onRenderBody_fn
+
+    OVERLAY_WIDGETS = { overlay = UIRelativeOverlay }
+
+Consequences
+************
+
+The generated ``preUpdateLayout_fn`` function works by "inflating" the overlay
+size (setting ``frame.w`` and ``frame.h``) and "floating" the overlay content
+(setting ``frame_inset``). This has some drawbacks when the interface area is
+much larger than the minimum size.
+
+* The overlay outlines drawn by `gui/overlay` reflect the inflated size, and
+  thus can grow quite large.
+
+  * When the mouse is over an "inflated" overlay outline, the area will be
+    filled, obscuring a potentially large portion of the interface area.
+
+  * Since the overlay content is inset to "float" inside the inflated overlay
+    size, it can be quite hard to judge where the content will be drawn while an
+    overlay move is in progress. It may take multiple tries to move the overlay
+    content to a particular desired location.
+
+* Because the overlay size is inflated, the available area for positioning the
+  overlay content is effectively reduced. The available area is equivalent to
+  the area that is available around the targeted UI element in minimum-size
+  interface area.
+
+An alternate ``getLeftOnlyOverlayPlacementInfo`` function is available that only
+"inflates" and "floats" on the left side, which is compatible with the way
+several existing overlays overlays are positioned relative to DF toolbars.

@@ -62,6 +62,8 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `overlay`: errors raised by a bad C function result count or corrupted Lua call stack are now reported as Lua errors instead of crashing the game
+- crash reports now include a Lua stack traceback when the game crashes while Lua code is executing (``crashlog/crash_*.txt`` on Linux, ``stderr.log`` on Windows)
 
 ## Documentation
 

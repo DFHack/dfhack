@@ -67,6 +67,12 @@ const char *image_name_for(uintptr_t addr)
     return nullptr;
 }
 
+void log_write_str(HANDLE log, const char *str)
+{
+    DWORD written;
+    WriteFile(log, str, (DWORD)strlen(str), &written, nullptr);
+}
+
 // Minimal output: append to stderr.log with raw Win32 IO so we depend on
 // as little process state as possible.
 void log_write(HANDLE log, const char *fmt, ...)
@@ -81,14 +87,8 @@ void log_write(HANDLE log, const char *fmt, ...)
     if (len < 0 || len >= (int)sizeof(buf))
         len = (int)sizeof(buf) - 1;  // truncated output is still worth having
     buf[sizeof(buf) - 1] = '\0';
-    DWORD written;
-    WriteFile(log, buf, len, &written, nullptr);
-}
+    log_write_str(log, buf);
 
-void log_write_str(HANDLE log, const char *str)
-{
-    DWORD written;
-    WriteFile(log, str, (DWORD)strlen(str), &written, nullptr);
 }
 
 // Walk the faulting thread's stack looking for instruction pointers inside
@@ -101,7 +101,12 @@ bool lua_frames_on_stack(EXCEPTION_POINTERS *ep)
     {
         if (ctx.Rip >= lua_image.base && ctx.Rip < lua_image.end)
             return true;
-        if (!ctx.Rip || (ctx.Rip & 7))
+        // Return addresses land on the instruction after a call and are
+        // normally unaligned, so the only sane early-out here is a null
+        // ip. Garbage values are harmless: RtlLookupFunctionEntry returns
+        // NULL for them, and the iteration bound plus the caller's SEH
+        // guard cap the damage from a corrupt stack.
+        if (!ctx.Rip)
             break;
 
         DWORD64 image_base = 0;
@@ -115,7 +120,11 @@ bool lua_frames_on_stack(EXCEPTION_POINTERS *ep)
         }
         else
         {
-            // leaf function: return address is at [rsp]
+            // Leaf function: return address is at [rsp]. Unlike rip, rsp
+            // is architecturally required to stay 8-aligned, so a
+            // misaligned value here means the context is corrupt.
+            if (ctx.Rsp & 7)
+                break;
             ctx.Rip = *reinterpret_cast<DWORD64*>(ctx.Rsp);
             ctx.Rsp += 8;
         }

@@ -54,7 +54,7 @@
 ** already dominated by the call itself, so it is cheap enough to run on
 ** every call, including hot paths like the overlay render loop.
 */
-#define checkcresults(L,ci,n,f) \
+#define DFHack_checkcresults(L,ci,n,f) \
     if ((n) < 0 || (n) >= (L)->top - (ci)->func) \
       luaG_runerror(L, \
         "lua_CFunction %p reported invalid result count %d", (void *)(f), (n));
@@ -470,7 +470,7 @@ int luaD_precall (lua_State *L, StkId func, int nresults) {
       n = (*f)(L);  /* do the actual call */
       lua_lock(L);
       api_checknelems(L, n);
-      checkcresults(L, ci, n, f);  /* DFHACK */
+      DFHack_checkcresults(L, ci, n, f);  /* DFHACK */
       luaD_poscall(L, ci, L->top - n, n);
       return 1;
     }
@@ -570,7 +570,7 @@ static void finishCcall (lua_State *L, int status) {
   n = (*ci->u.c.k)(L, status, ci->u.c.ctx);  /* call continuation function */
   lua_lock(L);
   api_checknelems(L, n);
-  checkcresults(L, ci, n, ci->u.c.k);  /* DFHACK */
+  DFHack_checkcresults(L, ci, n, ci->u.c.k);  /* DFHACK */
   luaD_poscall(L, ci, L->top - n, n);  /* finish 'luaD_precall' */
 }
 
@@ -674,7 +674,7 @@ static void resume (lua_State *L, void *ud) {
         n = (*ci->u.c.k)(L, LUA_YIELD, ci->u.c.ctx); /* call continuation */
         lua_lock(L);
         api_checknelems(L, n);
-        checkcresults(L, ci, n, ci->u.c.k);  /* DFHACK */
+        DFHack_checkcresults(L, ci, n, ci->u.c.k);  /* DFHACK */
         firstArg = L->top - n;  /* yield results come from continuation */
       }
       luaD_poscall(L, ci, firstArg, n);  /* finish 'luaD_precall' */

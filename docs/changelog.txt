@@ -60,6 +60,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- Fixed ``scriptmanager.getModStatePath()`` causing scripts to crash when called
 
 ## Misc Improvements
 

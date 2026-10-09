@@ -16,7 +16,6 @@
 #include "df/building.h"
 #include "df/caste_raw.h"
 #include "df/creature_raw.h"
-#include "df/game_type.h"
 #include "df/item.h"
 #include "df/plant_growth.h"
 #include "df/plant_raw.h"
@@ -31,7 +30,6 @@ using namespace df::enums;
 
 DFHACK_PLUGIN("createitem");
 REQUIRE_GLOBAL(world);
-REQUIRE_GLOBAL(gametype);
 REQUIRE_GLOBAL(cur_year_tick);
 
 int dest_container = -1, dest_building = -1;
@@ -403,9 +401,8 @@ command_result df_createitem (color_ostream &out, vector<string> &parameters) {
     auto unit = Gui::getSelectedUnit(out, true);
     if (!unit) {
         auto pos = Gui::getCursorPos();
-        if (*gametype == game_type::ADVENTURE_ARENA || World::isAdventureMode())
+        if ( (unit = World::getAdventurer()) )
         {   // Use the adventurer unit
-            unit = World::getAdventurer();
             move_to_cursor = pos.isValid();
         }
         else if (pos.isValid())

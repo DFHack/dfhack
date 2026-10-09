@@ -6,6 +6,29 @@ This page details the process we follow for beta and stable releases.
 For documentation on the related GitHub workflows, see
 `workflows-release-automation`.
 
+.. _release-process-df-mitigations:
+
+New DF releases
+---------------
+
+When Bay 12 releases a new version of DF, the mitigations we maintain for
+defects in DF itself may need to be adjusted or removed. These mitigations are
+marked with ``DF-MITIGATION:`` comments in the code (see
+`contributing` for the convention) and the ``fix/*`` scripts in
+the scripts repo are all mitigations by definition.
+
+To review them:
+
+1. Run ``ci/list-df-mitigations.py`` in a DFHack checkout (with submodules) to
+   generate the checklist.
+
+2. For each entry, determine whether the new DF version still exhibits the
+   defect. Some entries can be checked by code inspection; others need a save
+   that reproduces the defect.
+
+3. Remove or adjust mitigations that are no longer needed, and remove their
+   ``DF-MITIGATION`` markers. Keep entries that still apply.
+
 Beta release
 ------------
 
@@ -78,52 +101,54 @@ branch back into ``develop`` and remove the release branch to clean up.
     - https://github.com/DFHack/scripts/commits/master
     - https://github.com/DFHack/df-structures/commits/master
 
-4. Update version strings in :source:`CMakeLists.txt` as appropriate
+4. Check the `DF defect mitigation checklist <release-process-df-mitigations>`_ to see if any mitigations need to be updated
+
+5. Update version strings in :source:`CMakeLists.txt` as appropriate
 
     - Ensure the ``DFHACK_PRERELEASE`` flag is set to ``FALSE``.
     - Set ``RELEASE`` in your environment for the commands below (e.g. ``RELEASE=51.07-r1``)
 
-5. Replace "Future" with the version number and clean up changelog entries; add new "Future" section (with headers pre-populated from the template at the top of the file):
+6. Replace "Future" with the version number and clean up changelog entries; add new "Future" section (with headers pre-populated from the template at the top of the file):
 
     - ``docs/changelog.txt``
     - ``scripts/changelog.txt``
     - ``library/xml/changelog.txt``
     - ``plugins/stonesense/docs/changelog.txt``
 
-6. Do a top-level build to ensure the docs build cleanly
+7. Do a top-level build to ensure the docs build cleanly
 
-7. Commit/push changes to submodules and tag (``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin master``)
+8. Commit/push changes to submodules and tag (``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin master``)
 
     - ``scripts``
     - ``library/xml``
     - ``plugins/stonesense``
 
-8. Commit and push changes to ``develop``
+9. Commit and push changes to ``develop``
 
     - Ensure that any updates you pushed to submodules are tracked in the commit to ``DFHack/develop``
 
-9. Tag ``dfhack``: ``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin develop``
+10. Tag ``dfhack``: ``git tag -a $RELEASE -m "Bump to $RELEASE"; git push --tags origin develop``
 
     - This will automatically trigger a `Deploy to Steam <https://github.com/DFHack/dfhack/actions/workflows/steam-deploy.yml>`_ GitHub action to the "staging" Steam branch and a `Deploy to GitHub <https://github.com/DFHack/dfhack/actions/workflows/github-release.yml>`_ GitHub action to create a draft `release <https://github.com/DFHack/dfhack/releases>`_ from a template and attach the built artifacts.
 
-10. Switch to the Steam ``staging`` release channel in the Steam client (password: ``stagingstagingstaging``) and download/test the update.
+11. Switch to the Steam ``staging`` release channel in the Steam client (password: ``stagingstagingstaging``) and download/test the update.
 
     - Ensure DFHack starts DF when run from the Steam client
     - Ensure the DFHack version string is accurate on the title page (should just be the release number, e.g. ``DFHack 51.07-r1``, with no git hash or warnings)
     - Run `devel/check-release`
     - If something goes wrong with this step, fix it, delete the tag (both from `GitHub <https://github.com/DFHack/dfhack/tags>`_ and locally (``git tag -d $RELEASE``)), re-tag, re-push, and re-test. Note that you do *not* need to remove the GitHub draft release -- the existing one will just get updated with the new tag and binaries. You *can* remove the draft release, though, if you want the release notes to get regenerated.
 
-11. Prep release on GitHub
+12. Prep release on GitHub
 
     - Go to the draft `release <https://github.com/DFHack/dfhack/releases>`_ on GitHub
     - Add announcements, highlights (with demo videos), etc. to the description
 
-12. Push develop to master (``git push origin develop:master``)
+13. Push develop to master (``git push origin develop:master``)
 
     - This will start the documentation build process and update the published "stable" docs
     - Note that if this is a -r1 release, you won't be able to complete this step until a classic build is available on the Bay 12 website so the DFHack Test workflow can pass, which is a prerequisite for being able to push to ``master``.
 
-13. Post release notes on Steam
+14. Post release notes on Steam
 
     - Go to the `announcement creation page <https://steamcommunity.com/games/2346660/partnerevents/create>`_
     - Select "A game update"
@@ -140,16 +165,16 @@ branch back into ``develop`` and remove the release branch to clean up.
     - Go to the Artwork tab, select "Previously uploaded images", and search for and double-click on STABLEannouncement6.png. Click "Upload" (even though it has already been uploaded).
     - Switch to the "Publish" tab and publish!
 
-14. Go to the `Steam builds page <https://partner.steamgames.com/apps/builds/2346660>`_ and promote the build to the "default" branch
+15. Go to the `Steam builds page <https://partner.steamgames.com/apps/builds/2346660>`_ and promote the build to the "default" branch
 
     - For the build that you just pushed to "staging", click the "-- Select an app branch --" drop-down and select "default"
     - Click on "Preview Change"
     - Commit the change (you may need to verify with 2FA)
     - If the release is newer than what's on the ``beta`` and/or ``testing`` branches, set it live on those branches as well
 
-15. Publish the prepped GitHub release
+16. Publish the prepped GitHub release
 
-16. Send out release announcements
+17. Send out release announcements
 
     - Announce new version in r/dwarffortress. Example: https://www.reddit.com/r/dwarffortress/comments/1i3l5xl/dfhack_5015r2_released_highlights_stonesense/
         - Create the post in the Reddit web interface; the mobile app is extremely painful to use for posting
@@ -163,9 +188,9 @@ branch back into ``develop`` and remove the release branch to clean up.
     - Announce in `#mod-releases <https://discord.com/channels/329272032778780672/1066180550114680853>`_ on Kitfox Discord
         - Change the name of the release thread on Kitfox Discord to match the release version (if you are not Myk, ping Myk for this)
 
-17. Monitor all announcement channels for feedback and respond to questions/complaints
+18. Monitor all announcement channels for feedback and respond to questions/complaints
 
-18. Create a `project <https://github.com/orgs/dfhack/projects>`_ on GitHub in the DFHack org for the next release
+19. Create a `project <https://github.com/orgs/dfhack/projects>`_ on GitHub in the DFHack org for the next release
 
     - Open the `project template <https://github.com/orgs/DFHack/projects/52>`_
     - Click "Use this template"
@@ -174,7 +199,7 @@ branch back into ``develop`` and remove the release branch to clean up.
     - Move any remaining To Do or In Progress items from last release project to next release project
     - Close project for last release
 
-19. If this is a -r2 release or later, go to https://readthedocs.org/projects/dfhack/versions/ and "Edit" previous DFHack releases for the same DF version and mark them "Hidden" (keep the "Active" flag set) so they no longer appear on the docs version selector.
+20. If this is a -r2 release or later, go to https://readthedocs.org/projects/dfhack/versions/ and "Edit" previous DFHack releases for the same DF version and mark them "Hidden" (keep the "Active" flag set) so they no longer appear on the docs version selector.
 
 .. _converting-markdown-to-bbcode:
 

@@ -61,6 +61,7 @@ Template for new versions:
 
 ## Fixes
 - Fixed ``scriptmanager.getModStatePath()`` causing scripts to crash when called
+- `prospect`: don't warn about a missing magma sea in the pre-embark estimate when the world was generated without one
 
 ## Misc Improvements
 

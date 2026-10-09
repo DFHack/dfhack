@@ -60,9 +60,10 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- ``World::getAdventurer``: properly detect adventurer in arena mode
-- ``Units::getProfessionName``, ``Units::getCasteProfessionName``: now detects arena adventurer for default race name
+- Fixed ``scriptmanager.getModStatePath()`` causing scripts to crash when called
 - ``dwarfmode.lua``: properly handle adventure arena look cursor
+- ``Units::getProfessionName``, ``Units::getCasteProfessionName``: now detects arena adventurer for default race name
+- ``World::getAdventurer``: properly detect adventurer in arena mode
 
 ## Misc Improvements
 

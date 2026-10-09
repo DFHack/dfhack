@@ -33,6 +33,7 @@ distribution.
 #include "DataFuncs.h"
 #include "LuaWrapper.h"
 #include "LuaTools.h"
+#include "Crashlog.h"
 #include "MiscUtils.h"
 #include "DFHackVersion.h"
 #include "PluginManager.h"
@@ -836,9 +837,25 @@ static int dfhack_safecall (lua_State *L)
     return Lua::TailPCallK<safecall_cont>(L, lua_gettop(L) - 2, LUA_MULTRET, 1, 0);
 }
 
+// The lua_State through which this thread is currently executing a DFHack
+// Lua entry point, or nullptr. Consulted by the crash reporter.
+static thread_local lua_State *t_active_state = nullptr;
+
+lua_State *DFHack::Crashlog::active_state() {
+    return t_active_state;
+}
+
+lua_State *DFHack::Crashlog::set_active_state(lua_State *state) {
+    lua_State *old = t_active_state;
+    t_active_state = state;
+    return old;
+}
+
 bool DFHack::Lua::SafeCall(color_ostream &out, lua_State *L, int nargs, int nres, bool perr)
 {
     AssertCoreSuspend(L);
+
+    Crashlog::ActiveStateGuard lua_guard(L);
 
     int base = lua_gettop(L) - nargs;
 
@@ -1000,6 +1017,8 @@ lua_State *DFHack::Lua::NewCoroutine(lua_State *L) {
 int DFHack::Lua::SafeResume(color_ostream &out, lua_State *from, lua_State *thread, int nargs, int nres, bool perr)
 {
     AssertCoreSuspend(from);
+
+    Crashlog::ActiveStateGuard lua_guard(thread ? thread : from);
 
     color_ostream *cur_out = Lua::GetOutput(from);
     set_dfhack_output(from, &out);

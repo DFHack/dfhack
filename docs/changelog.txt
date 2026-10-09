@@ -64,6 +64,8 @@ Template for new versions:
 - `prospect`: don't warn about a missing magma sea in the pre-embark estimate when the world was generated without one
 
 ## Misc Improvements
+- `overlay`: errors raised by a bad C function result count or corrupted Lua call stack are now reported as Lua errors instead of crashing the game
+- crash reports now include a Lua stack traceback when the game crashes while Lua code is executing (``crashlog/crash_*.txt`` on Linux, ``stderr.log`` on Windows)
 
 ## Documentation
 

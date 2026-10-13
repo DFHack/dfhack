@@ -25,6 +25,7 @@ distribution.
 #pragma once
 
 #include <array>
+#include <concepts>
 #include <deque>
 #include <future>
 #include <map>
@@ -619,6 +620,122 @@ namespace DFHack
     DFHACK_EXPORT void lua_read_path(lua_State *state, void *ptr);
     DFHACK_EXPORT void lua_write_path(lua_State *state, int fname_idx, void *ptr, int val_index);
 
+    namespace detail {
+        /*
+         * Per-category overrides of type_identity properties, selected at
+         * compile time by constraint resolution. Categories with no
+         * matching overload fall back to the identity base class's
+         * implementation in type_identity_for's virtuals.
+         */
+
+        // type() overrides
+        template<typename T> requires (stl_string<T> || fs_path<T>)
+        constexpr identity_type type_override() { return IDTYPE_PRIMITIVE; }
+        template<typename T> requires ptr_container<T>
+        constexpr identity_type type_override() { return IDTYPE_STL_PTR_VECTOR; }
+
+        // getFullName() overrides
+        template<typename T> requires c_string<T>
+        constexpr const char *name_override() { return "char*"; }
+        template<typename T> requires stl_string<T>
+        constexpr const char *name_override() { return "string"; }
+        template<typename T> requires fs_path<T>
+        constexpr const char *name_override() { return "path"; }
+
+        // isPrimitive() override
+        template<typename T> requires (stl_string<T> || fs_path<T>)
+        constexpr bool primitive_override() { return true; }
+
+        /*
+         * Marshalling of primitive values between C++ objects and Lua.
+         * Overload resolution on the exact deduced type of the C++ object
+         * selects the implementation, so support for a new value type is
+         * added by writing a new overload here. Types with no matching
+         * overload fall back to the identity base class's implementation
+         * (reference semantics). All parameters are deduced, so implicit
+         * conversions of the wrapped type are never considered.
+         */
+        template<typename T> requires std::same_as<T, bool>
+        inline void lua_read_value(lua_State *state, const T &v) {
+            lua_pushboolean(state, v);
+        }
+        template<typename T> requires (std::integral<T> && !std::same_as<T, bool>)
+        inline void lua_read_value(lua_State *state, const T &v) {
+            lua_pushinteger(state, int64_t(v));
+        }
+        template<typename T> requires std::floating_point<T>
+        inline void lua_read_value(lua_State *state, const T &v) {
+            lua_pushnumber(state, double(v));
+        }
+        // enums marshal through their underlying type, matching
+        // enum_identity's forwarding to base_type
+        template<typename T> requires std::is_enum_v<T>
+        inline void lua_read_value(lua_State *state, const T &v) {
+            lua_read_value(state, static_cast<std::underlying_type_t<T>>(v));
+        }
+        template<typename T> requires c_string<T>
+        inline void lua_read_value(lua_State *state, const T &v) {
+            if (v)
+                lua_pushstring(state, v);
+            else
+                lua_pushnil(state);
+        }
+        template<typename T> requires stl_string<T>
+        inline void lua_read_value(lua_State *state, const T &v) {
+            lua_pushlstring(state, v.data(), v.size());
+        }
+        template<typename T> requires fs_path<T>
+        inline void lua_read_value(lua_State *state, const T &v) {
+            lua_read_path(state, const_cast<T*>(&v));
+        }
+
+        template<typename T> requires std::same_as<T, bool>
+        inline void lua_write_value(lua_State *state, int fname_idx, T &out, int val_index) {
+            if (lua_isboolean(state, val_index) || lua_isnil(state, val_index))
+                out = lua_toboolean(state, val_index);
+            else if (lua_isnumber(state, val_index))
+                out = lua_tointeger(state, val_index) != 0;
+            else
+                LuaWrapper::field_error(state, fname_idx, "boolean or number expected", "write");
+        }
+        template<typename T> requires (std::integral<T> && !std::same_as<T, bool>)
+        inline void lua_write_value(lua_State *state, int fname_idx, T &out, int val_index) {
+            int is_num = 0;
+            auto value = lua_tointegerx(state, val_index, &is_num);
+            if (!is_num)
+                LuaWrapper::field_error(state, fname_idx, "integer expected", "write");
+            out = T(value);
+        }
+        template<typename T> requires std::floating_point<T>
+        inline void lua_write_value(lua_State *state, int fname_idx, T &out, int val_index) {
+            if (!lua_isnumber(state, val_index))
+                LuaWrapper::field_error(state, fname_idx, "number expected", "write");
+            out = T(lua_tonumber(state, val_index));
+        }
+        template<typename T> requires std::is_enum_v<T>
+        inline void lua_write_value(lua_State *state, int fname_idx, T &out, int val_index) {
+            std::underlying_type_t<T> tmp;
+            lua_write_value(state, fname_idx, tmp, val_index);
+            out = T(tmp);
+        }
+        template<typename T> requires c_string<T>
+        inline void lua_write_value(lua_State *state, int fname_idx, T &, int) {
+            LuaWrapper::field_error(state, fname_idx, "raw pointer string", "write");
+        }
+        template<typename T> requires stl_string<T>
+        inline void lua_write_value(lua_State *state, int fname_idx, T &out, int val_index) {
+            size_t size;
+            const char *bytes = lua_tolstring(state, val_index, &size);
+            if (!bytes)
+                LuaWrapper::field_error(state, fname_idx, "string expected", "write");
+            out.assign(bytes, size);
+        }
+        template<typename T> requires fs_path<T>
+        inline void lua_write_value(lua_State *state, int fname_idx, T &out, int val_index) {
+            lua_write_path(state, fname_idx, &out, val_index);
+        }
+    }
+
     /*
      * The identity of the C++ type T. The base class is selected by
      * compile-time inspection of T (or an explicit df_identity_base
@@ -684,28 +801,22 @@ namespace DFHack
             : base(0, NULL, NULL, "global", NULL, fields) {}
 
         virtual identity_type type() const override {
-            if constexpr (detail::stl_string<T> || detail::fs_path<T>)
-                return IDTYPE_PRIMITIVE;
-            else if constexpr (detail::ptr_container<T>)
-                return IDTYPE_STL_PTR_VECTOR;
+            if constexpr (requires { detail::type_override<T>(); })
+                return detail::type_override<T>();
             else
                 return base::type();
         }
 
         virtual const std::string getFullName() const override {
-            if constexpr (detail::c_string<T>)
-                return "char*";
-            else if constexpr (detail::stl_string<T>)
-                return "string";
-            else if constexpr (detail::fs_path<T>)
-                return "path";
+            if constexpr (requires { detail::name_override<T>(); })
+                return detail::name_override<T>();
             else
                 return base::getFullName();
         }
 
         virtual bool isPrimitive() const override {
-            if constexpr (detail::stl_string<T> || detail::fs_path<T>)
-                return true;
+            if constexpr (requires { detail::primitive_override<T>(); })
+                return detail::primitive_override<T>();
             else
                 return base::isPrimitive();
         }
@@ -718,65 +829,15 @@ namespace DFHack
         }
 
         virtual void lua_read(lua_State *state, int fname_idx, void *ptr) const override {
-            if constexpr (std::is_same_v<T, bool>)
-                lua_pushboolean(state, *(T*)ptr);
-            else if constexpr (std::is_floating_point_v<T>)
-                lua_pushnumber(state, double(*(T*)ptr));
-            else if constexpr (std::is_integral_v<T>)
-                lua_pushinteger(state, int64_t(*(T*)ptr));
-            else if constexpr (detail::c_string<T>) {
-                auto pstr = *(T*)ptr;
-                if (pstr)
-                    lua_pushstring(state, pstr);
-                else
-                    lua_pushnil(state);
-            }
-            else if constexpr (detail::stl_string<T>) {
-                auto pstr = (T*)ptr;
-                lua_pushlstring(state, pstr->data(), pstr->size());
-            }
-            else if constexpr (detail::fs_path<T>)
-                DFHack::lua_read_path(state, ptr);
+            if constexpr (requires { detail::lua_read_value(state, *(const T*)ptr); })
+                detail::lua_read_value(state, *(const T*)ptr);
             else
                 base::lua_read(state, fname_idx, ptr);
         }
 
         virtual void lua_write(lua_State *state, int fname_idx, void *ptr, int val_index) const override {
-            if constexpr (std::is_same_v<T, bool>) {
-                char *pb = (char*)ptr;
-
-                if (lua_isboolean(state, val_index) || lua_isnil(state, val_index))
-                    *pb = lua_toboolean(state, val_index);
-                else if (lua_isnumber(state, val_index))
-                    *pb = lua_tointeger(state, val_index);
-                else
-                    DFHack::LuaWrapper::field_error(state, fname_idx, "boolean or number expected", "write");
-            }
-            else if constexpr (std::is_floating_point_v<T>) {
-                if (!lua_isnumber(state, val_index))
-                    DFHack::LuaWrapper::field_error(state, fname_idx, "number expected", "write");
-
-                *(T*)ptr = T(lua_tonumber(state, val_index));
-            }
-            else if constexpr (std::is_integral_v<T>) {
-                int is_num = 0;
-                auto value = lua_tointegerx(state, val_index, &is_num);
-                if (!is_num)
-                    DFHack::LuaWrapper::field_error(state, fname_idx, "integer expected", "write");
-                *(T*)ptr = T(value);
-            }
-            else if constexpr (detail::c_string<T>)
-                DFHack::LuaWrapper::field_error(state, fname_idx, "raw pointer string", "write");
-            else if constexpr (detail::stl_string<T>) {
-                size_t size;
-                const char *bytes = lua_tolstring(state, val_index, &size);
-                if (!bytes)
-                    DFHack::LuaWrapper::field_error(state, fname_idx, "string expected", "write");
-
-                *(T*)ptr = std::string(bytes, size);
-            }
-            else if constexpr (detail::fs_path<T>)
-                DFHack::lua_write_path(state, fname_idx, ptr, val_index);
+            if constexpr (requires { detail::lua_write_value(state, fname_idx, *(T*)ptr, val_index); })
+                detail::lua_write_value(state, fname_idx, *(T*)ptr, val_index);
             else
                 base::lua_write(state, fname_idx, ptr, val_index);
         }

@@ -44,6 +44,43 @@ namespace df {
     template<typename RT>
     concept isPrimitive = identity_traits<RT>::is_primitive || std::is_enum_v<RT> || std::is_void_v<RT>;
 
+    namespace detail {
+        /*
+         * Marshalling for wrapped-function arguments and return values that
+         * avoids virtual dispatch through the type identity. Types with a
+         * value representation (numbers, strings, enums, etc.) are handled
+         * directly by the lua_*_value overloads; pointers use the static
+         * pointer_identity_base implementation with the target identity
+         * supplied explicitly; anything else falls back to the identity's
+         * virtual method.
+         */
+        template<typename T>
+        inline void marshal_from_lua(lua_State *L, int idx, T &out)
+        {
+            using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
+            if constexpr (requires { DFHack::detail::lua_write_value(L, UPVAL_METHOD_NAME, out, idx); })
+                DFHack::detail::lua_write_value(L, UPVAL_METHOD_NAME, out, idx);
+            else if constexpr (std::is_same_v<DFHack::identity_base_of_t<T>, DFHack::pointer_identity_base>)
+            {
+                const type_identity *target = nullptr;
+                if constexpr (requires { df::identity_traits<std::remove_pointer_t<T>>::get(); })
+                    target = df::identity_traits<std::remove_pointer_t<T>>::get();
+                DFHack::pointer_identity_base::lua_write(L, UPVAL_METHOD_NAME, &out, target, idx);
+            }
+            else
+                df::identity_traits<T>::get()->lua_write(L, UPVAL_METHOD_NAME, &out, idx);
+        }
+
+        template<typename T>
+        inline void marshal_to_lua(lua_State *L, T &v)
+        {
+            if constexpr (requires { DFHack::detail::lua_read_value(L, v); })
+                DFHack::detail::lua_read_value(L, v);
+            else
+                df::identity_traits<T>::get()->lua_read(L, DFHack::LuaWrapper::UPVAL_METHOD_NAME, &v);
+        }
+    }
+
     // handle call-by-reference function arguments by converting pointers to a reference
     // will throw if lua code tries to pass a null pointer
     template<typename T> requires std::is_reference_v<T>
@@ -53,7 +90,7 @@ namespace df {
         using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
         using Ptr = std::add_pointer_t<std::remove_reference_t<T>>;
         Ptr ptr{};
-        df::identity_traits<Ptr>::get()->lua_write(L, UPVAL_METHOD_NAME, &ptr, idx);
+        detail::marshal_from_lua(L, idx, ptr);
         if (ptr == nullptr)
         {
             field_error(L, UPVAL_METHOD_NAME, "cannot convert null pointer to reference", "call");
@@ -66,9 +103,8 @@ namespace df {
     template<std::semiregular T>
     T get_from_lua_state(lua_State* L, int idx)
     {
-        using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
         T val{};
-        df::identity_traits<T>::get()->lua_write(L, UPVAL_METHOD_NAME, &val, idx);
+        detail::marshal_from_lua(L, idx, val);
         return val;
     }
 
@@ -76,7 +112,6 @@ namespace df {
         requires std::is_invocable_r_v<RT, FT, ET..., AT...>
     void call_and_push_impl(lua_State* L, int base, std::index_sequence<I...>, FT fun, ET... extra)
     {
-        using DFHack::LuaWrapper::UPVAL_METHOD_NAME;
         if constexpr (std::is_same_v<RT, void>) {
             std::invoke(fun, extra..., (get_from_lua_state<AT>(L, base+I))...);
             lua_pushnil(L);
@@ -84,7 +119,7 @@ namespace df {
         else
         {
             RT rv = std::invoke(fun, extra..., (get_from_lua_state<AT>(L, base+I))...);
-            df::identity_traits<RT>::get()->lua_read(L, UPVAL_METHOD_NAME, &rv);
+            detail::marshal_to_lua(L, rv);
         }
     }
 

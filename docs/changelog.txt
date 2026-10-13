@@ -70,6 +70,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``printall_recurse``: no longer recurses into untagged unions, which have no way to identify their live member; fixes crashes when printing structures that contain them, such as ``df.army_controller``
 
 ## Removed
 

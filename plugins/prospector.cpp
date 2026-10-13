@@ -385,7 +385,8 @@ bool estimate_underground(color_ostream &out, EmbarkTileLayout &tile, df::world_
 
     if (!sea_found)
     {
-        out.printerr("Could not find magma sea; depth may be incorrect.\n");
+        if (world->worldgen.worldgen_parms.have_bottom_layer_1)
+            out.printerr("Could not find magma sea; depth may be incorrect.\n");
         tile.min_z = tile.base_z;
     }
 

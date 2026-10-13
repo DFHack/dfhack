@@ -505,17 +505,43 @@ volatile std::sig_atomic_t lstop = 0;
 static void interrupt_hook (lua_State *L, lua_Debug *ar);
 static void interrupt_init (lua_State *L)
 {
-    lua_sethook(L, interrupt_hook, LUA_MASKCOUNT, 256);
+    lua_sethook(L, interrupt_hook, LUA_MASKCOUNT, 16384);
 }
+
+constexpr auto interrupt_log_buffer_size = 64;
+using timer = std::chrono::high_resolution_clock;
+static std::array<timer::time_point, interrupt_log_buffer_size> interrupt_log_buffer;
+static size_t interrupt_log_buffer_index = 0;
 
 static void interrupt_hook (lua_State *L, lua_Debug *ar)
 {
+    interrupt_log_buffer[interrupt_log_buffer_index] = timer::now();
+    interrupt_log_buffer_index = (interrupt_log_buffer_index + 1) % interrupt_log_buffer_size;
+
     if (lstop)
     {
         lstop = 0;
         interrupt_init(L);  // Restore default settings if necessary
         luaL_error(L, "interrupted!");
     }
+}
+
+static int dfhack_dump_interrupt_timing_data(lua_State* L)
+{
+    int base = lua_gettop(L);
+    lua_createtable(L, interrupt_log_buffer_size-1, 0);
+    auto last = timer::now();
+    for (auto idx = 0; idx < interrupt_log_buffer_size; idx++)
+    {
+        auto i = (idx + interrupt_log_buffer_index) % interrupt_log_buffer_size;
+        auto dur = interrupt_log_buffer[i] - last;
+        last = interrupt_log_buffer[i];
+        if (idx>0) {
+            lua_pushinteger(L, std::chrono::duration_cast<std::chrono::microseconds>(dur).count());
+            lua_rawseti(L, base + 1, idx);
+        }
+    }
+    return 1;
 }
 
 bool DFHack::Lua::Interrupt (bool force)
@@ -1498,6 +1524,7 @@ static const luaL_Reg dfhack_funcs[] = {
     { "with_suspend", lua_dfhack_with_suspend },
     { "open_plugin", dfhack_open_plugin },
     { "curry", dfhack_curry },
+    { "dump_interrupt_timing_data", dfhack_dump_interrupt_timing_data },
     { NULL, NULL }
 };
 

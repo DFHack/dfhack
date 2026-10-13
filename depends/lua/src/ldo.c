@@ -40,6 +40,33 @@
 
 /*
 ** {======================================================
+** DFHACK: runtime sanity checks around C function results
+** =======================================================
+*/
+
+/*
+** api_checknelems() compiles to nothing in release builds, so a C
+** function (or a continuation function) that returns a result count
+** inconsistent with the number of values actually on the stack would
+** make luaD_poscall()/moveresults() read and write outside the stack,
+** hard-crashing the host process. Convert that condition into a
+** catchable Lua error instead. This check is two comparisons on a path
+** already dominated by the call itself, so it is cheap enough to run on
+** every call, including hot paths like the overlay render loop.
+*/
+#define DFHack_checkcresults(L,ci,n,f) \
+    if ((n) < 0 || (n) >= (L)->top - (ci)->func) \
+      luaG_runerror(L, \
+        "lua_CFunction %p reported invalid result count %d", (void *)(f), (n));
+
+
+/*
+** }======================================================
+*/
+
+
+/*
+** {======================================================
 ** Error-recovery functions
 ** =======================================================
 */
@@ -386,6 +413,15 @@ int luaD_poscall (lua_State *L, CallInfo *ci, StkId firstResult, int nres) {
   }
   res = ci->func;  /* res == final position of 1st result */
   L->ci = ci->previous;  /* back to caller */
+  /* DFHACK: sanity-check the pointers moveresults() is about to use. A
+     corrupted pointer here would otherwise read or write outside the
+     stack and hard-crash (or silently corrupt) the host process. */
+  if (firstResult < L->stack || firstResult > L->top ||
+      res < L->stack || res >= L->stack_last) {
+    if (L->top > L->ci->top)
+      L->top = L->ci->top;  /* make sure the error value has a safe home */
+    luaG_runerror(L, "corrupted Lua call frame");
+  }
   /* move results to proper place */
   return moveresults(L, firstResult, res, nres, wanted);
 }
@@ -434,6 +470,7 @@ int luaD_precall (lua_State *L, StkId func, int nresults) {
       n = (*f)(L);  /* do the actual call */
       lua_lock(L);
       api_checknelems(L, n);
+      DFHack_checkcresults(L, ci, n, f);  /* DFHACK */
       luaD_poscall(L, ci, L->top - n, n);
       return 1;
     }
@@ -533,6 +570,7 @@ static void finishCcall (lua_State *L, int status) {
   n = (*ci->u.c.k)(L, status, ci->u.c.ctx);  /* call continuation function */
   lua_lock(L);
   api_checknelems(L, n);
+  DFHack_checkcresults(L, ci, n, ci->u.c.k);  /* DFHACK */
   luaD_poscall(L, ci, L->top - n, n);  /* finish 'luaD_precall' */
 }
 
@@ -636,6 +674,7 @@ static void resume (lua_State *L, void *ud) {
         n = (*ci->u.c.k)(L, LUA_YIELD, ci->u.c.ctx); /* call continuation */
         lua_lock(L);
         api_checknelems(L, n);
+        DFHack_checkcresults(L, ci, n, ci->u.c.k);  /* DFHACK */
         firstArg = L->top - n;  /* yield results come from continuation */
       }
       luaD_poscall(L, ci, firstArg, n);  /* finish 'luaD_precall' */

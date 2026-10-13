@@ -53,6 +53,7 @@ set(MAIN_HEADERS
     include/CoordTemplate.h
     include/Core.h
     include/CoreDefs.h
+    include/Crashlog.h
     include/DataDefs.h
     include/DataFuncs.h
     include/DataIdentity.h
@@ -131,6 +132,7 @@ endif()
 
 set(MAIN_SOURCES_WINDOWS
     ${CONSOLE_SOURCES}
+    Crashlog-windows.cpp
 )
 
 if(WIN32)

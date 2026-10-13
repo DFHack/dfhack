@@ -23,6 +23,7 @@ distribution.
 */
 
 #include "Core.h"
+#include "Crashlog.h"
 
 #include "Internal.h"
 
@@ -1096,8 +1097,7 @@ bool Core::InitMainThread(std::filesystem::path path) {
 
     Filesystem::init();
 
-    #ifdef LINUX_BUILD
-        extern void dfhack_crashlog_init();
+    #if defined(LINUX_BUILD) || defined(WIN32)
         dfhack_crashlog_init();
     #endif
 
@@ -1517,6 +1517,18 @@ bool Core::isSuspended(void)
 
 void Core::doUpdate(color_ostream &out)
 {
+    #ifdef WIN32
+        // Re-chain the top-level exception filter once DF is fully running,
+        // in case DF installed its own crash filter after our init. If ours
+        // is still installed, this is a no-op.
+        static bool crashlog_rearmed = false;
+        if (!crashlog_rearmed)
+        {
+            crashlog_rearmed = true;
+            dfhack_crashlog_init();
+        }
+    #endif
+
     Lua::Core::Reset(out, "DF code execution");
 
     // find the current viewscreen
@@ -1914,8 +1926,7 @@ void Core::onStateChange(color_ostream &out, state_change_event event)
 
 int Core::Shutdown ( void )
 {
-    #ifdef LINUX_BUILD
-        extern void dfhack_crashlog_shutdown();
+    #if defined(LINUX_BUILD) || defined(WIN32)
         dfhack_crashlog_shutdown();
     #endif
 

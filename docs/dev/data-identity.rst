@@ -70,6 +70,8 @@ which derives from the appropriate runtime base for the C++ type ``T`` that it w
 
         * ``virtual_identity`` polymorphic C++ ``class`` or ``structure`` having a virtual table to handle virtual dispatch
 
+        * ``global_identity_base`` special-case identity for the global quasiobject
+
       * ``xlsx_file_handle_identity`` special case
 
       * ``xlsx_sheet_handle_identity`` special case

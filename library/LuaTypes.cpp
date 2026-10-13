@@ -1697,10 +1697,10 @@ void other_vectors_identity::build_metatable(lua_State *state) const
     SetPtrMethods(state, base+1, base+2);
 }
 
-void DFHack::build_global_metatable(lua_State *state, const struct_identity *id)
+void global_identity_base::build_metatable(lua_State *state) const
 {
     int base = lua_gettop(state);
-    MakeFieldMetatable(state, id, meta_global_index, meta_global_newindex, meta_struct_next, true);
+    MakeFieldMetatable(state, this, meta_global_index, meta_global_newindex, meta_struct_next, true);
     SetStructMethod(state, base+1, base+2, meta_global_field_reference, "_field");
     SetPtrMethods(state, base+1, base+2);
 }

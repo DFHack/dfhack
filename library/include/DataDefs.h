@@ -329,10 +329,19 @@ namespace DFHack
         bool is_equivalent(const struct_identity* other) const;
     };
 
+    class DFHACK_EXPORT global_identity_base : public struct_identity {
+    public:
+        using struct_identity::struct_identity;
+
+        virtual identity_type type() const override { return IDTYPE_GLOBAL; }
+
+        virtual void build_metatable(lua_State *state) const override;
+    };
+
     // Placeholder type wrapped by the identity of the global "object",
     // which does not correspond to an actual C++ type.
     struct global_object {
-        using df_identity_base = struct_identity;
+        using df_identity_base = global_identity_base;
     };
 
     using global_identity = type_identity_for<global_object>;

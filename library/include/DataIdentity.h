@@ -616,7 +616,6 @@ namespace DFHack
     template<typename T>
     using identity_base_of_t = typename decltype(detail::select_identity_base<T>())::type;
 
-    DFHACK_EXPORT void build_global_metatable(lua_State *state, const struct_identity *id);
     DFHACK_EXPORT void lua_read_path(lua_State *state, void *ptr);
     DFHACK_EXPORT void lua_write_path(lua_State *state, int fname_idx, void *ptr, int val_index);
 
@@ -689,8 +688,6 @@ namespace DFHack
                 return IDTYPE_PRIMITIVE;
             else if constexpr (detail::ptr_container<T>)
                 return IDTYPE_STL_PTR_VECTOR;
-            else if constexpr (std::is_same_v<T, global_object>)
-                return IDTYPE_GLOBAL;
             else
                 return base::type();
         }
@@ -782,13 +779,6 @@ namespace DFHack
                 DFHack::lua_write_path(state, fname_idx, ptr, val_index);
             else
                 base::lua_write(state, fname_idx, ptr, val_index);
-        }
-
-        virtual void build_metatable(lua_State *state) const override {
-            if constexpr (std::is_same_v<T, global_object>)
-                DFHack::build_global_metatable(state, this);
-            else
-                base::build_metatable(state);
         }
     };
 }

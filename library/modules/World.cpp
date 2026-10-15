@@ -208,7 +208,7 @@ bool World::isLegends(df::game_type t)
 }
 
 df::unit * World::getAdventurer() {
-    if (!isAdventureMode() || !world)
+    if (!world || !df::global::gamemode || *df::global::gamemode != game_mode::ADVENTURE)
         return NULL;
 
     return world->units.adv_unit;

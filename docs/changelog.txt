@@ -62,6 +62,7 @@ Template for new versions:
 ## Fixes
 - Fixed ``scriptmanager.getModStatePath()`` causing scripts to crash when called
 - `prospect`: don't warn about a missing magma sea in the pre-embark estimate when the world was generated without one
+- Core: Windows console will no longer hang on close (on some builds of Windows)
 
 ## Misc Improvements
 - `overlay`: errors raised by a bad C function result count or corrupted Lua call stack are now reported as Lua errors instead of crashing the game

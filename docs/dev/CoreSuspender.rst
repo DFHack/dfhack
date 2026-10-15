@@ -50,7 +50,7 @@ Three kinds of threads matter:
     render thread will generally never read or write game state — it only renders
     the frame that was just computed by the simulation thread, using a double buffer
     mechanism, and then pauses until the simulation thread signals that a new
-    frame is ready — so generally it's safe to access game state (other than certain 
+    frame is ready — so generally it's safe to access game state (other than certain
     fields in ``df::global::enabler`` which are used by the render thread) while it's running.
 
     The following hooks (exported from ``library/Hooks.cpp``) are invoked on
@@ -231,9 +231,9 @@ yield the coroutine so the C++ side can drop the lock; wrapping such a call in
 ``A note about vmethod interposes``
 -----------------------------------
 
-VMethod interposes normally run in the context of the simulation thread, 
+VMethod interposes normally run in the context of the simulation thread,
 or alternatively in the context of another thread that has already acquired
-a ``CoreSuspender``, so they are effectively already in a suspended context. 
+a ``CoreSuspender``, so they are effectively already in a suspended context.
 You should therefore not construct a ``CoreSuspender`` in the implementation
 of a vmethod interpose, because there is a small chance that a vmethod interpose will
 instead be run on one of DF's worker threads; attempting to acquire a lock in that
@@ -327,7 +327,7 @@ Caveats and pitfalls
 - **The render thread races with you.** If you mutate data that drawing code
   reads asynchronously, the render thread may observe intermediate states.
   Usually cosmetic, but know that "the game is frozen" is not literally true.
-  Mainly, this applies to accessing objects reachable from ``df::global::enabler``, 
+  Mainly, this applies to accessing objects reachable from ``df::global::enabler``,
   which is the control object for the renderer.
 
 - **``MemAccess::isSuspended()`` is unrelated.** It's a legacy stub that

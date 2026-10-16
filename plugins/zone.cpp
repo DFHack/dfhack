@@ -539,7 +539,9 @@ static command_result assignUnitToCage(color_ostream& out, df::unit* unit, df::b
         return CR_WRONG_USAGE;
     }
 
-    // don't assign owned pets to a cage. the owner will release them, resulting into infinite hauling (df bug)
+    // DF-MITIGATION: caging owned pets causes infinite hauling (df bug)
+    // don't assign owned pets to a cage. the owner will release them, resulting
+    // into infinite hauling
     if(unit->relationship_ids[df::unit_relationship_type::PetOwner] != -1)
         return CR_OK;
 

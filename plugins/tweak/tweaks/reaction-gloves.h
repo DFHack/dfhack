@@ -1,4 +1,4 @@
-// Workaround for DF bug #6273 - adjust all custom reactions to produce GLOVES items in sets with correct handedness
+// DF-MITIGATION: workaround for DF bug #6273 - adjust all custom reactions to produce GLOVES items in sets with correct handedness
 // It also analyzes the body plan of the unit performing the reaction, so Antmen will get 4 gloves instead of 2
 
 // If a reaction tries to produce either 1 glove or 2 gloves, it will produce a single set

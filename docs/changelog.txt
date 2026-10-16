@@ -56,6 +56,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `luadebugger`: Debug Adapter Protocol server for interactively debugging Lua running inside DFHack (breakpoints, stepping, stack/variable inspection, evaluation); attach with the VSCode extension in ``devtools/vscode-dfhack-lua`` or the CLI client at ``devtools/luadebug-cli.py``
 
 ## New Features
 

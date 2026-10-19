@@ -17,6 +17,7 @@ These are pages relevant to people developing for DFHack.
    /docs/dev/Lua API
    /docs/dev/overlay-dev-guide
    /docs/dev/Structures-intro
+   /docs/dev/CoreSuspender
    /docs/dev/data-identity
    /docs/dev/github-workflows
    /docs/dev/release-process

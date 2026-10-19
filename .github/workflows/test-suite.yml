@@ -65,9 +65,14 @@ jobs:
       uses: actions/download-artifact@v4
       with:
         name: test-${{ inputs.compiler }}
+        path: ${{ env.DF_FOLDER }}
     - name: Install DFHack
       shell: bash
-      run: tar xjf test-${{ inputs.compiler }}.tar.bz2 -C ${{ env.DF_FOLDER }}
+      run: |
+        if [ -f "${{ env.DF_FOLDER }}/test-${{ inputs.compiler }}.tar.bz2" ]; then
+          tar xjf "${{ env.DF_FOLDER }}/test-${{ inputs.compiler }}.tar.bz2" -C "${{ env.DF_FOLDER }}"
+          rm "${{ env.DF_FOLDER }}/test-${{ inputs.compiler }}.tar.bz2"
+        fi
     - name: Start X server
       if: inputs.os == 'ubuntu'
       run: Xvfb :0 -screen 0 1600x1200x24 &

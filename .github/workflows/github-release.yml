@@ -58,8 +58,6 @@ jobs:
       run: |
         mkdir artifacts
         cd dfhack-windows64-build
-        tar xjf dfhack-windows64-build.tar.bz2
-        rm dfhack-windows64-build.tar.bz2
         zip -qr ../artifacts/dfhack-${{ steps.gettag.outputs.name }}-Windows-64bit.zip .
         cd ../dfhack-linux64-build
         mv dfhack-linux64-build.tar.bz2 ../artifacts/dfhack-${{ steps.gettag.outputs.name }}-Linux-64bit.tar.bz2

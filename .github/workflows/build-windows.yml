@@ -187,17 +187,13 @@ jobs:
         run: |
           Get-ChildItem -Recurse -File -Path "build" -Filter *.pdb |
             Copy-Item -Destination "pdb"
-      - name: Prep artifact
-        run: |
-          cd output
-          7z a -ttar -so -an . |
-            7z a -si -tbzip2 ../${{ steps.artifactname.outputs.name }}.tar.bz2
       - name: Upload artifact
         if: inputs.artifact-name
         uses: actions/upload-artifact@v4
         with:
           name: ${{ steps.artifactname.outputs.name }}
-          path: ${{ steps.artifactname.outputs.name }}.tar.bz2
+          path: output
+          include-hidden-files: true
       - name: Upload PDBs
         if: inputs.artifact-name && inputs.cache-id == 'release'
         uses: actions/upload-artifact@v4

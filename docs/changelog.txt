@@ -60,16 +60,35 @@ Template for new versions:
 ## New Features
 
 ## Fixes
-- Fixed ``scriptmanager.getModStatePath()`` causing scripts to crash when called
-- ``dwarfmode.lua``: properly handle adventure arena look cursor
-- ``Units::getProfessionName``, ``Units::getCasteProfessionName``: now detects arena adventurer for default race name
-- ``World::getAdventurer``: properly detect adventurer in arena mode
-- `prospect`: don't warn about a missing magma sea in the pre-embark estimate when the world was generated without one
-- Core: Windows console will no longer hang on close (on some builds of Windows)
 
 ## Misc Improvements
-- `overlay`: errors raised by a bad C function result count or corrupted Lua call stack are now reported as Lua errors instead of crashing the game
+
+## Documentation
+- ``export-world-map``: added more format conversion examples.
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.16-r3
+
+## New Tools
+
+## New Features
+
+## Fixes
+- Fixed ``scriptmanager.getModStatePath()`` causing scripts to crash when called
+- Core: Windows console will no longer hang on close (on some builds of Windows)
+- ``dwarfmode.lua``: properly handle adventure arena look cursor
+- `prospect`: don't warn about a missing magma sea in the pre-embark estimate when the world was generated without one
+- ``Units::getProfessionName``, ``Units::getCasteProfessionName``: now detect arena adventurer for default race name
+- ``World::getAdventurer``: properly detect adventurer in arena mode
+
+## Misc Improvements
 - crash reports now include a Lua stack traceback when the game crashes while Lua code is executing (``crashlog/crash_*.txt`` on Linux, ``stderr.log`` on Windows)
+- `overlay`: errors raised by a bad C function result count or corrupted Lua call stack are now reported as Lua errors instead of crashing the game
 
 ## Documentation
 - ``dfhack.world.isAdventureMode``: doesn't include adventurer arena, advise checking gamemode

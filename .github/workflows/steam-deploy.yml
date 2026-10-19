@@ -70,8 +70,10 @@ jobs:
       run: |
         for name in common win64 linux64; do
           cd ${name}-depot
-          tar xjf ${name}-depot.tar.bz2
-          rm ${name}-depot.tar.bz2
+          if [ -f ${name}-depot.tar.bz2 ]; then
+            tar xjf ${name}-depot.tar.bz2
+            rm ${name}-depot.tar.bz2
+          fi
           cd ..
         done
     - name: Get short SHA of commit

@@ -89,7 +89,8 @@ To download a development build from GitHub:
 - Click the number under "Artifacts" (or scroll down)
 - Click on the ``dfhack-*-build-*`` artifact for your platform to download
 
-The artifacts are "double-zipped". That is, you will have to extract the
+The Windows artifacts can be extracted directly into your DF folder. The
+Linux artifacts are "double-zipped". That is, you will have to extract the
 initial zip file to get to the package archive. You can extract this second
 package the same as if you are doing a manual install (see the next section).
 

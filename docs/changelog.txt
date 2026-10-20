@@ -60,6 +60,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- ``RemoteFortressReader``: ensured creature and caste names and caste descriptions in ``GetCreatureRaws``/``GetPartialCreatureRaws`` are transmitted in UTF-8 instead of CP437
 
 ## Misc Improvements
 

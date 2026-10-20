@@ -218,8 +218,8 @@ int32_t World::GetCurrentSiteId() {
     if (!plotinfo)
         return -1;
     if (isFortressMode()) {
-        // on a reclaimed fortress, site_id isn't assigned until the first
-        // save; fortress_site is set at embark, so use it as a fallback
+        // DF-MITIGATION: reclaimed forts lack site_id until first save (#5716)
+        // fortress_site is set at embark, so use it as a fallback
         if (plotinfo->site_id >= 0)
             return plotinfo->site_id;
         if (auto site = plotinfo->main.fortress_site)

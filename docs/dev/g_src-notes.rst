@@ -52,7 +52,7 @@ Source inventory and XML correspondence
      - ``renderer_curses`` (PRINT_MODE:TEXT)
      - ``df.g_src.renderer_2d.xml``
    * - ``renderer_offscreen.cpp``
-     - offscreen renderer for benchmarking
+     - offscreen renderer used for map renders (in olders releases, functionality currently not available)
      - ``df.g_src.renderer_2d.xml``
    * - ``renderer_opengl.hpp``
      - legacy OpenGL renderer (not compiled — ``#include`` commented out in
@@ -583,7 +583,7 @@ Other modules DFHack touches
   ``trandom_twist``.
 - ``filest``/``stringvectst``/``textlinesst`` — path resolution across DF
   dirs (``canon_location``/``both_locations``/
-  ``with_flags(FILE_FLAG_*)``), manual ``char*`` string vector, raw-file
+  ``with_flags(FILE_FLAG_*)``), manual ``std::string *`` vector (implemented via the ``pstringst`` class), raw-file
   loader.
 - ``LuaState`` (``lua.h``) — DF embeds Lua for the closed side (worldgen,
   utterances); ``add_lua_df_globals`` registers ``trandom``, ``lua_log``,
@@ -738,8 +738,8 @@ Platform layer and misc
 - **[stale]** ``endian.h`` byteswaps only under ``__ppc__``/
   ``__ppc64__`` — dead on all modern targets.
 - **[bug-ish]** ``stringvectst`` (``files.h``/``basics.h``) manually owns
-  ``char*`` strings, erases from the front, and leaks if methods are used
-  in unexpected order; several methods ignore allocation failure.
+  C++ STL strings, erases from the front, and can leak if a consumer directly accesses its public
+  data element or if ``read_file`` is used on a non-empty list. Several methods ignore allocation failure.
 - **[fragile]** file/decompression helpers (``files.cpp``,
   ``basics.cpp``) read sizes and resize buffers from on-disk values
   without validation — malformed data can trigger huge allocations or

@@ -860,7 +860,7 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     unit->idle_area = target_pos;
 
     // Move unit's riders (including babies) to destination
-    if (unit->flags1.bits.ridden)
+    if (unit->flags1.bits.ridden || unit->flags4.bits.carrying_somebody)
         for (auto rider : world->units.other[units_other_id::ANY_RIDER])
             if (rider->relationship_ids[unit_relationship_type::RiderMount] == unit->id)
                 rider->pos = unit->pos;

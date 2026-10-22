@@ -53,7 +53,7 @@ the named built-ins are not real materials -- for the ``CREATURE_*``,
 ``HIST_FIG_*``, and ``PLANT_*`` ranges the actual ``df::material`` lives
 inside a raw object and ``mat_index`` is needed to find it. Entries in
 the array may be null, so consumers should always check the resolved
-pointer.  
+pointer.
 
 The ``mat_index`` half
 ======================

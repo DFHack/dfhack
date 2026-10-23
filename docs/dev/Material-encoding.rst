@@ -9,7 +9,10 @@ item improvements, job requirements, plants, reactions, syndromes, map
 features, and so on -- it does so with a pair of integers. In the names
 provided by Bay 12, the pair is usually called ``material`` and
 ``matgloss``, although other naming is sometimes seen, such as ``subcat1``/
-``subcat2``. Before we learned otherwise, the DFHack team originally called
+``subcat2``. The ``subcat1``/``subcat2`` names usually appear on fields
+that can hold *either* a material+matgloss pair *or* a race+caste pair,
+with a companion ``item_type`` field determining how to interpret them.
+Before we learned otherwise, the DFHack team originally called
 what we now know to be a matgloss a ``mat_index`` ("material index"), and so
 this term tends to be used in DFHack code instead of "matgloss". Thus, you may
 see these two terms used interchangeably in DFHack code, in documentation, and
@@ -66,7 +69,10 @@ The meaning of ``mat_index`` depends entirely on the ``mat_type`` range:
   the built-in material object ``mat_table.builtin[mat_type]``. For most
   built-ins this is just the material itself, but ``(0, -1)`` is special:
   it is the *inorganic wildcard*, meaning "any inorganic material", used in
-  contexts such as job item constraints (e.g. "any stone").
+  contexts such as job item constraints (e.g. "any stone"). The same
+  ``(INORGANIC, -1)`` pair -- written ``INORGANIC:NONE`` in token form --
+  is also used for the "magma" material of liquid items picked up in
+  minecarts.
 
 * ``mat_type`` == 0 (``INORGANIC``), ``mat_index`` >= 0: ``mat_index`` is
   an index into ``world.raws.inorganics.all`` (a ``df::inorganic_raw``),
@@ -76,7 +82,10 @@ The meaning of ``mat_index`` depends entirely on the ``mat_type`` range:
 * 1 <= ``mat_type`` <= 18 (built-ins), ``mat_index`` >= 0: still a
   built-in material; ``mat_index`` is normally ignored. The one exception
   is ``COAL`` (7), where ``mat_index`` distinguishes the product:
-  0 means coke and 1 means charcoal.
+  0 means coke and 1 means charcoal. DF has a dedicated enum for these
+  values, ``MatGlossCoal`` (``MATGLOSS_COAL_COKE`` = 0,
+  ``MATGLOSS_COAL_CHARCOAL`` = 1), though df-structures does not currently
+  expose it.
 
 * 19 <= ``mat_type`` <= 218 (``CREATURE_1``..``CREATURE_200``):
   ``mat_index`` is an index into ``world.raws.creatures.all``
@@ -93,8 +102,10 @@ The meaning of ``mat_index`` depends entirely on the ``mat_type`` range:
   ``world.history.figures``. The material itself is
   ``creature->material[mat_type - HIST_FIG_1]`` of the figure's race
   (``creature_raw::find(figure->race)``). These pairs identify materials
-  belonging to a *specific* historical figure, e.g. products of named
-  creatures such as forgotten beasts, titans, and demons.
+  belonging to a *specific* historical figure. In practice they are most
+  often seen in body-material spatters (``spatter_common``, e.g. blood)
+  left by named creatures, and in products of named creatures such as
+  forgotten beasts, titans, and demons.
 
 * 419 <= ``mat_type`` <= 618 (``PLANT_1``..``PLANT_200``):
   ``mat_index`` is an index into ``world.raws.plants.all``
@@ -139,7 +150,9 @@ examples:
   (DF names ``get_forced_material``/``get_forced_matgloss``) compute the
   proper pair -- "an actual material, never a race/caste" -- so
   ``MaterialInfo::decode(item)`` always uses those methods rather than the
-  raw fields.
+  raw fields. This is the dual-purpose encoding mentioned above: the raw
+  ``getMaterial()``/``getMaterialIndex()`` methods (DF ``get_subcat1``/
+  ``get_subcat2``) return the race and caste for items like these.
 * ``material_vec_ref`` is a DFHack convenience compound (not a real DF
   structure) that bundles the parallel ``mat_type``/``mat_index`` vectors
   DF uses for multi-material lists, e.g. in reaction products and
@@ -153,9 +166,9 @@ examples:
   named creatures.
 
 Other names for the pair in DF code include ``material``/``matgloss``
-(items, improvements), ``use_mat``/``use_matg`` (plant material
-definitions), ``itemneeded_material``/``itemneeded_matgloss`` (job items),
-``dye_material``/``dye_matgloss`` (dyed improvements),
+(items, improvements, contaminants), ``use_mat``/``use_matg`` (plant
+material definitions), ``itemneeded_material``/``itemneeded_matgloss``
+(job items), ``dye_material``/``dye_matgloss`` (dyed improvements),
 ``hardens_with_water_mat``/``hardens_with_water_matg``, and
 ``syndrome_mat``/``syndrome_matg`` (syndrome tables).
 

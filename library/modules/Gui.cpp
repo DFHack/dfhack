@@ -2040,8 +2040,12 @@ void Gui::showPopupAnnouncement(std::string message, int color, bool bright)
 {
     df::popup_message *popup = new df::popup_message();
     popup->text = message;
-    popup->color = color; // Doesn't do anything anymore? Popups are always [C:7:0:0] gray text
-    popup->bright = bright; // See: https://dwarffortressbugtracker.com/view.php?id=12672
+    // DF-MITIGATION: DF ignores popup color/bright fields (bug 12672)
+    // Popups always render as [C:7:0:0] gray text; keep setting the fields so
+    // they take effect again if DF is fixed:
+    // https://dwarffortressbugtracker.com/view.php?id=12672
+    popup->color = color;
+    popup->bright = bright;
 
     auto &popups = world->status.popups;
     popups.push_back(popup);

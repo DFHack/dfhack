@@ -33,6 +33,7 @@ distribution.
 #include "TileTypes.h"
 #include "MiscUtils.h"
 #include "DataDefs.h"
+#include "VTableInterpose.h"
 
 #include "modules/Buildings.h"
 #include "modules/Maps.h"
@@ -61,6 +62,8 @@ distribution.
 #include "df/building_water_wheelst.h"
 #include "df/building_weaponst.h"
 #include "df/building_wellst.h"
+#include "df/building_window_gemst.h"
+#include "df/building_window_glassst.h"
 #include "df/building_workshopst.h"
 #include "df/buildingitemst.h"
 #include "df/buildings_other_id.h"
@@ -134,13 +137,43 @@ static df::building_extents_type *getExtentTile(const df::building::T_room &room
  */
 bool buildings_do_onupdate = false;
 
+/*
+ * Mitigation for a DF bug: gem and glass windows are the only buildings that
+ * nobles can demand in their rooms whose masterablebuilding (canMakeRoom)
+ * vmethod returns false, so a window built inside an existing room is linked
+ * to it while a room designated over an existing window is not. Interpose the
+ * vmethod on the two concrete subclasses; the abstract building_windowst
+ * vtable cannot be hooked.
+ */
+struct window_gem_masterable_hook : df::building_window_gemst {
+    typedef df::building_window_gemst interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(bool, canMakeRoom, ())
+    {
+        return true;
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(window_gem_masterable_hook, canMakeRoom);
+
+struct window_glass_masterable_hook : df::building_window_glassst {
+    typedef df::building_window_glassst interpose_base;
+    DEFINE_VMETHOD_INTERPOSE(bool, canMakeRoom, ())
+    {
+        return true;
+    }
+};
+IMPLEMENT_VMETHOD_INTERPOSE(window_glass_masterable_hook, canMakeRoom);
+
 void buildings_onStateChange(color_ostream &out, state_change_event event)
 {
     switch (event) {
     case SC_MAP_LOADED:
+        INTERPOSE_HOOK(window_gem_masterable_hook, canMakeRoom).apply();
+        INTERPOSE_HOOK(window_glass_masterable_hook, canMakeRoom).apply();
         buildings_do_onupdate = true;
         break;
     case SC_MAP_UNLOADED:
+        INTERPOSE_HOOK(window_gem_masterable_hook, canMakeRoom).remove();
+        INTERPOSE_HOOK(window_glass_masterable_hook, canMakeRoom).remove();
         buildings_do_onupdate = false;
         break;
     default:

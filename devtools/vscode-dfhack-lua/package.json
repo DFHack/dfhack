@@ -1,0 +1,55 @@
+{
+    "name": "dfhack-lua-debug",
+    "displayName": "DFHack Lua Debugger",
+    "description": "Attach VSCode to the DFHack luadebugger plugin's DAP endpoint and debug Lua running inside Dwarf Fortress.",
+    "version": "0.1.0",
+    "publisher": "dfhack",
+    "license": "MIT",
+    "engines": {
+        "vscode": "^1.75.0"
+    },
+    "categories": [
+        "Debuggers"
+    ],
+    "main": "./extension.js",
+    "contributes": {
+        "debuggers": [
+            {
+                "type": "dfhack-lua",
+                "label": "DFHack Lua",
+                "languages": [
+                    "lua"
+                ],
+                "configurationAttributes": {
+                    "attach": {
+                        "properties": {
+                            "host": {
+                                "type": "string",
+                                "description": "Host running DFHack's luadebugger plugin.",
+                                "default": "127.0.0.1"
+                            },
+                            "port": {
+                                "type": "number",
+                                "description": "TCP port the luadebugger plugin is listening on.",
+                                "default": 43030
+                            },
+                            "stopOnEntry": {
+                                "type": "boolean",
+                                "description": "Break at the next Lua line after attaching.",
+                                "default": false
+                            }
+                        }
+                    }
+                },
+                "initialConfigurations": [
+                    {
+                        "type": "dfhack-lua",
+                        "request": "attach",
+                        "name": "Attach to DFHack",
+                        "port": 43030
+                    }
+                ]
+            }
+        ]
+    }
+}

@@ -31,6 +31,7 @@ distribution.
 #include "VersionInfo.h"
 
 #include "modules/Items.h"
+#include "modules/Job.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
@@ -863,7 +864,14 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     if (unit->flags1.bits.ridden || unit->flags4.bits.carrying_somebody)
         for (auto rider : world->units.other[units_other_id::ANY_RIDER])
             if (rider->relationship_ids[unit_relationship_type::RiderMount] == unit->id)
-                rider->pos = unit->pos;
+                // Wagon riders need special handling -- they are not at the center of the wagon,
+                // and the draft animal riders are not even in the extent of the wagon.
+                if (auto craw = df::creature_raw::find(unit->race); craw &&
+                        craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON))
+                    Units::teleport(rider, (rider->pos - src_pos) + unit->pos);
+                else
+                    rider->pos = unit->pos;
+
     return true;
 }
 

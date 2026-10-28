@@ -39,6 +39,8 @@ distribution.
 #include "modules/World.h"
 
 #include "df/activity_entry.h"
+#include "df/building_cagest.h"
+#include "df/building_chainst.h"
 #include "df/burrow.h"
 #include "df/caste_raw.h"
 #include "df/creature_interaction_effect_display_namest.h"
@@ -871,6 +873,38 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
                     Units::teleport(rider, (rider->pos - src_pos) + unit->pos);
                 else
                     rider->pos = unit->pos;
+
+    // If the unit was teleported out of a cage, break those links.
+    if (auto cage = Units::getContainer(unit))
+    {
+        for (auto job: strict_virtual_cast<df::building_cagest>(Items::getHolderBuilding(cage))->jobs)
+            if (job->job_type == df::job_type::ReleaseLargeCreature || job->job_type == df::job_type::ReleasePet)
+                if (auto gref = findRef(job->general_refs, df::general_ref_type::UNIT_CAGEE);
+                        gref && gref->getID() == unit->id)
+                    Job::removeJob(job);
+        if (auto bld = strict_virtual_cast<df::building_cagest>(Items::getHolderBuilding(cage)))
+            std::erase(bld->assigned_units, unit->id);
+        removeRef(cage->general_refs, df::general_ref_type::CONTAINS_UNIT, unit->id);
+        removeRef(unit->general_refs, df::general_ref_type::CONTAINED_IN_ITEM, cage->id);
+        unit->flags1.bits.caged = false;
+    }
+
+    // If the unit was teleported out of a chain, break those links.
+    if (auto bld = strict_virtual_cast<df::building_chainst>
+        (findBuildingRef(unit->general_refs, df::general_ref_type::BUILDING_CHAIN)))
+    {
+        for (auto job: bld->jobs)
+            if (auto gref = findRef(job->general_refs, df::general_ref_type::UNIT_CAGEE);
+                    (job->job_type == df::job_type::UnchainAnimal || job->job_type == df::job_type::UnchainPet)
+                    && gref && gref->getID() == unit->id)
+                Job::removeJob(job);
+        if (bld->chained == unit)
+            bld->chained = NULL;
+        if (bld->assigned == unit)
+            bld->assigned = NULL;
+        removeRef(unit->general_refs, df::general_ref_type::BUILDING_CHAIN, bld->id);
+        unit->flags1.bits.chained = false;
+    }
 
     return true;
 }

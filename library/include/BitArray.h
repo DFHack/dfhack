@@ -609,6 +609,8 @@ namespace DFHack
     template<typename T, typename O, typename I>
     struct DfOtherVectors
     {
+        using dfhack_other_vectors = void;
+
         std::vector<I *> & operator[](O other_id)
         {
             CHECK_INVALID_ARGUMENT(size_t(other_id) < sizeof(T) / sizeof(std::vector<I *>));

@@ -788,14 +788,25 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     if (!old_occ || !new_occ)
         return false;
 
+    auto is_wagon = [](df::unit *unit) {
+        if (!unit)
+            return false;
+        auto craw = df::creature_raw::find(unit->race);
+        return craw && craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON);
+    };
+
+    auto uid_is_wagon = [&](int32_t unit_id) {
+        return is_wagon(df::unit::find(unit_id));
+    };
+
     // EQUIPMENT units (e.g. wagons) occupy a 3x3 footprint centered on their
     // position; all other units occupy just their position tile
-    auto unit_extent = [](df::unit *u) {
-        if (auto craw = df::creature_raw::find(u->race); craw &&
-            craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON))
+    auto unit_extent = [&](df::unit *unit) {
+        if (is_wagon(unit))
             return 1;
         return 0;
     };
+
     const int extent = unit_extent(unit);
 
     auto for_each_occupied_tile = [&](df::coord center, auto &&fn) {
@@ -868,20 +879,19 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
             if (rider->relationship_ids[unit_relationship_type::RiderMount] == unit->id)
                 // Wagon riders need special handling -- they are not at the center of the wagon,
                 // and the draft animal riders are not even in the extent of the wagon.
-                if (auto craw = df::creature_raw::find(unit->race); craw &&
-                        craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON))
+                if (is_wagon(unit))
                     Units::teleport(rider, (rider->pos - src_pos) + unit->pos);
                 else
                     rider->pos = unit->pos;
 
-    // if the unit itself was a rider, break that link.
+    // if the unit itself was a rider, break that link (except do nothing to wagon-riders).
     if (unit->flags1.bits.rider)
     {
         auto mount = df::unit::find(unit->relationship_ids[df::unit_relationship_type::RiderMount]);
-        unit->flags1.bits.rider = false;
-        unit->relationship_ids[df::unit_relationship_type::RiderMount] = -1;
-        if (mount)
+        if (mount && !is_wagon(mount))
         {
+            unit->flags1.bits.rider = false;
+            unit->relationship_ids[df::unit_relationship_type::RiderMount] = -1;
             mount->flags1.bits.ridden = false;
             mount->flags4.bits.carrying_somebody = false;
             // rebuild the ridden flags; mothers can carry more than one baby.

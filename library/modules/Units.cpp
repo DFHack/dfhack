@@ -874,6 +874,26 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
                 else
                     rider->pos = unit->pos;
 
+    // if the unit itself was a rider, break that link.
+    if (unit->flags1.bits.rider)
+    {
+        auto mount = df::unit::find(unit->relationship_ids[df::unit_relationship_type::RiderMount]);
+        unit->flags1.bits.rider = false;
+        unit->relationship_ids[df::unit_relationship_type::RiderMount] = -1;
+        if (mount)
+        {
+            mount->flags1.bits.ridden = false;
+            mount->flags4.bits.carrying_somebody = false;
+            // rebuild the ridden flags; mothers can carry more than one baby.
+            for (auto rider : world->units.other[units_other_id::ANY_RIDER])
+                if (rider->relationship_ids[unit_relationship_type::RiderMount] == mount->id)
+                    if (rider->profession == df::profession::BABY)
+                        mount->flags4.bits.carrying_somebody = true;
+                    else
+                        mount->flags1.bits.ridden = true;
+        }
+    }
+
     // If the unit was teleported out of a cage, break those links.
     if (auto cage = Units::getContainer(unit))
     {

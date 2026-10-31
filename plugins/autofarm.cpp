@@ -6,6 +6,7 @@
 #include "modules/Buildings.h"
 #include "modules/Items.h"
 #include "modules/Maps.h"
+#include "modules/Materials.h"
 #include "modules/World.h"
 
 #include "df/biome_type.h"
@@ -19,6 +20,9 @@
 #include "df/item_plant_growthst.h"
 #include "df/item_seedsst.h"
 #include "df/items_other_id.h"
+#include "df/material.h"
+#include "df/material_flags.h"
+#include "df/plant_growth.h"
 #include "df/plant_raw.h"
 #include "df/plant_raw_flags.h"
 #include "df/plotinfost.h"
@@ -54,7 +58,15 @@ private:
     std::map<int, int> thresholds;
     int defaultThreshold = 50;
 
+    // thresholds for specific growth products of a plant, keyed by
+    // (plant index, growth id). growth items whose growth has no explicit
+    // threshold count toward the plant's pooled threshold instead
+    std::map<std::pair<int, std::string>, int> growth_thresholds;
+
     std::map<int, int> lastCounts;
+    // stockpile growth item counts, keyed by (plant index, growth id).
+    // populated for reporting; untracked growths also count toward lastCounts
+    std::map<std::pair<int, std::string>, int> lastGrowthCounts;
 
 public:
     void initialize()
@@ -62,7 +74,10 @@ public:
         thresholds.clear();
         defaultThreshold = 50;
 
+        growth_thresholds.clear();
+
         lastCounts.clear();
+        lastGrowthCounts.clear();
     }
 
     void setThreshold(int id, int val)
@@ -78,6 +93,26 @@ public:
     void removeThreshold(int id)
     {
         thresholds.erase(id);
+    }
+
+    void setGrowthThreshold(int plant_id, const std::string& growth_id, int val)
+    {
+        growth_thresholds[std::make_pair(plant_id, growth_id)] = val;
+    }
+
+    void removeGrowthThreshold(int plant_id, const std::string& growth_id)
+    {
+        growth_thresholds.erase(std::make_pair(plant_id, growth_id));
+    }
+
+    const std::map<std::pair<int, std::string>, int>& getGrowthThresholds()
+    {
+        return growth_thresholds;
+    }
+
+    const std::map<std::pair<int, std::string>, int>& getLastGrowthCounts()
+    {
+        return lastGrowthCounts;
     }
 
     int getDefault()
@@ -215,6 +250,34 @@ public:
     {
         df::plant_raw* raw = df::plant_raw::find(plant_id);
         return raw ? raw->name : "NONE";
+    }
+
+    // whether the growth's material produces stockpilable growth items;
+    // only these are ever produced by processing jobs and gathering, so
+    // they are the only growths that can be meaningfully tracked
+    static bool is_stockpile_growth(df::plant_growth* growth)
+    {
+        MaterialInfo mat(growth->mat_type, growth->mat_index);
+        return mat.isValid() &&
+            mat.material->flags.is_set(df::material_flags::STOCKPILE_PLANT_GROWTH);
+    }
+
+    // the id of the stockpile growth at the given index, or "" if the
+    // growth doesn't exist or isn't stockpilable
+    static std::string stockpile_growth_id(df::plant_raw* plant, int32_t subtype)
+    {
+        if (subtype >= 0 && (size_t)subtype < plant->growths.size() &&
+            is_stockpile_growth(plant->growths[subtype]))
+            return plant->growths[subtype]->id;
+        return "";
+    }
+
+    static bool has_stockpile_growth(df::plant_raw* plant, const std::string& growth_id)
+    {
+        for (auto g : plant->growths)
+            if (g->id == growth_id && is_stockpile_growth(g))
+                return true;
+        return false;
     }
 
     // gathers the set of biomes covered by the farm's tiles, since a farm may
@@ -422,7 +485,9 @@ public:
 
         // have to scan both items[PLANT] and items[PLANT_GROWTH] because agricultural products can be either
 
-        auto count = [&, this](df::item* i) {
+        lastGrowthCounts.clear();
+
+        auto count_plant = [&, this](df::item* i) {
             auto mat = i->getMaterialIndex();
             if ((i->flags.whole & bad_flags) == 0 &&
                 plantable_plants.count(mat) > 0)
@@ -431,17 +496,55 @@ public:
             }
         };
 
+        auto count_growth = [&, this](df::item* i) {
+            auto g = virtual_cast<df::item_plant_growthst>(i);
+            auto mat = i->getMaterialIndex();
+            if (!g || (i->flags.whole & bad_flags) != 0 ||
+                plantable_plants.count(mat) == 0)
+                return;
+            df::plant_raw* plant = world->raws.plants.all[mat];
+            const std::string gid = stockpile_growth_id(plant, g->subtype);
+            const auto key = std::make_pair(mat, gid);
+            if (!gid.empty() && growth_thresholds.count(key))
+            {
+                // tracked growths count only toward their own threshold
+                lastGrowthCounts[key] += i->getStackSize();
+            }
+            else
+            {
+                if (!gid.empty())
+                    // unconfigured stockpile growths are tracked
+                    // separately for reporting, but still count toward
+                    // the plant's pooled threshold
+                    lastGrowthCounts[key] += i->getStackSize();
+                lastCounts[mat] += i->getStackSize();
+            }
+        };
+
         for (auto i : world->items.other[df::items_other_id::PLANT])
-            count(i);
+            count_plant(i);
         for (auto i : world->items.other[df::items_other_id::PLANT_GROWTH])
-            count(i);
+            count_growth(i);
 
         std::map<df::biome_type, std::set<int>> plants;
 
         for (auto& plantable : plantable_plants)
         {
             df::plant_raw* plant = world->raws.plants.all[plantable.first];
-            if (lastCounts[plant->index] < getThreshold(plant->index))
+            // a plant is in demand when its pooled stock is under threshold
+            // or any explicitly tracked growth of it is under threshold
+            bool under = lastCounts[plant->index] < getThreshold(plant->index);
+            if (!under)
+                for (auto& gt : growth_thresholds)
+                {
+                    if (gt.first.first == plant->index &&
+                        lastGrowthCounts[gt.first] < gt.second)
+                    {
+                        under = true;
+                        break;
+                    }
+                }
+            if (under)
                 for (auto biome : plantable.second)
                 {
                     plants[biome].insert(plant->index);
@@ -481,6 +584,14 @@ public:
             auto plant = world->raws.plants.all[th.first];
             out << plant->id << " limit " << getThreshold(th.first) << " current 0" << '\n';
         }
+
+        for (auto& gt : growth_thresholds)
+        {
+            auto plant = world->raws.plants.all[gt.first.first];
+            out << plant->id << ':' << gt.first.second << " limit " << gt.second
+                << " current " << lastGrowthCounts[gt.first] << '\n';
+        }
+
         out << "Default: " << defaultThreshold << '\n';
 
         out << std::flush;
@@ -521,15 +632,32 @@ public:
                 const auto allPlants = world->raws.plants.all;
                 const std::string id = i.val();
                 const int val = i.ival(0);
-                const auto plant = std::find_if(std::begin(allPlants), std::end(allPlants), [id](df::plant_raw* p) { return p->id == id; });
-                if (plant != std::end(allPlants))
+                const auto colon = id.find(':');
+                const std::string plant_id = id.substr(0, colon);
+                const auto plant = std::find_if(std::begin(allPlants), std::end(allPlants), [plant_id](df::plant_raw* p) { return p->id == plant_id; });
+                if (plant == std::end(allPlants))
+                {
+                    WARN(control, out).print("threshold for unknown plant {} in saved configuration ignored\n", id);
+                }
+                else if (colon == std::string::npos)
                 {
                     setThreshold((*plant)->index, val);
                     INFO(control, out).print("threshold of {} for plant {} in saved configuration loaded\n", val, id);
                 }
                 else
                 {
-                    WARN(control, out).print("threshold for unknown plant {} in saved configuration ignored\n", id);
+                    // "PLANT:GROWTH" entries hold thresholds for specific
+                    // stockpile growth products of the plant
+                    const std::string growth_id = id.substr(colon + 1);
+                    if (has_stockpile_growth(*plant, growth_id))
+                    {
+                        setGrowthThreshold((*plant)->index, growth_id, val);
+                        INFO(control, out).print("threshold of {} for growth {} in saved configuration loaded\n", val, id);
+                    }
+                    else
+                    {
+                        WARN(control, out).print("threshold for unknown growth {} in saved configuration ignored\n", id);
+                    }
                 }
             }
         }
@@ -552,6 +680,15 @@ public:
             const std::string keyName = "autofarm/threshold/" + plantID;
             PersistentDataItem cfgThreshold = World::AddPersistentSiteData(keyName);
             cfgThreshold.val() = plantID;
+            cfgThreshold.ival(0) = t.second;
+        }
+
+        for (const auto& t : growth_thresholds)
+        {
+            const std::string productID = world->raws.plants.all[t.first.first]->id + ":" + t.first.second;
+            const std::string keyName = "autofarm/threshold/" + productID;
+            PersistentDataItem cfgThreshold = World::AddPersistentSiteData(keyName);
+            cfgThreshold.val() = productID;
             cfgThreshold.ival(0) = t.second;
         }
     }
@@ -625,19 +762,29 @@ static command_result setThresholds(color_ostream& out, std::vector<std::string>
         std::string id = parameters[i];
         std::transform(id.begin(), id.end(), id.begin(), ::toupper);
 
+        // a threshold may apply to a plant ("PLANT") or to a specific
+        // stockpile growth product of a plant ("PLANT:GROWTH")
+        const auto colon = id.find(':');
+        const std::string plant_id = id.substr(0, colon);
+        const std::string growth_id = colon == std::string::npos ? "" : id.substr(colon + 1);
+
         bool ok = false;
         for (auto plant : world->raws.plants.all)
         {
-            if (plant->flags.is_set(df::plant_raw_flags::SEED) && (plant->id == id))
-            {
+            if (!plant->flags.is_set(df::plant_raw_flags::SEED) || (plant->id != plant_id))
+                continue;
+            if (growth_id.empty())
                 autofarmInstance->setThreshold(plant->index, val);
-                ok = true;
+            else if (AutoFarm::has_stockpile_growth(plant, growth_id))
+                autofarmInstance->setGrowthThreshold(plant->index, growth_id, val);
+            else
                 break;
-            }
+            ok = true;
+            break;
         }
         if (!ok)
         {
-            out << "Cannot find plant with id " << id << '\n' << std::flush;
+            out << "Cannot find plant or growth with id " << id << '\n' << std::flush;
             return CR_WRONG_USAGE;
         }
     }
@@ -699,6 +846,18 @@ static void autofarm_removeThreshold(color_ostream& out, int32_t plant_index)
     autofarmInstance->save_state(out);
 }
 
+static void autofarm_setGrowthThreshold(color_ostream& out, int32_t plant_index, std::string growth_id, int32_t val)
+{
+    autofarmInstance->setGrowthThreshold(plant_index, growth_id, val);
+    autofarmInstance->save_state(out);
+}
+
+static void autofarm_removeGrowthThreshold(color_ostream& out, int32_t plant_index, std::string growth_id)
+{
+    autofarmInstance->removeGrowthThreshold(plant_index, growth_id);
+    autofarmInstance->save_state(out);
+}
+
 static bool autofarm_isFarmExcluded(int32_t farm_id)
 {
     return autofarmInstance->is_farm_excluded(farm_id);
@@ -709,6 +868,30 @@ static void autofarm_setFarmExcluded(color_ostream& out, int32_t farm_id, bool e
     autofarmInstance->set_farm_excluded(farm_id, excluded);
 }
 
+// pushes a nested table of the form {plant_index = {growth_id = count}} for a
+// map keyed by (plant_index, growth_id)
+static void push_growth_map(lua_State* L, const std::map<std::pair<int, std::string>, int>& m)
+{
+    lua_newtable(L);
+    for (auto& [key, val] : m)
+    {
+        lua_pushinteger(L, key.first);
+        lua_gettable(L, -2);
+        if (lua_isnil(L, -1))
+        {
+            lua_pop(L, 1);
+            lua_newtable(L);
+            lua_pushinteger(L, key.first);
+            lua_pushvalue(L, -2);
+            lua_settable(L, -4);
+        }
+        Lua::Push(L, key.second);
+        lua_pushinteger(L, val);
+        lua_settable(L, -3);
+        lua_pop(L, 1);
+    }
+}
+
 static int autofarm_getData(lua_State* L)
 {
     lua_newtable(L);
@@ -716,8 +899,12 @@ static int autofarm_getData(lua_State* L)
     Lua::SetField(L, autofarmInstance->getDefault(), ctable, "default_threshold");
     Lua::Push(L, autofarmInstance->getThresholds());
     lua_setfield(L, ctable, "thresholds");
+    push_growth_map(L, autofarmInstance->getGrowthThresholds());
+    lua_setfield(L, ctable, "growth_thresholds");
     Lua::Push(L, autofarmInstance->getLastCounts());
     lua_setfield(L, ctable, "last_counts");
+    push_growth_map(L, autofarmInstance->getLastGrowthCounts());
+    lua_setfield(L, ctable, "growth_counts");
     Lua::Push(L, autofarmInstance->get_excluded_farms());
     lua_setfield(L, ctable, "excluded_farms");
     return 1;
@@ -727,6 +914,8 @@ DFHACK_PLUGIN_LUA_FUNCTIONS {
     DFHACK_LUA_FUNCTION(autofarm_setDefaultThreshold),
     DFHACK_LUA_FUNCTION(autofarm_setThreshold),
     DFHACK_LUA_FUNCTION(autofarm_removeThreshold),
+    DFHACK_LUA_FUNCTION(autofarm_setGrowthThreshold),
+    DFHACK_LUA_FUNCTION(autofarm_removeGrowthThreshold),
     DFHACK_LUA_FUNCTION(autofarm_isFarmExcluded),
     DFHACK_LUA_FUNCTION(autofarm_setFarmExcluded),
     DFHACK_LUA_END

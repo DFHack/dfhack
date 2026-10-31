@@ -31,6 +31,7 @@
 #include "df/report.h"
 #include "df/plotinfost.h"
 #include "df/unit.h"
+#include "df/unit_action.h"
 #include "df/unit_flags1.h"
 #include "df/unit_inventory_item.h"
 #include "df/unit_report_type.h"
@@ -224,12 +225,28 @@ static std::vector<int32_t> startedJobs;
 struct JobCompleteData {
     int32_t id;
     int32_t completion_timer;
-    uint32_t flags_bits_repeat;
+    df::job_flags flags;
 };
 
+/*
+ * Some jobs are driven by the worker's Job unit action timer rather than by
+ * job.completion_timer, which stays -1 for the job's entire lifetime (e.g.
+ * HarvestPlants). DF deletes these jobs in the same tick the action expires,
+ * so they are never observed with completion_timer == 0. Snapshot the worker's
+ * action timer for claimed jobs that are in their work phase but whose
+ * completion_timer isn't counting down; when such a job disappears, a timer
+ * that was within reach of expiring during the elapsed ticks indicates a
+ * completion rather than a cancellation.
+ */
+struct ActionDrivenJobData {
+    int32_t unit_id;
+    int32_t unit_index; // cache for Units::get_cached_unit_by_global_id
+    int32_t action_timer; // -1 = worker's Job action not observed yet
+};
 
 static std::unordered_map<int32_t, Job::JobUniquePtr> seenJobs;
 static std::vector<JobCompleteData> prevJobs;
+static std::unordered_map<int32_t, ActionDrivenJobData> actionDrivenJobs;
 
 //active units
 static unordered_set<int32_t> activeUnits;
@@ -312,6 +329,7 @@ void DFHack::EventManager::onStateChange(color_ostream& out, state_change_event 
         startedJobs.clear();
         seenJobs.clear();
         prevJobs.clear();
+        actionDrivenJobs.clear();
         tickQueue.clear();
         livingUnits.clear();
         buildings.clear();
@@ -560,9 +578,33 @@ static void manageJobCompletedEvent(color_ostream& out) {
                     || (seenJob->general_refs.size() != job.general_refs.size())) {
                 seenIt->second = Job::JobUniquePtr(Job::cloneJobStruct(&job, true));
             }
-        } else if (job.completion_timer != -1) {
+        } else if (job.completion_timer != -1 || job.flags.bits.working) {
             // Restrict additions to seenJobs to jobs that we know have started.
             seenJobs.emplace(job.id, Job::JobUniquePtr(Job::cloneJobStruct(&job, true)));
+        }
+
+        if (job.completion_timer == -1 && job.flags.bits.working) {
+            auto ait = actionDrivenJobs.find(job.id);
+            if (ait == actionDrivenJobs.end()) {
+                if (df::unit* worker = Job::getWorker(&job))
+                    ait = actionDrivenJobs.emplace(job.id,
+                        ActionDrivenJobData{worker->id, -1, -1}).first;
+            }
+            if (ait != actionDrivenJobs.end()) {
+                auto& data = ait->second;
+                df::unit* unit = Units::get_cached_unit_by_global_id(data.unit_id, data.unit_index);
+                if (!unit || unit->job.current_job != &job) {
+                    // worker lost or swapped; re-register on a later poll
+                    actionDrivenJobs.erase(ait);
+                } else {
+                    for (auto action : unit->actions) {
+                        if (action->type == unit_action_type::Job) {
+                            data.action_timer = action->data.job.timer;
+                            break;
+                        }
+                    }
+                }
+            }
         }
         /*
          * We still need to push back all jobs to maintain the invariant of the
@@ -590,7 +632,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
          * 1 in nowJobs is less than the smallest ID in prevJobs,
          * which breaks the algorithm.
          */
-        nowJobs.emplace_back(job.id, job.completion_timer, (bool)job.flags.bits.repeat);
+        nowJobs.emplace_back(job.id, job.completion_timer, job.flags);
     }
 
     // Do we want this check?
@@ -663,6 +705,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
 
     auto prevIt = prevJobs.begin();
     auto nowIt = nowJobs.begin();
+    int32_t tick = df::global::world->frame_counter;
     /*
      * Iterate through two ordered sets, prevJobs and nowJobs, where job IDs in nowJobs are invariably
      * greater than or equal to job IDs in prevJobs. The algorithm maintains the invariant that for each
@@ -674,7 +717,27 @@ static void manageJobCompletedEvent(color_ostream& out) {
         auto& prevJob = *prevIt;
         if (nowIt == nowJobs.end() || prevJob.id != nowIt->id) { // job ID is in prevJobs. ID does not exist in nowJobs.
             // recently finished or cancelled job
-            if (!prevJob.flags_bits_repeat && prevJob.completion_timer == 0) {
+            bool completed = prevJob.completion_timer == 0;
+            if (!completed) {
+                /*
+                 * Jobs whose work is tracked by the worker's Job unit action
+                 * are deleted the same tick they complete, before
+                 * completion_timer ever reaches 0. If the last observed action
+                 * timer was close enough to expiring that it could have hit 0
+                 * during the elapsed ticks, count it as a completion.
+                 */
+                auto ait = actionDrivenJobs.find(prevJob.id);
+                if (ait != actionDrivenJobs.end()
+                        && prevJob.flags.bits.working
+                        && !prevJob.flags.bits.suspend
+                        && !prevJob.flags.bits.item_lost
+                        && ait->second.action_timer >= 0
+                        && ait->second.action_timer <= tick - eventLastTick[EventType::JOB_COMPLETED]) {
+                    completed = true;
+                }
+            }
+            actionDrivenJobs.erase(prevJob.id);
+            if (completed && !prevJob.flags.bits.repeat) {
                 // It should be in seenJobs.
                 auto seenIt = seenJobs.find(prevJob.id);
                 if (seenIt != seenJobs.end()) {
@@ -688,7 +751,7 @@ static void manageJobCompletedEvent(color_ostream& out) {
             }
         } else { // prevIt job ID and nowIt job ID are equal.
             // could have just finished if it's a repeat job
-            if (prevJob.flags_bits_repeat && prevJob.completion_timer == 0
+            if (prevJob.flags.bits.repeat && prevJob.completion_timer == 0
                     && nowIt->completion_timer == -1) {
                 // It should be in seenJobs.
                 auto seenIt = seenJobs.find(prevJob.id);

@@ -2036,6 +2036,38 @@ int dfhack_timeout(lua_State *L)
     return 1;
 }
 
+int dfhack_timeout_until(lua_State *L)
+{
+    using df::global::world;
+
+    // Parse arguments
+    lua_Number tick = luaL_checknumber(L, 1);
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+    lua_settop(L, 2);
+
+    if (!Core::getInstance().isWorldLoaded())
+    {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    int delta = tick - world->frame_counter;
+
+    if (delta <= 0)
+        luaL_error(L, "Invalid timeout: %d", delta);
+
+    // Queue the timeout
+    int id = next_timeout_id++;
+    tick_timers.insert(std::pair<int,int>(tick, id));
+
+    lua_rawgetp(L, LUA_REGISTRYINDEX, &DFHACK_TIMEOUTS_TOKEN);
+    lua_swap(L);
+    lua_rawseti(L, -2, id);
+
+    lua_pushinteger(L, id);
+    return 1;
+}
+
 int dfhack_timeout_active(lua_State *L)
 {
     int id = luaL_optint(L, 1, -1);
@@ -2147,6 +2179,8 @@ static void Lua::Core::InitCoreContext(color_ostream &out)
 
     lua_pushcfunction(State, dfhack_timeout);
     lua_setfield(State, -2, "timeout");
+    lua_pushcfunction(State, dfhack_timeout_until);
+    lua_setfield(State, -2, "timeout_until");
     lua_pushcfunction(State, dfhack_timeout_active);
     lua_setfield(State, -2, "timeout_active");
 

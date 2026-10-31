@@ -69,6 +69,7 @@ Template for new versions:
 ## API
 
 ## Lua
+- ``dfhack.timeout_until``: new function to schedule a callback to run on a specified in-game tick
 
 ## Removed
 

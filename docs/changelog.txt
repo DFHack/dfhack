@@ -62,6 +62,7 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- ``eventful``: ``onJobCompleted`` now fires for jobs that are deleted the same tick they complete (e.g. ``HarvestPlants``), detected via the worker's Job unit action timer
 
 ## Documentation
 - ``export-world-map``: added more format conversion examples.

@@ -58,8 +58,10 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `autofarm`: farm plots can now be individually excluded from autofarm management via new controls on the farm plot information sheet, which also warn when a farm's crops are being managed by autofarm
 
 ## Fixes
+- `autofarm`: farms that span multiple biomes are now handled correctly: crops that can grow in any of the farm's biomes can be assigned to the farm, instead of only using the biome of the farm's center tile
 
 ## Misc Improvements
 

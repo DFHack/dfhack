@@ -1,6 +1,9 @@
 #include "Debug.h"
+#include "LuaTools.h"
 #include "PluginManager.h"
+#include "PluginLua.h"
 
+#include "modules/Buildings.h"
 #include "modules/Items.h"
 #include "modules/Maps.h"
 #include "modules/World.h"
@@ -22,8 +25,8 @@
 #include "df/unit.h"
 #include "df/world.h"
 
+#include <algorithm>
 #include <set>
-#include <queue>
 
 using namespace DFHack;
 using namespace df::enums;
@@ -70,6 +73,26 @@ public:
     int getThreshold(int id)
     {
         return (thresholds.count(id) > 0) ? thresholds[id] : defaultThreshold;
+    }
+
+    void removeThreshold(int id)
+    {
+        thresholds.erase(id);
+    }
+
+    int getDefault()
+    {
+        return defaultThreshold;
+    }
+
+    const std::map<int, int>& getThresholds()
+    {
+        return thresholds;
+    }
+
+    const std::map<int, int>& getLastCounts()
+    {
+        return lastCounts;
     }
 
     void setDefault(int val)
@@ -194,6 +217,82 @@ public:
         return raw ? raw->name : "NONE";
     }
 
+    // gathers the set of biomes covered by the farm's tiles, since a farm may
+    // span multiple biomes and DF allows planting any crop that can grow in
+    // any of them (in the tiles of the respective biome)
+    std::set<df::biome_type> get_farm_biomes(df::building_farmplotst* farm)
+    {
+        std::set<df::biome_type> biomes;
+        for (int32_t x = farm->x1; x <= farm->x2; x++)
+        {
+            for (int32_t y = farm->y1; y <= farm->y2; y++)
+            {
+                if (!Buildings::containsTile(farm, df::coord2d(x, y)))
+                    continue;
+                auto des = Maps::getTileDesignation(x, y, farm->z);
+                if (!des)
+                    continue;
+                if (des->bits.subterranean)
+                {
+                    // any subterranean tile can grow any crop that grows
+                    // underground
+                    biomes.insert(df::biome_type::SUBTERRANEAN_WATER);
+                    biomes.insert(df::biome_type::SUBTERRANEAN_CHASM);
+                    biomes.insert(df::biome_type::SUBTERRANEAN_LAVA);
+                }
+                else if (Maps::getRegionBiome(Maps::getTileBiomeRgn(df::coord(x, y, farm->z))))
+                {
+                    df::coord2d region(Maps::getTileBiomeRgn(df::coord(x, y, farm->z)));
+                    biomes.insert(Maps::getBiomeType(region.x, region.y));
+                }
+            }
+        }
+        return biomes;
+    }
+
+public:
+    bool is_farm_excluded(int32_t farm_id)
+    {
+        auto item = World::GetPersistentSiteData("autofarm/excluded_farm/" + std::to_string(farm_id));
+        return item.isValid() && item.ival(0) != 0;
+    }
+
+    void set_farm_excluded(int32_t farm_id, bool excluded)
+    {
+        const std::string key = "autofarm/excluded_farm/" + std::to_string(farm_id);
+        auto item = World::GetPersistentSiteData(key);
+        if (excluded)
+        {
+            if (!item.isValid())
+                item = World::AddPersistentSiteData(key);
+            if (item.isValid())
+                item.ival(0) = 1;
+        }
+        else if (item.isValid())
+        {
+            World::DeletePersistentData(item);
+        }
+    }
+
+    std::vector<int32_t> get_excluded_farms()
+    {
+        std::vector<PersistentDataItem> items;
+        std::vector<int32_t> ret;
+        World::GetPersistentSiteData(&items, "autofarm/excluded_farm/", true);
+        for (auto& i : items)
+        {
+            if (!i.isValid() || i.ival(0) == 0)
+                continue;
+            int32_t farm_id = atoi(i.key().substr(strlen("autofarm/excluded_farm/")).c_str());
+            auto bld = df::building::find(farm_id);
+            // ignore entries left behind by destroyed farm plots
+            if (bld && bld->getType() == df::building_type::FarmPlot)
+                ret.push_back(farm_id);
+        }
+        return ret;
+    }
+
+private:
     void set_farm(color_ostream& out, int new_plant_id, df::building_farmplotst* farm, int season)
     {
         int old_plant_id = farm->plant_id[season];
@@ -206,54 +305,100 @@ public:
         }
     }
 
-    void set_farms(color_ostream& out, const std::set<int>& plants, const std::vector<df::building_farmplotst*>& farms)
+public:
+    void set_farms(color_ostream& out, const std::map<df::biome_type, std::set<int>>& plants,
+                   const std::vector<std::pair<df::building_farmplotst*, std::set<df::biome_type>>>& farms)
     {
-        // this algorithm attempts to change as few farms as possible, while ensuring that
-        // the number of farms planting each eligible plant is "as equal as possible"
+        // this algorithm attempts to change as few farms as possible, while
+        // ensuring that the number of farms planting each plant is "as equal
+        // as possible". unlike previously, each farm may have a different set
+        // of plants that it can grow, since a farm can span multiple biomes
 
         int season = *df::global::cur_season;
 
-        if (farms.empty() || plants.empty())
+        // the plants that each farm is eligible to grow, and the list of
+        // farms assigned to each plant
+        std::map<df::building_farmplotst*, std::set<int>> eligible;
+        std::map<int, std::vector<df::building_farmplotst*>> assigned;
+        std::map<int, int> counters;
+        std::vector<df::building_farmplotst*> unassigned;
+
+        for (auto& [farm, biomes] : farms)
         {
-            // if no more plants were requested, fallow all farms
-            // if there were no farms, do nothing
-            for (auto farm : farms)
+            for (auto biome : biomes)
             {
-                set_farm(out, -1, farm, season);
+                auto it = plants.find(biome);
+                if (it != plants.end())
+                    eligible[farm].insert(it->second.begin(), it->second.end());
             }
-            return;
+            for (auto plant : eligible[farm])
+                assigned[plant]; // ensure every eligible plant can receive farms
         }
 
-        int min = farms.size() / plants.size(); // the number of farms that should plant each eligible plant, rounded down
-        int extra = farms.size() - min * plants.size(); // the remainder that cannot be evenly divided
-
-        std::map<int, int> counters;
-        std::queue<df::building_farmplotst*> toChange;
-
-        for (auto farm : farms)
+        // keep the current assignment for farms whose crop is still eligible
+        for (auto& [farm, biomes] : farms)
         {
-            int o = farm->plant_id[season];
-            if (plants.count(o) == 0 || counters[o] > min || (counters[o] == min && extra == 0))
-                toChange.push(farm); // this farm is an excess instance for the plant it is currently planting
+            int cur = farm->plant_id[season];
+            if (cur >= 0 && eligible[farm].count(cur))
+            {
+                assigned[cur].push_back(farm);
+                counters[cur]++;
+            }
             else
             {
-                if (counters[o] == min)
-                    extra--; // allocate off one of the remainder farms
-                counters[o]++;
+                unassigned.push_back(farm);
             }
         }
 
-        for (auto n : plants)
-        {
-            int c = counters[n];
-            while (toChange.size() > 0 && (c < min || (c == min && extra > 0)))
+        // assign farms with the fewest options first so that constrained
+        // farms don't get crowded out by more flexible ones
+        std::sort(unassigned.begin(), unassigned.end(),
+            [&](df::building_farmplotst* a, df::building_farmplotst* b)
             {
-                // pick one of the excess farms and change it to plant this plant
-                df::building_farmplotst* farm = toChange.front();
-                set_farm(out, n, farm, season);
-                toChange.pop();
-                if (c++ == min)
-                    extra--;
+                return eligible[a].size() < eligible[b].size();
+            });
+
+        for (auto farm : unassigned)
+        {
+            if (eligible[farm].empty())
+            {
+                set_farm(out, -1, farm, season);
+                continue;
+            }
+            int best = *std::min_element(eligible[farm].begin(), eligible[farm].end(),
+                [&](int a, int b) { return counters[a] < counters[b]; });
+            set_farm(out, best, farm, season);
+            assigned[best].push_back(farm);
+            counters[best]++;
+        }
+
+        // rebalance: move farms from overrepresented plants to
+        // underrepresented ones while their counts differ by more than one.
+        // each move strictly decreases the variance, so this terminates
+        for (bool moved = true; moved;)
+        {
+            moved = false;
+            for (auto& [src, src_farms] : assigned)
+            {
+                for (auto& [dst, dst_farms] : assigned)
+                {
+                    if (counters[src] <= counters[dst] + 1)
+                        continue;
+                    auto it = std::find_if(src_farms.begin(), src_farms.end(),
+                        [&](df::building_farmplotst* f) { return eligible[f].count(dst); });
+                    if (it == src_farms.end())
+                        continue;
+                    auto farm = *it;
+                    set_farm(out, dst, farm, season);
+                    src_farms.erase(it);
+                    dst_farms.push_back(farm);
+                    counters[src]--;
+                    counters[dst]++;
+                    moved = true;
+                    break;
+                }
+                if (moved)
+                    break;
             }
         }
     }
@@ -303,28 +448,18 @@ public:
                 }
         }
 
-        std::map<df::biome_type, std::vector<df::building_farmplotst*>> farms;
+        std::vector<std::pair<df::building_farmplotst*, std::set<df::biome_type>>> farms;
 
         for (auto& bb : world->buildings.other[df::buildings_other_id::FARM_PLOT])
         {
             auto farm = virtual_cast<df::building_farmplotst>(bb);
-            if (farm->flags.bits.exists)
+            if (farm->flags.bits.exists && !is_farm_excluded(farm->id))
             {
-                df::biome_type biome;
-                if (Maps::getTileDesignation(bb->centerx, bb->centery, bb->z)->bits.subterranean)
-                    biome = biome_type::SUBTERRANEAN_WATER;
-                else {
-                    df::coord2d region(Maps::getTileBiomeRgn(df::coord(bb->centerx, bb->centery, bb->z)));
-                    biome = Maps::getBiomeType(region.x, region.y);
-                }
-                farms[biome].push_back(farm);
+                farms.emplace_back(farm, get_farm_biomes(farm));
             }
         }
 
-        for (auto& ff : farms)
-        {
-            set_farms(out, plants[ff.first], ff.second);
-        }
+        set_farms(out, plants, farms);
 
         out << std::flush;
     }
@@ -545,3 +680,59 @@ static command_result autofarm(color_ostream& out, std::vector<std::string>& par
 
     return CR_OK;
 }
+
+static void autofarm_setDefaultThreshold(color_ostream& out, int32_t val)
+{
+    autofarmInstance->setDefault(val);
+    autofarmInstance->save_state(out);
+}
+
+static void autofarm_setThreshold(color_ostream& out, int32_t plant_index, int32_t val)
+{
+    autofarmInstance->setThreshold(plant_index, val);
+    autofarmInstance->save_state(out);
+}
+
+static void autofarm_removeThreshold(color_ostream& out, int32_t plant_index)
+{
+    autofarmInstance->removeThreshold(plant_index);
+    autofarmInstance->save_state(out);
+}
+
+static bool autofarm_isFarmExcluded(int32_t farm_id)
+{
+    return autofarmInstance->is_farm_excluded(farm_id);
+}
+
+static void autofarm_setFarmExcluded(color_ostream& out, int32_t farm_id, bool excluded)
+{
+    autofarmInstance->set_farm_excluded(farm_id, excluded);
+}
+
+static int autofarm_getData(lua_State* L)
+{
+    lua_newtable(L);
+    int ctable = lua_gettop(L);
+    Lua::SetField(L, autofarmInstance->getDefault(), ctable, "default_threshold");
+    Lua::Push(L, autofarmInstance->getThresholds());
+    lua_setfield(L, ctable, "thresholds");
+    Lua::Push(L, autofarmInstance->getLastCounts());
+    lua_setfield(L, ctable, "last_counts");
+    Lua::Push(L, autofarmInstance->get_excluded_farms());
+    lua_setfield(L, ctable, "excluded_farms");
+    return 1;
+}
+
+DFHACK_PLUGIN_LUA_FUNCTIONS {
+    DFHACK_LUA_FUNCTION(autofarm_setDefaultThreshold),
+    DFHACK_LUA_FUNCTION(autofarm_setThreshold),
+    DFHACK_LUA_FUNCTION(autofarm_removeThreshold),
+    DFHACK_LUA_FUNCTION(autofarm_isFarmExcluded),
+    DFHACK_LUA_FUNCTION(autofarm_setFarmExcluded),
+    DFHACK_LUA_END
+};
+
+DFHACK_PLUGIN_LUA_COMMANDS {
+    DFHACK_LUA_COMMAND(autofarm_getData),
+    DFHACK_LUA_END
+};

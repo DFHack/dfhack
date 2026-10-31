@@ -38,3 +38,20 @@ function test.threshold_rejects_bad_plant()
     expect.true_(output:find('Cannot find plant', 1, true) ~= nil
                  or status ~= 0)
 end
+
+function test.farm_exclusion()
+    local plugin = require('plugins.autofarm')
+    expect.false_(plugin.autofarm_isFarmExcluded(-1))
+    plugin.autofarm_setFarmExcluded(-1, true)
+    expect.true_(plugin.autofarm_isFarmExcluded(-1))
+    plugin.autofarm_setFarmExcluded(-1, false)
+    expect.false_(plugin.autofarm_isFarmExcluded(-1))
+end
+
+function test.get_data()
+    local data = require('plugins.autofarm').autofarm_getData()
+    expect.eq('number', type(data.default_threshold))
+    expect.eq('table', type(data.thresholds))
+    expect.eq('table', type(data.last_counts))
+    expect.eq('table', type(data.excluded_farms))
+end

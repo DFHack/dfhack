@@ -9,6 +9,14 @@ Periodically scan your plant stocks and assign crops to your farm plots based on
 which plant stocks are low (as long as you have the appropriate seeds). The
 target threshold for each crop type is configurable.
 
+Farms that span multiple biomes are handled correctly: any crop that can grow
+in any of the biomes covered by the farm's tiles may be assigned to that farm.
+
+Individual farm plots can be excluded from autofarm management via the controls
+that appear on the farm plot information sheet. That sheet also provides a
+shortcut to `gui/autofarm`, a convenient UI for setting crop thresholds and
+enabling or disabling autofarm.
+
 Usage
 -----
 

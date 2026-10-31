@@ -267,6 +267,9 @@ struct LaborEscalation {
     std::map<int32_t, std::set<df::unit_labor>> writes; // unit -> labors we set
 };
 static std::map<df::unit_labor, LaborEscalation> labor_escalations;
+// job ids that already completed a probe round; a posting that can never
+// be claimed would otherwise re-escalate every cycle and probe forever
+static std::set<int32_t> probed_jobs;
 static std::map<df::unit_labor, int> labor_work;         // live postings per labor, claimed or not
 // tool-detail membership as of the end of the last applied cycle; diffs
 // flag assignments made outside our reconcile calls (game or player)
@@ -504,6 +507,7 @@ void ModernEngine::enable(color_ostream &out)
     for (auto &kv : labor_escalations)
         revert_escalation(kv.second);
     labor_escalations.clear();
+    probed_jobs.clear();
     unit_track.clear();
     cycle_timestamp = 0;
     stat_starving = 0;
@@ -538,6 +542,7 @@ void ModernEngine::map_unload()
     unclaimed_job.clear();
     unclaimed_age.clear();
     labor_escalations.clear();
+    probed_jobs.clear();
     unit_track.clear();
     stat_starving = 0;
     stat_oldest_wait = 0;
@@ -1769,6 +1774,10 @@ void ModernEngine::update(color_ostream &out)
             j->job_type == df::job_type::PlantSeeds ||
             j->job_type == df::job_type::HarvestPlants)
             continue;
+        // a posting that already finished a probe round can never be
+        // claimed; starting another escalation for it would probe forever
+        if (probed_jobs.count(j->id))
+            continue;
         LaborEscalation esc;
         esc.job_id = j->id;
         esc.jtype = j->job_type;
@@ -1776,8 +1785,10 @@ void ModernEngine::update(color_ostream &out)
         // test the mapped labor on an idle dwarf first: distinguishes
         // "wrong labor" from "right labor, but every holder was busy"
         esc.candidates.push_back(l);
+        // the disputed set follows; unmanaged labors belong to the player's
+        // own work details, so the probe must not touch them
         for (auto m : disputed_labors)
-            if (m != l && !is_exclusive_labor(m))
+            if (m != l && managed_labor_cache[m] && !is_exclusive_labor(m))
                 esc.candidates.push_back(m);
         INFO(labor_probe).print(
             "possible labor mapping mismatch: posting {} ({}) maps to {} "
@@ -1822,8 +1833,12 @@ void ModernEngine::update(color_ostream &out)
             {
                 if (auto u = df::unit::find(wi->first))
                 {
-                    for (auto m : wi->second)
-                        u->status.labors[m] = true;
+                    // a unit that already claimed a job can't take the
+                    // target posting anyway; re-asserting only lets it
+                    // chain more work its details don't cover
+                    if (!u->job.current_job)
+                        for (auto m : wi->second)
+                            u->status.labors[m] = true;
                     ++wi;
                 }
                 else
@@ -1832,9 +1847,12 @@ void ModernEngine::update(color_ostream &out)
 
             if (esc.next < esc.candidates.size())
             {
+                // specialists are pinned to a skill detail; probing one
+                // would enable work its detail is meant to forbid
                 df::unit *idle = nullptr;
                 for (auto &info : units)
                     if (info.state == IDLE && !info.excluded &&
+                        !specialist_ids.count(info.u->id) &&
                         !esc.writes.count(info.u->id))
                     {
                         idle = info.u;
@@ -1864,6 +1882,7 @@ void ModernEngine::update(color_ostream &out)
                     "the probed set\n",
                     esc.job_id, esc.job_name,
                     ENUM_KEY_STR(unit_labor, l));
+                probed_jobs.insert(esc.job_id);
                 revert_escalation(esc);
                 it = labor_escalations.erase(it);
             }
@@ -1951,6 +1970,7 @@ void ModernEngine::update(color_ostream &out)
                 ENUM_KEY_STR(unit_labor, l));
         }
 
+        probed_jobs.insert(esc.job_id);
         revert_escalation(esc);
         it = labor_escalations.erase(it);
     }

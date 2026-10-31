@@ -60,6 +60,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- `labormanager`: the modern engine's labor-mismatch probe no longer enables unmanaged labors on idle units or specialists, and no longer re-probes postings that can never be claimed (#6028)
 
 ## Misc Improvements
 

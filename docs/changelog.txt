@@ -37,7 +37,6 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
-- ``export-world-map``: added more format conversion examples.
 
 ## API
 
@@ -64,7 +63,6 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
-- ``export-world-map``: added more format conversion examples.
 
 ## API
 
@@ -92,6 +90,7 @@ Template for new versions:
 
 ## Documentation
 - ``dfhack.world.isAdventureMode``: doesn't include adventurer arena, advise checking gamemode
+- ``export-world-map``: added more format conversion examples.
 
 ## API
 

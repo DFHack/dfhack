@@ -27,6 +27,7 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
+#include "Tiletypes.h"
 #include "Types.h"
 #include "VersionInfo.h"
 
@@ -787,6 +788,23 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     auto old_occ = Maps::getTileOccupancy(src_pos);
     auto new_occ = Maps::getTileOccupancy(target_pos);
     if (!old_occ || !new_occ)
+        return false;
+
+    if (!unit->flags3.bits.ghostly) {
+        auto new_tt = Maps::getTileType(target_pos);
+        if (tileShapeBasic(tileShape(*new_tt)) == df::tiletype_shape_basic::Wall)
+            return false;
+
+        using namespace df::enums::tile_building_occ;
+        if (auto b = new_occ->bits.building;
+            b == Obstacle || b == Well || b == Impassable || b == Dynamic)
+        return false;
+    }
+
+    // these won't return nullptr because we already got occupancies from these coords.
+    if (Maps::getTileDesignation(src_pos)->bits.hidden)
+        return false;
+    if (Maps::getTileDesignation(target_pos)->bits.hidden)
         return false;
 
     auto is_wagon = [](df::unit *unit) {

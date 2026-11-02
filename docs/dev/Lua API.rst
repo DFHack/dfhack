@@ -3824,6 +3824,15 @@ Core context specific functions:
   Returns the timer id, or *nil* if unsuccessful due to
   world being unloaded.
 
+* ``dfhack.timeout_until(tick,callback)``
+
+  Arranges for the callback to be called once the in-game
+  tick count (``df.global.world.frame_counter``) reaches
+  the specified value. The timer is canceled when the
+  world is unloaded, and cannot be queued until it is
+  loaded again. Returns the timer id, or *nil* if
+  unsuccessful due to world being unloaded.
+
 * ``dfhack.timeout_active(id[,new_callback])``
 
   Returns the active callback with the given id, or *nil*

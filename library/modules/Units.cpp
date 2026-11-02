@@ -27,7 +27,7 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
-#include "Tiletypes.h"
+#include "TileTypes.h"
 #include "Types.h"
 #include "VersionInfo.h"
 
@@ -907,20 +907,13 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         if (mount && unit->pos != mount->pos && !is_wagon(mount)) {
             unit->flags1.bits.rider = false;
             unit->relationship_ids[unit_relationship_type::RiderMount] = -1;
-            // units.other.* are not sorted; do not use erase_from_vector.
+            // units.other.* are not sorted; do not use erase_from_vector().
             std::erase(world->units.other[units_other_id::ANY_RIDER], unit);
             mount->flags1.bits.ridden = false;
             mount->flags4.bits.carrying_somebody = false;
             // rebuild the ridden flags; mothers can carry more than one baby.
             for (auto rider : world->units.other[units_other_id::ANY_RIDER]) {
                 if (rider->relationship_ids[unit_relationship_type::RiderMount] == mount->id) {
-                    // notes on the recover wounded job:
-                    // the wounded unit has .rider and .move_state true, no relevant refs,
-                    //  no job, relationship_ids.RiderMount set, mount_type == 1 Carried,
-                    //  health.flags.should_not_move true, a misc_trait of RequestRescueCooldown,
-                    //  and an entry in world.units.other.ANY_RIDER.
-                    // the rescuing unit has .carrying_somebody and .move_state true,
-                    //  no relevant refs, and a job of type 164 RecoverWounded.
                     if (rider->profession == df::profession::BABY || (mount->job.current_job
                             && mount->job.current_job->job_type == job_type::RecoverWounded))
                         mount->flags4.bits.carrying_somebody = true;
@@ -931,7 +924,6 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         }
     }
 
-    // removes jobs related to caging/uncaging/chaining/unchaining the teleported unit.
     auto delete_cagee_jobs = [](df::unit* unit, df::building* bld) {
         std::vector<df::job* > jobs_to_delete;
         for (auto job: bld->jobs)
@@ -941,7 +933,6 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
             Job::removeJob(job);
     };
 
-    // If the unit was teleported out of a cage, break those links.
     if (auto cage = getContainer(unit)) {
         auto bld = strict_virtual_cast<df::building_cagest>(Items::getHolderBuilding(cage));
         if (bld && bld->contained_items.size() > 0 && bld->contained_items[0]->item == cage) {
@@ -952,10 +943,8 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         removeRef(cage->general_refs, df::general_ref_type::CONTAINS_UNIT, unit->id);
         removeRef(unit->general_refs, df::general_ref_type::CONTAINED_IN_ITEM, cage->id);
         unit->flags1.bits.caged = false;
-        // unit->idle_area_type of caged units is set to -1, but that will be corrected by the game soon enough.
     }
 
-    // If the unit was teleported out of a chain, break those links.
     if (auto bld = strict_virtual_cast<df::building_chainst>
         (findBuildingRef(unit->general_refs, df::general_ref_type::BUILDING_CHAIN)))
     {
@@ -966,10 +955,8 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
             bld->assigned = nullptr;
         removeRef(unit->general_refs, df::general_ref_type::BUILDING_CHAIN, bld->id);
         unit->flags1.bits.chained = false;
-        // unit->idle_area_type of chained units is set to 17 ChainedAnimal, but that will be corrected by the game soon enough.
     }
 
-    // removes dragger/draggee links and any dragger job, which is assumed to be related to the dragging.
     auto break_dragging_links = [&target_pos](df::unit* dragger, df::unit* draggee) {
         if (!dragger || !draggee)
             return;
@@ -985,14 +972,10 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
             Job::removeJob(dragger->job.current_job);
         dragger->relationship_ids[unit_relationship_type::Draggee] = -1;
         draggee->relationship_ids[unit_relationship_type::Dragger] = -1;
-        // draggees have flag1 move_state false, but the game cleans that up during the next tick.
     };
 
-    // If the unit was dragging another unit, break those links.
     if (auto draggee = df::unit::find(unit->relationship_ids[unit_relationship_type::Draggee]))
         break_dragging_links(unit, draggee);
-
-    // If the unit was being dragged by another unit, break those links.
     if (auto dragger = df::unit::find(unit->relationship_ids[unit_relationship_type::Dragger]))
         break_dragging_links(dragger, unit);
 

@@ -127,13 +127,13 @@ function FarmCoverOverlay:init()
             text_pen=COLOR_YELLOW,
         },
         widgets.TextButton{
-            frame={b=3, l=2, w=24, h=1},
+            frame={b=4, l=2, r=2, h=1},
             label='configure autofarm',
             key='CUSTOM_CTRL_S',
             on_activate=function() dfhack.run_script('gui/autofarm') end,
         },
         widgets.TextButton{
-            frame={b=3, l=30, w=30, h=1},
+            frame={b=3, l=2, r=2, h=1},
             label='manage this farm manually',
             key='CUSTOM_CTRL_M',
             on_activate=function()

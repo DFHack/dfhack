@@ -60,8 +60,14 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- ``Units::teleport`` don't teleport units (except ghosts) into walls or impassable parts of buildings; don't teleport into or out of hidden tiles.
+- ``Units::teleport`` teleport babies along with their mothers, teleport merchant wagon-riders with their wagons. don't break links between wagons & their riders.
+- ``Units::teleport`` when using teleport to separate a rider/carried unit from its mount/carrying unit, clean up the links between the two.
+- ``Units::teleport`` when using teleport to separate a dragged unit from a dragger unit, clean up the links between the two.
 
 ## Misc Improvements
+- ``Units::teleport`` can now remove units from cages & chains, and will cancel any associated uncage/unchain jobs.
+- ``Units::teleport`` when teleporting a merchant dragging a pack animal, also teleport the animal.
 
 ## Documentation
 - ``export-world-map``: added more format conversion examples.

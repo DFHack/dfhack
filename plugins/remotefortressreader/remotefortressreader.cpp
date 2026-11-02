@@ -2626,15 +2626,15 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
         send_creature->set_index(i);
         send_creature->set_creature_id(orig_creature->creature_id);
-        send_creature->add_name(orig_creature->name[0]);
-        send_creature->add_name(orig_creature->name[1]);
-        send_creature->add_name(orig_creature->name[2]);
+        send_creature->add_name(DF2UTF(orig_creature->name[0]));
+        send_creature->add_name(DF2UTF(orig_creature->name[1]));
+        send_creature->add_name(DF2UTF(orig_creature->name[2]));
 
-        send_creature->add_general_baby_name(orig_creature->general_baby_name[0]);
-        send_creature->add_general_baby_name(orig_creature->general_baby_name[1]);
+        send_creature->add_general_baby_name(DF2UTF(orig_creature->general_baby_name[0]));
+        send_creature->add_general_baby_name(DF2UTF(orig_creature->general_baby_name[1]));
 
-        send_creature->add_general_child_name(orig_creature->general_child_name[0]);
-        send_creature->add_general_child_name(orig_creature->general_child_name[1]);
+        send_creature->add_general_child_name(DF2UTF(orig_creature->general_child_name[0]));
+        send_creature->add_general_child_name(DF2UTF(orig_creature->general_child_name[1]));
 
         send_creature->set_creature_tile(orig_creature->creature_tile);
         send_creature->set_creature_soldier_tile(orig_creature->creature_soldier_tile);
@@ -2654,15 +2654,15 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
 
             send_caste->set_caste_id(orig_caste->caste_id);
 
-            send_caste->add_caste_name(orig_caste->caste_name[0]);
-            send_caste->add_caste_name(orig_caste->caste_name[1]);
-            send_caste->add_caste_name(orig_caste->caste_name[2]);
+            send_caste->add_caste_name(DF2UTF(orig_caste->caste_name[0]));
+            send_caste->add_caste_name(DF2UTF(orig_caste->caste_name[1]));
+            send_caste->add_caste_name(DF2UTF(orig_caste->caste_name[2]));
 
-            send_caste->add_baby_name(orig_caste->baby_name[0]);
-            send_caste->add_baby_name(orig_caste->baby_name[1]);
+            send_caste->add_baby_name(DF2UTF(orig_caste->baby_name[0]));
+            send_caste->add_baby_name(DF2UTF(orig_caste->baby_name[1]));
 
-            send_caste->add_child_name(orig_caste->child_name[0]);
-            send_caste->add_child_name(orig_caste->child_name[1]);
+            send_caste->add_child_name(DF2UTF(orig_caste->child_name[0]));
+            send_caste->add_child_name(DF2UTF(orig_caste->child_name[1]));
             send_caste->set_gender(orig_caste->sex);
 
             for (size_t partIndex = 0; partIndex < orig_caste->body_info.body_parts.size(); partIndex++)
@@ -2781,7 +2781,7 @@ static command_result GetPartialCreatureRaws(color_ostream &stream, const ListRe
                 }
             }
 
-            send_caste->set_description(orig_caste->description);
+            send_caste->set_description(DF2UTF(orig_caste->description));
             send_caste->set_adult_size(orig_caste->misc.adult_size);
         }
 

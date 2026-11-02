@@ -855,7 +855,8 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     }
 
     // If there's already somebody standing at the destination, then force the unit to lay down
-    if (new_occ->bits.unit)
+    // (except riders never lay down)
+    if (new_occ->bits.unit && !unit->flags1.bits.rider)
         unit->flags1.bits.on_ground = true;
 
     // Set appropriate occupancy flags at new tile
@@ -870,7 +871,7 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     unit->pos = target_pos;
     unit->idle_area = target_pos;
 
-    // Move unit's riders (including babies) to destination
+    // Move unit's riders (including babies and wounded) to destination
     if (unit->flags1.bits.ridden || unit->flags4.bits.carrying_somebody) {
         for (auto rider : world->units.other[units_other_id::ANY_RIDER])
             if (rider->relationship_ids[unit_relationship_type::RiderMount] == unit->id)
@@ -888,6 +889,8 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
         if (mount && unit->pos != mount->pos && !is_wagon(mount)) {
             unit->flags1.bits.rider = false;
             unit->relationship_ids[unit_relationship_type::RiderMount] = -1;
+            // units.other.* are not sorted; do not use erase_from_vector.
+            std::erase(world->units.other[units_other_id::ANY_RIDER], unit);
             mount->flags1.bits.ridden = false;
             mount->flags4.bits.carrying_somebody = false;
             // rebuild the ridden flags; mothers can carry more than one baby.
@@ -958,6 +961,7 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
                 Units::teleport(dragger, target_pos);
             if (draggee->pos != target_pos)
                 Units::teleport(draggee, target_pos);
+            return;
         }
         if ((isCitizen(dragger, false) || isResident(dragger, false)) && dragger->job.current_job != NULL)
             Job::removeJob(dragger->job.current_job);

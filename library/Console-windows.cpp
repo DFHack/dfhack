@@ -46,6 +46,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #include <stdio.h>
 #include <fcntl.h>
 #include <io.h>
+#include <atomic>
 #include <iostream>
 #include <fstream>
 #include <istream>
@@ -73,7 +74,7 @@ namespace DFHack
             rawmode = 0;
             console_in = 0;
             console_out = 0;
-            exit_event = 0;
+            exiting = false;
             ConsoleWindow = 0;
             default_attributes = 0;
             state = con_unclaimed;
@@ -282,21 +283,17 @@ namespace DFHack
             inf.dwCursorPosition.X = (SHORT)plen;
             SetConsoleCursorPosition(console_out, inf.dwCursorPosition);
 
-            // exit_event comes first so shutdown wins if input is also
-            // pending. The console input handle is signaled whenever its
-            // input queue is non-empty, so the read below cannot block.
-            const HANDLE wait_handles[] = { exit_event, console_in };
             while (1)
             {
                 INPUT_RECORD rec;
                 DWORD count;
                 lock->unlock();
-                DWORD wait_result = WaitForMultipleObjects(2, wait_handles, FALSE, INFINITE);
+                // shutdown() queues a dummy input record to wake this read;
+                // the exiting flag distinguishes the wake from real input.
+                BOOL success = ReadConsoleInputA(console_in, &rec, 1, &count);
                 lock->lock();
-                if (wait_result != WAIT_OBJECT_0 + 1
-                    || ReadConsoleInputA(console_in, &rec, 1, &count) == 0) {
+                if (exiting || !success)
                     return Console::SHUTDOWN;
-                }
                 if (rec.EventType != KEY_EVENT || !rec.Event.KeyEvent.bKeyDown)
                     continue;
                 switch (rec.Event.KeyEvent.wVirtualKeyCode)
@@ -402,7 +399,7 @@ namespace DFHack
         int rawmode;
         HANDLE console_in;
         HANDLE console_out;
-        HANDLE exit_event;
+        std::atomic<bool> exiting;
         HWND ConsoleWindow;
         HWND MainWindow;
         WORD default_attributes;
@@ -486,9 +483,6 @@ bool Console::init(bool)
     d->console_owned = AllocConsole() != FALSE;
     d->ConsoleWindow = GetConsoleWindow();
     wlock = new std::recursive_mutex();
-    d->exit_event = CreateEventW(NULL, TRUE, FALSE, NULL);
-    if (!d->exit_event)
-        return false;
     if (d->console_owned)
     {
         HMENU  hm = GetSystemMenu(d->ConsoleWindow,false);
@@ -546,11 +540,15 @@ bool Console::init(bool)
 bool Console::shutdown(void)
 {
     assert(inited);
+    d->exiting = true;
     std::lock_guard<std::recursive_mutex> lock{*wlock};
-    // Wake any thread waiting on console input so it leaves prompt_loop
-    // before we detach or reconfigure the console below.
-    if (d->exit_event)
-        SetEvent(d->exit_event);
+    // Wake any thread blocked in ReadConsoleInputA by queueing a dummy
+    // input record, so it is no longer inside a console call and can
+    // observe the exiting flag before we detach the console below.
+    INPUT_RECORD rec = { 0 };
+    rec.EventType = FOCUS_EVENT;
+    DWORD written;
+    WriteConsoleInputA(d->console_in, &rec, 1, &written);
     if (d->console_owned)
     {
         FreeConsole();

@@ -37,7 +37,6 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
-- ``export-world-map``: added more format conversion examples.
 
 ## API
 
@@ -63,15 +62,17 @@ Template for new versions:
 
 ## Fixes
 - `autofarm`: farms that span multiple biomes are now handled correctly: crops that can grow in any of the farm's biomes can be assigned to the farm, instead of only using the biome of the farm's center tile
+- `labormanager`: the modern engine's labor-mismatch probe no longer enables unmanaged labors on idle units or specialists, and no longer re-probes postings that can never be claimed (#6028)
 
 ## Misc Improvements
+- ``eventful``: ``onJobCompleted`` now fires for jobs that are deleted the same tick they complete (e.g. ``HarvestPlants``), detected via the worker's Job unit action timer
 
 ## Documentation
-- ``export-world-map``: added more format conversion examples.
 
 ## API
 
 ## Lua
+- ``dfhack.timeout_until``: new function to schedule a callback to run on a specified in-game tick
 
 ## Removed
 
@@ -95,6 +96,7 @@ Template for new versions:
 
 ## Documentation
 - ``dfhack.world.isAdventureMode``: doesn't include adventurer arena, advise checking gamemode
+- ``export-world-map``: added more format conversion examples.
 
 ## API
 

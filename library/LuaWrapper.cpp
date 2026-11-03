@@ -283,8 +283,8 @@ bool LuaWrapper::is_type_compatible(lua_State *state, const type_identity *type1
     {
     case IDTYPE_POINTER:
         return is_type_compatible(state,
-                                  ((const pointer_identity*)type1)->getTarget(), 0,
-                                  ((const pointer_identity*)type2)->getTarget(), 0,
+                                  ((const pointer_identity_base*)type1)->getTarget(), 0,
+                                  ((const pointer_identity_base*)type2)->getTarget(), 0,
                                   exact_equal);
         break;
 
@@ -304,8 +304,8 @@ bool LuaWrapper::is_type_compatible(lua_State *state, const type_identity *type1
 
     case IDTYPE_STL_PTR_VECTOR:
     {
-        auto b1 = (const df::stl_ptr_vector_identity*)type1;
-        auto b2 = (const df::stl_ptr_vector_identity*)type2;
+        auto b1 = (const df::ptr_container_identity*)type1;
+        auto b2 = (const df::ptr_container_identity*)type2;
         const type_identity *item1 = b1->getItemType(), *item2 = b2->getItemType();
 
         fetch_container_details(state, meta1, &item1, NULL);

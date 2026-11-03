@@ -61,12 +61,18 @@ Template for new versions:
 - `autofarm`: thresholds can now be assigned to specific growth products of a plant (e.g. ``BUSH_QUARRY:LEAVES``), so crops that are grown for their growth items can be farmed to a target amount of that product
 
 ## Fixes
-- `autofarm`: farms that span multiple biomes are now handled correctly: crops that can grow in any of the farm's biomes can be assigned to the farm, instead of only using the biome of the farm's center tile
-- `labormanager`: the modern engine's labor-mismatch probe no longer enables unmanaged labors on idle units or specialists, and no longer re-probes postings that can never be claimed (#6028)
-- ``RemoteFortressReader``: ensured creature and caste names and caste descriptions in ``GetCreatureRaws``/``GetPartialCreatureRaws`` are transmitted in UTF-8 instead of CP437
+- ``Units::teleport`` don't teleport units (except ghosts) into walls or impassable parts of buildings; don't teleport into or out of hidden tiles.
+- ``Units::teleport`` teleport babies along with their mothers, teleport merchant wagon-riders with their wagons. don't break links between wagons & their riders.
+- ``Units::teleport`` when using teleport to separate a rider/carried unit from its mount/carrying unit, clean up the links between the two.
+- ``Units::teleport`` when using teleport to separate a dragged unit from a dragger unit, clean up the links between the two.
 
 ## Misc Improvements
+- `autofarm`: farms that span multiple biomes are now handled correctly: crops that can grow in any of the farm's biomes can be assigned to the farm, instead of only using the biome of the farm's center tile
 - ``eventful``: ``onJobCompleted`` now fires for jobs that are deleted the same tick they complete (e.g. ``HarvestPlants``), detected via the worker's Job unit action timer
+- `labormanager`: the modern engine's labor-mismatch probe no longer enables unmanaged labors on idle units or specialists, and no longer re-probes postings that can never be claimed (#6028)
+- ``RemoteFortressReader``: ensured creature and caste names and caste descriptions in ``GetCreatureRaws``/``GetPartialCreatureRaws`` are transmitted in UTF-8 instead of CP437
+- ``Units::teleport`` can now remove units from cages & chains, and will cancel any associated uncage/unchain jobs.
+- ``Units::teleport`` when teleporting a merchant dragging a pack animal, also teleport the animal.
 
 ## Documentation
 

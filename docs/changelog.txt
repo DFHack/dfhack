@@ -37,7 +37,6 @@ Template for new versions:
 ## Misc Improvements
 
 ## Documentation
-- ``export-world-map``: added more format conversion examples.
 
 ## API
 
@@ -58,18 +57,24 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+- `autofarm`: farm plots can now be individually excluded from autofarm management via new controls on the farm plot information sheet, which also warn when a farm's crops are being managed by autofarm
+- `autofarm`: thresholds can now be assigned to specific growth products of a plant (e.g. ``BUSH_QUARRY:LEAVES``), so crops that are grown for their growth items can be farmed to a target amount of that product
 
 ## Fixes
 - Core: Windows console editing will no longer move the cursor to the next line or scroll the screen when the length of the text being edited exceeds the screen width.
+- `autofarm`: farms that span multiple biomes are now handled correctly: crops that can grow in any of the farm's biomes can be assigned to the farm, instead of only using the biome of the farm's center tile
+- `labormanager`: the modern engine's labor-mismatch probe no longer enables unmanaged labors on idle units or specialists, and no longer re-probes postings that can never be claimed (#6028)
+- ``RemoteFortressReader``: ensured creature and caste names and caste descriptions in ``GetCreatureRaws``/``GetPartialCreatureRaws`` are transmitted in UTF-8 instead of CP437
 
 ## Misc Improvements
+- ``eventful``: ``onJobCompleted`` now fires for jobs that are deleted the same tick they complete (e.g. ``HarvestPlants``), detected via the worker's Job unit action timer
 
 ## Documentation
-- ``export-world-map``: added more format conversion examples.
 
 ## API
 
 ## Lua
+- ``dfhack.timeout_until``: new function to schedule a callback to run on a specified in-game tick
 
 ## Removed
 
@@ -93,6 +98,7 @@ Template for new versions:
 
 ## Documentation
 - ``dfhack.world.isAdventureMode``: doesn't include adventurer arena, advise checking gamemode
+- ``export-world-map``: added more format conversion examples.
 
 ## API
 

@@ -60,6 +60,7 @@ Template for new versions:
 ## New Features
 
 ## Fixes
+- Core: Windows console editing will no longer move the cursor to the next line or scroll the screen when the length of the text being edited exceeds the screen width.
 
 ## Misc Improvements
 

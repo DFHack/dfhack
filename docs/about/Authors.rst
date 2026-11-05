@@ -88,6 +88,7 @@ Harlan Playford         playfordh
 Hayati Ayguen           hayguen
 Herwig Hochleitner      bendlas
 Hevlikn                 Hevlikn
+Huitzilopochtli-98      Huitzilopochtli-98
 Ian S                   kremlin-
 IndigoFenix
 Jacek Konieczny         Jajcus

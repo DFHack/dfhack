@@ -186,10 +186,16 @@ no renderer hook can be in flight when that cleanup returns. ``status().stopped`
 becomes true only after the core has destroyed the cleanup callback as well.
 There is no Windows module pin and no platform-specific include in the backend.
 
+Even ``stop()`` on a never-prepared service queues cleanup. The idle unload
+check therefore verifies that there is no queued task or cleanup handle and
+closes admission under the same mutex as Lua calls before granting unload.
+The native title-screen regression stops an unprepared service, attempts unload,
+waits for cleanup if needed, drains later frames with the DLL unloaded, and reloads.
+
 An ordinary console ``unload worldmap-zoom-render`` owns no core lock and can
 wait for this fence. The wait is bounded: if SDL is not progressing, unload is
 refused while the module stays loaded. Retrying after a frame is safe.
-An unload attempted from Lua/simulation while still prepared is refused rather
+An unload attempted from Lua/simulation while render cleanup is pending is refused rather
 than waiting with the core lock held. A Lua owner can stop asynchronously::
 
     local function unload_when_stopped()

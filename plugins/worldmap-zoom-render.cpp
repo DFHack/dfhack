@@ -117,7 +117,7 @@ static std::recursive_mutex jobs_mutex;
 static std::vector<std::shared_ptr<RenderThreadTask>> render_jobs;
 static std::shared_ptr<RenderThreadTask> cleanup_job;
 static std::atomic_bool closing{false};
-static bool stopped_inline = false; // only used during render-thread process shutdown
+static bool stopped_without_task = false; // guarded by jobs_mutex: idle or inline shutdown
 
 static void remove_hooks();
 static int lua_prepare(lua_State *L);
@@ -829,6 +829,8 @@ static int lua_prepare(lua_State *L) {
 // the next simulation acknowledgement. status().stopped is the completion fence.
 static void request_stop() {
     std::lock_guard lock(jobs_mutex);
+    if (stopped_without_task)
+        return;
     const bool retry_failed_cleanup = !cleanup_job || (cleanup_job->finished() && !cleanup_job->succeeded());
     if (closing.exchange(true) && !retry_failed_cleanup)
         return;
@@ -849,7 +851,7 @@ static void request_stop() {
 
 static bool stopped() {
     std::lock_guard lock(jobs_mutex);
-    return stopped_inline || (cleanup_job && cleanup_job->finished() && cleanup_job->succeeded());
+    return stopped_without_task || (cleanup_job && cleanup_job->finished() && cleanup_job->succeeded());
 }
 
 static int lua_stop(lua_State *L) {
@@ -896,13 +898,22 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
             cleanup_job->cancel();
         remove_hooks();
         build_verified = false;
-        stopped_inline = true;
+        stopped_without_task = true;
         return CR_OK;
     }
-    if (stopped())
-        return CR_OK;
-    if (!build_verified && !prepare_pending)
-        return CR_OK; // never prepared: no callbacks, event watch, or hooks
+    {
+        std::lock_guard lock(jobs_mutex);
+        if (stopped())
+            return CR_OK;
+        // "Never prepared" is not sufficient: stop() can itself own a queued
+        // cleanup callback. Serialize this check with every Lua entry point,
+        // then close admission before allowing an idle module to unload.
+        if (!build_verified && !prepare_pending && render_jobs.empty() && !cleanup_job) {
+            closing = true;
+            stopped_without_task = true;
+            return CR_OK;
+        }
+    }
     if (core.isSuspended()) {
         out.printerr("Cannot wait for renderer cleanup while holding the core lock. "
                      "Call stop(), wait for status().stopped on later frames, then unload; "
@@ -910,10 +921,15 @@ DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_chan
         return CR_FAILURE;
     }
     request_stop();
+    std::shared_ptr<RenderThreadTask> cleanup;
+    {
+        std::lock_guard lock(jobs_mutex);
+        cleanup = cleanup_job;
+    }
     // The console path owns no core lock. A bounded wait avoids hanging unload
     // if the game has stopped servicing SDL. A timeout REFUSES unload while
     // keeping the module and cleanup task alive; it never unloads pending code.
-    if (!cleanup_job->waitFor(std::chrono::milliseconds(2000)) || !stopped()) {
+    if (!cleanup || !cleanup->waitFor(std::chrono::milliseconds(2000)) || !stopped()) {
         out.printerr(
             "Renderer cleanup is not complete; unload refused. Retry after the next rendered frame.\n");
         return CR_FAILURE;

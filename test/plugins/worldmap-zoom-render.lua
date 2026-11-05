@@ -53,3 +53,29 @@ function test.external_client_aliases()
     expect.eq(renderer.snapshotUi, renderer.snapshot_ui)
     expect.eq(renderer.uiHit, renderer.ui_hit)
 end
+
+function test.stop_without_prepare_requires_cleanup_before_unload()
+    -- Loading a plugin is not the only way it can own a queued callback:
+    -- stop() itself queues cleanup, even when no renderer hooks were prepared.
+    local name = 'worldmap-zoom-render'
+    local _, result = dfhack.run_command_silent('unload', name)
+    expect.eq(0, result)
+    _, result = dfhack.run_command_silent('load', name)
+    expect.eq(0, result)
+    renderer.stop()
+    _, result = dfhack.run_command_silent('unload', name)
+    if result ~= 0 then
+        -- A suspended test cannot wait synchronously for the render thread.
+        delay_until(function() return renderer.status().stopped end, 120)
+        expect.true_(renderer.status().stopped)
+        _, result = dfhack.run_command_silent('unload', name)
+    end
+    expect.eq(0, result)
+    expect.error_match('has been unloaded', function() renderer.status() end)
+    -- Allow core to drain queue wrappers after the DLL is gone. They must not
+    -- retain the unprepared stop callback or its plugin-owned function manager.
+    delay(2)
+    _, result = dfhack.run_command_silent('load', name)
+    expect.eq(0, result)
+    expect.false_(renderer.status().ready)
+end

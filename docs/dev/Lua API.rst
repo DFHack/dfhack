@@ -1808,6 +1808,11 @@ Units module
   Moves the specified unit and any riders to the target coordinates, setting
   tile occupancy flags appropriately. Returns true if successful.
 
+  This function correctly removes units from cages and chains, and correctly
+  removes the links between one unit dragging another unit. As a special
+  case, teleporting a merchant that is dragging a pack animal will also
+  teleport the pack animal.
+
 * ``dfhack.units.getGeneralRef(unit, type)``
 
   Searches for a ``general_ref`` with the given type.

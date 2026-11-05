@@ -27,10 +27,12 @@ distribution.
 #include "Internal.h"
 #include "MemAccess.h"
 #include "MiscUtils.h"
+#include "TileTypes.h"
 #include "Types.h"
 #include "VersionInfo.h"
 
 #include "modules/Items.h"
+#include "modules/Job.h"
 #include "modules/Maps.h"
 #include "modules/Materials.h"
 #include "modules/Translation.h"
@@ -38,6 +40,9 @@ distribution.
 #include "modules/World.h"
 
 #include "df/activity_entry.h"
+#include "df/building_cagest.h"
+#include "df/building_chainst.h"
+#include "df/buildingitemst.h"
 #include "df/burrow.h"
 #include "df/caste_raw.h"
 #include "df/creature_interaction_effect_display_namest.h"
@@ -785,14 +790,38 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     if (!old_occ || !new_occ)
         return false;
 
+    if (!unit->flags3.bits.ghostly) {
+        auto new_tt = Maps::getTileType(target_pos);
+        if (tileShapeBasic(tileShape(*new_tt)) == df::tiletype_shape_basic::Wall)
+            return false;
+
+        using namespace df::enums::tile_building_occ;
+        if (auto b = new_occ->bits.building;
+            b == Obstacle || b == Well || b == Impassable || b == Dynamic)
+        return false;
+    }
+
+    // these won't return nullptr because we already got occupancies from these coords.
+    if (Maps::getTileDesignation(src_pos)->bits.hidden)
+        return false;
+    if (Maps::getTileDesignation(target_pos)->bits.hidden)
+        return false;
+
+    auto is_wagon = [](df::unit *unit) {
+        if (!unit)
+            return false;
+        auto craw = df::creature_raw::find(unit->race);
+        return craw && craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON);
+    };
+
     // EQUIPMENT units (e.g. wagons) occupy a 3x3 footprint centered on their
     // position; all other units occupy just their position tile
-    auto unit_extent = [](df::unit *u) {
-        if (auto craw = df::creature_raw::find(u->race); craw &&
-            craw->flags.is_set(df::creature_raw_flags::EQUIPMENT_WAGON))
+    auto unit_extent = [&](df::unit *unit) {
+        if (is_wagon(unit))
             return 1;
         return 0;
     };
+
     const int extent = unit_extent(unit);
 
     auto for_each_occupied_tile = [&](df::coord center, auto &&fn) {
@@ -844,7 +873,8 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     }
 
     // If there's already somebody standing at the destination, then force the unit to lay down
-    if (new_occ->bits.unit)
+    // (except riders never lay down)
+    if (new_occ->bits.unit && !unit->flags1.bits.rider)
         unit->flags1.bits.on_ground = true;
 
     // Set appropriate occupancy flags at new tile
@@ -859,11 +889,96 @@ bool Units::teleport(df::unit *unit, df::coord target_pos)
     unit->pos = target_pos;
     unit->idle_area = target_pos;
 
-    // Move unit's riders (including babies) to destination
-    if (unit->flags1.bits.ridden)
+    // Move unit's riders (including babies and wounded) to destination
+    if (unit->flags1.bits.ridden || unit->flags4.bits.carrying_somebody) {
         for (auto rider : world->units.other[units_other_id::ANY_RIDER])
             if (rider->relationship_ids[unit_relationship_type::RiderMount] == unit->id)
-                rider->pos = unit->pos;
+                // Wagon riders need special handling -- they are not at the center of the wagon,
+                // and the draft animal riders are not even in the extent of the wagon.
+                // Unified this case with the normal case by maintaining the rider's delta-pos from
+                // the mount, and recursively teleporting instead of just setting the rider's pos.
+                Units::teleport(rider, (rider->pos - src_pos) + unit->pos);
+    }
+
+    // if the unit itself was a rider and it is not on the same tile as its mount, break that link.
+    // (except do nothing to wagon-riders).
+    if (unit->flags1.bits.rider) {
+        auto mount = df::unit::find(unit->relationship_ids[unit_relationship_type::RiderMount]);
+        if (mount && unit->pos != mount->pos && !is_wagon(mount)) {
+            unit->flags1.bits.rider = false;
+            unit->relationship_ids[unit_relationship_type::RiderMount] = -1;
+            // units.other.* are not sorted; do not use erase_from_vector().
+            std::erase(world->units.other[units_other_id::ANY_RIDER], unit);
+            mount->flags1.bits.ridden = false;
+            mount->flags4.bits.carrying_somebody = false;
+            // rebuild the ridden flags; mothers can carry more than one baby.
+            for (auto rider : world->units.other[units_other_id::ANY_RIDER]) {
+                if (rider->relationship_ids[unit_relationship_type::RiderMount] == mount->id) {
+                    if (rider->profession == df::profession::BABY || (mount->job.current_job
+                            && mount->job.current_job->job_type == job_type::RecoverWounded))
+                        mount->flags4.bits.carrying_somebody = true;
+                    else
+                        mount->flags1.bits.ridden = true;
+                }
+            }
+        }
+    }
+
+    auto delete_cagee_jobs = [](df::unit* unit, df::building* bld) {
+        std::vector<df::job* > jobs_to_delete;
+        for (auto job: bld->jobs)
+            if (findUnitRef(job->general_refs, df::general_ref_type::UNIT_CAGEE) == unit)
+                jobs_to_delete.push_back(job);
+        for (auto job: jobs_to_delete)
+            Job::removeJob(job);
+    };
+
+    if (auto cage = getContainer(unit)) {
+        auto bld = strict_virtual_cast<df::building_cagest>(Items::getHolderBuilding(cage));
+        if (bld && bld->contained_items.size() > 0 && bld->contained_items[0]->item == cage) {
+            delete_cagee_jobs(unit, bld);
+            std::erase(bld->assigned_units, unit->id);
+            bld->cage_flags.bits.check_occupants = true;
+        }
+        removeRef(cage->general_refs, df::general_ref_type::CONTAINS_UNIT, unit->id);
+        removeRef(unit->general_refs, df::general_ref_type::CONTAINED_IN_ITEM, cage->id);
+        unit->flags1.bits.caged = false;
+    }
+
+    if (auto bld = strict_virtual_cast<df::building_chainst>
+        (findBuildingRef(unit->general_refs, df::general_ref_type::BUILDING_CHAIN)))
+    {
+        delete_cagee_jobs(unit, bld);
+        if (bld->chained == unit)
+            bld->chained = nullptr;
+        if (bld->assigned == unit)
+            bld->assigned = nullptr;
+        removeRef(unit->general_refs, df::general_ref_type::BUILDING_CHAIN, bld->id);
+        unit->flags1.bits.chained = false;
+    }
+
+    auto break_dragging_links = [&target_pos](df::unit* dragger, df::unit* draggee) {
+        if (!dragger || !draggee)
+            return;
+        if (dragger->flags1.bits.merchant && draggee->flags1.bits.merchant) {
+            // this cannot infinite-recurse because at least one of the units is already at target_pos.
+            if (dragger->pos != target_pos)
+                Units::teleport(dragger, target_pos);
+            if (draggee->pos != target_pos)
+                Units::teleport(draggee, target_pos);
+            return;
+        }
+        if ((isCitizen(dragger, false) || isResident(dragger, false)) && dragger->job.current_job != NULL)
+            Job::removeJob(dragger->job.current_job);
+        dragger->relationship_ids[unit_relationship_type::Draggee] = -1;
+        draggee->relationship_ids[unit_relationship_type::Dragger] = -1;
+    };
+
+    if (auto draggee = df::unit::find(unit->relationship_ids[unit_relationship_type::Draggee]))
+        break_dragging_links(unit, draggee);
+    if (auto dragger = df::unit::find(unit->relationship_ids[unit_relationship_type::Dragger]))
+        break_dragging_links(dragger, unit);
+
     return true;
 }
 

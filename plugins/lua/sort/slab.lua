@@ -68,6 +68,7 @@ function SlabOverlay:onInput(keys)
 end
 
 function SlabOverlay:get_key()
+    -- DF-MITIGATION: building.category not reset when no units memorializable
     -- DF fails to set building.category back to NONE if there are no units that
     -- can be memorialized, so we have to manually check for a populated button vector
     if #building.button > 0 and

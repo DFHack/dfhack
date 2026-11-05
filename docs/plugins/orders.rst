@@ -72,6 +72,16 @@ useful for when the conditions were true when the order started, but they have
 become false and now you're just getting repeated cancellation spam as the
 order cannot be fulfilled.
 
+orders.position
+~~~~~~~~~~~~~~~
+
+Displays one-based positions beside fort-wide work orders. Use the positions
+toggle to show or hide the position fields. Click a position, enter a one-based
+destination, and press Enter to move the order.
+Modified shortcuts cancel the edit and pass through to DFHack or Dwarf
+Fortress. The inline operation is silent when successful and shows invalid
+input in an error dialog.
+
 orders.skillrestrictions and orders.laborrestrictions
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

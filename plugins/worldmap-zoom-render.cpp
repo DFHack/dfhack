@@ -26,6 +26,7 @@ Adapted for the DFHack build from World Map Zoom 1.0.0.
 #define NO_DFHACK_VERSION_MACROS
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <cmath>
@@ -38,7 +39,10 @@ Adapted for the DFHack build from World Map Zoom 1.0.0.
 #include <vector>
 
 #include <SDL.h>
+#include <lauxlib.h>
+#include <lua.h>
 
+#include "Core.h"
 #include "DFHackVersion.h"
 #include "PluginManager.h"
 #include "VTableInterpose.h"
@@ -52,66 +56,32 @@ Adapted for the DFHack build from World Map Zoom 1.0.0.
 #include "df/viewscreen_choose_start_sitest.h"
 #include "df/viewscreen_worldst.h"
 
-#include "lauxlib.h"
-#include "lua.h"
-
-#define WIN32_LEAN_AND_MEAN
-#ifndef NOMINMAX
-#define NOMINMAX
-#endif
-#include <windows.h>
+#include "worldmap-zoom-canvas.h"
+#include "worldmap-zoom-sdl.h"
 
 using namespace DFHack;
 DFHACK_PLUGIN("worldmap-zoom-render");
 REQUIRE_GLOBAL(enabler);
 REQUIRE_GLOBAL(gps);
 
-// Resolve SDL functions from DFHack's SDL handle; no separate SDL runtime.
-struct SdlApi {
-    void (*get_scale)(SDL_Renderer *, float *, float *) = nullptr;
-    int (*set_scale)(SDL_Renderer *, float, float) = nullptr;
-    void (*get_viewport)(SDL_Renderer *, SDL_Rect *) = nullptr;
-    int (*set_viewport)(SDL_Renderer *, const SDL_Rect *) = nullptr;
-    void (*get_clip)(SDL_Renderer *, SDL_Rect *) = nullptr;
-    int (*set_clip)(SDL_Renderer *, const SDL_Rect *) = nullptr;
-    int (*clip_enabled)(SDL_Renderer *) = nullptr;
-    int (*read_pixels)(SDL_Renderer *, const SDL_Rect *, unsigned, void *, int) = nullptr;
-    int (*output_size)(SDL_Renderer *, int *, int *) = nullptr;
-    void (*window_size)(SDL_Window *, int, int) = nullptr;
-    int (*fullscreen)(SDL_Window *, unsigned) = nullptr;
-    int (*display_index)(SDL_Window *) = nullptr;
-    int (*desktop_mode)(int, SDL_DisplayMode *) = nullptr;
-    unsigned (*window_id)(SDL_Window *) = nullptr;
-    SDL_Window *(*keyboard_focus)() = nullptr;
-    void (*add_event_watch)(int (*)(void *, SDL_Event *), void *) = nullptr;
-    void (*del_event_watch)(int (*)(void *, SDL_Event *), void *) = nullptr;
-    int (*renderer_info)(SDL_Renderer *, SDL_RendererInfo *) = nullptr;
-    void *(*get_target)(SDL_Renderer *) = nullptr;
-    int (*set_target)(SDL_Renderer *, void *) = nullptr;
-    void *(*create_texture)(SDL_Renderer *, unsigned, int, int, int) = nullptr;
-    void (*destroy_texture)(void *) = nullptr;
-    int (*texture_blend)(void *, int) = nullptr;
-    int (*texture_scale)(void *, int) = nullptr;
-    int (*get_color)(SDL_Renderer *, unsigned char *, unsigned char *, unsigned char *,
-                     unsigned char *) = nullptr;
-    int (*set_color)(SDL_Renderer *, unsigned char, unsigned char, unsigned char, unsigned char) = nullptr;
-    int (*clear)(SDL_Renderer *) = nullptr;
-    int (*fill)(SDL_Renderer *, const SDL_Rect *) = nullptr;
-    int (*copy)(SDL_Renderer *, void *, const SDL_Rect *, const SDL_Rect *) = nullptr;
-} sdl;
-
+static WorldMapSdl sdl;
 struct Camera {
     bool enabled = false;
     int context = 0;
     double zoom = 1, x = 0, y = 0;
+    const void *port = nullptr;
+    const void *screen = nullptr;
+    uint64_t generation = 0;
 };
 static std::mutex state_mutex;
 static Camera camera;
+// Lua and rendering exchange snapshots/diagnostics here. Profiling vectors are
+// bounded and mutex-protected; frame_start/frame_started are render-thread-only.
 static std::string capture_path, last_capture, last_error, capture_error;
 static std::atomic_bool hooks_ready{false};
 static std::atomic_bool build_verified{false}, prepare_pending{false};
 static std::atomic_uint64_t full_calls{0}, tile_calls{0}, transformed_calls{0};
-static std::atomic_uint32_t render_thread{0};
+static std::atomic_ulong render_thread{0};
 static std::atomic_uint64_t restore_checks{0}, restore_errors{0};
 static std::atomic_bool profiling{false};
 static std::vector<double> profile_us;
@@ -125,6 +95,8 @@ static void start_frame() {
     }
 }
 static std::vector<unsigned char> native_ui;
+// UI occupancy is captured/read only by the simulation-side Lua client. It is
+// separate from the SDL canvas, whose map pixels must not count as controls.
 static int ui_cols = 0, ui_rows = 0;
 static std::atomic_int desktop_width{0}, desktop_height{0}, output_width{0}, output_height{0};
 static std::atomic_bool window_focused{false};
@@ -136,26 +108,117 @@ static std::atomic_uint64_t camera_generation{0}, target_generation{0}, canvas_c
     canvas_composites{0};
 static std::atomic_uint64_t composited_generation{0}, presented_generation{0};
 static thread_local int transform_depth = 0;
+static worldmap_zoom::MapCanvas<WorldMapSdl> map_canvas(sdl);
+static df::renderer_2d_base *batch_renderer = nullptr;
+static df::graphic_map_portst *batch_port = nullptr;
+// Admission closes before unload cancels queued work. The core task handle
+// acknowledges destruction of plugin callbacks, not merely their last write.
+static std::recursive_mutex jobs_mutex;
+static std::vector<std::shared_ptr<RenderThreadTask>> render_jobs;
+static std::shared_ptr<RenderThreadTask> cleanup_job;
+static std::atomic_bool closing{false};
+static bool stopped_inline = false; // only used during render-thread process shutdown
+
 static void remove_hooks();
 static int lua_prepare(lua_State *L);
+static int lua_stop(lua_State *L);
+static bool stopped();
 
-static bool pin_module() {
-    // DFHack's render callback queue may outlive a logical plugin unload. Pin
-    // code until process exit, while detaching hooks and releasing all activity.
-    // This also closes the fetched-vtable-call/unload race on the graphics thread.
-    static HMODULE pinned = nullptr;
-    if (!pinned && !GetModuleHandleExW(GET_MODULE_HANDLE_EX_FLAG_FROM_ADDRESS | GET_MODULE_HANDLE_EX_FLAG_PIN,
-                                       reinterpret_cast<LPCWSTR>(&pin_module), &pinned))
+static std::shared_ptr<RenderThreadTask> queue_job(std::function<void()> callback) {
+    std::lock_guard lock(jobs_mutex);
+    if (closing)
+        return {};
+    std::erase_if(render_jobs, [](const auto &job) { return job->finished(); });
+    // Allocate tracking space before making a callback reachable from core.
+    // A failed vector allocation must not leave untracked plugin code queued.
+    render_jobs.reserve(render_jobs.size() + 1);
+    auto job = queueOnRenderThread(std::move(callback));
+    render_jobs.push_back(job);
+    return job;
+}
+
+static Camera camera_snapshot() {
+    std::lock_guard lock(state_mutex);
+    return camera;
+}
+
+// This is the only canvas-to-Lua publication path. All canvas fields are owned
+// by the render thread; Lua reads the copied counters and error under the mutex.
+static void publish_canvas_status() {
+    const auto &stats = map_canvas.stats();
+    canvas_creations = stats.creations;
+    canvas_composites = stats.composites;
+    composited_generation = stats.composited_generation;
+    restore_checks = stats.restore_checks;
+    restore_errors = stats.restore_errors;
+    if (!map_canvas.error().empty()) {
+        std::lock_guard lock(state_mutex);
+        camera.enabled = false;
+        last_error = map_canvas.error();
+    }
+}
+
+static void finish_canvas(bool composite = true) {
+    if (!map_canvas.active())
+        return;
+    const auto live = camera_snapshot();
+    const bool current_view = live.enabled && live.generation == map_canvas.generation() && !closing;
+    map_canvas.finish(composite && current_view, [] {
+        // Native rendering re-enters our vmethods. The depth guard routes
+        // nested calls directly to DF while this target pass remains active.
+        ++transform_depth;
+        batch_renderer->update_full_map_port(batch_port);
+        --transform_depth;
+    });
+    publish_canvas_status();
+}
+
+static void release_canvas(df::renderer_2d_base *renderer) {
+    auto native = renderer ? reinterpret_cast<SDL_Renderer *>(renderer->sdl_renderer) : nullptr;
+    auto window = renderer ? sdl.window_id(reinterpret_cast<SDL_Window *>(renderer->window)) : 0;
+    map_canvas.release(native, window);
+    batch_renderer = nullptr;
+    batch_port = nullptr;
+    publish_canvas_status();
+}
+
+static bool begin_canvas(df::renderer_2d_base *renderer, df::graphic_map_portst *port, const Camera &c,
+                         bool full_draw) {
+    // Only display-side map-port/renderer fields are read here. Screen mode and
+    // active map identity were already checked and published on the sim side.
+    constexpr int cell = worldmap_zoom::map_cell_pixels;
+    const SDL_Rect rect{renderer->origin_x + port->top_left_corner_x,
+                        renderer->origin_y + port->top_left_corner_y, port->dim_x * cell, port->dim_y * cell};
+    const worldmap_zoom::CanvasView view{c.zoom, c.x, c.y, c.generation};
+    const bool begun = map_canvas.begin(reinterpret_cast<SDL_Renderer *>(renderer->sdl_renderer),
+                                        sdl.window_id(reinterpret_cast<SDL_Window *>(renderer->window)), rect,
+                                        view, target_generation.load(), full_draw);
+    if (begun) {
+        batch_renderer = renderer;
+        batch_port = port;
+    }
+    publish_canvas_status();
+    return begun;
+}
+
+static bool canvas_camera(df::graphic_map_portst *port, Camera &c) {
+    constexpr int max_cells = worldmap_zoom::max_canvas_pixels / worldmap_zoom::map_cell_pixels;
+    if (transform_depth || !hooks_ready || closing || !port || !port->flag.bits.active || port->dim_x < 1 ||
+        port->dim_y < 1 || port->dim_x > max_cells || port->dim_y > max_cells)
         return false;
-    return true;
+    c = camera_snapshot();
+    return c.enabled && c.zoom > 1 && c.port == port;
 }
 
 static bool bind_sdl() {
     auto h = DFSDL::obtain_library_handle();
+    if (!h)
+        return false;
 #define BIND(member, name)                                                                                   \
     sdl.member = reinterpret_cast<decltype(sdl.member)>(LookupPlugin(h, name));                              \
     if (!sdl.member)                                                                                         \
     return false
+    BIND(thread_id, "SDL_ThreadID");
     BIND(get_scale, "SDL_RenderGetScale");
     BIND(set_scale, "SDL_RenderSetScale");
     BIND(get_viewport, "SDL_RenderGetViewport");
@@ -192,18 +255,19 @@ static bool bind_sdl() {
 static int watch_focus(void *, SDL_Event *event) {
     // SDL_WINDOWEVENT / SDL_WINDOWEVENT_FOCUS_LOST. An epoch also catches
     // loss followed by regain between two Lua updates. No mapped DF access.
-    if (event && event->window.type == 0x200 && event->window.windowID == watched_window.load()) {
-        if (event->window.event == 13) {
+    if (event && event->type == SDL_WINDOWEVENT && event->window.windowID == watched_window.load()) {
+        if (event->window.event == SDL_WINDOWEVENT_FOCUS_LOST) {
             window_focused = false;
             ++focus_epoch;
-        } else if (event->window.event == 12)
+        } else if (event->window.event == SDL_WINDOWEVENT_FOCUS_GAINED)
             window_focused = true;
     }
-    if (event && (event->window.type == 0x2000 || event->window.type == 0x2001))
+    if (event && (event->type == SDL_RENDER_TARGETS_RESET || event->type == SDL_RENDER_DEVICE_RESET))
         ++target_generation;
     return 1;
 }
 
+// Simulation/core-lock context only. Renderer hooks must use the published camera.
 static int current_context() {
     auto screen = Gui::getDFViewscreen(true);
     if (auto s = virtual_cast<df::viewscreen_choose_start_sitest>(screen))
@@ -213,9 +277,9 @@ static int current_context() {
     return 0;
 }
 
-#include "worldmap-zoom-canvas.h"
-
 static void capture(df::renderer_2d_base *r) {
+    // A diagnostic capture reads the composed backbuffer just before present.
+    // File I/O is opt-in; ordinary rendering never writes screenshots.
     std::string path;
     {
         std::lock_guard lock(state_mutex);
@@ -231,7 +295,7 @@ static void capture(df::renderer_2d_base *r) {
         error = "Invalid capture dimensions";
     else {
         std::vector<unsigned char> pixels(static_cast<size_t>(w) * h * 4);
-        if (sdl.read_pixels(sr, nullptr, 0x16762004, pixels.data(), w * 4) != 0)
+        if (sdl.read_pixels(sr, nullptr, SDL_PIXELFORMAT_ABGR8888, pixels.data(), w * 4) != 0)
             error = "SDL_RenderReadPixels failed";
         else
             try {
@@ -256,22 +320,22 @@ struct map_hook : df::renderer_2d_base {
     using interpose_base = df::renderer_2d_base;
     DEFINE_VMETHOD_INTERPOSE(void, update_full_map_port, (df::graphic_map_portst * port)) {
         start_frame();
-        render_thread = GetCurrentThreadId();
+        render_thread = sdl.thread_id();
         ++full_calls;
         const bool measure = profiling.load();
         const auto start =
             measure ? std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
         Camera c;
-        if (!transform_depth && canvas_camera(this, port, c) && map_canvas.begin(this, port, c, true)) {
+        if (!transform_depth && canvas_camera(port, c) && begin_canvas(this, port, c, true)) {
             ++transform_depth;
             INTERPOSE_NEXT(update_full_map_port)(port);
             --transform_depth;
-            map_canvas.valid = true;
+            map_canvas.markFullDraw();
             ++transformed_calls;
-            map_canvas.finish();
+            finish_canvas();
         } else {
             if (!transform_depth)
-                map_canvas.finish();
+                finish_canvas();
             INTERPOSE_NEXT(update_full_map_port)(port);
         }
         if (measure) {
@@ -287,24 +351,24 @@ struct map_hook : df::renderer_2d_base {
         start_frame();
         ++tile_calls;
         Camera c;
-        if (!transform_depth && canvas_camera(this, port, c) && map_canvas.begin(this, port, c, false)) {
+        if (!transform_depth && canvas_camera(port, c) && begin_canvas(this, port, c, false)) {
             ++transform_depth;
-            map_canvas.clear_tile(x, y);
+            map_canvas.clearTile(x, y);
             INTERPOSE_NEXT(update_map_port_tile)(port, x, y);
-            map_canvas.painted_tile(x, y);
+            map_canvas.paintedTile(x, y);
             --transform_depth;
             ++transformed_calls;
             // Keep consecutive tile updates in one target pass. The next UI
             // draw or present composites it once, below the native interface.
         } else {
             if (!transform_depth)
-                map_canvas.finish();
+                finish_canvas();
             INTERPOSE_NEXT(update_map_port_tile)(port, x, y);
         }
     }
     DEFINE_VMETHOD_INTERPOSE(void, render, ()) {
-        render_thread = GetCurrentThreadId();
-        map_canvas.finish();
+        render_thread = sdl.thread_id();
+        finish_canvas();
         int w = 0, h = 0;
         sdl.output_size(reinterpret_cast<SDL_Renderer *>(sdl_renderer), &w, &h);
         output_width = w;
@@ -324,75 +388,130 @@ struct map_hook : df::renderer_2d_base {
         }
         frame_started = false;
     }
-#define UI_HOOK(method, signature, args)                                                                     \
-    DEFINE_VMETHOD_INTERPOSE(void, method, signature) {                                                      \
-        start_frame();                                                                                       \
-        if (!transform_depth)                                                                                \
-            map_canvas.finish();                                                                             \
-        INTERPOSE_NEXT(method) args;                                                                         \
+    // Any of these native interface/fortress-viewport draws may follow a
+    // batch of world-map tile updates. Composite the map before that UI draw.
+    // The same boundary is skipped during our recursive native map fallback.
+    DEFINE_VMETHOD_INTERPOSE(void, update_all, ()) {
+        start_frame();
+        if (!transform_depth)
+            finish_canvas();
+        INTERPOSE_NEXT(update_all)();
     }
-    UI_HOOK(update_all, (), ())
-    UI_HOOK(update_tile, (int32_t x, int32_t y), (x, y))
-    UI_HOOK(update_anchor_tile, (int32_t x, int32_t y), (x, y))
-    UI_HOOK(update_top_tile, (int32_t x, int32_t y), (x, y))
-    UI_HOOK(update_top_anchor_tile, (int32_t x, int32_t y), (x, y))
-    UI_HOOK(update_viewport_tile, (df::graphic_viewportst * p, int32_t x, int32_t y), (p, x, y))
-    UI_HOOK(update_full_viewport, (df::graphic_viewportst * p), (p))
-#undef UI_HOOK
+    DEFINE_VMETHOD_INTERPOSE(void, update_tile, (int32_t x, int32_t y)) {
+        start_frame();
+        if (!transform_depth)
+            finish_canvas();
+        INTERPOSE_NEXT(update_tile)(x, y);
+    }
+    DEFINE_VMETHOD_INTERPOSE(void, update_anchor_tile, (int32_t x, int32_t y)) {
+        start_frame();
+        if (!transform_depth)
+            finish_canvas();
+        INTERPOSE_NEXT(update_anchor_tile)(x, y);
+    }
+    DEFINE_VMETHOD_INTERPOSE(void, update_top_tile, (int32_t x, int32_t y)) {
+        start_frame();
+        if (!transform_depth)
+            finish_canvas();
+        INTERPOSE_NEXT(update_top_tile)(x, y);
+    }
+    DEFINE_VMETHOD_INTERPOSE(void, update_top_anchor_tile, (int32_t x, int32_t y)) {
+        start_frame();
+        if (!transform_depth)
+            finish_canvas();
+        INTERPOSE_NEXT(update_top_anchor_tile)(x, y);
+    }
+    DEFINE_VMETHOD_INTERPOSE(void, update_viewport_tile,
+                             (df::graphic_viewportst * port, int32_t x, int32_t y)) {
+        start_frame();
+        if (!transform_depth)
+            finish_canvas();
+        INTERPOSE_NEXT(update_viewport_tile)(port, x, y);
+    }
+    DEFINE_VMETHOD_INTERPOSE(void, update_full_viewport, (df::graphic_viewportst * port)) {
+        start_frame();
+        if (!transform_depth)
+            finish_canvas();
+        INTERPOSE_NEXT(update_full_viewport)(port);
+    }
     DEFINE_VMETHOD_INTERPOSE(void, do_blank_screen_fill, ()) {
         start_frame();
-        map_canvas.finish(false);
+        finish_canvas(false);
         INTERPOSE_NEXT(do_blank_screen_fill)();
     }
     DEFINE_VMETHOD_INTERPOSE(void, resize, (int32_t w, int32_t h)) {
-        map_canvas.release(this);
+        release_canvas(this);
         INTERPOSE_NEXT(resize)(w, h);
     }
     DEFINE_VMETHOD_INTERPOSE(void, grid_resize, (int32_t w, int32_t h)) {
-        map_canvas.release(this);
+        release_canvas(this);
         INTERPOSE_NEXT(grid_resize)(w, h);
     }
     DEFINE_VMETHOD_INTERPOSE(void, set_fullscreen, ()) {
-        map_canvas.release(this);
+        release_canvas(this);
         INTERPOSE_NEXT(set_fullscreen)();
     }
     DEFINE_VMETHOD_INTERPOSE(bool, init_video, (int32_t w, int32_t h)) {
-        map_canvas.release(this);
+        release_canvas(this);
         return INTERPOSE_NEXT(init_video)(w, h);
     }
 };
 IMPLEMENT_VMETHOD_INTERPOSE(map_hook, update_full_map_port);
 IMPLEMENT_VMETHOD_INTERPOSE(map_hook, update_map_port_tile);
 IMPLEMENT_VMETHOD_INTERPOSE(map_hook, render);
-#define CANVAS_BOUNDARIES(X)                                                                                 \
-    X(update_all)                                                                                            \
-    X(update_tile)                                                                                           \
-    X(update_anchor_tile)                                                                                    \
-    X(update_top_tile) X(update_top_anchor_tile) X(update_viewport_tile) X(update_full_viewport)             \
-        X(do_blank_screen_fill) X(resize) X(grid_resize) X(set_fullscreen) X(init_video)
-#define DECLARE_BOUNDARY(name) IMPLEMENT_VMETHOD_INTERPOSE(map_hook, name);
-CANVAS_BOUNDARIES(DECLARE_BOUNDARY)
-#undef DECLARE_BOUNDARY
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, update_all);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, update_tile);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, update_anchor_tile);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, update_top_tile);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, update_top_anchor_tile);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, update_viewport_tile);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, update_full_viewport);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, do_blank_screen_fill);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, resize);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, grid_resize);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, set_fullscreen);
+IMPLEMENT_VMETHOD_INTERPOSE(map_hook, init_video);
+
+// One explicit registration list is shared by installation and removal.
+static const std::array<VMethodInterposeLinkBase *, 15> renderer_hooks{
+    &INTERPOSE_HOOK(map_hook, update_full_map_port),
+    &INTERPOSE_HOOK(map_hook, update_map_port_tile),
+    &INTERPOSE_HOOK(map_hook, render),
+    &INTERPOSE_HOOK(map_hook, update_all),
+    &INTERPOSE_HOOK(map_hook, update_tile),
+    &INTERPOSE_HOOK(map_hook, update_anchor_tile),
+    &INTERPOSE_HOOK(map_hook, update_top_tile),
+    &INTERPOSE_HOOK(map_hook, update_top_anchor_tile),
+    &INTERPOSE_HOOK(map_hook, update_viewport_tile),
+    &INTERPOSE_HOOK(map_hook, update_full_viewport),
+    &INTERPOSE_HOOK(map_hook, do_blank_screen_fill),
+    &INTERPOSE_HOOK(map_hook, resize),
+    &INTERPOSE_HOOK(map_hook, grid_resize),
+    &INTERPOSE_HOOK(map_hook, set_fullscreen),
+    &INTERPOSE_HOOK(map_hook, init_video),
+};
 
 static void remove_hooks() {
     if (enabler && enabler->renderer)
-        map_canvas.release(virtual_cast<df::renderer_2d_base>(enabler->renderer));
+        release_canvas(virtual_cast<df::renderer_2d_base>(enabler->renderer));
     if (event_watch_installed) {
+        // SDL2 invokes/removes event watches under the same internal mutex.
+        // We are outside event dispatch, so return from DelEventWatch also
+        // excludes an event-watch invocation on a foreign SDL_PushEvent thread.
         sdl.del_event_watch(watch_focus, nullptr);
         event_watch_installed = false;
     }
     watched_window = 0;
     window_focused = false;
     hooks_ready = false;
-    INTERPOSE_HOOK(map_hook, update_full_map_port).remove();
-    INTERPOSE_HOOK(map_hook, update_map_port_tile).remove();
-    INTERPOSE_HOOK(map_hook, render).remove();
-#define REMOVE_BOUNDARY(name) INTERPOSE_HOOK(map_hook, name).remove();
-    CANVAS_BOUNDARIES(REMOVE_BOUNDARY)
-#undef REMOVE_BOUNDARY
+    for (auto *hook : renderer_hooks)
+        hook->remove();
 }
 
 static int lua_camera(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    if (closing)
+        return luaL_error(L, "Renderer is stopping");
     Camera c;
     c.enabled = lua_toboolean(L, 1) != 0;
     const auto context = luaL_checkinteger(L, 2);
@@ -409,45 +528,53 @@ static int lua_camera(lua_State *L) {
         return luaL_error(L, "Renderer is not ready or the high-level map is no longer open");
     {
         std::lock_guard lock(state_mutex);
+        if (closing)
+            return luaL_error(L, "Renderer is stopping");
+        c.port = c.enabled ? gps->main_map_port : nullptr;
+        c.screen = c.enabled ? Gui::getDFViewscreen(true) : nullptr;
+        c.generation = ++camera_generation;
         camera = c;
     }
-    ++camera_generation;
     if (!c.enabled && build_verified)
-        runOnRenderThread([] { map_canvas.release(virtual_cast<df::renderer_2d_base>(enabler->renderer)); });
+        queue_job([] { release_canvas(virtual_cast<df::renderer_2d_base>(enabler->renderer)); });
     if (build_verified && gps)
         gps->force_full_display_count = 2;
     return 0;
 }
 
 static int zoom_status(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
     lua_newtable(L);
-#define INT_FIELD(name, value)                                                                               \
-    lua_pushinteger(L, static_cast<lua_Integer>(value));                                                     \
-    lua_setfield(L, -2, name)
+    const auto int_field = [L](const char *name, auto value) {
+        lua_pushinteger(L, static_cast<lua_Integer>(value));
+        lua_setfield(L, -2, name);
+    };
     lua_pushboolean(L, hooks_ready);
     lua_setfield(L, -2, "ready");
-    INT_FIELD("full_calls", full_calls.load());
-    INT_FIELD("tile_calls", tile_calls.load());
-    INT_FIELD("transformed_calls", transformed_calls.load());
-    INT_FIELD("render_thread", render_thread.load());
-    INT_FIELD("context", build_verified ? current_context() : 0);
-    INT_FIELD("restore_checks", restore_checks.load());
-    INT_FIELD("restore_errors", restore_errors.load());
-    INT_FIELD("desktop_width", desktop_width.load());
-    INT_FIELD("desktop_height", desktop_height.load());
-    INT_FIELD("output_width", output_width.load());
-    INT_FIELD("output_height", output_height.load());
-    INT_FIELD("focus_epoch", focus_epoch.load());
-    INT_FIELD("canvas_creations", canvas_creations.load());
-    INT_FIELD("canvas_composites", canvas_composites.load());
-    INT_FIELD("camera_generation", camera_generation.load());
-    INT_FIELD("presented_generation", presented_generation.load());
+    lua_pushboolean(L, stopped());
+    lua_setfield(L, -2, "stopped");
+    int_field("full_calls", full_calls.load());
+    int_field("tile_calls", tile_calls.load());
+    int_field("transformed_calls", transformed_calls.load());
+    int_field("render_thread", render_thread.load());
+    int_field("context", build_verified ? current_context() : 0);
+    int_field("restore_checks", restore_checks.load());
+    int_field("restore_errors", restore_errors.load());
+    int_field("desktop_width", desktop_width.load());
+    int_field("desktop_height", desktop_height.load());
+    int_field("output_width", output_width.load());
+    int_field("output_height", output_height.load());
+    int_field("focus_epoch", focus_epoch.load());
+    int_field("canvas_creations", canvas_creations.load());
+    int_field("canvas_composites", canvas_composites.load());
+    int_field("camera_generation", camera_generation.load());
+    int_field("presented_generation", presented_generation.load());
     lua_pushboolean(L, window_focused.load());
     lua_setfield(L, -2, "window_focused");
     {
         std::lock_guard lock(state_mutex);
-        INT_FIELD("profile_samples", profile_us.size());
-        INT_FIELD("frame_profile_samples", frame_profile_us.size());
+        int_field("profile_samples", profile_us.size());
+        int_field("frame_profile_samples", frame_profile_us.size());
         lua_pushstring(L, last_error.c_str());
         lua_setfield(L, -2, "error");
         lua_pushstring(L, renderer_name.c_str());
@@ -461,6 +588,9 @@ static int zoom_status(lua_State *L) {
 }
 
 static int lua_profile(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    if (closing)
+        return luaL_error(L, "Renderer is stopping");
     if (!build_verified || !hooks_ready)
         return luaL_error(L, "Renderer is not ready");
     std::lock_guard lock(state_mutex);
@@ -479,6 +609,9 @@ static int lua_profile(lua_State *L) {
 }
 
 static int lua_frame_profile(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    if (closing)
+        return luaL_error(L, "Renderer is stopping");
     if (!build_verified || !hooks_ready)
         return luaL_error(L, "Renderer is not ready");
     std::lock_guard lock(state_mutex);
@@ -494,6 +627,9 @@ static int lua_frame_profile(lua_State *L) {
 // Called after native parent rendering and BEFORE drawing the Lua controls.
 // UI lives in the text buffers; geographic layers live in main_map_port.
 static int lua_snapshot_ui(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    if (closing)
+        return luaL_error(L, "Renderer is stopping");
     if (!build_verified || !hooks_ready)
         return luaL_error(L, "Renderer is not ready");
     ui_cols = gps->dimx;
@@ -514,6 +650,9 @@ static int lua_snapshot_ui(lua_State *L) {
 }
 
 static int lua_ui_hit(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    if (closing)
+        return luaL_error(L, "Renderer is stopping");
     if (!build_verified || !hooks_ready)
         return luaL_error(L, "Renderer is not ready");
     const int x = static_cast<int>(luaL_checkinteger(L, 1)), y = static_cast<int>(luaL_checkinteger(L, 2));
@@ -530,6 +669,9 @@ static int lua_ui_hit(lua_State *L) {
 }
 
 static int lua_window(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    if (closing)
+        return luaL_error(L, "Renderer is stopping");
     if (!build_verified || !hooks_ready)
         return luaL_error(L, "Renderer is not ready");
     const int w = static_cast<int>(luaL_checkinteger(L, 1)), h = static_cast<int>(luaL_checkinteger(L, 2));
@@ -538,7 +680,7 @@ static int lua_window(lua_State *L) {
         return luaL_error(L, "Use native DF settings for fullscreen tests");
     if (w < 640 || h < 480 || w > 7680 || h > 4320)
         return luaL_error(L, "Invalid test window dimensions");
-    runOnRenderThread([w, h] {
+    queue_job([w, h] {
         auto r = virtual_cast<df::renderer_2d>(enabler->renderer);
         if (!r)
             return;
@@ -548,9 +690,9 @@ static int lua_window(lua_State *L) {
         // RESIZED. Let the native event loop pause simulation and reshape its
         // buffers, exactly as for an ordinary user window resize.
         SDL_Event event{};
-        event.window.type = 0x200;
+        event.window.type = SDL_WINDOWEVENT;
         event.window.windowID = sdl.window_id(window);
-        event.window.event = 5;
+        event.window.event = SDL_WINDOWEVENT_RESIZED;
         event.window.data1 = w;
         event.window.data2 = h;
         DFSDL::DFSDL_PushEvent(&event);
@@ -559,6 +701,9 @@ static int lua_window(lua_State *L) {
 }
 
 static int lua_capture(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    if (closing)
+        return luaL_error(L, "Renderer is stopping");
     if (!build_verified || !hooks_ready)
         return luaL_error(L, "Renderer is not ready");
     std::string path = luaL_checkstring(L, 1);
@@ -571,26 +716,39 @@ static int lua_capture(lua_State *L) {
 }
 
 static int lua_test_focus(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    if (closing)
+        return luaL_error(L, "Renderer is stopping");
     if (!build_verified || !hooks_ready)
         return luaL_error(L, "Renderer is not ready");
     const bool focused = lua_toboolean(L, 1) != 0;
-    runOnRenderThread([focused] {
+    queue_job([focused] {
         SDL_Event event{};
-        event.window.type = 0x200;
+        event.window.type = SDL_WINDOWEVENT;
         event.window.windowID = watched_window.load();
-        event.window.event = focused ? 12 : 13;
+        event.window.event = focused ? SDL_WINDOWEVENT_FOCUS_GAINED : SDL_WINDOWEVENT_FOCUS_LOST;
         DFSDL::DFSDL_PushEvent(&event);
     });
     return 0;
 }
 
-DFhackCExport CommandReg plugin_lua_commands[] = {
-    {"prepare", lua_prepare},      {"setCamera", lua_camera},  {"status", zoom_status},
-    {"capture", lua_capture},      {"profile", lua_profile},   {"snapshotUi", lua_snapshot_ui},
-    {"uiHit", lua_ui_hit},         {"testWindow", lua_window}, {"frameProfile", lua_frame_profile},
-    {"testFocus", lua_test_focus}, {nullptr, nullptr}};
+DFhackCExport CommandReg plugin_lua_commands[] = {{"stop", lua_stop},
+                                                  {"prepare", lua_prepare},
+                                                  {"setCamera", lua_camera},
+                                                  {"status", zoom_status},
+                                                  {"capture", lua_capture},
+                                                  {"profile", lua_profile},
+                                                  {"snapshotUi", lua_snapshot_ui},
+                                                  {"uiHit", lua_ui_hit},
+                                                  {"testWindow", lua_window},
+                                                  {"frameProfile", lua_frame_profile},
+                                                  {"testFocus", lua_test_focus},
+                                                  {nullptr, nullptr}};
 
 static int lua_prepare(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    if (closing)
+        return luaL_error(L, "Renderer is stopping; reload the plugin before preparing again");
     // Validate runtime metadata BEFORE reading mapped renderer fields or
     // installing hooks. Compare with the metadata linked into this build, not a fixed release.
     // Plugin metadata alone only checks the release/ABI.
@@ -605,7 +763,7 @@ static int lua_prepare(lua_State *L) {
             return luaL_error(L, "Unsupported DFHack build/structures");
         lua_pop(L, 2);
     }
-    if (!enabler || !virtual_cast<df::renderer_2d>(enabler->renderer) || !bind_sdl()) {
+    if (!enabler || !virtual_cast<df::renderer_2d>(enabler->renderer)) {
         return luaL_error(L, "Unsupported renderer: requires the tested SDL2 renderer");
     }
     if (hooks_ready && build_verified) {
@@ -616,20 +774,17 @@ static int lua_prepare(lua_State *L) {
         lua_pushboolean(L, false);
         return 1;
     }
-    if (!pin_module()) {
-        prepare_pending = false;
-        return luaL_error(L, "Could not retain the renderer module safely");
-    }
     {
         std::lock_guard lock(state_mutex);
         last_error.clear();
     }
     build_verified = true;
-    runOnRenderThread([] {
+    queue_job([] {
         if (!build_verified) {
             prepare_pending = false;
             return;
         }
+        map_canvas.clearError();
         auto r = virtual_cast<df::renderer_2d>(enabler->renderer);
         if (r) {
             SDL_RendererInfo info{};
@@ -650,12 +805,11 @@ static int lua_prepare(lua_State *L) {
                 desktop_height = mode.h;
             }
         }
-        bool ok = INTERPOSE_HOOK(map_hook, update_full_map_port).apply() &&
-                  INTERPOSE_HOOK(map_hook, update_map_port_tile).apply() &&
-                  INTERPOSE_HOOK(map_hook, render).apply();
-#define APPLY_BOUNDARY(name) ok = INTERPOSE_HOOK(map_hook, name).apply() && ok;
-        CANVAS_BOUNDARIES(APPLY_BOUNDARY)
-#undef APPLY_BOUNDARY
+        bool ok = true;
+        for (auto *hook : renderer_hooks) {
+            if (!hook->apply())
+                ok = false;
+        }
         if (!ok) {
             remove_hooks();
             std::lock_guard lock(state_mutex);
@@ -670,34 +824,109 @@ static int lua_prepare(lua_State *L) {
     return 1;
 }
 
+// Start teardown without waiting. This can be requested from Lua, where
+// blocking the sim/core-lock context would deadlock a render thread waiting for
+// the next simulation acknowledgement. status().stopped is the completion fence.
+static void request_stop() {
+    std::lock_guard lock(jobs_mutex);
+    const bool retry_failed_cleanup = !cleanup_job || (cleanup_job->finished() && !cleanup_job->succeeded());
+    if (closing.exchange(true) && !retry_failed_cleanup)
+        return;
+    for (const auto &job : render_jobs)
+        job->cancel();
+    {
+        std::lock_guard state_lock(state_mutex);
+        camera = {};
+    }
+    cleanup_job = queueOnRenderThread([] {
+        remove_hooks();
+        build_verified = false;
+        prepare_pending = false;
+        if (gps)
+            gps->force_full_display_count = 2;
+    });
+}
+
+static bool stopped() {
+    std::lock_guard lock(jobs_mutex);
+    return stopped_inline || (cleanup_job && cleanup_job->finished() && cleanup_job->succeeded());
+}
+
+static int lua_stop(lua_State *L) {
+    std::lock_guard admission(jobs_mutex);
+    request_stop();
+    lua_pushboolean(L, stopped());
+    return 1;
+}
+
 DFhackCExport command_result plugin_init(color_ostream &, std::vector<PluginCommand> &) {
+    // Function pointers are immutable once hooks can run on the render thread.
+    return bind_sdl() ? CR_OK : CR_FAILURE;
+}
+
+DFhackCExport command_result plugin_onupdate(color_ostream &) {
+    // This callback runs on simulation, where inspecting viewscreens is legal.
+    // Publish only a disable decision; rendering never follows a screen pointer.
+    std::lock_guard lock(state_mutex);
+    if (camera.enabled &&
+        (closing || camera.context != current_context() || camera.port != gps->main_map_port ||
+         camera.screen != Gui::getDFViewscreen(true))) {
+        camera.enabled = false;
+        camera.generation = ++camera_generation;
+    }
     return CR_OK;
 }
 
-DFhackCExport command_result plugin_onstatechange(color_ostream &, state_change_event event) {
+DFhackCExport command_result plugin_onstatechange(color_ostream &out, state_change_event event) {
     if (event == SC_WORLD_UNLOADED || event == SC_MAP_UNLOADED) {
         std::lock_guard lock(state_mutex);
         camera = {};
-        if (build_verified)
-            runOnRenderThread(
-                [] { map_canvas.release(virtual_cast<df::renderer_2d_base>(enabler->renderer)); });
+    }
+    if (event != SC_BEGIN_UNLOAD)
+        return CR_OK;
+    auto &core = Core::getInstance();
+    if (core.isRenderThread()) {
+        // Core::Shutdown runs here after the SDL loop, before DF destroys its
+        // renderer. There can be no renderer hook in flight on this thread.
+        std::lock_guard lock(jobs_mutex);
+        closing = true;
+        for (const auto &job : render_jobs)
+            job->cancel();
+        if (cleanup_job)
+            cleanup_job->cancel();
+        remove_hooks();
+        build_verified = false;
+        stopped_inline = true;
+        return CR_OK;
+    }
+    if (stopped())
+        return CR_OK;
+    if (!build_verified && !prepare_pending)
+        return CR_OK; // never prepared: no callbacks, event watch, or hooks
+    if (core.isSuspended()) {
+        out.printerr("Cannot wait for renderer cleanup while holding the core lock. "
+                     "Call stop(), wait for status().stopped on later frames, then unload; "
+                     "or run unload from the DFHack console.\n");
+        return CR_FAILURE;
+    }
+    request_stop();
+    // The console path owns no core lock. A bounded wait avoids hanging unload
+    // if the game has stopped servicing SDL. A timeout REFUSES unload while
+    // keeping the module and cleanup task alive; it never unloads pending code.
+    if (!cleanup_job->waitFor(std::chrono::milliseconds(2000)) || !stopped()) {
+        out.printerr(
+            "Renderer cleanup is not complete; unload refused. Retry after the next rendered frame.\n");
+        return CR_FAILURE;
     }
     return CR_OK;
 }
 
 DFhackCExport command_result plugin_shutdown(color_ostream &) {
-    {
-        std::lock_guard lock(state_mutex);
-        camera = {};
-    }
+    // SC_BEGIN_UNLOAD established that every callback/capture and renderer
+    // entry point is gone. No plugin lambda is queued after this return.
     profiling = false;
     native_ui.clear();
-    ui_cols = ui_rows = 0;
-    if (build_verified.exchange(false))
-        runOnRenderThread([] {
-            remove_hooks();
-            if (gps)
-                gps->force_full_display_count = 2;
-        });
+    render_jobs.clear();
+    cleanup_job.reset();
     return CR_OK;
 }

@@ -22,229 +22,313 @@ freely, subject to the following restrictions:
 Adapted for the DFHack build from World Map Zoom 1.0.0.
 */
 
-// Included after the verified SDL bindings and state in worldmap-zoom-render.cpp.
-// All canvas operations run on the native graphics thread.
-struct MapCanvas {
-    SDL_Renderer *owner = nullptr;
-    void *texture = nullptr;
-    unsigned window = 0;
-    int width = 0, height = 0;
-    bool active = false, valid = false;
-    uint64_t camera_epoch = 0, device_epoch = 0;
-    Camera view{};
-    SDL_Rect map{}, source{}, viewport{}, clip{};
-    void *previous_target = nullptr;
-    float sx = 1, sy = 1;
-    bool clipped = false;
-    unsigned char color[4]{};
-    df::renderer_2d_base *native_renderer = nullptr;
-    df::graphic_map_portst *native_port = nullptr;
-    std::vector<unsigned char> painted;
-    int columns = 0, x0 = 0, x1 = 0, y0 = 0, y1 = 0, painted_count = 0, required = 0;
+#pragma once
 
-    void error(const char *message) {
-        std::lock_guard lock(state_mutex);
-        camera.enabled = false;
-        last_error = message;
+#include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
+#include <string>
+#include <vector>
+
+#include <SDL.h>
+
+namespace worldmap_zoom {
+
+// World-map cells are fixed at 16 pixels in DF's map-port renderer. This is
+// independent of the text font size and of the requested magnification.
+constexpr int map_cell_pixels = 16;
+constexpr int max_canvas_pixels = 16384; // bound allocations even if native geometry is corrupt
+
+struct CanvasView {
+    double zoom = 1, x = 0, y = 0;
+    uint64_t generation = 0;
+};
+
+struct CanvasStats {
+    uint64_t creations = 0, composites = 0, restore_checks = 0, restore_errors = 0;
+    uint64_t composited_generation = 0;
+};
+
+// A render-thread-only target-texture pass. This class has no DF globals,
+// viewscreens, callback queue, or implicit dependencies on its includer.
+// Api supplies the SDL operations, allowing tests to inject failures without
+// redefining DF/SDL types. See the methodology section in the plugin docs.
+template <class Api> class MapCanvas {
+public:
+    explicit MapCanvas(Api &api) : sdl(api) {}
+    const CanvasStats &stats() const {
+        return counters;
     }
-    bool restore() {
-        bool ok = sdl.set_target(owner, previous_target) == 0;
-        ok = (sdl.set_scale(owner, sx, sy) == 0) && ok;
-        ok = (sdl.set_viewport(owner, &viewport) == 0) && ok;
-        ok = (sdl.set_clip(owner, clipped ? &clip : nullptr) == 0) && ok;
-        ok = (sdl.set_color(owner, color[0], color[1], color[2], color[3]) == 0) && ok;
-        float x, y;
-        SDL_Rect v{}, c{};
-        unsigned char rgba[4]{};
-        sdl.get_scale(owner, &x, &y);
-        sdl.get_viewport(owner, &v);
-        sdl.get_clip(owner, &c);
-        sdl.get_color(owner, &rgba[0], &rgba[1], &rgba[2], &rgba[3]);
-        ok = ok && sdl.get_target(owner) == previous_target && x == sx && y == sy && v.x == viewport.x &&
-             v.y == viewport.y && v.w == viewport.w && v.h == viewport.h &&
-             (sdl.clip_enabled(owner) != 0) == clipped &&
-             (!clipped || (c.x == clip.x && c.y == clip.y && c.w == clip.w && c.h == clip.h)) &&
-             std::equal(color, color + 4, rgba);
-        ++restore_checks;
-        if (!ok) {
-            ++restore_errors;
-            error("SDL canvas state restoration failed; zoom disabled");
-        }
-        return ok;
+    const std::string &error() const {
+        return failure;
     }
-    void finish(bool composite = true) {
-        if (!active)
-            return;
-        Camera live;
-        {
-            std::lock_guard lock(state_mutex);
-            live = camera;
+    uint64_t generation() const {
+        return view.generation;
+    }
+    bool active() const {
+        return pass_active;
+    }
+    void markFullDraw() {
+        valid = true;
+    }
+    void clearError() {
+        failure.clear();
+    }
+
+    bool begin(SDL_Renderer *renderer, uint32_t window_id, const SDL_Rect &map_rect,
+               const CanvasView &requested_view, uint64_t device_generation, bool full_draw) {
+        if (!failure.empty())
+            return false;
+        // The texture uses native output coordinates: DF's unmodified draw
+        // methods can draw at their usual positive origin. A negative/scaled
+        // viewport clips incorrectly on some Direct3D backends.
+        if (!validGeometry(map_rect, requested_view))
+            return fail("Invalid map canvas geometry or zoom");
+        if (!ensureTexture(renderer, window_id, map_rect, device_generation))
+            return false;
+        const bool new_view = view.generation != requested_view.generation || !valid;
+        if (pass_active && view.generation != requested_view.generation)
+            finish(false, [] {});
+        if (!failure.empty())
+            return false;
+        view = requested_view;
+        map = map_rect;
+        configureCrop();
+        const bool starting_pass = !pass_active;
+        if (starting_pass && new_view) {
+            valid = false;
+            resetTileCoverage();
         }
-        // A camera change can arrive as individual tile updates. Let that
-        // batch fill the visible crop before falling back to a full native
-        // draw, avoiding a redundant full draw at the start of every drag.
-        if (composite && !valid && live.enabled && live.context == view.context &&
-            current_context() == view.context) {
-            sdl.set_color(owner, 0, 0, 0, 255);
-            sdl.clear(owner);
-            sdl.set_color(owner, color[0], color[1], color[2], color[3]);
-            ++transform_depth;
-            native_renderer->update_full_map_port(native_port);
-            --transform_depth;
-            valid = true;
+        if (starting_pass && !beginTargetPass())
+            return false;
+
+        // A full rebuild overwrites the whole crop. Incremental updates must
+        // preserve the existing texture between batches, but a *new* crop has
+        // no valid pixels yet and must start from a known background.
+        const bool needs_clear = full_draw || (starting_pass && !valid);
+        if (needs_clear && !clearTarget()) {
+            finish(false, [] {});
+            return fail("Could not clear map canvas");
         }
-        active = false;
-        if (!restore())
+        if (sdl.set_clip(owner, &source) != 0) {
+            finish(false, [] {});
+            return fail("SDL rejected the map crop");
+        }
+        return true;
+    }
+
+    template <class Redraw> void finish(bool may_composite, Redraw redraw_full_map) {
+        if (!pass_active)
             return;
-        if (composite && valid && live.enabled && live.context == view.context &&
-            current_context() == view.context) {
+        // DF may supply only changed cells. If those cells did not cover the
+        // newly selected crop, redraw the native map once before enlarging it.
+        // The adapter owns the native pointers; this class only invokes it.
+        if (may_composite && !valid) {
+            if (!clearTarget()) {
+                may_composite = false;
+                fail("Could not clear incomplete map canvas");
+            } else {
+                redraw_full_map();
+                valid = true;
+            }
+        }
+        pass_active = false;
+        if (!restoreDestinationState())
+            return;
+        // Restore *before* copying: the map belongs in the same native output
+        // rectangle as before, and subsequent UI draws must use DF's state.
+        if (may_composite && valid) {
             if (sdl.copy(owner, texture, &source, &map) != 0)
-                error("SDL map composition failed; zoom disabled");
+                fail("SDL map composition failed");
             else {
-                ++canvas_composites;
-                composited_generation = camera_epoch;
+                ++counters.composites;
+                counters.composited_generation = view.generation;
             }
         }
     }
-    void release(df::renderer_2d_base *r) {
-        // SDL_DestroyRenderer frees its textures. Never dereference a texture
-        // belonging to a renderer/window that has already been replaced.
-        bool same = texture && r && owner == reinterpret_cast<SDL_Renderer *>(r->sdl_renderer) &&
-                    window == sdl.window_id(reinterpret_cast<SDL_Window *>(r->window));
-        if (same) {
-            finish(false);
+
+    void release(SDL_Renderer *current_renderer, uint32_t current_window) {
+        // SDL_DestroyRenderer also destroys its textures. If DF replaced the
+        // renderer/window, forget the old pointer instead of double-freeing it.
+        const bool same_owner = texture && owner == current_renderer && window == current_window;
+        if (same_owner) {
+            finish(false, [] {});
             sdl.destroy_texture(texture);
-        } else
-            active = false;
+        } else {
+            pass_active = false;
+        }
         texture = nullptr;
         owner = nullptr;
         valid = false;
         width = height = 0;
     }
-    bool begin(df::renderer_2d_base *r, df::graphic_map_portst *port, const Camera &c, bool full) {
-        auto sr = reinterpret_cast<SDL_Renderer *>(r->sdl_renderer);
-        auto wid = sdl.window_id(reinterpret_cast<SDL_Window *>(r->window));
-        int w = r->origin_x + port->top_left_corner_x + port->dim_x * 16;
-        int h = r->origin_y + port->top_left_corner_y + port->dim_y * 16;
-        if (w < 1 || h < 1 || w > 16384 || h > 16384) {
-            error("Invalid map canvas dimensions");
-            return false;
+
+    void clearTile(int x, int y) {
+        // A changed native cell can become transparent/empty. Clear just that
+        // cell so stale river/site/cloud pixels do not survive in our cache.
+        SDL_Rect cell{map.x + x * map_cell_pixels, map.y + y * map_cell_pixels, map_cell_pixels,
+                      map_cell_pixels};
+        const bool cleared =
+            sdl.set_color(owner, 0, 0, 0, SDL_ALPHA_OPAQUE) == 0 && sdl.fill(owner, &cell) == 0;
+        const bool color_restored = restoreDrawColor();
+        if (!cleared || !color_restored)
+            fail("Could not clear a changed map cell");
+    }
+
+    void paintedTile(int x, int y) {
+        if (valid || x < first_col || x > last_col || y < first_row || y > last_row)
+            return;
+        const auto index = static_cast<size_t>(y) * columns + x;
+        if (!painted[index]) {
+            painted[index] = true;
+            valid = ++painted_count == required_cells;
         }
-        if (texture && (owner != sr || window != wid || width != w || height != h ||
-                        device_epoch != target_generation.load()))
-            release(r);
-        if (!texture) {
-            SDL_RendererInfo info{};
-            if (sdl.renderer_info(sr, &info) != 0 || !(info.flags & 8) ||
-                (info.max_texture_width > 0 && w > info.max_texture_width) ||
-                (info.max_texture_height > 0 && h > info.max_texture_height)) {
-                error("Renderer cannot create the required map target texture");
-                return false;
-            }
-            {
-                std::lock_guard lock(state_mutex);
-                renderer_name = info.name ? info.name : "unknown";
-            }
-            texture = sdl.create_texture(sr, 0x16362004, 2, w, h); // ARGB8888 / TARGET
-            if (!texture) {
-                error("Could not create map target texture");
-                return false;
-            }
-            owner = sr;
-            window = wid;
-            width = w;
-            height = h;
-            valid = false;
-            ++canvas_creations;
-            if (sdl.texture_blend(texture, 0) != 0 || sdl.texture_scale(texture, 0) != 0) {
-                release(r);
-                error("Could not configure map target texture");
-                return false;
-            }
-        }
-        auto cg = camera_generation.load(), dg = target_generation.load();
-        if (active && (camera_epoch != cg || device_epoch != dg))
-            finish(false);
-        bool invalidated = camera_epoch != cg || device_epoch != dg || !valid;
-        if (camera_epoch != cg || device_epoch != dg)
-            valid = false;
-        camera_epoch = cg;
-        device_epoch = dg;
-        view = c;
-        map = {r->origin_x + port->top_left_corner_x, r->origin_y + port->top_left_corner_y, port->dim_x * 16,
-               port->dim_y * 16};
-        source = {
-            map.x + static_cast<int>(std::round(std::clamp(c.x, 0.0, port->dim_x * (1 - 1 / c.zoom)) * 16)),
-            map.y + static_cast<int>(std::round(std::clamp(c.y, 0.0, port->dim_y * (1 - 1 / c.zoom)) * 16)),
-            map.w / static_cast<int>(c.zoom), map.h / static_cast<int>(c.zoom)};
-        native_renderer = r;
-        native_port = port;
-        bool started = !active;
-        if (started && invalidated) {
-            columns = port->dim_x;
-            painted.assign(static_cast<size_t>(columns) * port->dim_y, 0);
-            painted_count = 0;
-            x0 = (source.x - map.x) / 16;
-            x1 = (source.x - map.x + source.w - 1) / 16;
-            y0 = (source.y - map.y) / 16;
-            y1 = (source.y - map.y + source.h - 1) / 16;
-            required = (x1 - x0 + 1) * (y1 - y0 + 1);
-        }
-        if (!active) {
-            previous_target = sdl.get_target(sr);
-            sdl.get_scale(sr, &sx, &sy);
-            sdl.get_viewport(sr, &viewport);
-            sdl.get_clip(sr, &clip);
-            clipped = sdl.clip_enabled(sr) != 0;
-            sdl.get_color(sr, &color[0], &color[1], &color[2], &color[3]);
-            active = true;
-            if (sdl.set_target(sr, texture) != 0 || sdl.set_scale(sr, 1, 1) != 0 ||
-                sdl.set_viewport(sr, nullptr) != 0 || sdl.set_clip(sr, nullptr) != 0) {
-                finish(false);
-                error("SDL rejected the map canvas; zoom disabled");
-                return false;
-            }
-        }
-        if (full || (!valid && started)) {
-            if (sdl.set_color(sr, 0, 0, 0, 255) != 0 || sdl.clear(sr) != 0 ||
-                sdl.set_color(sr, color[0], color[1], color[2], color[3]) != 0) {
-                finish(false);
-                error("Could not clear map canvas; zoom disabled");
-                return false;
-            }
-        }
-        if (sdl.set_clip(sr, &source) != 0) {
-            finish(false);
-            error("SDL rejected map canvas clipping");
-            return false;
+    }
+
+private:
+    Api &sdl;
+    SDL_Renderer *owner = nullptr;
+    SDL_Texture *texture = nullptr;
+    uint32_t window = 0;
+    int width = 0, height = 0;
+    uint64_t device_epoch = 0;
+    bool pass_active = false, valid = false;
+    CanvasView view;
+    CanvasStats counters;
+    std::string failure;
+    SDL_Rect map{}, source{}, saved_viewport{}, saved_clip{};
+    SDL_Texture *saved_target = nullptr;
+    float saved_scale_x = 1, saved_scale_y = 1;
+    bool saved_clipped = false;
+    std::array<unsigned char, 4> saved_color{};
+    std::vector<bool> painted;
+    int columns = 0, first_col = 0, last_col = 0, first_row = 0, last_row = 0;
+    int painted_count = 0, required_cells = 0;
+
+    bool fail(const char *message) {
+        failure = message;
+        return false;
+    }
+
+    bool validGeometry(const SDL_Rect &rect, const CanvasView &v) const {
+        return rect.x >= 0 && rect.y >= 0 && rect.w > 0 && rect.h > 0 &&
+               static_cast<int64_t>(rect.x) + rect.w <= max_canvas_pixels &&
+               static_cast<int64_t>(rect.y) + rect.h <= max_canvas_pixels && rect.w % map_cell_pixels == 0 &&
+               rect.h % map_cell_pixels == 0 && (v.zoom == 2 || v.zoom == 4) && std::isfinite(v.x) &&
+               std::isfinite(v.y);
+    }
+
+    bool ensureTexture(SDL_Renderer *renderer, uint32_t window_id, const SDL_Rect &rect, uint64_t epoch) {
+        const int wanted_width = rect.x + rect.w, wanted_height = rect.y + rect.h;
+        if (texture && (owner != renderer || window != window_id || width != wanted_width ||
+                        height != wanted_height || device_epoch != epoch))
+            release(renderer, window_id);
+        if (texture)
+            return true;
+        SDL_RendererInfo info{};
+        if (sdl.renderer_info(renderer, &info) != 0 || !(info.flags & SDL_RENDERER_TARGETTEXTURE) ||
+            (info.max_texture_width > 0 && wanted_width > info.max_texture_width) ||
+            (info.max_texture_height > 0 && wanted_height > info.max_texture_height))
+            return fail("Renderer cannot create the required map target texture");
+        texture = sdl.create_texture(renderer, SDL_PIXELFORMAT_ARGB8888, SDL_TEXTUREACCESS_TARGET,
+                                     wanted_width, wanted_height);
+        if (!texture)
+            return fail("Could not create map target texture");
+        owner = renderer;
+        window = window_id;
+        width = wanted_width;
+        height = wanted_height;
+        device_epoch = epoch;
+        valid = false;
+        ++counters.creations;
+        // The native map is opaque and nearest-neighbour magnification keeps
+        // the original pixel art sharp. Do not blend in old window contents.
+        if (sdl.texture_blend(texture, SDL_BLENDMODE_NONE) != 0 ||
+            sdl.texture_scale(texture, SDL_ScaleModeNearest) != 0) {
+            release(renderer, window_id);
+            return fail("Could not configure map target texture");
         }
         return true;
     }
-    void clear_tile(int x, int y) {
-        SDL_Rect cell{map.x + x * 16, map.y + y * 16, 16, 16};
-        if (sdl.set_color(owner, 0, 0, 0, 255) != 0 || sdl.fill(owner, &cell) != 0 ||
-            sdl.set_color(owner, color[0], color[1], color[2], color[3]) != 0)
-            error("Could not clear map tile; zoom disabled");
+
+    void configureCrop() {
+        const double cols = static_cast<double>(map.w) / map_cell_pixels;
+        const double rows = static_cast<double>(map.h) / map_cell_pixels;
+        const int offset_x = static_cast<int>(
+            std::round(std::clamp(view.x, 0.0, cols * (1 - 1 / view.zoom)) * map_cell_pixels));
+        const int offset_y = static_cast<int>(
+            std::round(std::clamp(view.y, 0.0, rows * (1 - 1 / view.zoom)) * map_cell_pixels));
+        source = {map.x + offset_x, map.y + offset_y, map.w / static_cast<int>(view.zoom),
+                  map.h / static_cast<int>(view.zoom)};
     }
-    void painted_tile(int x, int y) {
-        if (valid || x < x0 || x > x1 || y < y0 || y > y1)
-            return;
-        auto index = static_cast<size_t>(y) * columns + x;
-        if (!painted[index]) {
-            painted[index] = 1;
-            if (++painted_count == required)
-                valid = true;
+
+    void resetTileCoverage() {
+        columns = map.w / map_cell_pixels;
+        painted.assign(static_cast<size_t>(columns) * (map.h / map_cell_pixels), false);
+        painted_count = 0;
+        first_col = (source.x - map.x) / map_cell_pixels;
+        last_col = (source.x - map.x + source.w - 1) / map_cell_pixels;
+        first_row = (source.y - map.y) / map_cell_pixels;
+        last_row = (source.y - map.y + source.h - 1) / map_cell_pixels;
+        required_cells = (last_col - first_col + 1) * (last_row - first_row + 1);
+    }
+
+    bool beginTargetPass() {
+        saved_target = sdl.get_target(owner);
+        sdl.get_scale(owner, &saved_scale_x, &saved_scale_y);
+        sdl.get_viewport(owner, &saved_viewport);
+        sdl.get_clip(owner, &saved_clip);
+        saved_clipped = sdl.clip_enabled(owner) != 0;
+        sdl.get_color(owner, &saved_color[0], &saved_color[1], &saved_color[2], &saved_color[3]);
+        pass_active = true; // every failure below must restore the saved state
+        if (sdl.set_target(owner, texture) != 0 || sdl.set_scale(owner, 1, 1) != 0 ||
+            sdl.set_viewport(owner, nullptr) != 0 || sdl.set_clip(owner, nullptr) != 0) {
+            finish(false, [] {});
+            return fail("SDL rejected the map target pass");
         }
+        return true;
+    }
+
+    bool restoreDrawColor() {
+        return sdl.set_color(owner, saved_color[0], saved_color[1], saved_color[2], saved_color[3]) == 0;
+    }
+
+    bool clearTarget() {
+        // SDL_RenderClear clears the entire target regardless of its clip.
+        // Preserve DF's draw colour so native drawing observes its usual state.
+        const bool cleared = sdl.set_color(owner, 0, 0, 0, SDL_ALPHA_OPAQUE) == 0 && sdl.clear(owner) == 0;
+        return restoreDrawColor() && cleared;
+    }
+
+    bool restoreDestinationState() {
+        bool ok = sdl.set_target(owner, saved_target) == 0;
+        ok = (sdl.set_scale(owner, saved_scale_x, saved_scale_y) == 0) && ok;
+        ok = (sdl.set_viewport(owner, &saved_viewport) == 0) && ok;
+        ok = (sdl.set_clip(owner, saved_clipped ? &saved_clip : nullptr) == 0) && ok;
+        ok = restoreDrawColor() && ok;
+        // Check the state we restored, not just SDL's return values. A bad
+        // restore would otherwise corrupt all later interface drawing.
+        float x = 0, y = 0;
+        SDL_Rect viewport{}, clip{};
+        std::array<unsigned char, 4> color{};
+        sdl.get_scale(owner, &x, &y);
+        sdl.get_viewport(owner, &viewport);
+        sdl.get_clip(owner, &clip);
+        sdl.get_color(owner, &color[0], &color[1], &color[2], &color[3]);
+        const auto same_rect = [](const SDL_Rect &a, const SDL_Rect &b) {
+            return a.x == b.x && a.y == b.y && a.w == b.w && a.h == b.h;
+        };
+        ok = ok && sdl.get_target(owner) == saved_target && x == saved_scale_x && y == saved_scale_y &&
+             same_rect(viewport, saved_viewport) && (sdl.clip_enabled(owner) != 0) == saved_clipped &&
+             (!saved_clipped || same_rect(clip, saved_clip)) && color == saved_color;
+        ++counters.restore_checks;
+        if (!ok) {
+            ++counters.restore_errors;
+            return fail("SDL canvas state restoration failed");
+        }
+        return true;
     }
 };
-static MapCanvas map_canvas;
-static bool canvas_camera(df::renderer_2d_base *r, df::graphic_map_portst *p, Camera &c) {
-    if (transform_depth || !hooks_ready || !p || p != gps->main_map_port || r != enabler->renderer ||
-        !p->flag.bits.active || p->dim_x < 1 || p->dim_y < 1)
-        return false;
-    {
-        std::lock_guard lock(state_mutex);
-        c = camera;
-    }
-    return c.enabled && c.zoom > 1 && c.context == current_context();
-}
+
+} // namespace worldmap_zoom

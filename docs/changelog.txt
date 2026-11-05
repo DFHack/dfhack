@@ -71,9 +71,7 @@ Template for new versions:
 - ``Units::teleport`` when using teleport to separate a dragged unit from a dragger unit, clean up the links between the two.
 
 ## Misc Improvements
-- `autofarm`: farms that span multiple biomes are now handled correctly: crops that can grow in any of the farm's biomes can be assigned to the farm, instead of only using the biome of the farm's center tile
 - ``eventful``: ``onJobCompleted`` now fires for jobs that are deleted the same tick they complete (e.g. ``HarvestPlants``), detected via the worker's Job unit action timer
-- `labormanager`: the modern engine's labor-mismatch probe no longer enables unmanaged labors on idle units or specialists, and no longer re-probes postings that can never be claimed (#6028)
 - ``RemoteFortressReader``: ensured creature and caste names and caste descriptions in ``GetCreatureRaws``/``GetPartialCreatureRaws`` are transmitted in UTF-8 instead of CP437
 - ``Units::teleport`` can now remove units from cages & chains, and will cancel any associated uncage/unchain jobs.
 - ``Units::teleport`` when teleporting a merchant dragging a pack animal, also teleport the animal.

@@ -695,15 +695,17 @@ static int meta_new(lua_State *state)
     int argc = lua_gettop(state);
 
     if (argc != 1 && argc != 2)
-        luaL_error(state, "Usage: object:new() or df.new(object) or df.new(ptype,count)");
+        luaL_error(state, "Usage: object:new() or object:new(assign_table) or df.new(object) or df.new(object, assign_table) or df.new(ptype,count)");
 
     const type_identity *id = get_object_identity(state, 1, "df.new()", true);
 
     void *ptr = nullptr;
     std::string err_context;
 
+    auto has_assign_table = (argc == 2 && lua_istable(state, 2));
+
     // Support arrays of primitive types
-    if (argc == 2)
+    if (argc == 2 && !has_assign_table)
     {
         int cnt = luaL_checkint(state, 2);
         if (cnt <= 0)
@@ -745,6 +747,16 @@ static int meta_new(lua_State *state)
     else
         push_object_internal(state, id, ptr);
 
+    if (has_assign_table) {
+        // stack: 1 = the source object or type, 2 = the assign table, (... there could be junk here but currently isn't...), -1 = the new object that will be returned.
+        lua_dup(state);                     // duplicate the object we just new'ed
+        lua_getfield(state, -1, "assign");  // get its assign method
+        lua_swap(state);                    // shuffle the two
+        lua_pushvalue(state, 2);            // copy arg 2, the table of assign data
+        lua_call(state, 2, 0);              // call assign(), two args, we don't care what it returns.
+            // TODO this leaks the allocated object if assign fails.
+            // TODO maybe we should copy the table and insert a field "new = false".
+    }
     return 1;
 }
 

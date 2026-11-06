@@ -129,10 +129,12 @@ All typed objects have the following built-in features:
 
   Returns *size, address*
 
-* ``ref:new()``
+* ``ref:new([assign_table])``
 
   Allocates a new instance of the same type, and copies data
-  from the current object.
+  from the current object,
+  then optionally calls ``ref:assign`` with a Lua table of
+  :ref:`data to be assigned <lua-api-table-assignment>` to the new instance.
 
 * ``ref:delete()``
 
@@ -355,9 +357,11 @@ Types excluding the global object also support:
 
   Returns the size of an object of the type.
 
-* ``type:new()``
+* ``type:new([assign_table])``
 
-  Creates a new instance of an object of the type.
+  Creates a new instance of an object of the type,
+  then optionally calls ``ref:assign`` with a Lua table of
+  :ref:`data to be assigned <lua-api-table-assignment>` to the new instance.
 
 * ``type:is_instance(object)``
 
@@ -427,7 +431,7 @@ The ``df`` table itself contains the following functions and values:
   For types and refs identical to ``obj:sizeof()``.
   For lightuserdata returns *nil, address*
 
-* ``df.new(obj)``, ``df.delete(obj)``, ``df.assign(obj, obj2)``
+* ``df.new(obj[,assign_data])``, ``df.delete(obj)``, ``df.assign(obj, obj2)``
 
   Equivalent to using the matching methods of obj.
 

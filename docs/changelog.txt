@@ -55,6 +55,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `luadebugger`: Debug Adapter Protocol server for interactively debugging Lua running inside DFHack (breakpoints, stepping, stack/variable inspection, evaluation); attach with the VSCode extension in ``devtools/vscode-dfhack-lua`` or the CLI client at ``devtools/luadebug-cli.py``
 
 ## New Features
 - `autofarm`: farm plots can now be individually excluded from autofarm management via new controls on the farm plot information sheet, which also warn when a farm's crops are being managed by autofarm

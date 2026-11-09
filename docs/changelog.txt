@@ -55,6 +55,7 @@ Template for new versions:
 # Future
 
 ## New Tools
+- `worldmap-zoom-render`: add a Windows SDL2 native composition service for 2x and 4x high-level world-map zoom, preserving interface scale
 
 ## New Features
 - `autofarm`: farm plots can now be individually excluded from autofarm management via new controls on the farm plot information sheet, which also warn when a farm's crops are being managed by autofarm
@@ -79,6 +80,7 @@ Template for new versions:
 ## Documentation
 
 ## API
+- ``queueOnRenderThread``: cancellable render-task handles report completion after callback/capture destruction, allowing unloadable plugins to drain render work safely
 
 ## Lua
 - ``dfhack.timeout_until``: new function to schedule a callback to run on a specified in-game tick

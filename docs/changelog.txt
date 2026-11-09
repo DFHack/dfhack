@@ -57,6 +57,24 @@ Template for new versions:
 ## New Tools
 
 ## New Features
+
+## Fixes
+
+## Misc Improvements
+
+## Documentation
+
+## API
+
+## Lua
+
+## Removed
+
+# 53.17-r1
+
+## New Tools
+
+## New Features
 - `autofarm`: farm plots can now be individually excluded from autofarm management via new controls on the farm plot information sheet, which also warn when a farm's crops are being managed by autofarm
 - `autofarm`: thresholds can now be assigned to specific growth products of a plant (e.g. ``BUSH_QUARRY:LEAVES``), so crops that are grown for their growth items can be farmed to a target amount of that product
 

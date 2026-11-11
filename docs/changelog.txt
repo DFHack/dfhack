@@ -61,6 +61,8 @@ Template for new versions:
 ## Fixes
 
 ## Misc Improvements
+- `tailor`: clothing needs are now computed from each unit's body plan instead of a fixed armor/pants/shoes list: dwarves get two shoes, units with any number of stance parts get appropriately many pairs of shoes, and helmets, gloves, and unusually-shaped citizens are covered too. Clothing types are chosen to maximize body coverage using their UBSTEP/LBSTEP/UPSTEP reach
+- `tailor`: pending manager orders now count toward clothing needs, so repeating ``tailor now`` no longer creates additional orders in other materials for needs that are already covered by an outstanding order
 
 ## Documentation
 

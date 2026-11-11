@@ -3,20 +3,27 @@
  */
 
 #include <algorithm>
+#include <array>
+#include <map>
+#include <tuple>
 
 #include "Debug.h"
 #include "LuaTools.h"
 #include "PluginManager.h"
 #include "PluginLua.h"
 
+#include "modules/Items.h"
 #include "modules/Materials.h"
 #include "modules/Persistence.h"
 #include "modules/Units.h"
 #include "modules/World.h"
 
+#include "df/body_part_raw.h"
 #include "df/building.h"
+#include "df/caste_body_info.h"
 #include "df/creature_raw.h"
 #include "df/descriptor_color.h"
+#include "df/glove_handedness.h"
 #include "df/historical_entity.h"
 #include "df/item.h"
 #include "df/item_flags.h"
@@ -139,16 +146,316 @@ static struct BadFlags {
     }
 } badFlags;
 
+// chirality classes used to track left and right glove needs (and stock)
+// separately; achiral items always use CHIRAL_ANY
+enum TailorChiral {
+    CHIRAL_ANY = 0,
+    CHIRAL_RIGHT = 1,
+    CHIRAL_LEFT = 2,
+    CHIRAL_OTHER = 3,   // gloves with no (or an invalid) handedness; nothing we
+                        // can produce fills such a need
+};
+
+// one body part that wants a worn item, as determined by its flags using the
+// same precedence DF uses to compute clothing needs
+struct TailorSlot {
+    int16_t body_part_id;
+    df::item_type item_type;
+    int16_t subtype = -1; // chosen clothing itemdef, -1 if none is usable
+    int chiral = CHIRAL_ANY;
+};
+
+// the set of clothing slots for a body plan, plus the clothing item
+// definitions chosen to fill them. this is expensive to compute, so it is
+// cached per caste_body_info for the lifetime of the world
+struct BodyClothingPlan {
+    std::vector<TailorSlot> slots;
+    std::map<int16_t, size_t> slot_by_part;
+};
+
+// the item type a body part wants worn on it. DF checks part flags in this
+// order, so e.g. a part flagged both STANCE and GRASP (the "hands" of a
+// creature that walks on its hands) wants shoes rather than gloves
+static df::item_type slot_type_for_part(df::body_part_raw *part)
+{
+    auto &f = part->flags;
+    if (f.is_set(df::body_part_raw_flags::LOWERBODY)) return df::item_type::PANTS;
+    if (f.is_set(df::body_part_raw_flags::UPPERBODY)) return df::item_type::ARMOR;
+    if (f.is_set(df::body_part_raw_flags::STANCE))    return df::item_type::SHOES;
+    if (f.is_set(df::body_part_raw_flags::HEAD))      return df::item_type::HELM;
+    if (f.is_set(df::body_part_raw_flags::GRASP))     return df::item_type::GLOVES;
+    return df::item_type::NONE;
+}
+
+// faithful reimplementation of DF's bodyst::get_body_step_distance, which
+// measures how many "steps" of non-torso body parts lie between a target part
+// and the part a garment is worn on, walking up the body part parent
+// (con_part_id) chain. DF compares the result to a clothing item
+// definition's UBSTEP/LBSTEP values to decide coverage:
+//
+//   *main is set when the target is the worn part itself or a LOWERBODY part
+//        directly attached to it (body armor always covers the lower body).
+//   *ub_steps is set when the target does not lie on a stance limb chain
+//        (e.g. arms), *lb_steps when it does (legs, stance tails, etc).
+//
+// The distance counts every non-UPPERBODY/LOWERBODY part on the chain from
+// the target upward, stopping the count at the first torso part; every part
+// on the chain between that torso part and the worn part must itself be a
+// torso part, and the worn part must be an ancestor of the target, otherwise
+// no distance is reported.
+static void body_step_distance(df::caste_body_info *body, int16_t worn, int16_t target,
+        bool *main, int16_t *ub_steps, int16_t *lb_steps)
+{
+    *main = false;
+    *ub_steps = -1;
+    *lb_steps = -1;
+
+    auto &parts = body->body_parts;
+    int n = (int)parts.size();
+    if (worn < 0 || worn >= n || target < 0 || target >= n)
+        return;
+
+    auto is_torso = [&parts](int16_t i) {
+        return parts[i]->flags.is_set(df::body_part_raw_flags::UPPERBODY) ||
+               parts[i]->flags.is_set(df::body_part_raw_flags::LOWERBODY);
+    };
+
+    if (worn == target ||
+        (parts[target]->con_part_id == worn &&
+         parts[target]->flags.is_set(df::body_part_raw_flags::LOWERBODY))) {
+        *main = true;
+        return;
+    }
+
+    // a part is on a stance limb chain if it is itself a stance part or a LIMB
+    // ancestor of a stance part
+    bool on_stance_chain = false;
+    for (int i = 0; i < n && !on_stance_chain; i++) {
+        if (!parts[i]->flags.is_set(df::body_part_raw_flags::STANCE))
+            continue;
+        if (i == target) {
+            on_stance_chain = true;
+            break;
+        }
+        for (int16_t s = parts[i]->con_part_id; 0 <= s && s < n; s = parts[s]->con_part_id) {
+            if (!parts[s]->flags.is_set(df::body_part_raw_flags::LIMB))
+                break;
+            if (s == target) {
+                on_stance_chain = true;
+                break;
+            }
+        }
+    }
+
+    int steps = 0;
+    bool crossed_torso = false;
+    int16_t cur = target;
+    while (0 <= cur && cur < n) {
+        if (crossed_torso) {
+            if (!is_torso(cur))
+                return;
+        } else if (is_torso(cur)) {
+            crossed_torso = true;
+        } else {
+            steps++;
+        }
+        if (cur == worn)
+            break;
+        cur = parts[cur]->con_part_id;
+    }
+    if (steps > 0 && cur == worn) {
+        if (on_stance_chain)
+            *lb_steps = steps;
+        else
+            *ub_steps = steps;
+    }
+}
+
+// replicates the coverage decision made by DF's unitst::insulation_quantity:
+// does a garment of item type 'ty' worn on body part 'worn' cover body part
+// 'target'? the step parameters are the item definition's UBSTEP/LBSTEP/UPSTEP
+// values as appropriate for the type
+static bool covers_part(df::caste_body_info *body, df::item_type ty,
+        int16_t ubstep, int16_t lbstep, int16_t upstep, int16_t worn, int16_t target)
+{
+    auto &parts = body->body_parts;
+    int n = (int)parts.size();
+    if (worn < 0 || worn >= n || target < 0 || target >= n)
+        return false;
+
+    switch (ty) {
+    case df::item_type::HELM:
+        // helms cover only the head they are worn on
+        return target == worn;
+    case df::item_type::GLOVES:
+    case df::item_type::SHOES: {
+        // gloves and shoes cover the part they are worn on plus up to UPSTEP
+        // LIMB ancestors of that part
+        if (target == worn)
+            return true;
+        int steps = 1;
+        for (int16_t s = parts[worn]->con_part_id; 0 <= s && s < n; s = parts[s]->con_part_id, steps++) {
+            if (!parts[s]->flags.is_set(df::body_part_raw_flags::LIMB))
+                break;
+            if (s == target)
+                return steps <= upstep;
+        }
+        return false;
+    }
+    case df::item_type::ARMOR:
+    case df::item_type::PANTS: {
+        // body armor and pants never cover heads, grasp, or stance parts
+        auto &tf = parts[target]->flags;
+        if (tf.is_set(df::body_part_raw_flags::HEAD) ||
+            tf.is_set(df::body_part_raw_flags::GRASP) ||
+            tf.is_set(df::body_part_raw_flags::STANCE))
+            return false;
+        bool main;
+        int16_t ub, lb;
+        body_step_distance(body, worn, target, &main, &ub, &lb);
+        if (main)
+            return true;
+        if (ty == df::item_type::ARMOR)
+            return (0 <= ub && ub <= ubstep) || (0 <= lb && lb <= lbstep);
+        // pants can only extend down stance limb chains, never along arms
+        return 0 <= lb && lb <= lbstep;
+    }
+    default:
+        return false;
+    }
+}
+
+// the number of body parts an item of the given type/subtype would cover on
+// the given body plan when worn on 'worn'
+static int itemdef_coverage(df::caste_body_info *body, df::item_type ty, int16_t sub, int16_t worn)
+{
+    int16_t ubstep = 0, lbstep = 0, upstep = 0;
+    switch (ty) {
+    case df::item_type::ARMOR: {
+        auto def = world->raws.itemdefs.armor[sub];
+        if (!def)
+            return 0;
+        ubstep = def->ubstep;
+        lbstep = def->lbstep;
+        break;
+    }
+    case df::item_type::PANTS: {
+        auto def = world->raws.itemdefs.pants[sub];
+        if (!def)
+            return 0;
+        lbstep = def->lbstep;
+        break;
+    }
+    case df::item_type::GLOVES: {
+        auto def = world->raws.itemdefs.gloves[sub];
+        if (!def)
+            return 0;
+        upstep = def->upstep;
+        break;
+    }
+    case df::item_type::SHOES: {
+        auto def = world->raws.itemdefs.shoes[sub];
+        if (!def)
+            return 0;
+        upstep = def->upstep;
+        break;
+    }
+    case df::item_type::HELM:   break;
+    default: return 0;
+    }
+    int count = 0;
+    for (int t = 0; t < (int)body->body_parts.size(); t++)
+        if (covers_part(body, ty, ubstep, lbstep, upstep, worn, t))
+            count++;
+    return count;
+}
+
+static const std::vector<int16_t> &entity_itemdefs(df::historical_entity *e, df::item_type ty)
+{
+    static const std::vector<int16_t> empty;
+    switch (ty) {
+    case df::item_type::ARMOR:  return e->resources.armor_type;
+    case df::item_type::GLOVES: return e->resources.gloves_type;
+    case df::item_type::HELM:   return e->resources.helm_type;
+    case df::item_type::PANTS:  return e->resources.pants_type;
+    case df::item_type::SHOES:  return e->resources.shoes_type;
+    default: return empty;
+    }
+}
+
+// clothing is distinguished from real armor by armorlevel == 0
+static bool itemdef_is_clothing(df::item_type ty, int16_t sub)
+{
+    switch (ty) {
+    case df::item_type::ARMOR:
+        return world->raws.itemdefs.armor[sub] &&
+            world->raws.itemdefs.armor[sub]->armorlevel == 0;
+    case df::item_type::GLOVES:
+        return world->raws.itemdefs.gloves[sub] &&
+            world->raws.itemdefs.gloves[sub]->armorlevel == 0;
+    case df::item_type::HELM:
+        return world->raws.itemdefs.helms[sub] &&
+            world->raws.itemdefs.helms[sub]->armorlevel == 0;
+    case df::item_type::PANTS:
+        return world->raws.itemdefs.pants[sub] &&
+            world->raws.itemdefs.pants[sub]->armorlevel == 0;
+    case df::item_type::SHOES:
+        return world->raws.itemdefs.shoes[sub] &&
+            world->raws.itemdefs.shoes[sub]->armorlevel == 0;
+    default: return false;
+    }
+}
+
+// the chirality bucket a stock item belongs to
+static int stock_chiral(df::item *i)
+{
+    if (i->getType() != df::item_type::GLOVES)
+        return CHIRAL_ANY;
+    uint32_t h = i->getGloveHandedness();
+    if (h == (1u << df::glove_handedness::RIGHT))
+        return CHIRAL_RIGHT;
+    if (h == (1u << df::glove_handedness::LEFT))
+        return CHIRAL_LEFT;
+    return CHIRAL_OTHER;
+}
+
+// does this item fill the given clothing slot when worn on it? the item type
+// must match, and gloves must have the handedness the slot requires
+static bool item_fills_slot(df::item *item, const TailorSlot &slot)
+{
+    if (item->getType() != slot.item_type)
+        return false;
+    if (slot.item_type == df::item_type::GLOVES) {
+        uint32_t h = item->getGloveHandedness();
+        switch (slot.chiral) {
+        case CHIRAL_RIGHT: return (h & (1u << df::glove_handedness::RIGHT)) != 0;
+        case CHIRAL_LEFT:  return (h & (1u << df::glove_handedness::LEFT)) != 0;
+        case CHIRAL_OTHER: return h == 0;
+        default:           return false;
+        }
+    }
+    return true;
+}
+
 class Tailor {
 
 private:
     std::map<int, int> sizes; // this maps body size to races
 
-    std::map<std::pair<df::item_type, int>, int> available;
+    // (item type, size, chirality) -> count of unworn clothing items in stock
+    std::map<std::tuple<df::item_type, int, int>, int> available;
 
-    std::map<std::pair<df::item_type, int>, int> needed;
+    // (item type, itemdef subtype, size, chirality) -> count of items needed.
+    // for shoes and gloves this counts individual items; each order produces
+    // a pair, so order counts are derived from these numbers
+    std::map<std::tuple<df::item_type, int, int, int>, int> needed;
 
     std::map<std::tuple<df::job_type, int, int>, int> orders;
+
+    // cached clothing plans, keyed by the shared caste body plan pointer; see
+    // BodyClothingPlan. body plans and entity clothing lists are fixed for the
+    // lifetime of a loaded world
+    std::map<df::caste_body_info*, BodyClothingPlan> plan_cache;
 
     std::map<MatType, int> supply;
     std::map<MatType, int> reserves;
@@ -193,6 +500,11 @@ public:
         return material_order;
     }
 
+    void clear_plan_cache()
+    {
+        plan_cache.clear();
+    }
+
     void reset()
     {
         available.clear();
@@ -200,6 +512,67 @@ public:
         sizes.clear();
         supply.clear();
         orders.clear();
+    }
+
+    // choose the craftable clothing itemdef of the given type covering the
+    // most body parts on this body plan when worn on 'worn'; -1 if none
+    int best_subtype(df::item_type ty, const std::vector<int16_t> &candidates,
+            df::caste_body_info *body, int16_t worn)
+    {
+        int best = -1;
+        int best_coverage = -1;
+        for (auto sub : candidates)
+        {
+            if (!itemdef_is_clothing(ty, sub))
+                continue;
+            int coverage = itemdef_coverage(body, ty, sub, worn);
+            if (coverage > best_coverage)
+            {
+                best_coverage = coverage;
+                best = sub;
+            }
+        }
+        return best;
+    }
+
+    // compute (or fetch from the cache) the clothing plan for a body plan:
+    // the list of clothing slots and the best-covering itemdef for each
+    const BodyClothingPlan *get_plan(df::caste_body_info *body)
+    {
+        auto found = plan_cache.find(body);
+        if (found != plan_cache.end())
+            return &found->second;
+
+        BodyClothingPlan plan;
+        auto entity = world->entities.all[plotinfo->civ_id];
+        int n = (int)body->body_parts.size();
+        for (int i = 0; i < n; i++)
+        {
+            auto part = body->body_parts[i];
+            df::item_type ty = slot_type_for_part(part);
+            if (ty == df::item_type::NONE)
+                continue;
+
+            TailorSlot slot;
+            slot.body_part_id = (int16_t)i;
+            slot.item_type = ty;
+            if (ty == df::item_type::GLOVES)
+            {
+                // gloves are made in pairs of one left and one right glove, so
+                // only distinctly left/right grasp parts can wear them
+                bool r = part->flags.is_set(df::body_part_raw_flags::RIGHT);
+                bool l = part->flags.is_set(df::body_part_raw_flags::LEFT);
+                slot.chiral = r && !l ? CHIRAL_RIGHT :
+                              l && !r ? CHIRAL_LEFT : CHIRAL_OTHER;
+            }
+            if (slot.chiral != CHIRAL_OTHER)
+                slot.subtype = best_subtype(ty, entity_itemdefs(entity, ty), body, slot.body_part_id);
+
+            plan.slot_by_part[slot.body_part_id] = plan.slots.size();
+            plan.slots.push_back(slot);
+        }
+
+        return &plan_cache.emplace(body, std::move(plan)).first->second;
     }
 
     void scan_clothing()
@@ -212,13 +585,15 @@ public:
             }
             if (i->getWear() >= 1)
                 continue;
+            if (!i->isClothing())
+                continue;
             if (i->getMakerRace() < 0) // sometimes we get borked items with no valid maker race
                 continue;
 
             df::item_type t = i->getType();
             int size = world->raws.creatures.all[i->getMakerRace()]->adultsize;
 
-            available[std::make_pair(t, size)] += 1;
+            available[std::make_tuple(t, size, stock_chiral(i))] += 1;
         }
 
         if (DBG_NAME(cycle).isEnabled(DebugCategory::LDEBUG))
@@ -226,8 +601,8 @@ public:
             for (auto& i : available)
             {
                 df::item_type t;
-                int size;
-                std::tie(t, size) = i.first;
+                int size, chiral;
+                std::tie(t, size, chiral) = i.first;
                 DEBUG(cycle).print("tailor: {} {} of size {} found\n",
                     i.second, ENUM_KEY_STR(item_type, t), size);
             }
@@ -284,6 +659,27 @@ public:
             supply[M_SILK], supply[M_YARN], supply[M_CLOTH], supply[M_LEATHER], supply[M_ADAMANTINE]);
     }
 
+    void confiscate_item(df::unit *u, df::item *w)
+    {
+        std::string description;
+        w->getItemDescription(&description, 0);
+
+        if (w->flags.bits.owned)
+        {
+            bool confiscated = Items::setOwner(w, NULL);
+
+            INFO(cycle).print(
+                "tailor: {} {} from {}.\n",
+                (confiscated ? "confiscated" : "could not confiscate"),
+                DF2CONSOLE(description),
+                DF2CONSOLE(Units::getReadableName(u))
+            );
+        }
+
+        if (w->getWear() > 1)
+            w->flags.bits.dump = true;
+    }
+
     void scan_replacements()
     {
         for (auto u : Units::citizensRange(world->units.active)) {
@@ -291,140 +687,132 @@ public:
                 !Units::casteFlagSet(u->race, u->caste, df::enums::caste_raw_flags::EQUIPS))
                 continue; // skip units we don't control or that can't wear clothes
 
-            std::set <df::item_type> equipped;
-            std::set <df::item_type> ordered;
-            std::deque<df::item*> damaged;
-
-            for (auto inv : u->inventory)
-            {
-                if (inv->mode != df::inv_item_role_type::Worn)
-                    continue;
-                // skip non-clothing
-                if (!inv->item->isClothing())
-                    continue;
-                if (inv->item->getWear() > 0)
-                    damaged.push_back(inv->item);
-                else
-                    equipped.insert(inv->item->getType());
-            }
+            auto body = u->body.body_plan;
+            if (!body)
+                continue;
+            auto plan = get_plan(body);
+            if (!plan)
+                continue;
 
             int usize = world->raws.creatures.all[u->race]->adultsize;
             sizes[usize] = u->race;
 
-            for (auto w : damaged)
+            // count, per clothing slot, the intact and tattered items worn on
+            // the slot's body part that actually fill the slot
+            std::vector<int> good(plan->slots.size(), 0);
+            std::map<size_t, std::vector<df::item*>> tattered;
+
+            for (auto inv : u->inventory)
             {
-                // skip armor
-                if (w->getEffectiveArmorLevel() > 0)
+                if (inv->mode != df::inv_item_role_type::Worn &&
+                    inv->mode != df::inv_item_role_type::WrappedAround)
                     continue;
-
-                auto ty = w->getType();
-
-                auto makerRace = w->getMakerRace();
-                if (makerRace < 0 || makerRace >= (int16_t) world->raws.creatures.all.size())
+                // skip non-clothing
+                if (!inv->item->isClothing())
                     continue;
-
-                int isize = world->raws.creatures.all[makerRace]->adultsize;
-                std::string description;
-                w->getItemDescription(&description, 0);
-
-                if (equipped.count(ty) == 0)
-                {
-                    if (ordered.count(ty) == 0)
-                    {
-                        DEBUG(cycle).print ("tailor: {} (size {}) worn by {} (size {}) needs replacement\n",
-                                            DF2CONSOLE(description), isize,
-                                            DF2CONSOLE(Units::getReadableName(u)), usize);
-                        needed[std::make_pair(ty, usize)] += 1;
-                        ordered.insert(ty);
-                    }
-                }
-
-                if (confiscate && equipped.count(ty) > 0)
-                {
-                    if (w->flags.bits.owned)
-                    {
-                        bool confiscated = Items::setOwner(w, NULL);
-
-                        INFO(cycle).print(
-                            "tailor: {} {} from {}.\n",
-                            (confiscated ? "confiscated" : "could not confiscate"),
-                            DF2CONSOLE(description),
-                            DF2CONSOLE(Units::getReadableName(u))
-                        );
-                    }
-
-                    if (w->getWear() > 1)
-                        w->flags.bits.dump = true;
-                }
-
+                auto sit = plan->slot_by_part.find(inv->body_part_id);
+                if (sit == plan->slot_by_part.end())
+                    continue;
+                if (!item_fills_slot(inv->item, plan->slots[sit->second]))
+                    continue;
+                if (inv->item->getWear() > 0)
+                    tattered[sit->second].push_back(inv->item);
+                else
+                    good[sit->second] += 1;
             }
 
-            for (auto ty : std::set<df::item_type>{ df::item_type::ARMOR, df::item_type::PANTS, df::item_type::SHOES })
+            auto &part_status = u->body.components.body_part_status;
+            for (size_t i = 0; i < plan->slots.size(); i++)
             {
-                if (equipped.count(ty) == 0 && ordered.count(ty) == 0)
+                const TailorSlot &slot = plan->slots[i];
+                // missing parts need no clothing
+                if (slot.body_part_id < (int)part_status.size() &&
+                    part_status[slot.body_part_id].bits.missing)
+                    continue;
+
+                if (good[i] > 0)
                 {
-                    TRACE(cycle).print("tailor: one {} of size {} needed to cover {}\n",
-                        ENUM_KEY_STR(item_type, ty),
-                        usize,
-                        DF2CONSOLE(Units::getReadableName(u)));
-                    needed[std::make_pair(ty, usize)] += 1;
+                    // the slot is adequately covered; any tattered clothing
+                    // still worn on it is redundant and can be confiscated
+                    if (confiscate)
+                        for (auto w : tattered[i])
+                            confiscate_item(u, w);
+                    continue;
                 }
+
+                if (slot.subtype < 0)
+                {
+                    TRACE(cycle).print("tailor: {} has a {} part tailor cannot supply\n",
+                        DF2CONSOLE(Units::getReadableName(u)),
+                        ENUM_KEY_STR(item_type, slot.item_type));
+                    continue;
+                }
+
+                TRACE(cycle).print("tailor: one {} of size {} needed to cover {} ({})\n",
+                    ENUM_KEY_STR(item_type, slot.item_type),
+                    usize,
+                    DF2CONSOLE(Units::getReadableName(u)),
+                    DF2CONSOLE(body->body_parts[slot.body_part_id]->token));
+                needed[std::make_tuple(slot.item_type, slot.subtype, usize, slot.chiral)] += 1;
             }
         }
     }
 
     void create_orders()
     {
-        auto entity = world->entities.all[plotinfo->civ_id];
+        // glove needs are tallied per chirality across all body plans sharing
+        // a (subtype, size) pair; each job makes one left and one right glove,
+        // so the number of jobs is the larger of the two needs
+        std::map<std::pair<int, int>, std::array<int, 3>> glove_need;
 
         for (auto& a : needed)
         {
-            df::item_type ty = a.first.first;
-            int size = a.first.second;
-            int count = a.second;
+            df::item_type ty;
+            int sub, size, chiral;
+            std::tie(ty, sub, size, chiral) = a.first;
 
-            // decrease "need" by "available"
-            count -= available[std::make_pair(ty, size)];
+            // decrease "need" by "available"; stock of any subtype fills a
+            // need of its type, so consume the shared pool as we go
+            int &stock = available[std::make_tuple(ty, size, chiral)];
+            int count = a.second - stock;
+            stock = std::max(0, stock - a.second);
 
             if (count <= 0)
                 continue;
 
-            int sub = 0;
-            std::vector<int16_t> v;
-
-            switch (ty) {
-            case df::item_type::ARMOR:  v = entity->resources.armor_type; break;
-            case df::item_type::GLOVES: v = entity->resources.gloves_type; break;
-            case df::item_type::HELM:   v = entity->resources.helm_type; break;
-            case df::item_type::PANTS:  v = entity->resources.pants_type; break;
-            case df::item_type::SHOES:  v = entity->resources.shoes_type; break;
-            default: break;
-            }
-
-            for (auto vv : v) {
-                bool isClothing = false;
-                switch (ty) {
-                case df::item_type::ARMOR:  isClothing = world->raws.itemdefs.armor[vv]->armorlevel == 0; break;
-                case df::item_type::GLOVES: isClothing = world->raws.itemdefs.gloves[vv]->armorlevel == 0; break;
-                case df::item_type::HELM:   isClothing = world->raws.itemdefs.helms[vv]->armorlevel == 0; break;
-                case df::item_type::PANTS:  isClothing = world->raws.itemdefs.pants[vv]->armorlevel == 0; break;
-                case df::item_type::SHOES:  isClothing = world->raws.itemdefs.shoes[vv]->armorlevel == 0; break;
-                default: break;
-                }
-                if (isClothing)
-                {
-                    sub = vv;
-                    break;
-                }
-            }
-
-            auto jj = itemTypeMap.find(ty);
-            if (jj != itemTypeMap.end())
+            if (ty == df::item_type::SHOES)
             {
-                const df::job_type j = jj->second;
-                orders[std::make_tuple(j, sub, size)] += count;
-                DEBUG(cycle).print("tailor: {} times {} of size {} ordered\n", ENUM_KEY_STR(job_type, j), count, size);
+                // shoes are made in identical pairs, so two uncovered stance
+                // parts can be shod with a single order
+                int pairs = (count + 1) / 2;
+                orders[std::make_tuple(df::job_type::MakeShoes, sub, size)] += pairs;
+                DEBUG(cycle).print("tailor: {} shoes of size {} needed, ordering {} pairs\n",
+                    count, size, pairs);
             }
+            else if (ty == df::item_type::GLOVES)
+            {
+                glove_need[std::make_pair(sub, size)][chiral] += count;
+            }
+            else
+            {
+                auto jj = itemTypeMap.find(ty);
+                if (jj != itemTypeMap.end())
+                {
+                    orders[std::make_tuple(jj->second, sub, size)] += count;
+                    DEBUG(cycle).print("tailor: {} times {} of size {} ordered\n",
+                        ENUM_KEY_STR(job_type, jj->second), count, size);
+                }
+            }
+        }
+
+        for (auto& g : glove_need)
+        {
+            int pairs = std::max(g.second[CHIRAL_LEFT], g.second[CHIRAL_RIGHT]);
+            if (pairs <= 0)
+                continue;
+            orders[std::make_tuple(df::job_type::MakeGloves, g.first.first, g.first.second)] += pairs;
+            DEBUG(cycle).print("tailor: {} left and {} right gloves of size {} needed, ordering {} pairs\n",
+                g.second[CHIRAL_LEFT], g.second[CHIRAL_RIGHT], g.first.second, pairs);
         }
     }
 
@@ -571,18 +959,19 @@ public:
 
         pp->getDescription(&descr);
 
-        auto [_, n] = get_or_create_order(c, df::job_type::CustomReaction, -1, -1, 0, r->code);
-        if (n > 0)
+        auto [order, added] = ensure_order(c, df::job_type::CustomReaction, -1, -1, 0, r->code);
+        if (added > 0)
         {
-            INFO(cycle).print("tailor: ordered {} {}\n", c, DF2CONSOLE(descr));
+            INFO(cycle).print("tailor: ordered {} {}\n", added, DF2CONSOLE(descr));
         }
-        return n;
+        // the order (existing or new) now covers the requested amount
+        return order ? std::min<oqt>(c, order->amount_left) : 0;
     }
 
     oqt order_dye_cloth(int c = 1)
     {
-        auto [_, n] = get_or_create_order(c, df::job_type::DyeCloth, -1, -1, 0);
-        return n;
+        auto [order, added] = ensure_order(c, df::job_type::DyeCloth, -1, -1, 0);
+        return order ? std::min<oqt>(c, order->amount_left) : 0;
     }
 
     void make_dyes(int count)
@@ -620,7 +1009,7 @@ public:
         return sum;
     }
 
-    static std::pair<df::manager_order*,oqt> get_or_create_order(oqt c, df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat, std::string custom_reaction = "")
+    static df::manager_order *find_order(df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat, const std::string &custom_reaction)
     {
         auto f = [&] (df::manager_order* order) {
             return order->job_type == ty &&
@@ -631,24 +1020,52 @@ public:
                 order->specdata.race == hfid &&
                 order->material_category.whole == mcat.whole &&
                 order->frequency == df::workquota_frequency_type::OneTime &&
-                order->reaction_name == custom_reaction;
+                order->reaction_name == custom_reaction &&
+                order->amount_left > 0;
             };
 
         auto orderIt = std::ranges::find_if(world->manager_orders.all, f);
+        return orderIt != world->manager_orders.all.end() ? *orderIt : nullptr;
+    }
 
-        if (orderIt != world->manager_orders.all.end())
+    // how much of the demand for this (job, subtype, race) is already covered
+    // by pending manager orders; any material counts, since every such order
+    // eventually produces an item that fills the need
+    static oqt pending_coverage(oqt demand, df::job_type ty, int16_t sub, int32_t hfid)
+    {
+        oqt covered = 0;
+        for (auto order : world->manager_orders.all)
         {
-            auto o = *orderIt;
-            int chg = 0;
-            if (o->amount_left > 0)
+            if (order->job_type == ty &&
+                order->item_type == df::item_type::NONE &&
+                order->item_subtype == sub &&
+                order->mat_type == -1 &&
+                order->mat_index == -1 &&
+                order->specdata.race == hfid &&
+                order->frequency == df::workquota_frequency_type::OneTime &&
+                order->reaction_name.empty())
             {
-                int prev = o->amount_left;
-                o->amount_left = std::max(c, o->amount_left);
-                o->amount_total = std::max(c, o->amount_total);
-                chg = o->amount_left - prev;
+                covered += order->amount_left;
+                if (covered >= demand)
+                    break;
             }
-            return {o, chg};
         }
+        return std::min(covered, demand);
+    }
+
+    // increase the matching manager order by `add` items, creating it with
+    // `add` items if none exists; returns (order, items committed)
+    static std::pair<df::manager_order*,oqt> add_to_order(oqt add, df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat, std::string custom_reaction = "")
+    {
+        if (auto order = find_order(ty, sub, hfid, mcat, custom_reaction))
+        {
+            order->amount_left += add;
+            order->amount_total += add;
+            return {order, add};
+        }
+
+        if (add <= 0)
+            return {nullptr, 0};
 
         auto order = new df::manager_order;
         order->job_type = ty;
@@ -659,8 +1076,8 @@ public:
         order->material_category = mcat;
         order->mat_type = -1;
         order->mat_index = -1;
-        order->amount_left = c;
-        order->amount_total = c;
+        order->amount_left = add;
+        order->amount_total = add;
         order->status.bits.validated = false;
         order->status.bits.active = false;
         order->frequency = df::workquota_frequency_type::OneTime;
@@ -668,7 +1085,16 @@ public:
 
         world->manager_orders.all.push_back(order);
 
-        return {order, c};
+        return {order, add};
+    }
+
+    // ensure the matching order has at least `demand` items pending;
+    // returns (order, additional items committed by this call)
+    static std::pair<df::manager_order*,oqt> ensure_order(oqt demand, df::job_type ty, int16_t sub, int32_t hfid, df::job_material_category mcat, std::string custom_reaction = "")
+    {
+        auto order = find_order(ty, sub, hfid, mcat, custom_reaction);
+        oqt add = std::max<oqt>(0, demand - (order ? order->amount_left : 0));
+        return add_to_order(add, ty, sub, hfid, mcat, custom_reaction);
     }
 
     int place_orders()
@@ -743,6 +1169,11 @@ public:
                     continue;
                 }
 
+                // pending orders for this item already count toward the need
+                count -= pending_coverage(count, ty, sub, sizes[size]);
+                if (count <= 0)
+                    continue;
+
                 DEBUG(cycle).print("tailor: ordering {} {}\n", count, DF2CONSOLE(name_p));
 
                 for (auto& m : material_order)
@@ -754,17 +1185,15 @@ public:
                     int res = (r == reserves.end()) ? default_reserve : r->second;
 
                     if (supply[m] > res && fl->is_set(m.armor_flag)) {
-                        int c = count;
-                        if (supply[m] < count + res)
+                        int c = std::min(count, supply[m] - res);
+                        if (c < count)
                         {
-                            c = supply[m] - res;
                             TRACE(cycle).print("tailor: order reduced from {} to {} to protect reserves of {}\n",
                                 count, c, DF2CONSOLE(m.name));
-                            skipped += (count - c);
                         }
                         supply[m] -= c;
 
-                        auto [order,n] = get_or_create_order(c, ty, sub, sizes[size], m.job_material);
+                        auto [order,n] = add_to_order(c, ty, sub, sizes[size], m.job_material);
 
                         if (n > 0)
                         {
@@ -781,11 +1210,12 @@ public:
                     }
                     else
                     {
-                        skipped += count;
                         DEBUG(cycle).print("tailor: material {} skipped due to lack of reserves, {} available\n", DF2CONSOLE(m.name), supply[m]);
                     }
 
                 }
+
+                skipped += count;
             }
         }
 
@@ -887,6 +1317,8 @@ DFhackCExport command_result plugin_shutdown (color_ostream &out) {
 
 DFhackCExport command_result plugin_load_site_data (color_ostream &out) {
     cycle_timestamp = 0;
+    if (tailor_instance)
+        tailor_instance->clear_plan_cache();
     config = World::GetPersistentSiteData(CONFIG_KEY);
     config2 = World::GetPersistentSiteData(CONFIG_KEY_2);
 

@@ -224,10 +224,7 @@ namespace DFHack
         {
             COORD pos = { (SHORT)x, (SHORT)y };
             DWORD count = 0;
-            CONSOLE_SCREEN_BUFFER_INFO inf = { 0 };
-            GetConsoleScreenBufferInfo(console_out, &inf);
-            SetConsoleCursorPosition(console_out, pos);
-            WriteConsoleA(console_out, str, len, &count, NULL);
+            WriteConsoleOutputCharacterA(console_out, str, len, pos, &count);
         }
 
         void prompt_refresh()
@@ -238,9 +235,9 @@ namespace DFHack
             size_t len = raw_buffer.size();
             int cooked_cursor = raw_cursor;
 
-            if (plen + cooked_cursor > cols)
+            if (plen + cooked_cursor > (cols-1))
             {
-                int adj = std::min(plen + cooked_cursor - cols, len);
+                int adj = std::min(plen + cooked_cursor - (cols-1), len);
                 buf += adj;
                 len -= adj;
                 cooked_cursor -= adj;

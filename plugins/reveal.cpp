@@ -371,7 +371,8 @@ static void unhideFlood_internal(const df::coord &xy) {
         if(!des || !des->bits.hidden)
             continue;
 
-        // we don't want constructions or ice to restrict vision (to avoid bug #1871)
+        // DF-MITIGATION: we don't want constructions or ice to restrict vision
+        // (to avoid bug #1871)
         df::tiletype *tt = Maps::getTileType(current);
         if (!tt)
             continue;

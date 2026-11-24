@@ -128,7 +128,8 @@ static df::building_extents_type *getExtentTile(const df::building::T_room &room
 }
 
 /*
- * A monitor to work around this bug, in its application to buildings:
+ * DF-MITIGATION: monitor works around DF bug 1416 in its application to
+ * buildings:
  *
  * http://www.bay12games.com/dwarves/mantisbt/view.php?id=1416
  */

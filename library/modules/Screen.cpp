@@ -845,6 +845,7 @@ void dfhack_viewscreen::logic()
     // Various stuff works poorly unless always repainting
     Screen::invalidate();
 
+    // DF-MITIGATION: DF can get stuck when a dismissed screen stays buried
     // if the DF screen immediately beneath the DFHack viewscreens is waiting to
     // be dismissed, raise it to the top so DF never gets stuck
     auto *p = parent;

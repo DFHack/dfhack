@@ -193,22 +193,27 @@ static df::item_type slot_type_for_part(df::body_part_raw *part)
 // (con_part_id) chain. DF compares the result to a clothing item
 // definition's UBSTEP/LBSTEP values to decide coverage:
 //
-//   *main is set when the target is the worn part itself or a LOWERBODY part
+//   main is set when the target is the worn part itself or a LOWERBODY part
 //        directly attached to it (body armor always covers the lower body).
-//   *ub_steps is set when the target does not lie on a stance limb chain
-//        (e.g. arms), *lb_steps when it does (legs, stance tails, etc).
+//   ub_steps is set when the target does not lie on a stance limb chain
+//        (e.g. arms), lb_steps when it does (legs, stance tails, etc).
 //
 // The distance counts every non-UPPERBODY/LOWERBODY part on the chain from
 // the target upward, stopping the count at the first torso part; every part
 // on the chain between that torso part and the worn part must itself be a
 // torso part, and the worn part must be an ancestor of the target, otherwise
 // no distance is reported.
+//
+// Note: out parameters used here because the original DF code used them and
+// this is a faithful reimplementation of DF's code as determined through
+// reverse engineering
+
 static void body_step_distance(df::caste_body_info *body, int16_t worn, int16_t target,
-        bool *main, int16_t *ub_steps, int16_t *lb_steps)
+        bool &main, int16_t &ub_steps, int16_t &lb_steps)
 {
-    *main = false;
-    *ub_steps = -1;
-    *lb_steps = -1;
+    main = false;
+    ub_steps = -1;
+    lb_steps = -1;
 
     auto &parts = body->body_parts;
     int n = (int)parts.size();
@@ -223,7 +228,7 @@ static void body_step_distance(df::caste_body_info *body, int16_t worn, int16_t 
     if (worn == target ||
         (parts[target]->con_part_id == worn &&
          parts[target]->flags.is_set(df::body_part_raw_flags::LOWERBODY))) {
-        *main = true;
+        main = true;
         return;
     }
 
@@ -265,9 +270,9 @@ static void body_step_distance(df::caste_body_info *body, int16_t worn, int16_t 
     }
     if (steps > 0 && cur == worn) {
         if (on_stance_chain)
-            *lb_steps = steps;
+            lb_steps = steps;
         else
-            *ub_steps = steps;
+            ub_steps = steps;
     }
 }
 
@@ -312,7 +317,7 @@ static bool covers_part(df::caste_body_info *body, df::item_type ty,
             return false;
         bool main;
         int16_t ub, lb;
-        body_step_distance(body, worn, target, &main, &ub, &lb);
+        body_step_distance(body, worn, target, main, ub, lb);
         if (main)
             return true;
         if (ty == df::item_type::ARMOR)
@@ -325,6 +330,15 @@ static bool covers_part(df::caste_body_info *body, df::item_type ty,
     }
 }
 
+// bounds-checked itemdef lookup: entity resource lists are populated from
+// raws, but a modded game can leave subtype indices that are out of range
+// for the corresponding itemdefs table
+template<typename T>
+static T *itemdef_at(const std::vector<T*> &defs, int16_t sub)
+{
+    return 0 <= sub && (size_t)sub < defs.size() ? defs[sub] : nullptr;
+}
+
 // the number of body parts an item of the given type/subtype would cover on
 // the given body plan when worn on 'worn'
 static int itemdef_coverage(df::caste_body_info *body, df::item_type ty, int16_t sub, int16_t worn)
@@ -332,7 +346,7 @@ static int itemdef_coverage(df::caste_body_info *body, df::item_type ty, int16_t
     int16_t ubstep = 0, lbstep = 0, upstep = 0;
     switch (ty) {
     case df::item_type::ARMOR: {
-        auto def = world->raws.itemdefs.armor[sub];
+        auto def = itemdef_at(world->raws.itemdefs.armor, sub);
         if (!def)
             return 0;
         ubstep = def->ubstep;
@@ -340,21 +354,21 @@ static int itemdef_coverage(df::caste_body_info *body, df::item_type ty, int16_t
         break;
     }
     case df::item_type::PANTS: {
-        auto def = world->raws.itemdefs.pants[sub];
+        auto def = itemdef_at(world->raws.itemdefs.pants, sub);
         if (!def)
             return 0;
         lbstep = def->lbstep;
         break;
     }
     case df::item_type::GLOVES: {
-        auto def = world->raws.itemdefs.gloves[sub];
+        auto def = itemdef_at(world->raws.itemdefs.gloves, sub);
         if (!def)
             return 0;
         upstep = def->upstep;
         break;
     }
     case df::item_type::SHOES: {
-        auto def = world->raws.itemdefs.shoes[sub];
+        auto def = itemdef_at(world->raws.itemdefs.shoes, sub);
         if (!def)
             return 0;
         upstep = def->upstep;
@@ -387,21 +401,26 @@ static const std::vector<int16_t> &entity_itemdefs(df::historical_entity *e, df:
 static bool itemdef_is_clothing(df::item_type ty, int16_t sub)
 {
     switch (ty) {
-    case df::item_type::ARMOR:
-        return world->raws.itemdefs.armor[sub] &&
-            world->raws.itemdefs.armor[sub]->armorlevel == 0;
-    case df::item_type::GLOVES:
-        return world->raws.itemdefs.gloves[sub] &&
-            world->raws.itemdefs.gloves[sub]->armorlevel == 0;
-    case df::item_type::HELM:
-        return world->raws.itemdefs.helms[sub] &&
-            world->raws.itemdefs.helms[sub]->armorlevel == 0;
-    case df::item_type::PANTS:
-        return world->raws.itemdefs.pants[sub] &&
-            world->raws.itemdefs.pants[sub]->armorlevel == 0;
-    case df::item_type::SHOES:
-        return world->raws.itemdefs.shoes[sub] &&
-            world->raws.itemdefs.shoes[sub]->armorlevel == 0;
+    case df::item_type::ARMOR: {
+        auto def = itemdef_at(world->raws.itemdefs.armor, sub);
+        return def && def->armorlevel == 0;
+    }
+    case df::item_type::GLOVES: {
+        auto def = itemdef_at(world->raws.itemdefs.gloves, sub);
+        return def && def->armorlevel == 0;
+    }
+    case df::item_type::HELM: {
+        auto def = itemdef_at(world->raws.itemdefs.helms, sub);
+        return def && def->armorlevel == 0;
+    }
+    case df::item_type::PANTS: {
+        auto def = itemdef_at(world->raws.itemdefs.pants, sub);
+        return def && def->armorlevel == 0;
+    }
+    case df::item_type::SHOES: {
+        auto def = itemdef_at(world->raws.itemdefs.shoes, sub);
+        return def && def->armorlevel == 0;
+    }
     default: return false;
     }
 }
@@ -1122,43 +1141,60 @@ public:
             if (count > 0)
             {
                 std::vector<int16_t> v;
-                BitArray<df::armor_general_flags>* fl;
+                BitArray<df::armor_general_flags>* fl = nullptr;
                 std::string name_s, name_p;
 
                 switch (ty) {
 
                 case df::job_type::MakeArmor:
                     v = entity->resources.armor_type;
-                    name_s = world->raws.itemdefs.armor[sub]->name;
-                    name_p = world->raws.itemdefs.armor[sub]->name_plural;
-                    fl = &world->raws.itemdefs.armor[sub]->props.flags;
+                    if (auto def = itemdef_at(world->raws.itemdefs.armor, sub)) {
+                        name_s = def->name;
+                        name_p = def->name_plural;
+                        fl = &def->props.flags;
+                    }
                     break;
                 case df::job_type::MakeGloves:
-                    name_s = world->raws.itemdefs.gloves[sub]->name;
-                    name_p = world->raws.itemdefs.gloves[sub]->name_plural;
                     v = entity->resources.gloves_type;
-                    fl = &world->raws.itemdefs.gloves[sub]->props.flags;
+                    if (auto def = itemdef_at(world->raws.itemdefs.gloves, sub)) {
+                        name_s = def->name;
+                        name_p = def->name_plural;
+                        fl = &def->props.flags;
+                    }
                     break;
                 case df::job_type::MakeHelm:
-                    name_s = world->raws.itemdefs.helms[sub]->name;
-                    name_p = world->raws.itemdefs.helms[sub]->name_plural;
                     v = entity->resources.helm_type;
-                    fl = &world->raws.itemdefs.helms[sub]->props.flags;
+                    if (auto def = itemdef_at(world->raws.itemdefs.helms, sub)) {
+                        name_s = def->name;
+                        name_p = def->name_plural;
+                        fl = &def->props.flags;
+                    }
                     break;
                 case df::job_type::MakePants:
-                    name_s = world->raws.itemdefs.pants[sub]->name;
-                    name_p = world->raws.itemdefs.pants[sub]->name_plural;
                     v = entity->resources.pants_type;
-                    fl = &world->raws.itemdefs.pants[sub]->props.flags;
+                    if (auto def = itemdef_at(world->raws.itemdefs.pants, sub)) {
+                        name_s = def->name;
+                        name_p = def->name_plural;
+                        fl = &def->props.flags;
+                    }
                     break;
                 case df::job_type::MakeShoes:
-                    name_s = world->raws.itemdefs.shoes[sub]->name;
-                    name_p = world->raws.itemdefs.shoes[sub]->name_plural;
                     v = entity->resources.shoes_type;
-                    fl = &world->raws.itemdefs.shoes[sub]->props.flags;
+                    if (auto def = itemdef_at(world->raws.itemdefs.shoes, sub)) {
+                        name_s = def->name;
+                        name_p = def->name_plural;
+                        fl = &def->props.flags;
+                    }
                     break;
                 default:
                     break;
+                }
+
+                if (!fl)
+                {
+                    WARN(cycle).print("tailor: no item definition for {} subtype {}, skipped\n",
+                        ENUM_KEY_STR(job_type, ty), sub);
+                    continue;
                 }
 
                 bool can_make = std::find(v.begin(), v.end(), sub) != v.end();

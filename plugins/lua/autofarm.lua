@@ -61,7 +61,7 @@ function FarmControlsOverlay:init()
         widgets.TextButton{
             frame={t=0, r=0, w=18, h=1},
             label='configure',
-            key='CUSTOM_CTRL_S',
+            key='CUSTOM_CTRL_C',
             on_activate=function() dfhack.run_script('gui/autofarm') end,
         },
     }
@@ -129,7 +129,7 @@ function FarmCoverOverlay:init()
         widgets.TextButton{
             frame={b=4, l=2, r=2, h=1},
             label='configure autofarm',
-            key='CUSTOM_CTRL_S',
+            key='CUSTOM_CTRL_C',
             on_activate=function() dfhack.run_script('gui/autofarm') end,
         },
         widgets.TextButton{

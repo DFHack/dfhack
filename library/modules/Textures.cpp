@@ -15,6 +15,7 @@
 
 #include "df/enabler.h"
 #include "df/global_objects.h"
+#include "df/graphic.h"
 #include "df/viewscreen_adopt_regionst.h"
 #include "df/viewscreen_loadgamest.h"
 #include "df/viewscreen_new_arenast.h"
@@ -24,6 +25,7 @@
 #include <SDL_surface.h>
 
 using df::global::enabler;
+using df::global::gps;
 using namespace DFHack;
 using namespace DFHack::DFSDL;
 
@@ -95,6 +97,7 @@ SDL_Surface* canonicalize_format(SDL_Surface* src) {
 // register surface in texture raws, get a texpos
 static long add_texture(SDL_Surface* surface) {
     std::lock_guard<std::mutex> lg_add_texture(g_adding_mutex);
+    surface->refcount++; // prevent destruct on next FreeSurface by game
     auto texpos = enabler->textures.raws.size();
     enabler->textures.raws.push_back(surface);
     return texpos;
@@ -103,16 +106,32 @@ static long add_texture(SDL_Surface* surface) {
 // register surface in texture raws to specific texpos
 static void insert_texture(SDL_Surface* surface, long texpos) {
     std::lock_guard<std::mutex> lg_add_texture(g_adding_mutex);
+    surface->refcount++; // prevent destruct on next FreeSurface by game
     enabler->textures.raws[texpos] = surface;
 }
 
-// delete surface from texture raws
-static void delete_texture(long texpos) {
-    std::lock_guard<std::mutex> lg_add_texture(g_adding_mutex);
-    auto pos = static_cast<size_t>(texpos);
-    if (pos >= enabler->textures.raws.size())
+// true if the slot still references our surface, i.e. the game has not cleared it
+static bool slot_owns(long texpos, SDL_Surface* surface) {
+    return texpos >= 0 && static_cast<size_t>(texpos) < enabler->textures.raws.size() &&
+           enabler->textures.raws[texpos] == surface;
+}
+
+// null out the raws slot if it still references the surface and release the
+// reference that was taken for the slot; skipped for dynamic slots when a
+// post-init texture clear may be in flight, since the game consumes the slot
+// reference itself. reserved slots are below init_texture_size and are never
+// touched by the game's post-init clear.
+static void release_texpos(long texpos, SDL_Surface* surface) {
+    if (texpos < 0)
         return;
-    enabler->textures.raws[texpos] = NULL;
+    if (texpos >= enabler->textures.init_texture_size && gps &&
+        gps->do_post_init_texture_clear)
+        return;
+    std::lock_guard<std::mutex> lg_add_texture(g_adding_mutex);
+    if (slot_owns(texpos, surface)) {
+        enabler->textures.raws[texpos] = NULL;
+        DFSDL_FreeSurface(surface);
+    }
 }
 
 // create new surface with RGBA32 format and pixels as data
@@ -168,7 +187,6 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface, bool reserved) {
 
     auto handle = reinterpret_cast<uintptr_t>(surface);
     g_handle_to_surface.emplace(handle, surface);
-    surface->refcount++; // prevent destruct on next FreeSurface by game
 
     if (reserved && reserved_range.is_installed) {
         auto texpos = reserved_range.get_new_texpos();
@@ -181,6 +199,8 @@ TexposHandle Textures::loadTexture(SDL_Surface* surface, bool reserved) {
 
         if (loading_state) { // if we in loading state and reserved range is full -> error
             ERR(textures).printerr("reserved range limit has been reached, use dynamic range\n");
+            g_handle_to_surface.erase(handle);
+            DFSDL_FreeSurface(surface);
             return 0;
         }
     }
@@ -224,12 +244,17 @@ long Textures::getTexposByHandle(TexposHandle handle) {
 
     if (g_handle_to_reserved_texpos.contains(handle))
         return g_handle_to_reserved_texpos[handle];
-    if (g_handle_to_texpos.contains(handle))
-        return g_handle_to_texpos[handle];
+    if (auto it = g_handle_to_texpos.find(handle); it != g_handle_to_texpos.end()) {
+        // the game clears and reuses dynamic slots during world load, so only
+        // trust the cached texpos while the slot still holds our surface
+        auto sit = g_handle_to_surface.find(handle);
+        if (sit != g_handle_to_surface.end() && slot_owns(it->second, sit->second))
+            return it->second;
+        g_handle_to_texpos.erase(it);
+    }
     if (std::find(g_delayed_regs.begin(), g_delayed_regs.end(), handle) != g_delayed_regs.end())
         return 0;
     if (g_handle_to_surface.contains(handle)) {
-        g_handle_to_surface[handle]->refcount++; // prevent destruct on next FreeSurface by game
         if (loading_state) { // reinit dor dynamic range during loading -> delayed
             g_delayed_regs.push_back(handle);
             return 0;
@@ -267,21 +292,25 @@ void Textures::deleteHandle(TexposHandle handle) {
     if (!enabler)
         return;
 
-    auto texpos = Textures::getTexposByHandle(handle);
-    if (texpos > 0)
-        delete_texture(texpos);
-    if (g_handle_to_reserved_texpos.contains(handle))
-        g_handle_to_reserved_texpos.erase(handle);
-    if (g_handle_to_texpos.contains(handle))
-        g_handle_to_texpos.erase(handle);
+    long texpos = -1;
+    if (auto it = g_handle_to_reserved_texpos.find(handle);
+        it != g_handle_to_reserved_texpos.end()) {
+        texpos = it->second;
+        g_handle_to_reserved_texpos.erase(it);
+    } else if (auto it = g_handle_to_texpos.find(handle);
+               it != g_handle_to_texpos.end()) {
+        texpos = it->second;
+        g_handle_to_texpos.erase(it);
+    }
     if (auto it = std::find(g_delayed_regs.begin(), g_delayed_regs.end(), handle);
         it != g_delayed_regs.end())
         g_delayed_regs.erase(it);
-    if (g_handle_to_surface.contains(handle)) {
-        auto surface = g_handle_to_surface[handle];
-        while (surface->refcount)
-            DFSDL_FreeSurface(surface);
-        g_handle_to_surface.erase(handle);
+    if (auto it = g_handle_to_surface.find(handle); it != g_handle_to_surface.end()) {
+        // release the reference held by the raws slot (if it is still ours) and
+        // the reference we own, without ever inspecting surface->refcount
+        release_texpos(texpos, it->second);
+        DFSDL_FreeSurface(it->second);
+        g_handle_to_surface.erase(it);
     }
 }
 
@@ -303,6 +332,14 @@ static void reset_tilesets() {
 static void reset_surface() {
     DEBUG(textures).print("deleting cached surfaces\n");
     for (auto& entry : g_handle_to_surface) {
+        long texpos = -1;
+        if (auto it = g_handle_to_reserved_texpos.find(entry.first);
+            it != g_handle_to_reserved_texpos.end())
+            texpos = it->second;
+        else if (auto it = g_handle_to_texpos.find(entry.first);
+                 it != g_handle_to_texpos.end())
+            texpos = it->second;
+        release_texpos(texpos, entry.second);
         DFSDL_FreeSurface(entry.second);
     }
     g_handle_to_surface.clear();
@@ -311,7 +348,10 @@ static void reset_surface() {
 static void register_delayed_handles() {
     DEBUG(textures).print("register delayed handles, size {}\n", g_delayed_regs.size());
     for (auto& handle : g_delayed_regs) {
-        auto texpos = add_texture(g_handle_to_surface[handle]);
+        auto it = g_handle_to_surface.find(handle);
+        if (it == g_handle_to_surface.end())
+            continue; // handle was deleted before it could be registered
+        auto texpos = add_texture(it->second);
         g_handle_to_texpos.emplace(handle, texpos);
     }
     g_delayed_regs.clear();
@@ -440,7 +480,6 @@ static void reserve_static_range() {
     reserved_range.init(enabler->textures.init_texture_size);
     dummy_surface =
         DFSDL_CreateRGBSurfaceWithFormat(0, 0, 0, 32, SDL_PixelFormatEnum::SDL_PIXELFORMAT_RGBA32);
-    dummy_surface->refcount += ReservedRange::size;
     for (int32_t i = 0; i < ReservedRange::size; i++) {
         add_texture(dummy_surface);
     }
@@ -462,9 +501,9 @@ void Textures::cleanup() {
     if (!enabler)
         return;
 
+    reset_surface();
     reset_texpos();
     reset_reserved_texpos();
     reset_tilesets();
-    reset_surface();
     uninstall_reset_point();
 }

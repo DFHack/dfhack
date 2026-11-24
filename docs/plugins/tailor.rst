@@ -15,6 +15,19 @@ manufacture some more. ``tailor`` will intelligently create orders using raw
 materials that you have on hand in the fort. For example, if you have lots of
 silk, but no cloth, then ``tailor`` will order only silk clothing to be made.
 
+``tailor`` determines what each unit needs based on the unit's actual body
+plan rather than a fixed list of clothing types. Every body part that wants
+clothing -- upper and lower body parts, the head, grasp parts (hands), and
+stance parts (feet, or whatever else the unit stands on) -- gets its own
+requirement, so a dwarf needs *two* shoes, a one-legged creature needs only
+one, and a creature that stands on a tail needs a shoe for its tail. For each
+such part, ``tailor`` chooses from the clothing types your civilization knows
+how to make, preferring the ones that cover the most of the unit's body based
+on the item definition's UBSTEP/LBSTEP/UPSTEP reach. Since gloves and shoes
+are manufactured in pairs, orders for them account for pairs: one order makes
+two identical shoes that can cover any two stance parts, or one left and one
+right glove for the matching grasp parts.
+
 If you are wondering whether you should enable `autoclothing` instead, see the
 head-to-head comparison in the `autoclothing` docs.
 

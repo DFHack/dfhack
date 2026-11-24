@@ -3,6 +3,7 @@
 #include "ColorText.h"
 #include "Export.h"
 #include "PluginManager.h"
+#include "RenderThreadTask.h"
 
 #include <cstdint>
 #include <functional>
@@ -84,7 +85,7 @@ namespace DFHack
     DFHACK_EXPORT bool getClipboardTextCp437Multiline(std::vector<std::string> * lines);
     DFHACK_EXPORT bool setClipboardTextCp437Multiline(std::string text);
 
-    // Queue a cb to be run on the render thread
-    DFHACK_EXPORT void runOnRenderThread(std::function<void()> cb);
+    // runOnRenderThread() and the cancellable queueOnRenderThread() task API
+    // are declared in RenderThreadTask.h.
     DFHACK_EXPORT void runRenderThreadCallbacks();
 }

@@ -339,6 +339,45 @@ Caveats and pitfalls
   frame-length wait. Grouping operations into one critical section is still
   good advice for latency, not correctness.
 
+.. _render-thread-tasks:
+
+Cancellable render-thread work and plugin unload
+------------------------------------------------
+
+``runOnRenderThread(callback)`` queues a fire-and-forget ``std::function``.
+Its execution and subsequent destruction happen in the core render queue.
+An unloadable plugin must account for the callback's function manager and the
+destructors of any captures, as well as for its callback body. A completion flag
+written inside the callback body can become visible *before* those destructors
+have run.
+
+``queueOnRenderThread(callback)`` (``RenderThreadTask.h``, also included by
+``modules/DFSDL.h``) returns a shared ``RenderThreadTask`` handle:
+
+- ``cancel()`` cancels a pending task and destroys its callback/captures before
+  returning true. It returns false if execution/cancellation already started.
+- ``finished()`` reports that the callable and its captures have been destroyed,
+  after either execution or cancellation. A cancelled task's empty queue wrapper
+  can remain queued: that wrapper and its state destructor are compiled in core.
+- ``succeeded()`` is true only after a callback returned normally and its
+  captures were destroyed. Cancelled or throwing callbacks report false. The
+  task catches exceptions without retaining an ``exception_ptr``, whose payload
+  could itself have a destructor in the caller's module.
+- ``waitFor(std::chrono::milliseconds)`` waits for ``finished()`` with a timeout.
+  It is forbidden on the render thread or while holding a core suspend context;
+  use polling on later simulation frames in those contexts. A timeout gives no
+  permission to unload the callback's module.
+
+The handles track queued work only. Plugins must separately remove every native
+hook/event callback on its owning thread, stop new work from being submitted,
+and establish completion before permitting their module to unload. Store task
+handles until then; dropping a handle alone does not cancel a queued callback.
+
+The world-map renderer's methodology documentation describes a concrete
+application: its console unload waits without the core lock, its Lua owner can
+request nonblocking cleanup and poll, and its process-shutdown path cleans up
+inline on the render thread.
+
 Reference
 ---------
 

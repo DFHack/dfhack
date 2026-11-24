@@ -77,6 +77,7 @@ set(MAIN_HEADERS
     include/RemoteClient.h
     include/RemoteServer.h
     include/RemoteTools.h
+    include/RenderThreadTask.h
     include/Signal.hpp
     include/TileTypes.h
     include/Types.h
@@ -117,12 +118,24 @@ set(MAIN_SOURCES
     RemoteClient.cpp
     RemoteServer.cpp
     RemoteTools.cpp
+    RenderThreadTask.cpp
 )
 
 file(GLOB_RECURSE TEST_SOURCES
     LIST_DIRECTORIES false
     *test.cpp)
 dfhack_test(dfhack-test "${TEST_SOURCES}")
+
+if(BUILD_TESTING)
+    find_package(Threads REQUIRED)
+    # Standalone: test the production task implementation with an injected
+    # transport, without requiring a game, SDL context, or a loaded DFHack core.
+    add_executable(render-thread-task-test tests/render-thread-task.cpp RenderThreadTask.cpp)
+    target_include_directories(render-thread-task-test PRIVATE include)
+    target_compile_definitions(render-thread-task-test PRIVATE DFHACK_EXPORT= DFHACK_IMPORT=)
+    target_link_libraries(render-thread-task-test PRIVATE Threads::Threads)
+    add_test(NAME render-thread-task-test COMMAND render-thread-task-test)
+endif()
 
 if(WIN32)
     set(CONSOLE_SOURCES Console-windows.cpp)
